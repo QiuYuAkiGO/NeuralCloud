@@ -278,5 +278,5 @@ def _memory_text(memory: ScoredMemory) -> str:
 def _session_text(turns: list[SessionTurn]) -> str:
     if not turns:
         return ""
-    lines = [f"{turn.role}: {turn.text}" for turn in turns]
+    lines = [f"{turn.speaker or turn.role}: {turn.text}" for turn in turns]
     return "近期对话：\n" + "\n".join(lines)

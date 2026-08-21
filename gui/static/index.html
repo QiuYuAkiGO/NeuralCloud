@@ -19,10 +19,9 @@
       <span id="ws-dot" class="dot off" title="WebSocket"></span>
       <span id="mode-badge" class="badge">demo</span>
       <span id="llm-badge" class="badge ghost">LLM …</span>
-      <label class="session">
-        session
-        <input id="session-id" value="sess_0881" spellcheck="false" />
-      </label>
+      <span id="aux-badge" class="badge ghost">辅助 …</span>
+      <span id="embed-badge" class="badge ghost">向量 …</span>
+      <button type="button" id="btn-presets" class="btn ghost">预设</button>
       <button type="button" id="btn-settings" class="btn ghost">设置</button>
       <button type="button" id="btn-debug" class="btn ghost">调试</button>
       <button type="button" id="btn-reset" class="btn ghost danger">重置</button>
@@ -32,8 +31,21 @@
   <main>
     <section class="col chat-col" aria-label="对话">
       <header class="col-head">
-        <h1>对话</h1>
-        <p>输入后发送，右侧与中间同步推进九个阶段。</p>
+        <div class="col-head-row">
+          <div>
+            <h1>对话</h1>
+            <p>输入后发送，右侧与中间同步推进九个阶段。改动会写入当前预设。</p>
+          </div>
+          <div class="speaker-fields">
+            <label class="session">用户
+              <input id="user-name" maxlength="32" spellcheck="false" placeholder="用户" />
+            </label>
+            <label class="session">角色
+              <input id="character-name" maxlength="32" spellcheck="false" placeholder="角色名" />
+            </label>
+          </div>
+        </div>
+        <div class="chat-tabs" id="chat-tabs" aria-label="对话选项卡"></div>
       </header>
       <div id="transcript" class="transcript"></div>
       <form id="composer" class="composer">
@@ -65,12 +77,13 @@
   <dialog id="settings-dialog" class="modal">
     <form method="dialog" id="settings-form">
       <h2>运行模式</h2>
-      <p class="hint">演示模式使用 MockLLM 与内存记忆，无需 GPU。真实模式走 OpenAI 兼容端点。</p>
+        <p class="hint">演示模式使用 MockLLM 与内存记忆，无需 GPU。真实模式走 OpenAI 兼容端点。本地 ollama 会填入默认地址并查询已安装模型。保存后写入本地文件，重启 GUI 仍会沿用（含 API Key、说话者名称、打开的预设与调参）。切换模式不会清空当前预设存档。Parser / Gate / Interpreter 等辅助调用可单独指向 ollama 等小模型；留空则回退到上方主模型。</p>
       <label>
         模式
         <select id="cfg-mode">
           <option value="demo">demo · MockLLM</option>
           <option value="live">live · OpenAI-compat</option>
+          <option value="ollama">ollama · 本地</option>
         </select>
       </label>
       <label>
@@ -79,11 +92,39 @@
       </label>
       <label>
         Model
-        <input id="cfg-model" spellcheck="false" placeholder="qwen" />
+        <input id="cfg-model" list="cfg-model-list" spellcheck="false" placeholder="qwen" autocomplete="off" />
+        <datalist id="cfg-model-list"></datalist>
       </label>
+      <div id="cfg-model-tabs" class="chat-tabs model-tabs" hidden></div>
+      <p id="cfg-model-status" class="hint"></p>
       <label>
         API Key
         <input id="cfg-key" type="password" spellcheck="false" autocomplete="off" placeholder="留空则沿用当前密钥" />
+      </label>
+      <label>
+        用户名称
+        <input id="cfg-user-name" maxlength="32" spellcheck="false" placeholder="用户" />
+      </label>
+      <label>
+        角色名称
+        <input id="cfg-character-name" maxlength="32" spellcheck="false" placeholder="沿用 Persona" />
+      </label>
+      <h2 class="settings-section">辅助小模型</h2>
+      <p class="hint">除 CharacterModel 外的 JSON 辅助调用走此端点。请填 <code>qwen3:4b-instruct</code>（不要用 <code>qwen3:4b</code>，那是 thinking 版，会破坏 JSON）。启动后若可达会预载到 GPU。</p>
+      <label>
+        辅助 Base URL
+        <input id="cfg-aux-url" spellcheck="false" placeholder="http://127.0.0.1:11434/v1" />
+      </label>
+      <label>
+        辅助 Model
+        <input id="cfg-aux-model" list="cfg-aux-model-list" spellcheck="false" placeholder="qwen3:4b-instruct" autocomplete="off" />
+        <datalist id="cfg-aux-model-list"></datalist>
+      </label>
+      <div id="cfg-aux-model-tabs" class="chat-tabs model-tabs" hidden></div>
+      <p id="cfg-aux-model-status" class="hint"></p>
+      <label>
+        辅助 API Key
+        <input id="cfg-aux-key" type="password" spellcheck="false" autocomplete="off" placeholder="可留空" />
       </label>
       <menu>
         <button type="submit" value="cancel" class="btn ghost">取消</button>
@@ -96,7 +137,7 @@
     <div class="debug-head">
       <div>
         <h2>记忆系统调试</h2>
-        <p class="hint">滑条松手即保存。事件页可改字段、新建，或按当前摘要/事实重新生成解读、再跑 Curator。重置或切换模式后修改丢失。</p>
+        <p class="hint">滑条松手即保存，并写回当前预设（重启后仍在）。调参另写入本地设置。事件页可改字段、新建，或按当前摘要/事实重新生成解读、再跑 Curator。重置会把当前预设恢复为出厂模板。</p>
       </div>
       <button type="button" id="btn-debug-close" class="btn ghost">关闭</button>
     </div>
@@ -113,6 +154,17 @@
       <div class="debug-body" id="debug-body"></div>
     </div>
     <p id="debug-status" class="hint">就绪</p>
+  </dialog>
+
+  <dialog id="presets-dialog" class="modal wide">
+    <div class="debug-head">
+      <div>
+        <h2>预设库</h2>
+        <p class="hint">选择模板打开为对话选项卡，或套用到当前选项卡（聊天记录跟着预设走）。从模板新建会克隆该预设当前的人格、关系、心理、世界与 lore，聊天为空。</p>
+      </div>
+      <button type="button" id="btn-presets-close" class="btn ghost">关闭</button>
+    </div>
+    <div id="preset-list" class="preset-list"></div>
   </dialog>
 
   <script src="/static/app.js"></script>

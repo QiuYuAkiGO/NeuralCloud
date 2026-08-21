@@ -14,15 +14,16 @@ V1 把 01 文档里与「记忆 / 状态」相关的机制做成独立 Python �
 | --- | --- |
 | 六层状态 | Persona Core（锁定）、Episodic、Semantic、Relationship、Psych L/M/S、World State |
 | Dual Memory | 同一事件同时保存客观事实与角色视角解读 |
+| Episodic 生命周期 | 事件写入即短期记忆；小模型异步升格中/长期或标记遗忘；命中累积也可升格 |
 | Memory Writer | 候选 → 证据累积 → 置信度更新 → 语义固化 |
 | Memory Curator | 输出 `ADD / UPDATE / DELETE / NO_OP`，不替角色说话 |
 | 混合检索 | 检索计划 + 六信号加权；每条结果带 `why_retrieved` |
 | 反向检索 | 给定当前推断，找可能冲突的记忆，不静默覆盖 |
-| Provenance | 写 / 检索落 JSONL trace；操作写入 `memory_ops_log` |
+| Provenance | 写 / 检索落 JSONL trace；成功调用可另落全链路 JSON；操作写入 `memory_ops_log` |
 
-**本轮不做**（后续文档 / 后续代码）：Context Compiler、Social Interpreter、Experience Evaluator、九阶段推理、Response Validator、数字身体真实采集、自治驱动、FastAPI、dashboard。
+**本文只覆盖记忆子系统。** 九阶段推理、Context Compiler、Social Interpreter、Response Validator、可视化 GUI 已在本仓库落地，见 [TECHNICAL.md](../TECHNICAL.md) 与 [02-inference-flow.md](02-inference-flow.md)。**仍未做**：Experience Evaluator、数字身体真实采集、自治驱动、token 流式 / TTS。
 
-推荐阅读顺序：本文（怎么用）→ [01](01-cognitive-harness.md)（为什么这样设计）→ [02](02-inference-flow.md)（以后如何被单轮推理消费）。
+推荐阅读顺序：本文（记忆怎么用）→ [01](01-cognitive-harness.md)（为什么这样设计）→ [02](02-inference-flow.md)（单轮推理如何消费记忆）→ [TECHNICAL.md](../TECHNICAL.md)（全链路实现）。
 
 ---
 
@@ -175,10 +176,11 @@ MemoryService(
 | `bootstrap_persona(persona)` | 一次性写入锁定人格 |
 | `get_persona(persona_id=None)` | 读取；不传 id 则取最新一条 |
 | `update_persona` / `delete_persona` | **必定失败**，用于锁层测试 |
-| `record_event(incoming, ...)` | 写入 episodic + Dual Memory + 可选 Curator |
+| `record_event(incoming, ...)` | 写入 episodic（默认 `tier=short`）+ Dual Memory + uniqueness TTL + 可选 Curator |
 | `curate(event)` | 对已有事件再跑一遍 Curator / Writer |
-| `query(query)` | 混合检索，返回 `list[ScoredMemory]` |
-| `query_with_conflicts(query)` | 检索 + 反向检索；`query.current_inference` 必填 |
+| `query(query)` | 混合检索，返回 `list[ScoredMemory]`；强命中异步累加 `hit_count` 并可升格；顺带审查到期记忆 |
+| `query_with_conflicts(query)` | 检索 + 反向检索；`query.current_inference` 必填（反证命中不计入升格） |
+| `wait_background(timeout=5)` | 等待异步命中升格 / 到期审查完成（测试用） |
 | `get_state(...)` | 聚合 persona / relationship / psych（含 TTL）/ world |
 | `upsert_psych(state)` | 写入 L/M/S；short 层自动补 `set_at` |
 | `apply_relationship_delta(target, ...)` | 对 closeness / trust 等做增量，夹在 `[0, 1]` |
@@ -194,6 +196,7 @@ MemoryService(
 | `importance` | `0.5` | 传入 `InteractionEvent` 时使用 |
 | `emotional_valence` | `0.0` | `[-1, 1]` |
 | `event_type` | `None` | 如 `commitment_or_statement` |
+| `uniqueness` | `None` | 0–1；覆盖事件/话语上的独特性。越低 TTL 越短。缺省则按文本启发式计算 |
 | `now` | UTC now | 管线时间戳（候选更新等） |
 
 若传入的已是 `EpisodicEvent`，`importance` / `valence` / `event_type` 以对象自身字段为准。
@@ -205,9 +208,11 @@ MemoryService(
 ```text
 InteractionEvent / EpisodicEvent
     → Dual Memory（客观事实 + 角色解读）
+    → 计算 uniqueness、写入 expire_at（默认 tier=short）
     → episodic 存储 + embedding
     → Memory Curator（结构化 ops）
     → Writer Pipeline（候选 / 固化 / 丢弃）
+    → 到期后异步小模型审查（升格 mid/long 或标记 forgotten）
     → semantic_facts + memory_ops_log + JSONL trace
 ```
 
@@ -236,6 +241,9 @@ svc.record_event(
 - `objective_fact`：发生了什么
 - `persona_conditioned_insight` / `insight_confidence`：这个角色认为这意味着什么（LLM 失败时走规则 fallback；MockLLM 走规则）
 - `evidence`：证据引用
+- `tier`：生命周期分层，写入时为 `short`
+- `uniqueness`：0–1 独特性。越低越快到期（最低 5 分钟）；越高留存越久（满分默认 7 天）
+- `expire_at`：短期窗口结束时刻。到期时才调用小模型决定升格或遗忘
 
 ### 6.2 候选记忆如何变成语义事实
 
@@ -258,7 +266,36 @@ svc.stores.semantic.list_all()
 svc.stores.audit.list_for("semantic")
 ```
 
-### 6.3 接入真实 Curator 模型
+### 6.3 事件生命周期（tier）
+
+事件写入即短期记忆，并带一个 **uniqueness（0–1）**。升格与遗忘都是**字段标记**，数据不移动。`SemanticFact` 固化管线独立并存。
+
+TTL 由 uniqueness 分段线性决定：
+
+| uniqueness | 短期窗口 |
+| --- | --- |
+| `0.0` | 5 分钟（`NC_UNIQUENESS_TTL_MIN_MINUTES`） |
+| `0.4`（`NC_UNIQUENESS_LOW_CUTOFF`） | 30 分钟（`NC_UNIQUENESS_TTL_LOW_MINUTES`） |
+| `1.0` | 7 天（`NC_UNIQUENESS_TTL_MAX_MINUTES`，默认 10080） |
+
+未显式传入时，写入路径按文本启发式打分（问候/单字极低；承诺、情绪、记忆探针、高 importance 抬高）。也可在 `InteractionEvent.uniqueness` 或 `record_event(uniqueness=...)` 覆盖。
+
+**到期时**（`expire_at`）才调用小模型：升格 `mid`/`long`，或标记 `forgotten`。到期审查若仍判 `short`，视为未赢得留存，改为遗忘。命中会刷新 `expire_at`（仍为 short 时按同一曲线从命中时刻重新计时），或按命中次数直接升格。
+
+| `tier` | 含义 | 如何到达 |
+| --- | --- | --- |
+| `short` | 默认；仍在 uniqueness 窗口内 | 写入 |
+| `mid` | 印象深刻 / 时常被想起 | 到期小模型判定，或 `hit_count >= NC_TIER_PROMOTION_HITS_MID`（默认 3） |
+| `long` | 极深刻 / 反复命中 | 到期小模型判定，或 mid 后再命中至 `NC_TIER_PROMOTION_HITS_LONG`（默认 8） |
+| `forgotten` | 不再参与检索 | 到期小模型判定，或到期审查未升格 |
+
+命中升格只统计 `query()` 里 `relevance >= NC_TIER_HIT_MIN_RELEVANCE`（默认 0.35）的 episodic；`query_with_conflicts` 的反证命中不计数。命中路径只升不降；`forgotten` 不进检索池，V1 不复活。
+
+检索侧：`forgotten` 从候选池排除；`long` 的 recency 不低于 `NC_LONG_TERM_RECENCY_FLOOR`（默认 0.4）；`mid` 的半衰期 × `NC_MID_TERM_HALF_LIFE_FACTOR`（默认 7）。`why_retrieved` 带 `tier:<tier>`。
+
+小模型失败或 MockLLM 走规则兜底（承诺 / 高 importance / 强情绪 → mid 或 long；到期默认遗忘）。测试里若要读到到期审查结果，调用 `svc.wait_background()`。
+
+### 6.4 接入真实 Curator 模型
 
 ```python
 from harness.config import Settings
@@ -484,9 +521,23 @@ with Session(engine) as session:
 | `NC_RETRIEVAL_POOL_SIZE` | `50` | 检索候选池 |
 | `NC_RETRIEVAL_TOP_K` | `8` | 返回条数 |
 | `NC_RECENCY_HALF_LIFE_HOURS` | `24` | 近因衰减半衰期 |
+| `NC_TIER_LLM_ENABLED` | `true` | 到期审查是否调用小模型 |
+| `NC_TIER_PROMOTION_HITS_MID` | `3` | short → mid 所需强命中次数 |
+| `NC_TIER_PROMOTION_HITS_LONG` | `8` | mid → long 所需累计强命中次数 |
+| `NC_TIER_HIT_MIN_RELEVANCE` | `0.35` | 计入升格的最低 relevance |
+| `NC_UNIQUENESS_TTL_MIN_MINUTES` | `5` | uniqueness=0 的短期窗口 |
+| `NC_UNIQUENESS_TTL_LOW_MINUTES` | `30` | uniqueness=low_cutoff 的短期窗口 |
+| `NC_UNIQUENESS_LOW_CUTOFF` | `0.4` | 5–30 分钟区间的上沿 |
+| `NC_UNIQUENESS_TTL_MAX_MINUTES` | `10080` | uniqueness=1 的短期窗口（7 天） |
+| `NC_SHORT_TERM_TTL_DAYS` | `7` | 兼容旧名；高 uniqueness 上限与 max minutes 对齐 |
+| `NC_LONG_TERM_RECENCY_FLOOR` | `0.4` | long 记忆 recency 下限 |
+| `NC_MID_TERM_HALF_LIFE_FACTOR` | `7.0` | mid 记忆半衰期倍数 |
 | `NC_MODEL_VERSION` / `NC_PROMPT_VERSION` / `NC_SCHEMA_VERSION` | `mock` / `memory-v1` / `state-v1` | 写入 trace |
+| `NC_AUX_LLM_BASE_URL` / `MODEL` / `API_KEY` | 未配置则回退主端点 | Dual / Curator / Tier 等 `complete_json` 可走辅助小模型 |
+| `NC_PLANNER_LLM_ENABLED` | `false` | 检索计划默认纯规则；hybrid 自带时间窗回退 |
+| `NC_CALL_LOG_ENABLED` | `false`（GUI 强制 true） | 成功调用全链路 JSON，`traces/calls/YYYYMMDD/{call_id}.json` |
 
-检索权重请构造 `Settings(retrieval_weights={...})` 传入 `MemoryService`，不要在调用点写死。六键之和应为 1.0。
+检索权重请构造 `Settings(retrieval_weights={...})` 传入 `MemoryService`，不要在调用点写死。六键之和应为 1.0。推理 / GUI 全量配置（主辅端点、连说、Parser 开关等）见 [TECHNICAL.md](../TECHNICAL.md) §10。
 
 代码里覆盖示例：
 
@@ -507,29 +558,32 @@ svc = build_inmemory_service(settings=settings)
 | 后端 | 类 | 用途 |
 | --- | --- | --- |
 | Mock LLM | `harness.llm.client.MockLLM` | 单测；默认走 RuleCurator / 规则 Dual Memory / 规则检索计划 |
-| OpenAI 兼容 | `OpenAICompatClient` | llama.cpp / vLLM 的 `/v1/chat/completions`，要求模型返回 JSON 对象 |
+| OpenAI 兼容 | `OpenAICompatClient` | llama.cpp / vLLM / Ollama 的 `/v1/chat/completions`，要求模型返回 JSON 对象 |
+| 主辅路由 | `RoutingLLMClient` | `complete_json` → aux 小模型，`complete_chat` → 主角色模型 |
 | Mock Embedding | `harness.llm.embeddings.MockEmbedding` | 字符 n-gram 哈希，过程内确定性 |
 | OpenAI 兼容 Embedding | `OpenAICompatEmbedding` | `/v1/embeddings` |
+| Guarded Embedding | `GuardedEmbedding` | HTTP 失败降级为 `None` 向量 |
+| 组装 | `build_embedding_client` | 探活 + 本机 Ollama 回退；GUI live/ollama 使用 |
 
-开发期典型拓扑（与 00 / 05 一致）：Windows 本机 GPU 跑 llama.cpp，Harness 在 WSL2 经 HTTP 调用。
+开发期典型拓扑（与 00 / 05 一致）：本机 Ollama 同时承担 aux JSON 与 embedding；角色生成可以走云端 Chat API。GUI 在 live/ollama 模式下会注入 `build_embedding_client`，不再静默使用 MockEmbedding。
 
 ```python
 from harness.config import Settings
 from harness.llm.client import OpenAICompatClient
-from harness.llm.embeddings import OpenAICompatEmbedding
+from harness.llm.embeddings import build_embedding_client
 from harness.memory.service import build_inmemory_service
 
 settings = Settings(
-    llm_base_url="http://127.0.0.1:8080/v1",
-    embedding_base_url="http://127.0.0.1:8080/v1",
+    llm_base_url="https://api.deepseek.com",
+    aux_llm_base_url="http://127.0.0.1:11434/v1",
+    embedding_base_url="http://127.0.0.1:11434/v1",
     embedding_model="bge-m3",
     embedding_dim=1024,
-    model_version="qwen3-4b",
 )
 svc = build_inmemory_service(
     settings=settings,
     llm=OpenAICompatClient(settings),
-    embeddings=OpenAICompatEmbedding(settings),
+    embeddings=build_embedding_client(settings),
 )
 ```
 
@@ -557,8 +611,11 @@ svc = build_inmemory_service(tracer=tracer)
 - `curator_ops`
 - `retrieval`（含 plan、hits、分数分解；冲突检索另含 `conflicts`）
 - `psych_upsert` / `relationship_delta` / `world_update`
+- `tier_hits` / `tier_expiry_review` / `tier_error`
 
 库内审计表（或 in-memory 等价物）：`svc.stores.audit.list_for("persona_core")`、`unauthorized_persona_attempts()`。
+
+`NC_CALL_LOG_ENABLED=true` 时，每次成功的顶层调用另写 `{trace_dir}/calls/YYYYMMDD/{call_id}.json`（GUI 默认开启）。异常路径不落盘。后台 tier 升格/到期审查若真正改档，另写独立文件。
 
 ---
 
@@ -611,7 +668,7 @@ Eval 场景覆盖：
 
 ## 15. 给后续模块预留的接口
 
-记忆库不负责「角色开口说话」。下游应按 02 文档把 `get_state()` + `query()` 的结果编进 `SituationState` / `ContextPackage`：
+记忆库不负责「角色开口说话」。九阶段推理（`InferencePipeline`）已经按 02 文档消费本库：`get_state()` + `query()` → `SituationState` → Compiler → `ModelContext`。详见 [TECHNICAL.md](../TECHNICAL.md) §5。
 
 | 下游 | 从本库取什么 |
 | --- | --- |
@@ -632,13 +689,18 @@ Eval 场景覆盖：
 - 记忆离线演化与轨迹： [04-autonomy-and-data.md](04-autonomy-and-data.md)
 - 里程碑 M2 与技术栈： [05-roadmap-and-stack.md](05-roadmap-and-stack.md)
 - 仓库根目录速览： [README.md](../../README.md)
-- GUI 调试面板：本文 §17
+- 全链路实现细节： [TECHNICAL.md](../TECHNICAL.md)
+- GUI 调试面板与预设：本文 §17
 
 ---
 
-## 17. GUI 调试面板
+## 17. GUI 调试面板与角色预设
 
-入口：`python -m gui.server` → 顶栏 **调试**。独立对话框，用滑条 / 标签直接改 in-memory 记忆。事件页可以手动改字段，也可以重新走 Dual Memory / Curator。
+入口：`python -m gui.server` → 顶栏 **调试**。独立对话框，用滑条 / 标签直接改 in-memory 记忆，并自动写回当前预设工作副本。事件页可以手动改字段，也可以重新走 Dual Memory / Curator。
+
+顶栏 **预设** 打开模板库。出厂模板在 `presets/builtin/`（git 跟踪，目前 `vaelith.json`）；工作副本在 `data/presets/`（gitignore）。一份预设 = 人格 + 六层记忆快照 + 完整聊天记录（`schema_version=preset-v1`）。打开模板会复制到工作目录；调试与对话自动 flush。`builtin_id == preset_id` 的出厂 id 受保护不可删除。工作目录可用 `NC_GUI_PRESETS` 覆盖。
+
+REST：`GET /api/presets`，`POST /api/presets/{open,apply,new,restore}`，`DELETE /api/presets/{id}`。`POST /api/reset` 把当前预设恢复为出厂模板。
 
 | 分区 | 可改内容 | 控件 |
 | --- | --- | --- |
@@ -651,4 +713,4 @@ Eval 场景覆盖：
 
 `POST /api/debug/episodic`：带 `event_id` 为更新；不带 `event_id` 且有 `summary` 为新建（证据 `debug:{session}:{event_id}`）。`regenerate_insight=true` 按当前摘要/事实重写 Dual Memory；`curate=true` 对更新后的事件再跑 Curator。读写走 `GET /api/debug/state` 与 `POST /api/debug/{relationship,psych,persona,episodic,semantic,candidate,tuning}`。修改与 `/api/chat` 共用 `run_lock`。审计 `actor=debug_panel`，trace `kind=debug_edit`。人格绕锁的 `detail.bypass=persona_lock`。
 
-**重置或切换 demo/live 会 `rebuild()`，调试修改全部丢弃。** 证据链仍强制非空。PostgreSQL 后端没有人格绕锁（触发器）。
+**切换 demo / live / ollama 会保留当前预设存档。重置把当前预设恢复为出厂模板。** 证据链仍强制非空。PostgreSQL 后端没有人格绕锁（触发器）。

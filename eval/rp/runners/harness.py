@@ -101,6 +101,8 @@ class HarnessRunner:
             text = final.text
         except Exception as exc:  # noqa: BLE001
             error = str(exc)
+        finally:
+            memory.close()
         latency = (time.perf_counter() - started) * 1000.0
         retrieved_times = _retrieved_times(capture.situation)
         leak = detect_future_leak(episode, retrieved_times)

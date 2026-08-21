@@ -5,6 +5,10 @@ from harness.pipeline.continuation import (
     MARKER_END,
     PROTOCOL_DIRECTIVE,
     build_nudge,
+    fresh_bodies,
+    hide_markers,
+    is_echo,
+    split_protocol_segments,
     strip_marker,
 )
 from harness.pipeline.pipeline import InferencePipeline, StageObserver, build_pipeline
@@ -23,6 +27,10 @@ __all__ = [
     "StageObserver",
     "build_nudge",
     "build_pipeline",
+    "fresh_bodies",
+    "hide_markers",
+    "is_echo",
     "rule_parse",
+    "split_protocol_segments",
     "strip_marker",
 ]

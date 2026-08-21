@@ -45,6 +45,8 @@
 
 出口条件：角色在多轮对话中表现出可观测的人格一致性；每条上下文可追踪来源；Persona Core 非授权修改为 0。
 
+**本仓库落地状态**：M2 认知 Harness 主体已实现——六层记忆（含 Episodic 生命周期分层）、混合/反向检索、Writer 证据链、Dual Memory、Context Compiler、Social Interpreter、九阶段在线推理 + Fast/Deep + 连说循环、主辅双模型路由、可视化 GUI。Experience Evaluator 仍未做（依赖数字身体外部证据，V1 明确排除）。M0/M1 数字身体不在本仓库。已落地代码见 [TECHNICAL.md](../TECHNICAL.md)。
+
 ### M3 — Autonomous Life
 
 **目标**：没人指挥时自主活动。
@@ -117,12 +119,12 @@
 | State DB | **PostgreSQL** | 与原方案一致 |
 | Vector | **pgvector**（Qdrant 备选） | 与原方案一致 |
 | Object storage | 本地文件系统；后期 MinIO | 与原方案一致 |
-| 模型运行时 | **llama.cpp / vLLM（WSL2 CUDA）/ TensorRT-LLM**，经 HTTP API 暴露 | 原方案同机部署；适配为 Windows 本机 GPU + WSL2 服务化 |
-| Embedding | 独立小 embedding model | 与原方案一致 |
-| 辅助小模型 | 1–3B（Memory Curator 等） | 微模型当 memory daemon，不当最终角色 |
+| 模型运行时 | **Ollama**（推荐本机栈）/ llama.cpp / vLLM，经 OpenAI 兼容 HTTP API | 原方案同机部署；适配为 Windows 本机 GPU + HTTP 服务化。推荐主模型 Qwen3-30B-A3B instruct（`neuralcloud-main`）+ 辅助 `qwen3:4b-instruct` |
+| Embedding | 独立小 embedding model（推荐 `bge-m3`，经 `/v1/embeddings`） | 与原方案一致；GUI live/ollama 会探活，不可达则回退 Mock |
+| 辅助小模型 | 1–4B **instruct**（parser / gate / interpreter / validator / curator / dual / tier） | 微模型当 memory daemon 与 JSON helper，不当最终角色。thinking 标签会输出 `<think>` 破坏 JSON |
 | 主角色模型 | 后训练后的主 RP 模型，建议 **30B-A3B 级 MoE**（详见 §4） | 与原方案一致 |
 | Trace format | JSONL + DB metadata | 与原方案一致 |
-| 可视化 | Web dashboard | 与原方案一致 |
+| 可视化 | FastAPI 三栏 GUI（阶段时间线 + 调试面板 + 预设库）；远期 Web dashboard | V1 已落地 `gui/`；长跑 dashboard 属 M5 |
 | 版本控制 | Git | — |
 | 实验元数据 | model / prompt / schema / 快照版本全部固定记录 | 与原方案一致 |
 
@@ -142,13 +144,17 @@
 
 ---
 
-## 5. 代码仓库组织（建议）
+## 5. 代码仓库组织
+
+**当前本仓库（M2 Cognitive Harness）** 的实际布局见 [README.md](../../README.md)「仓库布局」与 [TECHNICAL.md](../TECHNICAL.md) §2.1（`harness/`、`gui/`、`eval/`、`infra/`、`presets/`）。
+
+远期全项目（含数字身体 / 自治 / 数据管线）建议布局如下。该目录已给实体机器人留出空间：未来新增 `body/perception/camera`、`body/action/vla` 等后端，Harness 体系不变：
 
 ```text
 NeuralCloud/
 ├── docs/harness/            # 本文档集
 ├── harness/
-│   ├── core/                # SituationState / ContextPackage / 数据模型
+│   ├── core/                # SituationState / ModelContext / 数据模型
 │   ├── memory/              # 六层记忆 / Memory Writer / 检索
 │   ├── compiler/            # Context Compiler
 │   ├── router/              # Complexity Gate / Fast-Deep 分流
@@ -168,8 +174,6 @@ NeuralCloud/
 ├── eval/                    # 外部 evaluator / benchmark（OSWorld 类）
 └── datapipeline/            # 五类数据导出 / SFT-DPO 数据集构造
 ```
-
-该目录已给实体机器人留出空间：未来新增 `body/perception/camera`、`body/action/vla` 等后端，Harness 体系不变。
 
 ---
 
@@ -206,3 +210,4 @@ Character Brain（人格/语言/社会判断/长期记忆）、Perception Brain�
 - M0/M1 对应数字身体建设：见 [03-digital-body.md](03-digital-body.md)。
 - M3/M4/M5 对应自主与数据：见 [04-autonomy-and-data.md](04-autonomy-and-data.md)。
 - 记忆子系统 V1（M2 记忆部分）操作手册：见 [06-memory-subsystem-usage.md](06-memory-subsystem-usage.md)。
+- 已落地代码的架构与实现细节：见 [TECHNICAL.md](../TECHNICAL.md)。

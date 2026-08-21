@@ -96,60 +96,155 @@ class _StubGateLLM:
         self.payload = payload if payload is not None else {"path": "deep", "reason": "probe"}
         self.raises = raises
         self.calls = 0
+        self.last_system: str | None = None
+        self.last_max_tokens: int | None = None
 
-    def complete_json(self, *, system: str, user: str) -> dict:
+    def complete_json(self, *, system: str, user: str, max_tokens: int | None = None) -> dict:
         self.calls += 1
+        self.last_system = system
+        self.last_max_tokens = max_tokens
         if self.raises:
             raise ValueError("boom")
         return dict(self.payload)
 
 
 # "你还记得上次说的那家店吗？": memory_probe(0.18) + question(0.04) = 0.22,
-# inside the gray zone [0.15, 0.5), and no _force_deep rule fires.
-GRAY_ZONE_TEXT = "你还记得上次说的那家店吗？"
+# below the rule threshold and not forced — the gate model's verdict routes it.
+LLM_DECIDED_TEXT = "你还记得上次说的那家店吗？"
 
 
-def test_gray_zone_promoted_by_llm() -> None:
+def test_llm_gate_decides_deep() -> None:
     llm = _StubGateLLM({"path": "deep", "reason": "relationship probe"})
     gate = ComplexityGate(Settings(complexity_threshold=0.5), llm=llm)
-    _, request = gate.evaluate(_situation(GRAY_ZONE_TEXT))
+    _, request = gate.evaluate(_situation(LLM_DECIDED_TEXT))
     assert request.path == "deep"
     assert "social_interpreter" in request.trigger_subagents
-    assert "llm_arbitrated:deep" in request.reasons
+    assert "llm_decided:deep" in request.reasons
     assert llm.calls == 1
 
 
-def test_gray_zone_kept_fast_by_llm() -> None:
+def test_llm_gate_decides_fast() -> None:
     llm = _StubGateLLM({"path": "fast", "reason": "casual question"})
     gate = ComplexityGate(Settings(complexity_threshold=0.5), llm=llm)
-    _, request = gate.evaluate(_situation(GRAY_ZONE_TEXT))
+    _, request = gate.evaluate(_situation(LLM_DECIDED_TEXT))
     assert request.path == "fast"
-    assert "llm_arbitrated:fast" in request.reasons
+    assert "llm_decided:fast" in request.reasons
 
 
-def test_gray_zone_llm_failure_falls_back_to_rule() -> None:
+def test_llm_failure_falls_back_to_rule() -> None:
     llm = _StubGateLLM(raises=True)
     gate = ComplexityGate(Settings(complexity_threshold=0.5), llm=llm)
-    _, request = gate.evaluate(_situation(GRAY_ZONE_TEXT))
+    _, request = gate.evaluate(_situation(LLM_DECIDED_TEXT))
     assert request.path == "fast"
-    assert not any(reason.startswith("llm_arbitrated") for reason in request.reasons)
+    assert not any(reason.startswith("llm_decided") for reason in request.reasons)
 
 
-def test_no_arbitration_outside_gray_zone() -> None:
-    llm = _StubGateLLM({"path": "deep"})
+def test_pure_greeting_skips_llm() -> None:
+    # 锚定全匹配的纯问候没有第二裁判需要捕捉的歧义，整条琐碎闲聊路径零 LLM 调用。
+    llm = _StubGateLLM({"path": "deep", "reason": "overcautious"})
     gate = ComplexityGate(Settings(complexity_threshold=0.5), llm=llm)
+    _, request = gate.evaluate(_situation("早上好。"))
+    assert request.path == "fast"
+    assert llm.calls == 0
+    assert not any(reason.startswith("llm_decided") for reason in request.reasons)
 
-    _, low = gate.evaluate(_situation("早上好。"))
-    assert low.path == "fast"
+
+def test_llm_may_promote() -> None:
+    # 规则侧判 fast 时小模型是第二裁判：其 deep 裁决一定生效。
+    llm = _StubGateLLM({"path": "deep", "reason": "hidden edge"})
+    gate = ComplexityGate(Settings(complexity_threshold=0.5), llm=llm)
+    _, request = gate.evaluate(_situation("今天天气怎么样？"))
+    assert request.path == "deep"
+    assert "social_interpreter" in request.trigger_subagents
+    assert "llm_decided:deep" in request.reasons
+
+
+def test_parser_gate_vote_is_reused() -> None:
+    # parser 的合并 LLM 调用已产出 gate 投票时，gate 直接复用，不再付出第二次调用。
+    llm = _StubGateLLM({"path": "fast", "reason": "should not be consulted"})
+    gate = ComplexityGate(Settings(complexity_threshold=0.5), llm=llm)
+    situation = _situation(LLM_DECIDED_TEXT)
+    assert situation.parsed is not None
+    situation.parsed.gate_vote = "deep"
+    _, request = gate.evaluate(situation)
+    assert request.path == "deep"
+    assert "llm_decided:deep" in request.reasons
     assert llm.calls == 0
 
+
+def test_gate_llm_call_caps_max_tokens() -> None:
+    llm = _StubGateLLM({"path": "fast", "reason": "casual question"})
+    gate = ComplexityGate(Settings(complexity_threshold=0.5, llm_json_max_tokens=256), llm=llm)
+    gate.evaluate(_situation(LLM_DECIDED_TEXT))
+    assert llm.calls == 1
+    assert llm.last_max_tokens == 256
+
+
+def test_rule_deep_not_demotable_by_llm() -> None:
+    # OR 合并：规则侧（打分越阈）已判 deep 时结果已定，小模型不再被调用，也无法降级。
+    llm = _StubGateLLM({"path": "fast", "reason": "regex over-triggered"})
+    gate = ComplexityGate(Settings(complexity_threshold=0.2), llm=llm)
+    _, request = gate.evaluate(_situation("你还记得我有多难过吗？我真的好难过。"))
+    assert request.path == "deep"
+    assert "social_interpreter" in request.trigger_subagents
+    assert llm.calls == 0
+
+
+def test_forced_trigger_skips_llm() -> None:
+    llm = _StubGateLLM({"path": "fast"})
+    gate = ComplexityGate(Settings(complexity_threshold=0.5), llm=llm)
     _, forced = gate.evaluate(_situation("你昨天不是说不会再管我了吗？"))
     assert forced.path == "deep"
-    assert llm.calls == 0  # force_deep 命中后不再仲裁
+    assert llm.calls == 0  # force_deep 命中后不再调用小模型
 
 
-def test_no_arbitration_with_mock_llm() -> None:
-    gate = ComplexityGate(Settings(complexity_threshold=0.5), llm=MockLLM())
-    _, request = gate.evaluate(_situation(GRAY_ZONE_TEXT))
+def test_mock_llm_uses_rule_path() -> None:
+    llm = MockLLM()
+    gate = ComplexityGate(Settings(complexity_threshold=0.5), llm=llm)
+    _, request = gate.evaluate(_situation(LLM_DECIDED_TEXT))
     assert request.path == "fast"
-    assert not any(reason.startswith("llm_arbitrated") for reason in request.reasons)
+    assert not any(reason.startswith("llm_decided") for reason in request.reasons)
+    assert llm.calls == []
+
+
+def test_person_name_forces_deep() -> None:
+    gate = ComplexityGate(Settings(complexity_threshold=0.5))
+    _, request = gate.evaluate(_situation("我昨天认识了一个叫阿哲的人。"))
+    assert request.path == "deep"
+    assert "social_interpreter" in request.trigger_subagents
+    assert "person_name" in request.reasons
+    assert "forced:documented_trigger" in request.reasons
+
+
+def test_known_name_from_memory_forces_deep() -> None:
+    situation = _situation("林雪最近怎么样？")
+    situation.relevant_memories.append(
+        ScoredMemory(
+            memory_type="episodic",
+            ref="evt_lin",
+            relevance=0.8,
+            why_retrieved=["entity:林雪"],
+            score_breakdown=ScoreBreakdown(),
+        )
+    )
+    gate = ComplexityGate(Settings(complexity_threshold=0.5))
+    _, request = gate.evaluate(situation)
+    assert request.path == "deep"
+    assert "person_name" in request.reasons
+
+
+def test_quoted_title_forces_deep() -> None:
+    gate = ComplexityGate(Settings(complexity_threshold=0.5))
+    _, request = gate.evaluate(_situation("你看过《三体》吗？"))
+    assert request.path == "deep"
+    assert "social_interpreter" in request.trigger_subagents
+    assert "unknown_entity" in request.reasons
+
+
+def test_gate_prompt_states_mandatory_name_rule() -> None:
+    llm = _StubGateLLM({"path": "deep", "reason": "new person"})
+    gate = ComplexityGate(Settings(complexity_threshold=0.5), llm=llm)
+    gate.evaluate(_situation(LLM_DECIDED_TEXT))
+    system = llm.last_system or ""
+    assert "MANDATORY deep path" in system
+    assert "person by name" in system

@@ -7,6 +7,7 @@ from harness.core.exceptions import (
 )
 from harness.core.ids import new_id
 from harness.core.inference import (
+    MAX_RELEVANT_MEMORIES,
     CandidateResponse,
     ComplexityAssessment,
     ComplexitySignals,
@@ -25,6 +26,7 @@ from harness.core.inference import (
     SituationState,
     SituationTrigger,
     StructuredInsight,
+    TokenUsage,
     ValidationResult,
 )
 from harness.core.models import (
@@ -36,6 +38,7 @@ from harness.core.models import (
     DualMemoryRecord,
     EpisodicEvent,
     InteractionEvent,
+    MemoryTier,
     PersonaCore,
     PersonaIdentity,
     ProvenanceRecord,
@@ -49,6 +52,7 @@ from harness.core.models import (
 )
 
 __all__ = [
+    "MAX_RELEVANT_MEMORIES",
     "CandidateMemory",
     "CandidateResponse",
     "CharacterSnapshot",
@@ -70,6 +74,7 @@ __all__ = [
     "InteractionEvent",
     "InvalidCuratorOpError",
     "MemoryNotFoundError",
+    "MemoryTier",
     "ModelContext",
     "ParsedInteraction",
     "PersonaCore",
@@ -89,6 +94,7 @@ __all__ = [
     "SituationState",
     "SituationTrigger",
     "StructuredInsight",
+    "TokenUsage",
     "ValidationResult",
     "WorldState",
     "new_id",

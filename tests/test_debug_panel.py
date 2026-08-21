@@ -173,6 +173,14 @@ def test_episodic_regenerate_insight_create_and_curate(service) -> None:
         for row in service.stores.audit.list_for("episodic", created.event_id)
     )
 
+    named = apply_episodic(
+        service,
+        EpisodicPatch(summary="阿宁打了招呼", speaker="阿宁", regenerate_insight=False, curate=False),
+    )
+    assert named.participants[0] == "阿宁"
+    assert "user" in named.participants
+    assert "character" in named.participants
+
     with pytest.raises(ValueError, match="summary"):
         apply_episodic(service, EpisodicPatch(regenerate_insight=True))
 

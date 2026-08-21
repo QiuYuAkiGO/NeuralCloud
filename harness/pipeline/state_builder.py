@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+from contextvars import copy_context
 from datetime import datetime
 from typing import Any
 
 from harness.core.inference import (
+    MAX_RELEVANT_MEMORIES,
     Hypothesis,
     ParsedInteraction,
     SituationActor,
@@ -22,6 +24,9 @@ class SituationStateBuilder:
         self.memory = memory
         # Reserved for Fast Path cache-first reads; V1 always hits live stores.
         self.state_cache = state_cache if state_cache is not None else {}
+        # Long-lived pool: creating a pool per request costs ~1ms, which dominates
+        # once both branches are local sub-millisecond work.
+        self._pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="state-build")
 
     def build(
         self,
@@ -37,11 +42,10 @@ class SituationStateBuilder:
             session_id=event.session_id,
             entities=list(parsed.entities) or ["user", "character"],
         )
-        with ThreadPoolExecutor(max_workers=2) as pool:
-            fut_state = pool.submit(self._get_state, moment)
-            fut_mem = pool.submit(self.memory.query, query)
-            snapshot = fut_state.result()
-            memories = fut_mem.result()
+        fut_state = self._pool.submit(copy_context().run, self._get_state, moment)
+        fut_mem = self._pool.submit(copy_context().run, self.memory.query, query)
+        snapshot = fut_state.result()
+        memories = fut_mem.result()
 
         persona_ref = snapshot.persona.persona_id if snapshot.persona else None
         psych_short = dict(snapshot.psych.short) if snapshot.psych else {}
@@ -56,7 +60,7 @@ class SituationStateBuilder:
             actor=SituationActor(persona_core_ref=persona_ref, psych_state={"short": psych_short}),
             relationship=snapshot.relationship,
             world=snapshot.world,
-            relevant_memories=memories,
+            relevant_memories=memories[:MAX_RELEVANT_MEMORIES],
             hypotheses=hypotheses,
             snapshot=snapshot,
         )

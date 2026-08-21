@@ -181,6 +181,7 @@ flowchart TB
 | [04-autonomy-and-data.md](04-autonomy-and-data.md) | 渐进自治、自主驱动系统、轨迹记录、数据分级与训练闭环 |
 | [05-roadmap-and-stack.md](05-roadmap-and-stack.md) | 里程碑 M0–M5、V1 验收标准、技术栈、实体机器人扩展路径 |
 | [06-memory-subsystem-usage.md](06-memory-subsystem-usage.md) | 记忆子系统 V1 使用说明：安装、API、写/读路径、配置、PostgreSQL、评测 |
+| [TECHNICAL.md](../TECHNICAL.md) | 已落地代码的架构、数据流与实现细节（工程师手册） |
 
 ## 8. 环境基线（适配说明）
 
@@ -188,7 +189,7 @@ flowchart TB
 
 - **数字身体 V0**：Docker Desktop（WSL2 backend）容器内运行 Ubuntu + Xvfb + XFCE + xdotool/PyAutoGUI + noVNC，替代完整 VM 起步；
 - **V1+ 升级路径**：WSL2 嵌套虚拟化跑 KVM/QEMU，或 Hyper-V VM；
-- **模型推理**：Windows 本机 GPU（llama.cpp / vLLM on WSL2，CUDA），经 HTTP API 供 Harness 调用；
-- **Harness 主体**：Python，运行于 WSL2 Ubuntu。
+- **模型推理**：Windows 本机 GPU。当前推荐 **Ollama**（主 30B-A3B instruct + 辅 4B instruct）；llama.cpp / vLLM 仍可用。Harness 经 OpenAI 兼容 HTTP 调用；
+- **Harness 主体**：Python，可在 Windows 或 WSL2 Ubuntu 运行。当前可视化 GUI 默认跑在 Windows 本机。
 
 所有与原始方案存在环境差异的位置，各文档均以"**适配说明**"标注，保持对应关系可追溯。

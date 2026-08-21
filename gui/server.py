@@ -29,10 +29,17 @@ from gui.debug import (
     apply_semantic,
     apply_tuning,
 )
-from gui.demo_seed import DEFAULT_SESSION_ID
 from gui.observer import QueueObserver
+from gui.persist import (
+    apply_loaded_tuning,
+    default_config_path,
+    load_gui_settings,
+    persist_gui_settings,
+)
+from gui.presets import DEFAULT_PRESET_ID, PresetLibrary
 from gui.service import HarnessChatService, Mode, new_run_id
 from harness.core.exceptions import EvidenceRequiredError, MemoryNotFoundError, PersonaLockedError
+from harness.llm.client import list_endpoint_models
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 HOST = "127.0.0.1"
@@ -41,7 +48,7 @@ PORT = 8765
 
 class ChatRequest(BaseModel):
     text: str = Field(min_length=1)
-    session_id: str = DEFAULT_SESSION_ID
+    session_id: str | None = None
 
 
 class ConfigRequest(BaseModel):
@@ -49,9 +56,54 @@ class ConfigRequest(BaseModel):
     base_url: str | None = None
     model: str | None = None
     api_key: str | None = None
+    aux_base_url: str | None = None
+    aux_model: str | None = None
+    aux_api_key: str | None = None
+    user_name: str | None = None
+    character_name: str | None = None
 
 
-async def _run_debug(app: FastAPI, apply_fn: Any) -> dict[str, Any]:
+class SpeakersRequest(BaseModel):
+    user_name: str | None = None
+    character_name: str | None = None
+
+
+class PresetIdRequest(BaseModel):
+    preset_id: str = Field(min_length=1, max_length=64)
+
+
+class PresetNewRequest(BaseModel):
+    from_id: str | None = Field(default=None, max_length=64)
+
+
+def _preset_error(exc: Exception) -> HTTPException:
+    if isinstance(exc, FileNotFoundError):
+        return HTTPException(status_code=404, detail=str(exc))
+    if isinstance(exc, ValueError):
+        return HTTPException(status_code=400, detail=str(exc))
+    return HTTPException(status_code=500, detail=str(exc))
+
+
+def _resolve_open_presets(library: PresetLibrary, persisted: Any) -> tuple[str, list[str]]:
+    requested = list(getattr(persisted, "open_preset_ids", None) or [])
+    active = getattr(persisted, "active_preset_id", None) or DEFAULT_PRESET_ID
+    if active not in requested:
+        requested.insert(0, active)
+    valid: list[str] = []
+    for preset_id in requested:
+        try:
+            if library.exists(preset_id) and preset_id not in valid:
+                valid.append(preset_id)
+        except ValueError:
+            continue
+    if not valid:
+        valid = [DEFAULT_PRESET_ID]
+    if active not in valid:
+        active = valid[0]
+    return active, valid
+
+
+async def _run_debug(app: FastAPI, apply_fn: Any, *, persist_settings: bool = False) -> dict[str, Any]:
     service: HarnessChatService = app.state.service
     async with app.state.run_lock:
         try:
@@ -62,20 +114,53 @@ async def _run_debug(app: FastAPI, apply_fn: Any) -> dict[str, Any]:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
         except (EvidenceRequiredError, ValueError, NotImplementedError, PersonaLockedError) as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+        service.flush_active()
+        if persist_settings:
+            _persist(app, service)
         snapshot = service.snapshot_state()
         if service.observer is not None:
             service.observer.emit_state(snapshot)
         return service.debug_state()
 
 
-def create_app() -> FastAPI:
+def _persist(app: FastAPI, service: HarnessChatService) -> None:
+    persist_gui_settings(
+        mode=service.mode,
+        settings=service.settings,
+        path=app.state.config_path,
+        user_name=service.user_name,
+        character_name=service.character_name,
+        active_preset_id=service.active_preset_id,
+        open_preset_ids=service.open_preset_ids,
+    )
+
+
+def create_app(*, config_path: Path | None = None, presets_dir: Path | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         loop = asyncio.get_running_loop()
         subscribers: set[asyncio.Queue[dict[str, Any]]] = set()
         observer = QueueObserver(loop, subscribers)
-        service = HarnessChatService(observer=observer, mode="demo")
+        resolved = config_path if config_path is not None else default_config_path()
+        persisted = load_gui_settings(resolved)
+        library = PresetLibrary(working_dir=presets_dir if presets_dir is not None else resolved.parent / "presets")
+        active_id, open_ids = _resolve_open_presets(library, persisted)
+        service = HarnessChatService(
+            observer=observer,
+            mode=persisted.mode,
+            base_url=persisted.base_url,
+            model=persisted.model,
+            api_key=persisted.api_key,
+            aux_base_url=persisted.aux_base_url,
+            aux_model=persisted.aux_model,
+            aux_api_key=persisted.aux_api_key,
+            library=library,
+            active_preset_id=active_id,
+            open_preset_ids=open_ids,
+        )
+        apply_loaded_tuning(service.settings, persisted)
         app.state.service = service
+        app.state.config_path = resolved
         app.state.subscribers = subscribers
         app.state.observer = observer
         app.state.run_lock = asyncio.Lock()
@@ -92,6 +177,81 @@ def create_app() -> FastAPI:
         service: HarnessChatService = app.state.service
         return service.status(session_id)
 
+    @app.get("/api/presets")
+    async def list_presets() -> dict[str, Any]:
+        service: HarnessChatService = app.state.service
+        return service.presets_payload()
+
+    @app.post("/api/presets/open")
+    async def open_preset(body: PresetIdRequest) -> dict[str, Any]:
+        service: HarnessChatService = app.state.service
+        async with app.state.run_lock:
+            try:
+                service.open_preset(body.preset_id)
+            except (FileNotFoundError, ValueError) as exc:
+                raise _preset_error(exc) from exc
+            _persist(app, service)
+            snapshot = service.status()
+            if service.observer is not None:
+                service.observer.emit_state(snapshot)
+        return snapshot
+
+    @app.post("/api/presets/apply")
+    async def apply_preset(body: PresetIdRequest) -> dict[str, Any]:
+        service: HarnessChatService = app.state.service
+        async with app.state.run_lock:
+            try:
+                service.apply_preset(body.preset_id)
+            except (FileNotFoundError, ValueError) as exc:
+                raise _preset_error(exc) from exc
+            _persist(app, service)
+            snapshot = service.status()
+            if service.observer is not None:
+                service.observer.emit_state(snapshot)
+        return snapshot
+
+    @app.post("/api/presets/new")
+    async def new_preset(body: PresetNewRequest) -> dict[str, Any]:
+        service: HarnessChatService = app.state.service
+        async with app.state.run_lock:
+            try:
+                service.new_preset(body.from_id)
+            except (FileNotFoundError, ValueError) as exc:
+                raise _preset_error(exc) from exc
+            _persist(app, service)
+            snapshot = service.status()
+            if service.observer is not None:
+                service.observer.emit_state(snapshot)
+        return snapshot
+
+    @app.post("/api/presets/restore")
+    async def restore_preset() -> dict[str, Any]:
+        service: HarnessChatService = app.state.service
+        async with app.state.run_lock:
+            try:
+                service.restore_active()
+            except (FileNotFoundError, ValueError) as exc:
+                raise _preset_error(exc) from exc
+            _persist(app, service)
+            snapshot = service.status()
+            if service.observer is not None:
+                service.observer.emit_state(snapshot)
+        return snapshot
+
+    @app.delete("/api/presets/{preset_id}")
+    async def delete_preset(preset_id: str) -> dict[str, Any]:
+        service: HarnessChatService = app.state.service
+        async with app.state.run_lock:
+            try:
+                service.delete_preset(preset_id)
+            except (FileNotFoundError, ValueError) as exc:
+                raise _preset_error(exc) from exc
+            _persist(app, service)
+            snapshot = service.status()
+            if service.observer is not None:
+                service.observer.emit_state(snapshot)
+        return snapshot
+
     @app.post("/api/chat")
     async def chat(body: ChatRequest) -> dict[str, Any]:
         text = body.text.strip()
@@ -101,7 +261,7 @@ def create_app() -> FastAPI:
         run_id = new_run_id()
         async with app.state.run_lock:
             try:
-                await asyncio.to_thread(service.respond, run_id, body.session_id, text)
+                await asyncio.to_thread(service.respond, run_id, body.session_id or "", text)
             except Exception as exc:
                 raise HTTPException(status_code=500, detail=str(exc)) from exc
         return {"ok": True, "run_id": run_id}
@@ -111,21 +271,50 @@ def create_app() -> FastAPI:
         service: HarnessChatService = app.state.service
         async with app.state.run_lock:
             try:
+                service.set_speakers(user_name=body.user_name, character_name=body.character_name)
                 service.rebuild(
                     mode=body.mode,
                     base_url=body.base_url,
                     model=body.model,
                     api_key=body.api_key,
+                    aux_base_url=body.aux_base_url,
+                    aux_model=body.aux_model,
+                    aux_api_key=body.aux_api_key,
                 )
             except Exception as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
+            _persist(app, service)
         return service.status()
+
+    @app.get("/api/models")
+    async def models(base_url: str | None = None) -> dict[str, Any]:
+        service: HarnessChatService = app.state.service
+        url = (base_url or "").strip() or service.settings.llm_base_url
+        key = service.settings.llm_api_key or "not-needed"
+        names = await asyncio.to_thread(list_endpoint_models, url, key)
+        return {"base_url": url, "models": names}
 
     @app.post("/api/reset")
     async def reset() -> dict[str, Any]:
         service: HarnessChatService = app.state.service
         async with app.state.run_lock:
-            service.rebuild(mode=service.mode)
+            try:
+                service.restore_active()
+            except (FileNotFoundError, ValueError) as exc:
+                raise _preset_error(exc) from exc
+            _persist(app, service)
+        return service.status()
+
+    @app.post("/api/speakers")
+    async def speakers(body: SpeakersRequest) -> dict[str, Any]:
+        service: HarnessChatService = app.state.service
+        async with app.state.run_lock:
+            service.set_speakers(user_name=body.user_name, character_name=body.character_name)
+            service.flush_active()
+            _persist(app, service)
+            snapshot = service.snapshot_state()
+            if service.observer is not None:
+                service.observer.emit_state(snapshot)
         return service.status()
 
     @app.get("/api/debug/state")
@@ -144,7 +333,12 @@ def create_app() -> FastAPI:
 
     @app.post("/api/debug/persona")
     async def debug_persona(body: PersonaPatch) -> dict[str, Any]:
-        return await _run_debug(app, lambda service: apply_persona(service.memory, body))
+        def apply(service: HarnessChatService) -> None:
+            apply_persona(service.memory, body)
+            if body.name is not None:
+                service.set_speakers(character_name=body.name)
+
+        return await _run_debug(app, apply, persist_settings=body.name is not None)
 
     @app.post("/api/debug/episodic")
     async def debug_episodic(body: EpisodicPatch) -> dict[str, Any]:
@@ -160,10 +354,10 @@ def create_app() -> FastAPI:
 
     @app.post("/api/debug/tuning")
     async def debug_tuning(body: TuningPatch) -> dict[str, Any]:
-        return await _run_debug(
-            app,
-            lambda service: apply_tuning(service.settings, body, memory=service.memory),
-        )
+        def apply(service: HarnessChatService) -> None:
+            apply_tuning(service.settings, body, memory=service.memory)
+
+        return await _run_debug(app, apply, persist_settings=True)
 
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket) -> None:

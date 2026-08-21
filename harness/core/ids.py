@@ -17,6 +17,7 @@ PREFIXES: dict[str, str] = {
     "response": "resp",
     "parse": "prs",
     "inference": "inf",
+    "call": "call",
 }
 
 

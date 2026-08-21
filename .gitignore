@@ -12,7 +12,12 @@ build/
 .coverage
 htmlcov/
 traces/
+data/gui_settings.json
+data/gui_settings.json.tmp
+data/presets/
 *.log
+logs/
+.gui.pid
 .env
 .env.local
 eval/external/*

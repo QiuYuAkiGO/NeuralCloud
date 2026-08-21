@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import threading
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Protocol
@@ -30,6 +31,7 @@ class JsonlTracer:
         directory = path.parent if path else self.settings.trace_dir
         directory.mkdir(parents=True, exist_ok=True)
         self.path = path or (directory / "memory.jsonl")
+        self._lock = threading.Lock()
 
     def record(self, kind: str, payload: dict[str, Any]) -> None:
         record = {
@@ -40,5 +42,7 @@ class JsonlTracer:
             "prompt_version": self.settings.prompt_version,
             **payload,
         }
-        with self.path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
+        line = json.dumps(record, ensure_ascii=False, default=str) + "\n"
+        with self._lock:
+            with self.path.open("a", encoding="utf-8") as handle:
+                handle.write(line)

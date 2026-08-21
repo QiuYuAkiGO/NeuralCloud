@@ -6,6 +6,7 @@ import re
 
 from pydantic import ValidationError
 
+from harness.config import Settings, get_settings
 from harness.core.inference import Hypothesis, ParsedInteraction, Reference
 from harness.core.models import InteractionEvent
 from harness.llm.client import LLMClient, MockLLM
@@ -17,7 +18,12 @@ Return JSON:
  "references": [{"type": "past_event", "time_hint": string|null, "about": string|null}],
  "possible_social_intent": {"about": "user_intent", "value": string, "confidence": number}|null,
  "emotion_cues": {"hurt": number, "testing": number},
- "entities": ["user", "character"]}
+ "entities": ["user", "character"],
+ "gate": {"path": "fast"|"deep", "reason": string}}
+The "gate" field judges routing complexity: deep when the utterance names a person,
+contains an unfamiliar proper noun/title, probes shared past events, checks a
+commitment, poses a value dilemma, or carries indirect accusation or hurt;
+fast for greetings, small talk, simple factual questions, and logistics.
 Output hypothesis + confidence only. Never say the user "is" doing something.
 """
 
@@ -29,26 +35,49 @@ _GREETING_RE = re.compile(
     r"^(早上好|晚上好|早安|晚安|你好|嗨|哈喽|在吗|你在干嘛|在干嘛|一起吃饭吗)[。？?！!\s]*$"
 )
 _HURT_MARKERS = ("不管我", "不会再管", "不要我", "不理我", "不管了")
+# Naming a third party ("和鸽子少女吵架") needs the LLM to surface the entity;
+# rule_parse only ever emits user/character. False positives like "和平" cost
+# one extra helper call, which is acceptable next to a missed entity.
+_THIRD_PARTY_RE = re.compile(r"[和跟与](?!你[们]?|您|我|他|她|它|谁|大家|别人|人家)[一-鿿A-Za-z]{2,}")
 
 
 class ContextParser:
-    def __init__(self, llm: LLMClient | None = None) -> None:
+    def __init__(self, llm: LLMClient | None = None, *, settings: Settings | None = None) -> None:
         self.llm = llm or MockLLM()
+        self.settings = settings or get_settings()
 
     def parse(self, event: InteractionEvent) -> ParsedInteraction:
-        if isinstance(self.llm, MockLLM):
+        if isinstance(self.llm, MockLLM) or not self.settings.parser_llm_enabled:
             return rule_parse(event)
+        # Rule-first: the baseline is cheap, and the fallback is computed before
+        # the LLM call so a failed/slow call never costs extra quality.
+        baseline = rule_parse(event)
+        if not _llm_needed(event.raw_text, baseline):
+            return baseline
         try:
             raw = self.llm.complete_json(
                 system=_SYSTEM,
                 user=str({"text": event.raw_text, "speaker": event.speaker}),
+                max_tokens=self.settings.llm_json_max_tokens,
             )
             parsed = _coerce_parsed(raw)
             if not parsed.entities:
                 parsed.entities = ["user", "character"]
             return parsed
         except (ValueError, ValidationError, TypeError, KeyError):
-            return rule_parse(event)
+            return baseline
+
+
+def _llm_needed(text: str, baseline: ParsedInteraction) -> bool:
+    """Trivial utterances get the same structure from regexes as from the LLM,
+    so the parse stage stays off the critical-path LLM budget for them."""
+    if baseline.references or baseline.possible_social_intent is not None or baseline.emotion_cues:
+        return True
+    if baseline.speech_act == "greeting":
+        return False
+    if _THIRD_PARTY_RE.search(text):
+        return True
+    return len(text.strip()) > 12
 
 
 def rule_parse(event: InteractionEvent) -> ParsedInteraction:
@@ -95,4 +124,10 @@ def _coerce_parsed(raw: dict) -> ParsedInteraction:
     if isinstance(intent, dict) and "about" not in intent:
         intent = {**intent, "about": "user_intent"}
         payload = {**payload, "possible_social_intent": intent}
-    return ParsedInteraction.model_validate(payload)
+    parsed = ParsedInteraction.model_validate(payload)
+    gate = payload.get("gate")
+    if isinstance(gate, dict):
+        vote = str(gate.get("path", "")).strip().lower()
+        if vote in ("fast", "deep"):
+            parsed.gate_vote = vote
+    return parsed

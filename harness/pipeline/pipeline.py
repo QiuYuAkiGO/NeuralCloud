@@ -10,18 +10,25 @@ from harness.compiler.compiler import ContextCompiler
 from harness.config import Settings, get_settings
 from harness.core.ids import new_id
 from harness.core.inference import (
+    MAX_RELEVANT_MEMORIES,
     CandidateResponse,
     FinalResponse,
     ModelContext,
     SituationState,
     StructuredInsight,
+    TokenUsage,
     ValidationResult,
 )
 from harness.core.models import InteractionEvent
 from harness.llm.character import CharacterModel
 from harness.llm.client import LLMClient
 from harness.memory.service import MemoryService
-from harness.pipeline.continuation import build_nudge, strip_marker
+from harness.pipeline.continuation import (
+    build_nudge,
+    fresh_bodies,
+    split_protocol_segments,
+    strip_marker,
+)
 from harness.pipeline.gateway import Gateway
 from harness.pipeline.parser import ContextParser
 from harness.pipeline.session import SessionStore
@@ -29,6 +36,7 @@ from harness.pipeline.state_builder import SituationStateBuilder
 from harness.router.gate import ComplexityGate
 from harness.subagents.interpreter import SocialInterpreter
 from harness.validator.validator import ResponseValidator
+from infra.trace.call_log import emit_pipeline_step, pipeline_emit_guard
 from infra.trace.recorder import NullTracer, Tracer
 
 
@@ -63,7 +71,7 @@ class InferencePipeline:
         self.tracer = tracer or memory.tracer or NullTracer()
         self.observer = observer
         self.gateway = gateway or Gateway()
-        self.parser = parser or ContextParser(self.llm)
+        self.parser = parser or ContextParser(self.llm, settings=self.settings)
         self.state_builder = state_builder or SituationStateBuilder(memory)
         self.gate = gate or ComplexityGate(self.settings, llm=self.llm)
         self.interpreter = interpreter or SocialInterpreter(self.llm)
@@ -78,13 +86,37 @@ class InferencePipeline:
         *,
         now: datetime | None = None,
         session_id: str | None = None,
+        speaker: str | None = None,
+        call_id: str | None = None,
     ) -> FinalResponse:
-        event = self._traced("ingest", lambda: self.gateway.ingest(source, session_id=session_id))
+        ingest_kwargs: dict[str, Any] = {"session_id": session_id}
+        if speaker:
+            ingest_kwargs["speaker"] = speaker
+        call_input = {
+            "text": source if isinstance(source, str) else source.raw_text,
+            "session_id": session_id if isinstance(source, str) else (session_id or source.session_id),
+            "speaker": speaker,
+        }
+        with self.memory.call_log.scope("respond", call_input, call_id=call_id) as call:
+            final = self._respond(source, now=now, ingest_kwargs=ingest_kwargs)
+            call.set_result(final)
+            return final
+
+    def _respond(
+        self,
+        source: InteractionEvent | str,
+        *,
+        now: datetime | None,
+        ingest_kwargs: dict[str, Any],
+    ) -> FinalResponse:
+        started = time.perf_counter()
+        event = self._traced("ingest", lambda: self.gateway.ingest(source, **ingest_kwargs))
         moment = now or event.timestamp
         self.session_store.append(
             event.session_id,
             "user",
             event.raw_text,
+            speaker=self._speaker_label("user", event.speaker),
             event_id=event.event_id,
             timestamp=event.timestamp,
         )
@@ -107,7 +139,12 @@ class InferencePipeline:
                 self._traced(
                     "interpret",
                     lambda: self.interpreter.interpret(situation),
-                    extra={"situation_id": situation.situation_id},
+                    extra={
+                        "situation_id": situation.situation_id,
+                        "memory_refs": [
+                            m.ref for m in situation.relevant_memories[:MAX_RELEVANT_MEMORIES]
+                        ],
+                    },
                 )
             ]
 
@@ -119,7 +156,7 @@ class InferencePipeline:
         )
 
         response_id = new_id("response")
-        segments, stopped_by, revisions, validation = self._speak(
+        segments, stopped_by, revisions, validation, usage = self._speak(
             context,
             situation=situation,
             insights=insights,
@@ -141,9 +178,11 @@ class InferencePipeline:
             complexity_score=request.score,
             segments=segments,
             stopped_by=stopped_by,
+            usage=usage,
         )
         if self.settings.record_interaction:
             self._record(event, final, moment)
+        final.latency_ms = round((time.perf_counter() - started) * 1000, 3)
         self._emit(
             "final",
             final,
@@ -154,6 +193,12 @@ class InferencePipeline:
                 "response_id": final.response_id,
                 "stopped_by": stopped_by,
                 "segments": len(segments),
+                "prompt_tokens": usage.prompt_tokens,
+                "completion_tokens": usage.completion_tokens,
+                "total_tokens": usage.total_tokens,
+                "character_calls": usage.calls,
+                "revision_tokens": usage.revision_tokens,
+                "total_latency_ms": final.latency_ms,
                 "latency_ms": 0.0,
             },
         )
@@ -169,9 +214,9 @@ class InferencePipeline:
         session_id: str,
         response_id: str,
         now: datetime,
-    ) -> tuple[list[str], str, int, ValidationResult]:
+    ) -> tuple[list[str], str, int, ValidationResult, TokenUsage]:
         if not self.settings.continuation_enabled:
-            candidate, validation, revisions = self._generate_validated(
+            candidate, validation, revisions, usage = self._generate_validated(
                 context,
                 situation=situation,
                 insights=insights,
@@ -179,45 +224,87 @@ class InferencePipeline:
                 continuation_instruction=None,
                 segment_index=0,
             )
-            self.session_store.append(
-                session_id,
-                "character",
-                candidate.text,
-                event_id=response_id,
-                timestamp=now,
+            bodies, _ = split_protocol_segments(candidate.text)
+            if not bodies:
+                return [], "disabled", revisions, validation, usage
+            accepted, _ = fresh_bodies(bodies, [])
+            if not accepted:
+                return [], "disabled", revisions, validation, usage
+            segments = self._commit_segments(
+                accepted,
+                session_id=session_id,
+                response_id=response_id,
+                now=now,
             )
-            return [candidate.text], "disabled", revisions, validation
+            return segments, "disabled", revisions, validation, usage
 
         segments: list[str] = []
         revisions = 0
+        usage = TokenUsage()
         validation = ValidationResult(verdict="pass", skipped=True)
         nudge: str | None = None
         while True:
-            candidate, validation, extra_revisions = self._generate_validated(
+            candidate, validation, extra_revisions, extra_usage = self._generate_validated(
                 context,
                 situation=situation,
                 insights=insights,
                 path=path,
                 continuation_instruction=nudge,
+                spoken_segments=segments,
                 segment_index=len(segments),
             )
             revisions += extra_revisions
-            body, marker = strip_marker(candidate.text)
-            if not body:
-                return segments, "empty", revisions, validation
+            usage = usage.add(extra_usage)
+            bodies, marker = split_protocol_segments(candidate.text)
+            if not bodies:
+                return segments, "empty", revisions, validation, usage
+            accepted, echoed = fresh_bodies(bodies, segments)
+            if not accepted:
+                return segments, "duplicate" if echoed else "empty", revisions, validation, usage
+            segments = self._commit_segments(
+                accepted,
+                session_id=session_id,
+                response_id=response_id,
+                now=now,
+                existing=segments,
+            )
+            if echoed:
+                return segments, "duplicate", revisions, validation, usage
+            if marker != "continue":
+                return segments, "marker", revisions, validation, usage
+            if len(segments) >= self.settings.max_reply_segments:
+                return segments, "max_segments", revisions, validation, usage
+            nudge = build_nudge(segments)
+
+    def _commit_segments(
+        self,
+        bodies: list[str],
+        *,
+        session_id: str,
+        response_id: str,
+        now: datetime,
+        existing: list[str] | None = None,
+    ) -> list[str]:
+        segments = existing if existing is not None else []
+        cap = self.settings.max_reply_segments
+        for body in bodies:
+            if not body or len(segments) >= cap:
+                break
             segments.append(body)
             self.session_store.append(
                 session_id,
                 "character",
                 body,
+                speaker=self._speaker_label("character"),
                 event_id=f"{response_id}:s{len(segments)}",
                 timestamp=now,
             )
-            if marker != "continue":
-                return segments, "marker", revisions, validation
-            if len(segments) >= self.settings.max_reply_segments:
-                return segments, "max_segments", revisions, validation
-            nudge = build_nudge(segments)
+            self._emit(
+                "reply_segment",
+                {"text": body, "index": len(segments) - 1},
+                {"segment": len(segments) - 1, "latency_ms": 0.0},
+            )
+        return segments
 
     def _generate_validated(
         self,
@@ -228,16 +315,21 @@ class InferencePipeline:
         path: str,
         continuation_instruction: str | None,
         segment_index: int,
-    ) -> tuple[CandidateResponse, ValidationResult, int]:
+        spoken_segments: list[str] | None = None,
+    ) -> tuple[CandidateResponse, ValidationResult, int, TokenUsage]:
+        usage = TokenUsage()
+        spoken = list(spoken_segments or [])
         candidate = self._traced(
             "generate",
             lambda: self.character.generate(
                 context,
                 continuation_instruction=continuation_instruction,
+                spoken_segments=spoken,
                 revision=0,
             ),
             extra={"revision": 0, "segment": segment_index},
         )
+        usage = usage.add(candidate.usage)
         if not self.validator.should_run(path):
             validation = ValidationResult(verdict="pass", skipped=True)
             self._emit(
@@ -252,7 +344,7 @@ class InferencePipeline:
                     "segment": segment_index,
                 },
             )
-            return candidate, validation, 0
+            return candidate, validation, 0, usage
 
         revisions = 0
         memory_empty = not situation.relevant_memories
@@ -277,11 +369,22 @@ class InferencePipeline:
                     context,
                     revision_instruction=inst,
                     continuation_instruction=continuation_instruction,
+                    spoken_segments=spoken,
                     revision=rev,
                 ),
                 extra={"revision": revisions, "segment": segment_index},
             )
-        return candidate, validation, revisions
+            usage = usage.add(candidate.usage)
+        return candidate, validation, revisions, usage
+
+    def _speaker_label(self, role: str, event_speaker: str | None = None) -> str:
+        if role == "user":
+            name = (event_speaker or "").strip()
+            return name if name and name != "character" else "user"
+        persona = self.memory.get_persona()
+        if persona is not None and persona.identity.name:
+            return persona.identity.name
+        return "character"
 
     def _record(self, event: InteractionEvent, final: FinalResponse, now: datetime) -> None:
         self.memory.record_event(event, generate_insight=True, curate=True, now=now)
@@ -316,11 +419,19 @@ class InferencePipeline:
         if kind == "generate" and hasattr(result, "text"):
             _, marker = strip_marker(result.text)
             payload["continuation"] = marker
+            usage = getattr(result, "usage", None)
+            if usage is not None:
+                payload["prompt_tokens"] = usage.prompt_tokens
+                payload["completion_tokens"] = usage.completion_tokens
+                payload["total_tokens"] = usage.total_tokens
+                payload["token_source"] = usage.source
         self._emit(kind, result, payload)
         return result
 
     def _emit(self, kind: str, result: Any, payload: dict[str, Any]) -> None:
-        self.tracer.record(kind, payload)
+        with pipeline_emit_guard():
+            self.tracer.record(kind, payload)
+        emit_pipeline_step(self.memory.call_log, kind, result, payload)
         if self.observer is not None:
             self.observer.on_stage(kind, result, payload)
 
