@@ -181,6 +181,8 @@ flowchart TB
 | [04-autonomy-and-data.md](04-autonomy-and-data.md) | 渐进自治、自主驱动系统、轨迹记录、数据分级与训练闭环 |
 | [05-roadmap-and-stack.md](05-roadmap-and-stack.md) | 里程碑 M0–M5、V1 验收标准、技术栈、实体机器人扩展路径 |
 | [06-memory-subsystem-usage.md](06-memory-subsystem-usage.md) | 记忆子系统 V1 使用说明：安装、API、写/读路径、配置、PostgreSQL、评测 |
+| [07-homeostatic-harness-research-design.md](07-homeostatic-harness-research-design.md) | 情感陪伴型具身智能内稳态 Harness V2 研究提案：七维状态、主动推断、闭环调节与三条件长期实验 |
+| [08-runtime-supervisor.md](08-runtime-supervisor.md) | Runtime Supervisor V2 架构提案：Runtime、Cognitive、Homeostatic 三服务拓扑，以及常驻循环、抢占、持久化恢复与控制面 |
 
 ## 8. 环境基线（适配说明）
 

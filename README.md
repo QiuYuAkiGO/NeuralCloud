@@ -7,6 +7,10 @@
 
 **记忆使用说明**：[docs/harness/06-memory-subsystem-usage.md](docs/harness/06-memory-subsystem-usage.md)
 
+**内稳态 Harness 研究设计（V2 提案，尚未实现）**：[docs/harness/07-homeostatic-harness-research-design.md](docs/harness/07-homeostatic-harness-research-design.md)
+
+**Runtime Supervisor 与三服务架构设计（V2 提案，尚未实现）**：[docs/harness/08-runtime-supervisor.md](docs/harness/08-runtime-supervisor.md)
+
 可视化 GUI 已接入（阶段级实时推送）。本轮**不包含** token 流式生成 / TTS、数字身体采集、Experience Evaluator。默认 MockLLM，测试不依赖 GPU。
 
 ## 架构
