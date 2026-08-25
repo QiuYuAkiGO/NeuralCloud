@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 from harness.compiler.compiler import ContextCompiler, estimate_tokens
 from harness.config import Settings
 from harness.core.inference import (
+    MAX_RELEVANT_MEMORIES,
     SessionTurn,
     SituationActor,
     SituationState,
@@ -83,6 +84,20 @@ def test_compiler_records_provenance() -> None:
     assert "昨天" in messages[1]["content"]
 
 
+def test_session_text_uses_speaker_names() -> None:
+    compiler = ContextCompiler(Settings(context_token_budget=3000, compiler_top_memories=5))
+    context = compiler.compile(
+        _situation(memories=0),
+        session=[
+            SessionTurn(role="user", text="上一句", speaker="阿宁"),
+            SessionTurn(role="character", text="嗯。", speaker="薇莉丝"),
+        ],
+    )
+    session_seg = next(seg for seg in context.segments if seg.kind == "session")
+    assert "阿宁: 上一句" in session_seg.text
+    assert "薇莉丝: 嗯。" in session_seg.text
+
+
 def test_compiler_respects_token_budget() -> None:
     compiler = ContextCompiler(Settings(context_token_budget=80, compiler_top_memories=5))
     context = compiler.compile(_situation(memories=8))
@@ -108,3 +123,11 @@ def test_memories_present_skip_no_fabrication_constraint() -> None:
     context = compiler.compile(_situation(memories=2))
     constraint_text = "".join(seg.text for seg in context.segments if seg.kind == "constraint")
     assert "no_fabricated_memory" not in constraint_text
+
+
+def test_situation_state_lists_at_most_five_memories() -> None:
+    situation = _situation(memories=8)
+    assert len(situation.relevant_memories) == MAX_RELEVANT_MEMORIES
+    assert [memory.ref for memory in situation.relevant_memories] == [
+        f"evt_mem{i}" for i in range(MAX_RELEVANT_MEMORIES)
+    ]

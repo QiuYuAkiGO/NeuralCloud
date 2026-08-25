@@ -32,6 +32,8 @@ def event_in_filters(
         return False
     if until is not None and event.time > until:
         return False
+    if getattr(event, "tier", "short") == "forgotten":
+        return False
     if channels and event.channel not in channels:
         return False
     if entities:

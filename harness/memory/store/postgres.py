@@ -238,7 +238,8 @@ class PostgresEpisodicStore:
         events = [
             event
             for event in events
-            if event_in_filters(event, since=None, until=None, channels=None, entities=entities)
+            if event.tier != "forgotten"
+            and event_in_filters(event, since=None, until=None, channels=None, entities=entities)
         ]
         if query_embedding:
             events.sort(key=lambda event: cosine(query_embedding, event.embedding or []), reverse=True)

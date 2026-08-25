@@ -20,10 +20,17 @@ class SessionStore:
         role: Literal["user", "character"],
         text: str,
         *,
+        speaker: str | None = None,
         event_id: str | None = None,
         timestamp: datetime | None = None,
     ) -> None:
-        turn = SessionTurn(role=role, text=text, event_id=event_id, timestamp=timestamp)
+        turn = SessionTurn(
+            role=role,
+            text=text,
+            speaker=speaker,
+            event_id=event_id,
+            timestamp=timestamp,
+        )
         bucket = self._turns[session_id]
         bucket.append(turn)
         overflow = len(bucket) - self.window
@@ -32,6 +39,10 @@ class SessionStore:
 
     def recent(self, session_id: str) -> list[SessionTurn]:
         return list(self._turns.get(session_id, []))
+
+    def replace(self, session_id: str, turns: list[SessionTurn]) -> None:
+        bucket = list(turns[-self.window :]) if turns else []
+        self._turns[session_id] = bucket
 
     def clear(self, session_id: str | None = None) -> None:
         if session_id is None:

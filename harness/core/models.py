@@ -14,6 +14,15 @@ def _clamp01(value: float) -> float:
     return max(0.0, min(1.0, value))
 
 
+def default_event_participants(speaker: str) -> list[str]:
+    name = speaker.strip() or "user"
+    if name == "character":
+        return ["character", "user"]
+    if name == "user":
+        return ["user", "character"]
+    return [name, "user", "character"]
+
+
 class ProvenanceRecord(BaseModel):
     model_version: str = "mock"
     prompt_version: str = "memory-v1"
@@ -32,12 +41,12 @@ class InteractionEvent(BaseModel):
     session_id: str
     participants: list[str] = Field(default_factory=list)
     evidence: list[str] = Field(default_factory=list)
+    uniqueness: float | None = Field(default=None, ge=0.0, le=1.0)
 
     @model_validator(mode="after")
     def _default_participants(self) -> InteractionEvent:
         if not self.participants:
-            others = ["character"] if self.speaker != "character" else ["user"]
-            self.participants = [self.speaker, *others]
+            self.participants = default_event_participants(self.speaker)
         return self
 
 
@@ -55,6 +64,9 @@ class PersonaCore(BaseModel):
     version: str = "v1"
     identity: PersonaIdentity
     created_at: datetime
+
+
+MemoryTier = Literal["short", "mid", "long", "forgotten"]
 
 
 class DualMemoryRecord(BaseModel):
@@ -83,6 +95,13 @@ class EpisodicEvent(BaseModel):
     event_type: str | None = None
     session_id: str | None = None
     embedding: list[float] | None = None
+    tier: MemoryTier = "short"
+    uniqueness: float | None = Field(default=None, ge=0.0, le=1.0)
+    expire_at: datetime | None = None
+    hit_count: int = 0
+    last_hit_at: datetime | None = None
+    tier_updated_at: datetime | None = None
+    tier_reasons: list[str] = Field(default_factory=list)
 
     @field_validator("evidence")
     @classmethod
@@ -200,7 +219,9 @@ class RetrievalPlan(BaseModel):
     entities: list[str] = Field(default_factory=list)
     event_type: str | None = None
     emotional_relevance: str | None = None
-    channels: list[str] = Field(default_factory=lambda: ["chat"])
+    # Channel filter is a hard constraint in pool selection; default empty so
+    # memories from non-chat channels (lore, combat, daily) stay reachable.
+    channels: list[str] = Field(default_factory=list)
 
 
 class ScoreBreakdown(BaseModel):

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from typing import Any
 
@@ -15,6 +16,7 @@ from harness.core.models import (
     PersonaCore,
     PsychState,
     RelationshipState,
+    RetrievalPlan,
     RetrievalQuery,
     ScoredMemory,
     SemanticFact,
@@ -29,8 +31,15 @@ from harness.memory.retrieval.hybrid import HybridRetriever
 from harness.memory.retrieval.planner import RetrievalPlanner
 from harness.memory.store.inmemory import InMemoryStores
 from harness.memory.store.protocols import MemoryStores
+from harness.memory.tier import (
+    TierClassifier,
+    register_hits,
+    review_expiries,
+    stamp_retention,
+)
 from harness.memory.writer.curator import CuratorBackend, default_curator
 from harness.memory.writer.pipeline import WriterPipeline
+from infra.trace.call_log import CallAwareTracer, CallLog
 from infra.trace.recorder import NullTracer, Tracer
 
 
@@ -74,28 +83,49 @@ class MemoryService:
         self.llm = llm or MockLLM()
         self.embeddings = embeddings or MockEmbedding(dim=self.settings.embedding_dim)
         self.curator = curator or default_curator(self.llm)
-        self.tracer = tracer or NullTracer()
+        self.call_log = CallLog(self.settings)
         self.perception = perception or ChatPerceptionBackend()
+        self._inner_tracer: Tracer
+        self._tracer: Tracer
+        self.tracer = tracer or NullTracer()
         self.dual = DualMemoryWriter(self.llm)
         self.pipeline = WriterPipeline(stores, self.embeddings, self.settings)
-        self.planner = RetrievalPlanner(self.llm)
+        self.planner = RetrievalPlanner(self.llm, llm_enabled=self.settings.planner_llm_enabled)
+        self._retrieve_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="retrieve")
+        self._tier_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="tier")
+        self._tier_pending: list[Any] = []
         self.hybrid = HybridRetriever(stores, self.embeddings, self.settings)
         self.conflicts = ConflictRetriever(self.hybrid, self.planner, self.settings)
+        self.tier_classifier = TierClassifier(self.llm, llm_enabled=self.settings.tier_llm_enabled)
+
+    @property
+    def tracer(self) -> Tracer:
+        return self._tracer
+
+    @tracer.setter
+    def tracer(self, value: Tracer | None) -> None:
+        inner: Tracer = value or NullTracer()
+        if isinstance(inner, CallAwareTracer):
+            inner = inner.inner
+        self._inner_tracer = inner
+        self._tracer = CallAwareTracer(inner, self.call_log)
 
     def bootstrap_persona(self, persona: PersonaCore) -> PersonaCore:
-        locked = persona.identity.model_copy(update={"locked": True})
-        persona = persona.model_copy(update={"identity": locked})
-        self.stores.persona.insert(persona)
-        self.stores.audit.log(
-            op="ADD",
-            target_type="persona_core",
-            target_id=persona.persona_id,
-            actor="bootstrap",
-            success=True,
-            detail={"version": persona.version},
-        )
-        self.tracer.record("persona_bootstrap", {"persona_id": persona.persona_id})
-        return persona
+        with self.call_log.scope("bootstrap_persona", {"persona_id": persona.persona_id}) as call:
+            locked = persona.identity.model_copy(update={"locked": True})
+            persona = persona.model_copy(update={"identity": locked})
+            self.stores.persona.insert(persona)
+            self.stores.audit.log(
+                op="ADD",
+                target_type="persona_core",
+                target_id=persona.persona_id,
+                actor="bootstrap",
+                success=True,
+                detail={"version": persona.version},
+            )
+            self.tracer.record("persona_bootstrap", {"persona_id": persona.persona_id})
+            call.set_result(persona)
+            return persona
 
     def update_persona(self, persona: PersonaCore) -> None:
         self.stores.audit.log(
@@ -132,7 +162,40 @@ class MemoryService:
         importance: float = 0.5,
         emotional_valence: float = 0.0,
         event_type: str | None = None,
+        uniqueness: float | None = None,
         now: datetime | None = None,
+    ) -> EpisodicEvent:
+        incoming_id = incoming.event_id
+        incoming_text = incoming.raw_text if isinstance(incoming, InteractionEvent) else incoming.summary
+        incoming_session = incoming.session_id
+        with self.call_log.scope(
+            "record_event",
+            {"event_id": incoming_id, "text": incoming_text, "session_id": incoming_session},
+        ) as call:
+            event = self._record_event(
+                incoming,
+                generate_insight=generate_insight,
+                curate=curate,
+                importance=importance,
+                emotional_valence=emotional_valence,
+                event_type=event_type,
+                uniqueness=uniqueness,
+                now=now,
+            )
+            call.set_result(event)
+            return event
+
+    def _record_event(
+        self,
+        incoming: InteractionEvent | EpisodicEvent,
+        *,
+        generate_insight: bool,
+        curate: bool,
+        importance: float,
+        emotional_valence: float,
+        event_type: str | None,
+        uniqueness: float | None,
+        now: datetime | None,
     ) -> EpisodicEvent:
         moment = now or _now()
         event = self._as_episodic(
@@ -140,8 +203,10 @@ class MemoryService:
             importance=importance,
             emotional_valence=emotional_valence,
             event_type=event_type,
+            uniqueness=uniqueness,
             now=moment,
         )
+        event = stamp_retention(event, now=moment, settings=self.settings)
         if not event.evidence:
             raise EvidenceRequiredError("record_event requires evidence")
         persona = self.stores.persona.get()
@@ -171,67 +236,92 @@ class MemoryService:
                 "event_id": event.event_id,
                 "evidence": event.evidence,
                 "has_insight": bool(event.persona_conditioned_insight),
+                "tier": event.tier,
+                "uniqueness": event.uniqueness,
+                "expire_at": event.expire_at.isoformat() if event.expire_at else None,
             },
         )
+        self._submit_tier(lambda when=moment: self._review_expiries(when))
         if curate:
             self.curate(event)
         return event
 
     def curate(self, event: EpisodicEvent) -> list[CuratorOp]:
-        persona = self.stores.persona.get()
-        output = self.curator.propose(event, persona=persona, open_candidates=self.stores.candidates.list_open())
-        applied = self.pipeline.apply(output, event=event, strict=False)
-        self.tracer.record(
-            "curator_ops",
-            {"event_id": event.event_id, "ops": [op.model_dump() for op in applied]},
-        )
-        return applied
+        with self.call_log.scope("curate", {"event_id": event.event_id}) as call:
+            persona = self.stores.persona.get()
+            output = self.curator.propose(event, persona=persona, open_candidates=self.stores.candidates.list_open())
+            applied = self.pipeline.apply(output, event=event, strict=False)
+            self.tracer.record(
+                "curator_ops",
+                {"event_id": event.event_id, "ops": [op.model_dump() for op in applied]},
+            )
+            call.set_result(applied)
+            return applied
+
+    def _plan_and_embed(self, query: RetrievalQuery) -> tuple[RetrievalPlan, list[float]]:
+        # The plan and the query embedding are independent; run them concurrently
+        # so a live planner LLM and a remote embedding API overlap instead of
+        # adding their round-trips.
+        fut_plan = self._retrieve_pool.submit(self.planner.plan, query)
+        fut_embed = self._retrieve_pool.submit(self.embeddings.embed_one, query.text)
+        return fut_plan.result(), fut_embed.result()
 
     def query(self, query: RetrievalQuery) -> list[ScoredMemory]:
-        if query.persona is None:
-            query = query.model_copy(update={"persona": self.stores.persona.get()})
-        if query.relationship is None:
-            query = query.model_copy(update={"relationship": self.stores.relationship.get("user")})
-        plan = self.planner.plan(query)
-        results = self.hybrid.search(query, plan)
-        payload: dict[str, Any] = {
-            "text": query.text,
-            "plan": plan.model_dump(),
-            "hits": [
-                {
-                    "ref": item.ref,
-                    "type": item.memory_type,
-                    "relevance": item.relevance,
-                    "why_retrieved": item.why_retrieved,
-                    "scores": item.score_breakdown.model_dump(),
-                }
-                for item in results
-            ],
-        }
-        self.tracer.record("retrieval", payload)
-        return results
-
-    def query_with_conflicts(self, query: RetrievalQuery) -> tuple[list[ScoredMemory], list[ScoredMemory]]:
-        query = query.model_copy(update={"include_conflicts": True})
-        if query.current_inference is None:
-            raise ValueError("current_inference is required for conflict retrieval")
-        if query.persona is None:
-            query = query.model_copy(update={"persona": self.stores.persona.get()})
-        if query.relationship is None:
-            query = query.model_copy(update={"relationship": self.stores.relationship.get("user")})
-        plan = self.planner.plan(query)
-        results = self.hybrid.search(query, plan)
-        conflicts = self.conflicts.find(query, query.current_inference)
-        self.tracer.record(
-            "retrieval",
-            {
+        with self.call_log.scope(
+            "query",
+            {"text": query.text, "session_id": query.session_id},
+        ) as call:
+            if query.persona is None:
+                query = query.model_copy(update={"persona": self.stores.persona.get()})
+            if query.relationship is None:
+                query = query.model_copy(update={"relationship": self.stores.relationship.get("user")})
+            plan, query_embedding = self._plan_and_embed(query)
+            results = self.hybrid.search(query, plan, query_embedding=query_embedding)
+            self._submit_tier(lambda items=results, when=query.now: self._after_query(items, when))
+            payload: dict[str, Any] = {
                 "text": query.text,
                 "plan": plan.model_dump(),
-                "hits": [item.ref for item in results],
-                "conflicts": [item.ref for item in conflicts],
-            },
-        )
-        return results, conflicts
+                "hits": [
+                    {
+                        "ref": item.ref,
+                        "type": item.memory_type,
+                        "relevance": item.relevance,
+                        "why_retrieved": item.why_retrieved,
+                        "scores": item.score_breakdown.model_dump(),
+                    }
+                    for item in results
+                ],
+            }
+            self.tracer.record("retrieval", payload)
+            call.set_result(results)
+            return results
+
+    def query_with_conflicts(self, query: RetrievalQuery) -> tuple[list[ScoredMemory], list[ScoredMemory]]:
+        with self.call_log.scope(
+            "query_with_conflicts",
+            {"text": query.text, "session_id": query.session_id},
+        ) as call:
+            query = query.model_copy(update={"include_conflicts": True})
+            if query.current_inference is None:
+                raise ValueError("current_inference is required for conflict retrieval")
+            if query.persona is None:
+                query = query.model_copy(update={"persona": self.stores.persona.get()})
+            if query.relationship is None:
+                query = query.model_copy(update={"relationship": self.stores.relationship.get("user")})
+            plan, query_embedding = self._plan_and_embed(query)
+            results = self.hybrid.search(query, plan, query_embedding=query_embedding)
+            conflicts = self.conflicts.find(query, query.current_inference)
+            self.tracer.record(
+                "retrieval",
+                {
+                    "text": query.text,
+                    "plan": plan.model_dump(),
+                    "hits": [item.ref for item in results],
+                    "conflicts": [item.ref for item in conflicts],
+                },
+            )
+            call.set_result((results, conflicts))
+            return results, conflicts
 
     def get_state(
         self,
@@ -254,14 +344,16 @@ class MemoryService:
         )
 
     def upsert_psych(self, state: PsychState, *, now: datetime | None = None) -> PsychState:
-        moment = now or _now()
-        short = dict(state.short)
-        if short and "set_at" not in short:
-            short["set_at"] = moment.isoformat()
-        state = state.model_copy(update={"short": short, "updated_at": moment})
-        self.stores.psych.upsert(state)
-        self.tracer.record("psych_upsert", {"character_id": state.character_id})
-        return state
+        with self.call_log.scope("upsert_psych", {"character_id": state.character_id}) as call:
+            moment = now or _now()
+            short = dict(state.short)
+            if short and "set_at" not in short:
+                short["set_at"] = moment.isoformat()
+            state = state.model_copy(update={"short": short, "updated_at": moment})
+            self.stores.psych.upsert(state)
+            self.tracer.record("psych_upsert", {"character_id": state.character_id})
+            call.set_result(state)
+            return state
 
     def apply_relationship_delta(
         self,
@@ -274,6 +366,35 @@ class MemoryService:
         last_major_event: str | None = None,
         history_note: str | None = None,
         now: datetime | None = None,
+    ) -> RelationshipState:
+        with self.call_log.scope(
+            "apply_relationship_delta",
+            {"target": target, "last_major_event": last_major_event},
+        ) as call:
+            updated = self._apply_relationship_delta(
+                target,
+                closeness=closeness,
+                trust=trust,
+                attachment=attachment,
+                recent_tension=recent_tension,
+                last_major_event=last_major_event,
+                history_note=history_note,
+                now=now,
+            )
+            call.set_result(updated)
+            return updated
+
+    def _apply_relationship_delta(
+        self,
+        target: str,
+        *,
+        closeness: float | None,
+        trust: float | None,
+        attachment: float | None,
+        recent_tension: float | None,
+        last_major_event: str | None,
+        history_note: str | None,
+        now: datetime | None,
     ) -> RelationshipState:
         moment = now or _now()
         current = self.stores.relationship.get(target)
@@ -301,29 +422,96 @@ class MemoryService:
         return updated
 
     def update_world(self, state: WorldState | None = None, *, now: datetime | None = None) -> WorldState:
-        world = state or self.perception.observe(now=now)
-        self.stores.world.insert(world)
-        self.tracer.record("world_update", {"time": world.time.isoformat(), "channel": world.channel})
-        return world
+        with self.call_log.scope(
+            "update_world",
+            {"channel": None if state is None else state.channel},
+        ) as call:
+            world = state or self.perception.observe(now=now)
+            self.stores.world.insert(world)
+            self.tracer.record("world_update", {"time": world.time.isoformat(), "channel": world.channel})
+            call.set_result(world)
+            return world
 
     def force_write_semantic(self, fact: SemanticFact) -> SemanticFact:
         """Explicit API that still enforces evidence. Used by negative tests."""
-        if not fact.supporting_events:
-            self.stores.audit.log(
-                op="ADD",
-                target_type="semantic",
-                target_id=fact.fact_id,
-                actor="unauthorized_attempt",
-                success=False,
-                detail={"reason": "missing_evidence"},
-            )
-            raise EvidenceRequiredError("semantic facts require supporting_events")
-        if fact.embedding is None:
-            fact = fact.model_copy(
-                update={"embedding": self.embeddings.embed_one(f"{fact.subject} {fact.predicate} {fact.value}")}
-            )
-        self.stores.semantic.insert(fact)
-        return fact
+        with self.call_log.scope("force_write_semantic", {"fact_id": fact.fact_id}) as call:
+            if not fact.supporting_events:
+                self.stores.audit.log(
+                    op="ADD",
+                    target_type="semantic",
+                    target_id=fact.fact_id,
+                    actor="unauthorized_attempt",
+                    success=False,
+                    detail={"reason": "missing_evidence"},
+                )
+                raise EvidenceRequiredError("semantic facts require supporting_events")
+            if fact.embedding is None:
+                fact = fact.model_copy(
+                    update={"embedding": self.embeddings.embed_one(f"{fact.subject} {fact.predicate} {fact.value}")}
+                )
+            self.stores.semantic.insert(fact)
+            call.set_result(fact)
+            return fact
+
+    def wait_background(self, timeout: float = 5.0) -> None:
+        """Block until queued tier classify / hit / sweep tasks finish. Tests use this."""
+        pending = self._tier_pending
+        self._tier_pending = []
+        for fut in pending:
+            fut.result(timeout=timeout)
+
+    def close(self) -> None:
+        try:
+            self.wait_background()
+        finally:
+            self._tier_pool.shutdown(wait=True, cancel_futures=True)
+            self._retrieve_pool.shutdown(wait=True, cancel_futures=True)
+            closer = getattr(self.embeddings, "close", None)
+            if callable(closer):
+                try:
+                    closer()
+                except Exception:
+                    pass
+
+    def _submit_tier(self, fn) -> None:
+        fut = self._tier_pool.submit(self._tier_safe, fn)
+        self._tier_pending.append(fut)
+
+    def _tier_safe(self, fn) -> None:
+        try:
+            fn()
+        except Exception as exc:
+            self.tracer.record("tier_error", {"error": str(exc)})
+
+    def _after_query(self, results: list[ScoredMemory], now: datetime) -> None:
+        self._register_hits(results, now)
+        self._review_expiries(now)
+
+    def _review_expiries(self, now: datetime) -> None:
+        reviewed = review_expiries(
+            self.stores,
+            self.settings,
+            self.tier_classifier,
+            self.stores.persona.get(),
+            now=now,
+        )
+        if not reviewed:
+            return
+        payload = {"decisions": [{"ref": ref, "tier": tier} for ref, tier in reviewed]}
+        with self.call_log.scope("tier_expiry_review", payload) as call:
+            self.tracer.record("tier_expiry_review", payload)
+            call.set_result(payload)
+
+    def _register_hits(self, results: list[ScoredMemory], now: datetime) -> None:
+        promotions = register_hits(self.stores, results, self.settings, now=now)
+        if not promotions:
+            return
+        payload = {
+            "promotions": [{"ref": ref, "from": src, "to": dst} for ref, src, dst in promotions]
+        }
+        with self.call_log.scope("tier_hits", payload) as call:
+            self.tracer.record("tier_hits", payload)
+            call.set_result(payload)
 
     def _as_episodic(
         self,
@@ -332,13 +520,17 @@ class MemoryService:
         importance: float,
         emotional_valence: float,
         event_type: str | None,
+        uniqueness: float | None,
         now: datetime,
     ) -> EpisodicEvent:
         if isinstance(incoming, EpisodicEvent):
-            return incoming
+            if uniqueness is None:
+                return incoming
+            return incoming.model_copy(update={"uniqueness": uniqueness})
         evidence = list(incoming.evidence)
         if not evidence:
             evidence = [f"chat:{incoming.session_id}:{incoming.event_id}"]
+        passed = uniqueness if uniqueness is not None else incoming.uniqueness
         return EpisodicEvent(
             event_id=incoming.event_id,
             time=incoming.timestamp,
@@ -353,6 +545,9 @@ class MemoryService:
             channel=incoming.channel,
             event_type=event_type,
             session_id=incoming.session_id,
+            uniqueness=passed,
+            tier="short",
+            tier_updated_at=now,
         )
 
 

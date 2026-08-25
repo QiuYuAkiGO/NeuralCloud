@@ -20,8 +20,15 @@ class HybridRetriever:
         self.embeddings = embeddings
         self.settings = settings or get_settings()
 
-    def search(self, query: RetrievalQuery, plan: RetrievalPlan) -> list[ScoredMemory]:
-        query_embedding = self.embeddings.embed_one(query.text)
+    def search(
+        self,
+        query: RetrievalQuery,
+        plan: RetrievalPlan,
+        *,
+        query_embedding: list[float] | None = None,
+    ) -> list[ScoredMemory]:
+        if query_embedding is None:
+            query_embedding = self.embeddings.embed_one(query.text)
         since, until = time_window(plan, query.now)
         pool_size = self.settings.retrieval_pool_size
         events = self.stores.episodic.search_pool(
@@ -44,6 +51,20 @@ class HybridRetriever:
                 limit=pool_size,
             )
             time_fallback = True
+        channel_fallback = False
+        if not events and plan.channels:
+            # channel is a planner guess; a miss here must not hide memories
+            # recorded under other channels (lore/combat/daily seeds). Keep the
+            # currently effective time window (already widened if time fell back).
+            events = self.stores.episodic.search_pool(
+                query_embedding=query_embedding,
+                since=None if time_fallback else since,
+                until=None if time_fallback else until,
+                channels=None,
+                entities=None,
+                limit=pool_size,
+            )
+            channel_fallback = True
         facts = self.stores.semantic.search_pool(
             query_embedding=query_embedding,
             subject=None,
@@ -60,6 +81,8 @@ class HybridRetriever:
             )
             if time_fallback:
                 why = [*why, "time:fallback"]
+            if channel_fallback:
+                why = [*why, "channel:fallback"]
             scored.append(
                 ScoredMemory(
                     memory_type="episodic",

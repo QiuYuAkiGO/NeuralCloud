@@ -23,4 +23,5 @@ def service(settings: Settings, tmp_path) -> MemoryService:
         tracer=NullTracer(),
     )
     svc.bootstrap_persona(vaelith())
-    return svc
+    yield svc
+    svc.close()

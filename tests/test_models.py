@@ -48,6 +48,10 @@ def test_episodic_roundtrip() -> None:
     assert restored.event_id == "evt_03812"
     assert restored.evidence == ["traj_T928100_step_44", "traj_T928100_step_45"]
     assert restored.dual().event_id == "evt_03812"
+    assert restored.tier == "short"
+    assert restored.hit_count == 0
+    assert restored.uniqueness is None
+    assert restored.expire_at is None
 
 
 def test_episodic_rejects_empty_evidence() -> None:
@@ -110,3 +114,20 @@ def test_persona_and_interaction_roundtrip() -> None:
     assert InteractionEvent.model_validate_json(event.model_dump_json()).raw_text.startswith("你昨天")
     assert RetrievalPlan.model_validate_json(plan.model_dump_json()).time_scope == "yesterday"
     assert dual.insight_confidence == 0.64
+
+
+def test_custom_speaker_keeps_role_aliases() -> None:
+    event = InteractionEvent(
+        timestamp=datetime(2026, 8, 21, 13, 54, tzinfo=TZ),
+        speaker="阿宁",
+        raw_text="早上好。",
+        session_id="sess_0881",
+    )
+    assert event.participants == ["阿宁", "user", "character"]
+    named = InteractionEvent(
+        timestamp=datetime(2026, 8, 21, 13, 54, tzinfo=TZ),
+        speaker="user",
+        raw_text="早上好。",
+        session_id="sess_0881",
+    )
+    assert named.participants == ["user", "character"]

@@ -6,36 +6,9 @@ import asyncio
 from typing import Any
 
 from harness.pipeline.pipeline import StageObserver
+from infra.trace.serialize import serialize_stage
 
 __all__ = ["QueueObserver", "RecordingObserver", "StageObserver", "serialize_stage"]
-
-
-def serialize_stage(kind: str, result: Any) -> Any:
-    """Turn a stage result into JSON-safe data. Gate tuples keep request + complexity only."""
-    if kind == "gate" and isinstance(result, tuple) and len(result) >= 2:
-        situation, request = result[0], result[1]
-        complexity = getattr(situation, "complexity", None)
-        return {
-            "request": _dump(request),
-            "complexity": _dump(complexity),
-        }
-    return _dump(result)
-
-
-def _dump(value: Any) -> Any:
-    if value is None:
-        return None
-    if hasattr(value, "model_dump"):
-        return value.model_dump(mode="json")
-    if isinstance(value, list):
-        return [_dump(item) for item in value]
-    if isinstance(value, tuple):
-        return [_dump(item) for item in value]
-    if isinstance(value, dict):
-        return {str(key): _dump(item) for key, item in value.items()}
-    if isinstance(value, (str, int, float, bool)):
-        return value
-    return str(value)
 
 
 class RecordingObserver:

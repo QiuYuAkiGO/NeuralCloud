@@ -87,7 +87,8 @@ class InMemoryEpisodicStore:
         pool = [
             event
             for event in self._rows.values()
-            if event_in_filters(event, since=since, until=until, channels=channels, entities=entities)
+            if event.tier != "forgotten"
+            and event_in_filters(event, since=since, until=until, channels=channels, entities=entities)
         ]
         if query_embedding:
             pool.sort(

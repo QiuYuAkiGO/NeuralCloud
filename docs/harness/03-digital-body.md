@@ -15,7 +15,7 @@
 ```mermaid
 flowchart TB
     subgraph win["Windows 主机"]
-        gpu["本机 GPU（CUDA）<br/>模型推理：llama.cpp / vLLM"]
+        gpu["本机 GPU（CUDA）<br/>模型推理：Ollama / llama.cpp / vLLM"]
         subgraph wsl["WSL2 Ubuntu"]
             harness["Harness 主体（Python）<br/>FastAPI 服务"]
             db["PostgreSQL + pgvector"]
@@ -54,7 +54,7 @@ Wayland 不用于第一阶段：Wayland 的应用隔离对通用输入注入限�
 
 ### 模型推理部署
 
-- 主模型与辅助小模型运行在 **Windows 本机 GPU**（经 WSL2 CUDA，llama.cpp / vLLM），以 HTTP API 暴露给 Harness。
+- 主模型与辅助小模型运行在 **Windows 本机 GPU**，以 OpenAI 兼容 HTTP API 暴露给 Harness。当前推荐 **Ollama**（主 `neuralcloud-main` + 辅 `qwen3:4b-instruct`）；llama.cpp / vLLM 仍可用。
 - Harness 主体（Python）跑在 WSL2 Ubuntu，与模型推理、数字身体容器三者解耦——任何一环都可独立替换。
 - 模型规格建议与硬件对照见 [05-roadmap-and-stack.md](05-roadmap-and-stack.md)。
 

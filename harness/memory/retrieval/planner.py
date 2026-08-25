@@ -16,15 +16,18 @@ time_scope one of: yesterday, day_before_yesterday, last_week, last_month, three
 Map user-stated dates to the scope that actually covers them (上个月 → last_month, not last_week).
 When unsure of the true date, prefer a wider scope over a narrower one.
 event_type examples: commitment_or_statement, preference, conflict, daily
+channels is a hard filter: only fill it when the user explicitly names a channel
+(e.g. "在聊天记录里"); otherwise return [] so memories from every channel stay reachable.
 """
 
 
 class RetrievalPlanner:
-    def __init__(self, llm: LLMClient) -> None:
+    def __init__(self, llm: LLMClient, *, llm_enabled: bool = True) -> None:
         self.llm = llm
+        self.llm_enabled = llm_enabled
 
     def plan(self, query: RetrievalQuery) -> RetrievalPlan:
-        if isinstance(self.llm, MockLLM):
+        if isinstance(self.llm, MockLLM) or not self.llm_enabled:
             return rule_plan(query)
         try:
             raw = self.llm.complete_json(
@@ -60,7 +63,8 @@ def rule_plan(query: RetrievalQuery) -> RetrievalPlan:
         entities=entities,
         event_type=event_type,
         emotional_relevance=emotional,
-        channels=["chat"],
+        # Rule parsing cannot infer a channel from text; leave unfiltered.
+        channels=[],
     )
 
 

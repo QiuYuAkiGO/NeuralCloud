@@ -71,6 +71,49 @@ body {
   color: var(--ink); border-radius: 6px; padding: 4px 8px; font: inherit;
 }
 
+.chat-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  align-items: center;
+}
+.chat-tab {
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.chat-tab:hover { color: var(--ink); border-color: #4a5568; }
+.chat-tab.active {
+  color: var(--gold-2);
+  border-color: #6a5636;
+  background: #241d12;
+}
+.chat-tab.add {
+  color: var(--gold);
+  border-style: dashed;
+}
+
+.preset-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; max-height: 60vh; overflow: auto; }
+.preset-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-2);
+}
+.preset-row h3 { margin: 0; font-size: 14px; }
+.preset-row .meta { color: var(--muted); font-size: 11px; margin-top: 4px; }
+.preset-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+
 main {
   min-height: 0;
   display: grid;
@@ -84,8 +127,11 @@ main {
 }
 .state-col { border-right: 0; grid-template-rows: auto 1fr; }
 .col-head { padding: 16px 18px 10px; }
+.col-head-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .col-head h1 { margin: 0; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); }
 .col-head p { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+.speaker-fields { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.speaker-fields .session input { width: 88px; }
 
 .transcript {
   overflow: auto;
@@ -115,6 +161,12 @@ main {
   font-size: 15px;
 }
 .bubble.pending { color: var(--muted); font-style: italic; font-family: var(--sans); font-size: 13px; }
+.bubble .who {
+  font-family: var(--sans); font-size: 11px; color: var(--gold);
+  letter-spacing: 0.04em; margin-bottom: 4px;
+}
+.bubble.user .who { color: var(--locked); }
+.bubble.pending .who { font-style: normal; }
 .bubble .meta {
   margin-top: 8px; display: flex; gap: 6px; font-family: var(--sans); font-size: 11px;
 }
@@ -180,6 +232,11 @@ main {
 .kv { display: grid; gap: 8px; }
 .kv-row { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; }
 .kv-row span { color: var(--muted); }
+.token-summary {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .chip {
   font-size: 11px; padding: 3px 8px; border-radius: 999px;
@@ -235,12 +292,19 @@ main {
 dialog.modal:not([open]) { display: none; }
 .modal::backdrop { background: rgba(0, 0, 0, 0.55); }
 .modal h2 { margin: 0 0 8px; font-size: 16px; }
+.modal h2.settings-section { margin-top: 20px; }
 .modal label { display: block; margin: 12px 0 0; font-size: 12px; color: var(--muted); }
 .modal input, .modal select, .modal textarea {
   width: 100%; margin-top: 6px; background: var(--bg-2); color: var(--ink);
   border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: inherit;
 }
 .modal textarea { min-height: 56px; resize: vertical; line-height: 1.45; }
+.modal .model-tabs {
+  max-height: 112px;
+  overflow: auto;
+  margin-top: 8px;
+}
+.modal #cfg-model-status, .modal #cfg-aux-model-status { margin: 6px 0 0; }
 .modal menu { display: flex; justify-content: flex-end; gap: 8px; margin: 16px 0 0; padding: 0; }
 
 .modal.wide {

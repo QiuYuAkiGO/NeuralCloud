@@ -7,14 +7,14 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from gui.demo_seed import DEFAULT_SESSION_ID
 from harness.config import DEFAULT_RETRIEVAL_WEIGHTS, Settings
 from harness.core.exceptions import MemoryNotFoundError
 from harness.core.ids import new_id
-from harness.core.models import EpisodicEvent, PsychState
+from harness.core.models import EpisodicEvent, PsychState, default_event_participants
 from harness.memory.service import MemoryService
 
 DEBUG_ACTOR = "debug_panel"
+DEFAULT_SESSION_ID = "sess_0881"
 WEIGHT_KEYS = tuple(DEFAULT_RETRIEVAL_WEIGHTS)
 WEIGHT_SUM_TOLERANCE = 0.01
 _EXCLUDE_EMBEDDING = {"embedding"}
@@ -232,6 +232,8 @@ def apply_episodic(memory: MemoryService, patch: EpisodicPatch) -> Any:
 
 
 def _create_episodic(memory: MemoryService, patch: EpisodicPatch) -> EpisodicEvent:
+    from gui.presets import DEFAULT_SESSION_ID
+
     summary = (patch.summary or "").strip()
     if not summary:
         raise ValueError("summary is required to create an event")
@@ -239,12 +241,11 @@ def _create_episodic(memory: MemoryService, patch: EpisodicPatch) -> EpisodicEve
     event_id = new_id("event")
     session_id = (patch.session_id or "").strip() or DEFAULT_SESSION_ID
     speaker = (patch.speaker or "user").strip() or "user"
-    counterpart = "character" if speaker != "character" else "user"
     evidence = [f"debug:{session_id}:{event_id}"]
     event = EpisodicEvent(
         event_id=event_id,
         time=datetime.now(UTC),
-        participants=[speaker, counterpart],
+        participants=default_event_participants(speaker),
         summary=summary,
         character_action=patch.character_action or None,
         outcome=patch.outcome or None,

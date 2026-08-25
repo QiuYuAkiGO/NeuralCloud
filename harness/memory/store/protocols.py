@@ -27,6 +27,7 @@ class PersonaStore(Protocol):
 
 
 class EpisodicStore(Protocol):
+    """Episodic event store. `search_pool` must exclude `tier == "forgotten"`."""
     def insert(self, event: EpisodicEvent) -> None: ...
 
     def get(self, event_id: str) -> EpisodicEvent | None: ...

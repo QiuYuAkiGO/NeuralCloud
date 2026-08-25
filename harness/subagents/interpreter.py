@@ -2,12 +2,24 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import ValidationError
 
-from harness.core.inference import IntentHypothesis, SituationState, StructuredInsight
+from harness.core.inference import (
+    MAX_RELEVANT_MEMORIES,
+    IntentHypothesis,
+    SituationState,
+    StructuredInsight,
+)
+from harness.core.models import ScoredMemory
 from harness.llm.client import LLMClient, MockLLM
 
 _SYSTEM = """You are Social Interpreter for a character AI.
+Input includes up to 5 retrieved memories: episodic events carry an objective
+fact plus the character's own perspective (insight) from when it happened;
+semantic facts carry subject/predicate/value with confidence. Ground your
+judgment in them.
 Output JSON only:
 {"possible_intents":[{"intent":string,"confidence":number}],
  "relationship_delta_expected": string|null,
@@ -34,8 +46,9 @@ class SocialInterpreter:
                     {
                         "utterance": situation.utterance,
                         "hypotheses": [h.model_dump() for h in situation.hypotheses],
-                        "why_retrieved": [
-                            m.why_retrieved for m in situation.relevant_memories[:5]
+                        "memories": [
+                            _memory_payload(m)
+                            for m in situation.relevant_memories[:MAX_RELEVANT_MEMORIES]
                         ],
                     }
                 ),
@@ -91,3 +104,29 @@ def rule_interpret(situation: SituationState) -> StructuredInsight:
 def _coerce_insight(raw: dict) -> StructuredInsight:
     payload = raw.get("social_inference", raw)
     return StructuredInsight.model_validate({**payload, "source": "social_interpreter"})
+
+
+def _memory_payload(memory: ScoredMemory) -> dict[str, Any]:
+    """Serialize the retrieved event/fact itself, not just the retrieval tags."""
+    payload: dict[str, Any] = {
+        "ref": memory.ref,
+        "type": memory.memory_type,
+        "relevance": round(memory.relevance, 4),
+        "why_retrieved": memory.why_retrieved,
+    }
+    if memory.episodic is not None:
+        event = memory.episodic
+        payload["event"] = {
+            "time": event.time.isoformat(),
+            "objective_fact": event.objective_fact,
+            "character_perspective": event.persona_conditioned_insight,
+        }
+    elif memory.semantic is not None:
+        fact = memory.semantic
+        payload["fact"] = {
+            "subject": fact.subject,
+            "predicate": fact.predicate,
+            "value": fact.value,
+            "confidence": fact.confidence,
+        }
+    return payload

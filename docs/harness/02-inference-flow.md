@@ -132,19 +132,25 @@ user_presence: active
 
 这一步决定整个请求的延迟与成本。
 
-| 输入示例 | complexity score | 路径 |
+| 输入示例 | complexity score（规则先验） | 路径 |
 | --- | --- | --- |
 | "早上好。" / "你在干嘛？" / "一起吃饭吗？" | ~0.1 | Fast Path 直通 |
+| "你看过《三体》吗？" | ~0.34 | Deep Path（未知名词强制走深路径） |
+| "我昨天认识了一个叫阿哲的人。" | ~0.54 | Deep Path（提及姓名强制走深路径） |
 | "你还记得昨天你说了什么吗？" | ~0.42 | Deep Path（带日期的记忆探针强制走深路径） |
 | "你昨天不是说不会再管我了吗？" | ~0.74 | Deep Path，触发 Social Interpreter |
 | "你还记得三个月前答应我的事情吗？" | ~0.8 | Deep Path + 深检索 |
 | "如果救我意味着放弃你一直追求的目标呢？" | ~0.9 | Deep Path + 多 subagent |
 
-除打格外，以下信号组合**强制** Deep Path（`_force_deep`）：价值冲突；`three_months` / `last_month` 级远程时间；承诺词 +（时间词或记忆探针）；记忆探针 + 时间词。
+除打格外，以下信号组合**强制** Deep Path（`_force_deep`）：提及人名（`has_person_name`）或未知名词（`has_unknown_entity`）；价值冲突；`three_months` / `last_month` 级远程时间；承诺词 +（时间词或记忆探针）；记忆探针 + 时间词。
 
-#### 灰色地带仲裁
+#### 姓名 / 未知名词强制走深
 
-规则打分落在灰色区 `[complexity_gray_lower, complexity_threshold)`（默认 `[0.15, 0.5)`）时，Pipeline 会用小模型做一次仲裁（prompt 附规则得分与已命中信号作为弱先验，模型可按语义推翻正则表——例如识别"8月20号"这类具体日期、间接表达）。仲裁**只升不降**：可能把 Fast 提升为 Deep，不会把规则判定的 Deep 降为 Fast。`complexity_gray_lower` 可用 `NC_COMPLEXITY_GRAY_LOWER` 覆盖；MockLLM 或仲裁异常时完全回退规则判定，仲裁结论记录在 gate trace 的 `reasons` 中（`llm_arbitrated:deep|fast`）。两端区间（明显简单 / 明显复杂 / 强制规则命中）不产生额外调用。
+话语提及具体人名（无论是否已存在于记忆）或出现角色可能不认识的名词（陌生专名、术语、作品名）时，**必须**走 Deep Path 调用 Social Interpreter——姓名与未知名词意味着话语涉及具体社会关系或陌生语义，regex 信号表无法可靠评估。regex 只做兜底检测（"叫X / 名叫X"介绍句式、记忆检索标签 `entity:<name>` 中的已知人名、《》/「」/『』书名号），真正的语义识别由 Gate 小模型在 prompt 中执行（MANDATORY deep path 条款）。
+
+#### 双路判定：regex + 小模型，任一命中即走深
+
+Complexity Gate 由两路独立判断**同时触发**：规则侧（regex 打分 ≥ `complexity_threshold`，或强制规则命中）与 Gate 小模型。**任一方判定需要 Social Interpreter 即走 Deep Path；仅当双方都认为不需要时才走 Fast Path**（OR 合并，宁深勿浅）。因此规则侧已判 deep 时不再调用小模型（OR 结果已定，不产生额外调用）；仅规则侧判 fast 时才咨询小模型——其 deep 裁决一定生效（`llm_decided:deep`），fast 裁决只在规则侧同为 fast 时成立（`llm_decided:fast`），模型可按语义推翻正则表的漏判（例如识别"8月20号"这类具体日期、间接表达）。MockLLM 或调用异常时回退为规则侧单路判定（`complexity_threshold` 可用 `NC_COMPLEXITY_THRESHOLD` 覆盖）。
 
 复杂输入触发 Social Interpreter（拿到完整 SituationState）：
 
@@ -174,21 +180,22 @@ user_presence: active
 
 ### 阶段 8.1 · 连说循环与自主收尾
 
-角色可以在用户不再说话的情况下继续说下一段（追补、换话题）。**是否继续由主模型判断**，Harness 只负责循环与硬性兜底——符合「模型负责判断，程序负责现实」。
+角色可以在用户不再说话的情况下继续说下一段（追补、换话题）。**是否还想再开口由主模型提议**（段尾 `[CONTINUE]` / `[END]`）；**这段是不是新话由程序放行**——符合「模型负责判断，程序负责现实」。
 
 **标记约定**（只认段尾；标记不会展示给用户）：
 
 | 段尾标记 | 含义 |
 | --- | --- |
-| `[CONTINUE]` | 还有话要说。Harness 复用同一 `ModelContext`，追加续说指令后再生成下一段 |
+| `[CONTINUE]` | 提议还有话要说。Harness 复用同一 `ModelContext`，把已提交段落作为 `assistant` 历史，追加短 nudge 后再生成下一段 |
 | `[END]` 或无标记 | 这轮说完。无标记默认收尾，避免漏标导致死循环 |
 
-循环条件：每段先走现有 Validator（含局部重生成），再剥离标记。正文为空则立即停止（`stopped_by=empty`），且不写入会话窗。
+循环条件：每段先走现有 Validator（含局部重生成），再剥离标记。正文为空则立即停止（`stopped_by=empty`），且不写入会话窗。新段若与已提交段近重复（改写复述、大幅包含），丢弃该段及同批后续并停循环（`stopped_by=duplicate`），不写入会话窗。
 
 程序兜底：
 
+- 近重复否决（`stopped_by=duplicate`）；
 - `max_reply_segments`（默认 3）到达后强制收尾（`stopped_by=max_segments`）；
-- `continuation_enabled=false` 时退回单段生成（`stopped_by=disabled`）。
+- `continuation_enabled=false` 时退回单段生成（`stopped_by=disabled`），同批内部复述仍会去掉，但 `stopped_by` 保持 `disabled`。
 
 多段在会话窗里各成一条气泡；写入长期记忆时角色侧仍是**一条** episodic（全文拼接），避免记忆碎片化。
 
@@ -229,9 +236,9 @@ user_presence: active
 
 ### Fast Path（绝大多数普通聊天）
 
-`Gateway → Parser → 状态查询（缓存优先）→ Compiler → Main Model → 轻量 Validator → 输出`
+`Gateway → Parser → 状态查询 → Compiler → Main Model → 轻量 Validator → 输出`
 
-要求低延迟；subagent 不触发；Validator 轻量或采样运行。
+要求低延迟；subagent 不触发；Validator 轻量或采样运行。设计上 Fast Path 状态查询可走缓存；V1 的 `state_cache` 槽位已预留，当前每次 live read。
 
 ### Deep Path（高价值输入）
 
@@ -292,4 +299,6 @@ Deep Path 才值得多跑几个 inference pass（Social Interpreter、反向检�
 
 这套系统实际是：`Event → Understanding → World State + Memory + Persona → Situation → Judgment → Expression`。从角色视角看，就是"发生了什么 → 这对我意味着什么 → 我此刻是谁、处于什么状态 → 我该怎么做 → 我该怎么表现"——最后一步才是**生成文字**。
 
-真正的模型输入不应只是 `messages[]`，而应演化为结构化 `ContextPackage`。此时搭建的已不再是普通 LLM wrapper，而是一个轻量的 **Character Cognitive Runtime**；后训练模型则是这个 runtime 中最关键的人物决策与表达引擎。
+真正的模型输入不应只是 `messages[]`，而应演化为结构化上下文。V1 落地为 `SituationState`（内部 canonical state）+ `ModelContext`（编译后的模型输入）；设计期曾用 `ContextPackage` 统称二者。此时搭建的已不再是普通 LLM wrapper，而是一个轻量的 **Character Cognitive Runtime**；后训练模型则是这个 runtime 中最关键的人物决策与表达引擎。
+
+实现细节见 [TECHNICAL.md](../TECHNICAL.md)。

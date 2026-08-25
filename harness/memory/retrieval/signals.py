@@ -60,7 +60,15 @@ def score_episodic(
     weights = settings.retrieval_weights
     semantic = cosine(query_embedding, event.embedding)
     entity = _entity_score(event.participants, plan.entities or query.entities)
-    recency = _recency_score(event.time, query.now, settings.recency_half_life_hours, plan.time_scope)
+    recency = _recency_score(
+        event.time,
+        query.now,
+        settings.recency_half_life_hours,
+        plan.time_scope,
+        tier=event.tier,
+        long_floor=settings.long_term_recency_floor,
+        mid_factor=settings.mid_term_half_life_factor,
+    )
     importance = max(0.0, min(1.0, event.importance))
     relationship = _relationship_score(event, query.relationship)
     persona = _persona_score(event.summary + " " + event.objective_fact, query.persona)
@@ -144,14 +152,27 @@ def _entity_score(participants: list[str], entities: list[str]) -> float:
     return hits / len(entities)
 
 
-def _recency_score(event_time: datetime, now: datetime, half_life_hours: float, time_scope: str | None) -> float:
+def _recency_score(
+    event_time: datetime,
+    now: datetime,
+    half_life_hours: float,
+    time_scope: str | None,
+    *,
+    tier: str = "short",
+    long_floor: float = 0.4,
+    mid_factor: float = 7.0,
+) -> float:
     now = _ensure_tz(now)
     event_time = _ensure_tz(event_time)
     hours = max(0.0, (now - event_time).total_seconds() / 3600.0)
-    decay = math.exp(-math.log(2) * hours / max(half_life_hours, 1e-6))
+    half = half_life_hours * mid_factor if tier == "mid" else half_life_hours
+    decay = math.exp(-math.log(2) * hours / max(half, 1e-6))
     if time_scope == "yesterday" and 8 <= hours <= 40:
         decay = max(decay, 0.85)
-    return max(0.0, min(1.0, decay))
+    decay = max(0.0, min(1.0, decay))
+    if tier == "long":
+        return max(decay, long_floor)
+    return decay
 
 
 def _relationship_score(event: EpisodicEvent, relationship: RelationshipState | None) -> float:
@@ -199,6 +220,7 @@ def _why_tags(
         tags.append("importance")
     if recency >= 0.5:
         tags.append("recency")
+    tags.append(f"tier:{event.tier}")
     # unique preserve order
     seen: set[str] = set()
     ordered: list[str] = []

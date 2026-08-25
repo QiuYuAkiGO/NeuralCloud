@@ -23,15 +23,28 @@ _GREETING_RE = re.compile(
     r"^(早上好|晚上好|早安|晚安|你好|嗨|哈喽|在吗|你在干嘛|在干嘛|一起吃饭吗)[。？?！!\s]*$"
 )
 _QUESTION_RE = re.compile(r"[?？]|吗|呢|是不是")
+# Best-effort fallbacks only — real name / unknown-noun detection is the gate
+# model's job; these patterns exist for the no-LLM (MockLLM / failure) path.
+_NAME_INTRO_RE = re.compile(r"(?:叫|名叫)(?![我你他她它吧吗呢啊哦啦])([一-龥]{2,3})(?=$|[\s，。！？!?,、的])")
+_QUOTED_TITLE_RE = re.compile(r"《[^》]+》|「[^」]+」|『[^』]+』")
+_DEFAULT_ENTITIES = {"user", "character"}
 
 _LLM_GATE_SYSTEM = """You are the Complexity Gate for a character-AI inference pipeline.
-Decide whether the utterance needs the deep path (Social Interpreter + full validation).
-Deep path signals: emotionally loaded probes, references to shared past events
+You are one of two independent judges; the other is a regex scoring table whose
+score and matched signals are attached as a weak prior. A deep verdict from
+either judge triggers the deep path (Social Interpreter + full validation);
+the fast path requires both judges to agree. If the table misreads the
+utterance as simpler than it is, choose deep.
+
+MANDATORY deep path:
+- The utterance mentions a person by name (a known character or someone new).
+- The utterance contains a noun the character may not know — an unfamiliar proper
+  noun, term, title, or concept. If you cannot resolve it, choose deep.
+
+Other deep path signals: emotionally loaded probes, references to shared past events
 (user-stated dates are often imprecise — judge by meaning, not literal keywords),
 commitment checks, value dilemmas, relationship tests, indirect accusation or hurt.
 Fast path: greetings, small talk, simple factual questions, logistics.
-The rule-based score and matched signals are a weak prior from a regex table;
-override them when the table misreads the utterance.
 Return JSON only: {"path": "fast"|"deep", "reason": string (short)}.
 """
 
@@ -48,15 +61,25 @@ class ComplexityGate:
             situation.relevant_memories,
         )
         score, reasons = score_complexity(signals)
-        deep = score >= self.settings.complexity_threshold
-        if _force_deep(signals):
-            deep = True
-            if "forced:documented_trigger" not in reasons:
-                reasons.append("forced:documented_trigger")
-        elif not deep and self._in_gray_zone(score):
-            verdict = self._arbitrate(situation, signals, score)
+        forced = _force_deep(signals)
+        # Two judges, OR-combined: the regex side (score / forced triggers) and the
+        # gate model vote independently. Either deep verdict triggers the Social
+        # Interpreter; fast requires both sides to agree. A rule-side deep verdict
+        # already settles the OR, so the model is only consulted on rule-side fast.
+        rule_deep = forced or score >= self.settings.complexity_threshold
+        deep = rule_deep
+        if forced and "forced:documented_trigger" not in reasons:
+            reasons.append("forced:documented_trigger")
+        # Pure greetings carry no ambiguity for a second judge to resolve;
+        # skipping keeps trivial small talk entirely off the LLM.
+        if not rule_deep and self._llm_enabled and not _pure_greeting(signals):
+            # The parser's LLM call doubles as this judge when it ran;
+            # only messages the parser handled rule-only need a live call here.
+            verdict = _parsed_gate_vote(situation)
+            if verdict is None:
+                verdict = self._decide(situation, signals, score)
             if verdict is not None:
-                reasons.append(f"llm_arbitrated:{verdict}")
+                reasons.append(f"llm_decided:{verdict}")
                 deep = verdict == "deep"
         complexity = ComplexityAssessment(
             score=min(1.0, score),
@@ -74,15 +97,14 @@ class ComplexityGate:
         )
         return updated, request
 
-    def _in_gray_zone(self, score: float) -> bool:
-        if self.llm is None or isinstance(self.llm, MockLLM):
-            return False
-        return self.settings.complexity_gray_lower <= score < self.settings.complexity_threshold
+    @property
+    def _llm_enabled(self) -> bool:
+        return self.llm is not None and not isinstance(self.llm, MockLLM)
 
-    def _arbitrate(
+    def _decide(
         self, situation: SituationState, signals: ComplexitySignals, score: float
     ) -> str | None:
-        """LLM arbitration for gray-zone scores; may promote to deep, never demotes."""
+        """Second judge, consulted only when the rule side votes fast; a deep verdict here always wins."""
         try:
             raw = self.llm.complete_json(
                 system=_LLM_GATE_SYSTEM,
@@ -93,6 +115,7 @@ class ComplexityGate:
                         "signals": signals.model_dump(),
                     }
                 ),
+                max_tokens=self.settings.llm_json_max_tokens,
             )
             path = str(raw.get("path", "")).strip().lower()
         except (ValueError, TypeError, AttributeError):
@@ -100,6 +123,26 @@ class ComplexityGate:
         if path in ("fast", "deep"):
             return path
         return None
+
+
+def _pure_greeting(signals: ComplexitySignals) -> bool:
+    """Same condition as the early return in score_complexity: a greeting match
+    with zero other signals leaves nothing for the second judge to catch."""
+    return signals.is_greeting and not (
+        signals.has_commitment_language
+        or signals.time_scope
+        or signals.has_value_conflict
+        or signals.has_memory_probe
+        or signals.has_person_name
+        or signals.has_unknown_entity
+    )
+
+
+def _parsed_gate_vote(situation: SituationState) -> str | None:
+    parsed = situation.parsed
+    if parsed is not None and parsed.gate_vote in ("fast", "deep"):
+        return parsed.gate_vote
+    return None
 
 
 def collect_signals(
@@ -111,11 +154,19 @@ def collect_signals(
     emotion = 0.0
     if parsed and parsed.emotion_cues:
         emotion = max(parsed.emotion_cues.values())
+    known_names = _memory_entity_names(memories)
+    if parsed:
+        known_names |= {e for e in parsed.entities if e not in _DEFAULT_ENTITIES}
+    has_person_name = bool(_NAME_INTRO_RE.search(text)) or any(
+        len(name) >= 2 and name in text for name in known_names
+    )
     return ComplexitySignals(
         time_scope=_match_time_scope(text),
         has_commitment_language=bool(_COMMITMENT_RE.search(text)),
         has_memory_probe=bool(_MEMORY_PROBE_RE.search(text)),
         has_value_conflict=bool(_VALUE_RE.search(text)),
+        has_person_name=has_person_name,
+        has_unknown_entity=bool(_QUOTED_TITLE_RE.search(text)),
         is_greeting=bool(_GREETING_RE.match(stripped)),
         is_question=bool(_QUESTION_RE.search(text)),
         text_length=len(stripped),
@@ -124,6 +175,18 @@ def collect_signals(
             "commitment_conflict" in item.why_retrieved for item in memories
         ),
     )
+
+
+def _memory_entity_names(memories: list[ScoredMemory]) -> set[str]:
+    """Names seen in prior retrieval tags count as known people when they reappear."""
+    names: set[str] = set()
+    for item in memories:
+        for tag in item.why_retrieved:
+            if tag.startswith("entity:"):
+                name = tag.split(":", 1)[1].strip()
+                if name and name not in _DEFAULT_ENTITIES:
+                    names.add(name)
+    return names
 
 
 def score_complexity(signals: ComplexitySignals) -> tuple[float, list[str]]:
@@ -136,6 +199,8 @@ def score_complexity(signals: ComplexitySignals) -> tuple[float, list[str]]:
             or signals.time_scope
             or signals.has_value_conflict
             or signals.has_memory_probe
+            or signals.has_person_name
+            or signals.has_unknown_entity
         ):
             return 0.1, reasons
 
@@ -158,6 +223,12 @@ def score_complexity(signals: ComplexitySignals) -> tuple[float, list[str]]:
     if signals.has_value_conflict:
         score += 0.82
         reasons.append("value_conflict")
+    if signals.has_person_name:
+        score += 0.30
+        reasons.append("person_name")
+    if signals.has_unknown_entity:
+        score += 0.30
+        reasons.append("unknown_entity")
     if signals.retrieval_commitment_conflict:
         score += 0.16
         reasons.append("retrieval:commitment_conflict")
@@ -174,6 +245,10 @@ def score_complexity(signals: ComplexitySignals) -> tuple[float, list[str]]:
 
 
 def _force_deep(signals: ComplexitySignals) -> bool:
+    if signals.has_person_name or signals.has_unknown_entity:
+        # Mandatory routing: names and unfamiliar nouns always need the Social
+        # Interpreter; the gate model applies the same rule as its primary check.
+        return True
     if signals.has_value_conflict:
         return True
     if signals.time_scope in ("three_months", "last_month"):
