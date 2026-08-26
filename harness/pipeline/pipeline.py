@@ -14,6 +14,7 @@ from harness.core.inference import (
     CandidateResponse,
     FinalResponse,
     ModelContext,
+    SessionTurn,
     SituationState,
     StructuredInsight,
     TokenUsage,
@@ -98,7 +99,46 @@ class InferencePipeline:
             "speaker": speaker,
         }
         with self.memory.call_log.scope("respond", call_input, call_id=call_id) as call:
-            final = self._respond(source, now=now, ingest_kwargs=ingest_kwargs)
+            final = self._respond(
+                source,
+                now=now,
+                ingest_kwargs=ingest_kwargs,
+                commit_interaction=True,
+            )
+            call.set_result(final)
+            return final
+
+    def prepare(
+        self,
+        source: InteractionEvent | str,
+        *,
+        now: datetime | None = None,
+        session_id: str | None = None,
+        speaker: str | None = None,
+        call_id: str | None = None,
+    ) -> FinalResponse:
+        """Generate a replayable response without mutating Session or Memory.
+
+        Runtime uses this method for the PrepareResponse command.  The legacy
+        :meth:`respond` method still performs generation and commit in one call.
+        """
+
+        ingest_kwargs: dict[str, Any] = {"session_id": session_id}
+        if speaker:
+            ingest_kwargs["speaker"] = speaker
+        call_input = {
+            "text": source if isinstance(source, str) else source.raw_text,
+            "session_id": session_id if isinstance(source, str) else (session_id or source.session_id),
+            "speaker": speaker,
+        }
+        with self.memory.call_log.scope("prepare_response", call_input, call_id=call_id) as call:
+            with self.memory.suppress_maintenance():
+                final = self._respond(
+                    source,
+                    now=now,
+                    ingest_kwargs=ingest_kwargs,
+                    commit_interaction=False,
+                )
             call.set_result(final)
             return final
 
@@ -108,18 +148,20 @@ class InferencePipeline:
         *,
         now: datetime | None,
         ingest_kwargs: dict[str, Any],
+        commit_interaction: bool,
     ) -> FinalResponse:
         started = time.perf_counter()
         event = self._traced("ingest", lambda: self.gateway.ingest(source, **ingest_kwargs))
         moment = now or event.timestamp
-        self.session_store.append(
-            event.session_id,
-            "user",
-            event.raw_text,
-            speaker=self._speaker_label("user", event.speaker),
-            event_id=event.event_id,
-            timestamp=event.timestamp,
-        )
+        if commit_interaction:
+            self.session_store.append(
+                event.session_id,
+                "user",
+                event.raw_text,
+                speaker=self._speaker_label("user", event.speaker),
+                event_id=event.event_id,
+                timestamp=event.timestamp,
+            )
 
         parsed = self._traced("parse", lambda: self.parser.parse(event), extra={"event_id": event.event_id})
         situation = self._traced(
@@ -149,6 +191,16 @@ class InferencePipeline:
             ]
 
         recent = self.session_store.recent(event.session_id)
+        if not commit_interaction:
+            recent.append(
+                SessionTurn(
+                    role="user",
+                    text=event.raw_text,
+                    speaker=self._speaker_label("user", event.speaker),
+                    event_id=event.event_id,
+                    timestamp=event.timestamp,
+                )
+            )
         context = self._traced(
             "compile",
             lambda: self.compiler.compile(situation, insights=insights, session=recent),
@@ -164,6 +216,7 @@ class InferencePipeline:
             session_id=event.session_id,
             response_id=response_id,
             now=moment,
+            commit_session=commit_interaction,
         )
         final = FinalResponse(
             response_id=response_id,
@@ -180,7 +233,7 @@ class InferencePipeline:
             stopped_by=stopped_by,
             usage=usage,
         )
-        if self.settings.record_interaction:
+        if self.settings.record_interaction and commit_interaction:
             self._record(event, final, moment)
         final.latency_ms = round((time.perf_counter() - started) * 1000, 3)
         self._emit(
@@ -214,6 +267,7 @@ class InferencePipeline:
         session_id: str,
         response_id: str,
         now: datetime,
+        commit_session: bool,
     ) -> tuple[list[str], str, int, ValidationResult, TokenUsage]:
         if not self.settings.continuation_enabled:
             candidate, validation, revisions, usage = self._generate_validated(
@@ -235,6 +289,7 @@ class InferencePipeline:
                 session_id=session_id,
                 response_id=response_id,
                 now=now,
+                commit_session=commit_session,
             )
             return segments, "disabled", revisions, validation, usage
 
@@ -267,6 +322,7 @@ class InferencePipeline:
                 response_id=response_id,
                 now=now,
                 existing=segments,
+                commit_session=commit_session,
             )
             if echoed:
                 return segments, "duplicate", revisions, validation, usage
@@ -284,6 +340,7 @@ class InferencePipeline:
         response_id: str,
         now: datetime,
         existing: list[str] | None = None,
+        commit_session: bool = True,
     ) -> list[str]:
         segments = existing if existing is not None else []
         cap = self.settings.max_reply_segments
@@ -291,16 +348,17 @@ class InferencePipeline:
             if not body or len(segments) >= cap:
                 break
             segments.append(body)
-            self.session_store.append(
-                session_id,
-                "character",
-                body,
-                speaker=self._speaker_label("character"),
-                event_id=f"{response_id}:s{len(segments)}",
-                timestamp=now,
-            )
+            if commit_session:
+                self.session_store.append(
+                    session_id,
+                    "character",
+                    body,
+                    speaker=self._speaker_label("character"),
+                    event_id=f"{response_id}:s{len(segments)}",
+                    timestamp=now,
+                )
             self._emit(
-                "reply_segment",
+                "reply_segment" if commit_session else "prepared_segment",
                 {"text": body, "index": len(segments) - 1},
                 {"segment": len(segments) - 1, "latency_ms": 0.0},
             )

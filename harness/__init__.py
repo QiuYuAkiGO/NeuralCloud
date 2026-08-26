@@ -10,7 +10,9 @@ from harness.core.models import (
     SemanticFact,
 )
 from harness.memory.service import MemoryService, build_inmemory_service
+from harness.homeostasis import HomeostasisEngine, HomeostaticProfile, HomeostaticSnapshot
 from harness.pipeline.pipeline import InferencePipeline, build_pipeline
+from harness.runtime import RuntimeEvent, RuntimeLifecycle, RuntimeSupervisor
 
 __all__ = [
     "EpisodicEvent",
@@ -18,10 +20,16 @@ __all__ = [
     "FinalResponse",
     "InferencePipeline",
     "InteractionEvent",
+    "HomeostasisEngine",
+    "HomeostaticProfile",
+    "HomeostaticSnapshot",
     "MemoryService",
     "PersonaCore",
     "PersonaLockedError",
     "RetrievalQuery",
+    "RuntimeEvent",
+    "RuntimeLifecycle",
+    "RuntimeSupervisor",
     "SemanticFact",
     "build_inmemory_service",
     "build_pipeline",

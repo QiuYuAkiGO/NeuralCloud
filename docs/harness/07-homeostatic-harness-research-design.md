@@ -1,6 +1,6 @@
 # 07 · 情感陪伴型具身智能内稳态 Harness 研究设计
 
-> **文档状态：V2 研究提案，尚未实现。** 本文定义拟议中的内稳态模型、概念数据契约、闭环行为和首轮研究协议。当前仓库只实现了 L/M/S `PsychState`、`RelationshipState`、记忆、检索和对话推理链路；本文中的 `Homeostasis`、主动推断、心跳、自主调节和实验控制面均不是当前运行时能力。
+> **文档状态：V2 设计，确定性开发纵切已实现。** 当前仓库已有七维 `HomeostasisEngine`、版本化 profile、belief/affect/policy、幂等 ledger、追加 transition trace、真实时间心跳，以及 Cognitive/Homeostasis/Runtime/GUI 四进程 Windows 开发拓扑。LLM appraisal、正式研究校准、数字身体、高影响动作和长期研究运行仍未完成。
 >
 > **首要研究假设：** 在同一 Persona、记忆、环境和候选策略条件下，允许主角色模型对主动推断给出的策略排序保留裁量权，比机械执行最低期望自由能策略产生更强的长期人格主体感，同时不显著破坏状态连续性和调节稳定性。
 
@@ -8,12 +8,12 @@
 
 ## 1. 研究定位与边界
 
-本系统面向**内部研究人员使用的情感陪伴型具身智能实验平台**。V2 先接入 Linux Desktop 数字身体，但内稳态层只依赖现有的两个抽象端口：
+本系统面向**内部研究人员使用的情感陪伴型具身智能实验平台**。V2 先接入 Linux Desktop 数字身体。与身体相关的端口必须按当前实现状态区分：
 
-- `PerceptionBackend.observe() -> Observation`
-- `ActionBackend.act(Goal) -> ActionResult`
+- **已有扩展点：** `PerceptionBackend.observe(*, now) -> WorldState`。当前实现是 chat-only `ChatPerceptionBackend`，不是统一原始 `Observation` 流。
+- **设计接口（尚未实现）：** `ActionBackend.act(Goal) -> ActionResult`。当前 Python 代码中还没有 `ActionBackend`、`Goal` 或 `ActionResult` 类型。
 
-未来迁移到实体机器人时替换感知和动作后端，不重写内稳态、记忆、关系、目标仲裁与研究记录体系。主动推断只评估回复、接触、休息、探索、反思等**目标级策略**，具体鼠标、键盘或机械动作仍由 Controller 规划并由外部结果验证。
+未来统一 `Observation` 先进入 Runtime journal，再由 adapter 投影为 Cognitive Harness 使用的 `WorldState`，同时把同一原始证据交给 Homeostatic Harness。迁移到实体机器人时替换感知和动作后端，不重写内稳态、记忆、关系、目标仲裁与研究记录体系。主动推断只评估回复、接触、休息、探索、反思等**目标级策略**，具体鼠标、键盘或机械动作仍由 Controller 规划并由外部结果验证。
 
 ### 1.1 V2 要回答的问题
 
@@ -30,6 +30,9 @@
 - 不在线修改实验基准转移矩阵、precision 配置或当前运行中的 Persona 版本。
 - 不把本轮 3–5 人团队自我实验解释为可推广的人类参与研究结论。
 - 不在本文档交付中修改当前代码、数据库迁移、Persona 数据库锁或 L/M/S `PsychState` 行为。
+- 不把当前 GUI 的 development/debug 写入口直接当作正式研究控制面。`/api/debug/*`、`/api/config`、preset apply/restore/delete、reset 及会改变 Persona 的角色重命名在 study/runtime mode 中必须禁用或经过独立强授权。
+
+本文区分两种控制模式：development/debug mode 允许热改并继续写审计与预设工作副本；study/runtime mode 以 `ExperimentManifest` 为唯一实验条件来源，Persona、profile、模型版本、precision、检索权重和策略选择条件在单次运行中冻结。
 
 ---
 
@@ -108,8 +111,13 @@ flowchart TB
     proposals --> aif["Factorized POMDP / Expected Free Energy"]
     aif --> selector["Policy Selector Condition"]
     selector --> character["Character Model"]
-    character --> goal["Reply or High-level Goal"]
-    goal --> controller["Digital Body Controller"]
+    character --> decision["CharacterDecision"]
+    decision --> reply["ReplyDecision"]
+    decision --> goal["GoalProposal"]
+    decision --> defer["NoAction / Defer"]
+    reply --> runtime["Runtime Supervisor"]
+    goal --> runtime
+    runtime --> controller["Delivery / Digital Body Controller"]
     controller --> outcome["Verified Outcome"]
     outcome --> belief
     outcome --> trace["Causal Trace / Offline Calibration Data"]
@@ -127,7 +135,7 @@ flowchart TB
 5. 检索器按当前状态调整情绪相关性与信息增益权重，同时强制加入可用反证。
 6. 注册策略库与主模型共同提出候选目标，主动推断层预测每个候选的后果和期望自由能。
 7. 按实验条件执行强制最优、Top-3 裁量或开放裁量；主模型输出结构化选择摘要，不记录私有长篇推理。
-8. 角色生成回复或高层 Goal，数字身体 Controller 负责具体计划、动作和结果验证。
+8. 角色输出类型化 `CharacterDecision`：文本回复、待审高层 Goal，或拒绝/等待；只有 Runtime 可以交付回复或把 Goal 送入动作、权限和验证流程。
 9. 结果作为新证据回写 belief，并记录预测误差供离线校准。
 
 ### 3.2 心跳与空闲路径
@@ -364,6 +372,16 @@ LLM 不直接写数据库状态，只提交结构化评价：
 - 角色可以请求暂停、缩短回复、转向恢复活动或拒绝普通任务。
 - 安全优先、用户优先、协商优先或角色自主优先均是 `ExperimentManifest` 中显式记录的研究条件，不允许在运行中热切换。
 
+### 7.5 类型化角色决策
+
+Homeostatic Harness 只负责候选后果预测与排序。Runtime 按 manifest 应用 `argmin_efe`、`llm_top3` 或 `llm_open` 条件，必要时让 Cognitive 主角色模型在允许集合中选择，再组装最终 `PolicyDecision`。`PolicyDecision` 不能直接产生外部副作用；主角色模型在允许候选基础上输出引用所选 `policy_id` 的 `CharacterDecision`：
+
+- `ReplyDecision`：候选文本回复，由 Runtime 负责交付并记录 delivery evidence；
+- `GoalProposal`：高层目标，必须继续经过 Runtime 的 revision、权限、审批、动作锁和结果验证；
+- `NoAction` / `Defer`：拒绝、等待更多证据或保持当前活动，不伪造一次外部动作。
+
+当前 M2 `FinalResponse` 通过 Cognitive adapter 映射为 `ReplyDecision`；它不能被解释为已经存在的 `GoalProposal`。`InteroceptiveSummary` 只提供状态、趋势和候选，不直接触发回复或动作。
+
 ---
 
 ## 8. 认知重评与自我重构
@@ -388,7 +406,7 @@ LLM 不直接写数据库状态，只提交结构化评价：
 
 这些变化只形成 `SelfReconstructionProposal`，不能在当前运行中生效。研究者审查 evidence、动机、预期影响和实验混杂后，可以在重启时创建新的 profile、模型或 Persona 版本。
 
-当前 Persona 数据库锁保持不变。未来实现优先通过插入新的 `persona_id/version` 表达批准后的重构，而不是 UPDATE 或 DELETE 既有 Persona。单次七天条件始终固定 Persona 与结构性自我模型。
+当前 Persona 数据库锁保持不变。未来实现优先通过插入新的 `persona_id/version` 表达批准后的重构，而不是 UPDATE 或 DELETE 既有 Persona。当前 in-memory GUI 的 `force_update()` 是仅供 development/debug mode 使用并带审计的绕锁入口；study/runtime mode 必须在 API 层拒绝该入口，不能只依赖数据库触发器。单次七天条件始终固定 Persona 与结构性自我模型。
 
 ---
 
@@ -412,6 +430,15 @@ LLM 不直接写数据库状态，只提交结构化评价：
 - “我总是需要某人”“某策略一定有效”等稳定认识仍须经过候选、证据积累和离线/受控固化流程。
 - 自我重评不能覆盖客观事实，只能新增角色视角或自我模型提案。
 
+### 9.3 现有 memory tier 的所有权
+
+M2 已实现 short/mid/long tier 分类、命中升格和到期审查。这些机制继续属于 Cognitive Harness：
+
+- Homeostasis 可以通过类型化状态偏置和 evidence 请求影响检索，但不能直接改写记忆 tier；
+- tier 实际变更必须推进 Cognitive service revision，并记录触发 event/correlation ID 和 analysis trace；
+- 后台 tier 任务必须服从 Runtime 定义的暂停、排空、停止和恢复对账语义，不能在 `PAUSED` 后继续产生未纳管状态写入；
+- `HomeostaticTransitionTrace` 不绕过现有 evidence、candidate、consolidation 或 tier 规则。
+
 ---
 
 ## 10. 概念数据契约
@@ -429,6 +456,9 @@ LLM 不直接写数据库状态，只提交结构化评价：
 - `PolicyCandidate`：目标、来源、预测转移、成功标准、权限、可逆性和自由能分解。
 - `ExpectedFreeEnergyBreakdown`：偏好风险、模糊性、信息价值、动作/打断成本和总分。
 - `PolicyDecision`：候选全集、选择模式、被选项、最低自由能项、排名差和结构化原因。
+- `CharacterDecision`：主角色模型的类型化输出 envelope，判别为 `ReplyDecision`、`GoalProposal` 或 `NoAction/Defer`。
+- `ReplyDecision`：待 Runtime 交付的文本回复及其来源 `PolicyDecision`、读取版本和交付要求。
+- `GoalProposal`：待 Runtime 做权限、审批、动作锁和验证的高层目标；自身不代表动作已经执行。
 - `SelfReconstructionProposal`：当前自我模型、建议变更、作用层级、证据、风险和审批状态。
 - `ExperimentManifest`：冻结的运行条件、模型版本、环境权限、数据治理和研究分组。
 - `HomeostaticTransitionTrace`：触发、前状态、appraisal、实际增量、后状态、候选、决策、行动结果和预测误差。
@@ -443,7 +473,7 @@ LLM 不直接写数据库状态，只提交结构化评价：
 ingest(observation_or_event, now) -> HomeostaticTransitionTrace
 tick(now) -> HomeostaticTransitionTrace
 propose_policies(context) -> list[PolicyCandidate]
-select_policy(candidates, mode) -> PolicyDecision
+rank_policies(candidates) -> list[PolicyCandidate]
 apply_outcome(decision, action_result, now) -> HomeostaticTransitionTrace
 render_interoception(snapshot) -> InteroceptiveSummary
 submit_reconstruction(proposal) -> PendingReview
@@ -451,7 +481,11 @@ submit_reconstruction(proposal) -> PendingReview
 
 所有操作显式传入 `now` 或可追踪时钟，测试和回放不得隐式依赖系统当前时间。
 
-对外服务契约将这些操作映射为 `ApplyEvent`、`ApplyHeartbeat`、`ApplyOutcome`、`GetSnapshot` 和 `ProposePolicies`，并统一携带 `event_id`、`correlation_id`、`character_id`、manifest revision、deadline、幂等键和 expected revision。服务拥有七维 belief、情绪与策略模型的领域存储和 revision；Runtime 只记录命令、结果与游标，并保留全局事件顺序和唯一外部执行权。完整三服务拓扑、恢复与失败语义见 [08-runtime-supervisor.md](08-runtime-supervisor.md)。
+对外服务契约将这些操作映射为 `ApplyEvent`、`ApplyHeartbeat`、`ApplyOutcome`、`GetSnapshot` 和 `ProposePolicies`，并统一携带 `event_id`、`correlation_id`、`character_id`、manifest revision、deadline、幂等键和 expected revision。服务拥有七维 belief、情绪与策略模型的领域存储和 revision；Runtime 只记录命令、结果与游标，并保留全局事件顺序和唯一外部执行权。
+
+服务 envelope 与领域 payload 分离：现有 Pydantic 对象可以继续作为 Cognitive payload，但服务响应必须另外携带 schema version、读取/提交 revision、acknowledged event cursor 和幂等结果状态。Homeostasis revision 是 V2 新能力，不声称当前模型已经具有这些字段。
+
+Cognitive 侧采用 [08-runtime-supervisor.md](08-runtime-supervisor.md) 定义的 `PrepareResponse` + `CommitInteraction` 边界：前者在 Runtime 给定的允许候选集合中生成 `CharacterDecision` 而不提交长期记忆，后者在 Runtime 获得回复交付、动作结果或 no-action decision evidence 后幂等提交 Session、episodic 和相关 Cognitive 写入。`InferencePipeline.respond()` 保留为兼容入口，但不限制 adapter 为获得幂等和恢复语义而拆分其内部计算与提交步骤。
 
 ---
 
@@ -492,7 +526,7 @@ watchdog state
 - 当前 manifest、权限模式、自我重构提案和 watchdog 状态；
 - 独立于角色模型与数字身体的人工暂停入口。
 
-运行中不允许热改参数。研究者若要修改 profile、选择模式、precision、权限或 Persona，必须停止当前实例、生成新 manifest/revision 并从指定快照重启。
+study/runtime mode 运行中不允许热改参数。研究者若要修改 profile、选择模式、precision、检索权重、模型、权限或 Persona，必须停止当前实例、生成新 manifest/revision 并从指定快照重启。development/debug mode 可以保留现有 GUI 调试能力，但界面必须持续显示当前模式，所有写入必须审计，且该运行不得混入正式研究条件数据。
 
 ### 11.3 `ExperimentManifest`
 
@@ -524,6 +558,17 @@ watchdog state
   "watchdog_action": "pause_preserve_state"
 }
 ```
+
+### 11.4 与 M2 记录层的映射
+
+V2 复用 M2 已有的版本戳、阶段 provenance 和追加写 trace，但不混淆四类记录的事实权威性：
+
+- Runtime journal 是生命周期、全局事件顺序、服务命令、动作与恢复对账的事实来源；
+- Cognitive/Homeostasis domain store 分别是领域状态及 revision 的事实来源；
+- JSONL analysis trace 记录推理阶段、检索、appraisal、自由能和状态解释，不用于恢复全局事件顺序；
+- successful-call CallLog 是成功顶层调用的完整诊断包，异常调用不保证生成，不能作为恢复 journal。
+
+每个研究调用显式映射 `RuntimeEvent.event_id`、`correlation_id`、领域命令 `idempotency_key`、Cognitive/Homeostasis revision、推理 `call_id`/GUI `run_id` 和 Runtime journal sequence。失败命令至少在 Runtime journal 和适用的追加写 trace 中留痕，不能因为没有成功 CallLog 而从实验历史消失。Homeostasis trace 在现有 `schema_version/model_version/prompt_version` 之外，增加 manifest 与 A/B/C/precision/coupling 版本。
 
 ---
 
@@ -663,16 +708,175 @@ LLM 文本生成本身允许非确定，但每次输出、采样参数和结构�
 - 十个正常场景和八个失败场景都有触发、预期行为与可观察证据。
 - 三个裁量条件只改变策略选择权，不改变 Persona、记忆起点、环境快照或主动推断评分。
 - 真实工作环境的授权范围、高影响确认、备份、撤权和暂停责任写入每个 manifest。
+- development/debug mode 与 study/runtime mode 的写权限边界明确，正式研究不能调用未授权热改入口。
+- 当前已实现、已有扩展点、设计接口、迁移前置能力和目标架构的表述可以分别核对，不把文档接口声称为现有代码。
 - 文档始终以“V2 研究提案”描述，不声称当前代码已经支持上述能力。
 
 ---
 
 ## 17. 与现有 Harness 的关系
 
-- 现有 L/M/S `PsychState` 保留。未来 `Homeostasis` 作为类型化并列子系统，`short.mood` 只提供派生兼容视图。
-- 现有 `RelationshipState` 保留；全局社会连接需要使用它作为关系特定的满足/压力输入，不与 closeness、trust、attachment 合并。
-- 现有 Persona 数据库触发器继续禁止 UPDATE/DELETE；批准后的 Persona 重构通过新版本表达。
-- 现有 Memory Writer 证据链继续约束长期事实；内稳态 trace 不绕过候选与固化流程。
-- 现有 Context Compiler 未来只接入 `InteroceptiveSummary`，不把原始概率矩阵塞入角色 prompt。
-- 现有 Perception/Action Backend 边界不变；V2 只在其上增加状态更新、目标级策略与结果反馈。
-- 现有 trajectory provenance 扩展为完整的内稳态因果链，继续坚持模型/prompt/schema/上下文来源全部可追踪。
+- **已实现（M2）：** `InferencePipeline.respond()`、Persona / Relationship / L/M/S Psych / World 投影、Memory Writer 与混合检索、Session window、Context Compiler、GUI 预设/配置持久化、JSONL trace、成功调用 CallLog 和 memory tier 继续作为 Cognitive Harness 基线。
+- **并列状态：** 现有 L/M/S `PsychState` 保留；未来 `Homeostasis` 是类型化并列子系统，`short.mood` 只提供派生兼容视图。现有 `RelationshipState` 作为关系特定输入，不与全局 `social_connection` 合并。
+- **Persona 边界：** 数据库触发器继续禁止 UPDATE/DELETE；in-memory debug bypass 只允许在 development/debug mode 使用。批准后的重构通过新的 `persona_id/version` 和新 manifest 表达。
+- **记忆边界：** 现有 evidence、candidate、consolidation 与 tier 规则继续约束长期事实。Homeostasis 只提供检索偏置和证据上下文，不直接改 tier 或写语义事实。
+- **推理接入：** `FinalResponse` 已由 adapter 映射为 `ReplyDecision`，Homeostasis 候选由 Runtime 心跳读取；`InteroceptiveSummary` 注入和完整三条件裁量仍待实现。
+- **身体端口：** 当前代码只存在 `PerceptionBackend.observe(...) -> WorldState` 扩展点；统一 `Observation` 流和 `ActionBackend` 都是尚未实现的目标接口。
+- **服务迁移：** service revision、acknowledged event cursor、幂等 command ledger、持久 Session 和 prepare/commit 边界已落地；Windows `start.ps1` 已完成四进程开发编排。
+- **可追踪性：** 现有 JSONL trace、CallLog 和 compiler provenance 扩展为完整内稳态因果链，但 Runtime journal 与领域 store 分别保持编排和状态事实权威性。
+
+---
+
+## 18. 代码改动实施方案
+
+本节把前述研究设计映射为当前仓库上的代码迁移计划。实现不采用“在现有 `InferencePipeline.respond()` 中直接加入七维状态”的方式，而先建立持久状态、幂等命令和交付后提交边界，再接入 Homeostatic Harness。完整实现拆成七个可独立验收的阶段；每个阶段都必须保持 Runtime 是唯一外部副作用所有者、Cognitive 与 Homeostasis 不直连、study/runtime mode 不绕过 manifest 三个不变量。
+
+### 18.1 当前代码基线与前置缺口
+
+- 当前 `InferencePipeline.respond()` 在推理开始时即追加用户 Session，在生成 reply segment 时追加角色 Session，并在返回前通过 `_record()` 写入 episodic、Curator 和相关审计。目标实现必须把这些副作用移到获得 delivery、ActionResult 或 no-action evidence 后的 `CommitInteraction`。
+- 当前 `SessionStore` 是进程内最近窗口，不具备持久 revision、event cursor、幂等提交或崩溃恢复语义。
+- 当前 GUI 直接创建、替换和销毁 `MemoryService`、Pipeline、LLM 与 embedding client；目标 GUI 只作为 Runtime Control Plane 客户端。
+- 当前 memory tier worker 由进程内 `ThreadPoolExecutor` 驱动，顶层调用返回后仍可能继续写入；迁移时必须增加 maintenance ledger、pause/drain/shutdown 和 recovery 语义。
+- 当前 Pydantic `EpisodicEvent` 已有 `tier`、`uniqueness`、`expire_at`、`hit_count` 等字段，但 PostgreSQL schema 和 repository 尚未完整持久化这些字段。该缺口必须在引入 Cognitive revision 之前修复。
+- 当前 `query_with_conflicts()` 已能执行显式反向检索，但常规 `SituationStateBuilder` 仍调用普通 `query()`；尚未实现内稳态检索偏置、反证目标配额与分组得分解释。
+
+### 18.2 P0：持久化基线与共享契约
+
+目标：先固定跨服务 envelope、实验条件和恢复所需的最小持久状态，不改变现有推理对外行为。
+
+新增共享契约：
+
+- `harness/contracts/envelope.py`：`DomainCommandEnvelope`、`DomainCommandResult`、`VersionVector`、deadline、expected revision、acknowledged event cursor 和幂等状态；
+- `harness/contracts/decisions.py`：`CharacterDecision` 判别联合、`ReplyDecision`、`GoalProposal`、`NoActionDecision`、`DeferDecision`、`PreparedResponse` 与 delivery/outcome evidence；
+- `harness/research/manifest.py`：冻结的 `ExperimentManifest`、版本引用、control mode、选择条件、授权范围、canonical hash 和加载校验。
+
+数据库修改通过新的 Alembic migration 完成，不回写已经发布的 `001_initial`：
+
+- 补齐 episodic tier 生命周期列及 repository round-trip；
+- 新增持久 Session turn 表；
+- 新增 Cognitive 单调 revision 与 acknowledged Runtime event cursor；
+- 新增 Cognitive command ledger 与 maintenance ledger；
+- 为 `character_id + command_type + idempotency_key` 建立唯一约束，请求 hash 不一致时返回幂等冲突。
+
+验收门：现有 `InferencePipeline.respond()` 测试全部保持通过；PostgreSQL tier round-trip、manifest 冻结与 hash、service envelope schema 均有测试。
+
+### 18.3 P1：Cognitive `PrepareResponse` / `CommitInteraction`
+
+目标：把生成候选和形成长期体验分离，同时保留 `respond()` 兼容入口。
+
+预计新增或修改：
+
+- `harness/cognitive/service.py`：实现 `PrepareResponse`、`CommitInteraction` 和 `GetCognitiveSnapshot`；
+- `harness/cognitive/store.py`：Session、prepared response、command ledger、revision/cursor 和 maintenance 提交；
+- `harness/pipeline/pipeline.py`：把 ingest/parse/state/retrieval/compile/generate 与 Session/Memory 写入拆开；
+- `harness/pipeline/session.py`：改为 Session repository protocol 的内存 adapter，正式运行使用持久实现。
+
+`PrepareResponse` 只读取不可变快照并返回 `PreparedResponse`，不得追加 Session、写 episodic、调用 Curator 或生成 tier maintenance。`CommitInteraction` 接受以下三类证据之一：
+
+- `ReplyDecision` 的 delivery evidence；
+- `GoalProposal` 的已验证 action outcome；
+- `NoAction/Defer` 的 decision evidence。
+
+提交必须在单个 Cognitive transaction 中推进 Session、episodic、同步 Curator/审计、cognitive revision 和 acknowledged cursor。同一幂等键重复调用返回原结果，不重复任何副作用。旧 `respond()` 通过 adapter 顺序执行 prepare、兼容性交付和 commit，继续返回当前 `FinalResponse`。
+
+验收门：prepare 零持久副作用；commit 崩溃窗口可恢复；重复提交不重复 Session、episodic、Curator 或 audit；旧 API 的结果和阶段 trace 保持兼容。
+
+### 18.4 P2：确定性 Homeostasis 内核
+
+目标：先完成可回放的七维闭环，再接入 LLM appraisal。
+
+新增 `harness/homeostasis/` 包：
+
+- `models.py`：`HomeostaticProfile`、`FactorBelief`、`HomeostaticSnapshot`、`EventAppraisal`、`CoreAffect`、`DerivedEmotion`、`InteroceptiveSummary`、`PolicyCandidate`、`ExpectedFreeEnergyBreakdown`、`PolicyDecision`、`SelfReconstructionProposal` 和 `HomeostaticTransitionTrace`；
+- `targets.py`：Persona baseline、circadian/task/event modifier、动态目标带与 hard bounds；
+- `integrator.py`：自然漂移、A/B/C、source precision、bounded delta、coupling 和 belief normalization；
+- `affect.py`：valence/arousal/dominance、派生情绪进入/退出阈值和最短保持期；
+- `appraisal.py`：可注入 `AppraisalBackend`，规则 backend 用于测试，LLM backend 只返回结构化建议；
+- `engine.py`：实现 `ingest/tick/propose_policies/rank_policies/apply_outcome/render_interoception/submit_reconstruction`；
+- `store/`：append-only snapshot revision、command ledger、pending reconstruction 和只追加 transition trace；
+- `watchdog.py`：非法概率、NaN、饱和、振荡、不可达偏好、无进展循环与时钟异常检查。
+
+profile 作为版本化 JSON 资产存入 `presets/homeostasis/`。所有计算显式接收 `now`；测试和重放禁止读取隐式系统当前时间。暂停、休眠或停机期间不补算 heartbeat。
+
+验收门：所有后验可归一、连续值受 hard bounds 约束、建议增量与实际增量分别保留；同一 manifest/seed/snapshot/event 能重建相同 belief、affect、candidate 和排序。
+
+### 18.5 P3：Runtime Facade、journal 与调度
+
+目标：在拆分进程前，先用同构 in-process adapter 建立唯一事件顺序与唯一外部交付权。
+
+新增 `harness/runtime/`：
+
+- `supervisor.py`：生命周期、事件调度、跨领域命令、版本向量、暂停/恢复和 reconciliation；
+- `events.py`：`RuntimeEvent`、优先级、receive/process sequence 与队列降载；
+- `journal.py`：checksum 串联的分段追加写 journal、command intent/result 和 delivery/action outcome；
+- `scheduler.py`：等待新事件或最近 deadline 的真实时间 scheduler；
+- `checkpoint.py`：从 journal 推导出的恢复加速索引；
+- `adapters.py`：in-process Cognitive/Homeostasis client、Reply DeliveryBackend 与目标 ActionBackend protocol。
+
+正常事件顺序固定为：
+
+```text
+accept RuntimeEvent + append journal
+→ Homeostasis ApplyEvent
+→ Cognitive PrepareResponse
+→ Runtime 校验 deadline/revision/permission
+→ deliver reply / execute Goal / record no-action
+→ Homeostasis ApplyOutcome + Cognitive CommitInteraction
+→ append committed revisions/cursors + complete event
+```
+
+首个纵切只支持文本回复交付和 `NoAction/Defer`。`GoalProposal` 可以生成和审计，但在 ActionBackend、权限检查、独立确认与结果验证完成前不得产生外部副作用。
+
+验收门：command intent 总是先于 RPC；迟到或旧 revision 结果不交付；journal 尾部截断、Runtime 崩溃和领域提交后响应丢失都能对账；GUI 断开不影响 Runtime 生命周期。
+
+### 18.6 P4：策略裁量与记忆反馈
+
+目标：实现首要研究假设所需的三个选择条件，并控制状态一致检索的自强化风险。
+
+- 注册策略与模型提案统一校验为 `PolicyCandidate`；缺少成功标准、权限、可逆性或验证方法的模型提案不得进入可行集。
+- Homeostasis 保存完整 EFE 分解并使用确定性 tie-break 排序，不负责最终人格选择。
+- Runtime 根据 manifest 构造 `argmin_efe`、`llm_top3` 或 `llm_open` 允许集合；Cognitive 的结构化输出必须引用允许集合内的 `policy_id`。
+- `RetrievalQuery` 增加类型化 homeostatic bias；`ScoreBreakdown` 增加状态相关、信息增益和反证原因，而不是把权重拼进自由文本。
+- 检索返回 `RetrievalBundle`，分别保留 state-consistent evidence、counterevidence、配额和 `counterevidence_exhausted`；只要存在合格反证至少返回一条，目标配额为情绪相关候选的 25%。
+- `ContextCompiler` 增加高优先级 `InteroceptiveSummary` segment，不向角色模型暴露原始 A/B/C、完整 belief 或 EFE 内部矩阵。
+
+验收门：三个条件只改变最终允许选择集合；Persona、初始 snapshot、候选全集、可行性检查和 EFE 评分完全一致；trace 能重建 chosen/argmin、rank divergence、counterfactual 与 prediction error。
+
+### 18.7 P5：watchdog、研究控制面与 GUI 迁移
+
+目标：把 development/debug 与 study/runtime 的边界落实为 Runtime 权限检查，而不是界面约定。
+
+Runtime Control Plane 把命令分为：
+
+- `diagnostic`：只读状态、trace、健康、诊断和 checkpoint；
+- `debug_mutation`：Persona/Psych/Relationship/Memory/tuning/preset 等开发写入；
+- `manifest_change`：模型、profile、precision、检索权重、选择条件和授权范围变更。
+
+study/runtime mode 对未授权 mutation 记录拒绝事件且不转发给 Cognitive；manifest change 只能停止实例、创建新 revision 后重启。GUI 的 chat、preset、config、reset、debug 和角色重命名全部迁为 Runtime command；GUI 不再创建或重建唯一 Cognitive 实例。
+
+研究视图增加七维时间线、appraisal 建议/应用差值、耦合、情绪滞回、检索反证、候选 EFE、rank divergence、prediction error、manifest、watchdog 和独立人工暂停入口。
+
+验收门：study/runtime mode 没有可绕过的热改入口；角色模型和数字身体不能修改 manifest、授权、watchdog 或 trace；所有拒绝、暂停和人工审批都进入 journal。
+
+### 18.8 P6：三进程拆分与研究场景验收
+
+目标：把同构 adapter 替换为版本化 HTTP command，并在真实进程边界验证恢复语义。
+
+- 新增 Runtime、Cognitive、Homeostasis 独立启动入口、健康端点和私有 service token；
+- 服务启动时执行 schema/identity/manifest/revision/cursor 握手；任一不兼容则 Runtime 不进入 `RUNNING`；
+- 自动重试只用于幂等命令并复用原键；deadline 后响应只用于诊断或 reconciliation；
+- 更新 `start.ps1/start.sh/stop.ps1/stop.sh` 与部署编排，使 GUI 与三个服务可以独立重启；
+- 将 §14 的十个正常场景和 §15 的八个失败场景编码为 `tests/scenarios/`；
+- 增加三进程故障注入：GUI 断连、单领域服务重启、Runtime 重启、journal 不可写、RPC 迟到、maintenance drain、未决 delivery/action 对账和 watchdog 暂停。
+
+正式研究开始前还必须完成长期 soak、备份/恢复、令牌撤权、高影响确认和数据留存演练。不能以单元测试通过代替真实进程边界和外部副作用恢复验证。
+
+### 18.9 全阶段合并门槛
+
+- 每个状态更新都显式传入可追踪时钟；测试不依赖隐式系统当前时间。
+- 每个领域写入都有 expected revision、稳定幂等键、request hash 和 acknowledged Runtime event cursor。
+- LLM 只生成结构化 appraisal、proposal 或 selection，不能直接写领域状态或产生外部副作用。
+- Runtime journal、Cognitive/Homeostasis store、analysis trace 和 successful-call CallLog 的事实权威性保持分离。
+- trace 同时保留原始 evidence、建议值、bounded/applied delta、读取/提交版本和失败信息；失败路径不能因缺少成功 CallLog 而消失。
+- Persona、profile、A/B/C、precision、coupling、模型和选择条件在 study/runtime 单次运行中冻结。
+- 每个阶段保持现有 M2 行为测试通过，并为新增恢复不变量增加单元、契约、集成与场景测试。

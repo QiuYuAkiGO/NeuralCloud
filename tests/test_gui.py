@@ -5,6 +5,7 @@ import json
 import pytest
 
 from gui.observer import RecordingObserver
+from gui.presets import DEFAULT_PRESET_ID
 from harness.config import Settings
 from harness.llm.client import REVISED_IN_CHARACTER_REPLY
 from harness.pipeline.pipeline import InferencePipeline
@@ -148,7 +149,9 @@ def test_api_status_and_index(api_client) -> None:
     assert 'id="user-name"' in home.text
     assert 'id="btn-presets"' in home.text
     assert 'id="chat-tabs"' in home.text
-    assert body["presets"]["active_id"] == "vaelith"
+    assert body["presets"]["active_id"] == DEFAULT_PRESET_ID
+    default_summary = next(item for item in body["presets"]["items"] if item["preset_id"] == DEFAULT_PRESET_ID)
+    assert default_summary["name"] == "Vaelith · 日常"
     css = api_client.get("/static/styles.css")
     assert css.status_code == 200
     js = api_client.get("/static/app.js")
@@ -196,6 +199,8 @@ def test_api_chat_websocket_fast_path(api_client) -> None:
 
 
 def test_api_chat_websocket_deep_path(api_client) -> None:
+    selected = api_client.post("/api/presets/open", json={"preset_id": "vaelith"})
+    assert selected.status_code == 200
     with api_client.websocket_connect("/ws") as ws:
         response = api_client.post(
             "/api/chat",
@@ -465,7 +470,10 @@ def test_gui_settings_file_roundtrip(tmp_path) -> None:
     assert loaded.aux_api_key == "sk-aux"
     assert loaded.user_name == "用户"
     assert loaded.character_name == ""
-    assert load_gui_settings(tmp_path / "missing.json").mode == "demo"
+    assert loaded.active_preset_id == DEFAULT_PRESET_ID
+    missing = load_gui_settings(tmp_path / "missing.json")
+    assert missing.mode == "demo"
+    assert missing.active_preset_id == DEFAULT_PRESET_ID
 
 
 def test_gui_settings_corrupt_file_falls_back(tmp_path) -> None:

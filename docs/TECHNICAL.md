@@ -85,11 +85,14 @@ infra/
   llm/            # Modelfile.character（Ollama 主模型：num_ctx=16384）
   trace/          # JsonlTracer / NullTracer / 成功调用 CallLog
 gui/              # FastAPI + WebSocket 可视化：server / service / observer / debug / persist / presets / demo_seed + static/
-presets/builtin/  # 出厂角色模板（Vaelith JSON）
+  runtime_server.py # Runtime 控制面的无状态 GUI facade
+harness/homeostasis/ # 七维 belief、积分、情感、策略、profile revision 与文件持久化
+harness/cognitive/   # Cognitive 独立服务 composition root
+presets/builtin/  # 出厂角色模板（Vaelith 日常版为默认，原设定版保留）
 eval/             # 场景评测 + 检索延迟基线 + 角色扮演基准（CharacterEval / RoleEval / TimeChara）
 tests/            # 单元与集成测试（pytest，全量不依赖 GPU/DB）
 docs/             # TECHNICAL.md（实现手册）+ harness/ 设计文档集 00–06
-start.* / stop.*  # Windows / WSL2 一键启停 GUI
+start.ps1 / stop.ps1 # Windows 四进程编排；start.sh / stop.sh 保留单进程兼容路径
 ```
 
 ### 2.2 模块协作总图
@@ -400,6 +403,8 @@ Raw Event → Curator 提出 ops → WriterPipeline 执行
 
 ### 9.1 架构（`gui/`）
 
+- **`runtime_server.py`**：Windows 四进程拓扑使用的 GUI facade。它只持有 Runtime control token，把现有 `/api/*` 路由代理为 Runtime 控制命令，并把 Runtime SSE 转成浏览器 WebSocket；浏览器不直接访问 Cognitive/Homeostasis。
+
 - **`server.py`**：FastAPI 应用。REST：`POST /api/chat`（发消息，`asyncio.to_thread` 跑同步 pipeline，`run_lock` 串行化）、`GET /api/status`、预设库（`GET /api/presets`、`POST /api/presets/{open,apply,new,restore}`、`DELETE /api/presets/{id}`）、`POST /api/config`（`demo` / `live` / `ollama` 切换与端点配置）、`GET /api/models`（探活端点模型列表）、`POST /api/reset`（当前预设恢复出厂）、`POST /api/speakers`、`GET /api/debug/state` + 7 个调试写入端点。WebSocket `/ws`：订阅者队列广播，25s 心跳。静态托管 `gui/static/`（三栏原生 JS 界面）。
 - **`service.py`**：`HarnessChatService` 包装 pipeline。`rebuild()` 重建 Settings → LLM 客户端（`demo`=MockLLM；`live`/`ollama`=OpenAI 兼容 + aux 路由 + 探活 + 异步预热；`ollama` 未填 URL 时默认 `:11434`）→ embedding 客户端（demo=MockEmbedding；live/ollama=`build_embedding_client`：可达则 `GuardedEmbedding(OpenAICompatEmbedding)`，否则 Mock）→ 按当前预设 hydrate 记忆（种子缺向量时批量补 embedding；模式切换会先 flush 存档，不再丢调试改动）。GUI 强制 `call_log_enabled=true`、`validator_sample_rate=1.0`（Fast Path 也全量跑 Validator，便于观察）。状态快照 `snapshot_state()` 聚合 persona/relationship/psych/world/各 store 计数/完整聊天记录/打开的预设选项卡/端点可达性（含 embedding backend）。
 - **`observer.py`**：`QueueObserver` 把 pipeline 每个阶段的结构化结果序列化后 `call_soon_threadsafe` 广播到所有 WebSocket 订阅者——实现**阶段级实时推送**（非 token 流式）。`RecordingObserver` 供测试。
@@ -416,6 +421,8 @@ python -m gui.server   # http://127.0.0.1:8765
 ```
 
 三栏界面：左角色对话（预设选项卡）、中九阶段推理时间线（每阶段完整结构化输出+延迟+token）、右 Persona/关系/心理/世界/记忆计数。三种模式：`demo`（内存 + MockLLM + MockEmbedding）、`live`（任意 OpenAI 兼容端点）、`ollama`（未填 URL 时默认 `http://127.0.0.1:11434/v1`，并从 `/models` 或 Ollama `/api/tags` 拉模型列表）。顶栏**预设**打开模板库，**设置**切模式。发"早上好。"看 Fast Path；发"你昨天不是说不会再管我了吗？"看 Deep Path（Interpreter + Validator 局部重生成）。调试与对话改动自动写回当前预设工作副本；切换模式不会丢存档；**重置**把当前预设恢复为出厂模板。成功对话落盘 `traces/calls/YYYYMMDD/{run_id}.json`（gitignore）。
+
+使用 `start.ps1` 时右栏额外展示七维 Homeostasis value、目标带、posterior、precision、情感、候选策略和 watchdog；顶栏**内稳态**可校验并保存新的 immutable profile/manifest revision，下一次 `start.ps1` 激活。
 
 ---
 

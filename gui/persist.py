@@ -10,6 +10,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, ValidationError
 
 from gui.debug import TuningPatch, apply_tuning
+from gui.presets import DEFAULT_PRESET_ID
 from harness.config import Settings
 
 Mode = Literal["demo", "live", "ollama"]
@@ -44,8 +45,8 @@ class GuiPersistedSettings(BaseModel):
     aux_api_key: str | None = None
     user_name: str = DEFAULT_USER_NAME
     character_name: str = ""
-    active_preset_id: str = "vaelith"
-    open_preset_ids: list[str] = Field(default_factory=lambda: ["vaelith"])
+    active_preset_id: str = DEFAULT_PRESET_ID
+    open_preset_ids: list[str] = Field(default_factory=lambda: [DEFAULT_PRESET_ID])
     tuning: TuningPatch | None = None
 
 
@@ -92,10 +93,10 @@ def snapshot_gui_settings(
     settings: Settings,
     user_name: str = DEFAULT_USER_NAME,
     character_name: str = "",
-    active_preset_id: str = "vaelith",
+    active_preset_id: str = DEFAULT_PRESET_ID,
     open_preset_ids: list[str] | None = None,
 ) -> GuiPersistedSettings:
-    active = (active_preset_id or "vaelith").strip() or "vaelith"
+    active = (active_preset_id or DEFAULT_PRESET_ID).strip() or DEFAULT_PRESET_ID
     opened = [item for item in (open_preset_ids or [active]) if item]
     if active not in opened:
         opened = [active, *[item for item in opened if item != active]]

@@ -1,87 +1,76 @@
-﻿# 停止 NeuralCloud GUI 服务（python -m gui.server，默认端口 8765）
 param(
     [switch]$Quiet
 )
 
 $ErrorActionPreference = "Continue"
 $Root = $PSScriptRoot
-$PidFile = Join-Path $Root ".gui.pid"
-$Port = 8765
+$RegistryPath = Join-Path $Root ".neuralcloud.pids.json"
+$LegacyPidPath = Join-Path $Root ".gui.pid"
 
 function Write-Info([string]$Message) {
-    if (-not $Quiet) {
-        Write-Host $Message
+    if (-not $Quiet) { Write-Host $Message }
+}
+
+function Test-ProcessIdentity([int]$PidValue, [string]$Module) {
+    $process = Get-CimInstance Win32_Process -Filter "ProcessId=$PidValue" -ErrorAction SilentlyContinue
+    if (-not $process -or -not $process.CommandLine) { return $false }
+    return $process.Name -match "^python(w)?\.exe$" -and $process.CommandLine -match [regex]::Escape($Module)
+}
+
+$entries = @()
+if (Test-Path -LiteralPath $RegistryPath) {
+    try {
+        $registry = Get-Content -Raw -LiteralPath $RegistryPath | ConvertFrom-Json
+        $entries = @($registry.services)
+    } catch {
+        Write-Info "The PID registry is corrupt. Unknown port owners were not stopped: $RegistryPath"
+        exit 1
     }
 }
 
-function Get-ServicePids {
-    $ids = New-Object "System.Collections.Generic.HashSet[int]"
-
-    if (Test-Path $PidFile) {
-        $raw = (Get-Content -LiteralPath $PidFile -ErrorAction SilentlyContinue | Select-Object -First 1)
-        if ($raw -and ($raw.Trim() -match '^\d+$')) {
-            $candidate = [int]$raw.Trim()
-            if (Get-Process -Id $candidate -ErrorAction SilentlyContinue) {
-                [void]$ids.Add($candidate)
-            }
-        }
+if ($entries.Count -eq 0 -and (Test-Path -LiteralPath $LegacyPidPath)) {
+    $raw = Get-Content -LiteralPath $LegacyPidPath -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($raw -and "$raw" -match "^\d+$") {
+        $entries = @([pscustomobject]@{ name = "legacy-gui"; pid = [int]$raw; module = "gui" })
     }
-
-    $netstat = netstat -ano 2>$null
-    if ($netstat) {
-        foreach ($line in $netstat) {
-            $text = "$line"
-            if ($text -notmatch "LISTENING") { continue }
-            if ($text -notmatch ":$Port\s") { continue }
-            $parts = @($text -split "\s+" | Where-Object { $_ })
-            if ($parts.Count -lt 2) { continue }
-            $owner = $parts[-1]
-            if ($owner -match "^\d+$" -and [int]$owner -gt 4) {
-                [void]$ids.Add([int]$owner)
-            }
-        }
-    }
-
-    Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
-        Where-Object {
-            $_.Name -match "^python(w)?\.exe$" -and
-            $_.CommandLine -and
-            $_.CommandLine -match "gui\.server|-m gui"
-        } |
-        ForEach-Object { [void]$ids.Add([int]$_.ProcessId) }
-
-    return @($ids)
 }
 
-$pids = @(Get-ServicePids)
-if ($pids.Count -eq 0) {
-    Write-Info "服务未在运行。"
-    if (Test-Path $PidFile) {
-        Remove-Item -LiteralPath $PidFile -Force -ErrorAction SilentlyContinue
-    }
+if ($entries.Count -eq 0) {
+    Write-Info "NeuralCloud services are not running."
+    Remove-Item -LiteralPath $RegistryPath, $LegacyPidPath -Force -ErrorAction SilentlyContinue
     exit 0
 }
 
-foreach ($id in $pids) {
-    Write-Info "正在停止进程 PID=$id ..."
-    Stop-Process -Id $id -Force -ErrorAction SilentlyContinue
+$failures = New-Object System.Collections.Generic.List[string]
+$ordered = @($entries | Sort-Object { switch ($_.name) { "gui" { 0 } "runtime" { 1 } "homeostasis" { 2 } default { 3 } } })
+foreach ($entry in $ordered) {
+    $pidValue = [int]$entry.pid
+    if (-not (Get-Process -Id $pidValue -ErrorAction SilentlyContinue)) { continue }
+    if (-not (Test-ProcessIdentity $pidValue ([string]$entry.module))) {
+        [void]$failures.Add("$($entry.name): PID=$pidValue command identity mismatch")
+        continue
+    }
+    Write-Info "Stopping $($entry.name) PID=$pidValue ..."
+    Stop-Process -Id $pidValue -Force -ErrorAction SilentlyContinue
 }
 
 $deadline = (Get-Date).AddSeconds(10)
+$remaining = @()
 do {
+    $remaining = @($entries | Where-Object { Get-Process -Id ([int]$_.pid) -ErrorAction SilentlyContinue })
+    if ($remaining.Count -eq 0) { break }
     Start-Sleep -Milliseconds 200
-    $left = @(Get-ServicePids)
-} while ($left.Count -gt 0 -and (Get-Date) -lt $deadline)
+} while ((Get-Date) -lt $deadline)
 
-if (Test-Path $PidFile) {
-    Remove-Item -LiteralPath $PidFile -Force -ErrorAction SilentlyContinue
+foreach ($entry in $remaining) {
+    [void]$failures.Add("$($entry.name): PID=$($entry.pid) did not stop")
 }
 
-$left = @(Get-ServicePids)
-if ($left.Count -gt 0) {
-    Write-Info "未能完全停止服务，残留 PID: $($left -join ', ')"
-    exit 1
+if ($failures.Count -eq 0) {
+    Remove-Item -LiteralPath $RegistryPath, $LegacyPidPath -Force -ErrorAction SilentlyContinue
+    Write-Info "NeuralCloud four-process runtime stopped."
+    exit 0
 }
 
-Write-Info "服务已停止。"
-exit 0
+Write-Info "Some services could not be stopped: $($failures -join '; ')"
+exit 1

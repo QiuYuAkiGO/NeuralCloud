@@ -8,9 +8,9 @@
 
 **文档**：
 
-**内稳态 Harness 研究设计（V2 提案，尚未实现）**：[docs/harness/07-homeostatic-harness-research-design.md](docs/harness/07-homeostatic-harness-research-design.md)
+**内稳态 Harness 研究设计（V2；确定性开发纵切已实现）**：[docs/harness/07-homeostatic-harness-research-design.md](docs/harness/07-homeostatic-harness-research-design.md)
 
-**Runtime Supervisor 与三服务架构设计（V2 提案，尚未实现）**：[docs/harness/08-runtime-supervisor.md](docs/harness/08-runtime-supervisor.md)
+**Runtime Supervisor 与三服务架构（V2 Runtime 核心与 Windows 四进程开发拓扑已实现）**：[docs/harness/08-runtime-supervisor.md](docs/harness/08-runtime-supervisor.md)
 
 可视化 GUI 已接入（阶段级实时推送）。本轮**不包含** token 流式生成 / TTS、数字身体采集、Experience Evaluator。默认 MockLLM，测试不依赖 GPU。
 
@@ -58,19 +58,25 @@ PostgreSQL 驱动为可选 extra：`pip install -e ".[dev,postgres]"`（`postgre
 
 无 GPU、无 Docker 时，默认 in-memory store + MockLLM/MockEmbedding，单元测试与 eval 场景仍可全绿。
 
+## Runtime Supervisor
+
+`harness.runtime` 提供 `RuntimeSupervisor`、journal/checkpoint、事件队列、心跳、watchdog 和认证控制面；`harness.homeostasis` 提供七维确定性状态、belief、情感、策略排序、幂等 ledger 与本地持久化。Windows `start.ps1` 默认通过 `HttpCognitiveClient` / `HttpHomeostasisClient` 启动 Cognitive、Homeostasis、Runtime、GUI 四个独立进程；`PassiveHomeostasisAdapter` 仅保留给隔离测试。
+
+Runtime 的编排事实写入 hash-chain 分段 JSONL journal，领域状态仍由 Cognitive/Homeostasis store 负责；checkpoint 只保存启动索引和领域游标。相关恢复、幂等、暂停汇总和队列降载验收见 `tests/test_runtime_supervisor.py`。
+
 ## 可视化 GUI
 
-三栏 Web 界面：左侧角色对话，中间九阶段推理时间线（每阶段完整结构化输出 + 延迟 + token 计量），右侧 Persona / 关系 / 心理 / 世界 / 记忆计数。发送后通过 WebSocket **按阶段**推送结果（非 token 流式）。另含**调试面板**：关系滑条、心理三层编辑、人格编辑（绕锁并记审计）、事件/语义/候选编辑、重生成解读、检索权重等调参；GUI 配置（模式/端点/称呼/调参）持久化到本地 JSON，重启自动恢复。
+三栏 Web 界面：左侧角色对话，中间九阶段推理时间线，右侧 Persona / 关系 / 心理 / 世界 / 记忆及七维 Homeostasis。顶栏可查看四服务健康、Runtime 生命周期、manifest/profile revision；内稳态面板展示 belief、目标带、precision、情感、候选策略并可在开发模式保存新的参数 revision。保存不会热改运行实例，重新执行 `start.ps1` 后原子激活。
 
 ```bash
 pip install -e ".[dev,gui]"
-python -m gui.server
+python -m gui.server  # 兼容的单进程 GUI
 # 浏览器打开 http://127.0.0.1:8765
 ```
 
-也可用一键脚本（已在运行则自动重启，日志写 `logs/`）：Windows 用 `start.ps1` / `stop.ps1`，WSL2/Linux 用 `start.sh` / `stop.sh`。
+Windows 推荐使用 `start.ps1` / `stop.ps1` 启停完整四进程开发拓扑（已在运行则原子重启，分服务日志写入 `logs/`）。`start.sh` / `stop.sh` 当前仍是兼容的单进程 GUI 路径。
 
-默认 **demo 模式**：内存记忆 + MockLLM + 出厂预设 Vaelith（`presets/builtin/vaelith.json`，含 `evt_09010`–`evt_09018` 共 9 条角色设定事件）。顶栏「预设」可打开/套用模板；调试与对话写回 `data/presets/` 工作副本。可在顶栏「设置」切换模式：`demo`（Mock）、`live`（任意 OpenAI 兼容端点）、`ollama`（未填 URL 时默认 `http://127.0.0.1:11434/v1`）。端点变量为 `NC_LLM_BASE_URL` / `NC_LLM_API_KEY`（代码默认 `http://127.0.0.1:8080/v1`）；另可配 `NC_AUX_LLM_*` 辅助小模型端点。切换模式时不会丢掉当前预设存档；对话阶段才会请求 LLM。
+默认 **demo 模式**：内存记忆 + MockLLM + 日常向 Vaelith 出厂预设（`presets/builtin/vaelith-daily.json`，含 6 条生活情境记忆和 3 条稳定语义事实）。原设定向模板仍保留为 `presets/builtin/vaelith.json`。顶栏「预设」可打开/套用模板；调试与对话写回 `data/presets/` 工作副本。可在顶栏「设置」切换模式：`demo`（Mock）、`live`（任意 OpenAI 兼容端点）、`ollama`（未填 URL 时默认 `http://127.0.0.1:11434/v1`）。端点变量为 `NC_LLM_BASE_URL` / `NC_LLM_API_KEY`（代码默认 `http://127.0.0.1:8080/v1`）；另可配 `NC_AUX_LLM_*` 辅助小模型端点。切换模式时不会丢掉当前预设存档；对话阶段才会请求 LLM。
 
 ### live 模式本地模型栈（推荐）
 
@@ -217,6 +223,7 @@ python -m eval.rp.run_eval --fixtures --mock --bench all
 | 02 §8.1 连说循环 | [`harness/pipeline/continuation.py`](harness/pipeline/continuation.py)（近重复截断） | `tests/test_continuation.py` |
 | 02 §阶段 9 Validator | [`harness/validator/validator.py`](harness/validator/validator.py) | `tests/test_validator.py` |
 | 02 九阶段编排 | [`harness/pipeline/pipeline.py`](harness/pipeline/pipeline.py) | `tests/test_pipeline.py`, `eval/scenarios/test_inference_scenarios.py` |
+| 08 Runtime Supervisor | [`harness/runtime/`](harness/runtime/)（事件循环 / journal / checkpoint / action / watchdog / control / RPC） | `tests/test_runtime_supervisor.py` |
 | 主/辅双端点 LLM 路由 | [`harness/llm/client.py`](harness/llm/client.py) `RoutingLLMClient` | `tests/test_aux_llm.py` |
 | 可视化 GUI（阶段观察 + FastAPI/WS） | [`gui/server.py`](gui/server.py), [`gui/observer.py`](gui/observer.py) | `tests/test_gui.py` |
 | GUI 调试面板（含 debug 绕锁审计） | [`gui/debug.py`](gui/debug.py), [`gui/persist.py`](gui/persist.py) | `tests/test_debug_panel.py` |
@@ -231,6 +238,7 @@ python -m eval.rp.run_eval --fixtures --mock --bench all
 harness/core/            数据模型：models.py（记忆侧）+ inference.py（推理侧）
 harness/memory/          六层记忆 / Dual / tier 生命周期 / Writer / 检索 / 存储抽象
 harness/pipeline/        Gateway / Parser / State Builder / 连说循环 / SessionStore / InferencePipeline
+harness/runtime/         Runtime Supervisor / 队列 / 调度 / journal / checkpoint / 动作 / 控制面 / RPC adapter
 harness/router/          Complexity Gate（Fast/Deep）
 harness/subagents/       Social Interpreter
 harness/compiler/        Context Compiler
@@ -240,7 +248,7 @@ infra/db/                docker-compose + Alembic
 infra/llm/               Modelfile.character（Ollama 主模型定义）
 infra/trace/             JSONL tracer + 成功调用全链路 CallLog
 gui/                     FastAPI + WebSocket 可视化（对话 / 九阶段 / 调试面板 / 预设库 / 配置持久化）
-presets/builtin/         出厂角色模板（Vaelith）
+presets/builtin/         出厂角色模板（Vaelith 日常版 + 原设定版）
 eval/                    场景评测、检索延迟基线、角色扮演基准（CharacterEval / RoleEval / TimeChara）
 tests/                   单元与集成测试
 docs/                    TECHNICAL.md 技术文档 + harness/ 设计文档集 00–06

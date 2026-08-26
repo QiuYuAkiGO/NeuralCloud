@@ -26,8 +26,8 @@ from harness.core.models import (
 from harness.memory.service import MemoryService
 
 TZ = ZoneInfo("Asia/Shanghai")
-DEFAULT_PRESET_ID = "vaelith"
-DEFAULT_SESSION_ID = "sess_0881"
+DEFAULT_PRESET_ID = "vaelith-daily"
+DEFAULT_SESSION_ID = "sess_vaelith_daily"
 DEFAULT_USER_NAME = "用户"
 ENV_PRESETS_DIR = "NC_GUI_PRESETS"
 _REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -86,7 +86,7 @@ class CharacterPreset(BaseModel):
 
     def display_name(self) -> str:
         ident = self.persona.identity.name if self.persona is not None else ""
-        return ident or self.name or self.preset_id
+        return self.name or ident or self.preset_id
 
 
 class PresetSummary(BaseModel):

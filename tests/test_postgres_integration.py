@@ -79,10 +79,24 @@ def test_postgres_persona_trigger_and_roundtrip(pg_engine) -> None:
                 emotional_valence=0.0,
                 evidence=["traj_pg"],
                 objective_fact="用户提到猫",
+                uniqueness=0.82,
+                tier="mid",
+                expire_at=datetime(2026, 8, 28, tzinfo=TZ),
+                hit_count=4,
+                last_hit_at=datetime(2026, 8, 22, tzinfo=TZ),
+                tier_updated_at=datetime(2026, 8, 22, tzinfo=TZ),
+                tier_reasons=["test:roundtrip"],
             )
         )
         session.commit()
-        assert stores.episodic.get(event.event_id) is not None
+        restored = stores.episodic.get(event.event_id)
+        assert restored is not None
+        assert restored.tier == "mid"
+        assert restored.uniqueness == pytest.approx(0.82)
+        assert restored.expire_at == datetime(2026, 8, 28, tzinfo=TZ)
+        assert restored.hit_count == 4
+        assert restored.last_hit_at == datetime(2026, 8, 22, tzinfo=TZ)
+        assert restored.tier_reasons == ["test:roundtrip"]
         with pytest.raises(EvidenceRequiredError):
             stores.semantic.insert(
                 SemanticFact.model_construct(

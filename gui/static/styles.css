@@ -463,6 +463,33 @@ dialog.modal:not([open]) { display: none; }
 #debug-status { margin: 10px 0 0; min-height: 1.2em; }
 #debug-status.err { color: var(--danger); }
 
+.homeostasis-card { border-color: rgba(111, 190, 170, 0.35); }
+.homeo-factor { margin: 9px 0 12px; }
+.homeo-factor-head { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; }
+.homeo-factor-head strong { color: var(--ink); font-family: var(--mono); font-weight: 600; }
+.homeo-factor-head b { color: var(--gold); font-family: var(--mono); }
+.homeo-track { position: relative; height: 7px; margin: 5px 0; border-radius: 8px; background: var(--bg); overflow: visible; }
+.homeo-target { position: absolute; top: 0; bottom: 0; border-radius: 8px; background: rgba(111, 190, 170, 0.38); }
+.homeo-value { position: absolute; top: -3px; width: 2px; height: 13px; background: var(--gold); border-radius: 2px; }
+.homeo-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; color: var(--muted); font: 10px var(--mono); }
+.homeo-affect { margin-top: 12px; }
+.homeo-warning, #homeostasis-status.err { color: var(--danger); }
+.homeo-profile-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 12px; }
+.homeostasis-form { overflow: auto; min-height: 0; }
+.homeo-editor-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.homeo-editor-dimension { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 10px; border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+.homeo-editor-dimension legend { color: var(--gold); font: 11px var(--mono); padding: 0 5px; }
+.homeo-editor-dimension label, .homeo-editor-settings label { margin: 0; font-size: 10px; color: var(--muted); }
+.homeo-editor-dimension input, .homeo-editor-settings input { margin-top: 3px; }
+.homeo-advanced { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.homeo-advanced label { margin: 0; }
+.homeo-advanced textarea { min-height: 130px; font: 10px var(--mono); }
+.homeo-editor-settings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+
+@media (max-width: 760px) {
+  .homeo-editor-grid, .homeo-advanced, .homeo-editor-settings { grid-template-columns: 1fr; }
+}
+
 .pulse::after {
   content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 6px;
   border-radius: 50%; background: var(--gold); animation: pulse 1s infinite;

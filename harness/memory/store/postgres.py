@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy import create_engine, select, text
 from sqlalchemy.engine import Engine
@@ -15,6 +15,7 @@ from harness.core.exceptions import EvidenceRequiredError, PersonaLockedError
 from harness.core.models import (
     CandidateMemory,
     EpisodicEvent,
+    MemoryTier,
     PersonaCore,
     PersonaIdentity,
     PsychState,
@@ -75,6 +76,13 @@ def _episodic_from_row(row: EpisodicEventRow) -> EpisodicEvent:
         channel=row.channel,
         event_type=row.event_type,
         session_id=row.session_id,
+        uniqueness=row.uniqueness,
+        tier=cast(MemoryTier, row.tier),
+        expire_at=row.expire_at,
+        hit_count=row.hit_count,
+        last_hit_at=row.last_hit_at,
+        tier_updated_at=row.tier_updated_at,
+        tier_reasons=list(row.tier_reasons or []),
         embedding=embedding,
     )
 
@@ -171,6 +179,13 @@ class PostgresEpisodicStore:
                 channel=event.channel,
                 event_type=event.event_type,
                 session_id=event.session_id,
+                uniqueness=event.uniqueness,
+                tier=event.tier,
+                expire_at=event.expire_at,
+                hit_count=event.hit_count,
+                last_hit_at=event.last_hit_at,
+                tier_updated_at=event.tier_updated_at,
+                tier_reasons=event.tier_reasons,
                 embedding=event.embedding,
             )
         )
@@ -201,6 +216,13 @@ class PostgresEpisodicStore:
         row.channel = event.channel
         row.event_type = event.event_type
         row.session_id = event.session_id
+        row.uniqueness = event.uniqueness
+        row.tier = event.tier
+        row.expire_at = event.expire_at
+        row.hit_count = event.hit_count
+        row.last_hit_at = event.last_hit_at
+        row.tier_updated_at = event.tier_updated_at
+        row.tier_reasons = event.tier_reasons
         row.embedding = event.embedding
         self.session.flush()
 

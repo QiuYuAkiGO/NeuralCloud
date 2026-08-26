@@ -23,6 +23,7 @@ const state = {
   speakers: { user_name: "用户", character_name: "" },
   activePresetId: "",
   debug: { open: false, tab: "relationship", data: null },
+  homeostasis: { profile: null },
 };
 
 function resetStages() {
@@ -431,6 +432,47 @@ function renderTranscript() {
   root.scrollTop = root.scrollHeight;
 }
 
+function renderHomeostasisCards(home) {
+  if (!home?.dimensions) {
+    return `<article class="card"><h2>Homeostasis</h2><p class="hint">内稳态服务尚未提供状态</p></article>`;
+  }
+  const factors = Object.entries(home.dimensions)
+    .map(([name, factor]) => {
+      const value = Number(factor.value || 0);
+      const low = Number(factor.target_band?.[0] || 0);
+      const high = Number(factor.target_band?.[1] || 0);
+      const posterior = factor.posterior || {};
+      return `<div class="homeo-factor">
+        <div class="homeo-factor-head"><strong>${esc(name)}</strong><b>${value.toFixed(3)}</b></div>
+        <div class="homeo-track">
+          <i class="homeo-target" style="left:${Math.round(low * 100)}%;width:${Math.max(1, Math.round((high - low) * 100))}%"></i>
+          <i class="homeo-value" style="left:${Math.round(value * 100)}%"></i>
+        </div>
+        <div class="homeo-meta">
+          <span>Δ ${Number(factor.velocity || 0).toFixed(3)}</span>
+          <span>P ${Number(factor.precision || 0).toFixed(2)}</span>
+          <span>L/I/H ${Number(posterior.low || 0).toFixed(2)} / ${Number(posterior.in_band || 0).toFixed(2)} / ${Number(posterior.high || 0).toFixed(2)}</span>
+        </div>
+      </div>`;
+    })
+    .join("");
+  const affect = home.core_affect || {};
+  const emotion = home.emotion || {};
+  const candidates = (home.candidates || []).map((item) => `${item.rank}. ${item.label} (${Number(item.efe?.total || 0).toFixed(3)})`);
+  return `<article class="card homeostasis-card">
+    <h2>Homeostasis <span class="badge">rev ${esc(home.revision)}</span></h2>
+    <p class="hint">${esc(home.profile_id)}@${esc(home.profile_revision)} · ${esc(home.updated_at)}</p>
+    ${factors}
+    <div class="kv homeo-affect">
+      <div class="kv-row"><span>affect</span><span>V ${Number(affect.valence || 0).toFixed(2)} · A ${Number(affect.arousal || 0).toFixed(2)} · D ${Number(affect.dominance || 0).toFixed(2)}</span></div>
+      <div class="kv-row"><span>emotion</span><span>${esc(emotion.label || "—")} · ${Number(emotion.intensity || 0).toFixed(2)}</span></div>
+      <div class="kv-row"><span>heartbeat</span><span>${esc(home.last_heartbeat_at || "尚未触发")}</span></div>
+    </div>
+    ${candidates.length ? `<p class="hint">候选：${esc(candidates.join(" · "))}</p>` : ""}
+    ${(home.watchdog || []).length ? `<p class="homeo-warning">watchdog: ${esc(home.watchdog.join(", "))}</p>` : ""}
+  </article>`;
+}
+
 function renderSubsystems(snap) {
   const root = $("subsystems");
   if (!snap) {
@@ -443,6 +485,10 @@ function renderSubsystems(snap) {
   const world = snap.world || {};
   const counts = snap.counts || {};
   const llm = snap.llm || {};
+  const runtime = snap.runtime || {};
+  const home = snap.homeostasis || {};
+  const manifest = snap.manifest || {};
+  const services = snap.services || {};
   $("mode-badge").textContent = llm.mode || snap.mode || "demo";
   const llmBadge = $("llm-badge");
   llmBadge.textContent = `${llm.model || "?"} · ${llm.reachable ? "可达" : "离线"}`;
@@ -479,8 +525,39 @@ function renderSubsystems(snap) {
   if (!$("settings-dialog")?.open) {
     fillSettingsForm(llm, aux);
   }
+  const runtimeBadge = $("runtime-badge");
+  if (runtimeBadge) {
+    runtimeBadge.textContent = `Runtime · ${runtime.lifecycle || "legacy"}`;
+    runtimeBadge.className = `badge ${String(runtime.lifecycle || "").toLowerCase() === "running" ? "ok" : runtime.lifecycle ? "bad" : "ghost"}`;
+  }
+  const guiBadge = $("gui-badge");
+  if (guiBadge) {
+    guiBadge.textContent = services.gui?.healthy ? "GUI · 在线" : "GUI · legacy";
+    guiBadge.className = `badge ${services.gui?.healthy ? "ok" : "ghost"}`;
+  }
+  const cognitiveBadge = $("cognitive-badge");
+  if (cognitiveBadge) {
+    const cognitiveRevision = services.cognitive?.revision;
+    const cognitiveHealthy = runtime.health?.cognitive_healthy !== false && cognitiveRevision != null;
+    cognitiveBadge.textContent = cognitiveRevision != null ? `Cognitive · r${cognitiveRevision}` : "Cognitive · 未接入";
+    cognitiveBadge.className = `badge ${cognitiveHealthy ? "ok" : cognitiveRevision != null ? "bad" : "ghost"}`;
+  }
+  const homeBadge = $("homeostasis-badge");
+  if (homeBadge) {
+    const homeHealthy = runtime.health?.homeostasis_healthy !== false && !(home.watchdog || []).length;
+    homeBadge.textContent = home.profile_id ? `内稳态 · r${home.revision}` : "内稳态 · 未接入";
+    homeBadge.className = `badge ${home.profile_id && homeHealthy ? "ok" : home.profile_id ? "bad" : "ghost"}`;
+  }
+  const controlBadge = $("control-badge");
+  if (controlBadge) {
+    controlBadge.textContent = `模式 · ${manifest.control_mode || "legacy"}`;
+    controlBadge.className = `badge ${manifest.control_mode === "study_runtime" ? "bad" : "ghost"}`;
+  }
+  const homeButton = $("btn-homeostasis");
+  if (homeButton) homeButton.disabled = !home.profile;
 
   root.innerHTML = `
+    ${renderHomeostasisCards(home)}
     <article class="card">
       <h2>Persona Core <span class="badge">${persona.locked ? "LOCKED" : "open"}</span></h2>
       <p><strong>${esc(persona.name || "—")}</strong></p>
@@ -1610,4 +1687,130 @@ $("debug-tabs").addEventListener("click", (event) => {
   event.preventDefault();
   state.debug.tab = btn.dataset.tab;
   renderDebugBody();
+});
+
+function setHomeostasisStatus(message, error = false) {
+  const node = $("homeostasis-status");
+  node.textContent = message;
+  node.className = `hint ${error ? "err" : ""}`;
+}
+
+function homeostasisNumber(value, step = "0.01") {
+  return `type="number" min="0" max="1" step="${step}" value="${esc(value)}"`;
+}
+
+function renderHomeostasisEditor(profile) {
+  const root = $("homeostasis-editor");
+  if (!profile) {
+    root.innerHTML = `<p class="hint">没有可编辑的 profile。</p>`;
+    return;
+  }
+  const dimensions = Object.entries(profile.dimensions || {})
+    .map(([name, spec]) => `<fieldset class="homeo-editor-dimension" data-dimension="${esc(name)}">
+      <legend>${esc(name)}</legend>
+      <label>目标下界<input data-field="baseline_low" ${homeostasisNumber(spec.baseline_band?.[0])}></label>
+      <label>目标上界<input data-field="baseline_high" ${homeostasisNumber(spec.baseline_band?.[1])}></label>
+      <label>硬下界<input data-field="hard_low" ${homeostasisNumber(spec.hard_bounds?.[0])}></label>
+      <label>硬上界<input data-field="hard_high" ${homeostasisNumber(spec.hard_bounds?.[1])}></label>
+      <label>每小时漂移<input data-field="drift_per_hour" ${homeostasisNumber(spec.drift_per_hour, "0.001")}></label>
+      <label>低侧权重<input data-field="lower_weight" type="number" min="0" max="10" step="0.05" value="${esc(spec.lower_weight)}"></label>
+      <label>高侧权重<input data-field="upper_weight" type="number" min="0" max="10" step="0.05" value="${esc(spec.upper_weight)}"></label>
+      <label>单事件最大增量<input data-field="max_event_delta" ${homeostasisNumber(spec.max_event_delta, "0.01")}></label>
+    </fieldset>`)
+    .join("");
+  root.innerHTML = `<div class="homeo-profile-meta">
+      <span class="badge">${esc(profile.profile_id)}@${esc(profile.revision)}</span>
+      <span class="badge ghost">${esc(profile.mode)}</span>
+      <span class="badge ghost">A ${esc(profile.observation_model_version)} · B ${esc(profile.transition_model_version)} · C ${esc(profile.preference_model_version)}</span>
+    </div>
+    <div class="homeo-editor-grid">${dimensions}</div>
+    <div class="homeo-advanced">
+      <label>Source precision<textarea data-json="source_precision">${esc(JSON.stringify(profile.source_precision || {}, null, 2))}</textarea></label>
+      <label>Coupling matrix<textarea data-json="coupling">${esc(JSON.stringify(profile.coupling || {}, null, 2))}</textarea></label>
+      <label>Observation model (A)<textarea data-json="observation_model">${esc(JSON.stringify(profile.observation_model || {}, null, 2))}</textarea></label>
+      <label>Transition model (B)<textarea data-json="transition_model">${esc(JSON.stringify(profile.transition_model || {}, null, 2))}</textarea></label>
+      <label>Preferences (C)<textarea data-json="preferences">${esc(JSON.stringify(profile.preferences || {}, null, 2))}</textarea></label>
+    </div>
+    <div class="homeo-editor-settings">
+      <label>情绪阈值<input data-profile="emotion_threshold" ${homeostasisNumber(profile.emotion_threshold, "0.01")}></label>
+      <label>最短保持秒数<input data-profile="emotion_minimum_hold_seconds" type="number" min="0" max="86400" step="1" value="${esc(profile.emotion_minimum_hold_seconds)}"></label>
+      <label>最大心跳步长<input data-profile="max_heartbeat_step_seconds" type="number" min="1" max="3600" step="1" value="${esc(profile.max_heartbeat_step_seconds)}"></label>
+    </div>`;
+}
+
+function collectHomeostasisProfile() {
+  const profile = structuredClone(state.homeostasis.profile);
+  $("homeostasis-editor").querySelectorAll("[data-dimension]").forEach((field) => {
+    const name = field.dataset.dimension;
+    const get = (key) => Number(field.querySelector(`[data-field=${key}]`).value);
+    profile.dimensions[name] = {
+      ...profile.dimensions[name],
+      baseline_band: [get("baseline_low"), get("baseline_high")],
+      hard_bounds: [get("hard_low"), get("hard_high")],
+      drift_per_hour: get("drift_per_hour"),
+      lower_weight: get("lower_weight"),
+      upper_weight: get("upper_weight"),
+      max_event_delta: get("max_event_delta"),
+    };
+  });
+  $("homeostasis-editor").querySelectorAll("textarea[data-json]").forEach((field) => {
+    profile[field.dataset.json] = JSON.parse(field.value);
+  });
+  $("homeostasis-editor").querySelectorAll("[data-profile]").forEach((field) => {
+    profile[field.dataset.profile] = Number(field.value);
+  });
+  return profile;
+}
+
+async function validateHomeostasisProfile() {
+  const profile = collectHomeostasisProfile();
+  const res = await fetch("/api/homeostasis/profile/validate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ profile }),
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail));
+  return body.profile;
+}
+
+$("btn-homeostasis").addEventListener("click", async () => {
+  setHomeostasisStatus("加载中…");
+  $("homeostasis-dialog").showModal();
+  try {
+    const res = await fetch("/api/homeostasis/profile");
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.detail || res.statusText);
+    state.homeostasis.profile = body.profile;
+    renderHomeostasisEditor(body.profile);
+    setHomeostasisStatus(body.pending_start ? `已有待激活版本：${body.pending_start.profile_ref}` : "就绪");
+  } catch (err) {
+    setHomeostasisStatus(err.message, true);
+  }
+});
+$("btn-homeostasis-close").addEventListener("click", () => $("homeostasis-dialog").close());
+$("btn-homeostasis-validate").addEventListener("click", async () => {
+  try {
+    await validateHomeostasisProfile();
+    setHomeostasisStatus("校验通过；保存后将创建新版本。", false);
+  } catch (err) {
+    setHomeostasisStatus(err.message, true);
+  }
+});
+$("homeostasis-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const profile = await validateHomeostasisProfile();
+    const res = await fetch("/api/homeostasis/profile/revisions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ base_revision: state.homeostasis.profile.revision, profile }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail));
+    setHomeostasisStatus(`已保存 ${body.profile_ref}；请重新运行 start.ps1 激活。`);
+    await fetchStatus();
+  } catch (err) {
+    setHomeostasisStatus(err.message, true);
+  }
 });

@@ -137,6 +137,7 @@ class HarnessChatService:
         self.character_name = normalize_speaker_name(character_name)
         self._session_id = DEFAULT_SESSION_ID
         self._active_builtin_id: str | None = DEFAULT_PRESET_ID
+        self._active_preset_name = ""
         self.transcript: list[SessionTurn] = []
         self.settings = Settings()
         self.memory: MemoryService
@@ -263,7 +264,7 @@ class HarnessChatService:
             transcript=self.transcript,
             user_name=self.user_name,
             builtin_id=self._active_builtin_id,
-            name=persona.identity.name,
+            name=self._active_preset_name or persona.identity.name,
         )
         self.library.save(preset)
         return preset
@@ -275,6 +276,7 @@ class HarnessChatService:
         self.active_preset_id = preset.preset_id
         self._session_id = preset.session_id
         self._active_builtin_id = preset.builtin_id
+        self._active_preset_name = preset.name
         self.transcript = list(preset.transcript)
         self.user_name = normalize_speaker_name(preset.user_name, default=DEFAULT_USER_NAME)
         self.character_name = normalize_speaker_name(preset.persona.identity.name)

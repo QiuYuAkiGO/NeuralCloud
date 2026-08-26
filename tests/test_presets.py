@@ -22,7 +22,7 @@ TZ = ZoneInfo("Asia/Shanghai")
 
 
 def test_vaelith_builtin_loads() -> None:
-    preset = load_builtin(DEFAULT_PRESET_ID)
+    preset = load_builtin("vaelith")
     assert preset.preset_id == "vaelith"
     assert preset.persona.identity.name == "Vaelith"
     assert "优雅" in preset.persona.identity.core_traits
@@ -31,8 +31,21 @@ def test_vaelith_builtin_loads() -> None:
     assert preset.relationships[0].last_major_event == "evt_09014"
 
 
+def test_daily_vaelith_is_the_default_builtin() -> None:
+    preset = load_builtin(DEFAULT_PRESET_ID)
+    assert DEFAULT_PRESET_ID == "vaelith-daily"
+    assert preset.preset_id == "vaelith-daily"
+    assert preset.name == "Vaelith · 日常"
+    assert preset.persona.identity.name == "Vaelith"
+    assert "嘴硬心软" in preset.persona.identity.core_traits
+    assert len(preset.episodic) == 6
+    assert len(preset.semantic) == 3
+    assert preset.transcript == []
+    assert preset.relationships[0].last_major_event == "evt_daily_006"
+
+
 def test_snapshot_hydrate_roundtrip() -> None:
-    factory = load_builtin(DEFAULT_PRESET_ID)
+    factory = load_builtin("vaelith")
     memory = build_inmemory_service()
     hydrate_memory(memory, factory)
     turns = [
@@ -63,11 +76,15 @@ def test_snapshot_hydrate_roundtrip() -> None:
 def test_hydrate_backfills_missing_embeddings() -> None:
     factory = load_builtin(DEFAULT_PRESET_ID)
     assert all(event.embedding is None for event in factory.episodic)
+    assert all(fact.embedding is None for fact in factory.semantic)
     memory = build_inmemory_service()
     hydrate_memory(memory, factory)
     events = memory.stores.episodic.list_all()
-    assert len(events) == 9
+    facts = memory.stores.semantic.list_all()
+    assert len(events) == len(factory.episodic)
+    assert len(facts) == len(factory.semantic)
     assert all(event.embedding is not None for event in events)
+    assert all(fact.embedding is not None for fact in facts)
 
 
 def test_hydrate_preserves_existing_embeddings() -> None:
@@ -84,7 +101,7 @@ def test_hydrate_preserves_existing_embeddings() -> None:
 
 def test_hydrated_seeds_give_semantic_signal_for_named_entity() -> None:
     memory = build_inmemory_service()
-    hydrate_memory(memory, load_builtin(DEFAULT_PRESET_ID))
+    hydrate_memory(memory, load_builtin("vaelith"))
     results = memory.query(
         RetrievalQuery(
             text="之前和鸽子少女吵架了吗？",
@@ -109,7 +126,7 @@ def test_hydrate_skips_failed_vectors() -> None:
         def embed_one(self, text):
             return None
 
-    factory = load_builtin(DEFAULT_PRESET_ID)
+    factory = load_builtin("vaelith")
     memory = build_inmemory_service()
     memory.embeddings = NoneEmbed()
     hydrate_memory(memory, factory)
@@ -159,7 +176,7 @@ def test_library_create_from_copies_source_state(tmp_path) -> None:
     )
     library.save(source)
     created = library.create_from("vaelith")
-    factory = load_builtin(DEFAULT_PRESET_ID)
+    factory = load_builtin("vaelith")
     assert created.preset_id != "vaelith"
     assert created.builtin_id == "vaelith"
     assert created.transcript == []
@@ -202,7 +219,7 @@ def test_debug_persona_and_chat_write_through_restart(tmp_path) -> None:
         rel = client.post("/api/debug/relationship", json={"closeness": 0.91})
         assert rel.status_code == 200
 
-    working = json.loads((tmp_path / "presets" / "vaelith.json").read_text(encoding="utf-8"))
+    working = json.loads((tmp_path / "presets" / f"{DEFAULT_PRESET_ID}.json").read_text(encoding="utf-8"))
     assert working["persona"]["identity"]["core_traits"] == ["傲慢", "debug"]
     assert len(working["transcript"]) >= 2
 
@@ -211,7 +228,7 @@ def test_debug_persona_and_chat_write_through_restart(tmp_path) -> None:
         assert body["persona"]["identity"]["core_traits"] == ["傲慢", "debug"]
         assert body["relationship"]["closeness"] == pytest.approx(0.91)
         assert len(body["session"]["turns"]) >= 2
-        assert body["presets"]["active_id"] == "vaelith"
+        assert body["presets"]["active_id"] == DEFAULT_PRESET_ID
 
 
 def test_config_rebuild_keeps_preset(api_client) -> None:
@@ -232,10 +249,10 @@ def test_new_preset_copies_source_relationship(api_client) -> None:
     assert rel.status_code == 200
     patched = api_client.post("/api/debug/persona", json={"core_traits": ["傲慢", "cloned"]})
     assert patched.status_code == 200
-    created = api_client.post("/api/presets/new", json={"from_id": "vaelith"})
+    created = api_client.post("/api/presets/new", json={"from_id": DEFAULT_PRESET_ID})
     assert created.status_code == 200
     body = created.json()
-    assert body["presets"]["active_id"] != "vaelith"
+    assert body["presets"]["active_id"] != DEFAULT_PRESET_ID
     assert body["relationship"]["closeness"] == pytest.approx(0.91)
     assert body["relationship"]["trust"] == pytest.approx(0.2)
     assert body["persona"]["identity"]["core_traits"] == ["傲慢", "cloned"]
@@ -245,13 +262,13 @@ def test_new_preset_copies_source_relationship(api_client) -> None:
 def test_switch_preset_loads_its_transcript(api_client) -> None:
     chat = api_client.post("/api/chat", json={"text": "早上好。"})
     assert chat.status_code == 200
-    created = api_client.post("/api/presets/new", json={"from_id": "vaelith"})
+    created = api_client.post("/api/presets/new", json={"from_id": DEFAULT_PRESET_ID})
     assert created.status_code == 200
     body = created.json()
     new_id = body["presets"]["active_id"]
-    assert new_id != "vaelith"
+    assert new_id != DEFAULT_PRESET_ID
     assert body["session"]["turns"] == []
-    opened = api_client.post("/api/presets/open", json={"preset_id": "vaelith"})
+    opened = api_client.post("/api/presets/open", json={"preset_id": DEFAULT_PRESET_ID})
     assert opened.status_code == 200
     assert len(opened.json()["session"]["turns"]) >= 2
     applied = api_client.post("/api/presets/apply", json={"preset_id": new_id})
@@ -261,8 +278,11 @@ def test_switch_preset_loads_its_transcript(api_client) -> None:
     listed = api_client.get("/api/presets").json()
     ids = [item["preset_id"] for item in listed["items"]]
     assert "vaelith" in ids
+    assert DEFAULT_PRESET_ID in ids
     assert new_id in ids
     deleted = api_client.delete(f"/api/presets/{new_id}")
     assert deleted.status_code == 200
     blocked = api_client.delete("/api/presets/vaelith")
     assert blocked.status_code == 400
+    blocked_default = api_client.delete(f"/api/presets/{DEFAULT_PRESET_ID}")
+    assert blocked_default.status_code == 400

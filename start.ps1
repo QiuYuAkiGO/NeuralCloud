@@ -1,126 +1,252 @@
-﻿# 启动 NeuralCloud GUI 服务。若已在运行则先停止再启动（重启）。
+param(
+    [string]$ManifestPath,
+    [string]$ProfilePath,
+    [ValidateSet("demo", "live", "ollama")]
+    [string]$Mode = "demo",
+    [int]$GuiPort = 8765,
+    [int]$RuntimePort = 8770,
+    [int]$CognitivePort = 8771,
+    [int]$HomeostasisPort = 8772
+)
+
 $ErrorActionPreference = "Stop"
 $Root = $PSScriptRoot
-$PidFile = Join-Path $Root ".gui.pid"
+$RegistryPath = Join-Path $Root ".neuralcloud.pids.json"
+$LegacyPidPath = Join-Path $Root ".gui.pid"
 $LogDir = Join-Path $Root "logs"
-$OutLog = Join-Path $LogDir "gui.out.log"
-$ErrLog = Join-Path $LogDir "gui.err.log"
-$Port = 8765
-$Url = "http://127.0.0.1:$Port"
+$PendingPath = Join-Path $Root "data\runtime\pending-start.json"
+$ActivePath = Join-Path $Root "data\runtime\active-start.json"
+$DefaultManifest = Join-Path $Root "presets\runtime\development-demo.json"
+$DefaultProfile = Join-Path $Root "presets\homeostasis\functional-proxy-v1.json"
+$started = New-Object System.Collections.Generic.List[object]
+$savedEnvironment = @{}
+$usingPending = $false
 
 Set-Location -LiteralPath $Root
 
-function Test-ServiceRunning {
-    if (Test-Path $PidFile) {
-        $raw = (Get-Content -LiteralPath $PidFile -ErrorAction SilentlyContinue | Select-Object -First 1)
-        if ($raw -and ($raw.Trim() -match "^\d+$")) {
-            if (Get-Process -Id ([int]$raw.Trim()) -ErrorAction SilentlyContinue) {
-                return $true
-            }
-        }
-    }
-
-    $netstat = netstat -ano 2>$null
-    if ($netstat) {
-        foreach ($line in $netstat) {
-            $text = "$line"
-            if ($text -match "LISTENING" -and $text -match ":$Port\s") {
-                return $true
-            }
-        }
-    }
-
-    $match = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
-        Where-Object {
-            $_.Name -match "^python(w)?\.exe$" -and
-            $_.CommandLine -and
-            $_.CommandLine -match "gui\.server|-m gui"
-        } |
-        Select-Object -First 1
-    return [bool]$match
-}
-
 function Get-PythonExe {
     $venvPython = Join-Path $Root ".venv\Scripts\python.exe"
-    if (Test-Path $venvPython) {
-        return $venvPython
+    if (Test-Path -LiteralPath $venvPython) { return $venvPython }
+    $command = Get-Command python -ErrorAction SilentlyContinue
+    if ($command) { return $command.Source }
+    return $null
+}
+
+function Set-LaunchEnvironment([hashtable]$Values) {
+    foreach ($key in $Values.Keys) {
+        $savedEnvironment[$key] = [Environment]::GetEnvironmentVariable($key, "Process")
+        [Environment]::SetEnvironmentVariable($key, [string]$Values[$key], "Process")
     }
-    $cmd = Get-Command python -ErrorAction SilentlyContinue
-    if ($cmd) {
-        return $cmd.Source
+}
+
+function Restore-LaunchEnvironment {
+    foreach ($key in $savedEnvironment.Keys) {
+        [Environment]::SetEnvironmentVariable($key, $savedEnvironment[$key], "Process")
+    }
+}
+
+function Get-PortOwner([int]$Port) {
+    $connection = Get-NetTCPConnection -State Listen -LocalPort $Port -ErrorAction SilentlyContinue |
+        Select-Object -First 1
+    if ($connection) { return [int]$connection.OwningProcess }
+    $netstat = netstat -ano 2>$null
+    foreach ($line in @($netstat)) {
+        $text = "$line"
+        if ($text -match "LISTENING" -and $text -match ":$Port\s") {
+            $parts = @($text -split "\s+" | Where-Object { $_ })
+            if ($parts[-1] -match "^\d+$") { return [int]$parts[-1] }
+        }
     }
     return $null
 }
 
-function Wait-PortListening([int]$Seconds) {
+function Wait-Endpoint(
+    [string]$Url,
+    [hashtable]$Headers,
+    [int]$Seconds,
+    [scriptblock]$Accept
+) {
     $deadline = (Get-Date).AddSeconds($Seconds)
     while ((Get-Date) -lt $deadline) {
-        $netstat = netstat -ano 2>$null
-        if ($netstat) {
-            foreach ($line in $netstat) {
-                $text = "$line"
-                if ($text -match "LISTENING" -and $text -match ":$Port\s") {
-                    return $true
-                }
-            }
+        try {
+            $response = Invoke-RestMethod -Uri $Url -Headers $Headers -TimeoutSec 2 -Method Get
+            if (-not $Accept -or (& $Accept $response)) { return $response }
+        } catch {
+            Start-Sleep -Milliseconds 300
+            continue
         }
-        Start-Sleep -Milliseconds 250
+        Start-Sleep -Milliseconds 300
     }
-    return $false
+    return $null
 }
 
-if (Test-ServiceRunning) {
-    Write-Host "检测到服务已启动，正在重启..."
+function Start-NeuralService(
+    [string]$Name,
+    [string]$Module,
+    [int]$Port,
+    [string]$Python
+) {
+    $outLog = Join-Path $LogDir "$Name.out.log"
+    $errLog = Join-Path $LogDir "$Name.err.log"
+    foreach ($log in @($outLog, $errLog)) {
+        if (Test-Path -LiteralPath $log) { Clear-Content -LiteralPath $log -ErrorAction SilentlyContinue }
+    }
+    Write-Host "Starting ${Name}: $Python -m $Module (port $Port)"
+    $process = Start-Process -FilePath $Python `
+        -ArgumentList "-m", $Module `
+        -WorkingDirectory $Root `
+        -RedirectStandardOutput $outLog `
+        -RedirectStandardError $errLog `
+        -WindowStyle Hidden `
+        -PassThru
+    $entry = [pscustomobject]@{
+        name = $Name
+        pid = $process.Id
+        port = $Port
+        module = $Module
+        started_at = (Get-Date).ToString("o")
+        out_log = $outLog
+        err_log = $errLog
+    }
+    [void]$started.Add($entry)
+    return $entry
+}
+
+function Stop-StartedProcesses {
+    for ($index = $started.Count - 1; $index -ge 0; $index--) {
+        $entry = $started[$index]
+        if (Get-Process -Id $entry.pid -ErrorAction SilentlyContinue) {
+            Stop-Process -Id $entry.pid -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+if ((Test-Path -LiteralPath $RegistryPath) -or (Test-Path -LiteralPath $LegacyPidPath)) {
+    Write-Host "Existing NeuralCloud processes detected; restarting them."
     & (Join-Path $Root "stop.ps1") -Quiet
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "重启失败：无法停止已有进程。"
+        Write-Host "Could not stop existing NeuralCloud processes."
         exit 1
     }
 }
 
 $python = Get-PythonExe
 if (-not $python) {
-    Write-Host "未找到 Python。请先创建虚拟环境：python -m venv .venv"
+    Write-Host "Python was not found. Create a virtual environment with: python -m venv .venv"
     exit 1
 }
 
-if (-not (Test-Path $LogDir)) {
-    New-Item -ItemType Directory -Path $LogDir | Out-Null
+if (-not $ManifestPath -and -not $ProfilePath -and (Test-Path -LiteralPath $PendingPath)) {
+    $pending = Get-Content -Raw -LiteralPath $PendingPath | ConvertFrom-Json
+    $ManifestPath = [string]$pending.manifest_path
+    $ProfilePath = [string]$pending.profile_path
+    $usingPending = $true
+    Write-Host "Activating pending configuration: $($pending.profile_ref) / $($pending.manifest_ref)"
 }
-
-foreach ($log in @($OutLog, $ErrLog)) {
-    if (Test-Path $log) {
-        Remove-Item -LiteralPath $log -Force -ErrorAction SilentlyContinue
-    }
+if (-not $ManifestPath -and -not $ProfilePath -and (Test-Path -LiteralPath $ActivePath)) {
+    $active = Get-Content -Raw -LiteralPath $ActivePath | ConvertFrom-Json
+    $ManifestPath = [string]$active.manifest_path
+    $ProfilePath = [string]$active.profile_path
 }
+if (-not $ManifestPath) { $ManifestPath = $DefaultManifest }
+if (-not $ProfilePath) { $ProfilePath = $DefaultProfile }
+$ManifestPath = (Resolve-Path -LiteralPath $ManifestPath).Path
+$ProfilePath = (Resolve-Path -LiteralPath $ProfilePath).Path
 
-Write-Host "正在启动服务: $python -m gui.server"
-$proc = Start-Process -FilePath $python `
-    -ArgumentList "-m", "gui.server" `
-    -WorkingDirectory $Root `
-    -RedirectStandardOutput $OutLog `
-    -RedirectStandardError $ErrLog `
-    -WindowStyle Hidden `
-    -PassThru
-
-Set-Content -LiteralPath $PidFile -Value $proc.Id -Encoding ascii
-
-if (-not (Wait-PortListening -Seconds 15)) {
-    $alive = Get-Process -Id $proc.Id -ErrorAction SilentlyContinue
-    if (-not $alive) {
-        Write-Host "启动失败，进程已退出。请查看日志："
-        Write-Host "  $ErrLog"
-        if (Test-Path $PidFile) {
-            Remove-Item -LiteralPath $PidFile -Force -ErrorAction SilentlyContinue
-        }
+$ports = @($GuiPort, $RuntimePort, $CognitivePort, $HomeostasisPort)
+if (($ports | Select-Object -Unique).Count -ne $ports.Count) {
+    Write-Host "All four service ports must be unique."
+    exit 1
+}
+foreach ($port in $ports) {
+    $owner = Get-PortOwner $port
+    if ($owner) {
+        Write-Host "Port $port is already owned by PID=$owner; no services were started."
         exit 1
     }
-    Write-Host "进程已启动（PID=$($proc.Id)），但端口 $Port 尚未就绪，请稍后打开 $Url"
-    Write-Host "日志: $OutLog"
-    exit 0
 }
 
-Write-Host "服务已启动  PID=$($proc.Id)"
-Write-Host "打开 $Url"
-Write-Host "日志: $OutLog"
-exit 0
+New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
+$serviceToken = ([guid]::NewGuid().ToString("N") + [guid]::NewGuid().ToString("N"))
+$controlToken = ([guid]::NewGuid().ToString("N") + [guid]::NewGuid().ToString("N"))
+$environment = @{
+    NC_MODE = $Mode
+    NC_SERVICE_TOKEN = $serviceToken
+    NC_CONTROL_TOKEN = $controlToken
+    NC_GUI_PORT = "$GuiPort"
+    NC_RUNTIME_PORT = "$RuntimePort"
+    NC_COGNITIVE_PORT = "$CognitivePort"
+    NC_HOMEOSTASIS_PORT = "$HomeostasisPort"
+    NC_RUNTIME_URL = "http://127.0.0.1:$RuntimePort"
+    NC_COGNITIVE_URL = "http://127.0.0.1:$CognitivePort"
+    NC_HOMEOSTASIS_URL = "http://127.0.0.1:$HomeostasisPort"
+    NC_RUNTIME_MANIFEST_PATH = $ManifestPath
+    NC_HOMEOSTASIS_PROFILE_PATH = $ProfilePath
+    NC_RUNTIME_STATE_DIR = (Join-Path $Root "data\runtime")
+    NC_COGNITIVE_STATE_PATH = (Join-Path $Root "data\cognitive\state.json")
+    NC_HOMEOSTASIS_STATE_DIR = (Join-Path $Root "data\homeostasis")
+}
+
+try {
+    Set-LaunchEnvironment $environment
+    $serviceHeaders = @{ Authorization = "Bearer $serviceToken" }
+    $controlHeaders = @{ Authorization = "Bearer $controlToken" }
+
+    Start-NeuralService "cognitive" "harness.cognitive.service" $CognitivePort $python | Out-Null
+    Start-NeuralService "homeostasis" "harness.homeostasis.service" $HomeostasisPort $python | Out-Null
+    if (-not (Wait-Endpoint "http://127.0.0.1:$CognitivePort/v1/health" $serviceHeaders 30 { param($body) $body.healthy })) {
+        throw "Cognitive service did not pass its health check"
+    }
+    if (-not (Wait-Endpoint "http://127.0.0.1:$HomeostasisPort/v1/health" $serviceHeaders 30 { param($body) $body.healthy })) {
+        throw "Homeostasis service did not pass its health check"
+    }
+
+    Start-NeuralService "runtime" "harness.runtime.service" $RuntimePort $python | Out-Null
+    $runtime = Wait-Endpoint "http://127.0.0.1:$RuntimePort/v1/status" $controlHeaders 40 {
+        param($body)
+        $body.lifecycle -notin @("booting", "recovering", "faulted")
+    }
+    if (-not $runtime) { throw "Runtime did not finish boot or recovery" }
+
+    Start-NeuralService "gui" "gui.runtime_server" $GuiPort $python | Out-Null
+    if (-not (Wait-Endpoint "http://127.0.0.1:$GuiPort/api/status" @{} 30 { param($body) $null -ne $body.runtime })) {
+        throw "GUI did not pass its composite status check"
+    }
+
+    $registry = [pscustomobject]@{
+        schema_version = "neuralcloud-processes-v1"
+        started_at = (Get-Date).ToString("o")
+        manifest_path = $ManifestPath
+        profile_path = $ProfilePath
+        services = @($started | ForEach-Object { $_ })
+    }
+    $registry | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $RegistryPath -Encoding UTF8
+    [pscustomobject]@{
+        manifest_path = $ManifestPath
+        profile_path = $ProfilePath
+        activated_at = (Get-Date).ToString("o")
+    } | ConvertTo-Json | Set-Content -LiteralPath $ActivePath -Encoding UTF8
+    if ($usingPending -and (Test-Path -LiteralPath $PendingPath)) {
+        Remove-Item -LiteralPath $PendingPath -Force
+    }
+
+    Write-Host "NeuralCloud four-process runtime is ready:"
+    foreach ($entry in $started) {
+        Write-Host "  $($entry.name) PID=$($entry.pid) http://127.0.0.1:$($entry.port)"
+    }
+    Write-Host "GUI: http://127.0.0.1:$GuiPort"
+    Write-Host "Manifest: $ManifestPath"
+    Write-Host "Profile:  $ProfilePath"
+    Write-Host "Logs: $LogDir"
+    exit 0
+} catch {
+    Write-Host "Startup failed: $($_.Exception.Message)"
+    Stop-StartedProcesses
+    if (Test-Path -LiteralPath $RegistryPath) { Remove-Item -LiteralPath $RegistryPath -Force }
+    foreach ($entry in $started) {
+        Write-Host "  $($entry.name) error log: $($entry.err_log)"
+    }
+    exit 1
+} finally {
+    Restore-LaunchEnvironment
+}

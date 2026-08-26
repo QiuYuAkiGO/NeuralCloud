@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from datetime import UTC, datetime
+import time
 from typing import Any
 
 from harness.config import Settings, get_settings
@@ -94,6 +96,7 @@ class MemoryService:
         self._retrieve_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="retrieve")
         self._tier_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="tier")
         self._tier_pending: list[Any] = []
+        self._maintenance_accepting = True
         self.hybrid = HybridRetriever(stores, self.embeddings, self.settings)
         self.conflicts = ConflictRetriever(self.hybrid, self.planner, self.settings)
         self.tier_classifier = TierClassifier(self.llm, llm_enabled=self.settings.tier_llm_enabled)
@@ -457,8 +460,40 @@ class MemoryService:
         """Block until queued tier classify / hit / sweep tasks finish. Tests use this."""
         pending = self._tier_pending
         self._tier_pending = []
-        for fut in pending:
-            fut.result(timeout=timeout)
+        deadline = time.monotonic() + timeout
+        for index, fut in enumerate(pending):
+            try:
+                fut.result(timeout=max(0.0, deadline - time.monotonic()))
+            except TimeoutError:
+                self._tier_pending.extend(pending[index:])
+                raise
+
+    def drain_maintenance(self, timeout: float = 5.0) -> bool:
+        """Stop accepting tier work and drain already-owned jobs within a bound."""
+
+        self._maintenance_accepting = False
+        try:
+            self.wait_background(timeout=timeout)
+        except TimeoutError:
+            return False
+        return True
+
+    def pause_maintenance(self, timeout: float = 5.0) -> bool:
+        return self.drain_maintenance(timeout=timeout)
+
+    def resume_maintenance(self) -> None:
+        self._maintenance_accepting = True
+
+    @contextmanager
+    def suppress_maintenance(self):
+        """Temporarily disable tier mutations during replayable prepare work."""
+
+        previous = self._maintenance_accepting
+        self._maintenance_accepting = False
+        try:
+            yield
+        finally:
+            self._maintenance_accepting = previous
 
     def close(self) -> None:
         try:
@@ -474,6 +509,8 @@ class MemoryService:
                     pass
 
     def _submit_tier(self, fn) -> None:
+        if not self._maintenance_accepting:
+            return
         fut = self._tier_pool.submit(self._tier_safe, fn)
         self._tier_pending.append(fut)
 

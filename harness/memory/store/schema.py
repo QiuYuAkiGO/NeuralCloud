@@ -6,13 +6,16 @@ from datetime import datetime
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     DateTime,
     Float,
     Integer,
     String,
     Text,
+    UniqueConstraint,
     func,
+    text as sql_text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -53,6 +56,18 @@ class EpisodicEventRow(Base):
     channel: Mapped[str] = mapped_column(String(32), nullable=False, default="chat")
     event_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
     session_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    uniqueness: Mapped[float | None] = mapped_column(Float, nullable=True)
+    tier: Mapped[str] = mapped_column(String(16), nullable=False, server_default="short", index=True)
+    expire_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    hit_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    last_hit_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    tier_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    tier_reasons: Mapped[list] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=list,
+        server_default=sql_text("'[]'::jsonb"),
+    )
     embedding = mapped_column(Vector(DEFAULT_EMBEDDING_DIM), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
@@ -144,6 +159,123 @@ class MemoryOpsLogRow(Base):
     success: Mapped[bool] = mapped_column(Boolean, nullable=False)
     detail: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class SessionTurnRow(Base):
+    """Committed Cognitive session projection; prepared output is not stored here."""
+
+    __tablename__ = "cognitive_session_turns"
+    __table_args__ = (
+        UniqueConstraint("character_id", "session_id", "turn_seq", name="uq_cognitive_session_turn_seq"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    character_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    session_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    turn_seq: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    role: Mapped[str] = mapped_column(String(16), nullable=False)
+    speaker: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    event_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    cognitive_revision: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    evidence: Mapped[list] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=list,
+        server_default=sql_text("'[]'::jsonb"),
+    )
+
+
+class CognitiveStateRow(Base):
+    """Monotonic Cognitive revision and acknowledged Runtime event cursor."""
+
+    __tablename__ = "cognitive_state"
+
+    character_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    revision: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default="0")
+    acknowledged_receive_seq: Mapped[int] = mapped_column(BigInteger, nullable=False, server_default="0")
+    acknowledged_event_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    component_revisions: Mapped[dict] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=dict,
+        server_default=sql_text("'{}'::jsonb"),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class CognitiveCommandLedgerRow(Base):
+    """Stable result for a Cognitive command idempotency key."""
+
+    __tablename__ = "cognitive_command_ledger"
+    __table_args__ = (
+        UniqueConstraint(
+            "character_id",
+            "command_type",
+            "idempotency_key",
+            name="uq_cognitive_command_idempotency",
+        ),
+    )
+
+    command_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    character_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    command_type: Mapped[str] = mapped_column(String(96), nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(String(256), nullable=False)
+    request_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    event_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    receive_seq: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    correlation_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    expected_revision: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    committed_revision: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    acknowledged_receive_seq: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    response_payload: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class CognitiveMaintenanceLedgerRow(Base):
+    """Recoverable ownership record for memory tier and other background work."""
+
+    __tablename__ = "cognitive_maintenance_ledger"
+    __table_args__ = (
+        UniqueConstraint(
+            "character_id",
+            "job_type",
+            "idempotency_key",
+            name="uq_cognitive_maintenance_idempotency",
+        ),
+    )
+
+    job_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    character_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    job_type: Mapped[str] = mapped_column(String(96), nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(String(256), nullable=False)
+    target_ref: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    payload: Mapped[dict] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=dict,
+        server_default=sql_text("'{}'::jsonb"),
+    )
+    base_revision: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    committed_revision: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 

@@ -18,6 +18,16 @@ PREFIXES: dict[str, str] = {
     "parse": "prs",
     "inference": "inf",
     "call": "call",
+    "command": "cmd",
+    "prepare": "prep",
+    "goal": "goal",
+    "delivery": "dlv",
+    "outcome": "out",
+    "runtime": "rt",
+    "action": "act",
+    "checkpoint": "ckpt",
+    "journal": "jrnl",
+    "watchdog": "wd",
 }
 
 

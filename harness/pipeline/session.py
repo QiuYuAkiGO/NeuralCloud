@@ -49,3 +49,18 @@ class SessionStore:
             self._turns.clear()
         else:
             self._turns.pop(session_id, None)
+
+    def snapshot(self) -> dict[str, list[SessionTurn]]:
+        """Return a detached snapshot suitable for a persistent projection."""
+
+        return {session_id: list(turns) for session_id, turns in self._turns.items()}
+
+    def restore(self, sessions: dict[str, list[SessionTurn]]) -> None:
+        """Replace all sessions from a previously persisted projection."""
+
+        self._turns.clear()
+        for session_id, turns in sessions.items():
+            self.replace(session_id, turns)
+
+    def contains_event(self, session_id: str, event_id: str) -> bool:
+        return any(turn.event_id == event_id for turn in self._turns.get(session_id, []))

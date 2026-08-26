@@ -18,6 +18,10 @@ data/presets/
 *.log
 logs/
 .gui.pid
+.neuralcloud.pids.json
+data/runtime/
+data/cognitive/
+data/homeostasis/
 .env
 .env.local
 eval/external/*

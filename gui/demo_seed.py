@@ -1,4 +1,4 @@
-"""Demo bootstrap: factory Vaelith lives in presets/builtin/vaelith.json."""
+"""Demo bootstrap: the default factory preset is Vaelith's daily-life profile."""
 
 from __future__ import annotations
 
