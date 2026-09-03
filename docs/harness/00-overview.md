@@ -172,15 +172,18 @@ flowchart TB
 
 ## 7. 文档集索引
 
+> 完成态的、可一次性验收的方案/规格文档统一在文件名中使用 `-DONE.md`；旧路径只保留轻量兼容跳转。README、TECHNICAL、GETTING_STARTED、runbook、ADR 等持续维护文档不使用 Done 命名。
+
 | 文档 | 内容 |
 | --- | --- |
 | [00-overview.md](00-overview.md) | 本文：定位、原则、范围、总架构、模块与里程碑总表 |
 | [01-cognitive-harness.md](01-cognitive-harness.md) | 六层记忆/状态体系、混合检索、门控 Subagent、Context Compiler |
-| [02-inference-flow.md](02-inference-flow.md) | 在线推理 9 阶段数据流、Fast/Deep Path、贯穿案例 |
+| [02-inference-flow-DONE.md](02-inference-flow-DONE.md) | **Done**：在线推理 9 阶段数据流、Fast/Deep Path、贯穿案例 |
 | [03-digital-body.md](03-digital-body.md) | Linux Desktop 数字身体：WSL2 环境适配、观察/动作系统、快照、权限分层 |
 | [04-autonomy-and-data.md](04-autonomy-and-data.md) | 渐进自治、自主驱动系统、轨迹记录、数据分级与训练闭环 |
 | [05-roadmap-and-stack.md](05-roadmap-and-stack.md) | 里程碑 M0–M5、V1 验收标准、技术栈、实体机器人扩展路径 |
-| [06-memory-subsystem-usage.md](06-memory-subsystem-usage.md) | 记忆子系统 V1 使用说明：安装、API、写/读路径、配置、PostgreSQL、评测 |
+| [06-memory-subsystem-usage-DONE.md](06-memory-subsystem-usage-DONE.md) | **Done**：记忆子系统 V1 使用说明；对应能力已经落地 |
+| [07-08-main-merge-alignment-plan-DONE.md](07-08-main-merge-alignment-plan-DONE.md) | **Done**：07 / 08 与主分支合并后的对齐方案，已批准并执行 |
 | [07-homeostatic-harness-research-design.md](07-homeostatic-harness-research-design.md) | 情感陪伴型具身智能内稳态 Harness V2 研究提案：七维状态、主动推断、闭环调节与三条件长期实验 |
 | [08-runtime-supervisor.md](08-runtime-supervisor.md) | Runtime Supervisor V2 架构提案：Runtime、Cognitive、Homeostatic 三服务拓扑，以及常驻循环、抢占、持久化恢复与控制面 |
 | [09-character-import-and-embodied-instance.md](09-character-import-and-embodied-instance.md) | 角色导入、运行实例身份与 embodied instance 生命周期边界 |
