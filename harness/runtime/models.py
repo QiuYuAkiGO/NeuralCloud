@@ -14,6 +14,8 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validato
 
 from harness.contracts.envelope import VersionVector
 from harness.core.ids import new_id
+from harness.embodiment.capabilities import EmbodimentStatus
+from harness.embodiment.contracts import EmbodiedActionSpec, EvidenceRef
 
 RUNTIME_SCHEMA_VERSION: Literal["runtime-v1"] = "runtime-v1"
 RUNTIME_EVENT_SCHEMA_VERSION: Literal["runtime-event-v1"] = "runtime-event-v1"
@@ -62,6 +64,9 @@ class RuntimeEventType(StrEnum):
     USER_MESSAGE = "user_message"
     ENVIRONMENT_CHANGE = "environment_change"
     PERCEPTION = "perception"
+    BODY_STATE = "body_state"
+    GOAL_RECONSIDERATION = "goal_reconsideration"
+    AGENCY_TERMINAL = "agency_terminal"
     RESUME_OBSERVATION = "resume_observation"
     HEARTBEAT = "heartbeat"
     MAINTENANCE = "maintenance"
@@ -88,6 +93,7 @@ PAUSED_RECORD_ONLY_TYPES = frozenset(
     {
         RuntimeEventType.PERCEPTION,
         RuntimeEventType.ENVIRONMENT_CHANGE,
+        RuntimeEventType.BODY_STATE,
     }
 )
 
@@ -224,6 +230,7 @@ class ActionExecution(BaseModel):
     updated_at: AwareDatetime = Field(default_factory=utc_now)
     outcome: dict[str, Any] | None = None
     error: str | None = None
+    embodied_action: EmbodiedActionSpec | None = None
 
     @property
     def high_impact(self) -> bool:
@@ -239,7 +246,7 @@ class ActionBackendResult(BaseModel):
 
     success: bool
     summary: str = Field(min_length=1)
-    evidence_refs: list[str] = Field(default_factory=list)
+    evidence_refs: list[EvidenceRef] = Field(default_factory=list)
     external_effect_ref: str | None = None
     safe_point: str | None = None
     continuation: dict[str, Any] | None = None
@@ -248,8 +255,6 @@ class ActionBackendResult(BaseModel):
 
     @model_validator(mode="after")
     def _validate_evidence(self) -> ActionBackendResult:
-        if self.success and not self.evidence_refs:
-            raise ValueError("successful action result requires evidence_refs")
         if self.success and self.unknown:
             raise ValueError("successful action result cannot be unknown")
         return self
@@ -312,6 +317,7 @@ class RuntimeHealth(BaseModel):
     degraded_reasons: list[str] = Field(default_factory=list)
     last_heartbeat_at: AwareDatetime | None = None
     last_journal_append_at: AwareDatetime | None = None
+    embodiment: EmbodimentStatus | None = None
 
 
 class RuntimeStatus(BaseModel):
@@ -331,6 +337,7 @@ class RuntimeStatus(BaseModel):
     current_action: ActionExecution | None = None
     pending_actions: int = Field(default=0, ge=0)
     pending_events: int = Field(default=0, ge=0)
+    embodiment: EmbodimentStatus | None = None
 
 
 class EventDispatchResult(BaseModel):

@@ -1,0 +1,167 @@
+{
+  "$defs": {
+    "EnergyState": {
+      "additionalProperties": false,
+      "properties": {
+        "available_ratio": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Available Ratio",
+          "type": "number"
+        },
+        "available_units": {
+          "minimum": 0,
+          "title": "Available Units",
+          "type": "number"
+        },
+        "capacity_units": {
+          "exclusiveMinimum": 0,
+          "title": "Capacity Units",
+          "type": "number"
+        },
+        "charging": {
+          "default": false,
+          "title": "Charging",
+          "type": "boolean"
+        },
+        "delta_units_per_minute": {
+          "title": "Delta Units Per Minute",
+          "type": "number"
+        },
+        "estimated_time_to_empty_seconds": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Estimated Time To Empty Seconds"
+        },
+        "terminal": {
+          "default": false,
+          "title": "Terminal",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "capacity_units",
+        "available_units",
+        "available_ratio",
+        "delta_units_per_minute"
+      ],
+      "title": "EnergyState",
+      "type": "object"
+    },
+    "EvidenceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "created_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created At"
+        },
+        "digest": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Digest"
+        },
+        "media_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Media Type"
+        },
+        "provider_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Provider Id",
+          "type": "string"
+        },
+        "ref": {
+          "minLength": 1,
+          "title": "Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "provider_id",
+        "ref"
+      ],
+      "title": "EvidenceRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "body_instance_id": {
+      "title": "Body Instance Id",
+      "type": "string"
+    },
+    "captured_at": {
+      "format": "date-time",
+      "title": "Captured At",
+      "type": "string"
+    },
+    "energy": {
+      "$ref": "#/$defs/EnergyState"
+    },
+    "evidence_refs": {
+      "items": {
+        "$ref": "#/$defs/EvidenceRef"
+      },
+      "minItems": 1,
+      "title": "Evidence Refs",
+      "type": "array"
+    },
+    "provider_id": {
+      "title": "Provider Id",
+      "type": "string"
+    },
+    "revision": {
+      "minimum": 0,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "physiology.body-state.v1",
+      "default": "physiology.body-state.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "provider_id",
+    "body_instance_id",
+    "revision",
+    "captured_at",
+    "energy",
+    "evidence_refs"
+  ],
+  "title": "BodyStateSnapshot",
+  "type": "object"
+}

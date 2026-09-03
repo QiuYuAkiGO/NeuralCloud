@@ -172,6 +172,17 @@ def create_app(*, config_path: Path | None = None, presets_dir: Path | None = No
     async def index() -> FileResponse:
         return FileResponse(STATIC_DIR / "index.html")
 
+    @app.get("/ops")
+    async def operations() -> FileResponse:
+        return FileResponse(STATIC_DIR / "ops.html")
+
+    @app.get("/api/ops/availability")
+    async def operations_availability() -> dict[str, Any]:
+        return {
+            "available": False,
+            "reason": "运维面板需要通过 start.ps1 启动完整 Runtime 四进程拓扑。",
+        }
+
     @app.get("/api/status")
     async def status(session_id: str | None = None) -> dict[str, Any]:
         service: HarnessChatService = app.state.service

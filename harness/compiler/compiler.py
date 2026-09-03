@@ -52,9 +52,11 @@ class ContextCompiler:
         *,
         insights: list[StructuredInsight] | None = None,
         session: list[SessionTurn] | None = None,
+        additional_segments: list[ContextSegment] | None = None,
     ) -> ModelContext:
         insights = insights or []
         session = session or []
+        additional_segments = additional_segments or []
         total = self.settings.context_token_budget
         remaining = total
         segments: list[ContextSegment] = []
@@ -95,6 +97,17 @@ class ContextCompiler:
             remaining=remaining,
             preferred=min(200, remaining),
         )
+
+        for additional in additional_segments:
+            remaining = _push(
+                segments,
+                kind=additional.kind,
+                text=additional.text,
+                source_ids=list(additional.source_ids),
+                why=additional.why or "runtime_context",
+                remaining=remaining,
+                preferred=min(120, remaining),
+            )
 
         psych_text = _psych_text(situation)
         if psych_text:

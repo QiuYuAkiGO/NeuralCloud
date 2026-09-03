@@ -28,16 +28,24 @@ class RuntimeGateway:
         self.headers = {"Authorization": f"Bearer {token}"}
         self.client = httpx.AsyncClient(base_url=self.base_url, headers=self.headers, timeout=65.0)
         self.subscribers: set[asyncio.Queue[dict[str, Any]]] = set()
+        self.ops_subscribers: set[asyncio.Queue[dict[str, Any]]] = set()
         self.stream_task: asyncio.Task[None] | None = None
+        self.monitor_stream_task: asyncio.Task[None] | None = None
+        self.monitor_cursor = 0
 
     async def start(self) -> None:
         self.stream_task = asyncio.create_task(self._stream(), name="gui-runtime-events")
+        self.monitor_stream_task = asyncio.create_task(self._monitor_stream(), name="gui-monitor-events")
 
     async def close(self) -> None:
         if self.stream_task is not None:
             self.stream_task.cancel()
             with suppress(asyncio.CancelledError):
                 await self.stream_task
+        if self.monitor_stream_task is not None:
+            self.monitor_stream_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await self.monitor_stream_task
         await self.client.aclose()
 
     async def request(self, method: str, path: str, **kwargs: Any) -> Any:
@@ -81,8 +89,25 @@ class RuntimeGateway:
     def unsubscribe(self, queue: asyncio.Queue[dict[str, Any]]) -> None:
         self.subscribers.discard(queue)
 
+    def subscribe_ops(self) -> asyncio.Queue[dict[str, Any]]:
+        queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(maxsize=512)
+        self.ops_subscribers.add(queue)
+        return queue
+
+    def unsubscribe_ops(self, queue: asyncio.Queue[dict[str, Any]]) -> None:
+        self.ops_subscribers.discard(queue)
+
     async def broadcast(self, event: dict[str, Any]) -> None:
         for queue in list(self.subscribers):
+            if queue.full():
+                try:
+                    queue.get_nowait()
+                except asyncio.QueueEmpty:
+                    pass
+            queue.put_nowait(event)
+
+    async def broadcast_ops(self, event: dict[str, Any]) -> None:
+        for queue in list(self.ops_subscribers):
             if queue.full():
                 try:
                     queue.get_nowait()
@@ -115,6 +140,27 @@ class RuntimeGateway:
                 await self.broadcast({"type": "error", "data": {"message": f"Runtime event stream: {exc}"}})
                 await asyncio.sleep(1.0)
 
+    async def _monitor_stream(self) -> None:
+        while True:
+            try:
+                async with httpx.AsyncClient(headers=self.headers, timeout=None) as client:
+                    params = {"after_seq": self.monitor_cursor}
+                    async with client.stream("GET", f"{self.base_url}/v1/monitor/stream", params=params) as response:
+                        response.raise_for_status()
+                        async for line in response.aiter_lines():
+                            if not line.startswith("data:"):
+                                continue
+                            payload = json.loads(line[5:].strip())
+                            if not isinstance(payload, dict):
+                                continue
+                            self.monitor_cursor = max(self.monitor_cursor, int(payload.get("seq") or 0))
+                            await self.broadcast_ops({"type": "ops.event", "data": payload})
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                await self.broadcast_ops({"type": "ops.error", "data": {"message": str(exc)}})
+                await asyncio.sleep(1.0)
+
 
 def create_app(*, runtime_url: str | None = None, control_token: str | None = None) -> FastAPI:
     @asynccontextmanager
@@ -139,9 +185,100 @@ def create_app(*, runtime_url: str | None = None, control_token: str | None = No
     async def index() -> FileResponse:
         return FileResponse(STATIC_DIR / "index.html")
 
+    @app.get("/ops")
+    async def operations() -> FileResponse:
+        return FileResponse(STATIC_DIR / "ops.html")
+
     @app.get("/api/status")
     async def status(request: Request) -> dict[str, Any]:
         return await gateway(request).status()
+
+    @app.get("/api/ops/availability")
+    async def ops_availability(request: Request) -> dict[str, Any]:
+        status_payload = await gateway(request).request("GET", "/v1/status")
+        return {"available": True, "runtime": status_payload}
+
+    @app.get("/api/ops/overview")
+    async def ops_overview(request: Request) -> Any:
+        bridge = gateway(request)
+        monitor_payload, composite = await asyncio.gather(
+            bridge.request("GET", "/v1/monitor/overview", params=dict(request.query_params)),
+            bridge.status(),
+        )
+        monitor_payload["services"] = composite.get("services") or {}
+        monitor_payload["homeostasis"] = composite.get("homeostasis") or {}
+        return monitor_payload
+
+    @app.get("/api/ops/events")
+    async def ops_events(request: Request) -> Any:
+        return await gateway(request).request(
+            "GET", "/v1/monitor/events", params=dict(request.query_params)
+        )
+
+    @app.get("/api/ops/journal")
+    async def ops_journal(request: Request) -> Any:
+        return await gateway(request).request(
+            "GET", "/v1/monitor/journal", params=dict(request.query_params)
+        )
+
+    @app.get("/api/ops/runs")
+    async def ops_runs(request: Request) -> Any:
+        return await gateway(request).request(
+            "GET", "/v1/monitor/runs", params=dict(request.query_params)
+        )
+
+    @app.get("/api/ops/runs/{run_id}")
+    async def ops_run(run_id: str, request: Request) -> Any:
+        return await gateway(request).request("GET", f"/v1/monitor/runs/{run_id}")
+
+    @app.get("/api/ops/actions")
+    async def ops_actions(request: Request) -> Any:
+        return await gateway(request).request(
+            "GET", "/v1/monitor/actions", params=dict(request.query_params)
+        )
+
+    @app.get("/api/ops/export/{correlation_id}")
+    async def ops_export(correlation_id: str, request: Request) -> Any:
+        return await gateway(request).request("GET", f"/v1/monitor/export/{correlation_id}")
+
+    @app.post("/api/ops/runtime/{operation}")
+    async def ops_runtime_control(operation: str, request: Request) -> Any:
+        mapping = {
+            "pause": "/v1/pause",
+            "resume": "/v1/resume",
+            "recover": "/v1/recover",
+            "emergency-stop": "/v1/emergency-stop",
+            "stop": "/v1/stop",
+            "checkpoint": "/v1/checkpoint",
+        }
+        path = mapping.get(operation)
+        if path is None:
+            raise HTTPException(status_code=404, detail="unknown runtime operation")
+        return await gateway(request).request("POST", path, json=await _json_body(request))
+
+    @app.post("/api/ops/events")
+    async def ops_inject_event(request: Request) -> Any:
+        return await gateway(request).request(
+            "POST", "/v1/debug/events", json=await _json_body(request)
+        )
+
+    @app.post("/api/ops/actions/{action_id}/{operation}")
+    async def ops_action(action_id: str, operation: str, request: Request) -> Any:
+        if operation not in {"approve", "reject", "resolve"}:
+            raise HTTPException(status_code=404, detail="unknown action operation")
+        return await gateway(request).request(
+            "POST",
+            f"/v1/actions/{action_id}/{operation}",
+            json=await _json_body(request),
+        )
+
+    @app.post("/api/ops/deliveries/{prepare_id}/resolve")
+    async def ops_delivery(prepare_id: str, request: Request) -> Any:
+        return await gateway(request).request(
+            "POST",
+            f"/v1/deliveries/{prepare_id}/resolve",
+            json=await _json_body(request),
+        )
 
     @app.post("/api/chat")
     async def chat(request: Request) -> dict[str, Any]:
@@ -236,6 +373,23 @@ def create_app(*, runtime_url: str | None = None, control_token: str | None = No
             pass
         finally:
             bridge.unsubscribe(queue)
+
+    @app.websocket("/ops/ws")
+    async def operations_websocket(websocket: WebSocket) -> None:
+        await websocket.accept()
+        bridge: RuntimeGateway = websocket.app.state.gateway
+        queue = bridge.subscribe_ops()
+        try:
+            while True:
+                try:
+                    event = await asyncio.wait_for(queue.get(), timeout=25.0)
+                    await websocket.send_json(event)
+                except TimeoutError:
+                    await websocket.send_json({"type": "ping"})
+        except WebSocketDisconnect:
+            pass
+        finally:
+            bridge.unsubscribe_ops(queue)
 
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
     return app

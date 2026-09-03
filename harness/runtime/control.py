@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import json
 import secrets
 from enum import StrEnum
@@ -11,6 +12,7 @@ from typing import Any
 from harness.homeostasis.models import HomeostaticProfile
 from harness.homeostasis.profiles import ProfileRevisionStore
 
+from harness.runtime.monitor import MonitorRecorder, window_since
 from harness.runtime.models import ActionBackendResult, DeliveryResult, RuntimeEventPriority, RuntimeEventType
 from harness.runtime.supervisor import RuntimeSupervisor
 
@@ -29,9 +31,17 @@ class RuntimeEventStream:
     def __init__(self, *, subscriber_capacity: int = 256) -> None:
         self.subscriber_capacity = subscriber_capacity
         self._subscribers: set[asyncio.Queue[dict[str, Any]]] = set()
+        self._listeners: list[Any] = []
 
     async def publish(self, topic: str, payload: dict[str, Any]) -> None:
         item = {"topic": topic, "payload": payload}
+        for listener in list(self._listeners):
+            try:
+                result = listener(topic, payload)
+                if inspect.isawaitable(result):
+                    await result
+            except Exception:
+                continue
         for queue in list(self._subscribers):
             if queue.full():
                 try:
@@ -47,6 +57,9 @@ class RuntimeEventStream:
 
     def unsubscribe(self, queue: asyncio.Queue[dict[str, Any]]) -> None:
         self._subscribers.discard(queue)
+
+    def add_listener(self, listener: Any) -> None:
+        self._listeners.append(listener)
 
 
 class ControlPlane:
@@ -99,6 +112,7 @@ def create_control_app(
     control: ControlPlane,
     *,
     profile_store: ProfileRevisionStore | None = None,
+    monitor: MonitorRecorder | None = None,
 ):
     """Create a localhost-oriented FastAPI app.
 
@@ -146,6 +160,158 @@ def create_control_app(
     @app.get("/v1/health", dependencies=[Depends(authenticate)])
     async def health() -> dict[str, Any]:
         return control.supervisor.status().health.model_dump(mode="json")
+
+    def require_monitor() -> MonitorRecorder:
+        if monitor is None:
+            raise HTTPException(status_code=501, detail="monitoring projection is unavailable")
+        return monitor
+
+    @app.get("/v1/monitor/overview", dependencies=[Depends(authenticate)])
+    async def monitor_overview(window: str = "24h") -> dict[str, Any]:
+        recorder = require_monitor()
+        try:
+            return await asyncio.to_thread(
+                recorder.store.overview,
+                window=window,
+                status=control.supervisor.status(),
+                manifest=control.supervisor.manifest.model_dump(mode="json"),
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @app.get("/v1/monitor/events", dependencies=[Depends(authenticate)])
+    async def monitor_events(
+        window: str = "24h",
+        since: str | None = None,
+        until: str | None = None,
+        topic: str | None = None,
+        severity: str | None = None,
+        status: str | None = None,
+        correlation_id: str | None = None,
+        cursor: str | None = None,
+        after_seq: int | None = None,
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        recorder = require_monitor()
+        try:
+            return await asyncio.to_thread(
+                recorder.store.list_events,
+                since=since or window_since(window),
+                until=until,
+                topic=topic,
+                severity=severity,
+                status=status,
+                correlation_id=correlation_id,
+                cursor=cursor,
+                after_seq=after_seq,
+                limit=limit,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @app.get("/v1/monitor/runs", dependencies=[Depends(authenticate)])
+    async def monitor_runs(
+        window: str = "24h",
+        since: str | None = None,
+        status: str | None = None,
+        cursor: str | None = None,
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        recorder = require_monitor()
+        try:
+            return await asyncio.to_thread(
+                recorder.store.list_runs,
+                since=since or window_since(window),
+                status=status,
+                cursor=cursor,
+                limit=limit,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @app.get("/v1/monitor/runs/{run_id}", dependencies=[Depends(authenticate)])
+    async def monitor_run(run_id: str) -> dict[str, Any]:
+        recorder = require_monitor()
+        value = await asyncio.to_thread(recorder.store.get_run, run_id)
+        if value is None:
+            raise HTTPException(status_code=404, detail="monitor run not found")
+        return value
+
+    @app.get("/v1/monitor/journal", dependencies=[Depends(authenticate)])
+    async def monitor_journal(
+        window: str = "24h",
+        since: str | None = None,
+        record_type: str | None = None,
+        correlation_id: str | None = None,
+        cursor: str | None = None,
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        recorder = require_monitor()
+        try:
+            topic = f"journal.{record_type}" if record_type else "journal."
+            return await asyncio.to_thread(
+                recorder.store.list_events,
+                since=since or window_since(window),
+                topic=topic,
+                correlation_id=correlation_id,
+                cursor=cursor,
+                limit=limit,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @app.get("/v1/monitor/actions", dependencies=[Depends(authenticate)])
+    async def monitor_actions(limit: int = 100) -> dict[str, Any]:
+        recorder = require_monitor()
+        return {"items": await asyncio.to_thread(recorder.store.list_actions, limit=limit)}
+
+    @app.get("/v1/monitor/export/{correlation_id}", dependencies=[Depends(authenticate)])
+    async def monitor_export(correlation_id: str) -> dict[str, Any]:
+        recorder = require_monitor()
+        return await asyncio.to_thread(
+            recorder.store.diagnostic_bundle,
+            correlation_id,
+            status=control.supervisor.status(),
+            manifest=control.supervisor.manifest.model_dump(mode="json"),
+        )
+
+    @app.get("/v1/monitor/stream", dependencies=[Depends(authenticate)])
+    async def monitor_stream(after_seq: int = 0) -> StreamingResponse:
+        recorder = require_monitor()
+        queue = recorder.subscribe()
+
+        async def generate_monitor():
+            last_sent = max(0, int(after_seq))
+            try:
+                while True:
+                    page = await asyncio.to_thread(
+                        recorder.store.list_events,
+                        after_seq=last_sent,
+                        limit=500,
+                    )
+                    items = page["items"]
+                    for item in items:
+                        seq = int(item["seq"])
+                        if seq <= last_sent:
+                            continue
+                        last_sent = seq
+                        yield f"id: {seq}\nevent: monitor\ndata: {json.dumps(item, ensure_ascii=False)}\n\n"
+                    if not page["has_more"]:
+                        break
+                while True:
+                    try:
+                        item = await asyncio.wait_for(queue.get(), timeout=15.0)
+                        seq = int(item["seq"])
+                        if seq <= last_sent:
+                            continue
+                        last_sent = seq
+                        yield f"id: {seq}\nevent: monitor\ndata: {json.dumps(item, ensure_ascii=False)}\n\n"
+                    except TimeoutError:
+                        yield ": keepalive\n\n"
+            finally:
+                recorder.unsubscribe(queue)
+
+        return StreamingResponse(generate_monitor(), media_type="text/event-stream")
 
     @app.post("/v1/messages", dependencies=[Depends(authenticate)])
     async def message(payload: dict[str, Any]) -> dict[str, Any]:
@@ -232,6 +398,26 @@ def create_control_app(
         )
         return accepted.model_dump(mode="json") if accepted else {"accepted": False}
 
+    @app.post("/v1/debug/events", dependencies=[Depends(authenticate)])
+    async def debug_event(payload: dict[str, Any]) -> dict[str, Any]:
+        try:
+            control.authorize(ControlPermission.DEBUG_MUTATION, operation="runtime.event.inject")
+            accepted = await control.supervisor.submit_event(
+                event_type=payload["event_type"],
+                priority=payload.get("priority", RuntimeEventPriority.TELEMETRY),
+                source=str(payload.get("source") or "ops_debug"),
+                source_time=payload.get("source_time"),
+                event_id=payload.get("event_id"),
+                correlation_id=payload.get("correlation_id"),
+                idempotency_key=payload.get("idempotency_key"),
+                payload=dict(payload.get("payload") or {}),
+            )
+            return accepted.model_dump(mode="json") if accepted else {"accepted": False}
+        except ControlAuthorizationError as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
+        except (KeyError, ValueError) as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
     @app.post("/v1/pause", dependencies=[Depends(authenticate)])
     async def pause(payload: dict[str, Any] | None = None) -> dict[str, Any]:
         return await control.submit_control(
@@ -244,6 +430,20 @@ def create_control_app(
         return await control.submit_control(
             RuntimeEventType.RESUME,
             reason=str((payload or {}).get("reason") or "control plane resume"),
+        )
+
+    @app.post("/v1/recover", dependencies=[Depends(authenticate)])
+    async def recover(payload: dict[str, Any] | None = None) -> dict[str, Any]:
+        return await control.submit_control(
+            RuntimeEventType.RECOVER,
+            reason=str((payload or {}).get("reason") or "control plane recover"),
+        )
+
+    @app.post("/v1/emergency-stop", dependencies=[Depends(authenticate)])
+    async def emergency_stop(payload: dict[str, Any] | None = None) -> dict[str, Any]:
+        return await control.submit_control(
+            RuntimeEventType.EMERGENCY_STOP,
+            reason=str((payload or {}).get("reason") or "control plane emergency stop"),
         )
 
     @app.post("/v1/stop", dependencies=[Depends(authenticate)])
@@ -262,27 +462,44 @@ def create_control_app(
         action = await control.supervisor.approve_action(
             action_id, approval=str(payload.get("approval") or "researcher")
         )
-        return action.model_dump(mode="json")
+        result = action.model_dump(mode="json")
+        await control.event_stream.publish("action.updated", {"action": result})
+        return result
 
     @app.post("/v1/actions/{action_id}/reject", dependencies=[Depends(authenticate)])
     async def reject(action_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         action = await control.supervisor.reject_action(
             action_id, reason=str(payload.get("reason") or "rejected")
         )
-        return action.model_dump(mode="json")
+        result = action.model_dump(mode="json")
+        await control.event_stream.publish("action.updated", {"action": result})
+        return result
 
     @app.post("/v1/deliveries/{prepare_id}/resolve", dependencies=[Depends(authenticate)])
     async def resolve_delivery(prepare_id: str, payload: dict[str, Any]) -> dict[str, bool]:
-        control.supervisor.resolve_delivery(prepare_id, DeliveryResult.model_validate(payload))
-        return {"resolved": True}
+        try:
+            control.authorize(ControlPermission.DEBUG_MUTATION, operation="delivery.resolve")
+            control.supervisor.resolve_delivery(prepare_id, DeliveryResult.model_validate(payload))
+            await control.event_stream.publish(
+                "delivery.resolved", {"prepare_id": prepare_id, "result": payload}
+            )
+            return {"resolved": True}
+        except ControlAuthorizationError as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
 
     @app.post("/v1/actions/{action_id}/resolve", dependencies=[Depends(authenticate)])
     async def resolve_action(action_id: str, payload: dict[str, Any]) -> dict[str, Any]:
-        action = await control.supervisor.resolve_action(
-            action_id,
-            result=ActionBackendResult.model_validate(payload),
-        )
-        return action.model_dump(mode="json")
+        try:
+            control.authorize(ControlPermission.DEBUG_MUTATION, operation="action.resolve")
+            action = await control.supervisor.resolve_action(
+                action_id,
+                result=ActionBackendResult.model_validate(payload),
+            )
+            result = action.model_dump(mode="json")
+            await control.event_stream.publish("action.updated", {"action": result})
+            return result
+        except ControlAuthorizationError as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
 
     @app.get("/v1/events/stream", dependencies=[Depends(authenticate)])
     async def events() -> StreamingResponse:

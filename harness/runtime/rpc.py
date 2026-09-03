@@ -133,6 +133,11 @@ class HttpHomeostasisClient(_HttpDomainClient):
     ) -> DomainCommandResult[dict[str, Any]]:
         return await self.apply_event(command)
 
+    async def assimilate_observation(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[dict[str, Any]]:
+        return await self.apply_event(command)
+
     async def propose_policies(self, *, version_vector: VersionVector) -> list[dict[str, Any]]:
         payload = await self._request(
             "POST", "/v1/policies", json={"version_vector": version_vector.model_dump(mode="json")}
@@ -171,6 +176,7 @@ def create_domain_service_app(service: Any, *, service_token: str, service_name:
             "ApplyEvent": getattr(service, "apply_event", None),
             "ApplyHeartbeat": getattr(service, "apply_heartbeat", None),
             "ApplyOutcome": getattr(service, "apply_outcome", None),
+            "AssimilateObservation": getattr(service, "assimilate_observation", None),
         }
         method = methods.get(command_type)
         if method is None:

@@ -174,6 +174,17 @@ def test_api_status_and_index(api_client) -> None:
     assert "OLLAMA_BASE_URL" in js.text
     assert "refreshEndpointModels" in js.text
 
+    ops = api_client.get("/ops")
+    assert ops.status_code == 200
+    assert "Runtime Ops" in ops.text
+    assert 'id="view-overview"' in ops.text
+    assert api_client.get("/static/ops.css").status_code == 200
+    ops_js = api_client.get("/static/ops.js")
+    assert ops_js.status_code == 200
+    assert "connectWebSocket" in ops_js.text
+    availability = api_client.get("/api/ops/availability").json()
+    assert availability["available"] is False
+
 
 def test_api_chat_websocket_fast_path(api_client) -> None:
     with api_client.websocket_connect("/ws") as ws:

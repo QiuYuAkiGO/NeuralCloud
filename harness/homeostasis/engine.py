@@ -8,9 +8,11 @@ import math
 import os
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal
+from collections.abc import Callable
+from typing import Any, Literal, cast
 
 from harness.contracts.envelope import DomainCommandEnvelope, DomainCommandResult, VersionVector
+from harness.embodiment.contracts import HomeostaticObservation, evidence_ref_strings
 from harness.homeostasis.models import (
     DIMENSIONS,
     CoreAffect,
@@ -55,6 +57,7 @@ class HomeostasisEngine:
         *,
         state_dir: Path | str,
         now: datetime | None = None,
+        clock: Callable[[], datetime] | None = None,
     ) -> None:
         self.profile = profile
         self.state_dir = Path(state_dir)
@@ -63,7 +66,8 @@ class HomeostasisEngine:
         self.trace_path = self.state_dir / "transitions.jsonl"
         self._lock = asyncio.Lock()
         self._ledger: dict[str, dict[str, Any]] = {}
-        self._started_at = now or utc_now()
+        self._clock = clock or ((lambda: now) if now is not None else utc_now)
+        self._started_at = now or self._clock()
         self.snapshot = initial_snapshot(profile, now=self._started_at)
         self._load()
         self._validate_profile_identity()
@@ -115,6 +119,126 @@ class HomeostasisEngine:
     ) -> DomainCommandResult[dict[str, Any]]:
         return await self._apply(command, kind="outcome")
 
+    async def assimilate_observation(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[dict[str, Any]]:
+        """Assimilate measured state without interpreting it as an event delta."""
+
+        async with self._lock:
+            request_hash = command.effective_request_hash()
+            key = f"{command.command_type}\0{command.idempotency_key}"
+            previous = self._ledger.get(key)
+            if previous is not None:
+                if previous["request_hash"] != request_hash:
+                    return self._failure(
+                        command,
+                        request_hash,
+                        "idempotency key reused with different request",
+                        "conflict",
+                    )
+                restored = DomainCommandResult[dict[str, Any]].model_validate(previous["result"])
+                return restored.model_copy(update={"status": "idempotent_replay", "idempotency_hit": True})
+            if command.is_expired(now=self._clock()):
+                return self._failure(command, request_hash, "command deadline expired", "rejected")
+            if command.expected_revision is not None and command.expected_revision != self.snapshot.revision:
+                return self._failure(
+                    command,
+                    request_hash,
+                    f"expected revision {command.expected_revision}, current {self.snapshot.revision}",
+                    "conflict",
+                )
+
+            observation = HomeostaticObservation.model_validate(
+                command.payload.get("observation") or command.payload
+            )
+            unknown = set(observation.observed_values) - set(DIMENSIONS)
+            if unknown:
+                return self._failure(
+                    command,
+                    request_hash,
+                    f"unknown observed dimensions: {sorted(unknown)}",
+                    "rejected",
+                )
+            effective_at = max(observation.observed_at, self.snapshot.updated_at)
+            factors = dict(self.snapshot.dimensions)
+            applied: dict[DimensionName, float] = {key: 0.0 for key in DIMENSIONS}
+            evidence = evidence_ref_strings(observation.evidence_refs)
+            for dimension_name, measured in observation.observed_values.items():
+                dimension = cast(DimensionName, dimension_name)
+                current = self.snapshot.dimensions[dimension]
+                spec = self.profile.dimensions[dimension]
+                value = _clamp(
+                    current.value + observation.precision * (float(measured) - current.value),
+                    spec.hard_bounds[0],
+                    spec.hard_bounds[1],
+                )
+                delta = value - current.value
+                applied[dimension] = delta
+                factors[dimension] = FactorBelief(
+                    dimension=dimension,
+                    value=value,
+                    velocity=delta,
+                    posterior=self._posterior(value, spec.baseline_band),
+                    target_band=spec.baseline_band,
+                    precision=observation.precision,
+                    dominant_evidence=(evidence + current.dominant_evidence)[:5],
+                    updated_at=effective_at,
+                )
+
+            revision = self.snapshot.revision + 1
+            watchdog = self._watchdog(factors)
+            self.snapshot = HomeostaticSnapshot(
+                revision=revision,
+                profile_id=self.profile.profile_id,
+                profile_revision=self.profile.revision,
+                dimensions=factors,
+                core_affect=self._derive_affect(factors),
+                emotion=self._derive_emotion(self._derive_affect(factors), factors, effective_at),
+                candidates=self._rank_policies(factors),
+                acknowledged_receive_seq=max(self.snapshot.acknowledged_receive_seq, command.receive_seq),
+                acknowledged_event_id=command.event_id,
+                last_heartbeat_at=self.snapshot.last_heartbeat_at,
+                updated_at=effective_at,
+                stable_snapshot_ref=(
+                    f"snapshot://{self.profile.profile_id}/{revision}"
+                    if not watchdog
+                    else self.snapshot.stable_snapshot_ref
+                ),
+                watchdog=watchdog,
+            )
+            trace = HomeostaticTransitionTrace(
+                revision=revision,
+                command_type=command.command_type,
+                event_id=command.event_id,
+                receive_seq=command.receive_seq,
+                occurred_at=effective_at,
+                source=observation.source,
+                precision=observation.precision,
+                suggested_impacts={key: 0.0 for key in DIMENSIONS},
+                applied_impacts=applied,
+                coupling_impacts={key: 0.0 for key in DIMENSIONS},
+                watchdog=watchdog,
+            )
+            result = DomainCommandResult[dict[str, Any]](
+                command_id=command.command_id,
+                command_type=command.command_type,
+                status="applied",
+                request_hash=request_hash,
+                committed_revision=revision,
+                acknowledged_event_id=command.event_id,
+                acknowledged_receive_seq=self.snapshot.acknowledged_receive_seq,
+                result={
+                    "revision": revision,
+                    "snapshot": self.snapshot.model_dump(mode="json"),
+                    "trace": trace.model_dump(mode="json"),
+                },
+                completed_at=self._clock(),
+            )
+            self._ledger[key] = {"request_hash": request_hash, "result": result.model_dump(mode="json")}
+            self._append_trace(trace)
+            self._persist()
+            return result
+
     async def propose_policies(self, *, version_vector: VersionVector) -> list[dict[str, Any]]:
         del version_vector
         async with self._lock:
@@ -139,7 +263,7 @@ class HomeostasisEngine:
                     return self._failure(command, request_hash, "idempotency key reused with different request", "conflict")
                 restored = DomainCommandResult[dict[str, Any]].model_validate(previous["result"])
                 return restored.model_copy(update={"status": "idempotent_replay", "idempotency_hit": True})
-            if command.is_expired(now=utc_now()):
+            if command.is_expired(now=self._clock()):
                 return self._failure(command, request_hash, "command deadline expired", "rejected")
             if command.expected_revision is not None and command.expected_revision != self.snapshot.revision:
                 return self._failure(
@@ -206,7 +330,7 @@ class HomeostasisEngine:
                 acknowledged_event_id=command.event_id,
                 acknowledged_receive_seq=self.snapshot.acknowledged_receive_seq,
                 result=result_payload,
-                completed_at=utc_now(),
+                completed_at=self._clock(),
             )
             self._ledger[key] = {"request_hash": request_hash, "result": result.model_dump(mode="json")}
             self._append_trace(trace)
@@ -432,8 +556,8 @@ class HomeostasisEngine:
                 reasons.append(f"{dimension}:posterior_saturated")
         return reasons
 
-    @staticmethod
     def _failure(
+        self,
         command: DomainCommandEnvelope[dict[str, Any]],
         request_hash: str,
         error: str,
@@ -445,7 +569,7 @@ class HomeostasisEngine:
             status=status,
             request_hash=request_hash,
             error=error,
-            completed_at=utc_now(),
+            completed_at=self._clock(),
         )
 
     def _validate_profile_identity(self) -> None:

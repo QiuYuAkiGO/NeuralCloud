@@ -8,6 +8,7 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validato
 
 from harness.contracts.envelope import VersionVector
 from harness.core.ids import new_id
+from harness.embodiment.contracts import EmbodiedActionSpec
 
 
 class ReplyDecision(BaseModel):
@@ -39,6 +40,7 @@ class GoalProposal(BaseModel):
     reversible: bool
     verification_method: str = Field(min_length=1)
     required_approvals: list[str] = Field(default_factory=list)
+    embodied_action: EmbodiedActionSpec | None = None
 
 
 class NoActionDecision(BaseModel):
@@ -119,7 +121,7 @@ class ActionOutcomeEvidence(BaseModel):
     observed_at: AwareDatetime
     success: bool
     summary: str = Field(min_length=1)
-    evidence_refs: list[str] = Field(min_length=1)
+    evidence_refs: list[str] = Field(default_factory=list)
     external_effect_ref: str | None = None
 
 

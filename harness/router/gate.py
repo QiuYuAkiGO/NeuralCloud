@@ -105,8 +105,11 @@ class ComplexityGate:
         self, situation: SituationState, signals: ComplexitySignals, score: float
     ) -> str | None:
         """Second judge, consulted only when the rule side votes fast; a deep verdict here always wins."""
+        llm = self.llm
+        if llm is None:
+            return None
         try:
-            raw = self.llm.complete_json(
+            raw = llm.complete_json(
                 system=_LLM_GATE_SYSTEM,
                 user=str(
                     {

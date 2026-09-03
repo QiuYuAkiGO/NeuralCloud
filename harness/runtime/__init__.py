@@ -16,6 +16,7 @@ from harness.runtime.adapters import (
     ServiceHealth,
 )
 from harness.runtime.checkpoint import CheckpointStore, RuntimeCheckpoint
+from harness.embodiment.ports import BodyStateProvider, CapabilityProvider, PerceptionBackend
 from harness.runtime.control import (
     ControlAuthorizationError,
     ControlPermission,
@@ -29,6 +30,7 @@ from harness.runtime.journal import (
     RuntimeJournal,
     RuntimeJournalRecord,
 )
+from harness.runtime.monitor import MonitorEvent, MonitorRecorder, MonitorRun, MonitorSample, MonitorStore
 
 from harness.runtime.models import (
     ActionBackendResult,
@@ -74,6 +76,8 @@ __all__ = [
     "ActionExecution",
     "ActionExecutionState",
     "CheckpointStore",
+    "BodyStateProvider",
+    "CapabilityProvider",
     "CognitiveServiceClient",
     "ControlAuthorizationError",
     "ControlPermission",
@@ -92,10 +96,16 @@ __all__ = [
     "JournalUnavailableError",
     "LateDomainResultError",
     "LifecycleTransition",
+    "MonitorEvent",
+    "MonitorRecorder",
+    "MonitorRun",
+    "MonitorSample",
+    "MonitorStore",
     "NoopActionBackend",
     "PassiveHomeostasisAdapter",
     "PauseObservationBuffer",
     "PerceptionGuard",
+    "PerceptionBackend",
     "PipelineCognitiveAdapter",
     "PriorityEventQueue",
     "QueueStatistics",

@@ -122,6 +122,15 @@ class RuntimeJournal:
         with self._lock:
             return list(self._records)
 
+    def records_after(self, record_seq: int, *, limit: int = 500) -> list[RuntimeJournalRecord]:
+        """Return a bounded tail without copying the complete in-memory journal."""
+
+        if record_seq < 0:
+            raise ValueError("record_seq must be non-negative")
+        page_size = max(1, min(5000, int(limit)))
+        with self._lock:
+            return list(self._records[record_seq : record_seq + page_size])
+
     def append(
         self,
         record_type: str,

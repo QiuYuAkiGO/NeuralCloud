@@ -60,8 +60,8 @@ def split_protocol_segments(text: str) -> tuple[list[str], Continuation]:
     raw = text or ""
     matches = list(_LINE_MARKER.finditer(raw))
     if not matches:
-        body, marker = strip_marker(raw)
-        return ([body] if body else []), marker
+        body, trailing_marker = strip_marker(raw)
+        return ([body] if body else []), trailing_marker
 
     parts: list[str] = []
     cursor = 0

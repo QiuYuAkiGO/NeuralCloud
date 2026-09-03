@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import logging
 from collections.abc import Sequence
-from typing import Protocol
+from typing import Protocol, cast
 
 import httpx
 import numpy as np
@@ -189,7 +189,10 @@ def build_embedding_client(
             }
         )
         live = OpenAICompatEmbedding(embed_settings)
-        guarded: EmbeddingClient = GuardedEmbedding(live)
+        # Consumers already treat a failed embedding as an absent semantic signal.
+        # Keep the public protocol strict for healthy backends while adapting this
+        # deliberately degrading wrapper at the composition boundary.
+        guarded = cast(EmbeddingClient, GuardedEmbedding(live))
         if guarded.embed_one("."):
             return guarded
         closer = getattr(guarded, "close", None)

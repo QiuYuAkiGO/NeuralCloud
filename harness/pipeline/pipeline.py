@@ -12,6 +12,7 @@ from harness.core.ids import new_id
 from harness.core.inference import (
     MAX_RELEVANT_MEMORIES,
     CandidateResponse,
+    ContextSegment,
     FinalResponse,
     ModelContext,
     SessionTurn,
@@ -25,6 +26,7 @@ from harness.llm.character import CharacterModel
 from harness.llm.client import LLMClient
 from harness.memory.service import MemoryService
 from harness.pipeline.continuation import (
+    StoppedBy,
     build_nudge,
     fresh_bodies,
     split_protocol_segments,
@@ -104,6 +106,7 @@ class InferencePipeline:
                 now=now,
                 ingest_kwargs=ingest_kwargs,
                 commit_interaction=True,
+                context_segments=None,
             )
             call.set_result(final)
             return final
@@ -116,6 +119,7 @@ class InferencePipeline:
         session_id: str | None = None,
         speaker: str | None = None,
         call_id: str | None = None,
+        context_segments: list[ContextSegment] | None = None,
     ) -> FinalResponse:
         """Generate a replayable response without mutating Session or Memory.
 
@@ -138,6 +142,7 @@ class InferencePipeline:
                     now=now,
                     ingest_kwargs=ingest_kwargs,
                     commit_interaction=False,
+                    context_segments=context_segments,
                 )
             call.set_result(final)
             return final
@@ -149,6 +154,7 @@ class InferencePipeline:
         now: datetime | None,
         ingest_kwargs: dict[str, Any],
         commit_interaction: bool,
+        context_segments: list[ContextSegment] | None,
     ) -> FinalResponse:
         started = time.perf_counter()
         event = self._traced("ingest", lambda: self.gateway.ingest(source, **ingest_kwargs))
@@ -203,7 +209,12 @@ class InferencePipeline:
             )
         context = self._traced(
             "compile",
-            lambda: self.compiler.compile(situation, insights=insights, session=recent),
+            lambda: self.compiler.compile(
+                situation,
+                insights=insights,
+                session=recent,
+                additional_segments=context_segments,
+            ),
             extra={"situation_id": situation.situation_id, "path": request.path},
         )
 
@@ -268,7 +279,7 @@ class InferencePipeline:
         response_id: str,
         now: datetime,
         commit_session: bool,
-    ) -> tuple[list[str], str, int, ValidationResult, TokenUsage]:
+    ) -> tuple[list[str], StoppedBy, int, ValidationResult, TokenUsage]:
         if not self.settings.continuation_enabled:
             candidate, validation, revisions, usage = self._generate_validated(
                 context,
@@ -284,14 +295,14 @@ class InferencePipeline:
             accepted, _ = fresh_bodies(bodies, [])
             if not accepted:
                 return [], "disabled", revisions, validation, usage
-            segments = self._commit_segments(
+            committed_segments = self._commit_segments(
                 accepted,
                 session_id=session_id,
                 response_id=response_id,
                 now=now,
                 commit_session=commit_session,
             )
-            return segments, "disabled", revisions, validation, usage
+            return committed_segments, "disabled", revisions, validation, usage
 
         segments: list[str] = []
         revisions = 0

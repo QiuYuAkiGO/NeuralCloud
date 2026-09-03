@@ -27,7 +27,7 @@ from harness.contracts.envelope import (
     DomainCommandResult,
     VersionVector,
 )
-from harness.core.inference import FinalResponse, SessionTurn
+from harness.core.inference import ContextSegment, FinalResponse, SessionTurn
 from harness.core.models import InteractionEvent
 from harness.pipeline.pipeline import InferencePipeline
 
@@ -93,6 +93,10 @@ class HomeostasisServiceClient(Protocol):
     ) -> DomainCommandResult[dict[str, Any]]: ...
 
     async def apply_outcome(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[dict[str, Any]]: ...
+
+    async def assimilate_observation(
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[dict[str, Any]]: ...
 
@@ -186,7 +190,8 @@ class PipelineCognitiveAdapter:
             if callable(bind):
                 bind(str(payload.get("call_id") or command.correlation_id))
             source_time = payload.get("source_time") or command.issued_at
-            autonomous = payload.get("mode") == "autonomous"
+            autonomous = payload.get("mode") in {"autonomous", "reconsideration"}
+            reconsideration = payload.get("mode") == "reconsideration"
             event = InteractionEvent(
                 event_id=command.event_id,
                 timestamp=source_time,
@@ -197,16 +202,38 @@ class PipelineCognitiveAdapter:
                 session_id=str(payload.get("session_id") or "sess_default"),
             )
             try:
+                context_segments: list[ContextSegment] = []
+                interoception = payload.get("interoception")
+                if isinstance(interoception, dict):
+                    level = float(interoception["resource_level"])
+                    trend = float(interoception["resource_trend"])
+                    time_to_limit = interoception.get("estimated_time_to_limit_seconds")
+                    text = f"Interoceptive resource measurement: level={level:.4f}; trend={trend:.4f}"
+                    if time_to_limit is not None:
+                        text += f"; estimated_time_to_limit_seconds={int(time_to_limit)}"
+                    context_segments.append(
+                        ContextSegment(
+                            kind="interoception",
+                            text=text,
+                            source_ids=[f"body-state:{int(interoception['source_revision'])}"],
+                            why="current_resource_measurement",
+                        )
+                    )
                 final = await asyncio.to_thread(
                     self.pipeline.prepare,
                     event,
                     now=command.issued_at,
                     call_id=payload.get("call_id"),
+                    context_segments=context_segments,
                 )
                 now = _utc_now()
                 read_versions = command.version_vector or self._version_vector()
                 decision = (
-                    ReplyDecision(
+                    NoActionDecision(
+                        reason="continue current goal after interoceptive reconsideration"
+                    )
+                    if reconsideration
+                    else ReplyDecision(
                         text=final.text,
                         segments=list(final.segments) or [final.text],
                         channel=str(payload.get("channel") or "chat"),
@@ -549,6 +576,11 @@ class PassiveHomeostasisAdapter:
         return await self._apply(command)
 
     async def apply_outcome(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[dict[str, Any]]:
+        return await self._apply(command)
+
+    async def assimilate_observation(
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[dict[str, Any]]:
         return await self._apply(command)

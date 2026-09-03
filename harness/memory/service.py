@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import UTC, datetime
 import time
-from typing import Any
+from typing import Any, cast
 
 from harness.config import Settings, get_settings
 from harness.core.exceptions import EvidenceRequiredError, PersonaLockedError
@@ -305,7 +305,8 @@ class MemoryService:
             {"text": query.text, "session_id": query.session_id},
         ) as call:
             query = query.model_copy(update={"include_conflicts": True})
-            if query.current_inference is None:
+            current_inference = query.current_inference
+            if current_inference is None:
                 raise ValueError("current_inference is required for conflict retrieval")
             if query.persona is None:
                 query = query.model_copy(update={"persona": self.stores.persona.get()})
@@ -313,7 +314,7 @@ class MemoryService:
                 query = query.model_copy(update={"relationship": self.stores.relationship.get("user")})
             plan, query_embedding = self._plan_and_embed(query)
             results = self.hybrid.search(query, plan, query_embedding=query_embedding)
-            conflicts = self.conflicts.find(query, query.current_inference)
+            conflicts = self.conflicts.find(query, current_inference)
             self.tracer.record(
                 "retrieval",
                 {
@@ -589,4 +590,6 @@ class MemoryService:
 
 
 def build_inmemory_service(**kwargs: Any) -> MemoryService:
-    return MemoryService(InMemoryStores(), **kwargs)
+    # Protocol attributes are mutable and therefore invariant to mypy even
+    # though every concrete in-memory store implements its corresponding port.
+    return MemoryService(cast(MemoryStores, InMemoryStores()), **kwargs)

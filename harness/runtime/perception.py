@@ -3,18 +3,14 @@
 from __future__ import annotations
 
 import asyncio
-import inspect
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
-from typing import Any, Protocol
+from typing import Any
 
 from pydantic import BaseModel
 
+from harness.embodiment.ports import PerceptionBackend
 from harness.runtime.models import ResumeObservation, RuntimeEvent, RuntimeEventPriority, RuntimeEventType
-
-
-class PerceptionBackend(Protocol):
-    def observe(self, *, now: datetime | None = None) -> Any: ...
 
 
 SubmitPerception = Callable[..., Awaitable[RuntimeEvent | None]]
@@ -102,11 +98,7 @@ class PerceptionGuard:
         while not self._stop.is_set():
             moment = datetime.now(UTC)
             try:
-                observe = self.backend.observe
-                if inspect.iscoroutinefunction(observe):
-                    observation = await observe(now=moment)
-                else:
-                    observation = await asyncio.to_thread(observe, now=moment)
+                observation = await self.backend.observe(now=moment)
                 payload = self._normalise(observation)
                 await self.submit(
                     event_type=RuntimeEventType.PERCEPTION,

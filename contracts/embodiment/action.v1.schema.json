@@ -1,0 +1,429 @@
+{
+  "$defs": {
+    "A11yNodeCriterion": {
+      "additionalProperties": false,
+      "properties": {
+        "app_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "App Id"
+        },
+        "condition": {
+          "enum": [
+            "present",
+            "absent"
+          ],
+          "title": "Condition",
+          "type": "string"
+        },
+        "kind": {
+          "const": "a11y_node",
+          "default": "a11y_node",
+          "title": "Kind",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "role": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Role"
+        }
+      },
+      "required": [
+        "condition"
+      ],
+      "title": "A11yNodeCriterion",
+      "type": "object"
+    },
+    "ActionIntent": {
+      "additionalProperties": false,
+      "properties": {
+        "arguments": {
+          "additionalProperties": true,
+          "title": "Arguments",
+          "type": "object"
+        },
+        "intent_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9_.-]+\\.v[0-9]+$",
+          "title": "Intent Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "intent_id"
+      ],
+      "title": "ActionIntent",
+      "type": "object"
+    },
+    "FileCriterion": {
+      "additionalProperties": false,
+      "properties": {
+        "condition": {
+          "enum": [
+            "exists",
+            "absent",
+            "sha256_equals",
+            "size_equals"
+          ],
+          "title": "Condition",
+          "type": "string"
+        },
+        "kind": {
+          "const": "file",
+          "default": "file",
+          "title": "Kind",
+          "type": "string"
+        },
+        "relative_path": {
+          "title": "Relative Path",
+          "type": "string"
+        },
+        "root_id": {
+          "title": "Root Id",
+          "type": "string"
+        },
+        "sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sha256"
+        },
+        "size": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size"
+        }
+      },
+      "required": [
+        "condition",
+        "root_id",
+        "relative_path"
+      ],
+      "title": "FileCriterion",
+      "type": "object"
+    },
+    "IntentionalNoopCriterion": {
+      "additionalProperties": false,
+      "properties": {
+        "condition": {
+          "enum": [
+            "waited",
+            "observed",
+            "deferred"
+          ],
+          "title": "Condition",
+          "type": "string"
+        },
+        "kind": {
+          "const": "intentional_noop",
+          "default": "intentional_noop",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "condition"
+      ],
+      "title": "IntentionalNoopCriterion",
+      "type": "object"
+    },
+    "PointerCriterion": {
+      "additionalProperties": false,
+      "properties": {
+        "app_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "App Id"
+        },
+        "condition": {
+          "const": "over_element",
+          "default": "over_element",
+          "title": "Condition",
+          "type": "string"
+        },
+        "kind": {
+          "const": "pointer",
+          "default": "pointer",
+          "title": "Kind",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "role": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Role"
+        }
+      },
+      "title": "PointerCriterion",
+      "type": "object"
+    },
+    "ProcessCriterion": {
+      "additionalProperties": false,
+      "properties": {
+        "app_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "App Id"
+        },
+        "condition": {
+          "enum": [
+            "running",
+            "not_running"
+          ],
+          "title": "Condition",
+          "type": "string"
+        },
+        "kind": {
+          "const": "process",
+          "default": "process",
+          "title": "Kind",
+          "type": "string"
+        },
+        "pid": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pid"
+        }
+      },
+      "required": [
+        "condition"
+      ],
+      "title": "ProcessCriterion",
+      "type": "object"
+    },
+    "ScreenChangeCriterion": {
+      "additionalProperties": false,
+      "properties": {
+        "baseline_evidence_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Baseline Evidence Ref"
+        },
+        "condition": {
+          "enum": [
+            "changed",
+            "unchanged"
+          ],
+          "title": "Condition",
+          "type": "string"
+        },
+        "kind": {
+          "const": "screen_change",
+          "default": "screen_change",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "condition"
+      ],
+      "title": "ScreenChangeCriterion",
+      "type": "object"
+    },
+    "WindowCriterion": {
+      "additionalProperties": false,
+      "properties": {
+        "app_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "App Id"
+        },
+        "condition": {
+          "enum": [
+            "present",
+            "absent",
+            "present_and_focused",
+            "title_equals"
+          ],
+          "title": "Condition",
+          "type": "string"
+        },
+        "kind": {
+          "const": "window",
+          "default": "window",
+          "title": "Kind",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "window_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Window Id"
+        }
+      },
+      "required": [
+        "condition"
+      ],
+      "title": "WindowCriterion",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "intent": {
+      "$ref": "#/$defs/ActionIntent"
+    },
+    "success_criteria": {
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "a11y_node": "#/$defs/A11yNodeCriterion",
+            "file": "#/$defs/FileCriterion",
+            "intentional_noop": "#/$defs/IntentionalNoopCriterion",
+            "pointer": "#/$defs/PointerCriterion",
+            "process": "#/$defs/ProcessCriterion",
+            "screen_change": "#/$defs/ScreenChangeCriterion",
+            "window": "#/$defs/WindowCriterion"
+          },
+          "propertyName": "kind"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/WindowCriterion"
+          },
+          {
+            "$ref": "#/$defs/FileCriterion"
+          },
+          {
+            "$ref": "#/$defs/ProcessCriterion"
+          },
+          {
+            "$ref": "#/$defs/ScreenChangeCriterion"
+          },
+          {
+            "$ref": "#/$defs/A11yNodeCriterion"
+          },
+          {
+            "$ref": "#/$defs/PointerCriterion"
+          },
+          {
+            "$ref": "#/$defs/IntentionalNoopCriterion"
+          }
+        ]
+      },
+      "minItems": 1,
+      "title": "Success Criteria",
+      "type": "array"
+    }
+  },
+  "required": [
+    "intent",
+    "success_criteria"
+  ],
+  "title": "EmbodiedActionSpec",
+  "type": "object"
+}

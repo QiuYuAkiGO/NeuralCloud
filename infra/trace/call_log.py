@@ -10,7 +10,7 @@ from contextvars import ContextVar
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Iterator, Literal
 
 from harness.config import SCHEMA_VERSION, Settings
 from harness.core.ids import new_id
@@ -74,7 +74,12 @@ class CallScope:
         self._token = _current.set(session)
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: Any) -> bool:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: Any,
+    ) -> Literal[False]:
         if self._nested or self._session is None:
             return False
         try:

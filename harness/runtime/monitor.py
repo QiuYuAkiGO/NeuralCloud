@@ -1,0 +1,1012 @@
+"""Rebuildable observability projection for the Runtime control plane.
+
+The monitor database is deliberately non-authoritative. Runtime correctness
+continues to depend on the hash-chained journal and domain stores; failures in
+this module are surfaced to operators but never stop event processing.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import base64
+import inspect
+import json
+import math
+import sqlite3
+import threading
+from contextlib import suppress
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+from typing import Any, Callable
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from harness.runtime.journal import RuntimeJournal, RuntimeJournalRecord
+from harness.runtime.models import RuntimeStatus
+from infra.trace.serialize import dump_value
+
+
+MONITOR_SCHEMA_VERSION = "monitor-v1"
+DIAGNOSTIC_SCHEMA_VERSION = "monitor-diagnostic-v1"
+DEFAULT_RETENTION_DAYS = 7
+DEFAULT_SAMPLE_SECONDS = 10.0
+MAX_PAGE_SIZE = 500
+
+
+class MonitorEvent(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    seq: int = Field(ge=1)
+    observed_at: str
+    source: str
+    topic: str
+    severity: str
+    correlation_id: str | None = None
+    run_id: str | None = None
+    event_id: str | None = None
+    payload: dict[str, Any]
+
+
+class MonitorRun(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    seq: int = Field(ge=1)
+    run_id: str
+    correlation_id: str | None = None
+    event_id: str | None = None
+    started_at: str
+    completed_at: str | None = None
+    updated_at: str
+    status: str
+    path: str | None = None
+    latency_ms: float | None = None
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
+    revisions: int = 0
+    error: str | None = None
+    stages: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class MonitorSample(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    seq: int = Field(ge=1)
+    observed_at: str
+    lifecycle: str
+    queue_size: int = 0
+    receive_process_lag: int = 0
+    pending_actions: int = 0
+    coalesced: int = 0
+    dropped: int = 0
+    rejected: int = 0
+    healthy: bool = True
+    payload: dict[str, Any] = Field(default_factory=dict)
+
+
+def utc_now() -> datetime:
+    return datetime.now(UTC)
+
+
+def _iso(value: datetime | str | None = None) -> str:
+    if value is None:
+        return utc_now().isoformat()
+    if isinstance(value, datetime):
+        return value.astimezone(UTC).isoformat()
+    text = str(value)
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return utc_now().isoformat()
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC).isoformat()
+
+
+def _encode_cursor(seq: int) -> str:
+    return base64.urlsafe_b64encode(f"seq:{seq}".encode()).decode().rstrip("=")
+
+
+def _decode_cursor(cursor: str | None) -> int | None:
+    if not cursor:
+        return None
+    try:
+        padded = cursor + "=" * (-len(cursor) % 4)
+        value = base64.urlsafe_b64decode(padded.encode()).decode()
+        prefix, raw = value.split(":", 1)
+        if prefix != "seq":
+            raise ValueError
+        return int(raw)
+    except (ValueError, UnicodeError) as exc:
+        raise ValueError("invalid monitor cursor") from exc
+
+
+def _safe_limit(limit: int) -> int:
+    return max(1, min(MAX_PAGE_SIZE, int(limit)))
+
+
+_SECRET_KEYS = {
+    "authorization",
+    "api_key",
+    "apikey",
+    "control_token",
+    "service_token",
+    "access_token",
+    "refresh_token",
+    "password",
+    "secret",
+}
+
+
+def sanitize_payload(value: Any) -> Any:
+    """Drop vector payloads and redact credentials while preserving debug data."""
+
+    value = dump_value(value)
+    if isinstance(value, dict):
+        cleaned: dict[str, Any] = {}
+        for key, item in value.items():
+            lowered = str(key).lower()
+            if lowered == "embedding":
+                continue
+            if (
+                lowered in _SECRET_KEYS
+                or lowered.endswith("_api_key")
+                or lowered.endswith("_password")
+                or (lowered.endswith("_token") and lowered not in {"prompt_token", "completion_token"})
+            ):
+                cleaned[str(key)] = "[REDACTED]"
+            else:
+                cleaned[str(key)] = sanitize_payload(item)
+        return cleaned
+    if isinstance(value, list):
+        return [sanitize_payload(item) for item in value]
+    return value
+
+
+def event_severity(topic: str, payload: dict[str, Any]) -> str:
+    text = f"{topic} {payload.get('status', '')} {payload.get('state', '')}".lower()
+    if any(word in text for word in ("fault", "failed", "error", "terminal", "unavailable")):
+        return "error"
+    if any(word in text for word in ("watchdog", "dropped", "rejected", "degraded", "paused")):
+        return "warning"
+    return "info"
+
+
+def _percentile(values: list[float], percentile: float) -> float | None:
+    if not values:
+        return None
+    ordered = sorted(values)
+    index = (len(ordered) - 1) * percentile
+    lower = math.floor(index)
+    upper = math.ceil(index)
+    if lower == upper:
+        return round(ordered[lower], 3)
+    weight = index - lower
+    return round(ordered[lower] * (1 - weight) + ordered[upper] * weight, 3)
+
+
+class MonitorStore:
+    """Thread-safe SQLite projection used by monitoring HTTP handlers."""
+
+    def __init__(self, path: Path | str, *, retention_days: int = DEFAULT_RETENTION_DAYS) -> None:
+        self.path = Path(path)
+        self.retention_days = max(1, int(retention_days))
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._lock = threading.RLock()
+        self.last_error: str | None = None
+        self.startup_error: str | None = None
+        self.ingest_dropped = 0
+        self._connection = sqlite3.connect(self.path, check_same_thread=False)
+        self._connection.row_factory = sqlite3.Row
+        self._initialize()
+
+    @property
+    def healthy(self) -> bool:
+        return self.last_error is None and self.startup_error is None
+
+    def _initialize(self) -> None:
+        with self._lock:
+            self._connection.execute("PRAGMA journal_mode=WAL")
+            self._connection.execute("PRAGMA synchronous=NORMAL")
+            self._connection.executescript(
+                """
+                CREATE TABLE IF NOT EXISTS monitor_meta (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS monitor_events (
+                    seq INTEGER PRIMARY KEY AUTOINCREMENT,
+                    observed_at TEXT NOT NULL,
+                    source TEXT NOT NULL,
+                    topic TEXT NOT NULL,
+                    severity TEXT NOT NULL,
+                    correlation_id TEXT,
+                    run_id TEXT,
+                    event_id TEXT,
+                    source_ref TEXT UNIQUE,
+                    payload_json TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_monitor_events_time ON monitor_events(observed_at DESC);
+                CREATE INDEX IF NOT EXISTS idx_monitor_events_topic ON monitor_events(topic, seq DESC);
+                CREATE INDEX IF NOT EXISTS idx_monitor_events_correlation ON monitor_events(correlation_id, seq);
+                CREATE INDEX IF NOT EXISTS idx_monitor_events_run ON monitor_events(run_id, seq);
+                CREATE INDEX IF NOT EXISTS idx_monitor_events_event ON monitor_events(event_id, seq);
+                CREATE TABLE IF NOT EXISTS monitor_runs (
+                    seq INTEGER PRIMARY KEY AUTOINCREMENT,
+                    run_id TEXT NOT NULL UNIQUE,
+                    correlation_id TEXT,
+                    event_id TEXT,
+                    started_at TEXT NOT NULL,
+                    completed_at TEXT,
+                    updated_at TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    path TEXT,
+                    latency_ms REAL,
+                    prompt_tokens INTEGER NOT NULL DEFAULT 0,
+                    completion_tokens INTEGER NOT NULL DEFAULT 0,
+                    total_tokens INTEGER NOT NULL DEFAULT 0,
+                    revisions INTEGER NOT NULL DEFAULT 0,
+                    error TEXT,
+                    stages_json TEXT NOT NULL DEFAULT '[]'
+                );
+                CREATE INDEX IF NOT EXISTS idx_monitor_runs_time ON monitor_runs(updated_at DESC);
+                CREATE TABLE IF NOT EXISTS monitor_samples (
+                    seq INTEGER PRIMARY KEY AUTOINCREMENT,
+                    observed_at TEXT NOT NULL,
+                    lifecycle TEXT NOT NULL,
+                    queue_size INTEGER NOT NULL,
+                    receive_process_lag INTEGER NOT NULL,
+                    pending_actions INTEGER NOT NULL,
+                    coalesced INTEGER NOT NULL,
+                    dropped INTEGER NOT NULL,
+                    rejected INTEGER NOT NULL,
+                    healthy INTEGER NOT NULL,
+                    payload_json TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_monitor_samples_time ON monitor_samples(observed_at DESC);
+                CREATE TABLE IF NOT EXISTS monitor_actions (
+                    action_id TEXT PRIMARY KEY,
+                    updated_at TEXT NOT NULL,
+                    state TEXT NOT NULL,
+                    correlation_id TEXT,
+                    payload_json TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_monitor_actions_time ON monitor_actions(updated_at DESC);
+                """
+            )
+            self._connection.execute(
+                "INSERT OR REPLACE INTO monitor_meta(key, value) VALUES('schema_version', ?)",
+                (MONITOR_SCHEMA_VERSION,),
+            )
+            self._connection.commit()
+
+    def close(self) -> None:
+        with self._lock:
+            self._connection.close()
+
+    def append_event(
+        self,
+        topic: str,
+        payload: dict[str, Any],
+        *,
+        observed_at: datetime | str | None = None,
+        source: str | None = None,
+        source_ref: str | None = None,
+        project: bool = True,
+    ) -> MonitorEvent | None:
+        clean = sanitize_payload(payload)
+        if not isinstance(clean, dict):
+            clean = {"value": clean}
+        normalized_topic = topic
+        if topic == "cognitive.ui":
+            kind = str(clean.get("type") or "event")
+            stage = str(clean.get("stage") or "")
+            normalized_topic = f"cognitive.stage.{stage}" if kind in {"stage", "final"} and stage else f"cognitive.{kind}"
+        timestamp = _iso(
+            observed_at
+            or clean.get("observed_at")
+            or clean.get("received_at")
+            or clean.get("completed_at")
+            or clean.get("at")
+            or clean.get("ts")
+        )
+        data = clean.get("data") if isinstance(clean.get("data"), dict) else {}
+        run_id = clean.get("run_id") or data.get("run_id")
+        event_id = clean.get("event_id") or data.get("event_id")
+        correlation_id = clean.get("correlation_id") or data.get("correlation_id") or run_id
+        domain = source or normalized_topic.split(".", 1)[0]
+        severity = event_severity(normalized_topic, clean)
+        payload_json = json.dumps(clean, ensure_ascii=False, separators=(",", ":"), default=str)
+        try:
+            with self._lock:
+                if not correlation_id and event_id:
+                    row = self._connection.execute(
+                        "SELECT correlation_id FROM monitor_events WHERE event_id=? AND correlation_id IS NOT NULL ORDER BY seq LIMIT 1",
+                        (str(event_id),),
+                    ).fetchone()
+                    if row:
+                        correlation_id = row["correlation_id"]
+                cursor = self._connection.execute(
+                    """
+                    INSERT OR IGNORE INTO monitor_events(
+                        observed_at, source, topic, severity, correlation_id, run_id,
+                        event_id, source_ref, payload_json
+                    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        timestamp,
+                        domain,
+                        normalized_topic,
+                        severity,
+                        str(correlation_id) if correlation_id else None,
+                        str(run_id) if run_id else None,
+                        str(event_id) if event_id else None,
+                        source_ref,
+                        payload_json,
+                    ),
+                )
+                if cursor.rowcount == 0:
+                    return None
+                seq = int(cursor.lastrowid)
+                if project:
+                    self._project_run_locked(seq, normalized_topic, clean, timestamp)
+                    self._project_action_locked(clean, timestamp, str(correlation_id) if correlation_id else None)
+                self._connection.commit()
+                self.last_error = None
+            return MonitorEvent(
+                seq=seq,
+                observed_at=timestamp,
+                source=domain,
+                topic=normalized_topic,
+                severity=severity,
+                correlation_id=str(correlation_id) if correlation_id else None,
+                run_id=str(run_id) if run_id else None,
+                event_id=str(event_id) if event_id else None,
+                payload=clean,
+            )
+        except sqlite3.Error as exc:
+            self.last_error = str(exc)
+            return None
+
+    def append_journal(self, record: RuntimeJournalRecord) -> MonitorEvent | None:
+        payload = record.model_dump(mode="json")
+        payload["integrity"] = {
+            "checksum_valid": record.verify_checksum(),
+            "chain_position": record.record_seq,
+            "has_previous": bool(record.prev_hash),
+        }
+        return self.append_event(
+            f"journal.{record.record_type}",
+            payload,
+            observed_at=record.recorded_at,
+            source="journal",
+            source_ref=f"journal:{record.runtime_instance_id}:{record.record_seq}",
+        )
+
+    def append_call_log(self, path: Path, payload: dict[str, Any]) -> None:
+        if str(payload.get("kind") or "") != "respond":
+            return
+        call_id = str(payload.get("call_id") or path.stem)
+        started_at = _iso(payload.get("ts"))
+        steps = list(payload.get("steps") or [])
+        result = payload.get("result") if isinstance(payload.get("result"), dict) else {}
+        for index, step in enumerate(steps):
+            if not isinstance(step, dict):
+                continue
+            stage = str(step.get("kind") or "step")
+            event_payload = {
+                "type": "final" if stage == "final" else "stage",
+                "run_id": call_id,
+                "stage": stage,
+                "latency_ms": step.get("latency_ms", 0),
+                "data": step.get("data") or {},
+                "meta": step.get("meta") or {},
+            }
+            self.append_event(
+                "cognitive.ui",
+                event_payload,
+                observed_at=started_at,
+                source="call_log",
+                source_ref=f"call:{call_id}:{index}",
+                project=False,
+            )
+        usage = result.get("usage") if isinstance(result.get("usage"), dict) else {}
+        completed_at = _iso(
+            datetime.fromisoformat(started_at) + timedelta(milliseconds=float(payload.get("latency_ms") or 0))
+        )
+        with self._lock:
+            row = self._connection.execute("SELECT seq, stages_json FROM monitor_runs WHERE run_id=?", (call_id,)).fetchone()
+            stages_json = row["stages_json"] if row else json.dumps(steps, ensure_ascii=False, default=str)
+            self._connection.execute(
+                """
+                INSERT INTO monitor_runs(
+                    run_id, correlation_id, event_id, started_at, completed_at, updated_at,
+                    status, path, latency_ms, prompt_tokens, completion_tokens,
+                    total_tokens, revisions, error, stages_json
+                ) VALUES(?, ?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?, ?, ?, NULL, ?)
+                ON CONFLICT(run_id) DO UPDATE SET
+                    completed_at=excluded.completed_at,
+                    updated_at=excluded.updated_at,
+                    status='completed',
+                    path=excluded.path,
+                    latency_ms=excluded.latency_ms,
+                    prompt_tokens=excluded.prompt_tokens,
+                    completion_tokens=excluded.completion_tokens,
+                    total_tokens=excluded.total_tokens,
+                    revisions=excluded.revisions
+                """,
+                (
+                    call_id,
+                    call_id,
+                    result.get("event_id"),
+                    started_at,
+                    completed_at,
+                    completed_at,
+                    result.get("path"),
+                    float(payload.get("latency_ms") or result.get("latency_ms") or 0),
+                    int(usage.get("prompt_tokens") or 0),
+                    int(usage.get("completion_tokens") or 0),
+                    int(usage.get("total_tokens") or 0),
+                    int(result.get("revisions") or 0),
+                    stages_json,
+                ),
+            )
+            self._connection.commit()
+
+    def _project_run_locked(self, _seq: int, topic: str, payload: dict[str, Any], observed_at: str) -> None:
+        run_id = payload.get("run_id")
+        if not run_id or not topic.startswith("cognitive."):
+            return
+        run_id = str(run_id)
+        existing = self._connection.execute("SELECT * FROM monitor_runs WHERE run_id=?", (run_id,)).fetchone()
+        stages = json.loads(existing["stages_json"]) if existing else []
+        stage = payload.get("stage")
+        if stage:
+            stages.append(
+                sanitize_payload(
+                    {
+                        "stage": stage,
+                        "latency_ms": payload.get("latency_ms", 0),
+                        "data": payload.get("data") or {},
+                        "meta": payload.get("meta") or {},
+                    }
+                )
+            )
+        kind = str(payload.get("type") or "stage")
+        data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+        usage = data.get("usage") if isinstance(data.get("usage"), dict) else {}
+        status = "failed" if kind == "error" else "completed" if kind == "final" or stage == "final" else "running"
+        error = data.get("message") if status == "failed" else None
+        started_at = existing["started_at"] if existing else observed_at
+        completed_at = observed_at if status in {"completed", "failed"} else (existing["completed_at"] if existing else None)
+        latency = data.get("latency_ms") if status == "completed" else (existing["latency_ms"] if existing else None)
+        self._connection.execute(
+            """
+            INSERT INTO monitor_runs(
+                run_id, correlation_id, event_id, started_at, completed_at, updated_at,
+                status, path, latency_ms, prompt_tokens, completion_tokens,
+                total_tokens, revisions, error, stages_json
+            ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(run_id) DO UPDATE SET
+                event_id=COALESCE(excluded.event_id, monitor_runs.event_id),
+                completed_at=COALESCE(excluded.completed_at, monitor_runs.completed_at),
+                updated_at=excluded.updated_at,
+                status=excluded.status,
+                path=COALESCE(excluded.path, monitor_runs.path),
+                latency_ms=COALESCE(excluded.latency_ms, monitor_runs.latency_ms),
+                prompt_tokens=CASE WHEN excluded.prompt_tokens > 0 THEN excluded.prompt_tokens ELSE monitor_runs.prompt_tokens END,
+                completion_tokens=CASE WHEN excluded.completion_tokens > 0 THEN excluded.completion_tokens ELSE monitor_runs.completion_tokens END,
+                total_tokens=CASE WHEN excluded.total_tokens > 0 THEN excluded.total_tokens ELSE monitor_runs.total_tokens END,
+                revisions=CASE WHEN excluded.revisions > 0 THEN excluded.revisions ELSE monitor_runs.revisions END,
+                error=COALESCE(excluded.error, monitor_runs.error),
+                stages_json=excluded.stages_json
+            """,
+            (
+                run_id,
+                run_id,
+                data.get("event_id"),
+                started_at,
+                completed_at,
+                observed_at,
+                status,
+                data.get("path"),
+                float(latency) if latency is not None else None,
+                int(usage.get("prompt_tokens") or 0),
+                int(usage.get("completion_tokens") or 0),
+                int(usage.get("total_tokens") or 0),
+                int(data.get("revisions") or 0),
+                str(error) if error else None,
+                json.dumps(stages, ensure_ascii=False, separators=(",", ":"), default=str),
+            ),
+        )
+
+    def _project_action_locked(self, payload: dict[str, Any], observed_at: str, correlation_id: str | None) -> None:
+        candidates = [payload.get("action")]
+        data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+        candidates.extend([data.get("action"), data.get("current_action")])
+        for action in candidates:
+            if not isinstance(action, dict) or not action.get("action_id"):
+                continue
+            clean = sanitize_payload(action)
+            self._connection.execute(
+                """
+                INSERT INTO monitor_actions(action_id, updated_at, state, correlation_id, payload_json)
+                VALUES(?, ?, ?, ?, ?)
+                ON CONFLICT(action_id) DO UPDATE SET
+                    updated_at=excluded.updated_at,
+                    state=excluded.state,
+                    correlation_id=COALESCE(excluded.correlation_id, monitor_actions.correlation_id),
+                    payload_json=excluded.payload_json
+                """,
+                (
+                    str(action["action_id"]),
+                    _iso(action.get("updated_at") or observed_at),
+                    str(action.get("state") or "UNKNOWN"),
+                    correlation_id,
+                    json.dumps(clean, ensure_ascii=False, separators=(",", ":"), default=str),
+                ),
+            )
+
+    def append_sample(self, status: RuntimeStatus) -> MonitorSample | None:
+        payload = sanitize_payload(status.model_dump(mode="json"))
+        observed_at = utc_now().isoformat()
+        queue = status.queue
+        healthy = not status.health.degraded_reasons and status.lifecycle.value not in {"FAULTED"}
+        try:
+            with self._lock:
+                cursor = self._connection.execute(
+                    """
+                    INSERT INTO monitor_samples(
+                        observed_at, lifecycle, queue_size, receive_process_lag,
+                        pending_actions, coalesced, dropped, rejected, healthy, payload_json
+                    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        observed_at,
+                        status.lifecycle.value,
+                        queue.size,
+                        max(0, status.receive_seq - status.process_seq),
+                        status.pending_actions,
+                        queue.coalesced,
+                        queue.dropped,
+                        queue.rejected,
+                        1 if healthy else 0,
+                        json.dumps(payload, ensure_ascii=False, separators=(",", ":"), default=str),
+                    ),
+                )
+                self._connection.commit()
+                self.last_error = None
+            return MonitorSample(
+                seq=int(cursor.lastrowid),
+                observed_at=observed_at,
+                lifecycle=status.lifecycle.value,
+                queue_size=queue.size,
+                receive_process_lag=max(0, status.receive_seq - status.process_seq),
+                pending_actions=status.pending_actions,
+                coalesced=queue.coalesced,
+                dropped=queue.dropped,
+                rejected=queue.rejected,
+                healthy=healthy,
+                payload=payload,
+            )
+        except sqlite3.Error as exc:
+            self.last_error = str(exc)
+            return None
+
+    def list_events(
+        self,
+        *,
+        since: str | None = None,
+        until: str | None = None,
+        topic: str | None = None,
+        severity: str | None = None,
+        status: str | None = None,
+        correlation_id: str | None = None,
+        cursor: str | None = None,
+        after_seq: int | None = None,
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        clauses: list[str] = []
+        params: list[Any] = []
+        if since:
+            clauses.append("observed_at >= ?")
+            params.append(_iso(since))
+        if until:
+            clauses.append("observed_at <= ?")
+            params.append(_iso(until))
+        if topic:
+            clauses.append("topic LIKE ?")
+            params.append(f"{topic}%")
+        if severity:
+            clauses.append("severity = ?")
+            params.append(severity)
+        if correlation_id:
+            clauses.append("correlation_id = ?")
+            params.append(correlation_id)
+        if status:
+            clauses.append("payload_json LIKE ?")
+            params.append(f'%"status":"{status}"%')
+        cursor_seq = _decode_cursor(cursor)
+        if cursor_seq is not None:
+            clauses.append("seq < ?")
+            params.append(cursor_seq)
+        if after_seq is not None:
+            clauses.append("seq > ?")
+            params.append(int(after_seq))
+        page_size = _safe_limit(limit)
+        where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        order = "ASC" if after_seq is not None else "DESC"
+        with self._lock:
+            rows = self._connection.execute(
+                f"SELECT * FROM monitor_events {where} ORDER BY seq {order} LIMIT ?",
+                (*params, page_size + 1),
+            ).fetchall()
+        has_more = len(rows) > page_size
+        rows = rows[:page_size]
+        items = [self._event_from_row(row).model_dump(mode="json") for row in rows]
+        next_cursor = _encode_cursor(int(rows[-1]["seq"])) if has_more and rows else None
+        return {"items": items, "next_cursor": next_cursor, "has_more": has_more}
+
+    def list_runs(
+        self,
+        *,
+        since: str | None = None,
+        status: str | None = None,
+        cursor: str | None = None,
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        clauses: list[str] = []
+        params: list[Any] = []
+        if since:
+            clauses.append("updated_at >= ?")
+            params.append(_iso(since))
+        if status:
+            clauses.append("status = ?")
+            params.append(status)
+        cursor_seq = _decode_cursor(cursor)
+        if cursor_seq is not None:
+            clauses.append("seq < ?")
+            params.append(cursor_seq)
+        page_size = _safe_limit(limit)
+        where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        with self._lock:
+            rows = self._connection.execute(
+                f"SELECT * FROM monitor_runs {where} ORDER BY seq DESC LIMIT ?",
+                (*params, page_size + 1),
+            ).fetchall()
+        has_more = len(rows) > page_size
+        rows = rows[:page_size]
+        items = [self._run_from_row(row).model_dump(mode="json") for row in rows]
+        return {
+            "items": items,
+            "next_cursor": _encode_cursor(int(rows[-1]["seq"])) if has_more and rows else None,
+            "has_more": has_more,
+        }
+
+    def get_run(self, run_id: str) -> dict[str, Any] | None:
+        with self._lock:
+            row = self._connection.execute("SELECT * FROM monitor_runs WHERE run_id=?", (run_id,)).fetchone()
+        return self._run_from_row(row).model_dump(mode="json") if row else None
+
+    def list_actions(self, *, limit: int = 100) -> list[dict[str, Any]]:
+        with self._lock:
+            rows = self._connection.execute(
+                "SELECT * FROM monitor_actions ORDER BY updated_at DESC LIMIT ?", (_safe_limit(limit),)
+            ).fetchall()
+        return [
+            {
+                "action_id": row["action_id"],
+                "updated_at": row["updated_at"],
+                "state": row["state"],
+                "correlation_id": row["correlation_id"],
+                "action": json.loads(row["payload_json"]),
+            }
+            for row in rows
+        ]
+
+    def overview(self, *, window: str, status: RuntimeStatus, manifest: dict[str, Any]) -> dict[str, Any]:
+        seconds = _window_seconds(window)
+        since = (utc_now() - timedelta(seconds=seconds)).isoformat()
+        with self._lock:
+            event_rows = self._connection.execute(
+                "SELECT * FROM monitor_events WHERE observed_at >= ? ORDER BY seq DESC", (since,)
+            ).fetchall()
+            run_rows = self._connection.execute(
+                "SELECT * FROM monitor_runs WHERE updated_at >= ? ORDER BY seq DESC", (since,)
+            ).fetchall()
+        events = [self._event_from_row(row).model_dump(mode="json") for row in event_rows]
+        runs = [self._run_from_row(row).model_dump(mode="json") for row in run_rows]
+        latencies = [float(run["latency_ms"]) for run in runs if run.get("latency_ms") is not None]
+        completed = sum(1 for item in events if item["topic"] == "event.completed" and item["payload"].get("status") == "completed")
+        failed = sum(1 for item in events if item["topic"] == "event.completed" and item["payload"].get("status") == "failed")
+        deferred = sum(1 for item in events if item["topic"] == "event.completed" and item["payload"].get("status") == "deferred")
+        with self._lock:
+            samples = self._connection.execute(
+                "SELECT * FROM monitor_samples WHERE observed_at >= ? ORDER BY seq ASC", (since,)
+            ).fetchall()
+        sample_items = [self._sample_from_row(row).model_dump(mode="json") for row in _downsample(samples, 720)]
+        alerts = [item for item in events if item["severity"] in {"warning", "error"}][:20]
+        paths: dict[str, int] = {}
+        for run in runs:
+            key = str(run.get("path") or "unknown")
+            paths[key] = paths.get(key, 0) + 1
+        return {
+            "schema_version": MONITOR_SCHEMA_VERSION,
+            "window": window,
+            "since": since,
+            "runtime": sanitize_payload(status.model_dump(mode="json")),
+            "manifest": sanitize_payload(manifest),
+            "monitor": {
+                "healthy": self.healthy,
+                "last_error": self.last_error or self.startup_error,
+                "ingest_dropped": self.ingest_dropped,
+                "retention_days": self.retention_days,
+            },
+            "aggregates": {
+                "events": len(events),
+                "warnings": sum(1 for item in events if item["severity"] == "warning"),
+                "errors": sum(1 for item in events if item["severity"] == "error"),
+                "completed": completed,
+                "failed": failed,
+                "deferred": deferred,
+                "throughput_per_minute": round(completed * 60 / seconds, 3),
+                "failure_rate": round(failed / max(1, completed + failed + deferred), 4),
+                "runs": len(runs),
+                "run_failures": sum(1 for run in runs if run["status"] == "failed"),
+                "latency_p50_ms": _percentile(latencies, 0.5),
+                "latency_p95_ms": _percentile(latencies, 0.95),
+                "total_tokens": sum(int(run.get("total_tokens") or 0) for run in runs),
+                "revisions": sum(int(run.get("revisions") or 0) for run in runs),
+                "paths": paths,
+            },
+            "samples": sample_items,
+            "alerts": alerts,
+        }
+
+    def diagnostic_bundle(
+        self,
+        correlation_id: str,
+        *,
+        status: RuntimeStatus,
+        manifest: dict[str, Any],
+    ) -> dict[str, Any]:
+        events = self.list_events(correlation_id=correlation_id, limit=MAX_PAGE_SIZE)["items"]
+        run = self.get_run(correlation_id)
+        action_rows = [item for item in self.list_actions(limit=MAX_PAGE_SIZE) if item.get("correlation_id") == correlation_id]
+        return {
+            "schema_version": DIAGNOSTIC_SCHEMA_VERSION,
+            "exported_at": utc_now().isoformat(),
+            "correlation_id": correlation_id,
+            "runtime": sanitize_payload(status.model_dump(mode="json")),
+            "manifest": sanitize_payload(manifest),
+            "run": run,
+            "events": events,
+            "journal": [item for item in events if item["topic"].startswith("journal.")],
+            "actions": action_rows,
+            "version_vector": sanitize_payload(status.version_vector.model_dump(mode="json")),
+        }
+
+    def cleanup(self, *, now: datetime | None = None) -> int:
+        cutoff = ((now or utc_now()) - timedelta(days=self.retention_days)).isoformat()
+        with self._lock:
+            removed = 0
+            for table, column in (
+                ("monitor_events", "observed_at"),
+                ("monitor_runs", "updated_at"),
+                ("monitor_samples", "observed_at"),
+                ("monitor_actions", "updated_at"),
+            ):
+                cursor = self._connection.execute(f"DELETE FROM {table} WHERE {column} < ?", (cutoff,))
+                removed += max(0, cursor.rowcount)
+            self._connection.commit()
+        return removed
+
+    @staticmethod
+    def _event_from_row(row: sqlite3.Row) -> MonitorEvent:
+        return MonitorEvent(
+            seq=int(row["seq"]),
+            observed_at=row["observed_at"],
+            source=row["source"],
+            topic=row["topic"],
+            severity=row["severity"],
+            correlation_id=row["correlation_id"],
+            run_id=row["run_id"],
+            event_id=row["event_id"],
+            payload=json.loads(row["payload_json"]),
+        )
+
+    @staticmethod
+    def _run_from_row(row: sqlite3.Row) -> MonitorRun:
+        return MonitorRun(
+            seq=int(row["seq"]),
+            run_id=row["run_id"],
+            correlation_id=row["correlation_id"],
+            event_id=row["event_id"],
+            started_at=row["started_at"],
+            completed_at=row["completed_at"],
+            updated_at=row["updated_at"],
+            status=row["status"],
+            path=row["path"],
+            latency_ms=row["latency_ms"],
+            prompt_tokens=int(row["prompt_tokens"]),
+            completion_tokens=int(row["completion_tokens"]),
+            total_tokens=int(row["total_tokens"]),
+            revisions=int(row["revisions"]),
+            error=row["error"],
+            stages=json.loads(row["stages_json"]),
+        )
+
+    @staticmethod
+    def _sample_from_row(row: sqlite3.Row) -> MonitorSample:
+        return MonitorSample(
+            seq=int(row["seq"]),
+            observed_at=row["observed_at"],
+            lifecycle=row["lifecycle"],
+            queue_size=int(row["queue_size"]),
+            receive_process_lag=int(row["receive_process_lag"]),
+            pending_actions=int(row["pending_actions"]),
+            coalesced=int(row["coalesced"]),
+            dropped=int(row["dropped"]),
+            rejected=int(row["rejected"]),
+            healthy=bool(row["healthy"]),
+            payload=json.loads(row["payload_json"]),
+        )
+
+
+class MonitorRecorder:
+    """Async, lossy-by-design bridge from live events and durable sources."""
+
+    def __init__(
+        self,
+        store: MonitorStore,
+        *,
+        journal: RuntimeJournal,
+        status_provider: Callable[[], RuntimeStatus],
+        trace_dir: Path | str,
+        sample_seconds: float = DEFAULT_SAMPLE_SECONDS,
+        queue_capacity: int = 2048,
+    ) -> None:
+        self.store = store
+        self.journal = journal
+        self.status_provider = status_provider
+        self.trace_dir = Path(trace_dir)
+        self.sample_seconds = max(1.0, float(sample_seconds))
+        self.queue: asyncio.Queue[tuple[str, dict[str, Any]]] = asyncio.Queue(maxsize=queue_capacity)
+        self.subscribers: set[asyncio.Queue[dict[str, Any]]] = set()
+        self._tasks: list[asyncio.Task[None]] = []
+        self._last_journal_seq = 0
+
+    def enqueue(self, topic: str, payload: dict[str, Any]) -> None:
+        try:
+            self.queue.put_nowait((topic, payload))
+        except asyncio.QueueFull:
+            self.store.ingest_dropped += 1
+
+    async def start(self) -> None:
+        try:
+            await asyncio.to_thread(self._backfill)
+        except Exception as exc:
+            self.store.last_error = f"monitor backfill failed: {exc}"
+        self._tasks = [
+            asyncio.create_task(self._consume(), name="monitor-event-projector"),
+            asyncio.create_task(self._poll_journal(), name="monitor-journal-projector"),
+            asyncio.create_task(self._sample(), name="monitor-runtime-sampler"),
+            asyncio.create_task(self._cleanup(), name="monitor-retention"),
+        ]
+
+    async def close(self) -> None:
+        await self.flush()
+        for task in self._tasks:
+            task.cancel()
+        for task in self._tasks:
+            with suppress(asyncio.CancelledError):
+                await task
+        await asyncio.to_thread(self.store.close)
+
+    async def flush(self) -> None:
+        while not self.queue.empty():
+            topic, payload = self.queue.get_nowait()
+            event = await asyncio.to_thread(self.store.append_event, topic, payload)
+            if event is not None:
+                self._publish(event.model_dump(mode="json"))
+        await self._ingest_journal_once()
+
+    def subscribe(self) -> asyncio.Queue[dict[str, Any]]:
+        queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(maxsize=512)
+        self.subscribers.add(queue)
+        return queue
+
+    def unsubscribe(self, queue: asyncio.Queue[dict[str, Any]]) -> None:
+        self.subscribers.discard(queue)
+
+    async def _consume(self) -> None:
+        while True:
+            topic, payload = await self.queue.get()
+            event = await asyncio.to_thread(self.store.append_event, topic, payload)
+            if event is not None:
+                self._publish(event.model_dump(mode="json"))
+
+    async def _poll_journal(self) -> None:
+        while True:
+            await self._ingest_journal_once()
+            await asyncio.sleep(0.5)
+
+    async def _ingest_journal_once(self) -> None:
+        while True:
+            records = self.journal.records_after(self._last_journal_seq, limit=500)
+            if not records:
+                return
+            for record in records:
+                event = await asyncio.to_thread(self.store.append_journal, record)
+                self._last_journal_seq = max(self._last_journal_seq, record.record_seq)
+                if event is not None:
+                    self._publish(event.model_dump(mode="json"))
+            if len(records) < 500:
+                return
+
+    async def _sample(self) -> None:
+        while True:
+            try:
+                await asyncio.to_thread(self.store.append_sample, self.status_provider())
+            except Exception as exc:
+                self.store.last_error = str(exc)
+            await asyncio.sleep(self.sample_seconds)
+
+    async def _cleanup(self) -> None:
+        while True:
+            await asyncio.sleep(3600)
+            await asyncio.to_thread(self.store.cleanup)
+
+    def _publish(self, event: dict[str, Any]) -> None:
+        for queue in list(self.subscribers):
+            if queue.full():
+                try:
+                    queue.get_nowait()
+                except asyncio.QueueEmpty:
+                    pass
+            queue.put_nowait(event)
+
+    def _backfill(self) -> None:
+        cutoff = utc_now() - timedelta(days=self.store.retention_days)
+        for record in self.journal.records():
+            self._last_journal_seq = max(self._last_journal_seq, record.record_seq)
+            if record.recorded_at >= cutoff:
+                self.store.append_journal(record)
+        calls_dir = self.trace_dir / "calls"
+        if calls_dir.exists():
+            for path in sorted(calls_dir.rglob("*.json")):
+                try:
+                    if datetime.fromtimestamp(path.stat().st_mtime, UTC) < cutoff:
+                        continue
+                    payload = json.loads(path.read_text(encoding="utf-8"))
+                    if isinstance(payload, dict):
+                        self.store.append_call_log(path, payload)
+                except (OSError, ValueError, json.JSONDecodeError):
+                    continue
+        self.store.cleanup()
+
+
+def _window_seconds(window: str) -> int:
+    mapping = {"1h": 3600, "6h": 6 * 3600, "24h": 24 * 3600, "7d": 7 * 86400}
+    if window not in mapping:
+        raise ValueError("window must be one of 1h, 6h, 24h, 7d")
+    return mapping[window]
+
+
+def window_since(window: str) -> str:
+    return (utc_now() - timedelta(seconds=_window_seconds(window))).isoformat()
+
+
+def _downsample(rows: list[sqlite3.Row], maximum: int) -> list[sqlite3.Row]:
+    if len(rows) <= maximum:
+        return rows
+    step = math.ceil(len(rows) / maximum)
+    result = rows[::step]
+    if result[-1]["seq"] != rows[-1]["seq"]:
+        result.append(rows[-1])
+    return result
+
+
+async def call_maybe_async(callback: Callable[..., Any], *args: Any) -> Any:
+    result = callback(*args)
+    return await result if inspect.isawaitable(result) else result

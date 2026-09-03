@@ -29,6 +29,19 @@ from harness.contracts.envelope import (
     VersionVector,
 )
 from harness.core.ids import new_id
+from harness.embodiment.capabilities import (
+    ACTION_EXECUTE,
+    OBSERVATION_SNAPSHOT,
+    PHYSIOLOGY_BODY_STATE,
+    EmbodimentState,
+)
+from harness.embodiment.contracts import (
+    BodyStateSnapshot,
+    HomeostaticObservation,
+    InteroceptiveState,
+)
+from harness.embodiment.guards import BodyStateGuard
+from harness.embodiment.manager import EmbodimentManager
 from harness.research.manifest import ExperimentManifest
 from harness.runtime.action import ActionCoordinator, DeliveryBackend, InMemoryDeliveryBackend
 from harness.runtime.adapters import (
@@ -203,6 +216,8 @@ class RuntimeSupervisor:
         queue: PriorityEventQueue | None = None,
         scheduler: RealTimeScheduler | None = None,
         action_coordinator: ActionCoordinator | None = None,
+        embodiment_manager: EmbodimentManager | None = None,
+        body_state_guard: BodyStateGuard | None = None,
         delivery_backend: DeliveryBackend | None = None,
         watchdog: RuntimeWatchdog | None = None,
         command_timeout_seconds: float = 30.0,
@@ -225,11 +240,19 @@ class RuntimeSupervisor:
         self.checkpoint_store = checkpoint_store or CheckpointStore(self.state_dir / "checkpoint.json")
         self.queue = queue or PriorityEventQueue()
         self.scheduler = scheduler or RealTimeScheduler(manifest.heartbeat_seconds)
+        self.embodiment = embodiment_manager or EmbodimentManager(manifest.embodiment)
         self.action_coordinator = action_coordinator or ActionCoordinator(
-            consistency_barrier=self._high_impact_barrier
+            consistency_barrier=self._high_impact_barrier,
+            capability_check=(
+                self.embodiment.supports
+                if embodiment_manager is not None or manifest.embodiment.mode != "off"
+                else None
+            ),
         )
         if self.action_coordinator.consistency_barrier is None:
             self.action_coordinator.consistency_barrier = self._high_impact_barrier
+        if embodiment_manager is not None or manifest.embodiment.mode != "off":
+            self.action_coordinator.capability_check = self.embodiment.supports
         self.delivery_backend = delivery_backend or InMemoryDeliveryBackend()
         self.watchdog = watchdog or RuntimeWatchdog()
         self.command_timeout_seconds = command_timeout_seconds
@@ -253,6 +276,9 @@ class RuntimeSupervisor:
         self._foreground_lock = asyncio.Lock()
         self._action_tasks: dict[str, asyncio.Task[None]] = {}
         self._perception_guard: PerceptionGuard | None = None
+        self._body_state_guard = body_state_guard
+        self._interoception: InteroceptiveState | None = None
+        self._last_reconsideration_at: datetime | None = None
         self._run_task: asyncio.Task[None] | None = None
         self._booted = False
         self._closed = False
@@ -284,6 +310,40 @@ class RuntimeSupervisor:
 
     def attach_perception_guard(self, guard: PerceptionGuard) -> None:
         self._perception_guard = guard
+
+    def attach_body_state_guard(self, guard: BodyStateGuard) -> None:
+        self._body_state_guard = guard
+
+    def _start_embodiment_guards(self) -> None:
+        legacy_mode = self.manifest.embodiment.mode == "off"
+        if self._perception_guard is not None and (
+            legacy_mode or self.embodiment.supports(OBSERVATION_SNAPSHOT)
+        ):
+            self._perception_guard.start()
+        if (
+            self._body_state_guard is not None
+            and self.manifest.embodiment.mode != "off"
+            and self.embodiment.supports(PHYSIOLOGY_BODY_STATE)
+        ):
+            self._body_state_guard.start()
+
+    async def _refresh_embodiment(self) -> None:
+        if self.manifest.embodiment.mode == "off":
+            return
+        before = self.embodiment.status()
+        after = await self.embodiment.refresh()
+        if after != before:
+            self._append_journal(
+                "embodiment_status_changed",
+                data={"before": before.model_dump(mode="json"), "after": after.model_dump(mode="json")},
+            )
+            await self._publish("embodiment.status", after.model_dump(mode="json"))
+        if self.lifecycle == RuntimeLifecycle.RUNNING:
+            self._start_embodiment_guards()
+        if not self.embodiment.supports(OBSERVATION_SNAPSHOT) and self._perception_guard is not None:
+            await self._perception_guard.stop()
+        if not self.embodiment.supports(PHYSIOLOGY_BODY_STATE) and self._body_state_guard is not None:
+            await self._body_state_guard.stop()
 
     def accepts_event(self, event_type: RuntimeEventType) -> bool:
         if self.lifecycle in {RuntimeLifecycle.STOPPING, RuntimeLifecycle.STOPPED}:
@@ -361,6 +421,11 @@ class RuntimeSupervisor:
                     data={"bytes": self.journal.truncated_tail_bytes},
                 )
             await self._check_services()
+            embodiment_status = await self.embodiment.activate()
+            self._append_journal(
+                "embodiment_activated",
+                data={"embodiment": embodiment_status.model_dump(mode="json")},
+            )
             await self._reconcile_incomplete_commands()
             await self._check_services()
             unresolved_action = await self._restore_and_reconcile_actions()
@@ -377,18 +442,25 @@ class RuntimeSupervisor:
                         "reason": "runtime_start",
                     },
                 )
-            requires_pause = unresolved_action or previous_lifecycle in {
+            requires_pause = (
+                unresolved_action
+                or (
+                    self.manifest.embodiment.required_for_runtime
+                    and embodiment_status.state
+                    in {EmbodimentState.UNAVAILABLE, EmbodimentState.TERMINAL}
+                )
+                or previous_lifecycle in {
                 RuntimeLifecycle.PAUSED,
                 RuntimeLifecycle.PAUSING,
                 RuntimeLifecycle.FAULTED,
                 RuntimeLifecycle.STOPPING,
-            }
+                }
+            )
             target = RuntimeLifecycle.PAUSED if requires_pause else RuntimeLifecycle.RUNNING
             await self._transition(target, reason="recovery complete")
             if target == RuntimeLifecycle.RUNNING:
                 self.scheduler.start()
-                if self._perception_guard is not None:
-                    self._perception_guard.start()
+                self._start_embodiment_guards()
             else:
                 self.scheduler.suspend()
                 self.pause_observations.begin(utc_now())
@@ -544,8 +616,7 @@ class RuntimeSupervisor:
         summary = self.pause_observations.build(resumed_at=resumed_at)
         await self._transition(RuntimeLifecycle.RUNNING, reason=reason)
         self.scheduler.reset_from_now()
-        if self._perception_guard is not None:
-            self._perception_guard.start()
+        self._start_embodiment_guards()
         if summary is not None:
             await self.submit_event(
                 event_type=RuntimeEventType.RESUME_OBSERVATION,
@@ -581,6 +652,8 @@ class RuntimeSupervisor:
         self.scheduler.suspend()
         if self._perception_guard is not None:
             await self._perception_guard.stop()
+        if self._body_state_guard is not None:
+            await self._body_state_guard.stop()
         try:
             await asyncio.wait_for(
                 self.action_coordinator.request_preemption(reason=reason),
@@ -677,14 +750,28 @@ class RuntimeSupervisor:
         )
 
     def status(self) -> RuntimeStatus:
+        embodiment_status = self.embodiment.status()
+        degraded_reasons = list(self._degraded_reasons)
+        if (
+            self.manifest.embodiment.mode != "off"
+            and embodiment_status.state
+            in {EmbodimentState.DEGRADED, EmbodimentState.UNAVAILABLE, EmbodimentState.TERMINAL}
+            and "embodiment" not in degraded_reasons
+        ):
+            degraded_reasons.append("embodiment")
         health = RuntimeHealth(
             lifecycle=self.lifecycle,
             journal_writable=self._journal_writable,
             cognitive_healthy="cognitive" not in self._degraded_reasons,
             homeostasis_healthy="homeostasis" not in self._degraded_reasons,
-            degraded_reasons=list(self._degraded_reasons),
+            body_healthy=(
+                self.manifest.embodiment.mode == "off"
+                or embodiment_status.state == EmbodimentState.AVAILABLE
+            ),
+            degraded_reasons=degraded_reasons,
             last_heartbeat_at=self._last_heartbeat_at,
             last_journal_append_at=self.journal.last_append_at,
+            embodiment=embodiment_status,
         )
         return RuntimeStatus(
             character_id=self.character_id,
@@ -700,6 +787,7 @@ class RuntimeSupervisor:
             current_action=self.action_coordinator.current,
             pending_actions=len(self.action_coordinator.pending()),
             pending_events=self.queue.qsize(),
+            embodiment=embodiment_status,
         )
 
     async def check_watchdog(self) -> None:
@@ -772,6 +860,17 @@ class RuntimeSupervisor:
                 decision_kind="action_result",
                 detail={"action": action.model_dump(mode="json")},
             )
+        if event.event_type == RuntimeEventType.BODY_STATE:
+            return await self._handle_body_state(event, process_seq)
+        if event.event_type == RuntimeEventType.AGENCY_TERMINAL:
+            return EventDispatchResult(
+                event_id=event.event_id,
+                receive_seq=event.receive_seq,
+                process_seq=process_seq,
+                status="completed",
+                decision_kind="agency_terminal",
+                detail={"embodiment": self.embodiment.status().model_dump(mode="json")},
+            )
         homeostasis_command = "ApplyHeartbeat" if event.event_type == RuntimeEventType.HEARTBEAT else "ApplyEvent"
         homeostasis_envelope = self._make_command(
             event,
@@ -791,6 +890,7 @@ class RuntimeSupervisor:
         self._update_homeostasis(homeostasis_result)
         if event.event_type == RuntimeEventType.HEARTBEAT:
             self._last_heartbeat_at = utc_now()
+            await self._refresh_embodiment()
             await self.check_watchdog()
             policies: list[dict[str, Any]] = []
             if (
@@ -819,7 +919,11 @@ class RuntimeSupervisor:
                     "autonomous_candidates": len(policies),
                 },
             )
-        if event.event_type not in {RuntimeEventType.USER_MESSAGE, RuntimeEventType.IDLE}:
+        if event.event_type not in {
+            RuntimeEventType.USER_MESSAGE,
+            RuntimeEventType.IDLE,
+            RuntimeEventType.GOAL_RECONSIDERATION,
+        }:
             return EventDispatchResult(
                 event_id=event.event_id,
                 receive_seq=event.receive_seq,
@@ -840,6 +944,26 @@ class RuntimeSupervisor:
                 **(
                     {"mode": "autonomous", "session_id": "sess_autonomous", "channel": "runtime"}
                     if event.event_type == RuntimeEventType.IDLE
+                    else {}
+                ),
+                **(
+                    {
+                        "mode": "reconsideration",
+                        "session_id": "sess_autonomous",
+                        "channel": "runtime",
+                    }
+                    if event.event_type == RuntimeEventType.GOAL_RECONSIDERATION
+                    else {}
+                ),
+                **(
+                    {
+                        "interoception": self._interoception.model_dump(
+                            mode="json",
+                            exclude={"evidence_refs"},
+                        )
+                    }
+                    if self._interoception is not None
+                    and self.manifest.embodiment.mode in {"grounded", "active"}
                     else {}
                 ),
             },
@@ -867,6 +991,139 @@ class RuntimeSupervisor:
             decision_kind=decision.kind,
             detail=detail,
         )
+
+    async def _handle_body_state(
+        self,
+        event: RuntimeEvent,
+        process_seq: int,
+    ) -> EventDispatchResult:
+        snapshot = BodyStateSnapshot.model_validate(
+            event.payload.get("body_state") or event.payload
+        )
+        expected_instance = self.manifest.embodiment.body_instance_id
+        if expected_instance and snapshot.body_instance_id != expected_instance:
+            raise DomainCommandError("body-state snapshot belongs to a different body instance")
+
+        interoception = InteroceptiveState(
+            source_revision=snapshot.revision,
+            resource_level=snapshot.energy.available_ratio,
+            resource_trend=snapshot.energy.delta_units_per_minute,
+            estimated_time_to_limit_seconds=snapshot.energy.estimated_time_to_empty_seconds,
+            evidence_refs=snapshot.evidence_refs,
+        )
+        previous_interoception = self._interoception
+        self._interoception = interoception
+        self._append_journal(
+            "body_state_observed",
+            event=event,
+            process_seq=process_seq,
+            data={"body_state": snapshot.model_dump(mode="json")},
+        )
+
+        terminal = snapshot.energy.terminal
+        if terminal:
+            self.embodiment.set_terminal("body-state provider reported terminal resource state")
+            if self.action_coordinator.current is not None:
+                await self.action_coordinator.request_preemption(reason="embodiment terminal state")
+            await self.submit_event(
+                event_type=RuntimeEventType.AGENCY_TERMINAL,
+                priority=RuntimeEventPriority.CONTROL,
+                source="embodiment",
+                source_time=snapshot.captured_at,
+                idempotency_key=f"agency-terminal:{snapshot.body_instance_id}:{snapshot.revision}",
+                payload={"body_state_revision": snapshot.revision},
+            )
+
+        mode = self.manifest.embodiment.mode
+        if mode in {"grounded", "active"}:
+            observation = HomeostaticObservation(
+                source="system_sensor",
+                precision=0.95,
+                observed_values={"energy_reserve": snapshot.energy.available_ratio},
+                evidence_refs=snapshot.evidence_refs,
+                observed_at=snapshot.captured_at,
+            )
+            envelope = self._make_command(
+                event,
+                command_type="AssimilateObservation",
+                idempotency_key=f"homeostasis:body-state:{snapshot.body_instance_id}:{snapshot.revision}",
+                expected_revision=self._homeostasis_snapshot.revision,
+                payload={"observation": observation.model_dump(mode="json")},
+            )
+            result = await self._invoke_domain(
+                service="homeostasis",
+                envelope=envelope,
+                method=self.homeostasis.assimilate_observation,
+                event=event,
+            )
+            self._update_homeostasis(result)
+
+        reconsider = terminal
+        if mode == "active" and not terminal and previous_interoception is not None:
+            target_band = self._energy_target_band()
+            if target_band is not None:
+                previous_band = self._target_band_position(
+                    previous_interoception.resource_level,
+                    target_band,
+                )
+                current_band = self._target_band_position(interoception.resource_level, target_band)
+                crossed = previous_band != current_band
+                significant = (
+                    abs(interoception.resource_level - previous_interoception.resource_level)
+                    >= self.manifest.embodiment.replan_hysteresis
+                )
+                interval_satisfied = (
+                    self._last_reconsideration_at is None
+                    or (snapshot.captured_at - self._last_reconsideration_at).total_seconds()
+                    >= self.manifest.embodiment.minimum_replan_interval_seconds
+                )
+                reconsider = crossed and significant and interval_satisfied
+        if mode == "active" and reconsider:
+            self._last_reconsideration_at = snapshot.captured_at
+            await self.submit_event(
+                event_type=RuntimeEventType.GOAL_RECONSIDERATION,
+                priority=RuntimeEventPriority.IMPORTANT_ENVIRONMENT,
+                source="homeostasis",
+                source_time=snapshot.captured_at,
+                idempotency_key=f"goal-reconsideration:{snapshot.body_instance_id}:{snapshot.revision}",
+                payload={
+                    "interoception": interoception.model_dump(mode="json"),
+                    "terminal": terminal,
+                },
+            )
+
+        return EventDispatchResult(
+            event_id=event.event_id,
+            receive_seq=event.receive_seq,
+            process_seq=process_seq,
+            status="completed",
+            decision_kind="body_state",
+            detail={
+                "mode": mode,
+                "body_state_revision": snapshot.revision,
+                "homeostasis_revision": self._homeostasis_snapshot.revision,
+                "terminal": terminal,
+                "reconsideration_requested": mode == "active" and reconsider,
+            },
+        )
+
+    def _energy_target_band(self) -> tuple[float, float] | None:
+        payload = self._homeostasis_snapshot.payload
+        state = payload.get("snapshot") if isinstance(payload.get("snapshot"), dict) else payload
+        dimensions = state.get("dimensions") if isinstance(state, dict) else None
+        energy = dimensions.get("energy_reserve") if isinstance(dimensions, dict) else None
+        target = energy.get("target_band") if isinstance(energy, dict) else None
+        if not isinstance(target, (list, tuple)) or len(target) != 2:
+            return None
+        return float(target[0]), float(target[1])
+
+    @staticmethod
+    def _target_band_position(value: float, target: tuple[float, float]) -> str:
+        if value < target[0]:
+            return "low"
+        if value > target[1]:
+            return "high"
+        return "in_band"
 
     async def _handle_decision(
         self,
@@ -920,6 +1177,73 @@ class RuntimeSupervisor:
                 "cognitive_revision": committed.committed_revision,
             }
         if isinstance(decision, GoalProposal):
+            if self.manifest.embodiment.mode != "off" and decision.embodied_action is None:
+                reason = "goal has no structured embodied action and cannot be sent to a provider"
+                committed = await self._commit_prepared(
+                    event,
+                    prepared,
+                    DecisionEvidence(
+                        prepare_id=prepared.prepare_id,
+                        recorded_at=utc_now(),
+                        decision_kind="defer",
+                        reason=reason,
+                    ),
+                )
+                return {
+                    "prepare_id": prepared.prepare_id,
+                    "reason": reason,
+                    "cognitive_revision": committed.committed_revision,
+                }
+            if self.manifest.embodiment.mode != "off" and (
+                self.embodiment.status().state == EmbodimentState.TERMINAL
+                or not self.embodiment.supports(ACTION_EXECUTE)
+            ):
+                reason = "embodied action is unavailable under the current negotiated health"
+                committed = await self._commit_prepared(
+                    event,
+                    prepared,
+                    DecisionEvidence(
+                        prepare_id=prepared.prepare_id,
+                        recorded_at=utc_now(),
+                        decision_kind="defer",
+                        reason=reason,
+                    ),
+                )
+                return {
+                    "prepare_id": prepared.prepare_id,
+                    "reason": reason,
+                    "cognitive_revision": committed.committed_revision,
+                }
+            if (
+                event.event_type == RuntimeEventType.GOAL_RECONSIDERATION
+                and self.action_coordinator.current is not None
+            ):
+                current_action: ActionExecution | None = self.action_coordinator.current
+                if self.manifest.embodiment.enable_drive_preemption:
+                    current_action = await self.action_coordinator.request_preemption(
+                        reason="goal replacement after interoceptive reconsideration"
+                    )
+                if current_action is not None and not current_action.terminal:
+                    reason = (
+                        "replacement is waiting for the current action to reach a safe point"
+                        if self.manifest.embodiment.enable_drive_preemption
+                        else "replacement is waiting because drive preemption is disabled"
+                    )
+                    committed = await self._commit_prepared(
+                        event,
+                        prepared,
+                        DecisionEvidence(
+                            prepare_id=prepared.prepare_id,
+                            recorded_at=utc_now(),
+                            decision_kind="defer",
+                            reason=reason,
+                        ),
+                    )
+                    return {
+                        "prepare_id": prepared.prepare_id,
+                        "reason": reason,
+                        "cognitive_revision": committed.committed_revision,
+                    }
             self._goal_revision += 1
             action = await self.action_coordinator.propose(
                 decision,
@@ -965,6 +1289,22 @@ class RuntimeSupervisor:
         *,
         event: RuntimeEvent | None,
     ) -> ActionExecution:
+        if self.manifest.embodiment.mode != "off" and (
+            self.embodiment.status().state == EmbodimentState.TERMINAL
+            or not self.embodiment.supports(ACTION_EXECUTE)
+        ):
+            rejected = await self.action_coordinator.reject(
+                action.action_id,
+                reason="embodied action capability is unavailable",
+            )
+            self._append_journal(
+                "action_blocked",
+                event=event,
+                idempotency_key=action.idempotency_key,
+                data={"action": rejected.model_dump(mode="json")},
+            )
+            await self._submit_action_result(rejected)
+            return rejected
         self._append_journal(
             "action_execution_intent",
             event=event,
@@ -1046,9 +1386,10 @@ class RuntimeSupervisor:
         event: RuntimeEvent = context["event"]
         prepared: PreparedResponse = context["prepared"]
         outcome = action.outcome or {}
-        evidence_refs = list(outcome.get("evidence_refs") or [])
-        if not evidence_refs:
-            evidence_refs = [f"runtime-action:{action.action_id}:{action.state.value}"]
+        evidence_refs = [
+            item.ref if hasattr(item, "ref") else str(item.get("ref") if isinstance(item, dict) else item)
+            for item in (outcome.get("evidence_refs") or [])
+        ]
         evidence = ActionOutcomeEvidence(
             prepare_id=prepared.prepare_id,
             goal_id=action.goal_id,
@@ -1596,5 +1937,6 @@ class RuntimeSupervisor:
             ("homeostasis", "ApplyEvent"): self.homeostasis.apply_event,
             ("homeostasis", "ApplyHeartbeat"): self.homeostasis.apply_heartbeat,
             ("homeostasis", "ApplyOutcome"): self.homeostasis.apply_outcome,
+            ("homeostasis", "AssimilateObservation"): self.homeostasis.assimilate_observation,
         }
         return mapping.get((service, command_type))

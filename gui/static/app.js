@@ -556,8 +556,22 @@ function renderSubsystems(snap) {
   const homeButton = $("btn-homeostasis");
   if (homeButton) homeButton.disabled = !home.profile;
 
+  const embodiment = runtime.embodiment || runtime.health?.embodiment;
+  const embodimentCard = embodiment
+    ? `<article class="card">
+        <h2>Embodiment <span class="badge ${["available", "disabled"].includes(embodiment.state) ? "ok" : "bad"}">${esc(embodiment.state)}</span></h2>
+        <div class="kv">
+          <div class="kv-row"><span>provider</span><code>${esc(embodiment.provider_id || "—")}</code></div>
+          <div class="kv-row"><span>body</span><code>${esc(embodiment.body_instance_id || "—")}</code></div>
+          <div class="kv-row"><span>effective</span><span>${esc((embodiment.effective_capabilities || []).join(", ") || "—")}</span></div>
+          <div class="kv-row"><span>reason</span><span>${esc(embodiment.reason || "—")}</span></div>
+        </div>
+      </article>`
+    : "";
+
   root.innerHTML = `
     ${renderHomeostasisCards(home)}
+    ${embodimentCard}
     <article class="card">
       <h2>Persona Core <span class="badge">${persona.locked ? "LOCKED" : "open"}</span></h2>
       <p><strong>${esc(persona.name || "—")}</strong></p>

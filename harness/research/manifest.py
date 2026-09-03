@@ -10,8 +10,35 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from harness.embodiment.capabilities import CapabilityRequirement
+
 ControlMode = Literal["development_debug", "study_runtime"]
 SelectionCondition = Literal["argmin_efe", "llm_top3", "llm_open"]
+
+
+class EmbodimentCondition(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    mode: Literal["off", "observe", "grounded", "active"] = "off"
+    required_for_runtime: bool = False
+    body_instance_id: str | None = None
+    capability_requirements: list[CapabilityRequirement] = Field(default_factory=list)
+    body_state_interval_seconds: float = Field(default=5.0, gt=0.0, le=3600.0)
+    body_state_max_age_seconds: float = Field(default=10.0, gt=0.0, le=3600.0)
+    replan_hysteresis: float = Field(default=0.05, ge=0.0, le=0.5)
+    minimum_replan_interval_seconds: float = Field(default=300.0, ge=0.0, le=86400.0)
+    anthropomorphic_labels: bool = False
+    blinded_names: bool = False
+    enable_drive_preemption: bool = False
+
+    @model_validator(mode="after")
+    def _validate_requirements(self) -> EmbodimentCondition:
+        names = [item.capability for item in self.capability_requirements]
+        if len(names) != len(set(names)):
+            raise ValueError("embodiment capability requirements must be unique")
+        if self.mode == "off" and self.required_for_runtime:
+            raise ValueError("off embodiment cannot be required for runtime")
+        return self
 
 
 class ExperimentManifest(BaseModel):
@@ -43,6 +70,7 @@ class ExperimentManifest(BaseModel):
     retention: str = Field(min_length=1)
     watchdog_action: str = Field(min_length=1)
     timezone: str = Field(default="Asia/Shanghai", min_length=1)
+    embodiment: EmbodimentCondition = Field(default_factory=EmbodimentCondition)
 
     @model_validator(mode="after")
     def _validate_study_authority(self) -> ExperimentManifest:

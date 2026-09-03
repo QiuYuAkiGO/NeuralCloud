@@ -1,9 +1,11 @@
 # 14 · Embodiment Port / Canonical Contract / Provider Adapter 与 Capability Negotiation
 
-> **状态**：Draft / Architecture Boundary Proposal  
+> **状态**：Implemented（E0–E3，2026-09-03）
 > **目标分支**：`sim-homeostasis`  
 > **适用范围**：NeuralCloud Runtime 与数字身体、仿真环境、未来实体机器人之间的长期边界  
 > **核心原则**：NeuralCloud 依赖“身体能提供什么语义能力”，而不是依赖“MistyAI 如何实现这些能力”。
+
+> **实现说明**：Canonical ports、严格能力协商、MistyAI M0 adapter、最小 Artificial Physiology 闭环与确定性 in-process Simulator 已落地。Energy Station、认知用量计费、body memory/salience、完整实验控制面、ROS2 与 MistyDigitalBody 仍不在本阶段范围；文档 11 与 MistyAI D003 中对应的后续设计保持未完成状态。
 
 ---
 

@@ -64,14 +64,23 @@ PostgreSQL 驱动为可选 extra：`pip install -e ".[dev,postgres]"`（`postgre
 
 Runtime 的编排事实写入 hash-chain 分段 JSONL journal，领域状态仍由 Cognitive/Homeostasis store 负责；checkpoint 只保存启动索引和领域游标。相关恢复、幂等、暂停汇总和队列降载验收见 `tests/test_runtime_supervisor.py`。
 
+### Embodiment Port 与能力协商
+
+`harness.embodiment` 现在是 Action、Perception、BodyState 与 Capability ports 的唯一所有者。Runtime 启动时依据 manifest 的 allowlist/required requirements 协商并冻结 activation set；Provider 后续重连只能恢复本次启动已授权的能力。`NC_EMBODIMENT_PROVIDER=none|mistyai|simulator` 只在 composition root 选择实现，Core 不按 Provider 名称分支。manifest 未配置 `embodiment` 时仍按 chat-only 模式启动。
+
+MistyAI adapter 支持 typed action、独立 verify、safe-point、reconcile、结构化 evidence 与可选 `physiology.body-state.v1`。Simulator 不使用 HTTP 或 MistyAI DTO，可脚本化 success/failure/unknown、健康变化及 energy terminal。配置与黑盒验收顺序见 [Embodiment 运行手册](docs/EMBODIMENT_RUNBOOK.md)。
+
 ## 可视化 GUI
 
 三栏 Web 界面：左侧角色对话，中间九阶段推理时间线，右侧 Persona / 关系 / 心理 / 世界 / 记忆及七维 Homeostasis。顶栏可查看四服务健康、Runtime 生命周期、manifest/profile revision；内稳态面板展示 belief、目标带、precision、情感、候选策略并可在开发模式保存新的参数 revision。保存不会热改运行实例，重新执行 `start.ps1` 后原子激活。
+
+完整四进程拓扑另提供 `http://127.0.0.1:8765/ops` 独立运维页：实时和最近 7 天的 Runtime 事件、journal、队列趋势、推理运行、watchdog、Embodiment 与 ActionExecution 可关联下钻；`development_debug` 模式可直接暂停/恢复、写 checkpoint、注入调试事件并处理动作/交付对账。监控历史保存在可重建的 `data/runtime/observability.sqlite3`，不会取代 hash-chain journal 或调用日志。
 
 ```bash
 pip install -e ".[dev,gui]"
 python -m gui.server  # 兼容的单进程 GUI
 # 浏览器打开 http://127.0.0.1:8765
+# 完整拓扑启动后打开 http://127.0.0.1:8765/ops
 ```
 
 Windows 推荐使用 `start.ps1` / `stop.ps1` 启停完整四进程开发拓扑（已在运行则原子重启，分服务日志写入 `logs/`）。`start.sh` / `stop.sh` 当前仍是兼容的单进程 GUI 路径。

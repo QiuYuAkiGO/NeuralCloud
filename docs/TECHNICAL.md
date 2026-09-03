@@ -404,6 +404,8 @@ Raw Event → Curator 提出 ops → WriterPipeline 执行
 ### 9.1 架构（`gui/`）
 
 - **`runtime_server.py`**：Windows 四进程拓扑使用的 GUI facade。它只持有 Runtime control token，把现有 `/api/*` 路由代理为 Runtime 控制命令，并把 Runtime SSE 转成浏览器 WebSocket；浏览器不直接访问 Cognitive/Homeostasis。
+- **`harness/runtime/monitor.py`**：`/ops` 的非权威可观测投影。它异步收集 Runtime/Cognitive 事件、journal 与成功调用日志，写入 WAL SQLite，保留 7 天并提供 cursor 查询、断线续传、运行聚合和单次诊断包；投影失败只影响面板，不改变 Runtime 生命周期。
+- **`static/ops.html|ops.js|ops.css`**：独立 Runtime 运维页，包含概览、事件/Journal、九阶段运行和动作/控制四个视图。完整控制只通过 GUI facade 转发，浏览器不持有 Runtime bearer token。
 
 - **`server.py`**：FastAPI 应用。REST：`POST /api/chat`（发消息，`asyncio.to_thread` 跑同步 pipeline，`run_lock` 串行化）、`GET /api/status`、预设库（`GET /api/presets`、`POST /api/presets/{open,apply,new,restore}`、`DELETE /api/presets/{id}`）、`POST /api/config`（`demo` / `live` / `ollama` 切换与端点配置）、`GET /api/models`（探活端点模型列表）、`POST /api/reset`（当前预设恢复出厂）、`POST /api/speakers`、`GET /api/debug/state` + 7 个调试写入端点。WebSocket `/ws`：订阅者队列广播，25s 心跳。静态托管 `gui/static/`（三栏原生 JS 界面）。
 - **`service.py`**：`HarnessChatService` 包装 pipeline。`rebuild()` 重建 Settings → LLM 客户端（`demo`=MockLLM；`live`/`ollama`=OpenAI 兼容 + aux 路由 + 探活 + 异步预热；`ollama` 未填 URL 时默认 `:11434`）→ embedding 客户端（demo=MockEmbedding；live/ollama=`build_embedding_client`：可达则 `GuardedEmbedding(OpenAICompatEmbedding)`，否则 Mock）→ 按当前预设 hydrate 记忆（种子缺向量时批量补 embedding；模式切换会先 flush 存档，不再丢调试改动）。GUI 强制 `call_log_enabled=true`、`validator_sample_rate=1.0`（Fast Path 也全量跑 Validator，便于观察）。状态快照 `snapshot_state()` 聚合 persona/relationship/psych/world/各 store 计数/完整聊天记录/打开的预设选项卡/端点可达性（含 embedding backend）。
@@ -424,6 +426,8 @@ python -m gui.server   # http://127.0.0.1:8765
 
 使用 `start.ps1` 时右栏额外展示七维 Homeostasis value、目标带、posterior、precision、情感、候选策略和 watchdog；顶栏**内稳态**可校验并保存新的 immutable profile/manifest revision，下一次 `start.ps1` 激活。
 
+同一拓扑下 `/ops` 展示 `1h / 6h / 24h / 7d` 运行历史。Runtime 私有控制面提供 `/v1/monitor/*`，GUI 映射为 `/api/ops/*` 并通过 `/ops/ws` 转发可续传实时流。`study_runtime` 在服务端拒绝调试事件注入和人工结果改写；普通生命周期控制、checkpoint 与正式动作审批仍可使用。兼容单进程 `gui.server` 只显示“需要完整 Runtime 拓扑”，不生成伪监控数据。
+
 ---
 
 ## 10. 配置体系
@@ -439,10 +443,13 @@ python -m gui.server   # http://127.0.0.1:8765
 | 记忆/检索 | 固化阈值 0.70、候选初始置信度 0.15、置信度步进 0.35、检索池 50、top_k 8、recency 半衰期 24h、六信号权重、uniqueness TTL 四参数（5min/30min/0.4/10080min）、tier 升格命中数（3/8）与最低 relevance 0.35、long recency 下限 0.4、mid 半衰期倍数 7 |
 | 推理 | `NC_COMPLEXITY_THRESHOLD`（0.5）、`NC_CONTEXT_TOKEN_BUDGET`（3000）、`NC_COMPILER_TOP_MEMORIES`（5）、`NC_VALIDATOR_SAMPLE_RATE`（0.2）、`NC_MAX_REVISIONS`（2）、`NC_SESSION_WINDOW`（10）、`NC_RECORD_INTERACTION`（true）、`NC_CONTINUATION_ENABLED`（true）/ `NC_MAX_REPLY_SEGMENTS`（3）、`NC_CALL_LOG_ENABLED`（false；GUI 强制 true）、`NC_PARSER_LLM_ENABLED`（true）、`NC_PLANNER_LLM_ENABLED`（false，计划只是 hint） |
 | GUI | `NC_GUI_CONFIG`（默认 `data/gui_settings.json`）、`NC_GUI_PRESETS`（默认 `data/presets/`） |
+| Embodiment | `NC_EMBODIMENT_PROVIDER`（`none`/`mistyai`/`simulator`）；MistyAI 的 `NC_MISTYAI_BASE_URL` / `NC_MISTYAI_TOKEN` / timeout / poll；Simulator 的 seed / offline / observation-only / physiology |
 
 版本戳：`NC_SCHEMA_VERSION`（state-v1）/ `NC_PROMPT_VERSION`（memory-v1）/ `NC_MODEL_VERSION`，随每条 trace 落盘。
 
 **注意**：`get_settings()` 有进程内 `lru_cache`；测试或多次改环境变量时应显式构造 `Settings(...)` 传入 Service，不要依赖缓存。
+
+Embodiment 的研究条件不从环境变量读取：mode、required/optional capability、body instance、BodyState freshness 与 active-mode debounce 均冻结在 `ExperimentManifest.embodiment`。环境变量只负责在 Runtime composition root 选择并连接 Provider。Canonical JSON Schema 位于 `contracts/embodiment/`。
 
 ---
 

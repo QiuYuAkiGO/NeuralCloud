@@ -9,6 +9,8 @@ from typing import Protocol
 
 from harness.contracts.decisions import GoalProposal
 from harness.contracts.envelope import VersionVector
+from harness.embodiment.capabilities import ACTION_RECONCILE, ACTION_SAFE_POINT, ACTION_VERIFY
+from harness.embodiment.ports import ActionBackend
 from harness.runtime.models import (
     ActionBackendResult,
     ActionExecution,
@@ -19,16 +21,6 @@ from harness.runtime.models import (
 
 def _utc_now() -> datetime:
     return datetime.now(UTC)
-
-
-class ActionBackend(Protocol):
-    async def execute(self, execution: ActionExecution) -> ActionBackendResult: ...
-
-    async def request_safe_point(self, execution: ActionExecution) -> ActionBackendResult: ...
-
-    async def verify(self, execution: ActionExecution) -> ActionBackendResult: ...
-
-    async def reconcile(self, execution: ActionExecution) -> ActionBackendResult: ...
 
 
 class DeliveryBackend(Protocol):
@@ -95,6 +87,7 @@ class InMemoryDeliveryBackend:
 
 
 ConsistencyBarrier = Callable[[ActionExecution], Awaitable[tuple[bool, VersionVector, str | None]]]
+CapabilityCheck = Callable[[str], bool]
 
 
 class ActionCoordinator:
@@ -103,9 +96,11 @@ class ActionCoordinator:
         backend: ActionBackend | None = None,
         *,
         consistency_barrier: ConsistencyBarrier | None = None,
+        capability_check: CapabilityCheck | None = None,
     ) -> None:
         self.backend = backend or NoopActionBackend()
         self.consistency_barrier = consistency_barrier
+        self.capability_check = capability_check or (lambda _capability: True)
         self._lock = asyncio.Lock()
         self._actions: dict[str, ActionExecution] = {}
         self._current_action_id: str | None = None
@@ -175,6 +170,7 @@ class ActionCoordinator:
                 reversible=proposal.reversible,
                 verification_method=proposal.verification_method,
                 required_approvals=list(proposal.required_approvals),
+                embodied_action=proposal.embodied_action,
                 version_vector=version_vector,
                 deadline=deadline,
             )
@@ -253,6 +249,21 @@ class ActionCoordinator:
         if not result.success:
             return await self._finish(action, result, ActionExecutionState.FAILED)
 
+        if not self.capability_check(ACTION_VERIFY):
+            return await self._finish(
+                action,
+                ActionBackendResult(
+                    success=False,
+                    summary="execution completed but independent verification is unavailable",
+                    evidence_refs=result.evidence_refs,
+                    external_effect_ref=result.external_effect_ref,
+                    safe_point=result.safe_point,
+                    continuation=result.continuation,
+                    unknown=True,
+                ),
+                ActionExecutionState.UNKNOWN,
+            )
+
         async with self._lock:
             action = self._replace(
                 action,
@@ -283,6 +294,8 @@ class ActionCoordinator:
                 return None
             if action.state not in {ActionExecutionState.RUNNING, ActionExecutionState.VERIFYING}:
                 return action
+            if not self.capability_check(ACTION_SAFE_POINT):
+                return action
         try:
             result = await self.backend.request_safe_point(action)
         except Exception as exc:
@@ -307,6 +320,16 @@ class ActionCoordinator:
     async def reconcile(self, action_id: str) -> ActionExecution:
         async with self._lock:
             action = self._require(action_id)
+        if not self.capability_check(ACTION_RECONCILE):
+            return await self._finish(
+                action,
+                ActionBackendResult(
+                    success=False,
+                    summary="action reconciliation capability is unavailable",
+                    unknown=True,
+                ),
+                ActionExecutionState.UNKNOWN,
+            )
         result = await self.backend.reconcile(action)
         if result.unknown:
             state = ActionExecutionState.UNKNOWN
