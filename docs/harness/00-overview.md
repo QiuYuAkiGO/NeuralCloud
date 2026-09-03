@@ -183,6 +183,12 @@ flowchart TB
 | [06-memory-subsystem-usage.md](06-memory-subsystem-usage.md) | 记忆子系统 V1 使用说明：安装、API、写/读路径、配置、PostgreSQL、评测 |
 | [07-homeostatic-harness-research-design.md](07-homeostatic-harness-research-design.md) | 情感陪伴型具身智能内稳态 Harness V2 研究提案：七维状态、主动推断、闭环调节与三条件长期实验 |
 | [08-runtime-supervisor.md](08-runtime-supervisor.md) | Runtime Supervisor V2 架构提案：Runtime、Cognitive、Homeostatic 三服务拓扑，以及常驻循环、抢占、持久化恢复与控制面 |
+| [09-character-import-and-embodied-instance.md](09-character-import-and-embodied-instance.md) | 角色导入、运行实例身份与 embodied instance 生命周期边界 |
+| [10-startup-and-situational-context-plan.md](10-startup-and-situational-context-plan.md) | Runtime 启动、恢复与 situational context 组装方案 |
+| [11-mistyai-body-state-integration-code-design.md](11-mistyai-body-state-integration-code-design.md) | MistyAI BodyState 接入、内感受投影、Homeostasis sensor assimilation 与实验条件隔离 |
+| [12-autonomous-relationship-formation.md](12-autonomous-relationship-formation.md) | 自主关系形成的证据边界、实验条件与评测框架 |
+| [13-relationship-belief-and-care-code-design.md](13-relationship-belief-and-care-code-design.md) | Relationship Belief、Other Model、other-regarding goal 与 costly care 代码设计 |
+| [14-embodiment-port-and-capability-negotiation.md](14-embodiment-port-and-capability-negotiation.md) | Stable Domain Port、Canonical Contract、Provider Adapter 三层边界与 capability negotiation / 降级策略 |
 | [TECHNICAL.md](../TECHNICAL.md) | 已落地代码的架构、数据流与实现细节（工程师手册） |
 
 ## 8. 环境基线（适配说明）
