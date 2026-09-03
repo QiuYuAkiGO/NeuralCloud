@@ -1,6 +1,6 @@
 # 06 · 记忆子系统使用说明（Memory Subsystem V1）
 
-> 本文是 **已落地代码** 的操作手册，不是设计论证。设计背景见 [01-cognitive-harness.md](01-cognitive-harness.md)。
+> **状态：Done（2026-09-03）**。本文覆盖的 `harness.memory` V1 记忆/状态子系统已经落地；本文是已落地代码的操作手册，不是设计论证。设计背景见 [01-cognitive-harness.md](01-cognitive-harness.md)。
 >
 > 入口类：`harness.memory.service.MemoryService`。模块之间只传结构化对象，不拼自然语言小作文。
 
