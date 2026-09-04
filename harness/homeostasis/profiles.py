@@ -73,6 +73,7 @@ class ProfileRevisionStore:
             {
                 "revision": current_manifest.revision + 1,
                 "homeostatic_profile": profile.profile_ref,
+                "persona_version": profile.persona_version,
                 "a_version": profile.observation_model_version,
                 "b_version": profile.transition_model_version,
                 "c_version": profile.preference_model_version,

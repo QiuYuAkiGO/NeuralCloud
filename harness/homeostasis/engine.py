@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import math
 import os
 from datetime import UTC, datetime
@@ -71,6 +72,11 @@ class HomeostasisEngine:
         self.ledger_store_path = self.state_dir / "command-ledger.sqlite3"
         self.trace_path = self.state_dir / "transitions.jsonl"
         self._lock = asyncio.Lock()
+        self._projection_errors: dict[str, str] = {}
+        self._boundary_heartbeat_streaks: dict[DimensionName, int] = {}
+        self._boundary_heartbeat_sides: dict[
+            DimensionName, Literal["low", "high"]
+        ] = {}
         self._command_ledger = CommandLedger(
             self.state_dir,
             cache_size=ledger_cache_size,
@@ -90,7 +96,7 @@ class HomeostasisEngine:
         async with self._lock:
             return ServiceHealth(
                 service="homeostasis",
-                healthy=not self.snapshot.watchdog,
+                healthy=not self.snapshot.watchdog and not self._projection_errors,
                 revision=self.snapshot.revision,
                 acknowledged_receive_seq=self.snapshot.acknowledged_receive_seq,
                 detail={
@@ -98,6 +104,10 @@ class HomeostasisEngine:
                     "profile_revision": self.profile.revision,
                     "profile_ref": self.profile.profile_ref,
                     "watchdog": list(self.snapshot.watchdog),
+                    "projection_errors": dict(self._projection_errors),
+                    "boundary_heartbeat_streaks": dict(
+                        self._boundary_heartbeat_streaks
+                    ),
                 },
             )
 
@@ -161,6 +171,7 @@ class HomeostasisEngine:
                         "idempotency key reused with different request",
                         "conflict",
                     )
+                self._repair_projections_if_needed()
                 restored = DomainCommandResult[dict[str, Any]].model_validate(previous["result"])
                 return restored.model_copy(update={"status": "idempotent_replay", "idempotency_hit": True})
             if command.is_expired(now=self._clock()):
@@ -231,10 +242,14 @@ class HomeostasisEngine:
                 )
 
             revision = self.snapshot.revision + 1
-            watchdog = self._watchdog(factors)
+            boundary_streaks, boundary_sides = self._next_boundary_heartbeat_streaks(
+                factors,
+                heartbeat=False,
+            )
+            watchdog = self._watchdog(factors, boundary_streaks)
             affect = self._derive_affect(factors)
             emotion = self._derive_emotion(affect, factors, effective_at)
-            self.snapshot = HomeostaticSnapshot(
+            next_snapshot = HomeostaticSnapshot(
                 revision=revision,
                 profile_id=self.profile.profile_id,
                 profile_revision=self.profile.revision,
@@ -285,10 +300,10 @@ class HomeostasisEngine:
                 request_hash=request_hash,
                 committed_revision=revision,
                 acknowledged_event_id=command.event_id,
-                acknowledged_receive_seq=self.snapshot.acknowledged_receive_seq,
+                acknowledged_receive_seq=next_snapshot.acknowledged_receive_seq,
                 result={
                     "revision": revision,
-                    "snapshot": self.snapshot.model_dump(mode="json"),
+                    "snapshot": next_snapshot.model_dump(mode="json"),
                     "trace": trace.model_dump(mode="json"),
                 },
                 completed_at=self._clock(),
@@ -297,10 +312,18 @@ class HomeostasisEngine:
                 key,
                 request_hash=request_hash,
                 result=result.model_dump(mode="json"),
-                snapshot=self.snapshot.model_dump(mode="json"),
+                snapshot=next_snapshot.model_dump(mode="json"),
+                engine_state=self._engine_state_payload(
+                    boundary_streaks,
+                    boundary_sides,
+                ),
+                trace=trace.model_dump(mode="json"),
             )
-            self._persist_snapshot_mirror()
-            self._append_trace(trace)
+            self.snapshot = next_snapshot
+            self._boundary_heartbeat_streaks = boundary_streaks
+            self._boundary_heartbeat_sides = boundary_sides
+            self._project_snapshot_mirror()
+            self._project_trace(trace)
             return result
 
     async def propose_policies(self, *, version_vector: VersionVector) -> list[dict[str, Any]]:
@@ -325,6 +348,7 @@ class HomeostasisEngine:
             if previous is not None:
                 if previous["request_hash"] != request_hash:
                     return self._failure(command, request_hash, "idempotency key reused with different request", "conflict")
+                self._repair_projections_if_needed()
                 restored = DomainCommandResult[dict[str, Any]].model_validate(previous["result"])
                 return restored.model_copy(update={"status": "idempotent_replay", "idempotency_hit": True})
             if command.is_expired(now=self._clock()):
@@ -344,11 +368,15 @@ class HomeostasisEngine:
             factors, applied, coupling = self._integrate(appraisal, effective_at, heartbeat=kind == "heartbeat")
             affect = self._derive_affect(factors)
             emotion = self._derive_emotion(affect, factors, effective_at)
-            watchdog = self._watchdog(factors)
+            boundary_streaks, boundary_sides = self._next_boundary_heartbeat_streaks(
+                factors,
+                heartbeat=kind == "heartbeat",
+            )
+            watchdog = self._watchdog(factors, boundary_streaks)
             revision = self.snapshot.revision + 1
             heartbeat_at = effective_at if kind == "heartbeat" else self.snapshot.last_heartbeat_at
             candidates = self._rank_policies(factors)
-            self.snapshot = HomeostaticSnapshot(
+            next_snapshot = HomeostaticSnapshot(
                 revision=revision,
                 profile_id=self.profile.profile_id,
                 profile_revision=self.profile.revision,
@@ -382,7 +410,7 @@ class HomeostasisEngine:
             )
             result_payload = {
                 "revision": revision,
-                "snapshot": self.snapshot.model_dump(mode="json"),
+                "snapshot": next_snapshot.model_dump(mode="json"),
                 "trace": trace.model_dump(mode="json"),
             }
             result = DomainCommandResult[dict[str, Any]](
@@ -392,7 +420,7 @@ class HomeostasisEngine:
                 request_hash=request_hash,
                 committed_revision=revision,
                 acknowledged_event_id=command.event_id,
-                acknowledged_receive_seq=self.snapshot.acknowledged_receive_seq,
+                acknowledged_receive_seq=next_snapshot.acknowledged_receive_seq,
                 result=result_payload,
                 completed_at=self._clock(),
             )
@@ -400,10 +428,18 @@ class HomeostasisEngine:
                 key,
                 request_hash=request_hash,
                 result=result.model_dump(mode="json"),
-                snapshot=self.snapshot.model_dump(mode="json"),
+                snapshot=next_snapshot.model_dump(mode="json"),
+                engine_state=self._engine_state_payload(
+                    boundary_streaks,
+                    boundary_sides,
+                ),
+                trace=trace.model_dump(mode="json"),
             )
-            self._persist_snapshot_mirror()
-            self._append_trace(trace)
+            self.snapshot = next_snapshot
+            self._boundary_heartbeat_streaks = boundary_streaks
+            self._boundary_heartbeat_sides = boundary_sides
+            self._project_snapshot_mirror()
+            self._project_trace(trace)
             return result
 
     def _appraise(self, event: dict[str, Any], *, kind: str, event_id: str) -> EventAppraisal:
@@ -514,10 +550,15 @@ class HomeostasisEngine:
             base_values[dimension] = base_value
             realised_base_delta[dimension] = base_value - current.value
 
+        coupling_source_delta = (
+            realised_base_delta
+            if self.profile.coupling_semantics == "realized_delta_v2"
+            else requested_base_delta
+        )
         requested_coupling: dict[DimensionName, float] = {
             key: 0.0 for key in DIMENSIONS
         }
-        for source, value in realised_base_delta.items():
+        for source, value in coupling_source_delta.items():
             for target_dimension, coefficient in self.profile.coupling.get(source, {}).items():
                 if target_dimension != source:
                     requested_coupling[target_dimension] += value * float(coefficient)
@@ -545,7 +586,12 @@ class HomeostasisEngine:
                 dominant_evidence=(appraisal.evidence_refs + current.dominant_evidence)[:5],
                 updated_at=now,
             )
-        return factors, applied, realised_coupling
+        reported_coupling = (
+            realised_coupling
+            if self.profile.coupling_semantics == "realized_delta_v2"
+            else requested_coupling
+        )
+        return factors, applied, reported_coupling
 
     @staticmethod
     def _posterior(
@@ -663,14 +709,56 @@ class HomeostasisEngine:
             )
         return candidates
 
-    @staticmethod
-    def _watchdog(factors: dict[DimensionName, FactorBelief]) -> list[str]:
+    def _next_boundary_heartbeat_streaks(
+        self,
+        factors: dict[DimensionName, FactorBelief],
+        *,
+        heartbeat: bool,
+    ) -> tuple[
+        dict[DimensionName, int],
+        dict[DimensionName, Literal["low", "high"]],
+    ]:
+        if self.profile.watchdog_boundary_heartbeats is None:
+            return {}, {}
+        previous = self._boundary_heartbeat_streaks
+        previous_sides = self._boundary_heartbeat_sides
+        streaks: dict[DimensionName, int] = {}
+        sides: dict[DimensionName, Literal["low", "high"]] = {}
+        for dimension in DIMENSIONS:
+            observed = self.snapshot.dimensions[dimension] if heartbeat else factors[dimension]
+            spec = self.profile.dimensions[dimension]
+            side: Literal["low", "high"] | None = None
+            if observed.value <= spec.hard_bounds[0] + 1e-9:
+                side = "low"
+            elif observed.value >= spec.hard_bounds[1] - 1e-9:
+                side = "high"
+            if side is None:
+                streaks[dimension] = 0
+                continue
+            sides[dimension] = side
+            same_side = previous_sides.get(dimension) == side
+            if heartbeat:
+                streaks[dimension] = previous.get(dimension, 0) + 1 if same_side else 1
+            elif same_side:
+                streaks[dimension] = previous.get(dimension, 0)
+            else:
+                streaks[dimension] = 0
+        return streaks, sides
+
+    def _watchdog(
+        self,
+        factors: dict[DimensionName, FactorBelief],
+        boundary_streaks: dict[DimensionName, int],
+    ) -> list[str]:
         reasons: list[str] = []
         for dimension, factor in factors.items():
             if not math.isfinite(factor.value):
                 reasons.append(f"{dimension}:non_finite")
             if max(factor.posterior.values()) > 0.999999:
                 reasons.append(f"{dimension}:posterior_saturated")
+            threshold = self.profile.watchdog_boundary_heartbeats
+            if threshold is not None and boundary_streaks.get(dimension, 0) >= threshold:
+                reasons.append(f"{dimension}:hard_bound_sustained")
         return reasons
 
     def _failure(
@@ -710,15 +798,23 @@ class HomeostasisEngine:
                     "updated_at": self._started_at,
                 }
             )
+        affect = self._derive_affect(factors)
+        emotion = self._derive_emotion(affect, factors, self._started_at)
         self.snapshot = self.snapshot.model_copy(
             update={
                 "revision": self.snapshot.revision + 1,
                 "profile_revision": self.profile.revision,
                 "dimensions": factors,
+                "core_affect": affect,
+                "emotion": emotion,
+                "candidates": self._rank_policies(factors),
                 "updated_at": self._started_at,
                 "stable_snapshot_ref": f"snapshot://{self.profile.profile_id}/profile-migration-r{self.profile.revision}",
+                "watchdog": [],
             }
         )
+        self._boundary_heartbeat_streaks = {}
+        self._boundary_heartbeat_sides = {}
         self._persist()
 
     def _load(self) -> None:
@@ -727,14 +823,111 @@ class HomeostasisEngine:
             self.snapshot = HomeostaticSnapshot.model_validate(stored_snapshot)
         elif self.state_path.is_file():
             self.snapshot = HomeostaticSnapshot.model_validate_json(self.state_path.read_text(encoding="utf-8"))
+        engine_state = self._command_ledger.load_engine_state()
+        raw_streaks = engine_state.get("boundary_heartbeat_streaks") or {}
+        raw_sides = engine_state.get("boundary_heartbeat_sides") or {}
+        if not isinstance(raw_streaks, dict) or not isinstance(raw_sides, dict):
+            raise ValueError("stored boundary heartbeat state must be an object")
+        self._boundary_heartbeat_streaks = {
+            cast(DimensionName, key): int(value)
+            for key, value in raw_streaks.items()
+            if key in DIMENSIONS and int(value) >= 0
+        }
+        self._boundary_heartbeat_sides = {
+            cast(DimensionName, key): cast(Literal["low", "high"], value)
+            for key, value in raw_sides.items()
+            if key in DIMENSIONS and value in {"low", "high"}
+        }
+        self._project_snapshot_mirror()
+        self._repair_trace_projection()
+
+    def _repair_projections_if_needed(self) -> None:
+        if not self._projection_errors:
+            return
+        self._project_snapshot_mirror()
+        self._repair_trace_projection()
 
     def _persist(self) -> None:
         self.state_dir.mkdir(parents=True, exist_ok=True)
-        self._command_ledger.save_snapshot(self.snapshot.model_dump(mode="json"))
-        self._persist_snapshot_mirror()
+        self._command_ledger.save_snapshot(
+            self.snapshot.model_dump(mode="json"),
+            engine_state=self._engine_state_payload(
+                self._boundary_heartbeat_streaks,
+                self._boundary_heartbeat_sides,
+            ),
+        )
+        self._project_snapshot_mirror()
 
-    def _persist_snapshot_mirror(self) -> None:
-        self._atomic(self.state_path, self.snapshot.model_dump_json(indent=2) + "\n")
+    @staticmethod
+    def _engine_state_payload(
+        boundary_streaks: dict[DimensionName, int],
+        boundary_sides: dict[DimensionName, Literal["low", "high"]],
+    ) -> dict[str, Any]:
+        return {
+            "boundary_heartbeat_streaks": dict(boundary_streaks),
+            "boundary_heartbeat_sides": dict(boundary_sides),
+        }
+
+    def _project_snapshot_mirror(self) -> None:
+        try:
+            self._atomic(self.state_path, self.snapshot.model_dump_json(indent=2) + "\n")
+        except OSError as exc:
+            self._projection_errors["snapshot"] = str(exc)
+        else:
+            self._projection_errors.pop("snapshot", None)
+
+    def _project_trace(self, trace: HomeostaticTransitionTrace) -> None:
+        if "trace" in self._projection_errors or not self.trace_path.is_file():
+            self._repair_trace_projection()
+            return
+        try:
+            self._append_trace(trace)
+        except OSError as exc:
+            self._projection_errors["trace"] = str(exc)
+        else:
+            self._projection_errors.pop("trace", None)
+
+    def _repair_trace_projection(self) -> None:
+        if not self._command_ledger.has_traces():
+            return
+        try:
+            if self._trace_projection_matches():
+                self._projection_errors.pop("trace", None)
+                return
+            temporary = self.trace_path.with_name(
+                f".{self.trace_path.name}.{os.getpid()}.tmp"
+            )
+            with temporary.open("w", encoding="utf-8", newline="\n") as handle:
+                for trace in self._command_ledger.iter_traces():
+                    handle.write(
+                        json.dumps(
+                            trace,
+                            ensure_ascii=False,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        )
+                        + "\n"
+                    )
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, self.trace_path)
+        except OSError as exc:
+            self._projection_errors["trace"] = str(exc)
+        else:
+            self._projection_errors.pop("trace", None)
+
+    def _trace_projection_matches(self) -> bool:
+        if not self.trace_path.is_file():
+            return False
+        try:
+            with self.trace_path.open("r", encoding="utf-8") as handle:
+                for expected in self._command_ledger.iter_traces():
+                    line = handle.readline()
+                    if not line or json.loads(line) != expected:
+                        return False
+                return handle.readline() == ""
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return False
 
     @staticmethod
     def _atomic(path: Path, value: str) -> None:

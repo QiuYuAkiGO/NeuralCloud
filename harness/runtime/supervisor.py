@@ -77,6 +77,7 @@ from harness.runtime.models import (
     RuntimeLifecycle,
     RuntimeStatus,
     WatchdogAction,
+    WatchdogDecision,
     utc_now,
 )
 from harness.runtime.perception import PauseObservationBuffer, PerceptionGuard
@@ -315,6 +316,7 @@ class RuntimeSupervisor:
         self._reconciliation_backlog = 0
         self._needs_refill = False
         self._action_context: dict[str, dict[str, Any]] = {}
+        self._homeostasis_watchdog_signature: tuple[int, tuple[str, ...]] | None = None
         self.pause_observations = PauseObservationBuffer()
         self.ingress = RuntimeIngress(self)
         self.instance_lock = SingleInstanceLock(
@@ -558,14 +560,14 @@ class RuntimeSupervisor:
                     "journal_tail_truncated",
                     data={"bytes": self.journal.truncated_tail_bytes},
                 )
-            await self._check_services()
+            homeostasis_watchdog = await self._check_services()
             embodiment_status = await self.embodiment.activate()
             self._append_journal(
                 "embodiment_activated",
                 data={"embodiment": embodiment_status.model_dump(mode="json")},
             )
             await self._reconcile_incomplete_commands()
-            await self._check_services()
+            homeostasis_watchdog = await self._check_services()
             unresolved_action = await self._restore_and_reconcile_actions()
             await self._restore_pending_events()
             if self.journal.records():
@@ -583,6 +585,7 @@ class RuntimeSupervisor:
             requires_pause = (
                 unresolved_action
                 or self._required_embodiment_blocks_runtime(embodiment_status)
+                or bool(homeostasis_watchdog)
                 or previous_lifecycle in {
                 RuntimeLifecycle.PAUSED,
                 RuntimeLifecycle.PAUSING,
@@ -591,7 +594,18 @@ class RuntimeSupervisor:
                 }
             )
             target = RuntimeLifecycle.PAUSED if requires_pause else RuntimeLifecycle.RUNNING
-            await self._transition(target, reason="recovery complete")
+            transition_reason = (
+                "recovery complete; homeostasis watchdog requires pause: "
+                + ", ".join(homeostasis_watchdog)
+                if homeostasis_watchdog
+                else "recovery complete"
+            )
+            await self._transition(target, reason=transition_reason)
+            if homeostasis_watchdog:
+                self._homeostasis_watchdog_signature = (
+                    self._homeostasis_snapshot.revision,
+                    homeostasis_watchdog,
+                )
             if target == RuntimeLifecycle.RUNNING:
                 self.scheduler.start()
                 self._start_embodiment_guards()
@@ -785,6 +799,9 @@ class RuntimeSupervisor:
         resumed_at = utc_now()
         summary = self.pause_observations.build(resumed_at=resumed_at)
         await self._transition(RuntimeLifecycle.RUNNING, reason=reason)
+        # An explicit researcher resume permits one new heartbeat to reassess
+        # the same persisted condition at a newer Homeostasis revision.
+        self._homeostasis_watchdog_signature = None
         self.scheduler.reset_from_now()
         self._start_embodiment_guards()
         if summary is not None:
@@ -1110,7 +1127,7 @@ class RuntimeSupervisor:
         homeostasis_result = await self._invoke_domain(
             service="homeostasis", envelope=homeostasis_envelope, method=method, event=event
         )
-        self._update_homeostasis(homeostasis_result)
+        await self._update_homeostasis(homeostasis_result, event=event)
         if event.event_type == RuntimeEventType.HEARTBEAT:
             self._last_heartbeat_at = utc_now()
             await self._refresh_embodiment()
@@ -1342,7 +1359,7 @@ class RuntimeSupervisor:
                 method=self.homeostasis.assimilate_observation,
                 event=event,
             )
-            self._update_homeostasis(result)
+            await self._update_homeostasis(result, event=event)
 
         reconsider = terminal
         if (
@@ -1468,7 +1485,7 @@ class RuntimeSupervisor:
             method=self.homeostasis.apply_observation,
             event=event,
         )
-        self._update_homeostasis(result)
+        await self._update_homeostasis(result, event=event)
         if self._agency_state == AgencyState.DEGRADED:
             self._agency_state = AgencyState.AVAILABLE
             self._degraded_reasons = [
@@ -1863,7 +1880,7 @@ class RuntimeSupervisor:
             method=self.homeostasis.apply_outcome,
             event=event,
         )
-        self._update_homeostasis(result)
+        await self._update_homeostasis(result, event=event)
         self._append_journal("action_completed", event=event, data={"action": action.model_dump(mode="json")})
         self._append_journal(
             "action_interaction_committed",
@@ -2027,24 +2044,41 @@ class RuntimeSupervisor:
             )
         return result
 
-    async def _check_services(self) -> None:
+    async def _check_services(self) -> tuple[str, ...]:
         cognitive_health, homeostasis_health = await asyncio.gather(
             asyncio.wait_for(self.cognitive.health(), timeout=self.command_timeout_seconds),
             asyncio.wait_for(self.homeostasis.health(), timeout=self.command_timeout_seconds),
         )
         self._validate_health(cognitive_health, "cognitive")
-        self._validate_health(homeostasis_health, "homeostasis")
-        self._degraded_reasons = [
-            reason
-            for reason in self._degraded_reasons
-            if reason not in {"cognitive", "homeostasis"}
-        ]
+        health_watchdog = self._homeostasis_watchdog_reasons(homeostasis_health.detail)
+        projection_errors = homeostasis_health.detail.get("projection_errors")
+        watchdog_only = bool(health_watchdog) and not projection_errors
+        self._validate_health(
+            homeostasis_health,
+            "homeostasis",
+            allow_unhealthy=watchdog_only,
+        )
         self._cognitive_snapshot, self._homeostasis_snapshot = await asyncio.gather(
             asyncio.wait_for(self.cognitive.get_snapshot(), timeout=self.command_timeout_seconds),
             asyncio.wait_for(self.homeostasis.get_snapshot(), timeout=self.command_timeout_seconds),
         )
         self._validate_snapshot(self._cognitive_snapshot, "cognitive")
         self._validate_snapshot(self._homeostasis_snapshot, "homeostasis")
+        self._validate_homeostasis_contract(self._homeostasis_snapshot)
+        snapshot_watchdog = self._homeostasis_watchdog_reasons(
+            self._homeostasis_snapshot.payload
+        )
+        if snapshot_watchdog != health_watchdog:
+            raise DomainCommandError(
+                "homeostasis health/snapshot watchdog state is inconsistent"
+            )
+        self._degraded_reasons = [
+            reason
+            for reason in self._degraded_reasons
+            if reason not in {"cognitive", "homeostasis"}
+        ]
+        if snapshot_watchdog:
+            self._degraded_reasons.append("homeostasis")
         self._append_journal(
             "service_reconciled",
             data={
@@ -2052,14 +2086,20 @@ class RuntimeSupervisor:
                 "homeostasis": self._homeostasis_snapshot.model_dump(mode="json"),
             },
         )
+        return snapshot_watchdog
 
     @staticmethod
-    def _validate_health(health: ServiceHealth, expected_service: str) -> None:
+    def _validate_health(
+        health: ServiceHealth,
+        expected_service: str,
+        *,
+        allow_unhealthy: bool = False,
+    ) -> None:
         if health.service != expected_service:
             raise DomainCommandError(
                 f"expected {expected_service} service, received {health.service}"
             )
-        if not health.healthy:
+        if not health.healthy and not allow_unhealthy:
             raise DomainCommandError(f"{expected_service} service is unhealthy")
         if health.schema_version != CONTRACT_SCHEMA_VERSION:
             raise DomainCommandError(
@@ -2078,7 +2118,51 @@ class RuntimeSupervisor:
                 f"{expected_service} snapshot schema {snapshot.schema_version} is incompatible"
             )
 
-    def _update_homeostasis(self, result: DomainCommandResult[Any]) -> None:
+    def _validate_homeostasis_contract(self, snapshot: DomainSnapshot) -> None:
+        profile = snapshot.payload.get("profile")
+        if not isinstance(profile, dict):
+            if self.manifest.homeostatic_profile == "passive-v1":
+                return
+            raise DomainCommandError("homeostasis snapshot is missing its profile")
+        profile_id = profile.get("profile_id")
+        profile_revision = profile.get("revision")
+        if not isinstance(profile_id, str) or not isinstance(profile_revision, int):
+            raise DomainCommandError("homeostasis snapshot profile identity is incomplete")
+        state = snapshot.payload
+        if (
+            state.get("profile_id") != profile_id
+            or state.get("profile_revision") != profile_revision
+        ):
+            raise DomainCommandError(
+                "homeostasis state identity does not match its embedded profile"
+            )
+        expected_profile = f"{profile_id}@{profile_revision}"
+        contracts = {
+            "homeostatic_profile": expected_profile,
+            "schema_version": state.get("schema_version"),
+            "persona_version": profile.get("persona_version"),
+            "a_version": profile.get("observation_model_version"),
+            "b_version": profile.get("transition_model_version"),
+            "c_version": profile.get("preference_model_version"),
+            "precision_version": profile.get("precision_profile_version"),
+            "coupling_version": profile.get("coupling_matrix_version"),
+        }
+        mismatches = [
+            f"{field}={getattr(self.manifest, field)!r}, profile={value!r}"
+            for field, value in contracts.items()
+            if getattr(self.manifest, field) != value
+        ]
+        if mismatches:
+            raise DomainCommandError(
+                "homeostasis profile/manifest contract mismatch: " + "; ".join(mismatches)
+            )
+
+    async def _update_homeostasis(
+        self,
+        result: DomainCommandResult[Any],
+        *,
+        event: RuntimeEvent,
+    ) -> None:
         revision = result.committed_revision or self._homeostasis_snapshot.revision
         self._homeostasis_snapshot = self._homeostasis_snapshot.model_copy(
             update={
@@ -2089,6 +2173,61 @@ class RuntimeSupervisor:
                 "payload": result.result or {},
             }
         )
+        await self._route_homeostasis_watchdog(result, event=event)
+
+    async def _route_homeostasis_watchdog(
+        self,
+        result: DomainCommandResult[Any],
+        *,
+        event: RuntimeEvent,
+    ) -> None:
+        payload = result.result if isinstance(result.result, dict) else {}
+        reasons = self._homeostasis_watchdog_reasons(payload)
+        if not reasons:
+            self._homeostasis_watchdog_signature = None
+            return
+        if "homeostasis" not in self._degraded_reasons:
+            self._degraded_reasons.append("homeostasis")
+        revision = int(
+            result.committed_revision or self._homeostasis_snapshot.revision
+        )
+        signature = (revision, reasons)
+        if signature == self._homeostasis_watchdog_signature:
+            return
+        decision = WatchdogDecision(
+            action=WatchdogAction.PAUSE,
+            reason="homeostasis reported an unsafe or unstable state",
+            evidence={
+                "homeostasis_revision": revision,
+                "reasons": list(reasons),
+            },
+            observed_at=result.completed_at,
+        )
+        serialized = decision.model_dump(mode="json")
+        self._append_journal("watchdog_decision", event=event, data=serialized)
+        await self._publish("watchdog", serialized)
+        if self.lifecycle == RuntimeLifecycle.RUNNING:
+            queued = await self.submit_event(
+                event_type=RuntimeEventType.WATCHDOG,
+                priority=RuntimeEventPriority.CONTROL,
+                source="homeostasis",
+                source_time=result.completed_at,
+                correlation_id=event.correlation_id,
+                idempotency_key=f"homeostasis-watchdog:{revision}",
+                payload=serialized,
+            )
+            if queued is not None:
+                self._homeostasis_watchdog_signature = signature
+        else:
+            self._homeostasis_watchdog_signature = signature
+
+    @staticmethod
+    def _homeostasis_watchdog_reasons(payload: dict[str, Any]) -> tuple[str, ...]:
+        state = payload.get("snapshot") if isinstance(payload.get("snapshot"), dict) else payload
+        raw_reasons = state.get("watchdog") if isinstance(state, dict) else None
+        if not isinstance(raw_reasons, list):
+            return ()
+        return tuple(sorted({str(reason) for reason in raw_reasons if str(reason)}))
 
     async def _high_impact_barrier(
         self, action: ActionExecution

@@ -64,6 +64,9 @@ class HomeostaticProfile(BaseModel):
     preference_model_version: str = "C-v1"
     precision_profile_version: str = "precision-v1"
     coupling_matrix_version: str = "coupling-v1"
+    coupling_semantics: Literal["requested_delta_v1", "realized_delta_v2"] = (
+        "requested_delta_v1"
+    )
     observation_model: dict[str, dict[DimensionName, float]] = Field(default_factory=dict)
     transition_model: dict[str, dict[DimensionName, float]] = Field(default_factory=dict)
     preferences: dict[DimensionName, float] = Field(default_factory=dict)
@@ -80,6 +83,7 @@ class HomeostaticProfile(BaseModel):
     emotion_threshold: float = Field(default=0.35, ge=0.0, le=1.0)
     emotion_minimum_hold_seconds: int = Field(default=180, ge=0, le=86400)
     max_heartbeat_step_seconds: int = Field(default=90, ge=1, le=3600)
+    watchdog_boundary_heartbeats: int | None = Field(default=None, ge=2, le=60)
 
     @field_validator("source_precision")
     @classmethod
@@ -108,6 +112,15 @@ class HomeostaticProfile(BaseModel):
                 raise ValueError("coupling contains an unknown dimension")
             if any(not math.isfinite(float(item)) or abs(float(item)) > 1.0 for item in impacts.values()):
                 raise ValueError("coupling coefficients must be finite within [-1, 1]")
+        known_semantics = {
+            "coupling-v1": "requested_delta_v1",
+            "coupling-v2-realized-delta": "realized_delta_v2",
+        }
+        expected_semantics = known_semantics.get(self.coupling_matrix_version)
+        if expected_semantics is not None and self.coupling_semantics != expected_semantics:
+            raise ValueError(
+                f"{self.coupling_matrix_version} requires coupling_semantics={expected_semantics}"
+            )
         return self
 
     @property

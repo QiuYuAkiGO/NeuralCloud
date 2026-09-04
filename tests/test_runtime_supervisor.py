@@ -435,6 +435,102 @@ def test_supervisor_user_event_pause_resume_and_checkpoint(tmp_path) -> None:
     asyncio.run(scenario())
 
 
+def test_homeostasis_watchdog_routes_through_control_queue_and_pauses(tmp_path) -> None:
+    class BoundaryHomeostasis(PassiveHomeostasisAdapter):
+        async def apply_heartbeat(self, command):
+            result = await super().apply_heartbeat(command)
+            payload = dict(result.result or {})
+            payload["snapshot"] = {
+                "watchdog": ["cognitive_load:hard_bound_sustained"]
+            }
+            return result.model_copy(update={"result": payload})
+
+    _, _, cognitive = _pipeline_adapter(tmp_path)
+    supervisor = RuntimeSupervisor(
+        manifest=_manifest(),
+        cognitive=cognitive,
+        homeostasis=BoundaryHomeostasis(),
+        state_dir=tmp_path / "runtime-homeostasis-watchdog",
+    )
+
+    async def scenario() -> None:
+        await supervisor.boot_and_recover()
+        heartbeat = await supervisor.submit_event(
+            event_type=RuntimeEventType.HEARTBEAT,
+            priority=RuntimeEventPriority.HEARTBEAT,
+            source="scheduler",
+            payload={},
+        )
+        assert heartbeat is not None
+        queued = await supervisor.queue.get(timeout=0)
+        assert queued is not None
+        await supervisor.dispatch(queued)
+
+        watchdog = await supervisor.queue.get(timeout=0)
+        assert watchdog is not None
+        assert watchdog.event_type == RuntimeEventType.WATCHDOG
+        assert watchdog.source == "homeostasis"
+        assert watchdog.payload["evidence"]["reasons"] == [
+            "cognitive_load:hard_bound_sustained"
+        ]
+
+        await supervisor.dispatch(watchdog)
+        assert supervisor.lifecycle == RuntimeLifecycle.PAUSED
+        assert (
+            supervisor.lifecycle_reason
+            == "homeostasis reported an unsafe or unstable state"
+        )
+        await supervisor.stop(reason="test complete")
+
+    asyncio.run(scenario())
+
+
+def test_persisted_homeostasis_watchdog_recovers_paused_and_allows_resume(
+    tmp_path,
+) -> None:
+    class PersistedBoundaryHomeostasis(PassiveHomeostasisAdapter):
+        reasons = ["cognitive_load:hard_bound_sustained"]
+
+        async def health(self):
+            health = await super().health()
+            return health.model_copy(
+                update={
+                    "healthy": False,
+                    "detail": {
+                        "watchdog": self.reasons,
+                        "projection_errors": {},
+                    },
+                }
+            )
+
+        async def get_snapshot(self):
+            snapshot = await super().get_snapshot()
+            return snapshot.model_copy(
+                update={"payload": {"watchdog": self.reasons, "policies": []}}
+            )
+
+    _, _, cognitive = _pipeline_adapter(tmp_path)
+    supervisor = RuntimeSupervisor(
+        manifest=_manifest(),
+        cognitive=cognitive,
+        homeostasis=PersistedBoundaryHomeostasis(),
+        state_dir=tmp_path / "runtime-persisted-homeostasis-watchdog",
+    )
+
+    async def scenario() -> None:
+        await supervisor.boot_and_recover()
+        assert supervisor.lifecycle == RuntimeLifecycle.PAUSED
+        assert "homeostasis watchdog requires pause" in supervisor.lifecycle_reason
+        assert supervisor.status().health.homeostasis_healthy is False
+
+        await supervisor.resume(reason="researcher reviewed persisted boundary")
+        assert supervisor.lifecycle == RuntimeLifecycle.RUNNING
+        assert supervisor._homeostasis_watchdog_signature is None
+        await supervisor.stop(reason="test complete")
+
+    asyncio.run(scenario())
+
+
 def test_pause_failure_faults_instead_of_sticking_in_pausing(tmp_path) -> None:
     _, _, cognitive = _pipeline_adapter(tmp_path)
 

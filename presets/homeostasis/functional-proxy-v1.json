@@ -1,7 +1,7 @@
 {
   "schema_version": "homeostasis-profile-v1",
   "profile_id": "functional-proxy-v1",
-  "revision": 1,
+  "revision": 2,
   "mode": "functional_proxy",
   "persona_version": "persona_misty_v020",
   "dimensions": {
@@ -17,7 +17,8 @@
   "transition_model_version": "B-v1",
   "preference_model_version": "C-v1",
   "precision_profile_version": "precision-v1",
-  "coupling_matrix_version": "coupling-v1",
+  "coupling_matrix_version": "coupling-v2-realized-delta",
+  "coupling_semantics": "realized_delta_v2",
   "observation_model": {
     "perception": {"cognitive_load": 0.01, "novelty": 0.015},
     "heartbeat": {}
@@ -41,5 +42,6 @@
   "affect_weights": {},
   "emotion_threshold": 0.35,
   "emotion_minimum_hold_seconds": 180,
-  "max_heartbeat_step_seconds": 90
+  "max_heartbeat_step_seconds": 90,
+  "watchdog_boundary_heartbeats": 3
 }

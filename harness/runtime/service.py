@@ -147,6 +147,7 @@ def create_app():
                 perception_backend,
                 supervisor.submit_event,
                 interval_seconds=provider_poll_seconds,
+                max_state_age_seconds=manifest.embodiment.max_state_age_seconds,
                 source="embodiment",
             )
         )

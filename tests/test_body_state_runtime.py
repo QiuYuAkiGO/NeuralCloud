@@ -63,7 +63,20 @@ def _embodied_supervisor(tmp_path, *, mode: str):
         replan_hysteresis=0.05,
         minimum_replan_interval_seconds=300,
     )
-    manifest = _manifest().model_copy(update={"embodiment": condition})
+    profile = load_profile("presets/homeostasis/functional-proxy-v1.json")
+    manifest = _manifest().model_copy(
+        update={
+            "embodiment": condition,
+            "persona_version": profile.persona_version,
+            "homeostatic_profile": profile.profile_ref,
+            "schema_version": "homeostasis-state-v1",
+            "a_version": profile.observation_model_version,
+            "b_version": profile.transition_model_version,
+            "c_version": profile.preference_model_version,
+            "precision_version": profile.precision_profile_version,
+            "coupling_version": profile.coupling_matrix_version,
+        }
+    )
     simulator = DeterministicEmbodimentSimulator(
         SimulatorConfig(body_instance_id="body-1", physiology=True),
         clock=lambda: moment,
@@ -71,7 +84,7 @@ def _embodied_supervisor(tmp_path, *, mode: str):
     manager = EmbodimentManager(condition, simulator)
     _memory, _pipeline, cognitive = _pipeline_adapter(tmp_path)
     homeostasis = HomeostasisEngine(
-        load_profile("presets/homeostasis/functional-proxy-v1.json"),
+        profile,
         state_dir=tmp_path / "homeostasis",
         now=moment,
     )
@@ -230,7 +243,20 @@ def test_required_offline_provider_pauses_without_faulting_runtime(tmp_path) -> 
                 CapabilityRequirement(capability=PHYSIOLOGY_BODY_STATE, required=True)
             ],
         )
-        manifest = _manifest().model_copy(update={"embodiment": condition})
+        profile = load_profile("presets/homeostasis/functional-proxy-v1.json")
+        manifest = _manifest().model_copy(
+            update={
+                "embodiment": condition,
+                "persona_version": profile.persona_version,
+                "homeostatic_profile": profile.profile_ref,
+                "schema_version": "homeostasis-state-v1",
+                "a_version": profile.observation_model_version,
+                "b_version": profile.transition_model_version,
+                "c_version": profile.preference_model_version,
+                "precision_version": profile.precision_profile_version,
+                "coupling_version": profile.coupling_matrix_version,
+            }
+        )
         simulator = DeterministicEmbodimentSimulator(
             SimulatorConfig(body_instance_id="body-1", physiology=True, offline=True)
         )
@@ -240,7 +266,7 @@ def test_required_offline_provider_pauses_without_faulting_runtime(tmp_path) -> 
             manifest=manifest,
             cognitive=cognitive,
             homeostasis=HomeostasisEngine(
-                load_profile("presets/homeostasis/functional-proxy-v1.json"),
+                profile,
                 state_dir=tmp_path / "homeostasis",
             ),
             state_dir=tmp_path / "runtime",
