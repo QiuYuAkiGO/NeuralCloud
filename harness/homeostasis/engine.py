@@ -293,13 +293,14 @@ class HomeostasisEngine:
                 },
                 completed_at=self._clock(),
             )
-            self._append_trace(trace)
-            self._persist()
-            self._command_ledger.put(
+            self._command_ledger.commit(
                 key,
                 request_hash=request_hash,
                 result=result.model_dump(mode="json"),
+                snapshot=self.snapshot.model_dump(mode="json"),
             )
+            self._persist_snapshot_mirror()
+            self._append_trace(trace)
             return result
 
     async def propose_policies(self, *, version_vector: VersionVector) -> list[dict[str, Any]]:
@@ -360,7 +361,7 @@ class HomeostasisEngine:
                 last_heartbeat_at=heartbeat_at,
                 updated_at=effective_at,
                 stable_snapshot_ref=(
-                    f"snapshot://{self.profile.profile_id}/{self.snapshot.revision}"
+                    f"snapshot://{self.profile.profile_id}/{revision}"
                     if not watchdog
                     else self.snapshot.stable_snapshot_ref
                 ),
@@ -395,13 +396,14 @@ class HomeostasisEngine:
                 result=result_payload,
                 completed_at=self._clock(),
             )
-            self._append_trace(trace)
-            self._persist()
-            self._command_ledger.put(
+            self._command_ledger.commit(
                 key,
                 request_hash=request_hash,
                 result=result.model_dump(mode="json"),
+                snapshot=self.snapshot.model_dump(mode="json"),
             )
+            self._persist_snapshot_mirror()
+            self._append_trace(trace)
             return result
 
     def _appraise(self, event: dict[str, Any], *, kind: str, event_id: str) -> EventAppraisal:
@@ -431,7 +433,7 @@ class HomeostasisEngine:
             impacts["safety_predictability"] = impacts.get("safety_predictability", 0.0) - 0.05
             impacts["cognitive_load"] = impacts.get("cognitive_load", 0.0) + 0.04
         if kind == "outcome":
-            success = bool(payload.get("success") or event.get("success"))
+            success = self._outcome_succeeded(event, payload)
             impacts.setdefault("competence", 0.05 if success else -0.04)
             impacts.setdefault("safety_predictability", 0.02 if success else -0.02)
         return EventAppraisal(
@@ -440,6 +442,34 @@ class HomeostasisEngine:
             suggested_impacts=impacts,
             evidence_refs=[event_id],
         )
+
+    @staticmethod
+    def _outcome_succeeded(event: dict[str, Any], payload: dict[str, Any]) -> bool:
+        def nested(root: dict[str, Any], *path: str) -> Any:
+            value: Any = root
+            for key in path:
+                if not isinstance(value, dict) or key not in value:
+                    return None
+                value = value[key]
+            return value
+
+        candidates = (
+            nested(payload, "success"),
+            nested(event, "success"),
+            nested(payload, "evidence", "success"),
+            nested(event, "evidence", "success"),
+            nested(payload, "action", "outcome", "success"),
+            nested(event, "action", "outcome", "success"),
+            nested(payload, "action", "state"),
+            nested(event, "action", "state"),
+        )
+        for value in candidates:
+            if value is None:
+                continue
+            if isinstance(value, str):
+                return value.strip().lower() in {"true", "1", "yes", "succeeded", "success"}
+            return bool(value)
+        return False
 
     def _integrate(
         self,
@@ -453,7 +483,9 @@ class HomeostasisEngine:
             elapsed = min(elapsed, float(self.profile.max_heartbeat_step_seconds))
         else:
             elapsed = 0.0
-        base_delta: dict[DimensionName, float] = {key: 0.0 for key in DIMENSIONS}
+        requested_base_delta: dict[DimensionName, float] = {
+            key: 0.0 for key in DIMENSIONS
+        }
         for dimension in DIMENSIONS:
             current = self.snapshot.dimensions[dimension]
             spec = self.profile.dimensions[dimension]
@@ -462,29 +494,47 @@ class HomeostasisEngine:
                 direction = 1.0 if target > current.value else -1.0
                 if abs(target - current.value) < 1e-12:
                     direction = 0.0
-                base_delta[dimension] += direction * min(
+                requested_base_delta[dimension] += direction * min(
                     abs(target - current.value), spec.drift_per_hour * elapsed / 3600.0
                 )
             suggested = float(appraisal.suggested_impacts.get(dimension, 0.0))
             bounded = _clamp(suggested, -spec.max_event_delta, spec.max_event_delta)
-            base_delta[dimension] += bounded * appraisal.precision
-        coupling_delta: dict[DimensionName, float] = {key: 0.0 for key in DIMENSIONS}
-        for source, value in base_delta.items():
+            requested_base_delta[dimension] += bounded * appraisal.precision
+
+        base_values: dict[DimensionName, float] = {}
+        realised_base_delta: dict[DimensionName, float] = {}
+        for dimension in DIMENSIONS:
+            current = self.snapshot.dimensions[dimension]
+            spec = self.profile.dimensions[dimension]
+            base_value = _clamp(
+                current.value + requested_base_delta[dimension],
+                spec.hard_bounds[0],
+                spec.hard_bounds[1],
+            )
+            base_values[dimension] = base_value
+            realised_base_delta[dimension] = base_value - current.value
+
+        requested_coupling: dict[DimensionName, float] = {
+            key: 0.0 for key in DIMENSIONS
+        }
+        for source, value in realised_base_delta.items():
             for target_dimension, coefficient in self.profile.coupling.get(source, {}).items():
                 if target_dimension != source:
-                    coupling_delta[target_dimension] += value * float(coefficient)
+                    requested_coupling[target_dimension] += value * float(coefficient)
         factors: dict[DimensionName, FactorBelief] = {}
         applied: dict[DimensionName, float] = {}
+        realised_coupling: dict[DimensionName, float] = {}
         for dimension in DIMENSIONS:
             current = self.snapshot.dimensions[dimension]
             spec = self.profile.dimensions[dimension]
             value = _clamp(
-                current.value + base_delta[dimension] + coupling_delta[dimension],
+                base_values[dimension] + requested_coupling[dimension],
                 spec.hard_bounds[0],
                 spec.hard_bounds[1],
             )
             delta = value - current.value
             applied[dimension] = delta
+            realised_coupling[dimension] = value - base_values[dimension]
             factors[dimension] = FactorBelief(
                 dimension=dimension,
                 value=value,
@@ -495,7 +545,7 @@ class HomeostasisEngine:
                 dominant_evidence=(appraisal.evidence_refs + current.dominant_evidence)[:5],
                 updated_at=now,
             )
-        return factors, applied, coupling_delta
+        return factors, applied, realised_coupling
 
     @staticmethod
     def _posterior(
@@ -672,11 +722,18 @@ class HomeostasisEngine:
         self._persist()
 
     def _load(self) -> None:
-        if self.state_path.is_file():
+        stored_snapshot = self._command_ledger.load_snapshot()
+        if stored_snapshot is not None:
+            self.snapshot = HomeostaticSnapshot.model_validate(stored_snapshot)
+        elif self.state_path.is_file():
             self.snapshot = HomeostaticSnapshot.model_validate_json(self.state_path.read_text(encoding="utf-8"))
 
     def _persist(self) -> None:
         self.state_dir.mkdir(parents=True, exist_ok=True)
+        self._command_ledger.save_snapshot(self.snapshot.model_dump(mode="json"))
+        self._persist_snapshot_mirror()
+
+    def _persist_snapshot_mirror(self) -> None:
         self._atomic(self.state_path, self.snapshot.model_dump_json(indent=2) + "\n")
 
     @staticmethod

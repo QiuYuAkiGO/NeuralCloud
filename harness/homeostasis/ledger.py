@@ -25,6 +25,7 @@ class CommandLedger:
         *,
         cache_size: int = 512,
         legacy_filename: str = "command-ledger.json",
+        snapshot_filename: str = "snapshot.json",
         filename: str = "command-ledger.sqlite3",
     ) -> None:
         if cache_size < 1:
@@ -33,6 +34,7 @@ class CommandLedger:
         self.state_dir.mkdir(parents=True, exist_ok=True)
         self.path = self.state_dir / filename
         self.legacy_path = self.state_dir / legacy_filename
+        self.snapshot_path = self.state_dir / snapshot_filename
         self.cache_size = cache_size
         self._cache: OrderedDict[str, dict[str, Any]] = OrderedDict()
         self._initialise()
@@ -62,8 +64,30 @@ class CommandLedger:
         self._remember(key, entry)
         return entry
 
-    def put(self, key: str, *, request_hash: str, result: dict[str, Any]) -> None:
+    def load_snapshot(self) -> dict[str, Any] | None:
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                "SELECT snapshot_json FROM homeostasis_state WHERE singleton = 1"
+            ).fetchone()
+        finally:
+            connection.close()
+        if row is None:
+            return None
+        payload = json.loads(str(row[0]))
+        return payload if isinstance(payload, dict) else None
+
+    def commit(
+        self,
+        key: str,
+        *,
+        request_hash: str,
+        result: dict[str, Any],
+        snapshot: dict[str, Any],
+    ) -> None:
         encoded = json.dumps(result, ensure_ascii=False, separators=(",", ":"))
+        encoded_snapshot = json.dumps(snapshot, ensure_ascii=False, separators=(",", ":"))
+        revision = int(snapshot["revision"])
         connection = self._connect()
         try:
             with connection:
@@ -77,9 +101,38 @@ class CommandLedger:
                     """,
                     (key, request_hash, encoded),
                 )
+                connection.execute(
+                    """
+                    INSERT INTO homeostasis_state(singleton, revision, snapshot_json)
+                    VALUES (1, ?, ?)
+                    ON CONFLICT(singleton) DO UPDATE SET
+                        revision = excluded.revision,
+                        snapshot_json = excluded.snapshot_json
+                    """,
+                    (revision, encoded_snapshot),
+                )
         finally:
             connection.close()
         self._remember(key, {"request_hash": request_hash, "result": result})
+
+    def save_snapshot(self, snapshot: dict[str, Any]) -> None:
+        encoded = json.dumps(snapshot, ensure_ascii=False, separators=(",", ":"))
+        revision = int(snapshot["revision"])
+        connection = self._connect()
+        try:
+            with connection:
+                connection.execute(
+                    """
+                    INSERT INTO homeostasis_state(singleton, revision, snapshot_json)
+                    VALUES (1, ?, ?)
+                    ON CONFLICT(singleton) DO UPDATE SET
+                        revision = excluded.revision,
+                        snapshot_json = excluded.snapshot_json
+                    """,
+                    (revision, encoded),
+                )
+        finally:
+            connection.close()
 
     def _connect(self) -> sqlite3.Connection:
         return sqlite3.connect(self.path, timeout=30.0)
@@ -104,6 +157,15 @@ class CommandLedger:
                     CREATE TABLE IF NOT EXISTS metadata (
                         key TEXT PRIMARY KEY,
                         value TEXT NOT NULL
+                    )
+                    """
+                )
+                connection.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS homeostasis_state (
+                        singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
+                        revision INTEGER NOT NULL,
+                        snapshot_json TEXT NOT NULL
                     )
                     """
                 )
@@ -141,6 +203,15 @@ class CommandLedger:
                         )
                     )
 
+        snapshot: dict[str, Any] | None = None
+        if self.snapshot_path.is_file():
+            try:
+                raw_snapshot = json.loads(self.snapshot_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                raw_snapshot = None
+            if isinstance(raw_snapshot, dict) and isinstance(raw_snapshot.get("revision"), int):
+                snapshot = raw_snapshot
+
         with connection:
             if entries:
                 connection.executemany(
@@ -149,6 +220,17 @@ class CommandLedger:
                     VALUES (?, ?, ?)
                     """,
                     entries,
+                )
+            if snapshot is not None:
+                connection.execute(
+                    """
+                    INSERT OR IGNORE INTO homeostasis_state(singleton, revision, snapshot_json)
+                    VALUES (1, ?, ?)
+                    """,
+                    (
+                        int(snapshot["revision"]),
+                        json.dumps(snapshot, ensure_ascii=False, separators=(",", ":")),
+                    ),
                 )
             connection.execute(
                 "INSERT OR REPLACE INTO metadata(key, value) VALUES (?, ?)",
