@@ -6,7 +6,7 @@ from typing import Any
 
 import httpx
 
-from harness.contracts.decisions import PreparedResponse
+from harness.contracts.decisions import AutonomousAssessment, PreparedResponse
 from harness.contracts.envelope import DomainCommandEnvelope, DomainCommandResult, VersionVector
 from harness.runtime.adapters import DomainSnapshot, ServiceHealth
 
@@ -83,6 +83,14 @@ class HttpCognitiveClient(_HttpDomainClient):
         result = await self.command(command)
         return DomainCommandResult[PreparedResponse].model_validate(result.model_dump(mode="json"))
 
+    async def assess_autonomous(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[AutonomousAssessment]:
+        result = await self.command(command)
+        return DomainCommandResult[AutonomousAssessment].model_validate(
+            result.model_dump(mode="json")
+        )
+
     async def commit_interaction(
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[dict[str, Any]]:
@@ -138,6 +146,11 @@ class HttpHomeostasisClient(_HttpDomainClient):
     ) -> DomainCommandResult[dict[str, Any]]:
         return await self.apply_event(command)
 
+    async def apply_observation(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[dict[str, Any]]:
+        return await self.apply_event(command)
+
     async def propose_policies(self, *, version_vector: VersionVector) -> list[dict[str, Any]]:
         payload = await self._request(
             "POST", "/v1/policies", json={"version_vector": version_vector.model_dump(mode="json")}
@@ -171,12 +184,14 @@ def create_domain_service_app(service: Any, *, service_token: str, service_name:
         if command_type != envelope.command_type:
             raise HTTPException(status_code=400, detail="command type mismatch")
         methods = {
+            "AssessAutonomous": getattr(service, "assess_autonomous", None),
             "PrepareResponse": getattr(service, "prepare_response", None),
             "CommitInteraction": getattr(service, "commit_interaction", None),
             "ApplyEvent": getattr(service, "apply_event", None),
             "ApplyHeartbeat": getattr(service, "apply_heartbeat", None),
             "ApplyOutcome": getattr(service, "apply_outcome", None),
             "AssimilateObservation": getattr(service, "assimilate_observation", None),
+            "ApplyObservation": getattr(service, "apply_observation", None),
         }
         method = methods.get(command_type)
         if method is None:

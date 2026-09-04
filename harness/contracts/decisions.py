@@ -66,6 +66,27 @@ CharacterDecision = Annotated[
 ]
 
 
+class AutonomousAssessment(BaseModel):
+    """Metadata for one autonomous-output assessment.
+
+    The model's raw prose deliberately stays in ``record_ref`` rather than the
+    JSON command result/runtime journal.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    assessment_id: str = Field(min_length=1)
+    decision: Literal["silent", "speak"]
+    record_ref: str = Field(min_length=1)
+    evaluator: Literal["aux", "main_fallback", "forced_silent"]
+    internal_memory_ref: str | None = None
+    session_id: str = Field(min_length=1)
+    channel: str = Field(min_length=1)
+    evaluated_at: AwareDatetime
+    model_version: str = Field(min_length=1)
+    prompt_version: str = Field(min_length=1)
+
+
 class PreparedResponse(BaseModel):
     """Replayable Cognitive output; it has not yet been delivered or committed."""
 

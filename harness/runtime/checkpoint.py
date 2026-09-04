@@ -11,7 +11,7 @@ from typing import Literal
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 from harness.contracts.envelope import VersionVector
-from harness.runtime.models import RUNTIME_CHECKPOINT_SCHEMA_VERSION, RuntimeLifecycle
+from harness.runtime.models import AgencyState, RUNTIME_CHECKPOINT_SCHEMA_VERSION, RuntimeLifecycle
 
 
 class RuntimeCheckpoint(BaseModel):
@@ -35,6 +35,11 @@ class RuntimeCheckpoint(BaseModel):
     maintenance_refs: list[str] = Field(default_factory=list)
     cognitive_acknowledged_receive_seq: int = Field(default=0, ge=0)
     homeostasis_acknowledged_receive_seq: int = Field(default=0, ge=0)
+    agency_state: AgencyState = AgencyState.AVAILABLE
+    body_episode_id: str | None = None
+    body_revision: int | None = Field(default=None, ge=1)
+    body_captured_at: AwareDatetime | None = None
+    interoceptive_state: dict[str, object] | None = None
 
 
 class CheckpointStore:

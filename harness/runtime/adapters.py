@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
 from harness.contracts.decisions import (
     ActionOutcomeEvidence,
+    AutonomousAssessment,
     CommitEvidence,
     DecisionEvidence,
     DeliveryEvidence,
@@ -21,13 +22,18 @@ from harness.contracts.decisions import (
     PreparedResponse,
     ReplyDecision,
 )
+from harness.cognitive.autonomous import (
+    assessment_id_for,
+    load_assessment_record,
+    run_or_load_assessment,
+)
 from harness.contracts.envelope import (
     CONTRACT_SCHEMA_VERSION,
     DomainCommandEnvelope,
     DomainCommandResult,
     VersionVector,
 )
-from harness.core.inference import ContextSegment, FinalResponse, SessionTurn
+from harness.core.inference import ContextSegment, FinalResponse, InteroceptiveState, SessionTurn
 from harness.core.models import InteractionEvent
 from harness.pipeline.pipeline import InferencePipeline
 
@@ -63,6 +69,10 @@ class CognitiveServiceClient(Protocol):
     async def prepare_response(
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[PreparedResponse]: ...
+
+    async def assess_autonomous(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[AutonomousAssessment]: ...
 
     async def commit_interaction(
         self, command: DomainCommandEnvelope[dict[str, Any]]
@@ -100,6 +110,10 @@ class HomeostasisServiceClient(Protocol):
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[dict[str, Any]]: ...
 
+    async def apply_observation(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[dict[str, Any]]: ...
+
     async def propose_policies(self, *, version_vector: VersionVector) -> list[dict[str, Any]]: ...
 
     async def close(self) -> None: ...
@@ -111,6 +125,9 @@ class _PreparedEntry(BaseModel):
     event: InteractionEvent
     final: FinalResponse
     prepared: PreparedResponse
+    autonomous_assessment_id: str | None = None
+    autonomous_record_ref: str | None = None
+    autonomous_memory_ref: str | None = None
 
 
 def _utc_now() -> datetime:
@@ -131,10 +148,19 @@ class PipelineCognitiveAdapter:
         *,
         character_id: str = "character",
         state_path: Path | str | None = None,
+        autonomous_log_dir: Path | str | None = None,
+        default_session_id: str = "sess_default",
     ) -> None:
         self.pipeline = pipeline
         self.character_id = character_id
         self.state_path = Path(state_path) if state_path is not None else None
+        if autonomous_log_dir is not None:
+            self.autonomous_log_dir = Path(autonomous_log_dir)
+        elif self.state_path is not None:
+            self.autonomous_log_dir = self.state_path.parent / "autonomous"
+        else:
+            self.autonomous_log_dir = Path("data/cognitive/autonomous")
+        self.default_session_id = default_session_id
         self._lock = asyncio.Lock()
         self._revision = 0
         self._cursor = 0
@@ -189,25 +215,42 @@ class PipelineCognitiveAdapter:
             bind = getattr(observer, "bind", None)
             if callable(bind):
                 bind(str(payload.get("call_id") or command.correlation_id))
+            mode = str(payload.get("mode") or "")
             source_time = payload.get("source_time") or command.issued_at
-            autonomous = payload.get("mode") in {"autonomous", "reconsideration"}
-            reconsideration = payload.get("mode") == "reconsideration"
+            autonomous = mode == "autonomous"
+            reconsideration = mode == "reconsideration"
+            internal = autonomous or reconsideration
+            session_id = str(payload.get("session_id") or self.default_session_id)
+            assessment = None
+            if autonomous:
+                try:
+                    assessment = self._load_speak_assessment(payload)
+                except Exception as exc:
+                    result = self._failure(command, f"invalid autonomous assessment: {exc}")
+                    self._remember(command, result)
+                    self._persist_state()
+                    return DomainCommandResult[PreparedResponse].model_validate(
+                        result.model_dump(mode="json")
+                    )
             event = InteractionEvent(
                 event_id=command.event_id,
                 timestamp=source_time,
                 channel=str(payload.get("channel") or "chat"),
-                speaker=str(payload.get("speaker") or ("runtime" if autonomous else "user")),
+                speaker=str(payload.get("speaker") or ("runtime" if internal else "user")),
                 modality="text",
-                raw_text=str(payload.get("text") or ("（自主状态评估）" if autonomous else "")),
-                session_id=str(payload.get("session_id") or "sess_default"),
+                raw_text=str(payload.get("text") or ("（主动表达准备）" if internal else "")),
+                session_id=session_id,
             )
-            try:
-                context_segments: list[ContextSegment] = []
-                interoception = payload.get("interoception")
-                if isinstance(interoception, dict):
-                    level = float(interoception["resource_level"])
-                    trend = float(interoception["resource_trend"])
-                    time_to_limit = interoception.get("estimated_time_to_limit_seconds")
+            interoception_payload = payload.get("interoception")
+            interoception: InteroceptiveState | None = None
+            context_segments: list[ContextSegment] = []
+            if isinstance(interoception_payload, dict):
+                if "resource_label" in interoception_payload:
+                    interoception = InteroceptiveState.model_validate(interoception_payload)
+                elif "resource_level" in interoception_payload:
+                    level = float(interoception_payload["resource_level"])
+                    trend = float(interoception_payload["resource_trend"])
+                    time_to_limit = interoception_payload.get("estimated_time_to_limit_seconds")
                     text = f"Interoceptive resource measurement: level={level:.4f}; trend={trend:.4f}"
                     if time_to_limit is not None:
                         text += f"; estimated_time_to_limit_seconds={int(time_to_limit)}"
@@ -215,17 +258,37 @@ class PipelineCognitiveAdapter:
                         ContextSegment(
                             kind="interoception",
                             text=text,
-                            source_ids=[f"body-state:{int(interoception['source_revision'])}"],
+                            source_ids=[
+                                f"body-state:{int(interoception_payload['source_revision'])}"
+                            ],
                             why="current_resource_measurement",
                         )
                     )
-                final = await asyncio.to_thread(
-                    self.pipeline.prepare,
-                    event,
-                    now=command.issued_at,
-                    call_id=payload.get("call_id"),
-                    context_segments=context_segments,
-                )
+            try:
+                if autonomous and assessment is not None:
+                    final = await asyncio.to_thread(
+                        self.pipeline.prepare_autonomous,
+                        event_id=command.event_id,
+                        assessment_id=assessment.assessment_id,
+                        assessment_text=assessment.body,
+                        record_ref=assessment.record_ref,
+                        homeostasis=dict(payload.get("homeostasis") or {}),
+                        policies=[dict(item) for item in (payload.get("policies") or [])],
+                        session_id=session_id,
+                        channel=str(payload.get("channel") or "chat"),
+                        now=command.issued_at,
+                        call_id=payload.get("call_id"),
+                        interoception=interoception,
+                    )
+                else:
+                    final = await asyncio.to_thread(
+                        self.pipeline.prepare,
+                        event,
+                        now=command.issued_at,
+                        call_id=payload.get("call_id"),
+                        context_segments=context_segments,
+                        interoception=interoception,
+                    )
                 now = _utc_now()
                 read_versions = command.version_vector or self._version_vector()
                 decision = (
@@ -262,6 +325,13 @@ class PipelineCognitiveAdapter:
                 event=event,
                 final=final,
                 prepared=prepared,
+                autonomous_assessment_id=assessment.assessment_id if assessment else None,
+                autonomous_record_ref=assessment.record_ref if assessment else None,
+                autonomous_memory_ref=(
+                    (str(payload.get("internal_memory_ref") or "") or None)
+                    if assessment
+                    else None
+                ),
             )
             self._cursor = max(self._cursor, command.receive_seq)
             self._event_id = command.event_id
@@ -274,6 +344,98 @@ class PipelineCognitiveAdapter:
                 acknowledged_event_id=command.event_id,
                 acknowledged_receive_seq=command.receive_seq,
                 result=prepared,
+                completed_at=_utc_now(),
+            )
+            self._remember(command, result)
+            self._persist_state()
+            return result
+
+    async def assess_autonomous(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[AutonomousAssessment]:
+        async with self._lock:
+            replay = self._lookup_replay(command)
+            if replay is not None:
+                self._persist_state()
+                return DomainCommandResult[AutonomousAssessment].model_validate(
+                    replay.model_dump(mode="json")
+                )
+            rejected = self._preflight(command)
+            if rejected is not None:
+                return DomainCommandResult[AutonomousAssessment].model_validate(
+                    rejected.model_dump(mode="json")
+                )
+
+            payload = command.payload
+            session_id = str(payload.get("session_id") or self.default_session_id)
+            channel = str(payload.get("channel") or "chat")
+            assessment_id = assessment_id_for(command.idempotency_key)
+            try:
+                run = await asyncio.to_thread(
+                    run_or_load_assessment,
+                    pipeline=self.pipeline,
+                    log_dir=self.autonomous_log_dir,
+                    assessment_id=assessment_id,
+                    evaluated_at=command.issued_at,
+                    session_id=session_id,
+                    channel=channel,
+                    homeostasis=dict(payload.get("homeostasis") or {}),
+                    policies=[dict(item) for item in (payload.get("policies") or [])],
+                )
+                memory_ref: str | None = None
+                if run.decision == "speak":
+                    memory_ref = f"reflection_{assessment_id.removeprefix('assessment_')}"
+                    if self.pipeline.memory.stores.episodic.get(memory_ref) is None:
+                        reflection = InteractionEvent(
+                            event_id=memory_ref,
+                            timestamp=run.evaluated_at,
+                            channel="internal",
+                            speaker="character",
+                            modality="text",
+                            raw_text=run.body,
+                            session_id=session_id,
+                            evidence=[f"autonomous-text:{run.record_ref}"],
+                        )
+                        self.pipeline.memory.record_event(
+                            reflection,
+                            generate_insight=False,
+                            curate=False,
+                            event_type="internal_reflection",
+                            now=run.evaluated_at,
+                        )
+                        self._revision += 1
+                        self._component_revisions["memory"] = self._revision
+                assessment = AutonomousAssessment(
+                    assessment_id=run.assessment_id,
+                    decision=run.decision,
+                    record_ref=run.record_ref,
+                    evaluator=run.evaluator,
+                    internal_memory_ref=memory_ref,
+                    session_id=session_id,
+                    channel=channel,
+                    evaluated_at=run.evaluated_at,
+                    model_version=run.model_version,
+                    prompt_version=run.prompt_version,
+                )
+            except Exception as exc:
+                result = self._failure(command, str(exc))
+                self._remember(command, result)
+                self._persist_state()
+                return DomainCommandResult[AutonomousAssessment].model_validate(
+                    result.model_dump(mode="json")
+                )
+
+            self._cursor = max(self._cursor, command.receive_seq)
+            self._event_id = command.event_id
+            result = DomainCommandResult[AutonomousAssessment](
+                command_id=command.command_id,
+                command_type=command.command_type,
+                status="applied",
+                request_hash=command.effective_request_hash(),
+                committed_revision=self._revision,
+                acknowledged_event_id=command.event_id,
+                acknowledged_receive_seq=self._cursor,
+                result=assessment,
                 completed_at=_utc_now(),
             )
             self._remember(command, result)
@@ -376,17 +538,20 @@ class PipelineCognitiveAdapter:
     ) -> None:
         event = entry.event
         session = self.pipeline.session_store
-        if not session.contains_event(event.session_id, event.event_id):
-            session.append(
-                event.session_id,
-                "user",
-                event.raw_text,
-                speaker=event.speaker,
-                event_id=event.event_id,
-                timestamp=event.timestamp,
-            )
-        if self.pipeline.memory.stores.episodic.get(event.event_id) is None:
-            self.pipeline.memory.record_event(event, generate_insight=True, curate=True, now=event.timestamp)
+        if entry.autonomous_assessment_id is None:
+            if not session.contains_event(event.session_id, event.event_id):
+                session.append(
+                    event.session_id,
+                    "user",
+                    event.raw_text,
+                    speaker=event.speaker,
+                    event_id=event.event_id,
+                    timestamp=event.timestamp,
+                )
+            if self.pipeline.memory.stores.episodic.get(event.event_id) is None:
+                self.pipeline.memory.record_event(
+                    event, generate_insight=True, curate=True, now=event.timestamp
+                )
 
         if isinstance(evidence, DeliveryEvidence) and evidence.success:
             for index, segment in enumerate(evidence.delivered_segments, start=1):
@@ -418,6 +583,22 @@ class PipelineCognitiveAdapter:
                     curate=False,
                     now=evidence.delivered_at,
                 )
+
+    def _load_speak_assessment(self, payload: dict[str, Any]):
+        assessment_id = str(payload.get("assessment_id") or "")
+        record_ref = str(payload.get("record_ref") or "")
+        if not assessment_id or not record_ref:
+            raise ValueError("assessment_id and record_ref are required")
+        root = self.autonomous_log_dir.resolve()
+        target = Path(record_ref).resolve()
+        if not target.is_relative_to(root):
+            raise ValueError("record_ref is outside the autonomous log directory")
+        run = load_assessment_record(target)
+        if run.assessment_id != assessment_id:
+            raise ValueError("assessment_id does not match record")
+        if run.decision != "speak":
+            raise ValueError("only SPEAK assessments can prepare autonomous output")
+        return run
 
     def _lookup_replay(
         self, command: DomainCommandEnvelope[dict[str, Any]]
@@ -581,6 +762,11 @@ class PassiveHomeostasisAdapter:
         return await self._apply(command)
 
     async def assimilate_observation(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[dict[str, Any]]:
+        return await self._apply(command)
+
+    async def apply_observation(
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[dict[str, Any]]:
         return await self._apply(command)

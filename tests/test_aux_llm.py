@@ -63,6 +63,20 @@ def test_routing_json_goes_to_aux_chat_to_main() -> None:
     assert not aux.chat_calls
 
 
+def test_routing_plain_text_assessment_goes_to_distinct_aux() -> None:
+    main = MockLLM(chat_script=["main"])
+    aux = MockLLM(chat_script=["SILENT\n保持安静。"])
+    client = RoutingLLMClient(main, aux)
+
+    result = client.complete_aux_text_result(
+        [{"role": "user", "content": "assess"}], max_tokens=64
+    )
+
+    assert result.text.startswith("SILENT")
+    assert aux.chat_calls
+    assert not main.chat_calls
+
+
 def test_keep_alive_value_coerces_numbers() -> None:
     assert keep_alive_value("-1") == -1
     assert keep_alive_value("5m") == "5m"

@@ -53,6 +53,7 @@ testpaths = ["tests", "eval"]
 pythonpath = ["."]
 markers = [
     "integration: requires PostgreSQL + pgvector",
+    "soak: requires a live physiology-enabled MistyAI service",
 ]
 
 [tool.ruff]

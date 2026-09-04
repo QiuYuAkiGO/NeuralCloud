@@ -380,10 +380,12 @@ Raw Event → Curator 提出 ops → WriterPipeline 执行
 | 类 | 用途 |
 | --- | --- |
 | `OpenAICompatClient` | OpenAI 兼容 `/chat/completions`（llama.cpp / vLLM / Ollama），长连接 httpx.Client；`complete_json` 用 temperature=0.1 + JSON 提取（剥 markdown 代码块、正则兜底） |
-| `RoutingLLMClient` | **双端点路由**：`complete_json` → 辅助小模型（aux），`complete_chat*` → 主角色模型。让 1–4B 小模型承担 parser/gate/interpreter/validator/curator/planner/dual 等辅助 JSON 调用，主模型只做生成 |
+| `RoutingLLMClient` | **双端点路由**：`complete_json` 与 `complete_aux_text_result` → 辅助小模型（aux），`complete_chat*` → 主角色模型。前者让 1–4B 小模型承担结构化 helper 和空闲主动表达判定，后者只做角色生成；空闲判定的 aux 故障路径可显式回退主模型 |
 | `MockLLM` | 关键词路由的确定性 mock，测试零 GPU 依赖；内置贯穿案例剧本（违规关心回复→修正后回复） |
 
 **辅助端点（aux）**：`NC_AUX_LLM_BASE_URL/MODEL/API_KEY` 显式配置或与主端点不同时激活；针对 Ollama 有 `keep_alive=-1` 常驻 + `num_ctx=8192` 限制 KV cache（防小模型默认 256K 上下文挤爆显存）+ 启动后异步 1-token 预热加载。端点探活用 `/models` 0.8s 超时探测。
+
+**空闲主动表达门控**：`HEARTBEAT` 只在队列为空且无前台动作时创建低优先级 `IDLE`。Cognitive 的 `AssessAutonomous` 使用首行 `SILENT|SPEAK`、后接自然语言理由的纯文本协议，并按 assessment ID 原子写入 `data/cognitive/autonomous/YYYYMMDD/*.txt`（可由 `NC_COGNITIVE_AUTONOMOUS_LOG_DIR` 覆盖）。结构化命令结果只保存判定和 `record_ref`。`SILENT` 不产生 Prepare/Commit、Session、记忆或交付；`SPEAK` 先写 `channel=internal/event_type=internal_reflection` episodic，再用专用 autonomous prepare 调主模型。Runtime 在判定前后检查用户事件序号，因此排队或判定期间到达的新用户消息会使本次主动表达失效。
 
 ### 8.2 CharacterModel（`llm/character.py`）
 
@@ -439,6 +441,7 @@ python -m gui.server   # http://127.0.0.1:8765
 | 存储 | `NC_DATABASE_URL`（postgresql+psycopg2://…localhost:5432/neuralcloud） |
 | 主 LLM | `NC_LLM_BASE_URL`（http://127.0.0.1:8080/v1）/ `NC_LLM_MODEL`（qwen）/ `NC_LLM_API_KEY` / `NC_LLM_TIMEOUT` / `NC_LLM_JSON_MAX_TOKENS`（512，防小模型 JSON 前啰嗦） |
 | 辅助 LLM | `NC_AUX_LLM_*`（base_url/model/api_key/preload/keep_alive=-1/num_ctx=8192） |
+| 空闲判定文本 | `NC_COGNITIVE_AUTONOMOUS_LOG_DIR`（默认 `data/cognitive/autonomous/`） |
 | Embedding | `NC_EMBEDDING_BASE_URL` / `NC_EMBEDDING_MODEL`（bge-m3）/ `NC_EMBEDDING_DIM`（1024，须与 PG vector 列一致） |
 | 记忆/检索 | 固化阈值 0.70、候选初始置信度 0.15、置信度步进 0.35、检索池 50、top_k 8、recency 半衰期 24h、六信号权重、uniqueness TTL 四参数（5min/30min/0.4/10080min）、tier 升格命中数（3/8）与最低 relevance 0.35、long recency 下限 0.4、mid 半衰期倍数 7 |
 | 推理 | `NC_COMPLEXITY_THRESHOLD`（0.5）、`NC_CONTEXT_TOKEN_BUDGET`（3000）、`NC_COMPILER_TOP_MEMORIES`（5）、`NC_VALIDATOR_SAMPLE_RATE`（0.2）、`NC_MAX_REVISIONS`（2）、`NC_SESSION_WINDOW`（10）、`NC_RECORD_INTERACTION`（true）、`NC_CONTINUATION_ENABLED`（true）/ `NC_MAX_REPLY_SEGMENTS`（3）、`NC_CALL_LOG_ENABLED`（false；GUI 强制 true）、`NC_PARSER_LLM_ENABLED`（true）、`NC_PLANNER_LLM_ENABLED`（false，计划只是 hint） |

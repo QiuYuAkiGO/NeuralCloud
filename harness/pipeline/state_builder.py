@@ -10,6 +10,7 @@ from typing import Any
 from harness.core.inference import (
     MAX_RELEVANT_MEMORIES,
     Hypothesis,
+    InteroceptiveState,
     ParsedInteraction,
     SituationActor,
     SituationState,
@@ -34,6 +35,7 @@ class SituationStateBuilder:
         parsed: ParsedInteraction,
         *,
         now: datetime | None = None,
+        interoception: InteroceptiveState | None = None,
     ) -> SituationState:
         moment = now or event.timestamp
         query = RetrievalQuery(
@@ -63,6 +65,7 @@ class SituationStateBuilder:
             relevant_memories=memories[:MAX_RELEVANT_MEMORIES],
             hypotheses=hypotheses,
             snapshot=snapshot,
+            interoception=interoception,
         )
 
     def _get_state(self, now: datetime) -> CharacterSnapshot:

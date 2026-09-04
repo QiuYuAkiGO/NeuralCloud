@@ -353,6 +353,8 @@ async def run(supervisor):
 - 默认每 60 秒生成一次 Heartbeat。
 - 用户消息、动作结果或环境事件立即处理，不等待心跳。
 - 心跳可以推进内稳态、检查自主目标和安排维护，但不是每次都必须调用主 LLM。
+- 有候选且系统空闲时，先调用 Cognitive `AssessAutonomous`：辅助模型以纯文本首行 `SILENT|SPEAK` 判定并留下文本记录；只有 `SPEAK` 才进入 `PrepareResponse` 主模型表达。辅助模型不可用或输出无效时允许主模型执行一次同格式判定。
+- `IDLE` 保存创建时最近的用户事件序号；判定前后出现更新的用户消息或前台动作时，本次主动表达失效。静默判定和内部提示不投影为用户 Session turn。
 - 进程休眠、暂停或停机期间漏失的 heartbeat 不补算、不逐条重放。
 - 恢复后发出 `TimeDiscontinuity`，记录 `last_runtime_time`、`current_time` 和间隔原因，从当前真实时间继续。
 

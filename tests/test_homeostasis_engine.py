@@ -27,7 +27,7 @@ def _command(*, sequence: int = 1, expected_revision: int = 0, at: datetime = NO
         manifest_revision=1,
         idempotency_key=f"homeostasis:event:{sequence}",
         issued_at=at,
-        deadline=at + timedelta(seconds=30),
+        deadline=at + timedelta(days=3650),
         expected_revision=expected_revision,
         payload={
             "event": {

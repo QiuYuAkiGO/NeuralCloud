@@ -61,6 +61,10 @@ class PriorityEventQueue:
             return event.event_type.value, "runtime"
         if event.event_type == RuntimeEventType.PERCEPTION:
             return event.event_type.value, event.source
+        if event.event_type == RuntimeEventType.BODY_STATE:
+            return event.event_type.value, str(
+                event.payload.get("body_instance_id") or event.source
+            )
         return None
 
     async def put(self, event: RuntimeEvent) -> bool:

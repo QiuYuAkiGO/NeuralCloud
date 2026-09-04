@@ -2,6 +2,7 @@
 
 from harness.contracts.decisions import (
     ActionOutcomeEvidence,
+    AutonomousAssessment,
     CharacterDecision,
     DecisionEvidence,
     DeferDecision,
@@ -11,6 +12,7 @@ from harness.contracts.decisions import (
     PreparedResponse,
     ReplyDecision,
 )
+from harness.contracts.body import BodyStateCaptureResponse, BodyStateSnapshot, EnergyState
 from harness.contracts.envelope import (
     CONTRACT_SCHEMA_VERSION,
     DomainCommandEnvelope,
@@ -21,6 +23,9 @@ from harness.contracts.envelope import (
 
 __all__ = [
     "ActionOutcomeEvidence",
+    "AutonomousAssessment",
+    "BodyStateCaptureResponse",
+    "BodyStateSnapshot",
     "CONTRACT_SCHEMA_VERSION",
     "CharacterDecision",
     "DecisionEvidence",
@@ -28,6 +33,7 @@ __all__ = [
     "DeliveryEvidence",
     "DomainCommandEnvelope",
     "DomainCommandResult",
+    "EnergyState",
     "GoalProposal",
     "NoActionDecision",
     "PreparedResponse",

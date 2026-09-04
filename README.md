@@ -4,7 +4,7 @@
 
 - **记忆子系统**：六层记忆/状态、Dual Memory、Memory Writer 候选-证据链、六信号混合检索 + 反向检索、Memory Curator、Episodic 生命周期分层（uniqueness TTL + 命中升格 + 到期小模型审查）
 - **在线推理九阶段**：Gateway → Parser → 并行状态/检索 → SituationState → Complexity Gate → 门控 Social Interpreter → Context Compiler → 主模型生成（含连说循环）→ Response Validator
-- **主辅双模型路由**：主模型只做"演出"；parser / gate / interpreter / validator / curator / planner 等辅助 JSON 调用可分流到 1–4B 小模型端点
+- **主辅双模型路由**：主模型负责角色表达；parser / gate / interpreter / validator / curator / planner 等辅助 JSON 调用，以及内稳态空闲时的纯文本静默判定，可分流到 1–4B 小模型端点
 
 **文档**：
 
@@ -69,6 +69,8 @@ Runtime 的编排事实写入 hash-chain 分段 JSONL journal，领域状态仍�
 `harness.embodiment` 现在是 Action、Perception、BodyState 与 Capability ports 的唯一所有者。Runtime 启动时依据 manifest 的 allowlist/required requirements 协商并冻结 activation set；Provider 后续重连只能恢复本次启动已授权的能力。`NC_EMBODIMENT_PROVIDER=none|mistyai|simulator` 只在 composition root 选择实现，Core 不按 Provider 名称分支。manifest 未配置 `embodiment` 时仍按 chat-only 模式启动。
 
 MistyAI adapter 支持 typed action、独立 verify、safe-point、reconcile、结构化 evidence 与可选 `physiology.body-state.v1`。Simulator 不使用 HTTP 或 MistyAI DTO，可脚本化 success/failure/unknown、健康变化及 energy terminal。配置与黑盒验收顺序见 [Embodiment 运行手册](docs/EMBODIMENT_RUNBOOK.md)。
+
+空闲心跳不会直接调用角色主模型：Runtime 先让 Cognitive 使用辅助模型做 `SILENT` / `SPEAK` 纯文本判定，并把原始判定写入 `data/cognitive/autonomous/YYYYMMDD/*.txt`。`SILENT` 不进入 Session 或记忆；`SPEAK` 才写一条 `internal_reflection` 并调用主模型表达。若辅助模型未配置、失败或输出无效，会按故障策略用主模型做一次同格式判定；用户消息在判定前或判定期间到达都会取消后续主动表达。
 
 ## 可视化 GUI
 
@@ -192,7 +194,7 @@ Persona Core 一经写入即锁定：`update_persona` / `delete_persona` 以及�
 | tier_promotion_hits_mid / long | 3 / 8 | 01 §2.2 命中升格阈值 |
 | uniqueness_ttl_* | 5min–7天 | 01 §2.2 短期留存窗口 |
 
-LLM / embedding 走 OpenAI 兼容 HTTP 端点：`RoutingLLMClient` 把 `complete_json` 辅助调用路由到 `NC_AUX_LLM_*` 端点（未配置时回退主端点），`complete_chat` 角色生成走 `NC_LLM_*` 主端点。完整配置项（aux / embedding / tier / planner 开关、版本戳等）见 [docs/TECHNICAL.md](docs/TECHNICAL.md) §10。测试使用 mock，不依赖真实 GPU。流式生成预留参数，本期不实现。
+LLM / embedding 走 OpenAI 兼容 HTTP 端点：`RoutingLLMClient` 把 `complete_json` 辅助调用和 `complete_aux_text_result` 空闲判定路由到 `NC_AUX_LLM_*` 端点，`complete_chat` 角色生成走 `NC_LLM_*` 主端点。未配置独立 aux 时，普通 JSON helper 延续既有回退；空闲判定显式标为 `main_fallback`。纯文本判定目录可用 `NC_COGNITIVE_AUTONOMOUS_LOG_DIR` 覆盖。完整配置项（aux / embedding / tier / planner 开关、版本戳等）见 [docs/TECHNICAL.md](docs/TECHNICAL.md) §10。测试使用 mock，不依赖真实 GPU。流式生成预留参数，本期不实现。
 
 ## 评测
 

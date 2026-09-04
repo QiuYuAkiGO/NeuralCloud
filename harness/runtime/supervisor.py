@@ -4,15 +4,20 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+import json
+import os
 from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import TypeAdapter
 
+from harness.body.mistyai import MistyBodyClient, MistyBodyMonitor
+from harness.contracts.body import BodyStateSnapshot as LegacyBodyStateSnapshot
 from harness.contracts.decisions import (
     ActionOutcomeEvidence,
+    AutonomousAssessment,
     CharacterDecision,
     DecisionEvidence,
     DeferDecision,
@@ -29,6 +34,7 @@ from harness.contracts.envelope import (
     VersionVector,
 )
 from harness.core.ids import new_id
+from harness.core.inference import InteroceptiveState as CognitiveInteroceptiveState
 from harness.embodiment.capabilities import (
     ACTION_EXECUTE,
     OBSERVATION_SNAPSHOT,
@@ -36,9 +42,9 @@ from harness.embodiment.capabilities import (
     EmbodimentState,
 )
 from harness.embodiment.contracts import (
-    BodyStateSnapshot,
-    HomeostaticObservation,
-    InteroceptiveState,
+    BodyStateSnapshot as EmbodimentBodyStateSnapshot,
+    HomeostaticObservation as EmbodimentHomeostaticObservation,
+    InteroceptiveState as EmbodimentInteroceptiveState,
 )
 from harness.embodiment.guards import BodyStateGuard
 from harness.embodiment.manager import EmbodimentManager
@@ -59,6 +65,7 @@ from harness.runtime.models import (
     ActionBackendResult,
     ActionExecution,
     ActionExecutionState,
+    AgencyState,
     DeliveryResult,
     EventDispatchResult,
     LifecycleTransition,
@@ -223,6 +230,7 @@ class RuntimeSupervisor:
         command_timeout_seconds: float = 30.0,
         action_timeout_seconds: float = 120.0,
         maintenance_drain_seconds: float = 5.0,
+        body_client: MistyBodyClient | None = None,
     ) -> None:
         self.manifest = manifest
         self.cognitive = cognitive
@@ -258,6 +266,16 @@ class RuntimeSupervisor:
         self.command_timeout_seconds = command_timeout_seconds
         self.action_timeout_seconds = action_timeout_seconds
         self.maintenance_drain_seconds = maintenance_drain_seconds
+        condition = manifest.embodiment
+        if condition.mode == "off" and body_client is not None:
+            raise RuntimeStateError("off embodiment mode must not create a body client")
+        if (
+            condition.mode in {"observe", "grounded"}
+            and condition.body_provider == "mistyai"
+            and body_client is None
+            and embodiment_manager is None
+        ):
+            raise RuntimeStateError(f"{condition.mode} embodiment mode requires a MistyAI client")
 
         self.lifecycle = RuntimeLifecycle.BOOTING
         self.lifecycle_since = utc_now()
@@ -268,16 +286,27 @@ class RuntimeSupervisor:
         self._cognitive_snapshot = DomainSnapshot(service="cognitive", revision=0)
         self._homeostasis_snapshot = DomainSnapshot(service="homeostasis", revision=0)
         self._last_heartbeat_at: datetime | None = None
+        self._last_user_receive_seq = 0
+        self._last_user_session_id: str | None = None
+        self._last_user_channel = "chat"
         self._last_runtime_time: datetime | None = None
         self._journal_writable = not self.journal.degraded
         self._degraded_reasons: list[str] = []
+        self._agency_state = AgencyState.AVAILABLE
+        self._body_episode_id: str | None = None
+        self._body_revision: int | None = None
+        self._body_captured_at: datetime | None = None
+        self._terminal_body_revision: int | None = None
+        self._terminal_episode_id: str | None = None
+        self._interoception: (
+            EmbodimentInteroceptiveState | CognitiveInteroceptiveState | None
+        ) = None
         self._listeners: list[RuntimeListener] = []
         self._lifecycle_lock = asyncio.Lock()
         self._foreground_lock = asyncio.Lock()
         self._action_tasks: dict[str, asyncio.Task[None]] = {}
         self._perception_guard: PerceptionGuard | None = None
         self._body_state_guard = body_state_guard
-        self._interoception: InteroceptiveState | None = None
         self._last_reconsideration_at: datetime | None = None
         self._run_task: asyncio.Task[None] | None = None
         self._booted = False
@@ -289,6 +318,20 @@ class RuntimeSupervisor:
         self.ingress = RuntimeIngress(self)
         self.instance_lock = SingleInstanceLock(
             self.state_dir / "runtime.lock", runtime_instance_id=self.runtime_instance_id
+        )
+        self.body_monitor = (
+            MistyBodyMonitor(
+                client=body_client,
+                body_instance_id=str(condition.body_instance_id),
+                poll_interval_seconds=condition.poll_interval_seconds,
+                max_state_age_seconds=condition.max_state_age_seconds,
+                future_clock_tolerance_seconds=condition.future_clock_tolerance_seconds,
+                on_snapshot=self.accept_body_snapshot,
+                on_degraded=self.mark_body_degraded,
+                on_recovered=self.mark_body_recovered,
+            )
+            if body_client is not None
+            else None
         )
 
     @property
@@ -360,7 +403,10 @@ class RuntimeSupervisor:
 
     async def submit_event(self, **kwargs: Any) -> RuntimeEvent | None:
         try:
-            return await self.ingress.accept(**kwargs)
+            event = await self.ingress.accept(**kwargs)
+            if event is not None and event.event_type == RuntimeEventType.USER_MESSAGE:
+                self._remember_user_event(event)
+            return event
         except QueueCapacityError:
             self._needs_refill = True
             self._append_journal("queue_overloaded", data={"statistics": self.queue.statistics().model_dump()})
@@ -393,6 +439,82 @@ class RuntimeSupervisor:
                 "channel": channel,
             },
         )
+
+    async def accept_body_snapshot(self, snapshot: LegacyBodyStateSnapshot) -> None:
+        """Accept only already schema/time/evidence-verified monitor output."""
+
+        if self._body_revision is not None and snapshot.revision <= self._body_revision:
+            raise RuntimeStateError(
+                f"body revision {snapshot.revision} did not advance beyond restored "
+                f"revision {self._body_revision}"
+            )
+        event_type = (
+            RuntimeEventType.AGENCY_TERMINAL
+            if snapshot.energy.terminal
+            else RuntimeEventType.BODY_STATE
+        )
+        await self.submit_event(
+            event_type=event_type,
+            priority=(
+                RuntimeEventPriority.CONTROL
+                if snapshot.energy.terminal
+                else RuntimeEventPriority.PERCEPTION
+            ),
+            source="mistyai",
+            source_time=snapshot.captured_at,
+            correlation_id=f"body:{snapshot.body_instance_id}:{snapshot.episode_id}",
+            idempotency_key=f"body:{snapshot.body_instance_id}:r{snapshot.revision}",
+            payload=snapshot.model_dump(mode="json"),
+        )
+
+    async def mark_body_degraded(self, reason: str) -> None:
+        if self._agency_state != AgencyState.TERMINAL:
+            self._agency_state = AgencyState.DEGRADED
+        if "body" not in self._degraded_reasons:
+            self._degraded_reasons.append("body")
+        self._append_journal("body_monitor_degraded", data={"reason": reason})
+        if self.accepts_event(RuntimeEventType.DIAGNOSTIC):
+            await self.submit_event(
+                event_type=RuntimeEventType.DIAGNOSTIC,
+                priority=RuntimeEventPriority.CONTROL,
+                source="mistyai_monitor",
+                payload={"component": "body", "reason": reason},
+            )
+
+    async def mark_body_recovered(self) -> None:
+        self._append_journal("body_monitor_transport_recovered")
+
+    async def reset_agency(self) -> LegacyBodyStateSnapshot:
+        """Research-control reset after MistyAI created a newer, non-terminal episode."""
+
+        if self._agency_state != AgencyState.TERMINAL:
+            raise RuntimeStateError("agency reset requires a sticky TERMINAL state")
+        if self.body_monitor is None or self.body_monitor.last_snapshot is None:
+            raise RuntimeStateError("no verified MistyAI snapshot is available")
+        snapshot = self.body_monitor.last_snapshot
+        if snapshot.energy.terminal:
+            raise RuntimeStateError("new body episode remains terminal")
+        if snapshot.episode_id == self._terminal_episode_id:
+            raise RuntimeStateError("agency reset requires a new body episode")
+        if self._terminal_body_revision is None or snapshot.revision <= self._terminal_body_revision:
+            raise RuntimeStateError("agency reset requires a higher body revision")
+        if (
+            self._body_revision != snapshot.revision
+            or self._body_episode_id != snapshot.episode_id
+        ):
+            raise RuntimeStateError("new body episode has not been applied by Runtime")
+        self._agency_state = AgencyState.AVAILABLE
+        self._degraded_reasons = [reason for reason in self._degraded_reasons if reason != "body"]
+        self._append_journal(
+            "agency_reset",
+            data={
+                "body_instance_id": snapshot.body_instance_id,
+                "episode_id": snapshot.episode_id,
+                "body_revision": snapshot.revision,
+                "evidence_refs": snapshot.evidence_refs,
+            },
+        )
+        return snapshot
 
     async def boot_and_recover(self) -> None:
         if self._booted:
@@ -464,6 +586,8 @@ class RuntimeSupervisor:
             else:
                 self.scheduler.suspend()
                 self.pause_observations.begin(utc_now())
+            if self.body_monitor is not None:
+                await self.body_monitor.start()
             self._booted = True
         except Exception as exc:
             if self.lifecycle not in {RuntimeLifecycle.FAULTED, RuntimeLifecycle.PAUSED}:
@@ -654,6 +778,8 @@ class RuntimeSupervisor:
             await self._perception_guard.stop()
         if self._body_state_guard is not None:
             await self._body_state_guard.stop()
+        if self.body_monitor is not None:
+            await self.body_monitor.stop()
         try:
             await asyncio.wait_for(
                 self.action_coordinator.request_preemption(reason=reason),
@@ -695,6 +821,15 @@ class RuntimeSupervisor:
             pending_action_ids=[action.action_id for action in self.action_coordinator.pending()],
             cognitive_acknowledged_receive_seq=self._cognitive_snapshot.acknowledged_receive_seq,
             homeostasis_acknowledged_receive_seq=self._homeostasis_snapshot.acknowledged_receive_seq,
+            agency_state=self._agency_state,
+            body_episode_id=self._body_episode_id,
+            body_revision=self._body_revision,
+            body_captured_at=self._body_captured_at,
+            interoceptive_state=(
+                self._interoception.model_dump(mode="json")
+                if self._interoception is not None
+                else None
+            ),
         )
         self.checkpoint_store.write(checkpoint)
         self._append_journal(
@@ -766,12 +901,23 @@ class RuntimeSupervisor:
             homeostasis_healthy="homeostasis" not in self._degraded_reasons,
             body_healthy=(
                 self.manifest.embodiment.mode == "off"
-                or embodiment_status.state == EmbodimentState.AVAILABLE
+                or (
+                    embodiment_status.state == EmbodimentState.AVAILABLE
+                    and self._agency_state == AgencyState.AVAILABLE
+                )
             ),
             degraded_reasons=degraded_reasons,
             last_heartbeat_at=self._last_heartbeat_at,
             last_journal_append_at=self.journal.last_append_at,
             embodiment=embodiment_status,
+            agency_state=self._agency_state,
+            body_episode_id=self._body_episode_id,
+            body_revision=self._body_revision,
+            body_state_age_seconds=(
+                max(0.0, (utc_now() - self._body_captured_at).total_seconds())
+                if self._body_captured_at is not None
+                else None
+            ),
         )
         return RuntimeStatus(
             character_id=self.character_id,
@@ -788,6 +934,7 @@ class RuntimeSupervisor:
             pending_actions=len(self.action_coordinator.pending()),
             pending_events=self.queue.qsize(),
             embodiment=embodiment_status,
+            agency_state=self._agency_state,
         )
 
     async def check_watchdog(self) -> None:
@@ -819,6 +966,31 @@ class RuntimeSupervisor:
         return recovered
 
     async def _dispatch_control(self, event: RuntimeEvent, process_seq: int) -> EventDispatchResult:
+        if (
+            event.event_type == RuntimeEventType.AGENCY_TERMINAL
+            and event.payload.get("schema_version") == "body-state-v1"
+        ):
+            terminal_snapshot = LegacyBodyStateSnapshot.model_validate(event.payload)
+            self._body_episode_id = terminal_snapshot.episode_id
+            self._body_revision = terminal_snapshot.revision
+            self._body_captured_at = terminal_snapshot.captured_at
+            self._interoception = self._build_interoception(terminal_snapshot)
+            self._agency_state = AgencyState.TERMINAL
+            self._terminal_body_revision = terminal_snapshot.revision
+            self._terminal_episode_id = terminal_snapshot.episode_id
+            if "body" not in self._degraded_reasons:
+                self._degraded_reasons.append("body")
+            await self.action_coordinator.request_preemption(reason="body agency terminal")
+            result = await self._apply_body_state(event, process_seq)
+            self._append_journal(
+                "agency_terminal",
+                event=event,
+                data={
+                    "episode_id": self._body_episode_id,
+                    "body_revision": self._body_revision,
+                },
+            )
+            return result
         if event.event_type in {RuntimeEventType.PAUSE, RuntimeEventType.EMERGENCY_STOP, RuntimeEventType.WATCHDOG, RuntimeEventType.PERMISSION_REVOKED}:
             if self.lifecycle == RuntimeLifecycle.RUNNING:
                 await self.pause(reason=str(event.payload.get("reason") or event.event_type.value))
@@ -840,6 +1012,11 @@ class RuntimeSupervisor:
     async def _dispatch_domain_event(
         self, event: RuntimeEvent, process_seq: int
     ) -> EventDispatchResult:
+        if event.event_type == RuntimeEventType.BODY_STATE:
+            body_payload = event.payload.get("body_state") or event.payload
+            if body_payload.get("schema_version") == "body-state-v1":
+                return await self._apply_body_state(event, process_seq)
+            return await self._handle_body_state(event, process_seq)
         if event.event_type == RuntimeEventType.ACTION_RESULT:
             action_id = str(event.payload.get("action_id") or "")
             action = self.action_coordinator.get(action_id)
@@ -860,17 +1037,17 @@ class RuntimeSupervisor:
                 decision_kind="action_result",
                 detail={"action": action.model_dump(mode="json")},
             )
-        if event.event_type == RuntimeEventType.BODY_STATE:
-            return await self._handle_body_state(event, process_seq)
-        if event.event_type == RuntimeEventType.AGENCY_TERMINAL:
-            return EventDispatchResult(
-                event_id=event.event_id,
-                receive_seq=event.receive_seq,
-                process_seq=process_seq,
-                status="completed",
-                decision_kind="agency_terminal",
-                detail={"embodiment": self.embodiment.status().model_dump(mode="json")},
-            )
+        if event.event_type == RuntimeEventType.IDLE:
+            ineligible = self._autonomous_ineligible(event)
+            if ineligible is not None:
+                return EventDispatchResult(
+                    event_id=event.event_id,
+                    receive_seq=event.receive_seq,
+                    process_seq=process_seq,
+                    status="ignored",
+                    decision_kind="no_action",
+                    detail={"reason": ineligible},
+                )
         homeostasis_command = "ApplyHeartbeat" if event.event_type == RuntimeEventType.HEARTBEAT else "ApplyEvent"
         homeostasis_envelope = self._make_command(
             event,
@@ -902,11 +1079,19 @@ class RuntimeSupervisor:
                     version_vector=self.version_vector
                 )
                 if policies:
+                    payload: dict[str, Any] = {
+                        "mode": "autonomous",
+                        "policies": policies,
+                        "scheduled_after_user_receive_seq": self._last_user_receive_seq,
+                        "channel": self._last_user_channel,
+                    }
+                    if self._last_user_session_id is not None:
+                        payload["session_id"] = self._last_user_session_id
                     await self.submit_event(
                         event_type=RuntimeEventType.IDLE,
                         priority=RuntimeEventPriority.IDLE,
                         source="scheduler",
-                        payload={"mode": "autonomous", "policies": policies},
+                        payload=payload,
                     )
             return EventDispatchResult(
                 event_id=event.event_id,
@@ -932,6 +1117,46 @@ class RuntimeSupervisor:
                 detail={"homeostasis_revision": self._homeostasis_snapshot.revision},
             )
 
+        assessment: AutonomousAssessment | None = None
+        if event.event_type == RuntimeEventType.IDLE:
+            assess_envelope = self._make_command(
+                event,
+                command_type="AssessAutonomous",
+                idempotency_key=f"cognitive:assess:{event.event_id}",
+                expected_revision=self._cognitive_snapshot.revision,
+                payload={
+                    "homeostasis": self._homeostasis_snapshot.payload,
+                    "policies": list(event.payload.get("policies") or []),
+                    "session_id": event.payload.get("session_id"),
+                    "channel": event.payload.get("channel") or "chat",
+                },
+            )
+            assess_result = await self._invoke_domain(
+                service="cognitive",
+                envelope=assess_envelope,
+                method=self.cognitive.assess_autonomous,
+                event=event,
+            )
+            assessment = AutonomousAssessment.model_validate(assess_result.result)
+            self._cognitive_snapshot = await self.cognitive.get_snapshot()
+            ineligible = self._autonomous_ineligible(event)
+            if assessment.decision == "silent" or ineligible is not None:
+                return EventDispatchResult(
+                    event_id=event.event_id,
+                    receive_seq=event.receive_seq,
+                    process_seq=process_seq,
+                    status="completed" if ineligible is None else "ignored",
+                    decision_kind="no_action",
+                    detail={
+                        "assessment_id": assessment.assessment_id,
+                        "assessment_decision": assessment.decision,
+                        "assessment_record_ref": assessment.record_ref,
+                        "assessment_evaluator": assessment.evaluator,
+                        "internal_memory_ref": assessment.internal_memory_ref,
+                        "reason": ineligible or "autonomous assessment chose silence",
+                    },
+                )
+
         prepare_envelope = self._make_command(
             event,
             command_type="PrepareResponse",
@@ -942,8 +1167,23 @@ class RuntimeSupervisor:
                 "source_time": event.source_time,
                 "call_id": event.correlation_id,
                 **(
-                    {"mode": "autonomous", "session_id": "sess_autonomous", "channel": "runtime"}
-                    if event.event_type == RuntimeEventType.IDLE
+                    {"interoception": self._interoception.model_dump(mode="json")}
+                    if self.manifest.embodiment.mode == "grounded"
+                    and self._interoception is not None
+                    else {}
+                ),
+                **(
+                    {
+                        "mode": "autonomous",
+                        "session_id": assessment.session_id,
+                        "channel": assessment.channel,
+                        "assessment_id": assessment.assessment_id,
+                        "record_ref": assessment.record_ref,
+                        "internal_memory_ref": assessment.internal_memory_ref,
+                        "homeostasis": self._homeostasis_snapshot.payload,
+                        "policies": list(event.payload.get("policies") or []),
+                    }
+                    if assessment is not None
                     else {}
                 ),
                 **(
@@ -997,14 +1237,14 @@ class RuntimeSupervisor:
         event: RuntimeEvent,
         process_seq: int,
     ) -> EventDispatchResult:
-        snapshot = BodyStateSnapshot.model_validate(
+        snapshot = EmbodimentBodyStateSnapshot.model_validate(
             event.payload.get("body_state") or event.payload
         )
         expected_instance = self.manifest.embodiment.body_instance_id
         if expected_instance and snapshot.body_instance_id != expected_instance:
             raise DomainCommandError("body-state snapshot belongs to a different body instance")
 
-        interoception = InteroceptiveState(
+        interoception = EmbodimentInteroceptiveState(
             source_revision=snapshot.revision,
             resource_level=snapshot.energy.available_ratio,
             resource_trend=snapshot.energy.delta_units_per_minute,
@@ -1036,7 +1276,7 @@ class RuntimeSupervisor:
 
         mode = self.manifest.embodiment.mode
         if mode in {"grounded", "active"}:
-            observation = HomeostaticObservation(
+            observation = EmbodimentHomeostaticObservation(
                 source="system_sensor",
                 precision=0.95,
                 observed_values={"energy_reserve": snapshot.energy.available_ratio},
@@ -1059,7 +1299,11 @@ class RuntimeSupervisor:
             self._update_homeostasis(result)
 
         reconsider = terminal
-        if mode == "active" and not terminal and previous_interoception is not None:
+        if (
+            mode == "active"
+            and not terminal
+            and isinstance(previous_interoception, EmbodimentInteroceptiveState)
+        ):
             target_band = self._energy_target_band()
             if target_band is not None:
                 previous_band = self._target_band_position(
@@ -1107,6 +1351,101 @@ class RuntimeSupervisor:
             },
         )
 
+    async def _apply_body_state(
+        self, event: RuntimeEvent, process_seq: int
+    ) -> EventDispatchResult:
+        snapshot = LegacyBodyStateSnapshot.model_validate(event.payload)
+        self._body_episode_id = snapshot.episode_id
+        self._body_revision = snapshot.revision
+        self._body_captured_at = snapshot.captured_at
+        self._interoception = self._build_interoception(snapshot)
+        trace = {
+            "mode": self.manifest.embodiment.mode,
+            "body_instance_id": snapshot.body_instance_id,
+            "episode_id": snapshot.episode_id,
+            "body_revision": snapshot.revision,
+            "captured_at": snapshot.captured_at.isoformat(),
+            "available_ratio": snapshot.energy.available_ratio,
+            "evidence_refs": snapshot.evidence_refs,
+            "terminal": snapshot.energy.terminal,
+            "interoception": self._interoception.model_dump(mode="json"),
+        }
+        self._append_body_analysis_trace(trace)
+        self._append_journal("body_state_observed", event=event, data=trace)
+        if self.manifest.embodiment.mode == "observe":
+            if self._agency_state == AgencyState.DEGRADED:
+                self._agency_state = AgencyState.AVAILABLE
+                self._degraded_reasons = [
+                    reason for reason in self._degraded_reasons if reason != "body"
+                ]
+            self._append_journal(
+                "body_state_applied",
+                event=event,
+                data={"terminal": snapshot.energy.terminal, "homeostasis_updated": False},
+            )
+            return EventDispatchResult(
+                event_id=event.event_id,
+                receive_seq=event.receive_seq,
+                process_seq=process_seq,
+                status="completed",
+                decision_kind="body_observation",
+                detail={**trace, "homeostasis_updated": False},
+            )
+        if self.manifest.embodiment.mode != "grounded":
+            raise RuntimeStateError("body event received while embodiment is off")
+        command = self._make_command(
+            event,
+            command_type="ApplyObservation",
+            idempotency_key=(
+                f"homeostasis:body:{snapshot.body_instance_id}:"
+                f"{snapshot.episode_id}:r{snapshot.revision}"
+            ),
+            expected_revision=self._homeostasis_snapshot.revision,
+            payload={
+                "observation": {
+                    "source": "system_sensor",
+                    "observed_values": {
+                        "energy_reserve": snapshot.energy.available_ratio,
+                    },
+                    "body_instance_id": snapshot.body_instance_id,
+                    "episode_id": snapshot.episode_id,
+                    "body_revision": snapshot.revision,
+                    "captured_at": snapshot.captured_at,
+                    "evidence_refs": snapshot.evidence_refs,
+                    "experiment_mode": "grounded",
+                }
+            },
+        )
+        result = await self._invoke_domain(
+            service="homeostasis",
+            envelope=command,
+            method=self.homeostasis.apply_observation,
+            event=event,
+        )
+        self._update_homeostasis(result)
+        if self._agency_state == AgencyState.DEGRADED:
+            self._agency_state = AgencyState.AVAILABLE
+            self._degraded_reasons = [
+                reason for reason in self._degraded_reasons if reason != "body"
+            ]
+        self._append_journal(
+            "body_state_applied",
+            event=event,
+            data={"terminal": snapshot.energy.terminal, "homeostasis_updated": True},
+        )
+        return EventDispatchResult(
+            event_id=event.event_id,
+            receive_seq=event.receive_seq,
+            process_seq=process_seq,
+            status="completed",
+            decision_kind="body_observation",
+            detail={
+                **trace,
+                "homeostasis_updated": True,
+                "homeostasis_revision": self._homeostasis_snapshot.revision,
+            },
+        )
+
     def _energy_target_band(self) -> tuple[float, float] | None:
         payload = self._homeostasis_snapshot.payload
         state = payload.get("snapshot") if isinstance(payload.get("snapshot"), dict) else payload
@@ -1124,6 +1463,48 @@ class RuntimeSupervisor:
         if value > target[1]:
             return "high"
         return "in_band"
+
+    def _build_interoception(
+        self, snapshot: LegacyBodyStateSnapshot
+    ) -> CognitiveInteroceptiveState:
+        ratio = snapshot.energy.available_ratio
+        level: Literal["critical", "low", "nominal", "high", "full"]
+        if snapshot.energy.terminal or ratio <= 0.1:
+            level = "critical"
+        elif ratio < 0.3:
+            level = "low"
+        elif ratio < 0.7:
+            level = "nominal"
+        elif ratio < 0.98:
+            level = "high"
+        else:
+            level = "full"
+        trend = max(
+            -1.0,
+            min(1.0, snapshot.energy.delta_units_per_minute / snapshot.energy.capacity_units),
+        )
+        return CognitiveInteroceptiveState(
+            resource_label=(
+                "resource_A" if self.manifest.embodiment.blinded_labels else "internal_resource"
+            ),
+            level=level,
+            trend=trend,
+            time_to_action_limit_seconds=snapshot.energy.estimated_time_to_terminal_seconds,
+            confidence=1.0,
+            captured_at=snapshot.captured_at,
+            evidence_refs=snapshot.evidence_refs,
+        )
+
+    def _append_body_analysis_trace(self, trace: dict[str, Any]) -> None:
+        path = self.state_dir / "body-analysis.jsonl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8", newline="\n") as handle:
+            handle.write(
+                json.dumps(trace, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+                + "\n"
+            )
+            handle.flush()
+            os.fsync(handle.fileno())
 
     async def _handle_decision(
         self,
@@ -1189,6 +1570,20 @@ class RuntimeSupervisor:
                         reason=reason,
                     ),
                 )
+            if self._agency_state != AgencyState.AVAILABLE:
+                reason = f"goal proposal blocked while agency is {self._agency_state.value}"
+                self._append_journal(
+                    "goal_proposal_blocked",
+                    event=event,
+                    data={"prepare_id": prepared.prepare_id, "reason": reason},
+                )
+                evidence = DecisionEvidence(
+                    prepare_id=prepared.prepare_id,
+                    recorded_at=utc_now(),
+                    decision_kind="no_action",
+                    reason=reason,
+                )
+                committed = await self._commit_prepared(event, prepared, evidence)
                 return {
                     "prepare_id": prepared.prepare_id,
                     "reason": reason,
@@ -1706,6 +2101,39 @@ class RuntimeSupervisor:
                 # Observers are non-authoritative and cannot stop Runtime.
                 continue
 
+    def _remember_user_event(self, event: RuntimeEvent) -> None:
+        if event.receive_seq < self._last_user_receive_seq:
+            return
+        self._last_user_receive_seq = event.receive_seq
+        session_id = str(event.payload.get("session_id") or "").strip()
+        if session_id:
+            self._last_user_session_id = session_id
+        channel = str(event.payload.get("channel") or "").strip()
+        if channel:
+            self._last_user_channel = channel
+
+    def _autonomous_ineligible(self, event: RuntimeEvent) -> str | None:
+        if self.lifecycle != RuntimeLifecycle.RUNNING:
+            return f"runtime lifecycle is {self.lifecycle.value}"
+        if self._agency_state != AgencyState.AVAILABLE:
+            return f"agency state is {self._agency_state.value}"
+        if self.action_coordinator.current is not None:
+            return "foreground action is active"
+        baseline = int(event.payload.get("scheduled_after_user_receive_seq") or 0)
+        if self._last_user_receive_seq > baseline:
+            return "new user activity superseded autonomous output"
+        if any(
+            queued.event_type == RuntimeEventType.USER_MESSAGE
+            for queued in self.queue.snapshot()
+        ):
+            return "a user message is waiting"
+        if any(
+            queued.priority <= RuntimeEventPriority.USER
+            for queued in self.queue.snapshot()
+        ):
+            return "a foreground event is waiting"
+        return None
+
     def _dispatch_predicate(self) -> Callable[[RuntimeEvent], bool]:
         if self.lifecycle == RuntimeLifecycle.RUNNING:
             return lambda event: True
@@ -1731,10 +2159,47 @@ class RuntimeSupervisor:
                 value = record.data.get("current")
                 if value:
                     previous_lifecycle = RuntimeLifecycle(value)
+            if record.record_type == "event_accepted":
+                payload = record.data.get("event")
+                if payload:
+                    accepted = RuntimeEvent.model_validate(payload)
+                    if accepted.event_type == RuntimeEventType.USER_MESSAGE:
+                        self._remember_user_event(accepted)
             if record.record_type == "action_proposed":
                 goal_id = (record.data.get("action") or {}).get("goal_id")
                 if goal_id:
                     journaled_goals.add(str(goal_id))
+            if record.record_type == "body_state_observed":
+                self._body_episode_id = record.data.get("episode_id")
+                revision = record.data.get("body_revision")
+                self._body_revision = int(revision) if revision is not None else None
+                captured = record.data.get("captured_at")
+                if captured:
+                    self._body_captured_at = datetime.fromisoformat(
+                        str(captured).replace("Z", "+00:00")
+                    )
+                interoception = record.data.get("interoception")
+                if interoception:
+                    model = (
+                        CognitiveInteroceptiveState
+                        if "resource_label" in interoception
+                        else EmbodimentInteroceptiveState
+                    )
+                    self._interoception = model.model_validate(interoception)
+            elif record.record_type == "agency_terminal":
+                self._agency_state = AgencyState.TERMINAL
+                self._terminal_body_revision = self._body_revision
+                self._terminal_episode_id = self._body_episode_id
+            elif record.record_type == "agency_reset":
+                self._agency_state = AgencyState.AVAILABLE
+            elif record.record_type == "body_monitor_degraded" and self._agency_state != AgencyState.TERMINAL:
+                self._agency_state = AgencyState.DEGRADED
+            elif (
+                record.record_type == "body_state_applied"
+                and not bool(record.data.get("terminal"))
+                and self._agency_state != AgencyState.TERMINAL
+            ):
+                self._agency_state = AgencyState.AVAILABLE
             self._last_runtime_time = record.recorded_at
         self._goal_revision = max(self._goal_revision, len(journaled_goals))
         checkpoint = self.checkpoint_store.load()
@@ -1748,6 +2213,21 @@ class RuntimeSupervisor:
             self._process_seq = max(self._process_seq, checkpoint.process_seq)
             self._goal_revision = max(self._goal_revision, checkpoint.version_vector.runtime_goal)
             self.action_coordinator.set_revision_floor(checkpoint.version_vector.runtime_action)
+            self._agency_state = checkpoint.agency_state
+            self._body_episode_id = checkpoint.body_episode_id
+            self._body_revision = checkpoint.body_revision
+            self._body_captured_at = checkpoint.body_captured_at
+            if checkpoint.interoceptive_state is not None:
+                state = checkpoint.interoceptive_state
+                model = (
+                    CognitiveInteroceptiveState
+                    if "resource_label" in state
+                    else EmbodimentInteroceptiveState
+                )
+                self._interoception = model.model_validate(state)
+            if checkpoint.agency_state == AgencyState.TERMINAL:
+                self._terminal_episode_id = checkpoint.body_episode_id
+                self._terminal_body_revision = checkpoint.body_revision
         return previous_lifecycle
 
     async def _restore_pending_events(self) -> None:
@@ -1932,11 +2412,13 @@ class RuntimeSupervisor:
         self, service: str, command_type: str
     ) -> Callable[[DomainCommandEnvelope[dict[str, Any]]], Awaitable[DomainCommandResult[Any]]] | None:
         mapping: dict[tuple[str, str], Callable[..., Awaitable[Any]]] = {
+            ("cognitive", "AssessAutonomous"): self.cognitive.assess_autonomous,
             ("cognitive", "PrepareResponse"): self.cognitive.prepare_response,
             ("cognitive", "CommitInteraction"): self.cognitive.commit_interaction,
             ("homeostasis", "ApplyEvent"): self.homeostasis.apply_event,
             ("homeostasis", "ApplyHeartbeat"): self.homeostasis.apply_heartbeat,
             ("homeostasis", "ApplyOutcome"): self.homeostasis.apply_outcome,
             ("homeostasis", "AssimilateObservation"): self.homeostasis.assimilate_observation,
+            ("homeostasis", "ApplyObservation"): self.homeostasis.apply_observation,
         }
         return mapping.get((service, command_type))

@@ -38,6 +38,12 @@ class RuntimeLifecycle(StrEnum):
     FAULTED = "FAULTED"
 
 
+class AgencyState(StrEnum):
+    AVAILABLE = "AVAILABLE"
+    DEGRADED = "DEGRADED"
+    TERMINAL = "TERMINAL"
+
+
 class RuntimeEventPriority(IntEnum):
     """Lower numeric values are dispatched first."""
 
@@ -86,6 +92,7 @@ CONTROL_EVENT_TYPES = frozenset(
         RuntimeEventType.PERMISSION_REVOKED,
         RuntimeEventType.WATCHDOG,
         RuntimeEventType.DIAGNOSTIC,
+        RuntimeEventType.AGENCY_TERMINAL,
     }
 )
 
@@ -318,6 +325,10 @@ class RuntimeHealth(BaseModel):
     last_heartbeat_at: AwareDatetime | None = None
     last_journal_append_at: AwareDatetime | None = None
     embodiment: EmbodimentStatus | None = None
+    agency_state: AgencyState = AgencyState.AVAILABLE
+    body_episode_id: str | None = None
+    body_revision: int | None = Field(default=None, ge=1)
+    body_state_age_seconds: float | None = Field(default=None, ge=0)
 
 
 class RuntimeStatus(BaseModel):
@@ -338,6 +349,7 @@ class RuntimeStatus(BaseModel):
     pending_actions: int = Field(default=0, ge=0)
     pending_events: int = Field(default=0, ge=0)
     embodiment: EmbodimentStatus | None = None
+    agency_state: AgencyState = AgencyState.AVAILABLE
 
 
 class EventDispatchResult(BaseModel):

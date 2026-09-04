@@ -12,7 +12,10 @@ from collections.abc import Callable
 from typing import Any, Literal, cast
 
 from harness.contracts.envelope import DomainCommandEnvelope, DomainCommandResult, VersionVector
-from harness.embodiment.contracts import HomeostaticObservation, evidence_ref_strings
+from harness.embodiment.contracts import (
+    HomeostaticObservation as EmbodimentHomeostaticObservation,
+    evidence_ref_strings,
+)
 from harness.homeostasis.models import (
     DIMENSIONS,
     CoreAffect,
@@ -21,6 +24,7 @@ from harness.homeostasis.models import (
     EventAppraisal,
     ExpectedFreeEnergyBreakdown,
     FactorBelief,
+    HomeostaticObservation as LegacyHomeostaticObservation,
     HomeostaticProfile,
     HomeostaticSnapshot,
     HomeostaticTransitionTrace,
@@ -123,6 +127,20 @@ class HomeostasisEngine:
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[dict[str, Any]]:
         """Assimilate measured state without interpreting it as an event delta."""
+        return await self._assimilate_observation(command, legacy=False)
+
+    async def apply_observation(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[dict[str, Any]]:
+        """Assimilate an absolute sensor reading without event caps or coupling."""
+        return await self._assimilate_observation(command, legacy=True)
+
+    async def _assimilate_observation(
+        self,
+        command: DomainCommandEnvelope[dict[str, Any]],
+        *,
+        legacy: bool,
+    ) -> DomainCommandResult[dict[str, Any]]:
 
         async with self._lock:
             request_hash = command.effective_request_hash()
@@ -148,9 +166,24 @@ class HomeostasisEngine:
                     "conflict",
                 )
 
-            observation = HomeostaticObservation.model_validate(
-                command.payload.get("observation") or command.payload
-            )
+            raw = command.payload.get("observation") or command.payload
+            if legacy:
+                observation = LegacyHomeostaticObservation.model_validate(raw)
+                observed_at = observation.captured_at
+                precision = self.profile.source_precision["system_sensor"]
+                evidence = list(observation.evidence_refs)
+                trace_metadata: dict[str, Any] = {
+                    "body_instance_id": observation.body_instance_id,
+                    "episode_id": observation.episode_id,
+                    "body_revision": observation.body_revision,
+                    "experiment_mode": observation.experiment_mode,
+                }
+            else:
+                observation = EmbodimentHomeostaticObservation.model_validate(raw)
+                observed_at = observation.observed_at
+                precision = observation.precision
+                evidence = evidence_ref_strings(observation.evidence_refs)
+                trace_metadata = {}
             unknown = set(observation.observed_values) - set(DIMENSIONS)
             if unknown:
                 return self._failure(
@@ -159,19 +192,24 @@ class HomeostasisEngine:
                     f"unknown observed dimensions: {sorted(unknown)}",
                     "rejected",
                 )
-            effective_at = max(observation.observed_at, self.snapshot.updated_at)
+            effective_at = max(observed_at, self.snapshot.updated_at)
             factors = dict(self.snapshot.dimensions)
-            applied: dict[DimensionName, float] = {key: 0.0 for key in DIMENSIONS}
-            evidence = evidence_ref_strings(observation.evidence_refs)
+            applied: dict[DimensionName, float] = (
+                {} if legacy else {key: 0.0 for key in DIMENSIONS}
+            )
+            before: dict[DimensionName, float] = {}
+            after: dict[DimensionName, float] = {}
             for dimension_name, measured in observation.observed_values.items():
                 dimension = cast(DimensionName, dimension_name)
                 current = self.snapshot.dimensions[dimension]
                 spec = self.profile.dimensions[dimension]
+                before[dimension] = current.value
                 value = _clamp(
-                    current.value + observation.precision * (float(measured) - current.value),
+                    current.value + precision * (float(measured) - current.value),
                     spec.hard_bounds[0],
                     spec.hard_bounds[1],
                 )
+                after[dimension] = value
                 delta = value - current.value
                 applied[dimension] = delta
                 factors[dimension] = FactorBelief(
@@ -180,22 +218,26 @@ class HomeostasisEngine:
                     velocity=delta,
                     posterior=self._posterior(value, spec.baseline_band),
                     target_band=spec.baseline_band,
-                    precision=observation.precision,
+                    precision=precision,
                     dominant_evidence=(evidence + current.dominant_evidence)[:5],
                     updated_at=effective_at,
                 )
 
             revision = self.snapshot.revision + 1
             watchdog = self._watchdog(factors)
+            affect = self._derive_affect(factors)
+            emotion = self._derive_emotion(affect, factors, effective_at)
             self.snapshot = HomeostaticSnapshot(
                 revision=revision,
                 profile_id=self.profile.profile_id,
                 profile_revision=self.profile.revision,
                 dimensions=factors,
-                core_affect=self._derive_affect(factors),
-                emotion=self._derive_emotion(self._derive_affect(factors), factors, effective_at),
+                core_affect=affect,
+                emotion=emotion,
                 candidates=self._rank_policies(factors),
-                acknowledged_receive_seq=max(self.snapshot.acknowledged_receive_seq, command.receive_seq),
+                acknowledged_receive_seq=max(
+                    self.snapshot.acknowledged_receive_seq, command.receive_seq
+                ),
                 acknowledged_event_id=command.event_id,
                 last_heartbeat_at=self.snapshot.last_heartbeat_at,
                 updated_at=effective_at,
@@ -213,11 +255,21 @@ class HomeostasisEngine:
                 receive_seq=command.receive_seq,
                 occurred_at=effective_at,
                 source=observation.source,
-                precision=observation.precision,
-                suggested_impacts={key: 0.0 for key in DIMENSIONS},
+                precision=precision,
+                suggested_impacts=(
+                    {} if legacy else {key: 0.0 for key in DIMENSIONS}
+                ),
                 applied_impacts=applied,
-                coupling_impacts={key: 0.0 for key in DIMENSIONS},
+                coupling_impacts=(
+                    {} if legacy else {key: 0.0 for key in DIMENSIONS}
+                ),
                 watchdog=watchdog,
+                observed_values=dict(observation.observed_values),
+                assimilation_gain=precision,
+                values_before=before,
+                values_after=after,
+                evidence_refs=evidence,
+                **trace_metadata,
             )
             result = DomainCommandResult[dict[str, Any]](
                 command_id=command.command_id,
@@ -234,7 +286,10 @@ class HomeostasisEngine:
                 },
                 completed_at=self._clock(),
             )
-            self._ledger[key] = {"request_hash": request_hash, "result": result.model_dump(mode="json")}
+            self._ledger[key] = {
+                "request_hash": request_hash,
+                "result": result.model_dump(mode="json"),
+            }
             self._append_trace(trace)
             self._persist()
             return result

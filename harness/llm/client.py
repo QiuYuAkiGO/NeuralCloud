@@ -45,6 +45,7 @@ class LLMClient(Protocol):
         *,
         temperature: float = 0.7,
         stream: bool = False,
+        max_tokens: int | None = None,
     ) -> ChatResult: ...
 
 
@@ -251,8 +252,36 @@ class RoutingLLMClient:
         *,
         temperature: float = 0.7,
         stream: bool = False,
+        max_tokens: int | None = None,
     ) -> ChatResult:
-        return self._main.complete_chat_result(messages, temperature=temperature, stream=stream)
+        return self._main.complete_chat_result(
+            messages,
+            temperature=temperature,
+            stream=stream,
+            max_tokens=max_tokens,
+        )
+
+    @property
+    def aux_distinct(self) -> bool:
+        return self._aux is not self._main
+
+    def complete_aux_text_result(
+        self,
+        messages: list[dict[str, str]],
+        *,
+        temperature: float = 0.1,
+        max_tokens: int | None = None,
+    ) -> ChatResult:
+        """Run a free-form text completion on the distinct helper endpoint."""
+
+        if not self.aux_distinct:
+            raise RuntimeError("a distinct auxiliary model is not configured")
+        return self._aux.complete_chat_result(
+            messages,
+            temperature=temperature,
+            stream=False,
+            max_tokens=max_tokens,
+        )
 
     def close(self) -> None:
         if self._aux is not self._main:
@@ -448,6 +477,7 @@ class MockLLM:
         *,
         temperature: float = 0.7,
         stream: bool = False,
+        max_tokens: int | None = None,
     ) -> ChatResult:
         if stream:
             raise NotImplementedError("streaming is reserved for a later milestone")

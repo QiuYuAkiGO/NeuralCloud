@@ -17,10 +17,13 @@ SelectionCondition = Literal["argmin_efe", "llm_top3", "llm_open"]
 
 
 class EmbodimentCondition(BaseModel):
+    """Frozen embodiment capabilities plus legacy MistyAI body settings."""
+
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     mode: Literal["off", "observe", "grounded", "active"] = "off"
     required_for_runtime: bool = False
+    body_provider: Literal["none", "mistyai"] = "none"
     body_instance_id: str | None = None
     capability_requirements: list[CapabilityRequirement] = Field(default_factory=list)
     body_state_interval_seconds: float = Field(default=5.0, gt=0.0, le=3600.0)
@@ -30,6 +33,13 @@ class EmbodimentCondition(BaseModel):
     anthropomorphic_labels: bool = False
     blinded_names: bool = False
     enable_drive_preemption: bool = False
+    poll_interval_seconds: float = Field(default=5.0, gt=0, le=3600)
+    max_state_age_seconds: float = Field(default=10.0, gt=0, le=3600)
+    future_clock_tolerance_seconds: float = Field(default=2.0, ge=0, le=60)
+    blinded_labels: bool = False
+    body_memory: bool = False
+    salience_bias: bool = False
+    drive_preemption: bool = False
 
     @model_validator(mode="after")
     def _validate_requirements(self) -> EmbodimentCondition:
@@ -38,6 +48,22 @@ class EmbodimentCondition(BaseModel):
             raise ValueError("embodiment capability requirements must be unique")
         if self.mode == "off" and self.required_for_runtime:
             raise ValueError("off embodiment cannot be required for runtime")
+        reserved = {
+            "anthropomorphic_labels": self.anthropomorphic_labels,
+            "body_memory": self.body_memory,
+            "salience_bias": self.salience_bias,
+            "drive_preemption": self.drive_preemption,
+        }
+        enabled = [name for name, value in reserved.items() if value]
+        if enabled:
+            raise ValueError(f"first-release embodiment fields must be false: {', '.join(enabled)}")
+        if self.mode == "active" and self.body_provider != "none":
+            raise ValueError("embodiment mode 'active' is not implemented")
+        if self.mode == "off":
+            if self.body_provider != "none" or self.body_instance_id is not None:
+                raise ValueError("off mode requires body_provider=none and no body_instance_id")
+        elif self.body_provider == "mistyai" and not self.body_instance_id:
+            raise ValueError("observe/grounded mode requires MistyAI and body_instance_id")
         return self
 
 

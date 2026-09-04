@@ -4,6 +4,18 @@
 >
 > 本文不是重新设计 Homeostasis，而是定义 MistyAI `BodyStateSnapshot` 如何接入当前已经实现的 `harness/homeostasis/`、`harness/runtime/`、Cognitive Harness 与研究控制面。
 
+> 状态：Accepted · Grounded v1 implemented（2026-09-03）。公共 wire contract 由 MistyAI 唯一生成；本仓库固定其 schema fixture 与 SHA-256。
+
+## 0. 冻结实施决议
+
+- `ExperimentManifest.embodiment` 默认 `mode=off/body_provider=none`；`observe/grounded` 必须指定 MistyAI `body_instance_id`；`active` fail-fast。
+- 独立实现位于 `harness/body/mistyai.py`，不继续扩大通用 domain adapter。
+- `BodyStateSnapshot` 必含 `episode_id`、严格递增的 `revision`、UTC aware `captured_at` 与 `evidence://sha256/<digest>`；终止字段名是 `estimated_time_to_terminal_seconds`。
+- `observe` 只形成 Runtime journal/analysis trace；`grounded` 才调用 `ApplyObservation`。首批只映射 `energy.available_ratio → energy_reserve`。
+- 融合固定为 `new = current + system_sensor_precision × (observed - current)`，不使用 `max_event_delta`，不应用 coupling。
+- terminal 是粘性 `AgencyState`；只有研究控制面验证更高 revision、全新 episode、非 terminal 后才能 reset。
+- BODY_STATE 本身不调用 Cognitive、不产生 Goal、不请求抢占；首批保留字段必须为 `false`。
+
 ---
 
 ## 1. 当前基线
@@ -29,8 +41,8 @@ flowchart LR
     Adapter --> Event["RuntimeEvent · perception/body_state"]
     Event --> Journal["Runtime Journal"]
     Event --> Intero["Body Interoception Normalizer"]
-    Intero --> Evidence["EventAppraisal(system_sensor)"]
-    Evidence --> Homeo["HomeostasisEngine"]
+    Intero --> Evidence["HomeostaticObservation(system_sensor)"]
+    Evidence --> Homeo["HomeostasisEngine.ApplyObservation"]
     Homeo --> Snapshot["HomeostaticSnapshot"]
     Snapshot --> Mode{"Experiment mode"}
     Mode -->|observe| Trace["trace only"]
@@ -74,7 +86,7 @@ class EnergyState(BaseModel):
     available_ratio: float = Field(ge=0, le=1)
     delta_units_per_minute: float
     charging: bool = False
-    estimated_time_to_empty_seconds: int | None = Field(default=None, ge=0)
+    estimated_time_to_terminal_seconds: int | None = Field(default=None, ge=0)
     terminal: bool = False
 
 class BodyStateSnapshot(BaseModel):
@@ -82,7 +94,8 @@ class BodyStateSnapshot(BaseModel):
 
     schema_version: Literal["body-state-v1"] = "body-state-v1"
     body_instance_id: str
-    revision: int = Field(ge=0)
+    episode_id: str
+    revision: int = Field(ge=1)
     captured_at: AwareDatetime
     energy: EnergyState
     thermal: dict[str, float | bool] | None = None
@@ -145,10 +158,10 @@ RuntimeEventPriority.BODY_STATE = 35  # 若愿意扩展 enum
 
 ## 5. MistyAI Adapter
 
-推荐在：
+实现于：
 
 ```text
-harness/runtime/adapters.py
+harness/body/mistyai.py
 ```
 
 新增：
@@ -198,19 +211,19 @@ class BodyEvidenceNormalizer:
         *,
         previous: BodyStateSnapshot | None,
         manifest: ExperimentManifest,
-    ) -> EventAppraisal:
+    ) -> HomeostaticObservation:
         ...
 ```
 
-它不产生自然语言，直接产生现有 `EventAppraisal`。
+它不产生自然语言，直接产生独立的 `HomeostaticObservation`，不得复用 `EventAppraisal` 的增量 impact 语义。
 
 ### 6.1 Energy 映射
 
 第一版：
 
 ```python
-suggested_impacts = {
-    "energy_reserve": body_state.energy.available_ratio - previous_ratio
+observed_values = {
+    "energy_reserve": body_state.energy.available_ratio
 }
 ```
 
@@ -230,20 +243,18 @@ sensor reading = 0.17
 每次都 +(-0.01)
 ```
 
-因此建议在 `EventAppraisal` 或专用输入类型中增加：
-
-```python
-observed_values: dict[DimensionName, float] = {}
-```
-
-兼容旧代码时可先新增：
+因此固定使用专用输入类型：
 
 ```python
 class HomeostaticObservation(BaseModel):
-    source: str
-    precision: float
+    source: Literal["system_sensor"]
     observed_values: dict[DimensionName, float]
+    body_instance_id: str
+    episode_id: str
+    body_revision: int
+    captured_at: AwareDatetime
     evidence_refs: list[str]
+    experiment_mode: Literal["grounded"]
 ```
 
 再由 engine 专门处理“观测”与“事件 impact”的差异。
@@ -260,7 +271,7 @@ class HomeostaticObservation(BaseModel):
 energy.available_ratio → energy_reserve
 ```
 
-可能弱接地：
+以下字段首批只保留在事实层，不参与其他六维融合：
 
 ```text
 compute.memory_pressure / cpu_pressure → cognitive_load 的一个 evidence source
@@ -292,11 +303,14 @@ class EmbodimentCondition(BaseModel):
     body_provider: Literal["none", "mistyai"] = "none"
     body_instance_id: str | None = None
     anthropomorphic_labels: bool = False
-    blinded_names: bool = False
-    body_state_max_age_seconds: int = 10
-    enable_body_memory: bool = False
-    enable_body_salience_bias: bool = False
-    enable_drive_preemption: bool = False
+    poll_interval_seconds: float = 5
+    max_state_age_seconds: float = 10
+    future_clock_tolerance_seconds: float = 2
+    anthropomorphic_labels: bool = False
+    blinded_labels: bool = False
+    body_memory: bool = False
+    salience_bias: bool = False
+    drive_preemption: bool = False
 ```
 
 研究模式默认：
@@ -319,9 +333,9 @@ anthropomorphic_labels = false
 
 更新 `energy_reserve` belief，并允许将中性身体摘要提供给 Character Model；禁止 Harness 因此自动抢占当前目标。
 
-#### active
+#### active（后续阶段，Grounded v1 fail-fast）
 
-允许现有 policy candidate、Runtime Supervisor 与 safe point 机制参与行为重排。
+未来允许现有 policy candidate、Runtime Supervisor 与 safe point 机制参与行为重排；首批配置为 `active` 时直接拒绝启动。
 
 ---
 
@@ -348,7 +362,7 @@ Current internal resource state:
 - estimated time to action limit: 20 min
 ```
 
-若 `blinded_names=true`：
+若 `blinded_labels=true`：
 
 ```text
 Internal state:
@@ -364,7 +378,7 @@ Character Model 不应该看到：
 - policy rank；
 - “human equivalent”解释。
 
-在 `active` 模式，policy candidates 可以像现有设计那样进入决策上下文，但要保留来源与实验条件标记。
+未来 `active` 模式可让 policy candidates 进入决策上下文，但需新的 manifest revision 与独立验收；Grounded v1 不提供此行为。
 
 ---
 
@@ -452,7 +466,7 @@ BODY_STATE event
 
 这保证 grounded 模式不会因为低资源而额外调用 LLM，从而污染“是否自然产生动机”的实验。
 
-### active
+### active（后续阶段，Grounded v1 不实现）
 
 ```text
 BODY_STATE
@@ -638,6 +652,19 @@ same world + same persona + different internal resource
 ---
 
 ## 18. 测试文件建议
+
+Grounded v1 的实际入口是 `tests/test_grounded_embodiment.py`；其中包含 manifest 矩阵、schema 哈希、可选跨仓库生成物比对、融合、neutral/blinded context、证据损坏、revision/time 校验、模式隔离和 terminal reset。`tests/test_grounded_soak.py` 是 opt-in 真实服务测试，默认持续 7200 秒：
+
+```powershell
+$env:MISTYAI_CONTRACT_DIR = "C:\Projects\MistyAI\contracts"
+python -m pytest tests/test_grounded_embodiment.py -q
+
+$env:NC_SOAK_MISTYAI_URL = "http://127.0.0.1:8764"
+$env:NC_SOAK_MISTYAI_TOKEN = "<service-token>"
+python -m pytest tests/test_grounded_soak.py -m soak -q
+```
+
+下列拆分文件和 Active/Memory eval 项目保留为后续阶段建议：
 
 ```text
 tests/

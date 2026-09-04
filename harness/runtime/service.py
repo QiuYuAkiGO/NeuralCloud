@@ -81,7 +81,8 @@ def create_app():
     manifest = load_experiment_manifest(manifest_path)
     cognitive = HttpCognitiveClient(cognitive_url, service_token=service_token)
     homeostasis = HttpHomeostasisClient(homeostasis_url, service_token=service_token)
-    provider_name = os.environ.get("NC_EMBODIMENT_PROVIDER", "none").strip().lower()
+    provider_default = getattr(manifest.embodiment, "body_provider", "none")
+    provider_name = os.environ.get("NC_EMBODIMENT_PROVIDER", provider_default).strip().lower()
     embodiment_client: MistyAIClient | None = None
     embodiment_manager: EmbodimentManager | None = None
     action_coordinator: ActionCoordinator | None = None
@@ -90,7 +91,10 @@ def create_app():
     provider_poll_seconds = float(os.environ.get("NC_MISTYAI_POLL_INTERVAL_SECONDS", "0.2"))
     if provider_name == "mistyai":
         embodiment_client = MistyAIClient(
-            os.environ.get("NC_MISTYAI_BASE_URL", "http://127.0.0.1:8764"),
+            os.environ.get(
+                "NC_MISTYAI_BASE_URL",
+                os.environ.get("NC_MISTYAI_URL", "http://127.0.0.1:8764"),
+            ),
             token=os.environ.get("NC_MISTYAI_TOKEN", "development-misty-token"),
             timeout_seconds=float(os.environ.get("NC_MISTYAI_TIMEOUT_SECONDS", "10")),
         )

@@ -9,7 +9,9 @@ from harness.homeostasis.models import (
     EventAppraisal,
     FactorBelief,
     HomeostaticProfile,
+    HomeostaticObservation,
     HomeostaticSnapshot,
+    HomeostaticTransitionTrace,
     PolicyCandidate,
 )
 from harness.homeostasis.profiles import ProfileRevisionStore, load_profile
@@ -23,7 +25,9 @@ __all__ = [
     "FactorBelief",
     "HomeostasisEngine",
     "HomeostaticProfile",
+    "HomeostaticObservation",
     "HomeostaticSnapshot",
+    "HomeostaticTransitionTrace",
     "PolicyCandidate",
     "ProfileRevisionStore",
     "load_profile",

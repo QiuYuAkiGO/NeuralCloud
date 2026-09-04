@@ -121,7 +121,17 @@ class CognitiveServiceHost:
             open_preset_ids=open_ids or [active],
         )
         apply_loaded_tuning(self.chat.settings, persisted)
-        self.adapter = PipelineCognitiveAdapter(self.chat.pipeline, state_path=state_path)
+        self.adapter = PipelineCognitiveAdapter(
+            self.chat.pipeline,
+            state_path=state_path,
+            autonomous_log_dir=Path(
+                os.environ.get(
+                    "NC_COGNITIVE_AUTONOMOUS_LOG_DIR",
+                    str(state_path.parent / "autonomous"),
+                )
+            ),
+            default_session_id=self.chat.active_session_id,
+        )
         self._control_lock = asyncio.Lock()
 
     async def health(self):
@@ -132,6 +142,12 @@ class CognitiveServiceHost:
 
     async def prepare_response(self, command):
         return await self.adapter.prepare_response(command)
+
+    async def assess_autonomous(self, command):
+        result = await self.adapter.assess_autonomous(command)
+        if result.result is not None and result.result.internal_memory_ref is not None:
+            self.chat.flush_active()
+        return result
 
     async def commit_interaction(self, command):
         result = await self.adapter.commit_interaction(command)
@@ -171,6 +187,7 @@ class CognitiveServiceHost:
                 return {"base_url": url, "models": names}
             self._apply_mutation(operation, body)
             self.adapter.pipeline = self.chat.pipeline
+            self.adapter.default_session_id = self.chat.active_session_id
             self.chat.flush_active()
             self._persist()
             snapshot = await self.ui_snapshot()

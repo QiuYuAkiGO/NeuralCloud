@@ -169,6 +169,32 @@ class EventAppraisal(BaseModel):
     evidence_refs: list[str] = Field(default_factory=list)
 
 
+class HomeostaticObservation(BaseModel):
+    """Absolute body observation; it is intentionally not an event impact."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    source: Literal["system_sensor"] = "system_sensor"
+    observed_values: dict[DimensionName, float]
+    body_instance_id: str
+    episode_id: str
+    body_revision: int = Field(ge=1)
+    captured_at: AwareDatetime
+    evidence_refs: list[str] = Field(min_length=1)
+    experiment_mode: Literal["grounded"] = "grounded"
+
+    @field_validator("observed_values")
+    @classmethod
+    def _validate_observed_values(
+        cls, value: dict[DimensionName, float]
+    ) -> dict[DimensionName, float]:
+        if set(value) != {"energy_reserve"}:
+            raise ValueError("body-state-v1 initially observes only energy_reserve")
+        if any(not math.isfinite(item) or not 0 <= item <= 1 for item in value.values()):
+            raise ValueError("observed values must be finite within [0, 1]")
+        return value
+
+
 class ExpectedFreeEnergyBreakdown(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -231,6 +257,15 @@ class HomeostaticTransitionTrace(BaseModel):
     applied_impacts: dict[DimensionName, float]
     coupling_impacts: dict[DimensionName, float]
     watchdog: list[str] = Field(default_factory=list)
+    observed_values: dict[DimensionName, float] = Field(default_factory=dict)
+    assimilation_gain: float | None = Field(default=None, ge=0.0, le=1.0)
+    values_before: dict[DimensionName, float] = Field(default_factory=dict)
+    values_after: dict[DimensionName, float] = Field(default_factory=dict)
+    body_instance_id: str | None = None
+    episode_id: str | None = None
+    body_revision: int | None = Field(default=None, ge=1)
+    evidence_refs: list[str] = Field(default_factory=list)
+    experiment_mode: str | None = None
 
 
 def initial_snapshot(profile: HomeostaticProfile, *, now: datetime) -> HomeostaticSnapshot:

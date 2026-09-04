@@ -14,9 +14,12 @@ from harness.core.inference import (
     CandidateResponse,
     ContextSegment,
     FinalResponse,
+    InteroceptiveState,
     ModelContext,
+    ParsedInteraction,
     SessionTurn,
     SituationState,
+    SituationTrigger,
     StructuredInsight,
     TokenUsage,
     ValidationResult,
@@ -91,6 +94,7 @@ class InferencePipeline:
         session_id: str | None = None,
         speaker: str | None = None,
         call_id: str | None = None,
+        interoception: InteroceptiveState | None = None,
     ) -> FinalResponse:
         ingest_kwargs: dict[str, Any] = {"session_id": session_id}
         if speaker:
@@ -107,6 +111,7 @@ class InferencePipeline:
                 ingest_kwargs=ingest_kwargs,
                 commit_interaction=True,
                 context_segments=None,
+                interoception=interoception,
             )
             call.set_result(final)
             return final
@@ -120,6 +125,7 @@ class InferencePipeline:
         speaker: str | None = None,
         call_id: str | None = None,
         context_segments: list[ContextSegment] | None = None,
+        interoception: InteroceptiveState | None = None,
     ) -> FinalResponse:
         """Generate a replayable response without mutating Session or Memory.
 
@@ -143,9 +149,175 @@ class InferencePipeline:
                     ingest_kwargs=ingest_kwargs,
                     commit_interaction=False,
                     context_segments=context_segments,
+                    interoception=interoception,
                 )
             call.set_result(final)
             return final
+
+    def prepare_autonomous(
+        self,
+        *,
+        event_id: str,
+        assessment_id: str,
+        assessment_text: str,
+        record_ref: str,
+        homeostasis: dict[str, Any],
+        policies: list[dict[str, Any]],
+        session_id: str,
+        channel: str,
+        now: datetime,
+        call_id: str | None = None,
+        interoception: InteroceptiveState | None = None,
+    ) -> FinalResponse:
+        """Prepare proactive speech from an internal assessment, not a user turn."""
+
+        call_input = {
+            "assessment_id": assessment_id,
+            "record_ref": record_ref,
+            "session_id": session_id,
+            "channel": channel,
+        }
+        with self.memory.call_log.scope(
+            "prepare_autonomous_response", call_input, call_id=call_id
+        ) as call:
+            with self.memory.suppress_maintenance():
+                final = self._prepare_autonomous(
+                    event_id=event_id,
+                    assessment_id=assessment_id,
+                    assessment_text=assessment_text,
+                    homeostasis=homeostasis,
+                    policies=policies,
+                    session_id=session_id,
+                    channel=channel,
+                    now=now,
+                    interoception=interoception,
+                )
+            call.set_result(final)
+            return final
+
+    def _prepare_autonomous(
+        self,
+        *,
+        event_id: str,
+        assessment_id: str,
+        assessment_text: str,
+        homeostasis: dict[str, Any],
+        policies: list[dict[str, Any]],
+        session_id: str,
+        channel: str,
+        now: datetime,
+        interoception: InteroceptiveState | None = None,
+    ) -> FinalResponse:
+        started = time.perf_counter()
+        retrieval_event = InteractionEvent(
+            event_id=event_id,
+            timestamp=now,
+            channel="internal",
+            speaker="character",
+            modality="text",
+            raw_text=assessment_text,
+            session_id=session_id,
+            evidence=[f"autonomous-assessment:{assessment_id}"],
+        )
+        parsed = ParsedInteraction(
+            speech_act="internal_reflection",
+            entities=["user", "character"],
+        )
+        situation = self._traced(
+            "state_build",
+            lambda: self.state_builder.build(
+                retrieval_event,
+                parsed,
+                now=now,
+                interoception=interoception,
+            ),
+            extra={"event_id": event_id, "mode": "autonomous"},
+        )
+        expression_instruction = (
+            "这不是用户发来的消息。根据内部判断，用角色本人的口吻向用户发起一次自然、"
+            "克制的主动表达；只输出角色真正会说的话，不解释判断过程或内稳态机制。"
+        )
+        state = dict(homeostasis.get("snapshot") or homeostasis)
+        emotion = state.get("emotion") or {}
+        policy_text = "；".join(
+            f"{item.get('policy_id', '?')}:{item.get('label', '')}" for item in policies
+        )
+        internal_text = assessment_text
+        if isinstance(emotion, dict) and emotion:
+            internal_text += (
+                f"\n当前内稳态情绪：{emotion.get('label', 'unknown')}，"
+                f"强度={emotion.get('intensity', '?')}。"
+            )
+        if policy_text:
+            internal_text += f"\n允许参考的候选策略：{policy_text}。"
+        insight = StructuredInsight(
+            kind="autonomous_assessment",
+            possible_intents=[],
+            recommended_stance=internal_text,
+            constraint="avoid_explicit_psychological_explanation",
+            source="autonomous_assessor",
+        )
+        situation = situation.model_copy(
+            update={
+                "trigger": SituationTrigger(type="autonomous_assessment", ref=assessment_id),
+                "utterance": expression_instruction,
+            }
+        )
+        recent = self.session_store.recent(session_id)
+        context = self._traced(
+            "compile",
+            lambda: self.compiler.compile(situation, insights=[insight], session=recent),
+            extra={"situation_id": situation.situation_id, "path": "deep", "mode": "autonomous"},
+        )
+        response_id = new_id("response")
+        segments, stopped_by, revisions, validation, usage = self._speak(
+            context,
+            situation=situation,
+            insights=[insight],
+            path="deep",
+            session_id=session_id,
+            response_id=response_id,
+            now=now,
+            commit_session=False,
+        )
+        final = FinalResponse(
+            response_id=response_id,
+            text="\n\n".join(segments),
+            path="deep",
+            revisions=revisions,
+            situation_id=situation.situation_id,
+            context_id=context.context_id,
+            event_id=event_id,
+            insights=[insight],
+            validation=validation,
+            complexity_score=1.0,
+            segments=segments,
+            stopped_by=stopped_by,
+            usage=usage,
+            latency_ms=round((time.perf_counter() - started) * 1000, 3),
+        )
+        self._emit(
+            "final",
+            final,
+            {
+                "event_id": event_id,
+                "path": "deep",
+                "mode": "autonomous",
+                "assessment_id": assessment_id,
+                "revisions": revisions,
+                "response_id": response_id,
+                "stopped_by": stopped_by,
+                "segments": len(segments),
+                "prompt_tokens": usage.prompt_tokens,
+                "completion_tokens": usage.completion_tokens,
+                "total_tokens": usage.total_tokens,
+                "character_calls": usage.calls,
+                "revision_tokens": usage.revision_tokens,
+                "total_latency_ms": final.latency_ms,
+                "latency_ms": 0.0,
+            },
+        )
+        return final
 
     def _respond(
         self,
@@ -155,6 +327,7 @@ class InferencePipeline:
         ingest_kwargs: dict[str, Any],
         commit_interaction: bool,
         context_segments: list[ContextSegment] | None,
+        interoception: InteroceptiveState | None,
     ) -> FinalResponse:
         started = time.perf_counter()
         event = self._traced("ingest", lambda: self.gateway.ingest(source, **ingest_kwargs))
@@ -172,7 +345,12 @@ class InferencePipeline:
         parsed = self._traced("parse", lambda: self.parser.parse(event), extra={"event_id": event.event_id})
         situation = self._traced(
             "state_build",
-            lambda: self.state_builder.build(event, parsed, now=moment),
+            lambda: self.state_builder.build(
+                event,
+                parsed,
+                now=moment,
+                interoception=interoception,
+            ),
             extra={"event_id": event.event_id},
         )
         situation, request = self._traced(

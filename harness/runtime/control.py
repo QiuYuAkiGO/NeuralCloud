@@ -457,6 +457,17 @@ def create_control_app(
     async def checkpoint() -> dict[str, Any]:
         return control.supervisor.write_checkpoint().model_dump(mode="json")
 
+    @app.post("/v1/agency:reset", dependencies=[Depends(authenticate)])
+    async def reset_agency() -> dict[str, Any]:
+        try:
+            snapshot = await control.supervisor.reset_agency()
+        except Exception as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return {
+            "agency_state": control.supervisor.status().agency_state.value,
+            "body_state": snapshot.model_dump(mode="json"),
+        }
+
     @app.post("/v1/actions/{action_id}/approve", dependencies=[Depends(authenticate)])
     async def approve(action_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         action = await control.supervisor.approve_action(

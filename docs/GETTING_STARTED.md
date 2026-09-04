@@ -459,7 +459,7 @@ BOOTING -> RECOVERING -> RUNNING
 
 ### 7.4 心跳和空闲自驱
 
-Scheduler 到期后产生 heartbeat。内稳态服务先接收心跳；当队列为空且没有前台动作时，它可以提出 policy，再由 Supervisor 生成低优先级 `IDLE` 事件，交给认知域决定回复、提出目标、暂缓或什么都不做。
+Scheduler 到期后产生 heartbeat。内稳态服务先接收心跳；当队列为空且没有前台动作时，它可以提出 policy，再由 Supervisor 生成低优先级 `IDLE` 事件。Cognitive 先用辅助模型进行纯文本 `SILENT` / `SPEAK` 判定并写入独立 `.txt` 日志；只有 `SPEAK` 才调用角色主模型。判定前后若收到用户消息，本次主动表达直接取消。
 
 当前 `PassiveHomeostasisAdapter` 只保存单调版本和预设 policy，不代表完整的情绪、需求和驱力模型已经实现。
 

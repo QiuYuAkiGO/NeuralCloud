@@ -88,6 +88,18 @@ class ContextCompiler:
                 preferred=min(80, remaining),
             )
 
+        if situation.interoception is not None:
+            interoception = situation.interoception
+            remaining = _push(
+                segments,
+                kind="interoception",
+                text=_interoception_text(interoception),
+                source_ids=list(interoception.evidence_refs),
+                why="verified_internal_resource",
+                remaining=remaining,
+                preferred=min(80, remaining),
+            )
+
         remaining = _push(
             segments,
             kind="user",
@@ -260,6 +272,22 @@ def _world_text(situation: SituationState) -> str:
     return (
         f"世界状态 time={world.time.isoformat()} channel={world.channel} "
         f"presence={world.user_presence}"
+    )
+
+
+def _interoception_text(state: object) -> str:
+    from harness.core.inference import InteroceptiveState
+
+    value = InteroceptiveState.model_validate(state)
+    limit = (
+        "unknown"
+        if value.time_to_action_limit_seconds is None
+        else str(value.time_to_action_limit_seconds)
+    )
+    return (
+        f"interoception {value.resource_label}: level={value.level}; "
+        f"trend={value.trend:.3f}; time_to_action_limit_seconds={limit}; "
+        f"confidence={value.confidence:.2f}; captured_at={value.captured_at.isoformat()}"
     )
 
 

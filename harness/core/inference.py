@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from harness.core.ids import new_id
 from harness.core.models import (
@@ -71,6 +71,20 @@ class ComplexityAssessment(BaseModel):
     signals: ComplexitySignals = Field(default_factory=ComplexitySignals)
 
 
+class InteroceptiveState(BaseModel):
+    """Neutral, structured resource context safe for the character model."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    resource_label: Literal["internal_resource", "resource_A"] = "internal_resource"
+    level: Literal["critical", "low", "nominal", "high", "full"]
+    trend: float = Field(ge=-1.0, le=1.0)
+    time_to_action_limit_seconds: int | None = Field(default=None, ge=0)
+    confidence: float = Field(ge=0.0, le=1.0)
+    captured_at: AwareDatetime
+    evidence_refs: list[str] = Field(min_length=1)
+
+
 # Downstream stages (Interpreter / Compiler / GUI) only list this many hits.
 MAX_RELEVANT_MEMORIES = 5
 
@@ -92,6 +106,7 @@ class SituationState(BaseModel):
     hypotheses: list[Hypothesis] = Field(default_factory=list)
     complexity: ComplexityAssessment = Field(default_factory=ComplexityAssessment)
     snapshot: CharacterSnapshot | None = None
+    interoception: InteroceptiveState | None = None
 
     @field_validator("relevant_memories", mode="before")
     @classmethod
