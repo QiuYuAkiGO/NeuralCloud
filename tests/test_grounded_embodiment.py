@@ -43,6 +43,10 @@ NOW = datetime(2026, 9, 3, 8, 0, tzinfo=UTC)
 EVIDENCE = "evidence://sha256/" + "a" * 64
 
 
+def _canonical_contract_bytes(path: Path) -> bytes:
+    return path.read_bytes().replace(b"\r\n", b"\n")
+
+
 def _body_state(
     *,
     revision: int = 1,
@@ -149,7 +153,7 @@ def test_pinned_mistyai_body_schema_hash_matches_fixture() -> None:
     expected = (
         root / "tests" / "fixtures" / "mistyai" / "body-state.schema.sha256"
     ).read_text(encoding="utf-8").strip()
-    content = schema_path.read_bytes()
+    content = _canonical_contract_bytes(schema_path)
     assert hashlib.sha256(content).hexdigest() == expected
     schema = json.loads(content)
     assert schema["properties"]["schema_version"]["const"] == "body-state-v1"
@@ -163,7 +167,9 @@ def test_live_mistyai_contract_matches_fixture_when_configured() -> None:
     fixtures = root / "tests" / "fixtures" / "mistyai"
     generated = Path(source) / "schemas"
     for name in ("body-state.schema.json", "body-state-capture-response.schema.json"):
-        assert (generated / name).read_bytes() == (fixtures / name).read_bytes()
+        assert _canonical_contract_bytes(generated / name) == _canonical_contract_bytes(
+            fixtures / name
+        )
 
 def test_absolute_observation_uses_frozen_gain_without_coupling(tmp_path) -> None:
     async def scenario() -> None:

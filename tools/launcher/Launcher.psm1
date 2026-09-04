@@ -367,7 +367,7 @@ function Get-LauncherWorkspaceFiles {
     )
 
     $result = Invoke-LauncherExternalCommand `
-        -FilePath 'git.exe' `
+        -FilePath 'git' `
         -ArgumentList @('-C', $Root, 'ls-files', '-z', '--cached', '--others', '--exclude-standard') `
         -CommandInvoker $CommandInvoker
     if ($result.exit_code -ne 0) {

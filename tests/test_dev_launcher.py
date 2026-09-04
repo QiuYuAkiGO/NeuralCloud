@@ -1799,7 +1799,7 @@ def test_deployment_refuses_unmanaged_opt_path_before_building_an_image(tmp_path
                 -StagingDirectory {_ps_literal(staging)} `
                 -CommandInvoker {{
                     param($request)
-                    if ($request.FilePath -eq 'git.exe') {{
+                    if ($request.FilePath -eq 'git') {{
                         $files = @('deploy/compose.yaml', 'pyproject.toml', 'uv.lock')
                         return [pscustomobject]@{{ exit_code = 0; stdout = (($files -join [char]0) + [char]0); stderr = '' }}
                     }}
@@ -1844,7 +1844,7 @@ def test_failed_candidate_build_does_not_mutate_m0_or_swap_directories(tmp_path:
                 -StagingDirectory {_ps_literal(staging)} `
                 -CommandInvoker {{
                     param($request)
-                    if ($request.FilePath -eq 'git.exe') {{
+                    if ($request.FilePath -eq 'git') {{
                         $files = @('deploy/compose.yaml', 'pyproject.toml', 'uv.lock')
                         return [pscustomobject]@{{ exit_code = 0; stdout = (($files -join [char]0) + [char]0); stderr = '' }}
                     }}
@@ -1922,7 +1922,7 @@ def test_deployment_swap_stops_units_strictly_before_tagging_or_moving(tmp_path:
                 -StagingDirectory {_ps_literal(staging)} `
                 -CommandInvoker {{
                     param($request)
-                    if ($request.FilePath -eq 'git.exe') {{
+                    if ($request.FilePath -eq 'git') {{
                         $files = @('deploy/compose.yaml', 'pyproject.toml', 'uv.lock')
                         return [pscustomobject]@{{ exit_code = 0; stdout = (($files -join [char]0) + [char]0); stderr = '' }}
                     }}
