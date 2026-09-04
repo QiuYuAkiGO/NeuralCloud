@@ -7,6 +7,9 @@ __pycache__/
 dist/
 build/
 .pytest_cache/
+.pytest-tmp/
+.test-tmp/
+.launcher-staging/
 .mypy_cache/
 .ruff_cache/
 .coverage

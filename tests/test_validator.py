@@ -3,6 +3,7 @@ from __future__ import annotations
 from harness.core.inference import CandidateResponse, StructuredInsight
 from harness.llm.client import REVISED_IN_CHARACTER_REPLY, VIOLATING_CARE_REPLY
 from harness.validator.validator import rule_check
+from gui.presets import load_builtin
 from tests.factories import vaelith
 
 
@@ -37,6 +38,19 @@ def test_psych_leak_is_caught() -> None:
     )
     assert result.verdict == "revise"
     assert "explicit_psychological_explanation" in result.violations
+
+
+def test_misty_revision_does_not_inherit_vaelith_style() -> None:
+    result = rule_check(
+        "我检测到你正在寻求关系确认。",
+        persona=load_builtin("misty").persona,
+        insights=[],
+    )
+    assert result.verdict == "revise"
+    assert result.instruction is not None
+    assert "心理分析" in result.instruction
+    assert "嘴硬" not in result.instruction
+    assert "不要道歉" not in result.instruction
 
 
 def test_candidate_wrapper_roundtrip() -> None:

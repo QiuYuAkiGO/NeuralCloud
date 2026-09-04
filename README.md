@@ -41,6 +41,47 @@ Raw Message
 
 ## 快速开始
 
+Windows 11 上的推荐入口是根目录 [`dev.ps1`](dev.ps1)。它统一检查、准备、部署和启动相邻的 MistyAI 工程与本仓库；默认目录布局为：
+
+```text
+<parent>/
+├── MistyAI/
+└── NeuralCloud/
+```
+
+第一次运行先检查环境，再启动：
+
+```powershell
+.\dev.ps1 doctor
+.\dev.ps1 up
+```
+
+启动拓扑如下：
+
+```text
+Windows 11
+├── NeuralCloud（Windows Python 3.12；Cognitive / Homeostasis / Runtime / GUI）
+├── WSL2 Ubuntu 24.04
+│   └── MistyAI Body Service（systemd）
+└── Docker Desktop（Linux containers）
+    └── MistyAI desktop / agent / loopback-gateway
+```
+
+`up` 会检查 Windows、Git、Python 3.12、WSL2、Ubuntu 24.04、Docker Desktop/Compose、WSL systemd、uv 0.12.9 及端口占用。交互模式会对缺失依赖的安装或 Windows 系统功能变更逐项确认；执行 `install`/`up` 本身即授权依赖就绪后的 WSL root 部署与服务操作，这些操作会显示脱敏的阶段提示。`-NonInteractive` 不自动安装缺失依赖，但前置已满足时仍执行所请求的部署或启停。Docker Desktop 首次协议、WSL integration 和系统重启仍需按提示手动完成，之后重新运行同一命令即可续跑。
+
+```powershell
+.\dev.ps1 up                         # 检查、部署并启动两套工程
+.\dev.ps1 down                       # 先停 NeuralCloud，再停 MistyAI
+.\dev.ps1 restart
+.\dev.ps1 status
+.\dev.ps1 install                    # 只准备环境，不启动
+.\dev.ps1 logs -Service all
+```
+
+常用参数包括 `-MistyAIPath <path>`（默认 `..\MistyAI`）、`-Distro <name>`（默认 `Ubuntu-24.04`）、`-Mode demo|live|ollama`、`-NonInteractive`、`-NoOpen` 和 `-Json`。这里的 `demo` 只表示 NeuralCloud 使用 MockLLM；统一入口始终使用真实 MistyAI 与 `grounded-mistyai-v1.json`，身体服务、身份或能力协商失败时会中止，不会退回 simulator。成功后可访问 GUI <http://127.0.0.1:8766>、运维页 <http://127.0.0.1:8766/ops> 和 noVNC <http://127.0.0.1:6080>。完整命令、退出码与故障排查见 [新手入门](docs/GETTING_STARTED.md#3-windows-统一启动入口)。
+
+只调试 NeuralCloud 时，仍可手动准备 Python 环境：
+
 ```bash
 python -m venv .venv
 # Windows: .venv\Scripts\activate
@@ -68,7 +109,7 @@ Runtime 的编排事实写入 hash-chain 分段 JSONL journal，领域状态仍�
 
 `harness.embodiment` 现在是 Action、Perception、BodyState 与 Capability ports 的唯一所有者。Runtime 启动时依据 manifest 的 allowlist/required requirements 协商并冻结 activation set；Provider 后续重连只能恢复本次启动已授权的能力。`NC_EMBODIMENT_PROVIDER=none|mistyai|simulator` 只在 composition root 选择实现，Core 不按 Provider 名称分支。manifest 未配置 `embodiment` 时仍按 chat-only 模式启动。
 
-MistyAI adapter 支持 typed action、独立 verify、safe-point、reconcile、结构化 evidence 与可选 `physiology.body-state.v1`。Simulator 不使用 HTTP 或 MistyAI DTO，可脚本化 success/failure/unknown、健康变化及 energy terminal。配置与黑盒验收顺序见 [Embodiment 运行手册](docs/EMBODIMENT_RUNBOOK.md)。
+MistyAI adapter 支持 typed action、独立 verify、safe-point、reconcile、下载并校验内容寻址 evidence，以及可选 `physiology.body-state.v1`。Grounded 部署使用显式 token/token file 且执行严格就绪判定；生产 Cognitive 可把受信任的结构化 action request 编译为安全 `GoalProposal`，不会从普通聊天文本猜测动作。Simulator 不使用 HTTP 或 MistyAI DTO，可脚本化 success/failure/unknown、健康变化及 energy terminal。配置与黑盒验收顺序见 [Embodiment 运行手册](docs/EMBODIMENT_RUNBOOK.md)。
 
 空闲心跳不会直接调用角色主模型：Runtime 先让 Cognitive 使用辅助模型做 `SILENT` / `SPEAK` 纯文本判定，并把原始判定写入 `data/cognitive/autonomous/YYYYMMDD/*.txt`。`SILENT` 不进入 Session 或记忆；`SPEAK` 才写一条 `internal_reflection` 并调用主模型表达。若辅助模型未配置、失败或输出无效，会按故障策略用主模型做一次同格式判定；用户消息在判定前或判定期间到达都会取消后续主动表达。
 
@@ -76,18 +117,18 @@ MistyAI adapter 支持 typed action、独立 verify、safe-point、reconcile、�
 
 三栏 Web 界面：左侧角色对话，中间九阶段推理时间线，右侧 Persona / 关系 / 心理 / 世界 / 记忆及七维 Homeostasis。顶栏可查看四服务健康、Runtime 生命周期、manifest/profile revision；内稳态面板展示 belief、目标带、precision、情感、候选策略并可在开发模式保存新的参数 revision。保存不会热改运行实例，重新执行 `start.ps1` 后原子激活。
 
-完整四进程拓扑另提供 `http://127.0.0.1:8765/ops` 独立运维页：实时和最近 7 天的 Runtime 事件、journal、队列趋势、推理运行、watchdog、Embodiment 与 ActionExecution 可关联下钻；`development_debug` 模式可直接暂停/恢复、写 checkpoint、注入调试事件并处理动作/交付对账。监控历史保存在可重建的 `data/runtime/observability.sqlite3`，不会取代 hash-chain journal 或调用日志。
+完整四进程拓扑另提供 `http://127.0.0.1:8766/ops` 独立运维页：实时和最近 7 天的 Runtime 事件、journal、队列趋势、推理运行、watchdog、Embodiment 与 ActionExecution 可关联下钻；`development_debug` 模式可直接暂停/恢复、写 checkpoint、注入调试事件并处理动作/交付对账。监控历史保存在可重建的 `data/runtime/observability.sqlite3`，不会取代 hash-chain journal 或调用日志。
 
 ```bash
 pip install -e ".[dev,gui]"
 python -m gui.server  # 兼容的单进程 GUI
-# 浏览器打开 http://127.0.0.1:8765
-# 完整拓扑启动后打开 http://127.0.0.1:8765/ops
+# 浏览器打开 http://127.0.0.1:8766
+# 完整拓扑启动后打开 http://127.0.0.1:8766/ops
 ```
 
-Windows 推荐使用 `start.ps1` / `stop.ps1` 启停完整四进程开发拓扑（已在运行则原子重启，分服务日志写入 `logs/`）。`start.sh` / `stop.sh` 当前仍是兼容的单进程 GUI 路径。
+`start.ps1` / `stop.ps1` 保留为 NeuralCloud 四进程的低层启停器（已在运行则原子重启，分服务日志写入 `logs/`）；它们不会检查或安装前置依赖，也不会部署 MistyAI。日常双工程开发请使用 `dev.ps1`。`start.sh` / `stop.sh` 当前仍是兼容的单进程 GUI 路径。
 
-默认 **demo 模式**：内存记忆 + MockLLM + 日常向 Vaelith 出厂预设（`presets/builtin/vaelith-daily.json`，含 6 条生活情境记忆和 3 条稳定语义事实）。原设定向模板仍保留为 `presets/builtin/vaelith.json`。顶栏「预设」可打开/套用模板；调试与对话写回 `data/presets/` 工作副本。可在顶栏「设置」切换模式：`demo`（Mock）、`live`（任意 OpenAI 兼容端点）、`ollama`（未填 URL 时默认 `http://127.0.0.1:11434/v1`）。端点变量为 `NC_LLM_BASE_URL` / `NC_LLM_API_KEY`（代码默认 `http://127.0.0.1:8080/v1`）；另可配 `NC_AUX_LLM_*` 辅助小模型端点。切换模式时不会丢掉当前预设存档；对话阶段才会请求 LLM。
+默认 **demo 模式**：内存记忆 + MockLLM + 小雾（Misty）出厂预设（`presets/builtin/misty.json`）。该预设完整导入相邻 MistyDigitalBody 冻结设定包 v0.2.0 的姓名、年龄、生日、身高、爱好、人格、表达基线、自我外观认知与背景物品，并以干净关系/记忆状态启动，避免继承旧角色经历。旧 Vaelith 模板仍保留在预设库中，但不再是默认角色。顶栏「预设」可打开/套用模板；调试与对话写回 `data/presets/` 工作副本。可在顶栏「设置」切换模式：`demo`（Mock）、`live`（任意 OpenAI 兼容端点）、`ollama`（未填 URL 时默认 `http://127.0.0.1:11434/v1`）。端点变量为 `NC_LLM_BASE_URL` / `NC_LLM_API_KEY`（代码默认 `http://127.0.0.1:8080/v1`）；另可配 `NC_AUX_LLM_*` 辅助小模型端点。切换模式时不会丢掉当前预设存档；对话阶段才会请求 LLM。
 
 ### live 模式本地模型栈（推荐）
 
@@ -259,7 +300,7 @@ infra/db/                docker-compose + Alembic
 infra/llm/               Modelfile.character（Ollama 主模型定义）
 infra/trace/             JSONL tracer + 成功调用全链路 CallLog
 gui/                     FastAPI + WebSocket 可视化（对话 / 九阶段 / 调试面板 / 预设库 / 配置持久化）
-presets/builtin/         出厂角色模板（Vaelith 日常版 + 原设定版）
+presets/builtin/         出厂角色模板（小雾为默认；Vaelith 模板仅供显式选择）
 eval/                    场景评测、检索延迟基线、角色扮演基准（CharacterEval / RoleEval / TimeChara）
 tests/                   单元与集成测试
 docs/                    TECHNICAL.md 技术文档 + harness/ 设计文档集 00–06

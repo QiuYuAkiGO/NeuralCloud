@@ -27,6 +27,7 @@ from harness.embodiment.providers.simulator import (
 from harness.research.manifest import load_experiment_manifest
 from harness.runtime.action import ActionCoordinator
 from harness.runtime.control import ControlPlane, create_control_app
+from harness.runtime.mistyai_config import MistyAIConnectionSettings
 from harness.runtime.monitor import MonitorRecorder, MonitorStore
 from harness.runtime.perception import PerceptionGuard
 from harness.runtime.rpc import HttpCognitiveClient, HttpHomeostasisClient
@@ -88,15 +89,14 @@ def create_app():
     action_coordinator: ActionCoordinator | None = None
     perception_backend: PerceptionBackend | None = None
     body_state_provider: BodyStateProvider | None = None
-    provider_poll_seconds = float(os.environ.get("NC_MISTYAI_POLL_INTERVAL_SECONDS", "0.2"))
+    provider_poll_seconds = 0.2
     if provider_name == "mistyai":
+        mistyai_settings = MistyAIConnectionSettings.from_environment()
+        provider_poll_seconds = mistyai_settings.poll_interval_seconds
         embodiment_client = MistyAIClient(
-            os.environ.get(
-                "NC_MISTYAI_BASE_URL",
-                os.environ.get("NC_MISTYAI_URL", "http://127.0.0.1:8764"),
-            ),
-            token=os.environ.get("NC_MISTYAI_TOKEN", "development-misty-token"),
-            timeout_seconds=float(os.environ.get("NC_MISTYAI_TIMEOUT_SECONDS", "10")),
+            mistyai_settings.base_url,
+            token=mistyai_settings.token,
+            timeout_seconds=mistyai_settings.timeout_seconds,
         )
         embodiment_manager = EmbodimentManager(
             manifest.embodiment,

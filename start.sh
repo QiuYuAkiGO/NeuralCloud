@@ -7,7 +7,7 @@ PID_FILE="$ROOT/.gui.pid"
 LOG_DIR="$ROOT/logs"
 OUT_LOG="$LOG_DIR/gui.out.log"
 ERR_LOG="$LOG_DIR/gui.err.log"
-PORT=8765
+PORT=8766
 URL="http://127.0.0.1:${PORT}"
 
 cd "$ROOT"

@@ -1,4 +1,4 @@
-"""Demo bootstrap: the default factory preset is Vaelith's daily-life profile."""
+"""Demo bootstrap: the default factory preset is Misty's frozen DigitalBody profile."""
 
 from __future__ import annotations
 

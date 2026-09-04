@@ -1,0 +1,117 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-launcher:
+    runs-on: windows-2025
+    steps:
+      - name: Check out NeuralCloud
+        uses: actions/checkout@v4
+        with:
+          path: neuralcloud
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: neuralcloud/pyproject.toml
+      - name: Install launcher test dependencies
+        run: python -m pip install pytest
+      - name: Validate PowerShell launcher fail-closed behavior
+        working-directory: neuralcloud
+        run: python -m pytest -q tests/test_start_script.py tests/test_dev_launcher.py
+
+  python:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out NeuralCloud
+        uses: actions/checkout@v4
+        with:
+          path: neuralcloud
+      - name: Check out MistyAI contracts
+        uses: actions/checkout@v4
+        with:
+          repository: QiuYuAkiGO/MistyAI
+          path: mistyai
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: neuralcloud/pyproject.toml
+      - name: Install NeuralCloud
+        run: python -m pip install -e "./neuralcloud[dev,gui]"
+      - name: Static checks
+        working-directory: neuralcloud
+        run: python -m ruff check harness tests gui eval infra
+      - name: Tests and cross-repository schema gate
+        working-directory: neuralcloud
+        env:
+          MISTYAI_CONTRACT_DIR: ${{ github.workspace }}/mistyai/contracts
+        run: python -m pytest -q
+
+  mistyai-cross-process:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out NeuralCloud
+        uses: actions/checkout@v4
+        with:
+          path: neuralcloud
+      - name: Check out MistyAI
+        uses: actions/checkout@v4
+        with:
+          repository: QiuYuAkiGO/MistyAI
+          path: mistyai
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            neuralcloud/pyproject.toml
+            mistyai/pyproject.toml
+      - name: Install both projects
+        run: python -m pip install -e "./neuralcloud[dev,gui]" -e "./mistyai[test]"
+      - name: Start MistyAI fixture process
+        env:
+          MISTYAI_FIXTURE_STATE_DIR: ${{ runner.temp }}/mistyai-cross-process
+          MISTYAI_SERVICE_TOKEN: cross-process-service-token
+          PYTHONPATH: ${{ github.workspace }}/neuralcloud:${{ github.workspace }}/mistyai/src
+        run: |
+          python -m uvicorn tests.cross_process.mistyai_fixture_app:app \
+            --host 127.0.0.1 --port 8787 \
+            >"${RUNNER_TEMP}/mistyai-cross-process.log" 2>&1 &
+          echo $! >"${RUNNER_TEMP}/mistyai-cross-process.pid"
+          for attempt in $(seq 1 40); do
+            if curl --fail --silent \
+              -H "Authorization: Bearer ${MISTYAI_SERVICE_TOKEN}" \
+              http://127.0.0.1:8787/v1/health >/dev/null; then
+              exit 0
+            fi
+            sleep 0.25
+          done
+          cat "${RUNNER_TEMP}/mistyai-cross-process.log"
+          exit 1
+      - name: Exercise NeuralCloud adapter over TCP
+        working-directory: neuralcloud
+        env:
+          NC_CROSS_PROCESS_MISTYAI_URL: http://127.0.0.1:8787
+          NC_CROSS_PROCESS_MISTYAI_TOKEN: cross-process-service-token
+        run: python -m pytest -q tests/test_cross_process_mistyai.py
+      - name: Stop MistyAI fixture process
+        if: always()
+        run: |
+          if test -f "${RUNNER_TEMP}/mistyai-cross-process.pid"; then
+            kill "$(cat "${RUNNER_TEMP}/mistyai-cross-process.pid")" || true
+          fi
+      - name: Upload cross-process logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mistyai-cross-process-log
+          path: ${{ runner.temp }}/mistyai-cross-process.log
+          if-no-files-found: ignore

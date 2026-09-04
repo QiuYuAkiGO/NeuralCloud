@@ -3,7 +3,7 @@
   "profile_id": "functional-proxy-v1",
   "revision": 1,
   "mode": "functional_proxy",
-  "persona_version": "persona_v3",
+  "persona_version": "persona_misty_v020",
   "dimensions": {
     "energy_reserve": {"baseline_band": [0.55, 0.78], "hard_bounds": [0.1, 0.95], "drift_per_hour": 0.04, "lower_weight": 0.9, "upper_weight": 0.3, "max_event_delta": 0.12},
     "cognitive_load": {"baseline_band": [0.25, 0.55], "hard_bounds": [0.05, 0.95], "drift_per_hour": 0.05, "lower_weight": 0.2, "upper_weight": 1.0, "max_event_delta": 0.12},

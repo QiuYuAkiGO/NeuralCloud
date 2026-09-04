@@ -88,7 +88,7 @@ gui/              # FastAPI + WebSocket 可视化：server / service / observer 
   runtime_server.py # Runtime 控制面的无状态 GUI facade
 harness/homeostasis/ # 七维 belief、积分、情感、策略、profile revision 与文件持久化
 harness/cognitive/   # Cognitive 独立服务 composition root
-presets/builtin/  # 出厂角色模板（Vaelith 日常版为默认，原设定版保留）
+presets/builtin/  # 出厂角色模板（小雾为默认；Vaelith 模板仅供显式选择）
 eval/             # 场景评测 + 检索延迟基线 + 角色扮演基准（CharacterEval / RoleEval / TimeChara）
 tests/            # 单元与集成测试（pytest，全量不依赖 GPU/DB）
 docs/             # TECHNICAL.md（实现手册）+ harness/ 设计文档集 00–06
@@ -421,7 +421,7 @@ Raw Event → Curator 提出 ops → WriterPipeline 执行
 
 ```bash
 pip install -e ".[dev,gui]"
-python -m gui.server   # http://127.0.0.1:8765
+python -m gui.server   # http://127.0.0.1:8766
 ```
 
 三栏界面：左角色对话（预设选项卡）、中九阶段推理时间线（每阶段完整结构化输出+延迟+token）、右 Persona/关系/心理/世界/记忆计数。三种模式：`demo`（内存 + MockLLM + MockEmbedding）、`live`（任意 OpenAI 兼容端点）、`ollama`（未填 URL 时默认 `http://127.0.0.1:11434/v1`，并从 `/models` 或 Ollama `/api/tags` 拉模型列表）。顶栏**预设**打开模板库，**设置**切模式。发"早上好。"看 Fast Path；发"你昨天不是说不会再管我了吗？"看 Deep Path（Interpreter + Validator 局部重生成）。调试与对话改动自动写回当前预设工作副本；切换模式不会丢存档；**重置**把当前预设恢复为出厂模板。成功对话落盘 `traces/calls/YYYYMMDD/{run_id}.json`（gitignore）。

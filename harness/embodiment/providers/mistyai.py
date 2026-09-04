@@ -5,10 +5,13 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import re
+from collections import OrderedDict
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, TypeVar
 
 import httpx
+from pydantic import BaseModel
 
 from harness.embodiment.capabilities import (
     ACTION_EXECUTE,
@@ -35,6 +38,7 @@ from harness.embodiment.providers.mistyai_dto import (
     NativeAction,
     NativeActionResult,
     NativeBodyState,
+    NativeBodyStateCaptureResponse,
     NativeCapabilities,
     NativeError,
     NativeHealth,
@@ -43,13 +47,38 @@ from harness.embodiment.providers.mistyai_dto import (
 from harness.runtime.models import ActionBackendResult, ActionExecution
 
 PROVIDER_ID = "mistyai"
+EVIDENCE_REF_PATTERN = re.compile(r"^evidence://sha256/([0-9a-f]{64})$")
+EVIDENCE_DIGEST_PATTERN = re.compile(r"^[0-9a-f]{64}$")
+MEDIA_TYPE_PATTERN = re.compile(r"^[a-z0-9!#$%&'*+.^_`|~-]+/[a-z0-9!#$%&'*+.^_`|~-]+$")
+DEFAULT_MAX_EVIDENCE_BYTES = 16 * 1024 * 1024
+DEFAULT_EVIDENCE_TIMEOUT_SECONDS = 10.0
+DEFAULT_EVIDENCE_CACHE_ENTRIES = 128
+DEFAULT_MAX_EVIDENCE_REFS = 32
 TERMINAL_NATIVE_STATES = frozenset(
     {"execution_succeeded", "failed", "cancelled", "unknown"}
 )
 
+_NativePayload = TypeVar("_NativePayload", bound=BaseModel)
+
 
 def _utc_now() -> datetime:
     return datetime.now(UTC)
+
+
+def _validate_native(
+    model: type[_NativePayload],
+    payload: dict[str, Any],
+    *,
+    surface: str,
+) -> _NativePayload:
+    try:
+        return model.model_validate(payload)
+    except Exception as exc:
+        raise MistyAIError(
+            f"provider returned an invalid {surface} response",
+            code="invalid_provider_response",
+            details={"surface": surface, "error_type": type(exc).__name__},
+        ) from exc
 
 
 class MistyAIError(RuntimeError):
@@ -80,9 +109,26 @@ class MistyAIClient:
         *,
         token: str,
         timeout_seconds: float = 10.0,
+        evidence_timeout_seconds: float = DEFAULT_EVIDENCE_TIMEOUT_SECONDS,
+        max_evidence_bytes: int = DEFAULT_MAX_EVIDENCE_BYTES,
+        evidence_cache_entries: int = DEFAULT_EVIDENCE_CACHE_ENTRIES,
+        max_evidence_refs: int = DEFAULT_MAX_EVIDENCE_REFS,
         client: httpx.AsyncClient | None = None,
     ) -> None:
+        if evidence_timeout_seconds <= 0:
+            raise ValueError("evidence timeout must be positive")
+        if max_evidence_bytes <= 0:
+            raise ValueError("maximum evidence size must be positive")
+        if evidence_cache_entries <= 0:
+            raise ValueError("evidence cache size must be positive")
+        if max_evidence_refs <= 0:
+            raise ValueError("maximum evidence reference count must be positive")
         self._owns_client = client is None
+        self.evidence_timeout_seconds = evidence_timeout_seconds
+        self.max_evidence_bytes = max_evidence_bytes
+        self.evidence_cache_entries = evidence_cache_entries
+        self.max_evidence_refs = max_evidence_refs
+        self._verified_evidence: OrderedDict[str, str] = OrderedDict()
         self.client = client or httpx.AsyncClient(
             base_url=base_url.rstrip("/"),
             headers={"Authorization": f"Bearer {token}"},
@@ -94,24 +140,42 @@ class MistyAIClient:
             await self.client.aclose()
 
     async def capabilities(self) -> NativeCapabilities:
-        return NativeCapabilities.model_validate(await self._request("GET", "/v1/capabilities"))
+        return _validate_native(
+            NativeCapabilities,
+            await self._request("GET", "/v1/capabilities"),
+            surface="capabilities",
+        )
 
     async def health(self) -> NativeHealth:
-        return NativeHealth.model_validate(await self._request("GET", "/v1/health"))
+        return _validate_native(
+            NativeHealth,
+            await self._request("GET", "/v1/health"),
+            surface="health",
+        )
 
     async def observe(self) -> NativeObservation:
-        return NativeObservation.model_validate(
+        observation = _validate_native(
+            NativeObservation,
             await self._request(
                 "POST",
                 "/v1/observations:capture",
                 json={"schema_version": "body-contract-v1"},
-            )
+            ),
+            surface="observation",
         )
+        await self.verify_evidence_ref(
+            observation.frame.evidence_ref,
+            expected_digest=observation.frame.sha256,
+            expected_media_type=observation.frame.media_type,
+        )
+        if observation.a11y_ref is not None:
+            await self.verify_evidence_ref(observation.a11y_ref)
+        return observation
 
     async def submit_action(self, payload: dict[str, Any], *, action_id: str) -> NativeAction | None:
         try:
             response = await self._request("POST", "/v1/actions", json=payload)
-            return NativeAction.model_validate(response)
+            return await self._validated_action(response, expected_action_id=action_id)
         except MistyAIError as exc:
             if not exc.uncertain_post:
                 raise
@@ -123,8 +187,9 @@ class MistyAIClient:
                 return None
 
     async def get_action(self, action_id: str) -> NativeAction:
-        return NativeAction.model_validate(
-            await self._request("GET", f"/v1/actions/{action_id}")
+        return await self._validated_action(
+            await self._request("GET", f"/v1/actions/{action_id}"),
+            expected_action_id=action_id,
         )
 
     async def request_safe_point(self, action_id: str) -> NativeActionResult:
@@ -139,22 +204,219 @@ class MistyAIClient:
         return await self._action_result(f"/v1/actions/{action_id}:reconcile")
 
     async def body_state(self) -> NativeBodyState:
-        return NativeBodyState.model_validate(
+        response = _validate_native(
+            NativeBodyStateCaptureResponse,
             await self._request(
                 "POST",
                 "/v1/body-state:capture",
                 json={"schema_version": "body-contract-v1"},
-            )
+            ),
+            surface="body-state",
         )
+        await self.verify_evidence_refs(response.body_state.evidence_refs)
+        return response.body_state
 
     async def _action_result(self, path: str) -> NativeActionResult:
-        return NativeActionResult.model_validate(
+        result = _validate_native(
+            NativeActionResult,
             await self._request(
                 "POST",
                 path,
                 json={"schema_version": "body-contract-v1"},
-            )
+            ),
+            surface="action-result",
         )
+        await self._verify_action_result(result)
+        return result
+
+    async def _validated_action(
+        self,
+        payload: dict[str, Any],
+        *,
+        expected_action_id: str,
+    ) -> NativeAction:
+        action = _validate_native(NativeAction, payload, surface="action")
+        if action.action_id != expected_action_id:
+            raise MistyAIError(
+                "provider returned an action for a different request",
+                code="invalid_provider_response",
+                details={
+                    "surface": "action",
+                    "expected_action_id": expected_action_id,
+                    "actual_action_id": action.action_id,
+                },
+            )
+        if action.result is not None:
+            await self._verify_action_result(action.result)
+        return action
+
+    async def _verify_action_result(self, result: NativeActionResult) -> None:
+        if result.success and not result.evidence_refs:
+            raise MistyAIError(
+                "successful action result has no evidence",
+                code="evidence_missing",
+            )
+        await self.verify_evidence_refs(result.evidence_refs)
+
+    async def verify_evidence_refs(self, references: list[str]) -> None:
+        if len(references) > self.max_evidence_refs:
+            raise MistyAIError(
+                "provider returned too many evidence references",
+                code="evidence_fanout_exceeded",
+                details={
+                    "references": len(references),
+                    "maximum_references": self.max_evidence_refs,
+                },
+            )
+        try:
+            async with asyncio.timeout(self.evidence_timeout_seconds):
+                for reference in references:
+                    await self.verify_evidence_ref(reference)
+        except TimeoutError as exc:
+            raise MistyAIError(
+                "evidence set exceeded its verification deadline",
+                code="evidence_download_failed",
+            ) from exc
+
+    async def verify_evidence_ref(
+        self,
+        reference: str,
+        *,
+        expected_digest: str | None = None,
+        expected_media_type: str | None = None,
+    ) -> str:
+        match = EVIDENCE_REF_PATTERN.fullmatch(reference)
+        if match is None:
+            raise MistyAIError(
+                "provider returned an invalid evidence reference",
+                code="invalid_evidence_ref",
+                details={"reference": reference},
+            )
+        digest = match.group(1)
+        if expected_digest is not None and digest != expected_digest:
+            raise MistyAIError(
+                "evidence reference does not match declared digest",
+                code="evidence_digest_mismatch",
+                details={"expected": expected_digest, "actual": digest},
+            )
+        normalized_expected = (
+            self._normalize_media_type(expected_media_type)
+            if expected_media_type is not None
+            else None
+        )
+        cached_media_type = self._verified_evidence.get(digest)
+        if cached_media_type is not None:
+            if normalized_expected is not None and cached_media_type != normalized_expected:
+                raise MistyAIError(
+                    "evidence media type does not match observation metadata",
+                    code="evidence_media_type_mismatch",
+                    details={"expected": normalized_expected, "actual": cached_media_type},
+                )
+            self._verified_evidence.move_to_end(digest)
+            return digest
+        await self.get_evidence(digest, expected_media_type=normalized_expected)
+        return digest
+
+    async def get_evidence(
+        self,
+        digest: str,
+        *,
+        expected_media_type: str | None = None,
+    ) -> bytes:
+        if EVIDENCE_DIGEST_PATTERN.fullmatch(digest) is None:
+            raise MistyAIError(
+                "evidence digest must be 64 lowercase hexadecimal characters",
+                code="invalid_evidence_digest",
+                details={"digest": digest},
+            )
+        normalized_expected = (
+            self._normalize_media_type(expected_media_type)
+            if expected_media_type is not None
+            else None
+        )
+        try:
+            async with asyncio.timeout(self.evidence_timeout_seconds):
+                async with self.client.stream(
+                    "GET",
+                    f"/v1/evidence/{digest}",
+                    timeout=self.evidence_timeout_seconds,
+                ) as response:
+                    if not response.is_success:
+                        raise MistyAIError(
+                            f"evidence download returned HTTP {response.status_code}",
+                            status_code=response.status_code,
+                            code="evidence_download_failed",
+                            retryable=response.status_code >= 500,
+                        )
+                    media_type = self._normalize_media_type(response.headers.get("content-type"))
+                    if normalized_expected is not None and media_type != normalized_expected:
+                        raise MistyAIError(
+                            "evidence media type does not match observation metadata",
+                            code="evidence_media_type_mismatch",
+                            details={"expected": normalized_expected, "actual": media_type},
+                        )
+                    content_length = response.headers.get("content-length")
+                    if content_length is not None:
+                        try:
+                            declared_length = int(content_length)
+                        except ValueError as exc:
+                            raise MistyAIError(
+                                "evidence response has an invalid Content-Length",
+                                code="invalid_evidence_content_length",
+                            ) from exc
+                        if declared_length < 0 or declared_length > self.max_evidence_bytes:
+                            raise MistyAIError(
+                                "evidence response exceeds the configured size limit",
+                                code="evidence_too_large",
+                                details={
+                                    "declared_bytes": declared_length,
+                                    "maximum_bytes": self.max_evidence_bytes,
+                                },
+                            )
+                    content = bytearray()
+                    hasher = hashlib.sha256()
+                    async for chunk in response.aiter_bytes():
+                        if len(content) + len(chunk) > self.max_evidence_bytes:
+                            raise MistyAIError(
+                                "evidence response exceeds the configured size limit",
+                                code="evidence_too_large",
+                                details={"maximum_bytes": self.max_evidence_bytes},
+                            )
+                        content.extend(chunk)
+                        hasher.update(chunk)
+        except MistyAIError:
+            raise
+        except (TimeoutError, httpx.TimeoutException, httpx.TransportError) as exc:
+            raise MistyAIError(
+                str(exc) or type(exc).__name__,
+                code="evidence_download_failed",
+            ) from exc
+        actual_digest = hasher.hexdigest()
+        if actual_digest != digest:
+            raise MistyAIError(
+                "downloaded evidence failed SHA-256 verification",
+                code="evidence_digest_mismatch",
+                details={"expected": digest, "actual": actual_digest},
+            )
+        self._remember_verified_evidence(digest, media_type)
+        return bytes(content)
+
+    @staticmethod
+    def _normalize_media_type(value: str | None) -> str:
+        media_type = (value or "").partition(";")[0].strip().lower()
+        if MEDIA_TYPE_PATTERN.fullmatch(media_type) is None:
+            raise MistyAIError(
+                "evidence response has an invalid Content-Type",
+                code="invalid_evidence_media_type",
+                details={"content_type": value},
+            )
+        return media_type
+
+    def _remember_verified_evidence(self, digest: str, media_type: str) -> None:
+        self._verified_evidence[digest] = media_type
+        self._verified_evidence.move_to_end(digest)
+        while len(self._verified_evidence) > self.evidence_cache_entries:
+            self._verified_evidence.popitem(last=False)
 
     async def _request(
         self,
@@ -168,28 +430,42 @@ class MistyAIClient:
         except (httpx.TimeoutException, httpx.TransportError) as exc:
             raise MistyAIError(str(exc) or type(exc).__name__) from exc
         if response.is_success:
-            payload = response.json()
+            try:
+                payload = response.json()
+            except Exception as exc:
+                raise MistyAIError(
+                    "provider returned invalid JSON",
+                    code="invalid_provider_response",
+                    details={"path": path, "error_type": type(exc).__name__},
+                ) from exc
             if not isinstance(payload, dict):
-                raise MistyAIError("provider returned a non-object JSON response")
+                raise MistyAIError(
+                    "provider returned a non-object JSON response",
+                    code="invalid_provider_response",
+                    details={"path": path},
+                )
             return payload
+        raise self._response_error(response)
+
+    @staticmethod
+    def _response_error(response: httpx.Response) -> MistyAIError:
         try:
             native = NativeError.model_validate(response.json())
             detail = native.error
-            raise MistyAIError(
+            return MistyAIError(
                 detail.message,
                 status_code=response.status_code,
                 code=detail.code,
                 retryable=detail.retryable,
                 details=detail.details,
             )
-        except MistyAIError:
-            raise
         except Exception as exc:
-            raise MistyAIError(
+            return MistyAIError(
                 f"provider HTTP {response.status_code}",
                 status_code=response.status_code,
                 code="invalid_error_response",
-            ) from exc
+                details={"parse_error": type(exc).__name__},
+            )
 
 
 class MistyAIActionBackend:
@@ -334,7 +610,13 @@ class MistyAIActionBackend:
             "ambiguous_target",
             "deadline_expired",
         }
-        unknown = reconcile or (exc.uncertain_post and not deterministic)
+        evidence_unverified = exc.code.startswith("evidence_") or exc.code in {
+            "invalid_evidence_ref",
+            "invalid_evidence_digest",
+            "invalid_evidence_content_length",
+            "invalid_provider_response",
+        }
+        unknown = evidence_unverified or reconcile or (exc.uncertain_post and not deterministic)
         return ActionBackendResult(
             success=False,
             summary=f"{PROVIDER_ID}:{exc.code}: {exc}",
@@ -424,11 +706,19 @@ class MistyAICapabilityProvider:
     async def health(self) -> ProviderHealth:
         native = await self.client.health()
         observation = _worst_health(native.environment.status, native.observation.status)
+        action = HealthStatus(native.action.status)
+        restricted = native.agency_state == "TERMINAL" or native.manual_takeover_active
+        if native.manual_takeover_active:
+            observation = HealthStatus.UNAVAILABLE
+        action_execute = HealthStatus.UNAVAILABLE if restricted else action
+        overall = HealthStatus(native.status)
+        if restricted and overall == HealthStatus.HEALTHY:
+            overall = HealthStatus.DEGRADED
         mapping = {
-            ACTION_EXECUTE: HealthStatus(native.action.status),
-            ACTION_SAFE_POINT: HealthStatus(native.action.status),
-            ACTION_VERIFY: HealthStatus(native.action.status),
-            ACTION_RECONCILE: HealthStatus(native.action.status),
+            ACTION_EXECUTE: action_execute,
+            ACTION_SAFE_POINT: action,
+            ACTION_VERIFY: action,
+            ACTION_RECONCILE: action,
             OBSERVATION_SNAPSHOT: observation,
             EVIDENCE_REFERENCE: HealthStatus(native.evidence_store.status),
         }
@@ -447,12 +737,13 @@ class MistyAICapabilityProvider:
         return ProviderHealth(
             provider_id=PROVIDER_ID,
             body_instance_id=native.body_instance_id,
-            status=HealthStatus(native.status),
+            status=overall,
             capability_health=mapping,
             observed_at=native.checked_at,
             detail={
                 "active_action_id": native.active_action_id,
                 "manual_takeover_active": native.manual_takeover_active,
+                "agency_state": native.agency_state,
             },
         )
 
@@ -468,7 +759,17 @@ class MistyAIBodyStateProvider:
             body_instance_id=native.body_instance_id,
             revision=native.revision,
             captured_at=native.captured_at,
-            energy=EnergyState.model_validate(native.energy.model_dump(mode="json")),
+            energy=EnergyState(
+                capacity_units=native.energy.capacity_units,
+                available_units=native.energy.available_units,
+                available_ratio=native.energy.available_ratio,
+                delta_units_per_minute=native.energy.delta_units_per_minute,
+                charging=native.energy.charging,
+                estimated_time_to_empty_seconds=(
+                    native.energy.estimated_time_to_terminal_seconds
+                ),
+                terminal=native.energy.terminal,
+            ),
             evidence_refs=[_evidence(ref, created_at=native.captured_at) for ref in native.evidence_refs],
         )
 

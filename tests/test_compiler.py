@@ -80,6 +80,8 @@ def test_compiler_records_provenance() -> None:
     messages = context.render_messages()
     assert messages[0]["role"] == "system"
     assert "Vaelith" in messages[0]["content"]
+    assert "知识边界" in messages[0]["content"]
+    assert "不知道现代社会常识之外的事" in messages[0]["content"]
     assert "avoid_explicit_psychological_explanation" in messages[0]["content"]
     assert "昨天" in messages[1]["content"]
 

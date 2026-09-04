@@ -9,6 +9,13 @@ import pytest
 from harness.config import Settings
 from harness.contracts.decisions import DeliveryEvidence, GoalProposal
 from harness.contracts.envelope import DomainCommandEnvelope, VersionVector
+from harness.embodiment.capabilities import (
+    ACTION_EXECUTE,
+    EVIDENCE_REFERENCE,
+    CapabilityStatus,
+)
+from harness.embodiment.manager import EmbodimentManager
+from harness.embodiment.providers.simulator import DeterministicEmbodimentSimulator
 from harness.memory.service import build_inmemory_service
 from harness.pipeline.pipeline import InferencePipeline
 from harness.research.manifest import ExperimentManifest
@@ -29,6 +36,7 @@ from harness.runtime import (
     RuntimeEventType,
     RuntimeJournal,
     RuntimeLifecycle,
+    RuntimeStateError,
     RuntimeSupervisor,
 )
 from tests.factories import vaelith
@@ -327,6 +335,58 @@ def test_pipeline_prepare_is_side_effect_free_and_commit_is_idempotent(tmp_path)
     asyncio.run(scenario())
 
 
+def test_replayed_domain_command_renews_only_transport_window(tmp_path) -> None:
+    _, _, cognitive = _pipeline_adapter(tmp_path)
+    supervisor = RuntimeSupervisor(
+        manifest=_manifest(),
+        cognitive=cognitive,
+        homeostasis=PassiveHomeostasisAdapter(),
+        state_dir=tmp_path / "runtime-command-replay",
+    )
+    event = _event(1, RuntimeEventType.USER_MESSAGE, RuntimeEventPriority.USER)
+    original = DomainCommandEnvelope[dict[str, object]](
+        command_id="cmd_replay",
+        command_type="PrepareResponse",
+        event_id=event.event_id,
+        receive_seq=event.receive_seq,
+        correlation_id=event.correlation_id,
+        runtime_instance_id=supervisor.runtime_instance_id,
+        manifest_revision=1,
+        idempotency_key="cognitive:prepare:evt_1",
+        issued_at=NOW - timedelta(minutes=2),
+        deadline=NOW - timedelta(minutes=1),
+        expected_revision=0,
+        version_vector=VersionVector(),
+        payload={"text": "replay safely"},
+    )
+    original_hash = original.effective_request_hash()
+    supervisor.journal.append(
+        "domain_command_intent",
+        event_id=event.event_id,
+        receive_seq=event.receive_seq,
+        correlation_id=event.correlation_id,
+        command_id=original.command_id,
+        idempotency_key=original.idempotency_key,
+        data={"service": "cognitive", "envelope": original.model_dump(mode="json")},
+    )
+
+    replay = supervisor._make_command(
+        event,
+        command_type="PrepareResponse",
+        idempotency_key=original.idempotency_key,
+        expected_revision=0,
+        payload={"text": "replay safely"},
+    )
+
+    assert replay.command_id == original.command_id
+    assert replay.idempotency_key == original.idempotency_key
+    assert replay.payload == original.payload
+    assert replay.effective_request_hash() == original_hash
+    assert replay.issued_at > original.deadline
+    assert replay.deadline > replay.issued_at
+    cognitive.pipeline.memory.close()
+
+
 def test_supervisor_user_event_pause_resume_and_checkpoint(tmp_path) -> None:
     _, _, cognitive = _pipeline_adapter(tmp_path)
     supervisor = RuntimeSupervisor(
@@ -371,6 +431,145 @@ def test_supervisor_user_event_pause_resume_and_checkpoint(tmp_path) -> None:
         assert supervisor.checkpoint_store.load() is not None
         await supervisor.stop(reason="test complete")
         assert supervisor.lifecycle == RuntimeLifecycle.STOPPED
+
+    asyncio.run(scenario())
+
+
+def test_pause_failure_faults_instead_of_sticking_in_pausing(tmp_path) -> None:
+    _, _, cognitive = _pipeline_adapter(tmp_path)
+
+    async def failing_pause_maintenance(*, timeout: float) -> bool:
+        raise ConnectionError("maintenance endpoint unavailable")
+
+    cognitive.pause_maintenance = failing_pause_maintenance  # type: ignore[method-assign]
+    supervisor = RuntimeSupervisor(
+        manifest=_manifest(),
+        cognitive=cognitive,
+        homeostasis=PassiveHomeostasisAdapter(),
+        state_dir=tmp_path / "runtime-pause-failure",
+    )
+
+    async def scenario() -> None:
+        await supervisor.boot_and_recover()
+        with pytest.raises(RuntimeStateError, match="maintenance endpoint unavailable"):
+            await supervisor.pause(reason="test failing pause")
+        assert supervisor.lifecycle == RuntimeLifecycle.FAULTED
+        assert "maintenance endpoint unavailable" in supervisor.lifecycle_reason
+        cognitive.pipeline.memory.close()
+
+    asyncio.run(scenario())
+
+
+def test_pause_transport_wait_is_bounded(tmp_path) -> None:
+    _, _, cognitive = _pipeline_adapter(tmp_path)
+
+    async def blocked_pause_maintenance(*, timeout: float) -> bool:
+        await asyncio.Event().wait()
+        return True
+
+    cognitive.pause_maintenance = blocked_pause_maintenance  # type: ignore[method-assign]
+    supervisor = RuntimeSupervisor(
+        manifest=_manifest(),
+        cognitive=cognitive,
+        homeostasis=PassiveHomeostasisAdapter(),
+        state_dir=tmp_path / "runtime-blocked-pause",
+        maintenance_drain_seconds=0.01,
+    )
+
+    async def scenario() -> None:
+        await supervisor.boot_and_recover()
+        with pytest.raises(RuntimeStateError, match="TimeoutError"):
+            await supervisor.pause(reason="test bounded pause")
+        assert supervisor.lifecycle == RuntimeLifecycle.FAULTED
+        cognitive.pipeline.memory.close()
+
+    asyncio.run(scenario())
+
+
+def test_domain_timeout_requeues_event_even_when_recovery_pause_fails(tmp_path) -> None:
+    _, _, cognitive = _pipeline_adapter(tmp_path)
+
+    async def failing_prepare(command):
+        raise TimeoutError()
+
+    async def failing_pause_maintenance(*, timeout: float) -> bool:
+        raise ConnectionError("maintenance endpoint unavailable")
+
+    cognitive.prepare_response = failing_prepare  # type: ignore[method-assign]
+    cognitive.pause_maintenance = failing_pause_maintenance  # type: ignore[method-assign]
+    supervisor = RuntimeSupervisor(
+        manifest=_manifest(),
+        cognitive=cognitive,
+        homeostasis=PassiveHomeostasisAdapter(),
+        state_dir=tmp_path / "runtime-domain-timeout",
+    )
+
+    async def scenario() -> None:
+        await supervisor.boot_and_recover()
+        accepted = await supervisor.submit_user_message("retry me", session_id="sess_1")
+        assert accepted is not None
+        event = await supervisor.queue.get(timeout=0)
+        assert event is not None
+
+        result = await supervisor.dispatch(event)
+
+        assert result.status == "deferred"
+        assert result.detail["error"] == "TimeoutError"
+        assert supervisor.lifecycle == RuntimeLifecycle.FAULTED
+        replay = await supervisor.queue.get(timeout=0)
+        assert replay is not None
+        assert replay.event_id == event.event_id
+        record_types = [record.record_type for record in supervisor.journal.records()]
+        assert "pause_failed" in record_types
+        assert "event_requeued" in record_types
+        cognitive.pipeline.memory.close()
+
+    asyncio.run(scenario())
+
+
+def test_required_embodiment_runtime_loss_pauses_and_blocks_resume(tmp_path) -> None:
+    manifest_payload = _manifest().model_dump(mode="json")
+    manifest_payload["embodiment"] = {
+        "mode": "observe",
+        "required_for_runtime": True,
+        "body_provider": "none",
+        "capability_requirements": [
+            {"capability": ACTION_EXECUTE, "required": True},
+            {"capability": EVIDENCE_REFERENCE, "required": True},
+        ],
+    }
+    manifest = ExperimentManifest.model_validate(manifest_payload)
+    simulator = DeterministicEmbodimentSimulator(clock=lambda: NOW)
+    manager = EmbodimentManager(manifest.embodiment, simulator)
+    _, _, cognitive = _pipeline_adapter(tmp_path)
+    supervisor = RuntimeSupervisor(
+        manifest=manifest,
+        cognitive=cognitive,
+        homeostasis=PassiveHomeostasisAdapter(),
+        embodiment_manager=manager,
+        state_dir=tmp_path / "runtime-required-embodiment",
+    )
+
+    async def scenario() -> None:
+        await supervisor.boot_and_recover()
+        assert supervisor.lifecycle == RuntimeLifecycle.RUNNING
+
+        simulator.set_capability_status(EVIDENCE_REFERENCE, CapabilityStatus.UNAVAILABLE)
+        await supervisor._refresh_embodiment()
+
+        assert supervisor.lifecycle == RuntimeLifecycle.PAUSED
+        assert manager.supports(ACTION_EXECUTE) is True
+        assert manager.supports(EVIDENCE_REFERENCE) is False
+        with pytest.raises(
+            RuntimeStateError,
+            match="cannot resume while required embodiment is unavailable",
+        ):
+            await supervisor.resume()
+
+        simulator.set_capability_status(EVIDENCE_REFERENCE, CapabilityStatus.AVAILABLE)
+        await supervisor.resume(reason="required embodiment recovered")
+        assert supervisor.lifecycle == RuntimeLifecycle.RUNNING
+        await supervisor.stop(reason="test complete")
 
     asyncio.run(scenario())
 

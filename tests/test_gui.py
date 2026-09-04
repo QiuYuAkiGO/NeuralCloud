@@ -136,11 +136,11 @@ def test_api_status_and_index(api_client) -> None:
     assert status.status_code == 200
     body = status.json()
     assert body["mode"] == "demo"
-    assert body["persona"]["identity"]["name"] == "Vaelith"
+    assert body["persona"]["identity"]["name"] == "小雾"
     assert body["persona"]["identity"]["locked"] is True
     assert body["speakers"]["user_name"] == "用户"
-    assert body["speakers"]["character_name"] == "Vaelith"
-    assert body["counts"]["episodic"] >= 1
+    assert body["speakers"]["character_name"] == "小雾"
+    assert body["counts"]["episodic"] == 0
     assert body["llm"]["aux"]["active"] is False
     assert body["llm"]["embedding"]["backend"] == "mock"
     assert 'id="embed-badge"' in home.text
@@ -151,7 +151,7 @@ def test_api_status_and_index(api_client) -> None:
     assert 'id="chat-tabs"' in home.text
     assert body["presets"]["active_id"] == DEFAULT_PRESET_ID
     default_summary = next(item for item in body["presets"]["items"] if item["preset_id"] == DEFAULT_PRESET_ID)
-    assert default_summary["name"] == "Vaelith · 日常"
+    assert default_summary["name"] == "小雾 · MistyDigitalBody v0.2.0"
     css = api_client.get("/static/styles.css")
     assert css.status_code == 200
     js = api_client.get("/static/app.js")
@@ -252,8 +252,8 @@ def test_api_config_and_reset(api_client) -> None:
     assert reset.status_code == 200
     after = api_client.get("/api/status?session_id=sess_0881").json()
     assert after["session"]["turns"] == []
-    assert after["persona"]["identity"]["name"] == "Vaelith"
-    assert after["counts"]["episodic"] >= 1
+    assert after["persona"]["identity"]["name"] == "小雾"
+    assert after["counts"]["episodic"] == 0
 
 
 def test_api_speakers_rename_and_chat(api_client) -> None:
@@ -277,8 +277,8 @@ def test_api_speakers_rename_and_chat(api_client) -> None:
     after = reset.json()
     assert after["session"]["turns"] == []
     assert after["speakers"]["user_name"] == "用户"
-    assert after["speakers"]["character_name"] == "Vaelith"
-    assert after["persona"]["identity"]["name"] == "Vaelith"
+    assert after["speakers"]["character_name"] == "小雾"
+    assert after["persona"]["identity"]["name"] == "小雾"
 
 
 def test_api_config_live_does_not_call_llm_during_seed(api_client) -> None:
@@ -289,8 +289,8 @@ def test_api_config_live_does_not_call_llm_during_seed(api_client) -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["mode"] == "live"
-    assert body["persona"]["identity"]["name"] == "Vaelith"
-    assert body["counts"]["episodic"] >= 1
+    assert body["persona"]["identity"]["name"] == "小雾"
+    assert body["counts"]["episodic"] == 0
     assert body["llm"]["reachable"] is False
     assert "aux" in body["llm"]
     assert set(body["llm"]["aux"]) >= {"base_url", "model", "reachable", "preloaded", "active"}
@@ -346,8 +346,15 @@ def test_api_debug_state_and_edits(api_client) -> None:
     state = api_client.get("/api/debug/state")
     assert state.status_code == 200
     body = state.json()
-    assert body["persona"]["identity"]["name"] == "Vaelith"
-    assert len(body["episodic"]) >= 1
+    assert body["persona"]["identity"]["name"] == "小雾"
+    assert body["episodic"] == []
+    seeded = api_client.post(
+        "/api/debug/episodic",
+        json={"summary": "初始调试事件", "importance": 0.5, "character_action": "认真听"},
+    )
+    assert seeded.status_code == 200
+    body = seeded.json()
+    assert len(body["episodic"]) == 1
     assert "embedding" not in body["episodic"][0]
     assert body["tuning"]["retrieval_top_k"] >= 1
 
@@ -452,7 +459,7 @@ def test_api_debug_state_and_edits(api_client) -> None:
     assert reset.status_code == 200
     after = api_client.get("/api/debug/state").json()
     assert "debug" not in after["persona"]["identity"]["core_traits"]
-    assert after["relationship"]["closeness"] != pytest.approx(0.91)
+    assert after["relationship"] is None
 
 
 def test_gui_settings_file_roundtrip(tmp_path) -> None:

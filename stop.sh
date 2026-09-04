@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# 停止 NeuralCloud GUI 服务（python -m gui.server，默认端口 8765）
+# 停止 NeuralCloud GUI 服务（python -m gui.server，默认端口 8766）
 set +e
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PID_FILE="$ROOT/.gui.pid"
-PORT=8765
+PORT=8766
 QUIET=0
 
 if [[ "${1:-}" == "--quiet" || "${1:-}" == "-q" ]]; then

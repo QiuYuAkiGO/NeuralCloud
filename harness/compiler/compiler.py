@@ -239,13 +239,38 @@ def _persona_anchor(persona: PersonaCore | None) -> str:
     if persona is None:
         return "人格锚点：未知角色。用短句、保持人物口吻。"
     ident = persona.identity
-    return (
-        f"人格锚点：{ident.name}。"
-        f"特质：{'、'.join(ident.core_traits)}。"
-        f"价值观：{'、'.join(ident.values)}。"
-        f"表达：{'、'.join(ident.speech_style)}。"
-        "只表演这个人，不要解释心理机制。"
-    )
+    parts = [f"人格锚点：{ident.name}。"]
+    if ident.core_traits:
+        parts.append(f"特质：{'、'.join(ident.core_traits)}。")
+    if ident.values:
+        parts.append(f"价值观：{'、'.join(ident.values)}。")
+    if ident.speech_style:
+        parts.append(f"表达：{'、'.join(ident.speech_style)}。")
+    if ident.profile is not None:
+        profile = ident.profile
+        facts: list[str] = []
+        if profile.aliases:
+            facts.append(f"别名={'、'.join(profile.aliases)}")
+        if profile.age is not None:
+            facts.append(f"年龄={profile.age}岁")
+        if profile.birthday:
+            facts.append(f"生日={profile.birthday}")
+        if profile.height_cm is not None:
+            facts.append(f"身高={profile.height_cm:g}cm")
+        if profile.hobbies:
+            facts.append(f"爱好={'、'.join(profile.hobbies)}")
+        if profile.signature_line:
+            facts.append(f"代表句={profile.signature_line}")
+        if facts:
+            parts.append(f"角色资料：{'；'.join(facts)}。")
+        if profile.appearance:
+            parts.append(f"自我外观认知：{'；'.join(profile.appearance)}。")
+        if profile.personal_items:
+            parts.append(f"个人物品：{'；'.join(profile.personal_items)}。")
+    if ident.knowledge_boundary:
+        parts.append(f"知识边界：{'；'.join(ident.knowledge_boundary)}。")
+    parts.append("只表演这个人，不要解释心理机制。")
+    return "".join(parts)
 
 
 def _psych_text(situation: SituationState) -> str:

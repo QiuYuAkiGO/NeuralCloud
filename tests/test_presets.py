@@ -31,17 +31,23 @@ def test_vaelith_builtin_loads() -> None:
     assert preset.relationships[0].last_major_event == "evt_09014"
 
 
-def test_daily_vaelith_is_the_default_builtin() -> None:
+def test_misty_digitalbody_is_the_default_builtin() -> None:
     preset = load_builtin(DEFAULT_PRESET_ID)
-    assert DEFAULT_PRESET_ID == "vaelith-daily"
-    assert preset.preset_id == "vaelith-daily"
-    assert preset.name == "Vaelith · 日常"
-    assert preset.persona.identity.name == "Vaelith"
-    assert "嘴硬心软" in preset.persona.identity.core_traits
-    assert len(preset.episodic) == 6
-    assert len(preset.semantic) == 3
+    assert DEFAULT_PRESET_ID == "misty"
+    assert preset.preset_id == "misty"
+    assert preset.name == "小雾 · MistyDigitalBody v0.2.0"
+    assert preset.persona.identity.name == "小雾"
+    assert preset.persona.identity.core_traits == ["温柔", "慢热", "容易害羞", "情绪细腻"]
+    assert preset.persona.identity.profile is not None
+    assert preset.persona.identity.profile.age == 19
+    assert preset.persona.identity.profile.birthday == "5月20日"
+    assert preset.persona.identity.profile.height_cm == 157
+    assert preset.persona.identity.profile.hobbies == ["听歌", "摄影", "收集蝴蝶结"]
+    assert preset.persona.identity.profile.source_refs
+    assert preset.relationships == []
+    assert preset.episodic == []
+    assert preset.semantic == []
     assert preset.transcript == []
-    assert preset.relationships[0].last_major_event == "evt_daily_006"
 
 
 def test_snapshot_hydrate_roundtrip() -> None:
@@ -74,7 +80,7 @@ def test_snapshot_hydrate_roundtrip() -> None:
 
 
 def test_hydrate_backfills_missing_embeddings() -> None:
-    factory = load_builtin(DEFAULT_PRESET_ID)
+    factory = load_builtin("vaelith-daily")
     assert all(event.embedding is None for event in factory.episodic)
     assert all(fact.embedding is None for fact in factory.semantic)
     memory = build_inmemory_service()
@@ -88,7 +94,7 @@ def test_hydrate_backfills_missing_embeddings() -> None:
 
 
 def test_hydrate_preserves_existing_embeddings() -> None:
-    factory = load_builtin(DEFAULT_PRESET_ID)
+    factory = load_builtin("vaelith-daily")
     sentinel = [0.01] * 1024
     seeded = factory.episodic[0].model_copy(update={"embedding": sentinel})
     preset = factory.model_copy(update={"episodic": [seeded, *factory.episodic[1:]]})

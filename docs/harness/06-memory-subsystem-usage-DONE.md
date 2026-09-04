@@ -698,7 +698,7 @@ Eval 场景覆盖：
 
 入口：`python -m gui.server` → 顶栏 **调试**。独立对话框，用滑条 / 标签直接改 in-memory 记忆，并自动写回当前预设工作副本。事件页可以手动改字段，也可以重新走 Dual Memory / Curator。
 
-顶栏 **预设** 打开模板库。出厂模板在 `presets/builtin/`（git 跟踪，`vaelith-daily.json` 为日常向默认模板，`vaelith.json` 保留原设定）；工作副本在 `data/presets/`（gitignore）。一份预设 = 人格 + 六层记忆快照 + 完整聊天记录（`schema_version=preset-v1`）。打开模板会复制到工作目录；调试与对话自动 flush。`builtin_id == preset_id` 的出厂 id 受保护不可删除。工作目录可用 `NC_GUI_PRESETS` 覆盖。
+顶栏 **预设** 打开模板库。出厂模板在 `presets/builtin/`（git 跟踪，`misty.json` 为默认模板；Vaelith 模板仅供显式选择）；工作副本在 `data/presets/`（gitignore）。一份预设 = 人格 + 六层记忆快照 + 完整聊天记录（`schema_version=preset-v1`）。打开模板会复制到工作目录；调试与对话自动 flush。`builtin_id == preset_id` 的出厂 id 受保护不可删除。工作目录可用 `NC_GUI_PRESETS` 覆盖。
 
 REST：`GET /api/presets`，`POST /api/presets/{open,apply,new,restore}`，`DELETE /api/presets/{id}`。`POST /api/reset` 把当前预设恢复为出厂模板。
 

@@ -128,9 +128,10 @@ class EmbodimentManager:
                 if item.required
             }
             required_unhealthy = required - effective
-            if (
-                required_unhealthy
-                or health.status == HealthStatus.DEGRADED
+            if required_unhealthy:
+                state = EmbodimentState.UNAVAILABLE
+            elif (
+                health.status == HealthStatus.DEGRADED
                 or negotiated.degraded
                 or set(health.capability_health.values()) & {HealthStatus.DEGRADED, HealthStatus.UNAVAILABLE}
             ):

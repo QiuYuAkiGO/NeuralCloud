@@ -40,6 +40,7 @@ from harness.embodiment.capabilities import (
     OBSERVATION_SNAPSHOT,
     PHYSIOLOGY_BODY_STATE,
     EmbodimentState,
+    EmbodimentStatus,
 )
 from harness.embodiment.contracts import (
     BodyStateSnapshot as EmbodimentBodyStateSnapshot,
@@ -381,12 +382,27 @@ class RuntimeSupervisor:
                 data={"before": before.model_dump(mode="json"), "after": after.model_dump(mode="json")},
             )
             await self._publish("embodiment.status", after.model_dump(mode="json"))
+        if (
+            self.lifecycle == RuntimeLifecycle.RUNNING
+            and self._required_embodiment_blocks_runtime(after)
+        ):
+            await self.pause(reason=f"required embodiment became {after.state.value}")
         if self.lifecycle == RuntimeLifecycle.RUNNING:
             self._start_embodiment_guards()
         if not self.embodiment.supports(OBSERVATION_SNAPSHOT) and self._perception_guard is not None:
             await self._perception_guard.stop()
         if not self.embodiment.supports(PHYSIOLOGY_BODY_STATE) and self._body_state_guard is not None:
             await self._body_state_guard.stop()
+
+    def _required_embodiment_blocks_runtime(
+        self,
+        status: EmbodimentStatus | None = None,
+    ) -> bool:
+        effective = status or self.embodiment.status()
+        return (
+            self.manifest.embodiment.required_for_runtime
+            and effective.state in {EmbodimentState.UNAVAILABLE, EmbodimentState.TERMINAL}
+        )
 
     def accepts_event(self, event_type: RuntimeEventType) -> bool:
         if self.lifecycle in {RuntimeLifecycle.STOPPING, RuntimeLifecycle.STOPPED}:
@@ -566,11 +582,7 @@ class RuntimeSupervisor:
                 )
             requires_pause = (
                 unresolved_action
-                or (
-                    self.manifest.embodiment.required_for_runtime
-                    and embodiment_status.state
-                    in {EmbodimentState.UNAVAILABLE, EmbodimentState.TERMINAL}
-                )
+                or self._required_embodiment_blocks_runtime(embodiment_status)
                 or previous_lifecycle in {
                 RuntimeLifecycle.PAUSED,
                 RuntimeLifecycle.PAUSING,
@@ -660,16 +672,32 @@ class RuntimeSupervisor:
                     await self.action_coordinator.request_preemption(reason="user message preemption")
                 result = await self._dispatch_domain_event(event, process_seq)
         except Exception as exc:
+            error_detail = str(exc).strip() or type(exc).__name__
             self._append_journal(
                 "processing_failed",
                 event=event,
                 process_seq=process_seq,
-                data={"error": str(exc), "error_type": type(exc).__name__},
+                data={"error": error_detail, "error_type": type(exc).__name__},
             )
             retryable = isinstance(exc, (DomainCommandError, TimeoutError, ConnectionError))
             if retryable:
                 if self.lifecycle == RuntimeLifecycle.RUNNING:
-                    await self.pause(reason=f"critical domain failure: {exc}")
+                    try:
+                        await self.pause(reason=f"critical domain failure: {error_detail}")
+                    except Exception as pause_exc:
+                        # Pausing is a recovery action, so its own failure must not
+                        # kill the run loop before the original event is durably
+                        # requeued.  pause() has already moved the lifecycle to a
+                        # terminal recovery state when this path is reached.
+                        self._append_journal(
+                            "pause_failed",
+                            event=event,
+                            process_seq=process_seq,
+                            data={
+                                "error": str(pause_exc).strip() or type(pause_exc).__name__,
+                                "error_type": type(pause_exc).__name__,
+                            },
+                        )
                 try:
                     await self.queue.put(event)
                     self._append_journal(
@@ -685,7 +713,7 @@ class RuntimeSupervisor:
                 receive_seq=event.receive_seq,
                 process_seq=process_seq,
                 status="deferred" if retryable else "failed",
-                detail={"error": str(exc), "error_type": type(exc).__name__},
+                detail={"error": error_detail, "error_type": type(exc).__name__},
             )
         self._append_journal(
             "processing_completed",
@@ -711,30 +739,48 @@ class RuntimeSupervisor:
         self.scheduler.suspend()
         self.pause_observations.begin(utc_now())
         try:
-            await asyncio.wait_for(
-                self.action_coordinator.request_preemption(reason=reason),
-                timeout=self.maintenance_drain_seconds,
+            try:
+                await asyncio.wait_for(
+                    self.action_coordinator.request_preemption(reason=reason),
+                    timeout=self.maintenance_drain_seconds,
+                )
+            except TimeoutError as exc:
+                raise RuntimeStateError("action could not reach safe point") from exc
+            if not await self._drain_action_tasks(timeout=self.maintenance_drain_seconds):
+                raise RuntimeStateError("foreground action did not stop")
+            # The service-side timeout cannot help while Cognitive's event loop
+            # is too busy to accept the request.  Bound the transport wait from
+            # Runtime as well so PAUSING always converges to PAUSED or FAULTED.
+            drained = await asyncio.wait_for(
+                self.cognitive.pause_maintenance(timeout=self.maintenance_drain_seconds),
+                timeout=self.maintenance_drain_seconds + 1.0,
             )
-        except TimeoutError as exc:
-            await self._transition(RuntimeLifecycle.FAULTED, reason="action could not reach safe point")
-            raise RuntimeStateError("action could not reach safe point") from exc
-        if not await self._drain_action_tasks(timeout=self.maintenance_drain_seconds):
-            await self._transition(RuntimeLifecycle.FAULTED, reason="foreground action did not stop")
-            raise RuntimeStateError("foreground action did not stop")
-        drained = await self.cognitive.pause_maintenance(timeout=self.maintenance_drain_seconds)
-        self._append_journal("maintenance_drain", data={"completed": drained})
-        if not drained:
-            await self._transition(
-                RuntimeLifecycle.FAULTED,
-                reason="cognitive maintenance did not drain within deadline",
-            )
-            raise RuntimeStateError("cognitive maintenance did not drain within deadline")
-        await self._transition(RuntimeLifecycle.PAUSED, reason=reason)
+            self._append_journal("maintenance_drain", data={"completed": drained})
+            if not drained:
+                raise RuntimeStateError("cognitive maintenance did not drain within deadline")
+            await self._transition(RuntimeLifecycle.PAUSED, reason=reason)
+        except Exception as exc:
+            error_detail = str(exc).strip() or type(exc).__name__
+            if self.lifecycle == RuntimeLifecycle.PAUSING:
+                await self._transition(
+                    RuntimeLifecycle.FAULTED,
+                    reason=f"pause failed: {error_detail}",
+                )
+            if isinstance(exc, RuntimeStateError):
+                raise
+            raise RuntimeStateError(f"pause failed: {error_detail}") from exc
 
     async def resume(self, *, reason: str = "explicit researcher resume") -> None:
         if self.lifecycle != RuntimeLifecycle.PAUSED:
             raise RuntimeStateError(f"cannot resume from {self.lifecycle}")
         await self._check_services()
+        await self._refresh_embodiment()
+        embodiment_status = self.embodiment.status()
+        if self._required_embodiment_blocks_runtime(embodiment_status):
+            raise RuntimeStateError(
+                "cannot resume while required embodiment is "
+                f"{embodiment_status.state.value}"
+            )
         await self.cognitive.resume_maintenance()
         resumed_at = utc_now()
         summary = self.pause_observations.build(resumed_at=resumed_at)
@@ -1228,7 +1274,7 @@ class RuntimeSupervisor:
             receive_seq=event.receive_seq,
             process_seq=process_seq,
             status="completed",
-            decision_kind=decision.kind,
+            decision_kind=str(detail.get("effective_decision_kind") or decision.kind),
             detail=detail,
         )
 
@@ -1570,6 +1616,12 @@ class RuntimeSupervisor:
                         reason=reason,
                     ),
                 )
+                return {
+                    "prepare_id": prepared.prepare_id,
+                    "reason": reason,
+                    "cognitive_revision": committed.committed_revision,
+                    "effective_decision_kind": "defer",
+                }
             if self._agency_state != AgencyState.AVAILABLE:
                 reason = f"goal proposal blocked while agency is {self._agency_state.value}"
                 self._append_journal(
@@ -1588,6 +1640,7 @@ class RuntimeSupervisor:
                     "prepare_id": prepared.prepare_id,
                     "reason": reason,
                     "cognitive_revision": committed.committed_revision,
+                    "effective_decision_kind": "no_action",
                 }
             if self.manifest.embodiment.mode != "off" and (
                 self.embodiment.status().state == EmbodimentState.TERMINAL
@@ -1608,6 +1661,7 @@ class RuntimeSupervisor:
                     "prepare_id": prepared.prepare_id,
                     "reason": reason,
                     "cognitive_revision": committed.committed_revision,
+                    "effective_decision_kind": "defer",
                 }
             if (
                 event.event_type == RuntimeEventType.GOAL_RECONSIDERATION
@@ -1638,6 +1692,7 @@ class RuntimeSupervisor:
                         "prepare_id": prepared.prepare_id,
                         "reason": reason,
                         "cognitive_revision": committed.committed_revision,
+                        "effective_decision_kind": "defer",
                     }
             self._goal_revision += 1
             action = await self.action_coordinator.propose(
@@ -1891,7 +1946,8 @@ class RuntimeSupervisor:
                 continue
             previous = record.data.get("envelope")
             if previous:
-                return DomainCommandEnvelope[dict[str, Any]].model_validate(previous)
+                envelope = DomainCommandEnvelope[dict[str, Any]].model_validate(previous)
+                return self._renew_command_window(envelope)
         issued_at = utc_now()
         return DomainCommandEnvelope[dict[str, Any]](
             command_type=command_type,
@@ -1907,6 +1963,26 @@ class RuntimeSupervisor:
             expected_revision=expected_revision,
             version_vector=self.version_vector,
             payload=payload,
+        )
+
+    def _renew_command_window(
+        self,
+        envelope: DomainCommandEnvelope[dict[str, Any]],
+    ) -> DomainCommandEnvelope[dict[str, Any]]:
+        """Give an idempotent replay a usable transport window.
+
+        Command identity and every request-fingerprint field stay unchanged;
+        only the transport timestamps are renewed.  This lets a service return
+        its durable idempotent result after Runtime restarts without reissuing
+        the already-completed external effect.
+        """
+
+        issued_at = utc_now()
+        return envelope.model_copy(
+            update={
+                "issued_at": issued_at,
+                "deadline": issued_at + timedelta(seconds=self.command_timeout_seconds),
+            }
         )
 
     async def _invoke_domain(
@@ -2304,7 +2380,9 @@ class RuntimeSupervisor:
             if not envelope_data or service not in {"cognitive", "homeostasis"}:
                 self._reconciliation_backlog += 1
                 continue
-            envelope = DomainCommandEnvelope[dict[str, Any]].model_validate(envelope_data)
+            envelope = self._renew_command_window(
+                DomainCommandEnvelope[dict[str, Any]].model_validate(envelope_data)
+            )
             method = self._command_method(service, envelope.command_type)
             if method is None:
                 self._reconciliation_backlog += 1

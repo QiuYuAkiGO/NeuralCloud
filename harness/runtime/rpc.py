@@ -11,7 +11,7 @@ from harness.contracts.envelope import DomainCommandEnvelope, DomainCommandResul
 from harness.runtime.adapters import DomainSnapshot, ServiceHealth
 
 
-class DomainRpcError(RuntimeError):
+class DomainRpcError(ConnectionError):
     pass
 
 

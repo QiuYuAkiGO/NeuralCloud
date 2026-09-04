@@ -19,7 +19,7 @@ from gui.presets import DEFAULT_SESSION_ID
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 HOST = os.environ.get("NC_GUI_HOST", "127.0.0.1")
-PORT = int(os.environ.get("NC_GUI_PORT", "8765"))
+PORT = int(os.environ.get("NC_GUI_PORT", "8766"))
 
 
 class RuntimeGateway:

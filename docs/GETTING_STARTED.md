@@ -26,56 +26,143 @@ NeuralCloud 更像一整套剧组：
 
 ## 2. 当前项目做到哪里了
 
-先分清“现在直接能运行的路径”和“完整长期运行架构”，阅读代码会轻松很多。
+先分清“统一双工程入口”“NeuralCloud 低层入口”和“兼容单进程入口”，阅读代码会轻松很多。
 
-### 2.1 Windows 默认路径：四进程 Runtime
+### 2.1 Windows 默认路径：MistyAI + NeuralCloud
 
-根目录运行 `start.ps1`，启动的是：
+Windows 11 的公开开发入口是根目录 `dev.ps1`。它先检查环境和端口，再部署并启动以下拓扑：
 
 ```text
-浏览器
-  -> GUI Runtime facade（8765）
-  -> Runtime Supervisor / REST + SSE（8770）
-  -> Cognitive 服务（8771）
-  -> Homeostasis 七维确定性引擎（8772）
-  -> MockLLM 或 OpenAI 兼容模型端点
+Windows 11
+├── NeuralCloud（Windows Python 3.12）
+│   ├── GUI Runtime facade（8766）
+│   ├── Runtime Supervisor / REST + SSE（8770）
+│   ├── Cognitive 服务（8771）
+│   └── Homeostasis 七维确定性引擎（8772）
+├── WSL2 Ubuntu 24.04
+│   └── MistyAI Body Service（systemd，8787）
+└── Docker Desktop（Linux containers）
+    ├── MistyAI desktop（含 noVNC 6080）
+    ├── MistyAI agent
+    └── loopback-gateway
 ```
 
-这条路径完成角色对话、阶段事件、记忆提交、真实时间心跳、七维内稳态状态和版本化参数展示。四个服务只监听本机，私有令牌由启动脚本通过环境传递。
+NeuralCloud 四个服务只监听本机。Runtime 固定使用 `grounded-mistyai-v1.json` 和真实 `mistyai` provider；MistyAI 身份、身体实例或必需能力协商失败都会中止启动，不会悄悄回退到 simulator。`-Mode demo` 只把 NeuralCloud 的语言模型切换为 MockLLM，不会模拟身体。
 
-### 2.2 兼容路径：单进程 GUI
+### 2.2 低层与兼容入口
 
-`python -m gui.server` 与 `start.sh` 仍可启动旧的进程内 `HarnessChatService`，适合 Cognitive Pipeline 隔离调试。它们不会启动 Runtime 或 Homeostasis；Windows 完整拓扑使用 `start.ps1`。
+`start.ps1` / `stop.ps1` 保留为 NeuralCloud 四进程的低层启停器，适合已经准备好环境后的单工程调试。它们不会安装依赖、部署或启停 MistyAI，也不具备统一入口的前置检查和事务式清理。
 
-## 3. 五分钟跑起来
+`python -m gui.server` 与 `start.sh` 仍可启动旧的进程内 `HarnessChatService`，适合 Cognitive Pipeline 隔离调试；它们不会启动 Runtime、Homeostasis 或 MistyAI。日常双工程开发使用 `dev.ps1`。
 
-第一次运行推荐使用 `demo` 模式。它使用 `MockLLM`、`MockEmbedding` 和内存存储，不需要 GPU、Ollama、Docker 或 PostgreSQL。
+## 3. Windows 统一启动入口
 
-项目要求 Python 3.11 或更高版本。
+首版统一入口固定支持 Windows 11、WSL2 Ubuntu 24.04 和 Docker Desktop。NeuralCloud 在 Windows Python 3.12 中运行，MistyAI Body Service 在 WSL systemd 中运行，MistyAI 容器使用 Docker Desktop 的 Linux engine。
 
-### 3.1 Windows PowerShell
+默认假设两个仓库互为同级目录：
 
-在项目根目录执行：
+```text
+<parent>/
+├── MistyAI/
+└── NeuralCloud/
+```
+
+### 3.1 第一次启动
+
+在 NeuralCloud 根目录打开 PowerShell 5.1 或更高版本，先执行只读检查，再启动：
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev]"
-python -m gui.server
+.\dev.ps1 doctor
+.\dev.ps1 up
 ```
 
-浏览器打开 <http://127.0.0.1:8765>。
-
-依赖安装完成后，也可以使用后台启停脚本：
+如果 MistyAI 不在默认位置，显式指定仓库和 WSL 发行版：
 
 ```powershell
-.\start.ps1
-.\stop.ps1
+.\dev.ps1 up -MistyAIPath D:\src\MistyAI -Distro Ubuntu-24.04
 ```
 
-`start.ps1` 启动或重启 Cognitive、Homeostasis、Runtime 和 GUI，不会安装依赖，也不会启动 Ollama 或 PostgreSQL。PID 注册写入 `.neuralcloud.pids.json`，后台日志按服务写入 `logs/`。
+启动成功后可访问：
 
-### 3.2 Linux / WSL2
+- GUI：<http://127.0.0.1:8766>
+- 运维页：<http://127.0.0.1:8766/ops>
+- MistyAI noVNC：<http://127.0.0.1:6080>
+
+### 3.2 命令
+
+```powershell
+.\dev.ps1 up                 # 检查、修复、部署并启动两个工程
+.\dev.ps1 down               # 先停 NeuralCloud，再停 MistyAI
+.\dev.ps1 restart            # 完整停止后重新启动
+.\dev.ps1 status             # 查看组件、端口与健康状态
+.\dev.ps1 doctor             # 只读检查，不安装、不启动
+.\dev.ps1 install            # 准备依赖和部署环境，不启动服务
+.\dev.ps1 logs -Service all  # 汇总查看服务日志
+```
+
+`down` 只停止这套启动器能够确认归属的 NeuralCloud 进程、MistyAI units 和 Compose 服务；不会关闭共享的 Docker Desktop 或 WSL，也不会删除数据库、evidence 或 Docker volumes。
+
+### 3.3 前置检查与半自动安装
+
+统一入口会检查三层要求：
+
+- Windows：Windows 11、Git、Python 3.12、硬件虚拟化、WSL2、Ubuntu 24.04、Docker Desktop、Linux engine 和 Docker Compose。
+- WSL：systemd、Python 3.12、uv 0.12.9、Docker Desktop 的 WSL integration、MistyAI 部署目录、配置、systemd units 和 token 文件权限。
+- 运行时：6080、8765～8772、8787 的占用者。已有健康组件只有在身份匹配时才会复用；未知进程占用时返回配置冲突，不会擅自结束进程。
+
+交互模式下，缺失依赖的安装或 Windows 系统功能变更会逐项说明并请求确认，可使用 `winget`、`wsl --install`、`apt` 和 `python -m pip install uv==0.12.9`。当依赖已经就绪时，用户执行 `install`/`up` 本身即授权相应的 WSL root 部署、配置和服务操作；启动器会在每类特权操作前显示脱敏的动作说明，但不会再次逐项询问。启动器不会使用“下载后直接管道执行”的远程脚本。
+
+以下步骤需要用户在 Windows 或 Docker Desktop 中完成，启动器会保存无敏感信息的进度；完成或重启后重新运行原命令即可续跑：
+
+- 在固件与 Windows 功能中启用虚拟化/WSL2，并按提示重启。
+- 接受 Docker Desktop 首次使用协议，切换到 Linux containers。
+- 在 Docker Desktop 的 **Settings → Resources → WSL Integration** 中启用 `Ubuntu-24.04`。
+
+`-NonInteractive` 禁止自动安装缺失依赖和交互确认；缺少依赖时只输出结构化修复建议并返回退出码 10。若前置条件已经满足，显式请求的 `install`/`up` 仍会继续执行部署或启停（包括所需的 WSL root 操作）；无人值守只读预检应使用 `doctor -NonInteractive -Json`。
+
+依赖准备完成后，启动器以 `uv sync --frozen --extra dev --extra gui` 同步 NeuralCloud。MistyAI 使用当前工作区快照和内容指纹部署到 WSL；源码或锁文件未变化时会跳过重复同步和镜像构建，部署失败时保留或恢复上一可用版本。
+
+### 3.4 常用参数
+
+| 参数 | 默认值 | 用途 |
+| --- | --- | --- |
+| `-MistyAIPath <path>` | `..\MistyAI` | 指定 Windows 上的 MistyAI 工作区。 |
+| `-Distro <name>` | `Ubuntu-24.04` | 指定承载 MistyAI Body Service 的 WSL 发行版。 |
+| `-Mode demo\|live\|ollama` | `demo` | 选择 NeuralCloud 的 LLM 模式；不改变真实 MistyAI grounded 身体。 |
+| `-NonInteractive` | 关闭 | 禁止自动安装和交互确认；前置已满足时仍执行所请求的部署或启停。 |
+| `-NoOpen` | 关闭 | 启动成功后不自动打开 GUI。 |
+| `-Json` | 关闭 | 输出适合脚本处理的结构化结果；其中不会包含 token。 |
+| `-Service <name>` | `all` | 为 `logs` 命令选择服务；`all` 查看全部。 |
+
+示例：
+
+```powershell
+.\dev.ps1 doctor -NonInteractive -Json
+.\dev.ps1 up -Mode ollama -NoOpen
+.\dev.ps1 status -Json
+```
+
+### 3.5 退出码
+
+| 退出码 | 含义 |
+| ---: | --- |
+| `0` | 命令成功。 |
+| `10` | 缺少依赖、需要手动安装或需要重启；按检查项修复后重试。 |
+| `20` | MistyAI 部署、启动、健康、身份或能力协商失败。 |
+| `30` | NeuralCloud 安装、启动或就绪检查失败。 |
+| `40` | 配置错误、仓库错误或端口被未知进程占用。 |
+| `50` | 另一个统一启动流程持有独占锁。 |
+
+### 3.6 安全边界
+
+- MistyAI 工作区快照包含 tracked、已修改和未被忽略的未跟踪源码，但排除 `.git`、虚拟环境、缓存、构建产物和日志；发现 `.env`、token、私钥等敏感候选文件时会拒绝部署并报告路径。
+- `/etc/mistyai/body-service.token` 只在当前 PowerShell 进程内存中读取，并临时通过环境变量交给 NeuralCloud Runtime；它不会进入命令行、Windows 配置、日志、JSON 输出或 PID registry，命令结束时会被清除。
+- `%LOCALAPPDATA%\NeuralCloud\launcher\` 只保存安装阶段、部署指纹和组件归属，用于重启续跑与安全清理，不保存密钥。
+- 启动、回滚和停止不会清空用户仓库、SQLite、evidence 或 Docker volumes；无法确认归属的进程和服务不会被终止。
+
+### 3.7 Linux / WSL2 单工程兼容路径
+
+统一双工程入口当前只支持从 Windows 运行。只调试 NeuralCloud 的单进程 GUI 时仍可使用：
 
 ```bash
 python3 -m venv .venv
@@ -91,9 +178,9 @@ bash start.sh
 bash stop.sh
 ```
 
-### 3.3 第一次应该观察什么
+### 3.8 第一次应该观察什么
 
-首次启动默认使用日常向内置角色预设 [`presets/builtin/vaelith-daily.json`](../presets/builtin/vaelith-daily.json)。它包含角色人格、关系状态、心理状态、世界状态、6 条生活情境记忆和 3 条稳定语义事实；原设定向模板仍保留在 [`presets/builtin/vaelith.json`](../presets/builtin/vaelith.json)。已有 GUI 配置会继续打开用户上次选择的预设。
+首次启动默认使用小雾（Misty）内置角色预设 [`presets/builtin/misty.json`](../presets/builtin/misty.json)。它来自相邻 MistyDigitalBody 的冻结设定包 v0.2.0，包含姓名、年龄、生日、身高、爱好、四项核心人格、克制的表达基线、自我外观认知与背景物品；关系、对话和长期记忆从干净状态开始，不继承旧角色经历。Vaelith 模板仍保留在预设库中供显式选择。已有 GUI 配置仍会打开用户上次选择的预设，因此要切换既有环境需在预设面板应用 `misty`。
 
 可以先发一句简单问候，再问一个涉及往事、承诺、第三方人物或情绪暗示的问题。观察中间区域的阶段输出：
 
@@ -480,7 +567,7 @@ Scheduler 到期后产生 heartbeat。内稳态服务先接收心跳；当队列
 
 直接构造纯内存 `MemoryService` 时，进程结束后数据会消失，除非调用方自行做快照。使用 PostgreSQL Store 时，领域数据由数据库持久化。
 
-Runtime Supervisor 的 journal、checkpoint、锁文件和适配器状态写到构造 Supervisor 时传入的 `state_dir`；仓库没有一个默认生产目录，因为默认启动脚本目前不启动 Supervisor。
+Runtime Supervisor 的 journal、checkpoint、锁文件和适配器状态写到启动时配置的 `state_dir`。统一启动器自身的安装阶段、部署指纹和组件归属保存在 `%LOCALAPPDATA%\NeuralCloud\launcher\`；这是编排元数据，不包含 MistyAI token。
 
 ## 9. 切换真实模型
 
@@ -599,14 +686,34 @@ print(result.text)      # 合并后的最终回复
 
 它可能已被标记为 `forgotten`。遗忘只让记录退出检索池，不会直接删除审计数据。
 
+### “`dev.ps1` 提示需要安装或重启？”
+
+先运行 `.\dev.ps1 doctor` 查看每个检查项的当前值、要求和修复建议。退出码 10 表示环境尚未就绪，不代表源码错误；完成 Docker Desktop 首次设置、WSL integration 或 Windows 重启后，重新运行原命令即可从保存的阶段继续。
+
+### “Docker 已安装，为什么仍说 WSL integration 不可用？”
+
+确认 Docker Desktop 正在运行 Linux engine，并在 **Settings → Resources → WSL Integration** 中启用启动命令所选的发行版。随后在该发行版内确认 `docker version` 和 `docker compose version` 可用，再运行 `.\dev.ps1 doctor`。
+
+### “为什么拒绝现有的 `/opt/mistyai`？”
+
+启动器只会替换带有自身部署标记的 `/opt/mistyai`，不会静默接管手工部署、符号链接或来源不明的目录。先在 WSL 中检查并把现有目录备份或移到你明确选择的位置，再重新运行；如果 `/opt/mistyai` 缺失但存在带标记的 `/opt/mistyai.previous`，先执行 `sudo mv /opt/mistyai.previous /opt/mistyai` 恢复上次被中断的部署。不要为未知目录手工伪造启动器标记。
+
+### “端口冲突或另一个启动流程正在运行？”
+
+退出码 40 通常表示 6080、8765～8772 或 8787 被无法确认归属的进程占用。用 `.\dev.ps1 status` 查看占用者，关闭对应程序后重试；启动器不会杀死未知进程。退出码 50 表示已有 `dev.ps1` 持有独占锁，应等待该命令完成，而不是同时启动第二套环境。
+
+### “MistyAI 或 NeuralCloud 没有就绪？”
+
+先执行 `.\dev.ps1 logs -Service all`。退出码 20 表示 MistyAI 部署、systemd/Compose、body health、身份或能力协商失败；退出码 30 表示 NeuralCloud 四进程或最终 Runtime/Embodiment 就绪检查失败。MistyAI 失败不会启动 NeuralCloud；NeuralCloud 失败时，启动器会清理本轮创建的 NeuralCloud 进程，并只在 MistyAI 原先未运行时回收本轮启动的 MistyAI 组件。
+
 ### “`start.ps1` 执行失败时看哪里？”
 
-检查 `logs/gui.err.log`，并确认虚拟环境已创建、依赖已安装、8765 端口未被其他程序占用。也可以直接运行 `python -m gui.server` 查看前台错误。
+它是仅启动 NeuralCloud 的低层入口。检查 `logs/gui.err.log`，并确认虚拟环境已创建、依赖已安装、8766 端口未被其他程序占用；也可以直接运行 `python -m gui.server` 查看前台错误。需要自动检查 MistyAI、WSL2、Docker 和依赖时，应改用 `.\dev.ps1 up`。
 
 ## 14. 最后记住这三件事
 
 1. **主模型不是整个系统。** 它只负责角色表达，记忆、判断、约束和写回都由 Harness 管理。
 2. **记忆不是聊天记录堆积。** 事件、角色视角、候选认识、语义事实和遗忘生命周期彼此分开，并保留证据链。
-3. **当前 GUI 与长期 Runtime 是两层。** GUI 已能完整演示认知流水线；Supervisor 提供长期在线所需的调度和恢复内核，但尚未成为默认启动拓扑。
+3. **GUI、长期 Runtime 与 MistyAI 身体是分层协作的。** `dev.ps1` 负责把三层严格地部署、协商并拉起；`start.ps1` / `stop.ps1` 只负责 NeuralCloud 的低层四进程启停。
 
 带着这三点再看源码，绝大多数目录和类都会自然地找到自己的位置。

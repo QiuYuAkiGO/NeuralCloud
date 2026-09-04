@@ -659,7 +659,7 @@ Grounded v1 的实际入口是 `tests/test_grounded_embodiment.py`；其中包�
 $env:MISTYAI_CONTRACT_DIR = "C:\Projects\MistyAI\contracts"
 python -m pytest tests/test_grounded_embodiment.py -q
 
-$env:NC_SOAK_MISTYAI_URL = "http://127.0.0.1:8764"
+$env:NC_SOAK_MISTYAI_URL = "http://127.0.0.1:8787"
 $env:NC_SOAK_MISTYAI_TOKEN = "<service-token>"
 python -m pytest tests/test_grounded_soak.py -m soak -q
 ```

@@ -160,3 +160,23 @@ def test_activation_set_is_frozen_until_next_boot() -> None:
     import asyncio
 
     asyncio.run(scenario())
+
+
+def test_required_capability_with_unavailable_health_makes_embodiment_unavailable() -> None:
+    async def scenario() -> None:
+        simulator = DeterministicEmbodimentSimulator(clock=lambda: NOW)
+        simulator.set_capability_status(ACTION_EXECUTE, CapabilityStatus.UNAVAILABLE)
+        condition = EmbodimentCondition(
+            mode="observe",
+            required_for_runtime=True,
+            capability_requirements=[
+                CapabilityRequirement(capability=ACTION_EXECUTE, required=True)
+            ],
+        )
+        status = await EmbodimentManager(condition, simulator).activate()
+        assert status.state.value == "unavailable"
+        assert ACTION_EXECUTE not in status.effective_capabilities
+
+    import asyncio
+
+    asyncio.run(scenario())

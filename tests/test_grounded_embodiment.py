@@ -22,8 +22,15 @@ from harness.core.inference import (
     SituationState,
     SituationTrigger,
 )
+from harness.embodiment.capabilities import (
+    ACTION_EXECUTE,
+    ACTION_VERIFY,
+    EVIDENCE_REFERENCE,
+    OBSERVATION_SNAPSHOT,
+    PHYSIOLOGY_BODY_STATE,
+)
 from harness.homeostasis import HomeostasisEngine, load_profile
-from harness.research.manifest import ExperimentManifest
+from harness.research.manifest import ExperimentManifest, load_experiment_manifest
 from harness.runtime.models import (
     AgencyState,
     RuntimeEvent,
@@ -118,6 +125,22 @@ def test_manifest_defaults_off_and_rejects_active_or_unsafe_flags() -> None:
     }
     with pytest.raises(ValueError, match="must be false"):
         ExperimentManifest.model_validate(payload)
+
+
+def test_grounded_mistyai_preset_requires_core_provider_capabilities() -> None:
+    root = Path(__file__).resolve().parents[1]
+    manifest = load_experiment_manifest(root / "presets/runtime/grounded-mistyai-v1.json")
+    requirements = {
+        item.capability: item.required
+        for item in manifest.embodiment.capability_requirements
+    }
+
+    assert manifest.embodiment.required_for_runtime is True
+    assert requirements[ACTION_EXECUTE] is True
+    assert requirements[ACTION_VERIFY] is True
+    assert requirements[OBSERVATION_SNAPSHOT] is True
+    assert requirements[EVIDENCE_REFERENCE] is True
+    assert requirements[PHYSIOLOGY_BODY_STATE] is False
 
 
 def test_pinned_mistyai_body_schema_hash_matches_fixture() -> None:

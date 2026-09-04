@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -27,6 +28,7 @@ from harness.embodiment.providers.mistyai import (
     MistyAIBodyStateProvider,
     MistyAICapabilityProvider,
     MistyAIClient,
+    MistyAIError,
     MistyAIPerceptionBackend,
 )
 from harness.embodiment.providers.simulator import (
@@ -41,7 +43,9 @@ from harness.runtime.supervisor import RuntimeSupervisor
 from tests.test_runtime_supervisor import _manifest
 
 NOW = datetime(2026, 9, 3, 12, tzinfo=UTC)
-EVIDENCE = "evidence://sha256/" + "a" * 64
+EVIDENCE_BYTES = b"mistyai evidence fixture"
+EVIDENCE_DIGEST = hashlib.sha256(EVIDENCE_BYTES).hexdigest()
+EVIDENCE = f"evidence://sha256/{EVIDENCE_DIGEST}"
 
 
 def _execution(action_id: str = "action-1") -> ActionExecution:
@@ -108,11 +112,15 @@ def _misty_handler(request: httpx.Request) -> httpx.Response:
                 "schema_version": "body-contract-v1",
                 "body_instance_id": "body-1",
                 "status": "healthy",
+                "database": component,
                 "environment": component,
                 "observation": component,
+                "agent_backends": {"screen": "healthy"},
                 "action": component,
                 "evidence_store": component,
                 "body_state": component,
+                "physiology": component,
+                "agency_state": "AVAILABLE",
                 "active_action_id": None,
                 "manual_takeover_active": False,
                 "checked_at": NOW.isoformat(),
@@ -130,7 +138,7 @@ def _misty_handler(request: httpx.Request) -> httpx.Response:
                 "frame": {
                     "evidence_ref": EVIDENCE,
                     "media_type": "image/png",
-                    "sha256": "a" * 64,
+                    "sha256": EVIDENCE_DIGEST,
                     "width": 640,
                     "height": 480,
                 },
@@ -143,6 +151,12 @@ def _misty_handler(request: httpx.Request) -> httpx.Response:
                 "running_apps": [],
                 "backend_health": {"screen": "healthy"},
             },
+        )
+    if path == f"/v1/evidence/{EVIDENCE_DIGEST}":
+        return httpx.Response(
+            200,
+            content=EVIDENCE_BYTES,
+            headers={"Content-Type": "image/png"},
         )
     if path == "/v1/actions" and request.method == "POST":
         action_id = json.loads(request.content)["execution"]["action_id"]
@@ -179,22 +193,38 @@ def _misty_handler(request: httpx.Request) -> httpx.Response:
     if path.endswith(":verify") or path.endswith(":reconcile"):
         return httpx.Response(200, json=_native_result())
     if path == "/v1/body-state:capture":
+        energy = {
+            "capacity_units": 100,
+            "available_units": 75,
+            "available_ratio": 0.75,
+            "delta_units_per_minute": -0.1,
+            "charging": False,
+            "estimated_time_to_terminal_seconds": 45000,
+            "terminal": False,
+        }
+        body_state = {
+            "schema_version": "body-state-v1",
+            "body_instance_id": "body-1",
+            "episode_id": "episode-1",
+            "revision": 4,
+            "captured_at": NOW.isoformat(),
+            "energy": energy,
+            "thermal": None,
+            "compute": None,
+            "integrity": None,
+            "evidence_refs": [EVIDENCE],
+        }
         return httpx.Response(
             200,
             json={
                 "schema_version": "body-contract-v1",
+                "request_id": "body-state-request-1",
+                "body_state": body_state,
                 "body_instance_id": "body-1",
+                "episode_id": "episode-1",
                 "revision": 4,
                 "captured_at": NOW.isoformat(),
-                "energy": {
-                    "capacity_units": 100,
-                    "available_units": 75,
-                    "available_ratio": 0.75,
-                    "delta_units_per_minute": -0.1,
-                    "charging": False,
-                    "estimated_time_to_empty_seconds": 45000,
-                    "terminal": False,
-                },
+                "energy": energy,
                 "evidence_refs": [EVIDENCE],
             },
         )
@@ -259,7 +289,283 @@ def test_provider_neutral_contract_suite(provider_kind: str) -> None:
         assert body.revision > 0 and body.evidence_refs
 
         if http_client is not None:
+            assert body.energy.estimated_time_to_empty_seconds == 45000
             await http_client.aclose()
+
+    asyncio.run(scenario())
+
+
+def test_misty_evidence_verification_cache_is_shared_across_provider_surfaces() -> None:
+    async def scenario() -> None:
+        evidence_downloads = 0
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            nonlocal evidence_downloads
+            if request.url.path.startswith("/v1/evidence/"):
+                evidence_downloads += 1
+            return _misty_handler(request)
+
+        http_client = httpx.AsyncClient(
+            transport=httpx.MockTransport(handler),
+            base_url="http://misty.test",
+        )
+        client = MistyAIClient("http://misty.test", token="token", client=http_client)
+        await MistyAIPerceptionBackend(client).observe(now=NOW)
+        backend = MistyAIActionBackend(client, poll_interval_seconds=0.001, clock=lambda: NOW)
+        assert (await backend.execute(_execution())).success
+        assert (await backend.verify(_execution())).success
+        assert (await backend.reconcile(_execution())).success
+        await MistyAIBodyStateProvider(client).snapshot()
+        assert evidence_downloads == 1
+        await http_client.aclose()
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    ("agency_state", "manual_takeover", "observation_available"),
+    [
+        ("TERMINAL", False, True),
+        ("AVAILABLE", True, False),
+    ],
+)
+def test_misty_health_blocks_new_actions_for_terminal_or_takeover(
+    agency_state: str,
+    manual_takeover: bool,
+    observation_available: bool,
+) -> None:
+    async def scenario() -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            response = _misty_handler(request)
+            if request.url.path != "/v1/health":
+                return response
+            payload = response.json()
+            payload["agency_state"] = agency_state
+            payload["manual_takeover_active"] = manual_takeover
+            return httpx.Response(200, json=payload)
+
+        http_client = httpx.AsyncClient(
+            transport=httpx.MockTransport(handler),
+            base_url="http://misty.test",
+        )
+        provider = MistyAICapabilityProvider(
+            MistyAIClient("http://misty.test", token="token", client=http_client)
+        )
+        health = await provider.health()
+        assert health.status.value == "degraded"
+        assert health.capability_health[ACTION_EXECUTE].value == "unavailable"
+        expected_observation = "healthy" if observation_available else "unavailable"
+        assert health.capability_health[OBSERVATION_SNAPSHOT].value == expected_observation
+        assert health.detail["agency_state"] == agency_state
+        await http_client.aclose()
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    "surface",
+    ["observation", "execute", "verify", "reconcile", "body_state"],
+)
+def test_misty_provider_rejects_corrupt_evidence_on_every_trusted_surface(
+    surface: str,
+) -> None:
+    async def scenario() -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.url.path.startswith("/v1/evidence/"):
+                return httpx.Response(
+                    200,
+                    content=b"corrupt evidence",
+                    headers={"Content-Type": "image/png"},
+                )
+            return _misty_handler(request)
+
+        http_client = httpx.AsyncClient(
+            transport=httpx.MockTransport(handler),
+            base_url="http://misty.test",
+        )
+        client = MistyAIClient("http://misty.test", token="token", client=http_client)
+        backend = MistyAIActionBackend(client, poll_interval_seconds=0.001, clock=lambda: NOW)
+        if surface == "observation":
+            with pytest.raises(MistyAIError, match="SHA-256") as captured:
+                await MistyAIPerceptionBackend(client).observe(now=NOW)
+            assert captured.value.code == "evidence_digest_mismatch"
+        elif surface == "body_state":
+            with pytest.raises(MistyAIError, match="SHA-256") as captured:
+                await MistyAIBodyStateProvider(client).snapshot()
+            assert captured.value.code == "evidence_digest_mismatch"
+        else:
+            result = await getattr(backend, surface)(_execution())
+            assert result.success is False
+            assert result.unknown is True
+            assert "evidence_digest_mismatch" in result.summary
+        await http_client.aclose()
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    ("response_headers", "maximum_bytes", "expected_code"),
+    [
+        ({"Content-Type": "application/json"}, 1024, "evidence_media_type_mismatch"),
+        ({"Content-Type": "image/png"}, 4, "evidence_too_large"),
+    ],
+)
+def test_misty_observation_rejects_wrong_media_type_and_oversized_evidence(
+    response_headers: dict[str, str],
+    maximum_bytes: int,
+    expected_code: str,
+) -> None:
+    async def scenario() -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.url.path.startswith("/v1/evidence/"):
+                return httpx.Response(
+                    200,
+                    content=EVIDENCE_BYTES,
+                    headers=response_headers,
+                )
+            return _misty_handler(request)
+
+        http_client = httpx.AsyncClient(
+            transport=httpx.MockTransport(handler),
+            base_url="http://misty.test",
+        )
+        client = MistyAIClient(
+            "http://misty.test",
+            token="token",
+            max_evidence_bytes=maximum_bytes,
+            client=http_client,
+        )
+        with pytest.raises(MistyAIError) as captured:
+            await MistyAIPerceptionBackend(client).observe(now=NOW)
+        assert captured.value.code == expected_code
+        await http_client.aclose()
+
+    asyncio.run(scenario())
+
+
+def test_misty_evidence_download_timeout_is_reported_as_unverified() -> None:
+    async def scenario() -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.url.path.startswith("/v1/evidence/"):
+                raise httpx.ReadTimeout("timed out", request=request)
+            return _misty_handler(request)
+
+        http_client = httpx.AsyncClient(
+            transport=httpx.MockTransport(handler),
+            base_url="http://misty.test",
+        )
+        client = MistyAIClient("http://misty.test", token="token", client=http_client)
+        result = await MistyAIActionBackend(
+            client,
+            poll_interval_seconds=0.001,
+            clock=lambda: NOW,
+        ).verify(_execution())
+        assert result.success is False
+        assert result.unknown is True
+        assert "evidence_download_failed" in result.summary
+        await http_client.aclose()
+
+    asyncio.run(scenario())
+
+
+def test_misty_evidence_download_has_a_wall_clock_deadline() -> None:
+    class SlowEvidenceStream(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            await asyncio.sleep(0.05)
+            yield EVIDENCE_BYTES
+
+        async def aclose(self) -> None:
+            return None
+
+    async def scenario() -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.url.path.startswith("/v1/evidence/"):
+                return httpx.Response(
+                    200,
+                    stream=SlowEvidenceStream(),
+                    headers={"Content-Type": "image/png"},
+                )
+            return _misty_handler(request)
+
+        http_client = httpx.AsyncClient(
+            transport=httpx.MockTransport(handler),
+            base_url="http://misty.test",
+        )
+        client = MistyAIClient(
+            "http://misty.test",
+            token="token",
+            evidence_timeout_seconds=0.01,
+            client=http_client,
+        )
+        result = await MistyAIActionBackend(
+            client,
+            poll_interval_seconds=0.001,
+            clock=lambda: NOW,
+        ).verify(_execution())
+        assert result.success is False
+        assert result.unknown is True
+        assert "evidence_download_failed" in result.summary
+        await http_client.aclose()
+
+    asyncio.run(scenario())
+
+
+def test_misty_evidence_reference_fanout_is_bounded() -> None:
+    async def scenario() -> None:
+        downloads = 0
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            nonlocal downloads
+            if request.url.path.startswith("/v1/evidence/"):
+                downloads += 1
+            response = _misty_handler(request)
+            if request.url.path.endswith(":verify"):
+                payload = response.json()
+                payload["evidence_refs"] = [EVIDENCE] * 3
+                return httpx.Response(200, json=payload)
+            return response
+
+        http_client = httpx.AsyncClient(
+            transport=httpx.MockTransport(handler),
+            base_url="http://misty.test",
+        )
+        client = MistyAIClient(
+            "http://misty.test",
+            token="token",
+            max_evidence_refs=2,
+            client=http_client,
+        )
+        result = await MistyAIActionBackend(client).verify(_execution())
+        assert result.success is False
+        assert result.unknown is True
+        assert "evidence_fanout_exceeded" in result.summary
+        assert downloads == 0
+        await http_client.aclose()
+
+    asyncio.run(scenario())
+
+
+def test_misty_missing_evidence_is_reported_as_unverified() -> None:
+    async def scenario() -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.url.path.startswith("/v1/evidence/"):
+                return httpx.Response(404, content=b"missing")
+            return _misty_handler(request)
+
+        http_client = httpx.AsyncClient(
+            transport=httpx.MockTransport(handler),
+            base_url="http://misty.test",
+        )
+        client = MistyAIClient("http://misty.test", token="token", client=http_client)
+        result = await MistyAIActionBackend(
+            client,
+            poll_interval_seconds=0.001,
+            clock=lambda: NOW,
+        ).verify(_execution())
+        assert result.success is False
+        assert result.unknown is True
+        assert "evidence_download_failed" in result.summary
+        await http_client.aclose()
 
     asyncio.run(scenario())
 
@@ -332,6 +638,167 @@ def test_uncertain_post_timeout_is_queried_once_and_never_replayed() -> None:
         result = await MistyAIActionBackend(client, clock=lambda: NOW).execute(_execution())
         assert result.unknown is True
         assert calls == {"post": 1, "get": 1}
+        await http_client.aclose()
+
+    asyncio.run(scenario())
+
+
+def test_malformed_terminal_action_response_is_unknown_not_failed() -> None:
+    async def scenario() -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            response = _misty_handler(request)
+            if request.method == "GET" and request.url.path.startswith("/v1/actions/"):
+                payload = response.json()
+                assert payload["result"] is not None
+                del payload["result"]["evidence_refs"]
+                return httpx.Response(200, json=payload)
+            return response
+
+        http_client = httpx.AsyncClient(
+            transport=httpx.MockTransport(handler),
+            base_url="http://misty.test",
+        )
+        client = MistyAIClient("http://misty.test", token="token", client=http_client)
+        result = await MistyAIActionBackend(
+            client,
+            poll_interval_seconds=0.001,
+            clock=lambda: NOW,
+        ).execute(_execution())
+        assert result.success is False
+        assert result.unknown is True
+        assert "invalid_provider_response" in result.summary
+        await http_client.aclose()
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda result: result.update(summary=""),
+        lambda result: result.update(success=True, unknown=True),
+    ],
+)
+def test_invalid_native_result_invariants_are_unknown(mutate: Any) -> None:
+    async def scenario() -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            response = _misty_handler(request)
+            if request.method == "GET" and request.url.path.startswith("/v1/actions/"):
+                payload = response.json()
+                assert payload["result"] is not None
+                mutate(payload["result"])
+                return httpx.Response(200, json=payload)
+            return response
+
+        http_client = httpx.AsyncClient(
+            transport=httpx.MockTransport(handler),
+            base_url="http://misty.test",
+        )
+        client = MistyAIClient("http://misty.test", token="token", client=http_client)
+        result = await MistyAIActionBackend(
+            client,
+            poll_interval_seconds=0.001,
+            clock=lambda: NOW,
+        ).execute(_execution())
+        assert result.success is False
+        assert result.unknown is True
+        assert "invalid_provider_response" in result.summary
+        await http_client.aclose()
+
+    asyncio.run(scenario())
+
+
+def test_naive_native_action_timestamp_is_unknown() -> None:
+    async def scenario() -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            response = _misty_handler(request)
+            if request.method == "GET" and request.url.path.startswith("/v1/actions/"):
+                payload = response.json()
+                payload["updated_at"] = "2026-09-04T00:00:01"
+                return httpx.Response(200, json=payload)
+            return response
+
+        http_client = httpx.AsyncClient(
+            transport=httpx.MockTransport(handler),
+            base_url="http://misty.test",
+        )
+        client = MistyAIClient("http://misty.test", token="token", client=http_client)
+        result = await MistyAIActionBackend(
+            client,
+            poll_interval_seconds=0.001,
+            clock=lambda: NOW,
+        ).execute(_execution())
+        assert result.success is False
+        assert result.unknown is True
+        assert "invalid_provider_response" in result.summary
+        await http_client.aclose()
+
+    asyncio.run(scenario())
+
+
+def test_mismatched_native_action_id_is_unknown() -> None:
+    async def scenario() -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            response = _misty_handler(request)
+            if request.method == "GET" and request.url.path.startswith("/v1/actions/"):
+                payload = response.json()
+                payload["action_id"] = "different-action"
+                return httpx.Response(200, json=payload)
+            return response
+
+        http_client = httpx.AsyncClient(
+            transport=httpx.MockTransport(handler),
+            base_url="http://misty.test",
+        )
+        client = MistyAIClient("http://misty.test", token="token", client=http_client)
+        result = await MistyAIActionBackend(
+            client,
+            poll_interval_seconds=0.001,
+            clock=lambda: NOW,
+        ).execute(_execution())
+        assert result.success is False
+        assert result.unknown is True
+        assert "invalid_provider_response" in result.summary
+        await http_client.aclose()
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    ("state", "native_result"),
+    [
+        ("unknown", _native_result(success=False, unknown=False)),
+        ("execution_succeeded", _native_result(success=False, unknown=False)),
+        ("failed", _native_result(success=True, unknown=False)),
+    ],
+)
+def test_conflicting_terminal_action_state_is_unknown(
+    state: str,
+    native_result: dict[str, Any],
+) -> None:
+    async def scenario() -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            response = _misty_handler(request)
+            if request.method == "GET" and request.url.path.startswith("/v1/actions/"):
+                payload = response.json()
+                payload["state"] = state
+                payload["result"] = native_result
+                return httpx.Response(200, json=payload)
+            return response
+
+        http_client = httpx.AsyncClient(
+            transport=httpx.MockTransport(handler),
+            base_url="http://misty.test",
+        )
+        client = MistyAIClient("http://misty.test", token="token", client=http_client)
+        result = await MistyAIActionBackend(
+            client,
+            poll_interval_seconds=0.001,
+            clock=lambda: NOW,
+        ).execute(_execution())
+        assert result.success is False
+        assert result.unknown is True
+        assert "invalid_provider_response" in result.summary
         await http_client.aclose()
 
     asyncio.run(scenario())

@@ -50,12 +50,27 @@ class InteractionEvent(BaseModel):
         return self
 
 
+class PersonaProfile(BaseModel):
+    """Structured, source-linked facts the character may know about itself."""
+
+    aliases: list[str] = Field(default_factory=list)
+    age: int | None = Field(default=None, ge=0, le=200)
+    birthday: str | None = None
+    height_cm: float | None = Field(default=None, gt=0, le=300)
+    hobbies: list[str] = Field(default_factory=list)
+    signature_line: str | None = None
+    appearance: list[str] = Field(default_factory=list)
+    personal_items: list[str] = Field(default_factory=list)
+    source_refs: list[str] = Field(default_factory=list)
+
+
 class PersonaIdentity(BaseModel):
     name: str
     core_traits: list[str] = Field(default_factory=list)
     values: list[str] = Field(default_factory=list)
     speech_style: list[str] = Field(default_factory=list)
     knowledge_boundary: list[str] = Field(default_factory=list)
+    profile: PersonaProfile | None = None
     locked: bool = True
 
 

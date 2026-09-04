@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import math
 import os
 from datetime import UTC, datetime
@@ -31,6 +30,7 @@ from harness.homeostasis.models import (
     PolicyCandidate,
     initial_snapshot,
 )
+from harness.homeostasis.ledger import CommandLedger
 from harness.runtime.adapters import DomainSnapshot, ServiceHealth
 
 
@@ -62,14 +62,21 @@ class HomeostasisEngine:
         state_dir: Path | str,
         now: datetime | None = None,
         clock: Callable[[], datetime] | None = None,
+        ledger_cache_size: int = 512,
     ) -> None:
         self.profile = profile
         self.state_dir = Path(state_dir)
         self.state_path = self.state_dir / "snapshot.json"
         self.ledger_path = self.state_dir / "command-ledger.json"
+        self.ledger_store_path = self.state_dir / "command-ledger.sqlite3"
         self.trace_path = self.state_dir / "transitions.jsonl"
         self._lock = asyncio.Lock()
-        self._ledger: dict[str, dict[str, Any]] = {}
+        self._command_ledger = CommandLedger(
+            self.state_dir,
+            cache_size=ledger_cache_size,
+            legacy_filename=self.ledger_path.name,
+            filename=self.ledger_store_path.name,
+        )
         self._clock = clock or ((lambda: now) if now is not None else utc_now)
         self._started_at = now or self._clock()
         self.snapshot = initial_snapshot(profile, now=self._started_at)
@@ -145,7 +152,7 @@ class HomeostasisEngine:
         async with self._lock:
             request_hash = command.effective_request_hash()
             key = f"{command.command_type}\0{command.idempotency_key}"
-            previous = self._ledger.get(key)
+            previous = self._command_ledger.get(key)
             if previous is not None:
                 if previous["request_hash"] != request_hash:
                     return self._failure(
@@ -286,12 +293,13 @@ class HomeostasisEngine:
                 },
                 completed_at=self._clock(),
             )
-            self._ledger[key] = {
-                "request_hash": request_hash,
-                "result": result.model_dump(mode="json"),
-            }
             self._append_trace(trace)
             self._persist()
+            self._command_ledger.put(
+                key,
+                request_hash=request_hash,
+                result=result.model_dump(mode="json"),
+            )
             return result
 
     async def propose_policies(self, *, version_vector: VersionVector) -> list[dict[str, Any]]:
@@ -312,7 +320,7 @@ class HomeostasisEngine:
         async with self._lock:
             request_hash = command.effective_request_hash()
             key = f"{command.command_type}\0{command.idempotency_key}"
-            previous = self._ledger.get(key)
+            previous = self._command_ledger.get(key)
             if previous is not None:
                 if previous["request_hash"] != request_hash:
                     return self._failure(command, request_hash, "idempotency key reused with different request", "conflict")
@@ -387,9 +395,13 @@ class HomeostasisEngine:
                 result=result_payload,
                 completed_at=self._clock(),
             )
-            self._ledger[key] = {"request_hash": request_hash, "result": result.model_dump(mode="json")}
             self._append_trace(trace)
             self._persist()
+            self._command_ledger.put(
+                key,
+                request_hash=request_hash,
+                result=result.model_dump(mode="json"),
+            )
             return result
 
     def _appraise(self, event: dict[str, Any], *, kind: str, event_id: str) -> EventAppraisal:
@@ -662,18 +674,10 @@ class HomeostasisEngine:
     def _load(self) -> None:
         if self.state_path.is_file():
             self.snapshot = HomeostaticSnapshot.model_validate_json(self.state_path.read_text(encoding="utf-8"))
-        if self.ledger_path.is_file():
-            try:
-                payload = json.loads(self.ledger_path.read_text(encoding="utf-8"))
-                if isinstance(payload, dict):
-                    self._ledger = payload
-            except json.JSONDecodeError:
-                self._ledger = {}
 
     def _persist(self) -> None:
         self.state_dir.mkdir(parents=True, exist_ok=True)
         self._atomic(self.state_path, self.snapshot.model_dump_json(indent=2) + "\n")
-        self._atomic(self.ledger_path, json.dumps(self._ledger, ensure_ascii=False, indent=2) + "\n")
 
     @staticmethod
     def _atomic(path: Path, value: str) -> None:

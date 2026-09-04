@@ -26,8 +26,8 @@ from harness.core.models import (
 from harness.memory.service import MemoryService
 
 TZ = ZoneInfo("Asia/Shanghai")
-DEFAULT_PRESET_ID = "vaelith-daily"
-DEFAULT_SESSION_ID = "sess_vaelith_daily"
+DEFAULT_PRESET_ID = "misty"
+DEFAULT_SESSION_ID = "sess_misty"
 DEFAULT_USER_NAME = "用户"
 ENV_PRESETS_DIR = "NC_GUI_PRESETS"
 _REPO_ROOT = Path(__file__).resolve().parent.parent

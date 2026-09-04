@@ -3,7 +3,7 @@
   "revision": 1,
   "control_mode": "development_debug",
   "condition": "llm_top3",
-  "persona_version": "persona_v3",
+  "persona_version": "persona_misty_v020",
   "homeostatic_profile": "functional-proxy-v1@1",
   "heartbeat_seconds": 60,
   "policy_horizon": 3,

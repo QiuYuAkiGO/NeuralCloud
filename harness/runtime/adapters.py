@@ -16,8 +16,10 @@ from harness.contracts.decisions import (
     ActionOutcomeEvidence,
     AutonomousAssessment,
     CommitEvidence,
+    DeferDecision,
     DecisionEvidence,
     DeliveryEvidence,
+    GoalProposal,
     NoActionDecision,
     PreparedResponse,
     ReplyDecision,
@@ -27,6 +29,7 @@ from harness.cognitive.autonomous import (
     load_assessment_record,
     run_or_load_assessment,
 )
+from harness.cognitive.action_planner import ActionDecisionPlanner
 from harness.contracts.envelope import (
     CONTRACT_SCHEMA_VERSION,
     DomainCommandEnvelope,
@@ -150,6 +153,7 @@ class PipelineCognitiveAdapter:
         state_path: Path | str | None = None,
         autonomous_log_dir: Path | str | None = None,
         default_session_id: str = "sess_default",
+        action_planner: ActionDecisionPlanner | None = None,
     ) -> None:
         self.pipeline = pipeline
         self.character_id = character_id
@@ -161,6 +165,7 @@ class PipelineCognitiveAdapter:
         else:
             self.autonomous_log_dir = Path("data/cognitive/autonomous")
         self.default_session_id = default_session_id
+        self.action_planner = action_planner or ActionDecisionPlanner()
         self._lock = asyncio.Lock()
         self._revision = 0
         self._cursor = 0
@@ -291,19 +296,25 @@ class PipelineCognitiveAdapter:
                     )
                 now = _utc_now()
                 read_versions = command.version_vector or self._version_vector()
-                decision = (
-                    NoActionDecision(
+                decision: ReplyDecision | GoalProposal | NoActionDecision | DeferDecision
+                if reconsideration:
+                    decision = NoActionDecision(
                         reason="continue current goal after interoceptive reconsideration"
                     )
-                    if reconsideration
-                    else ReplyDecision(
-                        text=final.text,
-                        segments=list(final.segments) or [final.text],
-                        channel=str(payload.get("channel") or "chat"),
-                    )
-                    if final.text.strip()
-                    else NoActionDecision(reason="cognitive pipeline produced no reply")
-                )
+                else:
+                    planned = self.action_planner.decide(payload, mode=mode)
+                    if planned is not None:
+                        decision = planned
+                    elif final.text.strip():
+                        decision = ReplyDecision(
+                            text=final.text,
+                            segments=list(final.segments) or [final.text],
+                            channel=str(payload.get("channel") or "chat"),
+                        )
+                    else:
+                        decision = NoActionDecision(
+                            reason="cognitive pipeline produced no reply"
+                        )
                 prepared = PreparedResponse(
                     event_id=command.event_id,
                     correlation_id=command.correlation_id,
@@ -549,8 +560,19 @@ class PipelineCognitiveAdapter:
                     timestamp=event.timestamp,
                 )
             if self.pipeline.memory.stores.episodic.get(event.event_id) is None:
+                # A structured action has already been planned, approved, executed,
+                # and independently verified before its outcome reaches this commit.
+                # Re-running persona insight and curator LLM calls here adds no
+                # decision value, can exceed the Runtime command deadline, and used
+                # to leave the supervisor trying to pause while Cognitive was still
+                # blocked in synchronous enrichment.  Keep the objective audit event,
+                # but reserve enrichment for conversational deliveries.
+                enrich = not isinstance(evidence, ActionOutcomeEvidence)
                 self.pipeline.memory.record_event(
-                    event, generate_insight=True, curate=True, now=event.timestamp
+                    event,
+                    generate_insight=enrich,
+                    curate=enrich,
+                    now=event.timestamp,
                 )
 
         if isinstance(evidence, DeliveryEvidence) and evidence.success:

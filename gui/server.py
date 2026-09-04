@@ -43,7 +43,7 @@ from harness.llm.client import list_endpoint_models
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 HOST = "127.0.0.1"
-PORT = 8765
+PORT = 8766
 
 
 class ChatRequest(BaseModel):

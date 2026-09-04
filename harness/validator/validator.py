@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import random
 
 from pydantic import ValidationError
@@ -26,7 +27,7 @@ _FABRICATED_MEMORY = (
     "你答应过",
 )
 
-_INSTRUCTION = "保持嘴硬的表达外壳，关心只能通过行动或迂回措辞体现，不要道歉，不要说出心理分析。"
+_DEFAULT_INSTRUCTION = "保持当前 Persona 的表达风格，只修正已指出的问题，不要说出心理分析。"
 _FABRICATION_INSTRUCTION = (
     "记忆库为空：不要引用任何共同经历或过去的对话，不要编造「上次/之前」发生的事；"
     "可以坦率表示不记得，或只回应当前话题。"
@@ -78,7 +79,11 @@ class ResponseValidator:
                         verdict="revise",
                         violations=merged,
                         severity=max(result.severity, extra.severity),
-                        instruction=extra.instruction or result.instruction or _INSTRUCTION,
+                        instruction=(
+                            extra.instruction
+                            or result.instruction
+                            or _revision_instruction(merged, persona)
+                        ),
                     )
             except (ValueError, ValidationError, TypeError, KeyError):
                 return result
@@ -86,10 +91,10 @@ class ResponseValidator:
 
     def _llm_check(self, candidate: CandidateResponse, persona: PersonaCore | None) -> ValidationResult:
         assert self.llm is not None
-        traits = persona.identity.core_traits if persona else []
+        identity = persona.identity.model_dump(mode="json") if persona else None
         raw = self.llm.complete_json(
             system=_LLM_SYSTEM,
-            user=str({"text": candidate.text, "traits": traits}),
+            user=json.dumps({"text": candidate.text, "persona": identity}, ensure_ascii=False),
         )
         return ValidationResult.model_validate(raw)
 
@@ -122,9 +127,7 @@ def rule_check(
         return ValidationResult(verdict="pass", violations=[], severity=0.0, instruction=None)
 
     severity = min(1.0, 0.36 * len(violations) + 0.36)
-    instruction = _INSTRUCTION
-    if "fabricated_memory" in violations:
-        instruction = _FABRICATION_INSTRUCTION + _INSTRUCTION
+    instruction = _revision_instruction(violations, persona)
     return ValidationResult(
         verdict="revise",
         violations=violations,
@@ -137,4 +140,25 @@ def _persona_blob(persona: PersonaCore | None) -> str:
     if persona is None:
         return ""
     ident = persona.identity
-    return " ".join([*ident.core_traits, *ident.values, *ident.speech_style])
+    return " ".join(
+        [*ident.core_traits, *ident.values, *ident.speech_style, *ident.knowledge_boundary]
+    )
+
+
+def _revision_instruction(violations: list[str], persona: PersonaCore | None) -> str:
+    blob = _persona_blob(persona)
+    instructions: list[str] = []
+    if "fabricated_memory" in violations:
+        instructions.append(_FABRICATION_INSTRUCTION)
+    if "direct_care_expression" in violations:
+        if "嘴硬" in blob or "不直接表达关心" in blob:
+            instructions.append("保持嘴硬的表达外壳，关心只能通过行动或迂回措辞体现。")
+        else:
+            instructions.append("避免直接宣告关心，改用符合当前 Persona 的具体回应。")
+    if "premature_apology" in violations:
+        instructions.append("不要轻易道歉，按当前 Persona 的自尊与责任边界回应。")
+    if "explicit_psychological_explanation" in violations:
+        instructions.append("不要把心理分析、内部标签或关系机制直接说出口。")
+    if not instructions:
+        instructions.append(_DEFAULT_INSTRUCTION)
+    return "".join(instructions)
