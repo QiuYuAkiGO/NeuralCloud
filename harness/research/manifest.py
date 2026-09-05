@@ -167,6 +167,8 @@ class ExperimentManifest(BaseModel):
         payload = self.model_dump(mode="json")
         if self.grounded_agency is None:
             payload.pop("grounded_agency")
+        elif self.grounded_agency.runtime is None:
+            payload["grounded_agency"].pop("runtime")
         return json.dumps(
             payload,
             ensure_ascii=False,

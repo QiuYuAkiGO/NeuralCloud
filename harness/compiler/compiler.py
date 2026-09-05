@@ -127,6 +127,9 @@ class ContextCompiler:
         session: list[SessionTurn] | None = None,
         additional_segments: list[ContextSegment] | None = None,
         homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
+        opaque_interoception: tuple | list | None = None,
+        opaque_token_budget: int = 256,
+        required_user_context: bool = False,
     ) -> ModelContext:
         insights = insights or []
         session = session or []
@@ -138,6 +141,20 @@ class ContextCompiler:
         homeostatic: HomeostaticInteroceptiveSummary | None = None
         homeostatic_text = ""
         homeostatic_tokens = 0
+        opaque_text = ""
+        opaque_sources: list[str] = []
+        opaque_tokens = 0
+        if opaque_interoception:
+            from harness.research.interoception.contracts import observation_hash
+            from harness.research.interoception.renderer import render_opaque_interoception
+
+            if homeostatic_interoception is not None or situation.interoception is not None:
+                raise ValueError("opaque observations cannot be combined with semantic interoception")
+            opaque_text = render_opaque_interoception(opaque_interoception, max_tokens=opaque_token_budget)
+            opaque_sources = [observation_hash(item) for item in opaque_interoception]
+            opaque_tokens = estimate_tokens(opaque_text)
+            if opaque_tokens > total:
+                raise ValueError("complete opaque interoception exceeds context token budget")
         if homeostatic_interoception is not None:
             homeostatic = HomeostaticInteroceptiveSummary.model_validate(
                 homeostatic_interoception
@@ -158,8 +175,18 @@ class ContextCompiler:
             source_ids=[persona.persona_id] if persona else [],
             why="persona_core_anchor",
             remaining=remaining,
-            preferred=min(400, max(0, remaining - homeostatic_tokens)),
+            preferred=min(400, max(0, remaining - homeostatic_tokens - opaque_tokens)),
         )
+
+        if opaque_text:
+            remaining = _push_required(
+                segments,
+                kind="opaque_interoception",
+                text=opaque_text,
+                source_ids=opaque_sources,
+                why="model_visible_observation",
+                remaining=remaining,
+            )
 
         if homeostatic is not None:
             remaining = _push_required(
@@ -201,15 +228,21 @@ class ContextCompiler:
                 preferred=min(80, remaining),
             )
 
-        remaining = _push(
-            segments,
-            kind="user",
-            text=situation.utterance,
-            source_ids=[situation.trigger.ref],
-            why="trigger_utterance",
-            remaining=remaining,
-            preferred=min(200, remaining),
-        )
+        if required_user_context and situation.utterance:
+            remaining = _push_required(
+                segments, kind="user", text=situation.utterance,
+                source_ids=[situation.trigger.ref], why="trigger_utterance", remaining=remaining,
+            )
+        else:
+            remaining = _push(
+                segments,
+                kind="user",
+                text=situation.utterance,
+                source_ids=[situation.trigger.ref],
+                why="trigger_utterance",
+                remaining=remaining,
+                preferred=min(200, remaining),
+            )
 
         for additional in additional_segments:
             remaining = _push(

@@ -59,6 +59,22 @@ class GroundedAgencyEvaluation(FrozenContract):
         return self
 
 
+class GroundedAgencyRuntimeOptions(FrozenContract):
+    """Explicit execution limits; absent in the original GA-01 declarations."""
+
+    permitted_intents: tuple[Annotated[str, Field(pattern=r"^[a-z][a-z0-9_.-]+\.v[0-9]+$")], ...] = ()
+    max_decision_repairs: int = Field(default=1, ge=0, le=2, strict=True)
+    history_limit: int = Field(default=6, ge=1, le=8, strict=True)
+    opaque_token_budget: int = Field(default=256, ge=128, le=1024, strict=True)
+    sensor_bins: int = Field(default=9, ge=5, le=9, strict=True)
+
+    @model_validator(mode="after")
+    def _unique_intents(self) -> GroundedAgencyRuntimeOptions:
+        if len(set(self.permitted_intents)) != len(self.permitted_intents):
+            raise ValueError("permitted_intents must be unique")
+        return self
+
+
 class GroundedAgencyCondition(FrozenContract):
     protocol_version: Literal["grounded-agency-v1"]
     condition_id: NonBlank
@@ -78,6 +94,7 @@ class GroundedAgencyCondition(FrozenContract):
     evaluation: GroundedAgencyEvaluation | None = None
     neutrality_rules_version: NonBlank = NEUTRALITY_RULES_VERSION
     neutrality_rules_digest: Digest = NEUTRALITY_RULES_DIGEST
+    runtime: GroundedAgencyRuntimeOptions | None = None
 
     @property
     def is_opaque(self) -> bool:

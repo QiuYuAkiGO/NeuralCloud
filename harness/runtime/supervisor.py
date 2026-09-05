@@ -126,7 +126,8 @@ _TRANSITIONS: dict[RuntimeLifecycle, frozenset[RuntimeLifecycle]] = {
 }
 
 _HOMEOSTATIC_COGNITIVE_RESERVED_PAYLOAD_KEYS = frozenset(
-    {"homeostatic_interoception", "homeostatic_profile_ref", "interoception"}
+    {"homeostatic_interoception", "homeostatic_profile_ref", "interoception",
+     "opaque_interoception", "grounded_manifest_hash", "provider_intents", "research_context"}
 )
 
 
@@ -255,6 +256,8 @@ class RuntimeSupervisor:
         action_timeout_seconds: float = 120.0,
         maintenance_drain_seconds: float = 5.0,
         body_client: MistyBodyClient | None = None,
+        grounded_sensor_transform: Callable[[Any], Any] | None = None,
+        research_clock: Callable[[], datetime] | None = None,
     ) -> None:
         self.manifest = manifest
         self.cognitive = cognitive
@@ -263,6 +266,27 @@ class RuntimeSupervisor:
         self.runtime_instance_id = runtime_instance_id or new_id("runtime")
         self.state_dir = Path(state_dir)
         self.state_dir.mkdir(parents=True, exist_ok=True)
+        self._grounded_binding = manifest.bind_condition() if manifest.grounded_agency else None
+        self._opaque_store = None
+        self._grounded_body = None
+        self._grounded_sensor_transform = grounded_sensor_transform
+        self._research_clock = research_clock or utc_now
+        if manifest.grounded_agency is not None:
+            from harness.research.grounded_agency.manifest import GroundedAgencyRuntimeOptions
+
+            self._grounded_options = manifest.grounded_agency.runtime or GroundedAgencyRuntimeOptions()
+            bind = getattr(cognitive, "bind_research_manifest", None)
+            if callable(bind):
+                bind(manifest)
+            if manifest.grounded_agency.sensor_transform is not None:
+                from harness.research.interoception.store import OpaqueInteroceptionStore
+
+                self._opaque_store = OpaqueInteroceptionStore(
+                    self.state_dir / "opaque-interoception.sqlite3", manifest.grounded_agency,
+                    history_limit=self._grounded_options.history_limit,
+                    max_tokens=self._grounded_options.opaque_token_budget,
+                    bin_count=self._grounded_options.sensor_bins,
+                )
         self.journal = journal or RuntimeJournal(
             self.state_dir / "journal",
             runtime_instance_id=self.runtime_instance_id,
@@ -987,6 +1011,8 @@ class RuntimeSupervisor:
             self.write_checkpoint()
             await self.cognitive.close()
             await self.homeostasis.close()
+            if self._opaque_store is not None:
+                self._opaque_store.close()
             await self._transition(RuntimeLifecycle.STOPPED, reason=reason, durable=True)
             await self.queue.close()
             self._closed = True
@@ -1167,6 +1193,8 @@ class RuntimeSupervisor:
             event.event_type == RuntimeEventType.AGENCY_TERMINAL
             and event.payload.get("schema_version") == "body-state-v1"
         ):
+            if self.manifest.grounded_agency is not None:
+                return await self._handle_grounded_body(event, process_seq)
             terminal_snapshot = LegacyBodyStateSnapshot.model_validate(event.payload)
             self._body_episode_id = terminal_snapshot.episode_id
             self._body_revision = terminal_snapshot.revision
@@ -1210,6 +1238,8 @@ class RuntimeSupervisor:
         self, event: RuntimeEvent, process_seq: int
     ) -> EventDispatchResult:
         if event.event_type == RuntimeEventType.BODY_STATE:
+            if self.manifest.grounded_agency is not None:
+                return await self._handle_grounded_body(event, process_seq)
             body_payload = event.payload.get("body_state") or event.payload
             if body_payload.get("schema_version") == "body-state-v1":
                 return await self._apply_body_state(event, process_seq)
@@ -1234,6 +1264,8 @@ class RuntimeSupervisor:
                 decision_kind="action_result",
                 detail={"action": action.model_dump(mode="json")},
             )
+        if self.manifest.grounded_agency is not None:
+            return await self._dispatch_grounded_event(event, process_seq)
         if event.event_type == RuntimeEventType.IDLE:
             ineligible = self._autonomous_ineligible(event)
             if ineligible is not None:
@@ -1596,6 +1628,186 @@ class RuntimeSupervisor:
             status="completed",
             decision_kind=str(detail.get("effective_decision_kind") or decision.kind),
             detail={**detail, **causal_context},
+        )
+
+    async def _handle_grounded_body(self, event: RuntimeEvent, process_seq: int) -> EventDispatchResult:
+        """Keep body facts local; a body tick never requests a policy or decision."""
+        from harness.research.grounded_agency.hashes import content_hash
+
+        self._grounded_binding.assert_matches(self.manifest)
+        raw = event.payload.get("body_state") or event.payload
+        model = LegacyBodyStateSnapshot if raw.get("schema_version") == "body-state-v1" else EmbodimentBodyStateSnapshot
+        snapshot = model.model_validate(raw)
+        expected = self.manifest.embodiment.body_instance_id
+        if expected is not None and snapshot.body_instance_id != expected:
+            raise DomainCommandError("body-state snapshot belongs to a different body instance")
+        self._assert_grounded_snapshot_progress(snapshot, self._grounded_body)
+        episode_id = getattr(snapshot, "episode_id", None) or self._body_episode_id
+        trace = {"body_state": snapshot.model_dump(mode="json"), "manifest_hash": self.manifest.content_hash()}
+        if self._opaque_store is not None:
+            sensor_value = None
+            if self._grounded_sensor_transform is not None:
+                transformed = self._grounded_sensor_transform(snapshot)
+                sensor_value = transformed.energy.available_ratio if hasattr(transformed, "energy") else transformed
+                trace["sensor_intervention_value"] = sensor_value
+            envelope = self._opaque_store.ingest(snapshot, episode_id=episode_id, sensor_value=sensor_value)
+            trace.update(
+                envelope=envelope.model_dump(mode="json"),
+                observation_hash=content_hash(envelope.observation),
+            )
+        self._append_journal("grounded_body_observed", event=event, process_seq=process_seq, data=trace)
+        # Publish the new runtime state only after all validation and sensor
+        # persistence succeeds. Rejected revisions cannot poison a later call.
+        self._install_grounded_body(snapshot)
+        if snapshot.energy.terminal:
+            self._agency_state = AgencyState.TERMINAL
+            self._terminal_body_revision = snapshot.revision
+            self._terminal_episode_id = self._body_episode_id
+            self.embodiment.set_terminal("body provider reported terminal state")
+            await self.action_coordinator.request_preemption(reason="body provider reported terminal state")
+        return EventDispatchResult(
+            event_id=event.event_id, receive_seq=event.receive_seq, process_seq=process_seq,
+            status="completed", decision_kind="body_observation",
+            detail={"body_revision": snapshot.revision, "reconsideration_requested": False},
+        )
+
+    @staticmethod
+    def _assert_grounded_snapshot_progress(snapshot, previous) -> None:
+        from harness.research.grounded_agency.hashes import content_hash
+
+        if previous is None:
+            return
+        if snapshot.body_instance_id != previous.body_instance_id:
+            raise DomainCommandError("grounded body instance changed without a new run")
+        if snapshot.revision < previous.revision:
+            raise DomainCommandError("grounded body revision moved backwards")
+        if snapshot.revision == previous.revision and content_hash(snapshot) != content_hash(previous):
+            raise DomainCommandError("same body revision contains conflicting truth")
+        if snapshot.captured_at < previous.captured_at:
+            raise DomainCommandError("grounded body capture time moved backwards")
+
+    def _install_grounded_body(self, snapshot) -> None:
+        self._body_revision = snapshot.revision
+        self._body_captured_at = snapshot.captured_at
+        self._body_episode_id = getattr(snapshot, "episode_id", None) or self._body_episode_id
+        self._grounded_body = snapshot
+        self._interoception = None
+        if self.manifest.grounded_agency.semantic_homeostasis:
+            ratio = snapshot.energy.available_ratio
+            self._interoception = CognitiveInteroceptiveState(
+                level="critical" if ratio <= .1 else "low" if ratio < .3 else "nominal" if ratio < .7 else "high",
+                trend=max(-1., min(1., snapshot.energy.delta_units_per_minute)), confidence=1.,
+                captured_at=snapshot.captured_at, evidence_refs=[f"body-state:{snapshot.revision}"],
+            )
+
+    def _restore_grounded_body(self, records: list[RuntimeJournalRecord]) -> None:
+        """Rebuild body authority and a missing sensor cache from the durable journal."""
+        if self.manifest.grounded_agency is None:
+            return
+        previous = None
+        terminal_state = None
+        episode_id = None
+        for record in records:
+            if record.record_type == "agency_reset":
+                terminal_state = AgencyState.AVAILABLE
+            if record.record_type != "grounded_body_observed":
+                continue
+            if record.data.get("manifest_hash") != self.manifest.content_hash():
+                raise RuntimeStateError("grounded body journal manifest drift")
+            raw = record.data["body_state"]
+            model = LegacyBodyStateSnapshot if raw.get("schema_version") == "body-state-v1" else EmbodimentBodyStateSnapshot
+            snapshot = model.model_validate(raw)
+            self._assert_grounded_snapshot_progress(snapshot, previous)
+            episode_id = getattr(snapshot, "episode_id", None) or episode_id
+            if self._opaque_store is not None:
+                envelope = self._opaque_store.ingest(
+                    snapshot, episode_id=episode_id, sensor_value=record.data.get("sensor_intervention_value"),
+                )
+                if envelope.model_dump(mode="json") != record.data.get("envelope"):
+                    raise RuntimeStateError("grounded sensor replay does not match its recorded envelope")
+            previous = snapshot
+            if snapshot.energy.terminal:
+                terminal_state = AgencyState.TERMINAL
+                self._terminal_body_revision = snapshot.revision
+                self._terminal_episode_id = episode_id
+        if previous is not None:
+            self._install_grounded_body(previous)
+        if terminal_state is not None:
+            self._agency_state = terminal_state
+        if self._agency_state == AgencyState.TERMINAL:
+            self.embodiment.set_terminal("restored terminal body state")
+
+    async def _dispatch_grounded_event(self, event: RuntimeEvent, process_seq: int) -> EventDispatchResult:
+        """Independent research route: no legacy ranking, reflection or social increments."""
+        self._grounded_binding.assert_matches(self.manifest)
+        ga = self.manifest.grounded_agency
+        if event.event_type == RuntimeEventType.HEARTBEAT:
+            self._last_heartbeat_at = utc_now()
+            await self._refresh_embodiment()
+        if event.event_type not in {
+            RuntimeEventType.USER_MESSAGE, RuntimeEventType.ENVIRONMENT_CHANGE,
+            RuntimeEventType.GOAL_RECONSIDERATION, RuntimeEventType.IDLE,
+        } or self._agency_state != AgencyState.AVAILABLE:
+            return EventDispatchResult(
+                event_id=event.event_id, receive_seq=event.receive_seq, process_seq=process_seq,
+                status="completed", decision_kind="no_action",
+                detail={"reason": "observation recorded without requesting a model decision"},
+            )
+        if event.event_type == RuntimeEventType.IDLE and self._autonomous_ineligible(event) is not None:
+            return EventDispatchResult(
+                event_id=event.event_id, receive_seq=event.receive_seq, process_seq=process_seq,
+                status="ignored", decision_kind="no_action", detail={"reason": "idle event superseded"},
+            )
+        sampled_at = self._research_clock()
+        observations = self._opaque_store.observations(now=sampled_at) if self._opaque_store else ()
+        self._append_journal(
+            "grounded_observation_sampled", event=event,
+            data={"sampled_at": sampled_at.isoformat()},
+        )
+        provider = self.embodiment.provider
+        declared = getattr(provider, "supported_intents", None)
+        if callable(declared):
+            declared = declared()
+            if inspect.isawaitable(declared):
+                declared = await declared
+        provider_intents = list(declared) if declared is not None else []
+        if not self.embodiment.supports(ACTION_EXECUTE):
+            provider_intents = []
+        payload = {
+            "mode": "grounded_agency_decision",
+            "grounded_manifest_hash": self.manifest.content_hash(),
+            "text": str(event.payload.get("text") or ""),
+            "session_id": str(event.payload.get("session_id") or "grounded-agency"),
+            "channel": str(event.payload.get("channel") or "runtime"),
+            "source_time": event.source_time,
+            "opaque_interoception": [item.model_dump(mode="json") for item in observations],
+            "provider_intents": provider_intents,
+        }
+        if ga.action_selection == "engineered_argmin":
+            payload["policies"] = await self.homeostasis.propose_policies(version_vector=self.version_vector)
+        if ga.semantic_homeostasis and self._interoception is not None:
+            payload["interoception"] = self._interoception.model_dump(mode="json", exclude={"evidence_refs"})
+        envelope = self._make_command(
+            event, command_type="PrepareResponse", idempotency_key=self._prepare_idempotency_key(event),
+            expected_revision=self._cognitive_snapshot.revision, payload=payload,
+        )
+        result = await self._invoke_domain(
+            service="cognitive", envelope=envelope, method=self.cognitive.prepare_response, event=event,
+        )
+        prepared = PreparedResponse.model_validate(result.result)
+        if prepared.expires_at <= utc_now():
+            raise LateDomainResultError("research decision expired before execution")
+        trace = getattr(self.cognitive, "research_traces", {}).get(event.event_id)
+        if trace is not None:
+            self._append_journal("grounded_decision", event=event, data=trace)
+        if isinstance(prepared.decision, ReplyDecision) and ga.report_channel != "normal":
+            raise DomainCommandError("action-only research cannot deliver a ReplyDecision")
+        detail = await self._handle_decision(event, prepared, prepared.decision)
+        self._cognitive_snapshot = await self.cognitive.get_snapshot()
+        return EventDispatchResult(
+            event_id=event.event_id, receive_seq=event.receive_seq, process_seq=process_seq,
+            status="completed", decision_kind=str(detail.get("effective_decision_kind") or prepared.decision.kind),
+            detail=detail,
         )
 
     async def _handle_body_state(
@@ -2280,20 +2492,22 @@ class RuntimeSupervisor:
         # event, while outcome application and its causal trace belong to the
         # ACTION_RESULT (when one exists).
         await self._commit_prepared(original_event, prepared, evidence)
-        outcome_command = self._make_command(
-            effective_outcome_event,
-            command_type="ApplyOutcome",
-            idempotency_key=f"homeostasis:outcome:{action.idempotency_key}",
-            expected_revision=self._homeostasis_snapshot.revision,
-            payload={"action": action.model_dump(mode="json"), "evidence": evidence.model_dump(mode="json")},
-        )
-        result = await self._invoke_domain(
-            service="homeostasis",
-            envelope=outcome_command,
-            method=self.homeostasis.apply_outcome,
-            event=effective_outcome_event,
-        )
-        await self._update_homeostasis(result, event=effective_outcome_event)
+        ga = self.manifest.grounded_agency
+        if ga is None or ga.action_selection == "engineered_argmin":
+            outcome_command = self._make_command(
+                effective_outcome_event,
+                command_type="ApplyOutcome",
+                idempotency_key=f"homeostasis:outcome:{action.idempotency_key}",
+                expected_revision=self._homeostasis_snapshot.revision,
+                payload={"action": action.model_dump(mode="json"), "evidence": evidence.model_dump(mode="json")},
+            )
+            result = await self._invoke_domain(
+                service="homeostasis",
+                envelope=outcome_command,
+                method=self.homeostasis.apply_outcome,
+                event=effective_outcome_event,
+            )
+            await self._update_homeostasis(result, event=effective_outcome_event)
         self._append_journal(
             "action_completed",
             event=effective_outcome_event,
@@ -3474,6 +3688,7 @@ class RuntimeSupervisor:
             if checkpoint.agency_state == AgencyState.TERMINAL:
                 self._terminal_episode_id = checkpoint.body_episode_id
                 self._terminal_body_revision = checkpoint.body_revision
+        self._restore_grounded_body(records)
         return previous_lifecycle
 
     async def _restore_pending_events(self) -> None:

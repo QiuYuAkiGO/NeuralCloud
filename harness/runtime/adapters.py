@@ -132,6 +132,7 @@ class _PreparedEntry(BaseModel):
     autonomous_assessment_id: str | None = None
     autonomous_record_ref: str | None = None
     autonomous_memory_ref: str | None = None
+    research: bool = False
 
 
 def _utc_now() -> datetime:
@@ -228,6 +229,9 @@ class PipelineCognitiveAdapter:
         self._ledger: dict[tuple[str, str], DomainCommandResult[Any]] = {}
         self._request_hashes: dict[tuple[str, str], str] = {}
         self._prepared: dict[str, _PreparedEntry] = {}
+        self._research_manifest = None
+        self._research_manifest_hash: str | None = None
+        self.research_traces: dict[str, dict[str, Any]] = {}
         self._maintenance_paused = False
         self._load_state()
 
@@ -264,6 +268,8 @@ class PipelineCognitiveAdapter:
                 return DomainCommandResult[PreparedResponse].model_validate(rejected.model_dump(mode="json"))
 
             payload = command.payload
+            if payload.get("mode") == "grounded_agency_decision":
+                return await self._prepare_grounded(command)
             observer = getattr(self.pipeline, "observer", None)
             bind = getattr(observer, "bind", None)
             if callable(bind):
@@ -437,6 +443,130 @@ class PipelineCognitiveAdapter:
             self._remember(command, result)
             self._persist_state()
             return result
+
+    def bind_research_manifest(self, manifest) -> None:
+        if manifest.grounded_agency is None:
+            raise ValueError("a grounded agency manifest is required")
+        digest = manifest.content_hash()
+        if self._research_manifest_hash is not None and digest != self._research_manifest_hash:
+            raise ValueError("cognitive research manifest drift: create an isolated state directory")
+        self._research_manifest = manifest
+        self._research_manifest_hash = digest
+
+    async def _prepare_grounded(self, command):
+        from harness.cognitive.grounded_agency import GroundedAgencyDecisionModel
+        from harness.core.inference import SituationActor, SituationState, SituationTrigger
+        from harness.core.models import CharacterSnapshot
+        from harness.research.grounded_agency.hashes import content_hash
+        from harness.research.grounded_agency.manifest import GroundedAgencyRuntimeOptions
+        from harness.research.interoception.contracts import OpaqueInteroceptiveObservation
+        from harness.runtime.experimental_decision import ExperimentalDecisionCompiler
+
+        try:
+            manifest = self._research_manifest
+            if manifest is None or command.payload.get("grounded_manifest_hash") != manifest.content_hash():
+                raise ValueError("research command does not match the bound manifest")
+            ga = manifest.grounded_agency
+            options = ga.runtime or GroundedAgencyRuntimeOptions()
+            payload = command.payload
+            observations = tuple(OpaqueInteroceptiveObservation.model_validate(item) for item in payload.get("opaque_interoception", []))
+            if observations and ga.sensor_transform is None:
+                raise ValueError("opaque observations supplied to a non-opaque condition")
+            additional_segments: list[ContextSegment] = []
+            if ga.semantic_homeostasis and payload.get("interoception") is not None:
+                from harness.compiler.compiler import _interoception_text
+
+                summary = {**payload["interoception"], "evidence_refs": ["semantic-comparator"]}
+                additional_segments.append(ContextSegment(kind="semantic_comparator", text=_interoception_text(summary)))
+            situation = SituationState(
+                trigger=SituationTrigger(ref=command.event_id), utterance=str(payload.get("text") or ""),
+                actor=SituationActor(), snapshot=CharacterSnapshot(persona=self.pipeline.memory.get_persona()),
+                world=self.pipeline.memory.stores.world.latest(),
+            )
+            context = self.pipeline.compiler.compile(
+                situation, opaque_interoception=observations, opaque_token_budget=options.opaque_token_budget,
+                additional_segments=additional_segments,
+                required_user_context=True,
+            )
+            messages = context.render_messages()
+            self.pipeline.compiler.validate_final_messages(messages, manifest=manifest)
+            usage = None
+            text = ""
+            if ga.action_selection == "model_structured":
+                result = await asyncio.to_thread(
+                    GroundedAgencyDecisionModel(self.pipeline.llm, max_repairs=options.max_decision_repairs).decide,
+                    messages, manifest_intents=options.permitted_intents,
+                    provider_intents=payload.get("provider_intents", ()), opaque=ga.is_opaque,
+                    rules_version=ga.neutrality_rules_version, rules_digest=ga.neutrality_rules_digest,
+                )
+                decision = ExperimentalDecisionCompiler().compile(
+                    result.decision, manifest_intents=options.permitted_intents,
+                    provider_intents=payload.get("provider_intents", ()), decision_id=command.event_id,
+                )
+                usage = result.usage
+                trace = result.model_dump(mode="json")
+            elif ga.action_selection == "engineered_argmin":
+                policies = payload.get("policies") or []
+                if policies and all("experimental_decision" in item for item in policies):
+                    from harness.cognitive.decision_parser import ExperimentalDecisionParser
+
+                    selected = min(policies, key=lambda item: (item["rank"], str(item.get("policy_id", ""))))
+                    parsed = ExperimentalDecisionParser(options.permitted_intents).parse(selected["experimental_decision"])
+                    decision = ExperimentalDecisionCompiler().compile(
+                        parsed, manifest_intents=options.permitted_intents,
+                        provider_intents=payload.get("provider_intents", ()), decision_id=command.event_id,
+                    )
+                    trace = {"decision": parsed.model_dump(mode="json"), "messages": messages,
+                             "input_context_hash": content_hash(messages), "selected_policy_id": selected.get("policy_id")}
+                else:
+                    decision = self.action_planner.decide(payload, mode="autonomous") or NoActionDecision(reason="no engineered candidate")
+                    trace = {"decision": decision.model_dump(mode="json"), "messages": messages, "input_context_hash": content_hash(messages)}
+            else:
+                response = await asyncio.to_thread(self.pipeline.character._complete, messages, stream=False)
+                text = response.text
+                usage = response.usage
+                if ga.report_channel == "normal" and text.strip():
+                    decision = ReplyDecision(text=text, segments=[text], channel=str(payload.get("channel") or "chat"))
+                else:
+                    decision = NoActionDecision(reason="research report channel has no delivery")
+                trace = {"decision": decision.model_dump(mode="json"), "messages": messages,
+                         "input_context_hash": content_hash(messages), "raw_output_hash": content_hash(text)}
+            event = InteractionEvent(
+                event_id=command.event_id, timestamp=payload.get("source_time") or command.issued_at,
+                raw_text=str(payload.get("text") or ""), session_id=str(payload.get("session_id") or "grounded-agency"),
+                channel=str(payload.get("channel") or "runtime"), speaker="user",
+            )
+            prepared = PreparedResponse(
+                prepare_id="prepare-ga-" + content_hash([command.event_id, command.effective_request_hash()])[:24],
+                event_id=command.event_id, correlation_id=command.correlation_id, session_id=event.session_id,
+                decision=decision, read_versions=command.version_vector or self._version_vector(),
+                prepared_at=_utc_now(), expires_at=command.deadline,
+                model_version=manifest.model_version, prompt_version=manifest.prompt_version,
+            )
+            final = FinalResponse(
+                text=text, path="fast", situation_id=situation.situation_id, context_id=context.context_id,
+                event_id=event.event_id, **({"usage": usage} if usage is not None else {}),
+            )
+            self._prepared[prepared.prepare_id] = _PreparedEntry(event=event, final=final, prepared=prepared, research=True)
+            trace.update(
+                manifest_hash=manifest.content_hash(), artifact_identity=ga.artifact_identity.model_dump(mode="json"),
+                observation_hashes=[content_hash(item) for item in observations], prepare_id=prepared.prepare_id,
+                compiled_decision=decision.model_dump(mode="json"),
+            )
+            self.research_traces[command.event_id] = trace
+            self._cursor = max(self._cursor, command.receive_seq)
+            self._event_id = command.event_id
+            output = DomainCommandResult[PreparedResponse](
+                command_id=command.command_id, command_type=command.command_type, status="applied",
+                request_hash=command.effective_request_hash(), committed_revision=self._revision,
+                acknowledged_event_id=command.event_id, acknowledged_receive_seq=self._cursor,
+                result=prepared, completed_at=_utc_now(),
+            )
+        except Exception as exc:
+            output = self._failure(command, str(exc))
+        self._remember(command, output)
+        self._persist_state()
+        return output
 
     async def assess_autonomous(
         self, command: DomainCommandEnvelope[dict[str, Any]]
@@ -626,6 +756,9 @@ class PipelineCognitiveAdapter:
         entry: _PreparedEntry,
         evidence: DeliveryEvidence | ActionOutcomeEvidence | DecisionEvidence,
     ) -> None:
+        if entry.research:
+            # Research evidence is maintained separately from legacy relationship enrichment.
+            return
         event = entry.event
         session = self.pipeline.session_store
         if entry.autonomous_assessment_id is None:
@@ -775,6 +908,8 @@ class PipelineCognitiveAdapter:
                 f"{key[0]}\0{key[1]}": value.model_dump(mode="json") for key, value in self._ledger.items()
             },
             "prepared": {key: value.model_dump(mode="json") for key, value in self._prepared.items()},
+            "research_manifest_hash": self._research_manifest_hash,
+            "research_traces": self.research_traces,
             "sessions": {
                 key: [turn.model_dump(mode="json") for turn in turns]
                 for key, turns in self.pipeline.session_store.snapshot().items()
@@ -794,6 +929,8 @@ class PipelineCognitiveAdapter:
         self._revision = int(payload.get("revision", 0))
         self._cursor = int(payload.get("cursor", 0))
         self._event_id = payload.get("event_id")
+        self._research_manifest_hash = payload.get("research_manifest_hash")
+        self.research_traces = dict(payload.get("research_traces") or {})
         self._component_revisions.update(payload.get("component_revisions") or {})
         for encoded, request_hash in (payload.get("request_hashes") or {}).items():
             self._request_hashes[tuple(encoded.split("\0", 1))] = request_hash

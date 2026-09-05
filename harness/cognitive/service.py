@@ -132,6 +132,13 @@ class CognitiveServiceHost:
             ),
             default_session_id=self.chat.active_session_id,
         )
+        manifest_path = os.environ.get("NC_COGNITIVE_MANIFEST_PATH") or os.environ.get("NC_RUNTIME_MANIFEST_PATH")
+        if manifest_path:
+            from harness.research.manifest import load_experiment_manifest
+
+            manifest = load_experiment_manifest(Path(manifest_path))
+            if manifest.grounded_agency is not None:
+                self.adapter.bind_research_manifest(manifest)
         self._control_lock = asyncio.Lock()
 
     async def health(self):

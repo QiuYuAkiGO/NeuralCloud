@@ -273,6 +273,39 @@
       "title": "ProcessCriterion",
       "type": "object"
     },
+    "ScenarioCriterion": {
+      "additionalProperties": false,
+      "description": "Target-bound outcome supported by a declared experimental scenario provider.",
+      "properties": {
+        "condition": {
+          "enum": [
+            "task_completed",
+            "station_used"
+          ],
+          "title": "Condition",
+          "type": "string"
+        },
+        "kind": {
+          "const": "scenario",
+          "default": "scenario",
+          "title": "Kind",
+          "type": "string"
+        },
+        "target_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_.-]+$",
+          "title": "Target Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "condition",
+        "target_id"
+      ],
+      "title": "ScenarioCriterion",
+      "type": "object"
+    },
     "ScreenChangeCriterion": {
       "additionalProperties": false,
       "properties": {
@@ -386,6 +419,7 @@
             "intentional_noop": "#/$defs/IntentionalNoopCriterion",
             "pointer": "#/$defs/PointerCriterion",
             "process": "#/$defs/ProcessCriterion",
+            "scenario": "#/$defs/ScenarioCriterion",
             "screen_change": "#/$defs/ScreenChangeCriterion",
             "window": "#/$defs/WindowCriterion"
           },
@@ -412,6 +446,9 @@
           },
           {
             "$ref": "#/$defs/IntentionalNoopCriterion"
+          },
+          {
+            "$ref": "#/$defs/ScenarioCriterion"
           }
         ]
       },

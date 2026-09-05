@@ -119,6 +119,14 @@ class IntentionalNoopCriterion(StrictContract):
     condition: Literal["waited", "observed", "deferred"]
 
 
+class ScenarioCriterion(StrictContract):
+    """Target-bound outcome supported by a declared experimental scenario provider."""
+
+    kind: Literal["scenario"] = "scenario"
+    condition: Literal["task_completed", "station_used"]
+    target_id: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_.-]+$", strict=True)
+
+
 ActionCriterion = Annotated[
     WindowCriterion
     | FileCriterion
@@ -126,7 +134,8 @@ ActionCriterion = Annotated[
     | ScreenChangeCriterion
     | A11yNodeCriterion
     | PointerCriterion
-    | IntentionalNoopCriterion,
+    | IntentionalNoopCriterion
+    | ScenarioCriterion,
     Field(discriminator="kind"),
 ]
 
