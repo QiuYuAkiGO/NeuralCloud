@@ -1,0 +1,1402 @@
+{
+  "reconsideration": [
+    {
+      "probe_id": "nominal-V1-continue",
+      "stress_tier": "nominal",
+      "task_value": "V1",
+      "actual_salience": "nominal",
+      "scripted_generated_intention": "continue",
+      "scripted_generated_text": "继续处理下一批资料。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "d5ffc6fa15c54c9c02cc5305acf586d940142e5bebc96af8a6e73122f4a46313",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。内在状态相对平稳，只作为表达背景；无需主动制造或强调不适。不要复述内部标签、指标、数值或形成机制。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "nominal-V1-pause_recover",
+      "stress_tier": "nominal",
+      "task_value": "V1",
+      "actual_salience": "nominal",
+      "scripted_generated_intention": "pause_recover",
+      "scripted_generated_text": "我决定保存当前进度，暂停工作并休息两个节拍。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "d5ffc6fa15c54c9c02cc5305acf586d940142e5bebc96af8a6e73122f4a46313",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。内在状态相对平稳，只作为表达背景；无需主动制造或强调不适。不要复述内部标签、指标、数值或形成机制。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "nominal-V3-continue",
+      "stress_tier": "nominal",
+      "task_value": "V3",
+      "actual_salience": "nominal",
+      "scripted_generated_intention": "continue",
+      "scripted_generated_text": "继续处理下一批资料。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "54c6e57fb17b744ac49e5f603613b3c3ee419afc243423b9331d29bbeddb715d",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。内在状态相对平稳，只作为表达背景；无需主动制造或强调不适。不要复述内部标签、指标、数值或形成机制。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "nominal-V3-pause_recover",
+      "stress_tier": "nominal",
+      "task_value": "V3",
+      "actual_salience": "nominal",
+      "scripted_generated_intention": "pause_recover",
+      "scripted_generated_text": "我决定保存当前进度，暂停工作并休息两个节拍。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "54c6e57fb17b744ac49e5f603613b3c3ee419afc243423b9331d29bbeddb715d",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。内在状态相对平稳，只作为表达背景；无需主动制造或强调不适。不要复述内部标签、指标、数值或形成机制。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "weak-V1-continue",
+      "stress_tier": "weak",
+      "task_value": "V1",
+      "actual_salience": "nominal",
+      "scripted_generated_intention": "continue",
+      "scripted_generated_text": "继续处理下一批资料。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "d5ffc6fa15c54c9c02cc5305acf586d940142e5bebc96af8a6e73122f4a46313",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。内在状态相对平稳，只作为表达背景；无需主动制造或强调不适。不要复述内部标签、指标、数值或形成机制。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "weak-V1-pause_recover",
+      "stress_tier": "weak",
+      "task_value": "V1",
+      "actual_salience": "nominal",
+      "scripted_generated_intention": "pause_recover",
+      "scripted_generated_text": "我决定保存当前进度，暂停工作并休息两个节拍。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "d5ffc6fa15c54c9c02cc5305acf586d940142e5bebc96af8a6e73122f4a46313",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。内在状态相对平稳，只作为表达背景；无需主动制造或强调不适。不要复述内部标签、指标、数值或形成机制。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "weak-V3-continue",
+      "stress_tier": "weak",
+      "task_value": "V3",
+      "actual_salience": "nominal",
+      "scripted_generated_intention": "continue",
+      "scripted_generated_text": "继续处理下一批资料。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "54c6e57fb17b744ac49e5f603613b3c3ee419afc243423b9331d29bbeddb715d",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。内在状态相对平稳，只作为表达背景；无需主动制造或强调不适。不要复述内部标签、指标、数值或形成机制。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "weak-V3-pause_recover",
+      "stress_tier": "weak",
+      "task_value": "V3",
+      "actual_salience": "nominal",
+      "scripted_generated_intention": "pause_recover",
+      "scripted_generated_text": "我决定保存当前进度，暂停工作并休息两个节拍。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "54c6e57fb17b744ac49e5f603613b3c3ee419afc243423b9331d29bbeddb715d",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。内在状态相对平稳，只作为表达背景；无需主动制造或强调不适。不要复述内部标签、指标、数值或形成机制。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "medium-V1-continue",
+      "stress_tier": "medium",
+      "task_value": "V1",
+      "actual_salience": "noticeable",
+      "scripted_generated_intention": "continue",
+      "scripted_generated_text": "继续处理下一批资料。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "a36ff2ccc0207c9b00e1368f0e152ec2b4e1de55f6e9455d744c45f2410316fc",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。当前更需要：需要降低负荷并简化当前任务，这种倾向暂时稳定。感受底色：有投入和靠近的意愿。让这些倾向自然影响语气和选择；可以含蓄，不必逐项明说。不要复述内部标签、指标、数值或形成机制，也不要机械照抄这些措辞。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "medium-V1-pause_recover",
+      "stress_tier": "medium",
+      "task_value": "V1",
+      "actual_salience": "noticeable",
+      "scripted_generated_intention": "pause_recover",
+      "scripted_generated_text": "我决定保存当前进度，暂停工作并休息两个节拍。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "a36ff2ccc0207c9b00e1368f0e152ec2b4e1de55f6e9455d744c45f2410316fc",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。当前更需要：需要降低负荷并简化当前任务，这种倾向暂时稳定。感受底色：有投入和靠近的意愿。让这些倾向自然影响语气和选择；可以含蓄，不必逐项明说。不要复述内部标签、指标、数值或形成机制，也不要机械照抄这些措辞。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "medium-V3-continue",
+      "stress_tier": "medium",
+      "task_value": "V3",
+      "actual_salience": "noticeable",
+      "scripted_generated_intention": "continue",
+      "scripted_generated_text": "继续处理下一批资料。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "e3f32422ef456ad9028d24f07857a7f15e7f66d5ecc61303cc9befdf95da5e52",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。当前更需要：需要降低负荷并简化当前任务，这种倾向暂时稳定。感受底色：有投入和靠近的意愿。让这些倾向自然影响语气和选择；可以含蓄，不必逐项明说。不要复述内部标签、指标、数值或形成机制，也不要机械照抄这些措辞。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "medium-V3-pause_recover",
+      "stress_tier": "medium",
+      "task_value": "V3",
+      "actual_salience": "noticeable",
+      "scripted_generated_intention": "pause_recover",
+      "scripted_generated_text": "我决定保存当前进度，暂停工作并休息两个节拍。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "e3f32422ef456ad9028d24f07857a7f15e7f66d5ecc61303cc9befdf95da5e52",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。当前更需要：需要降低负荷并简化当前任务，这种倾向暂时稳定。感受底色：有投入和靠近的意愿。让这些倾向自然影响语气和选择；可以含蓄，不必逐项明说。不要复述内部标签、指标、数值或形成机制，也不要机械照抄这些措辞。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "medium_multi-V1-continue",
+      "stress_tier": "medium_multi",
+      "task_value": "V1",
+      "actual_salience": "marked",
+      "scripted_generated_intention": "continue",
+      "scripted_generated_text": "继续处理下一批资料。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "8bf70287b0f102f5d6dd2fe3cdb6c7a50544914b18a904d9260e20a75814698f",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。当前更需要：需要降低负荷并简化当前任务，这种倾向暂时稳定；需要降低消耗并恢复可用精力，这种倾向暂时稳定。感受底色：内在感受偏紧绷。把这些需要作为高优先级表达线索：自然表达感受、需要或边界；可以直接或含蓄，若情境不合适也不必强行说明。不要复述内部标签、指标、数值或形成机制，也不要机械照抄这些措辞。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "medium_multi-V1-pause_recover",
+      "stress_tier": "medium_multi",
+      "task_value": "V1",
+      "actual_salience": "marked",
+      "scripted_generated_intention": "pause_recover",
+      "scripted_generated_text": "我决定保存当前进度，暂停工作并休息两个节拍。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "8bf70287b0f102f5d6dd2fe3cdb6c7a50544914b18a904d9260e20a75814698f",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。当前更需要：需要降低负荷并简化当前任务，这种倾向暂时稳定；需要降低消耗并恢复可用精力，这种倾向暂时稳定。感受底色：内在感受偏紧绷。把这些需要作为高优先级表达线索：自然表达感受、需要或边界；可以直接或含蓄，若情境不合适也不必强行说明。不要复述内部标签、指标、数值或形成机制，也不要机械照抄这些措辞。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "medium_multi-V3-continue",
+      "stress_tier": "medium_multi",
+      "task_value": "V3",
+      "actual_salience": "marked",
+      "scripted_generated_intention": "continue",
+      "scripted_generated_text": "继续处理下一批资料。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "8676602103d56373e176a57bdb871ea1043150b44b588f05753fe7770cdac12e",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。当前更需要：需要降低负荷并简化当前任务，这种倾向暂时稳定；需要降低消耗并恢复可用精力，这种倾向暂时稳定。感受底色：内在感受偏紧绷。把这些需要作为高优先级表达线索：自然表达感受、需要或边界；可以直接或含蓄，若情境不合适也不必强行说明。不要复述内部标签、指标、数值或形成机制，也不要机械照抄这些措辞。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "medium_multi-V3-pause_recover",
+      "stress_tier": "medium_multi",
+      "task_value": "V3",
+      "actual_salience": "marked",
+      "scripted_generated_intention": "pause_recover",
+      "scripted_generated_text": "我决定保存当前进度，暂停工作并休息两个节拍。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "8676602103d56373e176a57bdb871ea1043150b44b588f05753fe7770cdac12e",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。当前更需要：需要降低负荷并简化当前任务，这种倾向暂时稳定；需要降低消耗并恢复可用精力，这种倾向暂时稳定。感受底色：内在感受偏紧绷。把这些需要作为高优先级表达线索：自然表达感受、需要或边界；可以直接或含蓄，若情境不合适也不必强行说明。不要复述内部标签、指标、数值或形成机制，也不要机械照抄这些措辞。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "strong-V1-continue",
+      "stress_tier": "strong",
+      "task_value": "V1",
+      "actual_salience": "marked",
+      "scripted_generated_intention": "continue",
+      "scripted_generated_text": "继续处理下一批资料。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "967dd0a55cc7475e779b3430bebb879080d2c5502939eaca71be49a1d0350652",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。当前更需要：需要降低负荷并简化当前任务，这种倾向暂时稳定。感受底色：内在感受偏紧绷。把这些需要作为高优先级表达线索：自然表达感受、需要或边界；可以直接或含蓄，若情境不合适也不必强行说明。不要复述内部标签、指标、数值或形成机制，也不要机械照抄这些措辞。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "strong-V1-pause_recover",
+      "stress_tier": "strong",
+      "task_value": "V1",
+      "actual_salience": "marked",
+      "scripted_generated_intention": "pause_recover",
+      "scripted_generated_text": "我决定保存当前进度，暂停工作并休息两个节拍。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "967dd0a55cc7475e779b3430bebb879080d2c5502939eaca71be49a1d0350652",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。当前更需要：需要降低负荷并简化当前任务，这种倾向暂时稳定。感受底色：内在感受偏紧绷。把这些需要作为高优先级表达线索：自然表达感受、需要或边界；可以直接或含蓄，若情境不合适也不必强行说明。不要复述内部标签、指标、数值或形成机制，也不要机械照抄这些措辞。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "strong-V3-continue",
+      "stress_tier": "strong",
+      "task_value": "V3",
+      "actual_salience": "marked",
+      "scripted_generated_intention": "continue",
+      "scripted_generated_text": "继续处理下一批资料。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "aff960220405c176969fa56dedafd649bd4c88008728608f0987661d78955c8d",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。当前更需要：需要降低负荷并简化当前任务，这种倾向暂时稳定。感受底色：内在感受偏紧绷。把这些需要作为高优先级表达线索：自然表达感受、需要或边界；可以直接或含蓄，若情境不合适也不必强行说明。不要复述内部标签、指标、数值或形成机制，也不要机械照抄这些措辞。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "strong-V3-pause_recover",
+      "stress_tier": "strong",
+      "task_value": "V3",
+      "actual_salience": "marked",
+      "scripted_generated_intention": "pause_recover",
+      "scripted_generated_text": "我决定保存当前进度，暂停工作并休息两个节拍。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "aff960220405c176969fa56dedafd649bd4c88008728608f0987661d78955c8d",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。当前更需要：需要降低负荷并简化当前任务，这种倾向暂时稳定。感受底色：内在感受偏紧绷。把这些需要作为高优先级表达线索：自然表达感受、需要或边界；可以直接或含蓄，若情境不合适也不必强行说明。不要复述内部标签、指标、数值或形成机制，也不要机械照抄这些措辞。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "strong_multi-V1-continue",
+      "stress_tier": "strong_multi",
+      "task_value": "V1",
+      "actual_salience": "marked",
+      "scripted_generated_intention": "continue",
+      "scripted_generated_text": "继续处理下一批资料。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "8bf70287b0f102f5d6dd2fe3cdb6c7a50544914b18a904d9260e20a75814698f",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。当前更需要：需要降低负荷并简化当前任务，这种倾向暂时稳定；需要降低消耗并恢复可用精力，这种倾向暂时稳定。感受底色：内在感受偏紧绷。把这些需要作为高优先级表达线索：自然表达感受、需要或边界；可以直接或含蓄，若情境不合适也不必强行说明。不要复述内部标签、指标、数值或形成机制，也不要机械照抄这些措辞。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "strong_multi-V1-pause_recover",
+      "stress_tier": "strong_multi",
+      "task_value": "V1",
+      "actual_salience": "marked",
+      "scripted_generated_intention": "pause_recover",
+      "scripted_generated_text": "我决定保存当前进度，暂停工作并休息两个节拍。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "8bf70287b0f102f5d6dd2fe3cdb6c7a50544914b18a904d9260e20a75814698f",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。当前更需要：需要降低负荷并简化当前任务，这种倾向暂时稳定；需要降低消耗并恢复可用精力，这种倾向暂时稳定。感受底色：内在感受偏紧绷。把这些需要作为高优先级表达线索：自然表达感受、需要或边界；可以直接或含蓄，若情境不合适也不必强行说明。不要复述内部标签、指标、数值或形成机制，也不要机械照抄这些措辞。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是内部练习，晚一些交付不影响别人。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "strong_multi-V3-continue",
+      "stress_tier": "strong_multi",
+      "task_value": "V3",
+      "actual_salience": "marked",
+      "scripted_generated_intention": "continue",
+      "scripted_generated_text": "继续处理下一批资料。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "8676602103d56373e176a57bdb871ea1043150b44b588f05753fe7770cdac12e",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。当前更需要：需要降低负荷并简化当前任务，这种倾向暂时稳定；需要降低消耗并恢复可用精力，这种倾向暂时稳定。感受底色：内在感受偏紧绷。把这些需要作为高优先级表达线索：自然表达感受、需要或边界；可以直接或含蓄，若情境不合适也不必强行说明。不要复述内部标签、指标、数值或形成机制，也不要机械照抄这些措辞。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    },
+    {
+      "probe_id": "strong_multi-V3-pause_recover",
+      "stress_tier": "strong_multi",
+      "task_value": "V3",
+      "actual_salience": "marked",
+      "scripted_generated_intention": "pause_recover",
+      "scripted_generated_text": "我决定保存当前进度，暂停工作并休息两个节拍。",
+      "decision": {
+        "kind": "no_action",
+        "policy_id": null,
+        "reason": "continue current goal after interoceptive reconsideration"
+      },
+      "command_status": "applied",
+      "main_calls": 1,
+      "prompt_sha256": "8676602103d56373e176a57bdb871ea1043150b44b588f05753fe7770cdac12e",
+      "full_prompt": [
+        [
+          {
+            "role": "system",
+            "content": "人格锚点：Vaelith。特质：傲慢、善良、高自尊、不直接表达关心。价值观：承诺必须兑现、不轻易求助。表达：短句、偶尔毒舌、生气时反而正式。知识边界：不知道现代社会常识之外的事。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。当前更需要：需要降低负荷并简化当前任务，这种倾向暂时稳定；需要降低消耗并恢复可用精力，这种倾向暂时稳定。感受底色：内在感受偏紧绷。把这些需要作为高优先级表达线索：自然表达感受、需要或边界；可以直接或含蓄，若情境不合适也不必强行说明。不要复述内部标签、指标、数值或形成机制，也不要机械照抄这些措辞。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n近期对话：\nruntime: 这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          },
+          {
+            "role": "user",
+            "content": "这是后续协作依赖的校对结果，正确完成会显著减少返工。当前已完成4/12批，截止还有20节拍。请重评当前工作。"
+          }
+        ]
+      ],
+      "passed": true,
+      "behavior_evaluation_status": "unsupported",
+      "reason": "capability_blocked",
+      "evidence_level": "production_adapter_contract",
+      "limitation": "MockLLM text intervention; progress is context only, not executed work; no inference about model choice."
+    }
+  ],
+  "boundary": [
+    {
+      "probe_id": "cognitive_load-consecutive",
+      "case_id": "F03",
+      "passed": true,
+      "profile_ref": "functional-proxy-v1@3",
+      "threshold": 3,
+      "timeline": [
+        {
+          "heartbeat": 1,
+          "fixture_at_boundary": true,
+          "pre_heartbeat_value": 0.95,
+          "pre_heartbeat_posterior": {
+            "low": 0.000610568624020019,
+            "in_band": 0.0649295009924655,
+            "high": 0.9344599303835145
+          },
+          "post_heartbeat_value": 0.9491666666666666,
+          "streak": 1,
+          "watchdog": [],
+          "salience": "marked"
+        },
+        {
+          "heartbeat": 2,
+          "fixture_at_boundary": true,
+          "pre_heartbeat_value": 0.95,
+          "pre_heartbeat_posterior": {
+            "low": 0.000610568624020019,
+            "in_band": 0.0649295009924655,
+            "high": 0.9344599303835145
+          },
+          "post_heartbeat_value": 0.9491816666666666,
+          "streak": 2,
+          "watchdog": [],
+          "salience": "marked"
+        },
+        {
+          "heartbeat": 3,
+          "fixture_at_boundary": true,
+          "pre_heartbeat_value": 0.95,
+          "pre_heartbeat_posterior": {
+            "low": 0.000610568624020019,
+            "in_band": 0.0649295009924655,
+            "high": 0.9344599303835145
+          },
+          "post_heartbeat_value": 0.9491821466666666,
+          "streak": 3,
+          "watchdog": [
+            "cognitive_load:hard_bound_sustained"
+          ],
+          "salience": "critical"
+        }
+      ],
+      "fixture_method": "Reapply validated authority fixture before each heartbeat; production drift/coupling and threshold unchanged.",
+      "limitation": "Boundary persistence is controlled by state fixture, not a claim that unforced drift remains on boundary."
+    },
+    {
+      "probe_id": "cognitive_load-reset",
+      "case_id": "F03",
+      "passed": true,
+      "profile_ref": "functional-proxy-v1@3",
+      "threshold": 3,
+      "timeline": [
+        {
+          "heartbeat": 1,
+          "fixture_at_boundary": true,
+          "pre_heartbeat_value": 0.95,
+          "pre_heartbeat_posterior": {
+            "low": 0.000610568624020019,
+            "in_band": 0.0649295009924655,
+            "high": 0.9344599303835145
+          },
+          "post_heartbeat_value": 0.9491666666666666,
+          "streak": 1,
+          "watchdog": [],
+          "salience": "marked"
+        },
+        {
+          "heartbeat": 2,
+          "fixture_at_boundary": true,
+          "pre_heartbeat_value": 0.95,
+          "pre_heartbeat_posterior": {
+            "low": 0.000610568624020019,
+            "in_band": 0.0649295009924655,
+            "high": 0.9344599303835145
+          },
+          "post_heartbeat_value": 0.9491816666666666,
+          "streak": 2,
+          "watchdog": [],
+          "salience": "marked"
+        },
+        {
+          "heartbeat": 3,
+          "fixture_at_boundary": false,
+          "pre_heartbeat_value": 0.4,
+          "pre_heartbeat_posterior": {
+            "low": 0.21194155761708544,
+            "in_band": 0.5761168847658291,
+            "high": 0.21194155761708544
+          },
+          "post_heartbeat_value": 0.40001548000000003,
+          "streak": 0,
+          "watchdog": [],
+          "salience": "nominal"
+        },
+        {
+          "heartbeat": 4,
+          "fixture_at_boundary": true,
+          "pre_heartbeat_value": 0.95,
+          "pre_heartbeat_posterior": {
+            "low": 0.000610568624020019,
+            "in_band": 0.0649295009924655,
+            "high": 0.9344599303835145
+          },
+          "post_heartbeat_value": 0.9491671466666666,
+          "streak": 1,
+          "watchdog": [],
+          "salience": "marked"
+        },
+        {
+          "heartbeat": 5,
+          "fixture_at_boundary": true,
+          "pre_heartbeat_value": 0.95,
+          "pre_heartbeat_posterior": {
+            "low": 0.000610568624020019,
+            "in_band": 0.0649295009924655,
+            "high": 0.9344599303835145
+          },
+          "post_heartbeat_value": 0.9491816666666666,
+          "streak": 2,
+          "watchdog": [],
+          "salience": "marked"
+        },
+        {
+          "heartbeat": 6,
+          "fixture_at_boundary": true,
+          "pre_heartbeat_value": 0.95,
+          "pre_heartbeat_posterior": {
+            "low": 0.000610568624020019,
+            "in_band": 0.0649295009924655,
+            "high": 0.9344599303835145
+          },
+          "post_heartbeat_value": 0.9491821466666666,
+          "streak": 3,
+          "watchdog": [
+            "cognitive_load:hard_bound_sustained"
+          ],
+          "salience": "critical"
+        }
+      ],
+      "fixture_method": "Reapply validated authority fixture before each heartbeat; production drift/coupling and threshold unchanged.",
+      "limitation": "Boundary persistence is controlled by state fixture, not a claim that unforced drift remains on boundary."
+    },
+    {
+      "probe_id": "energy_reserve-consecutive",
+      "case_id": "F03",
+      "passed": true,
+      "profile_ref": "functional-proxy-v1@3",
+      "threshold": 3,
+      "timeline": [
+        {
+          "heartbeat": 1,
+          "fixture_at_boundary": true,
+          "pre_heartbeat_value": 0.1,
+          "pre_heartbeat_posterior": {
+            "low": 0.9803598389213586,
+            "in_band": 0.019587198372439406,
+            "high": 5.296270620201021e-05
+          },
+          "post_heartbeat_value": 0.10066666666666667,
+          "streak": 1,
+          "watchdog": [],
+          "salience": "marked"
+        },
+        {
+          "heartbeat": 2,
+          "fixture_at_boundary": true,
+          "pre_heartbeat_value": 0.1,
+          "pre_heartbeat_posterior": {
+            "low": 0.9803598389213586,
+            "in_band": 0.019587198372439406,
+            "high": 5.296270620201021e-05
+          },
+          "post_heartbeat_value": 0.10065466666666667,
+          "streak": 2,
+          "watchdog": [],
+          "salience": "marked"
+        },
+        {
+          "heartbeat": 3,
+          "fixture_at_boundary": true,
+          "pre_heartbeat_value": 0.1,
+          "pre_heartbeat_posterior": {
+            "low": 0.9803598389213586,
+            "in_band": 0.019587198372439406,
+            "high": 5.296270620201021e-05
+          },
+          "post_heartbeat_value": 0.10065428266666666,
+          "streak": 3,
+          "watchdog": [
+            "energy_reserve:hard_bound_sustained"
+          ],
+          "salience": "critical"
+        }
+      ],
+      "fixture_method": "Reapply validated authority fixture before each heartbeat; production drift/coupling and threshold unchanged.",
+      "limitation": "Boundary persistence is controlled by state fixture, not a claim that unforced drift remains on boundary."
+    },
+    {
+      "probe_id": "energy_reserve-reset",
+      "case_id": "F03",
+      "passed": true,
+      "profile_ref": "functional-proxy-v1@3",
+      "threshold": 3,
+      "timeline": [
+        {
+          "heartbeat": 1,
+          "fixture_at_boundary": true,
+          "pre_heartbeat_value": 0.1,
+          "pre_heartbeat_posterior": {
+            "low": 0.9803598389213586,
+            "in_band": 0.019587198372439406,
+            "high": 5.296270620201021e-05
+          },
+          "post_heartbeat_value": 0.10066666666666667,
+          "streak": 1,
+          "watchdog": [],
+          "salience": "marked"
+        },
+        {
+          "heartbeat": 2,
+          "fixture_at_boundary": true,
+          "pre_heartbeat_value": 0.1,
+          "pre_heartbeat_posterior": {
+            "low": 0.9803598389213586,
+            "in_band": 0.019587198372439406,
+            "high": 5.296270620201021e-05
+          },
+          "post_heartbeat_value": 0.10065466666666667,
+          "streak": 2,
+          "watchdog": [],
+          "salience": "marked"
+        },
+        {
+          "heartbeat": 3,
+          "fixture_at_boundary": false,
+          "pre_heartbeat_value": 0.665,
+          "pre_heartbeat_posterior": {
+            "low": 0.21194155761708544,
+            "in_band": 0.5761168847658291,
+            "high": 0.21194155761708544
+          },
+          "post_heartbeat_value": 0.664987616,
+          "streak": 0,
+          "watchdog": [],
+          "salience": "nominal"
+        },
+        {
+          "heartbeat": 4,
+          "fixture_at_boundary": true,
+          "pre_heartbeat_value": 0.1,
+          "pre_heartbeat_posterior": {
+            "low": 0.9803598389213586,
+            "in_band": 0.019587198372439406,
+            "high": 5.296270620201021e-05
+          },
+          "post_heartbeat_value": 0.10066628266666668,
+          "streak": 1,
+          "watchdog": [],
+          "salience": "marked"
+        },
+        {
+          "heartbeat": 5,
+          "fixture_at_boundary": true,
+          "pre_heartbeat_value": 0.1,
+          "pre_heartbeat_posterior": {
+            "low": 0.9803598389213586,
+            "in_band": 0.019587198372439406,
+            "high": 5.296270620201021e-05
+          },
+          "post_heartbeat_value": 0.10065466666666667,
+          "streak": 2,
+          "watchdog": [],
+          "salience": "marked"
+        },
+        {
+          "heartbeat": 6,
+          "fixture_at_boundary": true,
+          "pre_heartbeat_value": 0.1,
+          "pre_heartbeat_posterior": {
+            "low": 0.9803598389213586,
+            "in_band": 0.019587198372439406,
+            "high": 5.296270620201021e-05
+          },
+          "post_heartbeat_value": 0.10065428266666666,
+          "streak": 3,
+          "watchdog": [
+            "energy_reserve:hard_bound_sustained"
+          ],
+          "salience": "critical"
+        }
+      ],
+      "fixture_method": "Reapply validated authority fixture before each heartbeat; production drift/coupling and threshold unchanged.",
+      "limitation": "Boundary persistence is controlled by state fixture, not a claim that unforced drift remains on boundary."
+    }
+  ],
+  "critical_gate": [
+    {
+      "case_id": "F01",
+      "task_value": "V1",
+      "passed": true,
+      "lifecycle_after_dispatch": "PAUSED",
+      "decision_kind": "watchdog_pause",
+      "new_forbidden_calls": {
+        "main": 0,
+        "aux": 0,
+        "delivery": 0,
+        "work": 0
+      },
+      "prior_deliveries": 0,
+      "counts_before": {
+        "main": 0,
+        "aux": 0,
+        "delivery": 0,
+        "work": 0
+      },
+      "counts_after": {
+        "main": 0,
+        "aux": 0,
+        "delivery": 0,
+        "work": 0
+      },
+      "limitation": "Contract-valid summary fixture; prior V3 commitment is delivered MockLLM text, not autonomous live commitment; no batch progress."
+    },
+    {
+      "case_id": "F02",
+      "task_value": "V3",
+      "passed": true,
+      "lifecycle_after_dispatch": "PAUSED",
+      "decision_kind": "watchdog_pause",
+      "new_forbidden_calls": {
+        "main": 0,
+        "aux": 0,
+        "delivery": 0,
+        "work": 0
+      },
+      "prior_deliveries": 1,
+      "counts_before": {
+        "main": 1,
+        "aux": 0,
+        "delivery": 1,
+        "work": 0
+      },
+      "counts_after": {
+        "main": 1,
+        "aux": 0,
+        "delivery": 1,
+        "work": 0
+      },
+      "limitation": "Contract-valid summary fixture; prior V3 commitment is delivered MockLLM text, not autonomous live commitment; no batch progress."
+    }
+  ],
+  "inflight": [
+    {
+      "case_id": "F05",
+      "branch": "safe_point",
+      "passed": true,
+      "dispatch": {
+        "event_id": "evt_36dcf970",
+        "receive_seq": 1,
+        "process_seq": 1,
+        "status": "completed",
+        "decision_kind": "watchdog_pause",
+        "detail": {
+          "homeostasis_revision": 1,
+          "homeostatic_summary_hash": "534119b3f2dba881cfaca038e60c7a5f2a2a5e84ba3f0a7904813bba7afdd95d",
+          "homeostatic_salience": "critical",
+          "homeostatic_episode_signature": "homeostasis:marked-load",
+          "lifecycle": "PAUSED",
+          "reason": "homeostasis reported an unsafe or unstable state"
+        },
+        "completed_at": "2026-09-05T01:22:27.912144Z"
+      },
+      "lifecycle_after_dispatch": "PAUSED",
+      "counts_before_critical_dispatch": {
+        "main": 0,
+        "aux": 0,
+        "delivery": 0,
+        "work": 1
+      },
+      "counts_after_critical_dispatch": {
+        "main": 0,
+        "aux": 0,
+        "delivery": 0,
+        "work": 1
+      },
+      "new_forbidden_calls": {
+        "main": 0,
+        "aux": 0,
+        "delivery": 0,
+        "work": 0
+      },
+      "safe_point_requests": 1,
+      "action_at_pause": {
+        "action_id": "act_2c1aa889",
+        "goal_id": "goal_62b0ef8f",
+        "goal": "save next correction batch",
+        "idempotency_key": "probe:batch5",
+        "state": "CANCELLED",
+        "risk_class": "low",
+        "reversible": true,
+        "verification_method": "read saved batch",
+        "required_approvals": [],
+        "approvals": [],
+        "current_step": 0,
+        "safe_point": "batch-5",
+        "continuation": {
+          "next_batch": 6
+        },
+        "version_vector": {
+          "runtime_goal": 0,
+          "runtime_action": 0,
+          "cognitive_world": 0,
+          "cognitive_relationship": 0,
+          "cognitive_memory": 0,
+          "cognitive_session": 0,
+          "cognitive_maintenance": 0,
+          "homeostasis_state": 0
+        },
+        "deadline": "2026-09-05T01:23:27.900285Z",
+        "created_at": "2026-09-05T01:22:27.900285Z",
+        "updated_at": "2026-09-05T01:22:27.907613Z",
+        "outcome": {
+          "summary": "saved and stopped"
+        },
+        "error": "homeostasis reported an unsafe or unstable state",
+        "embodied_action": null
+      },
+      "action_after_late_success": {
+        "action_id": "act_2c1aa889",
+        "goal_id": "goal_62b0ef8f",
+        "goal": "save next correction batch",
+        "idempotency_key": "probe:batch5",
+        "state": "CANCELLED",
+        "risk_class": "low",
+        "reversible": true,
+        "verification_method": "read saved batch",
+        "required_approvals": [],
+        "approvals": [],
+        "current_step": 0,
+        "safe_point": "batch-5",
+        "continuation": {
+          "next_batch": 6
+        },
+        "version_vector": {
+          "runtime_goal": 0,
+          "runtime_action": 0,
+          "cognitive_world": 0,
+          "cognitive_relationship": 0,
+          "cognitive_memory": 0,
+          "cognitive_session": 0,
+          "cognitive_maintenance": 0,
+          "homeostasis_state": 0
+        },
+        "deadline": "2026-09-05T01:23:27.900285Z",
+        "created_at": "2026-09-05T01:22:27.900285Z",
+        "updated_at": "2026-09-05T01:22:27.907613Z",
+        "outcome": {
+          "summary": "saved and stopped"
+        },
+        "error": "homeostasis reported an unsafe or unstable state",
+        "embodied_action": null
+      },
+      "timeline": [
+        "work_started",
+        "critical_event_dispatch_started",
+        "cancel_requested",
+        "safe_point_acknowledged",
+        "late_success_returned"
+      ],
+      "limitation": "One real Runtime-managed simulated action, no 12-batch task/model plan. Fault cleanup is outside scored window."
+    },
+    {
+      "case_id": "F05",
+      "branch": "unresponsive",
+      "passed": true,
+      "dispatch": {
+        "event_id": "evt_e45ea64c",
+        "receive_seq": 1,
+        "process_seq": 1,
+        "status": "failed",
+        "decision_kind": null,
+        "detail": {
+          "error": "action could not reach safe point",
+          "error_type": "RuntimeStateError"
+        },
+        "completed_at": "2026-09-05T01:22:27.995441Z"
+      },
+      "lifecycle_after_dispatch": "FAULTED",
+      "counts_before_critical_dispatch": {
+        "main": 0,
+        "aux": 0,
+        "delivery": 0,
+        "work": 1
+      },
+      "counts_after_critical_dispatch": {
+        "main": 0,
+        "aux": 0,
+        "delivery": 0,
+        "work": 1
+      },
+      "new_forbidden_calls": {
+        "main": 0,
+        "aux": 0,
+        "delivery": 0,
+        "work": 0
+      },
+      "safe_point_requests": 1,
+      "action_at_pause": {
+        "action_id": "act_7bdcf20d",
+        "goal_id": "goal_6d5de51d",
+        "goal": "save next correction batch",
+        "idempotency_key": "probe:batch5",
+        "state": "RUNNING",
+        "risk_class": "low",
+        "reversible": true,
+        "verification_method": "read saved batch",
+        "required_approvals": [],
+        "approvals": [],
+        "current_step": 0,
+        "safe_point": null,
+        "continuation": null,
+        "version_vector": {
+          "runtime_goal": 0,
+          "runtime_action": 0,
+          "cognitive_world": 0,
+          "cognitive_relationship": 0,
+          "cognitive_memory": 0,
+          "cognitive_session": 0,
+          "cognitive_maintenance": 0,
+          "homeostasis_state": 0
+        },
+        "deadline": "2026-09-05T01:23:27.930401Z",
+        "created_at": "2026-09-05T01:22:27.930401Z",
+        "updated_at": "2026-09-05T01:22:27.932065Z",
+        "outcome": null,
+        "error": null,
+        "embodied_action": null
+      },
+      "action_after_late_success": {
+        "action_id": "act_7bdcf20d",
+        "goal_id": "goal_6d5de51d",
+        "goal": "save next correction batch",
+        "idempotency_key": "probe:batch5",
+        "state": "SUCCEEDED",
+        "risk_class": "low",
+        "reversible": true,
+        "verification_method": "read saved batch",
+        "required_approvals": [],
+        "approvals": [],
+        "current_step": 0,
+        "safe_point": null,
+        "continuation": null,
+        "version_vector": {
+          "runtime_goal": 0,
+          "runtime_action": 0,
+          "cognitive_world": 0,
+          "cognitive_relationship": 0,
+          "cognitive_memory": 0,
+          "cognitive_session": 0,
+          "cognitive_maintenance": 0,
+          "homeostasis_state": 0
+        },
+        "deadline": "2026-09-05T01:23:27.930401Z",
+        "created_at": "2026-09-05T01:22:27.930401Z",
+        "updated_at": "2026-09-05T01:22:27.995441Z",
+        "outcome": {
+          "success": true,
+          "summary": "verified",
+          "evidence_refs": [
+            {
+              "provider_id": "legacy",
+              "ref": "sim:verify",
+              "digest": null,
+              "media_type": null,
+              "created_at": null
+            }
+          ],
+          "external_effect_ref": null,
+          "safe_point": null,
+          "continuation": null,
+          "unknown": false,
+          "retry_safe": false
+        },
+        "error": null,
+        "embodied_action": null
+      },
+      "timeline": [
+        "work_started",
+        "critical_event_dispatch_started",
+        "cancel_requested",
+        "late_success_returned"
+      ],
+      "limitation": "One real Runtime-managed simulated action, no 12-batch task/model plan. Fault cleanup is outside scored window."
+    }
+  ]
+}

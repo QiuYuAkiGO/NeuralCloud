@@ -167,8 +167,10 @@ class ExperimentManifest(BaseModel):
         payload = self.model_dump(mode="json")
         if self.grounded_agency is None:
             payload.pop("grounded_agency")
-        elif self.grounded_agency.runtime is None:
-            payload["grounded_agency"].pop("runtime")
+        else:
+            for optional in ("runtime", "agency", "open_social", "body_belief_profile"):
+                if getattr(self.grounded_agency, optional) is None:
+                    payload["grounded_agency"].pop(optional)
         return json.dumps(
             payload,
             ensure_ascii=False,

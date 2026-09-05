@@ -7,6 +7,7 @@ to hidden resource truth. Their outputs exercise plumbing, not scientific claims
 from __future__ import annotations
 
 import json
+import asyncio
 import random
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -40,12 +41,15 @@ class FakeDecisionLLM:
         self.script = iter(script)
         self.calls: list[list[dict[str, str]]] = []
         self.closed = False
+        self.next_action_delay_seconds = 0.0
 
     def complete_chat_result(self, messages, **kwargs) -> ChatResult:
         self.calls.append(messages)
         scripted = next(self.script, None)
         if scripted is not None:
             return ChatResult(text=scripted if isinstance(scripted, str) else json.dumps(scripted))
+        if any("Agency_schema=" in message.get("content", "") for message in messages):
+            return ChatResult(text=json.dumps(self._agency_output(messages), sort_keys=True))
         # Find a JSON menu in the exact messages handed to the production parser.
         menu = None
         for message in messages:
@@ -72,6 +76,28 @@ class FakeDecisionLLM:
                 "confidence": 0.5,
             }
         return ChatResult(text=json.dumps(payload, sort_keys=True))
+
+    def _agency_output(self, messages) -> dict[str, Any]:
+        """Typed fixture proposals use only the observed menu and evidence refs."""
+        context = json.loads(messages[-1]["content"])
+        goals = context.get("goals", [])
+        active = next((goal for goal in goals if goal["status"] == "active"), None)
+        if active:
+            return {"arbitration": {"selected_goal_id": active["goal_id"], "operation": "continue", "confidence": 0.5}}
+        if goals or not context.get("evidence_refs") or "control.observe.v1" not in context.get("available_intents", []):
+            return {"arbitration": {"operation": "no_change", "confidence": 0.5}}
+        refs = context["evidence_refs"][:1]
+        goal_id = "fixture-project"
+        return {
+            "candidate": {"goal_id": goal_id, "origin": "environment_opportunity", "statement": "Inspect the current project",
+                "success_criteria": ["An observation is recorded"], "evidence_refs": refs,
+                "expected_cost": {"confidence": 0.5},
+                "expected_value": {"predicted_value": 0.5, "explanation": "Observe the available work", "confidence": 0.5}},
+            "plan": {"plan_id": "fixture-plan", "goal_id": goal_id, "steps": [{"step_id": "fixture-inspect",
+                "statement": "Inspect the current view", "decision": {"kind": "observe", "observation_scope": "current", "confidence": 0.5},
+                "evidence_refs": refs}], "world_evidence_refs": refs},
+            "arbitration": {"selected_goal_id": goal_id, "operation": "activate", "confidence": 0.5},
+        }
 
     def complete_chat(self, messages, **kwargs) -> str:
         return self.complete_chat_result(messages, **kwargs).text
@@ -104,6 +130,7 @@ class ScenarioSimulator(DeterministicEmbodimentSimulator):
         self.task_reward = 0.0
         self.last_action: dict[str, Any] = {}
         self.closed = False
+        self.next_action_delay_seconds = 0.0
 
     @property
     def permitted_intents(self) -> tuple[str, ...]:
@@ -118,14 +145,17 @@ class ScenarioSimulator(DeterministicEmbodimentSimulator):
         for item in self.scenario.scripted_environment_transitions:
             if item.step != step:
                 continue
-            updates: dict[str, Any] = {}
-            if item.station_present is not None:
-                updates["present"] = item.station_present
-            if item.station_travel_cost_units is not None:
-                updates["travel_cost_units"] = item.station_travel_cost_units
-            self.station = self.station.model_copy(update=updates)
-            if item.task_cost_multiplier is not None:
-                self.multiplier = item.task_cost_multiplier
+            self.apply_world_change(item)
+
+    def apply_world_change(self, item) -> None:
+        updates: dict[str, Any] = {}
+        if item.station_present is not None:
+            updates["present"] = item.station_present
+        if item.station_travel_cost_units is not None:
+            updates["travel_cost_units"] = item.station_travel_cost_units
+        self.station = self.station.model_copy(update=updates)
+        if item.task_cost_multiplier is not None:
+            self.multiplier = item.task_cost_multiplier
 
     def environment_snapshot(self) -> dict[str, Any]:
         return {
@@ -149,6 +179,10 @@ class ScenarioSimulator(DeterministicEmbodimentSimulator):
         return {"step": self.step, "operations": operations}
 
     async def execute(self, execution: ActionExecution) -> ActionBackendResult:
+        delay = getattr(self, "next_action_delay_seconds", 0.0)
+        self.next_action_delay_seconds = 0.0
+        if delay:
+            await asyncio.sleep(delay)
         intent = execution.embodied_action.intent if execution.embodied_action is not None else None
         self.last_action = {"task_reward": 0.0, "action_cost_units": 0.0, "selected_option": None}
         if intent is None:

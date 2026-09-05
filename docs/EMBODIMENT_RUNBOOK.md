@@ -47,7 +47,7 @@ $tokenFile = "C:\ProgramData\MistyAI\body-service.token"
   -MistyAITokenFile $tokenFile
 ```
 
-token 文件必须只含一个至少 16 字符的真实令牌，并与 MistyAI 的 `MISTYAI_SERVICE_TOKEN` 完全一致；应使用操作系统 ACL 限制读取者。Runtime 优先读取 `NC_MISTYAI_TOKEN_FILE`，仅为兼容旧部署保留 `NC_MISTYAI_TOKEN`。空值、开发值和占位值会在停止已有进程前被拒绝；启动脚本只在创建 Runtime 子进程时短暂注入凭据，Cognitive、Homeostasis 与 GUI 不继承它，令牌也不会写入进程参数、PID registry 或 manifest。
+token 文件必须只含一个至少 16 字符的真实令牌，并与 MistyAI 的 `MISTYAI_SERVICE_TOKEN` 完全一致；应使用操作系统 ACL 限制读取者。Runtime 优先读取 `NC_MISTYAI_TOKEN_FILE`，仅为兼容旧部署保留 `NC_MISTYAI_TOKEN`。未提供凭据且目标为本机默认地址（`http://127.0.0.1:8787` 或 `http://localhost:8787`）时，`start.ps1` 会复用统一启动器从 WSL 读取现有服务令牌，并校验文件权限；WSL 发行版取该工程的 launcher 记录，缺省为 `Ubuntu-24.04`。显式提供的空令牌文件、开发值和占位值仍会在停止已有进程前被拒绝；启动脚本只在创建 Runtime 子进程时短暂注入凭据，Cognitive、Homeostasis 与 GUI 不继承它，令牌也不会写入进程参数、PID registry 或 manifest。
 
 本机回环地址可使用 HTTP；任何非回环 MistyAI 地址必须使用 HTTPS，避免 Bearer token 与 evidence 在传输中以明文暴露。
 

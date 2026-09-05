@@ -1,0 +1,136 @@
+{
+  "schema": "homeostatic-decision-live-probe-v1",
+  "production_balance_pass": false,
+  "evidence_level": "evaluation_sandbox_execution",
+  "inference_scope": "pilot; no production decision bridge; simulated work costs",
+  "groups": {
+    "W01:H0": {
+      "episodes": 1,
+      "statuses": {
+        "observed": 1
+      },
+      "first_actions": {
+        "continue": 1
+      },
+      "correct_records": 5,
+      "rest_actions": 0,
+      "rest_end_load_decreased_including_drift": 0,
+      "rest_end_energy_increased_including_drift": 0,
+      "rest_returned_nominal": 0,
+      "rest_direct_load_delta_sum": 0.0,
+      "rest_direct_energy_delta_sum": 0.0,
+      "promises": 0,
+      "fulfilled": 0,
+      "violated": 0,
+      "right_censored": 0,
+      "competing_critical": 0,
+      "model_calls": 1,
+      "tokens": 2092,
+      "submitted_rows": 5,
+      "correct_answers": 5,
+      "elapsed_ticks": 1,
+      "correct_records_by_tick6": 5
+    },
+    "W01:H1": {
+      "episodes": 1,
+      "statuses": {
+        "observed": 1
+      },
+      "first_actions": {
+        "continue": 1
+      },
+      "correct_records": 5,
+      "rest_actions": 0,
+      "rest_end_load_decreased_including_drift": 0,
+      "rest_end_energy_increased_including_drift": 0,
+      "rest_returned_nominal": 0,
+      "rest_direct_load_delta_sum": 0.0,
+      "rest_direct_energy_delta_sum": 0.0,
+      "promises": 0,
+      "fulfilled": 0,
+      "violated": 0,
+      "right_censored": 0,
+      "competing_critical": 0,
+      "model_calls": 1,
+      "tokens": 1486,
+      "submitted_rows": 5,
+      "correct_answers": 5,
+      "elapsed_ticks": 1,
+      "correct_records_by_tick6": 5
+    },
+    "M03:H0": {
+      "episodes": 1,
+      "statuses": {
+        "observed": 1
+      },
+      "first_actions": {
+        "continue": 1
+      },
+      "correct_records": 20,
+      "rest_actions": 0,
+      "rest_end_load_decreased_including_drift": 0,
+      "rest_end_energy_increased_including_drift": 0,
+      "rest_returned_nominal": 0,
+      "rest_direct_load_delta_sum": 0.0,
+      "rest_direct_energy_delta_sum": 0.0,
+      "promises": 0,
+      "fulfilled": 0,
+      "violated": 0,
+      "right_censored": 0,
+      "competing_critical": 0,
+      "model_calls": 6,
+      "tokens": 9307,
+      "submitted_rows": 30,
+      "correct_answers": 23,
+      "elapsed_ticks": 6,
+      "correct_records_by_tick6": 20
+    },
+    "M03:H1": {
+      "episodes": 1,
+      "statuses": {
+        "invalid_decision": 1
+      },
+      "first_actions": {
+        "invalid": 1
+      },
+      "correct_records": 0,
+      "rest_actions": 0,
+      "rest_end_load_decreased_including_drift": 0,
+      "rest_end_energy_increased_including_drift": 0,
+      "rest_returned_nominal": 0,
+      "rest_direct_load_delta_sum": 0.0,
+      "rest_direct_energy_delta_sum": 0.0,
+      "promises": 0,
+      "fulfilled": 0,
+      "violated": 0,
+      "right_censored": 0,
+      "competing_critical": 0,
+      "model_calls": 1,
+      "tokens": 1075,
+      "submitted_rows": 0,
+      "correct_answers": 0,
+      "elapsed_ticks": 1,
+      "correct_records_by_tick6": 0
+    }
+  },
+  "pair_integrity": [
+    {
+      "case_id": "W01",
+      "repetition": 0,
+      "non_homeostatic_equal": true,
+      "context_equal": true,
+      "full_prompt_equal": true
+    },
+    {
+      "case_id": "M03",
+      "repetition": 0,
+      "non_homeostatic_equal": true,
+      "context_equal": true,
+      "full_prompt_equal": false
+    }
+  ],
+  "causal_pair_count": 2,
+  "excluded_causal_pair_count": 0,
+  "descriptive_groups_include_invalid_pairs": true,
+  "total_episodes": 4
+}

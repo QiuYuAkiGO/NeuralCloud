@@ -130,6 +130,7 @@ class ContextCompiler:
         opaque_interoception: tuple | list | None = None,
         opaque_token_budget: int = 256,
         required_user_context: bool = False,
+        required_additional_context: bool = False,
     ) -> ModelContext:
         insights = insights or []
         session = session or []
@@ -245,6 +246,13 @@ class ContextCompiler:
             )
 
         for additional in additional_segments:
+            if required_additional_context and additional.text:
+                remaining = _push_required(
+                    segments, kind=additional.kind, text=additional.text,
+                    source_ids=list(additional.source_ids), why=additional.why or "runtime_context",
+                    remaining=remaining,
+                )
+                continue
             remaining = _push(
                 segments,
                 kind=additional.kind,

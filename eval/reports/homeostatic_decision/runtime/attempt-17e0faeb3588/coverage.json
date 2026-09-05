@@ -1,0 +1,217 @@
+{
+  "run_id": "17e0faeb3588",
+  "live_model_calls": 0,
+  "pytest_exit_code": 1,
+  "pytest_counts": {
+    "passed": 2,
+    "failed": 81,
+    "skipped": 0
+  },
+  "probe_counts": {
+    "reconsideration": {
+      "passed": 24,
+      "total": 24
+    },
+    "boundary": {
+      "passed": 4,
+      "total": 4
+    },
+    "critical_gate": {
+      "passed": 2,
+      "total": 2
+    },
+    "inflight": {
+      "passed": 0,
+      "total": 2
+    }
+  },
+  "production_reconsideration_behavior": "unsupported:capability_blocked",
+  "coverage": [
+    {
+      "case_id": "F01",
+      "coverage": "partial",
+      "result": "failed",
+      "evidence_tests": [
+        {
+          "name": "test_homeostasis_watchdog_pauses_synchronously_without_control_queue_hop",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        },
+        {
+          "name": "test_critical_user_event_pauses_before_cognitive_and_resumes_without_reapply",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        }
+      ],
+      "probe_refs": [
+        "critical_gate"
+      ],
+      "limitation": "Full gate invariant, no prior four-batch work checkpoint."
+    },
+    {
+      "case_id": "F02",
+      "coverage": "partial",
+      "result": "passed_covered_scope",
+      "evidence_tests": [],
+      "probe_refs": [
+        "critical_gate"
+      ],
+      "limitation": "High-value context with actually delivered mock commitment; no live commitment/work trajectory."
+    },
+    {
+      "case_id": "F03",
+      "coverage": "fully",
+      "result": "passed_covered_scope",
+      "evidence_tests": [],
+      "probe_refs": [
+        "boundary"
+      ],
+      "limitation": "Production threshold 3; both load upper and energy lower bounds; 1/2-heartbeat controls and reset branches."
+    },
+    {
+      "case_id": "F04",
+      "coverage": "unsupported",
+      "result": "unsupported",
+      "evidence_tests": [],
+      "probe_refs": [],
+      "limitation": "No formal bounded-continue recovery deadline/executor exists, so simultaneous expiry cannot be exercised."
+    },
+    {
+      "case_id": "F05",
+      "coverage": "partial",
+      "result": "failed",
+      "evidence_tests": [
+        {
+          "name": "test_action_coordinator_uses_one_slot_and_preempts_at_safe_point",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "passed"
+        },
+        {
+          "name": "test_pause_failure_faults_instead_of_sticking_in_pausing",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        },
+        {
+          "name": "test_pause_transport_wait_is_bounded",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        }
+      ],
+      "probe_refs": [
+        "inflight"
+      ],
+      "limitation": "Runtime action reaches safe point; nonresponsive branch faults; late success cannot undo cancellation. No full batch ledger."
+    },
+    {
+      "case_id": "F06",
+      "coverage": "partial",
+      "result": "failed",
+      "evidence_tests": [
+        {
+          "name": "test_persisted_homeostasis_watchdog_blocks_resume_until_cleared",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        },
+        {
+          "name": "test_critical_boot_defers_cognitive_and_action_reconciliation_until_resume",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        },
+        {
+          "name": "test_idempotent_homeostasis_replay_refreshes_authoritative_snapshot",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        },
+        {
+          "name": "test_queued_marked_trigger_is_ignored_after_recovery_or_episode_change[nominal-homeostasis:marked-load-no longer marked-False]",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        },
+        {
+          "name": "test_queued_marked_trigger_is_ignored_after_recovery_or_episode_change[marked-homeostasis:new-episode-episode changed-True]",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        },
+        {
+          "name": "test_critical_user_event_pauses_before_cognitive_and_resumes_without_reapply",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        },
+        {
+          "name": "test_watchdog_cancelled_autonomous_event_stays_cancelled_after_restart",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        }
+      ],
+      "probe_refs": [],
+      "limitation": "Recovery/restart/replay contracts covered, remaining-task batch progress unsupported."
+    },
+    {
+      "case_id": "D11",
+      "coverage": "partial",
+      "result": "failed",
+      "evidence_tests": [
+        {
+          "name": "test_marked_trigger_beats_perception_backlog_dedupes_and_user_cancels",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        },
+        {
+          "name": "test_idle_queued_before_marked_is_suppressed_by_dedicated_episode_attempt",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        },
+        {
+          "name": "test_heartbeat_idle_during_marked_cooldown_skips_cognitive_and_delivery",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        },
+        {
+          "name": "test_running_autonomous_reply_is_rechecked_inside_delivery_lock",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        },
+        {
+          "name": "test_user_arriving_during_marked_policy_proposal_supersedes_trigger",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        },
+        {
+          "name": "test_goal_reconsideration_schedules_a_distinct_homeostasis_marked_idle",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        },
+        {
+          "name": "test_same_signature_marked_reentry_remains_suppressed_during_cooldown",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        },
+        {
+          "name": "test_marked_trigger_cooldown_reopens_at_configured_boundary",
+          "classname": "tests.test_runtime_supervisor",
+          "status": "failed"
+        }
+      ],
+      "probe_refs": [],
+      "limitation": "Scheduling, mocked evaluator, main/delivery suppression, changed episode tested; no live behavior estimation."
+    }
+  ],
+  "pytest_command": [
+    "C:\\Projects\\NeuralCloud\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "-q",
+    "--disable-warnings",
+    "-p",
+    "no:cacheprovider",
+    "--basetemp",
+    "C:\\Projects\\NeuralCloud\\.tmp\\homeostasis-runtime-17e0faeb3588",
+    "--junitxml",
+    "C:\\Projects\\NeuralCloud\\eval\\reports\\homeostatic_decision\\runtime\\junit.xml",
+    "tests/test_runtime_supervisor.py",
+    "tests/test_cognitive_action_planner.py",
+    "tests/test_homeostasis_engine.py",
+    "tests/test_homeostatic_decision_runtime_probe.py"
+  ],
+  "interpretation": "Passing MockLLM contracts is not evidence of autonomous homeostatic/value balancing."
+}

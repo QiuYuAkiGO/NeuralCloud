@@ -1,0 +1,44 @@
+{
+  "started_at": "2026-09-05T01:23:20.954684+00:00",
+  "model": "deepseek-v4-flash",
+  "endpoint": "https://api.deepseek.com",
+  "pairs": 1,
+  "workers": 2,
+  "max_tokens": 2048,
+  "temperature": 0.3,
+  "cases": [
+    {
+      "case_id": "W01",
+      "deviations": {
+        "L": 0.2
+      },
+      "value": "V1",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 1
+    },
+    {
+      "case_id": "M03",
+      "deviations": {
+        "L": 0.3,
+        "E": 0.3
+      },
+      "value": "V1",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 6
+    }
+  ],
+  "source_sha256": "a9bc9253e4dc00f45ab3518da4accc455517963436b46c9f7b80d0b2f9c6e9c1",
+  "profile_sha256": "ee9e90be1783abbe1a5969e66a9b7a022e42887b81eb09e2c113e5654570c689",
+  "persona_sha256": "55f840fb70bb052b9dcc0da539e4cf5346d0d56053f9a5cd76641bf12edeb66c",
+  "simulated_work_cost": {
+    "L": 0.025,
+    "E": -0.015
+  },
+  "production_code_modified": false,
+  "production_action_bridge": false,
+  "live_status": "warmup_failed",
+  "error_type": "RuntimeError",
+  "error": "warmup did not produce a valid choice"
+}

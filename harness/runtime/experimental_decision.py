@@ -18,7 +18,9 @@ from harness.contracts.experimental_decisions import (
     ExperimentalDeferDecision, ExperimentalNoActionDecision, ExperimentalObserveDecision,
     ExperimentalWaitDecision,
 )
-from harness.embodiment.contracts import ActionIntent, EmbodiedActionSpec, IntentionalNoopCriterion, ScenarioCriterion
+from harness.embodiment.contracts import (
+    ActionIntent, EmbodiedActionSpec, EntityInteractionCriterion, IntentionalNoopCriterion, ScenarioCriterion,
+)
 from harness.research.grounded_agency.hashes import content_hash
 
 
@@ -91,6 +93,17 @@ class ExperimentalDecisionCompiler:
                     raise _PlanningRejected(
                         "scenario criterion does not identify the requested action target", "target-bound scenario criterion",
                     )
+            if act.intent.intent_id == "entity.interact.v1":
+                for item in act.success_criteria:
+                    bound = (
+                        isinstance(item, EntityInteractionCriterion)
+                        and item.actor_ref == arguments["actor_ref"] and item.operation == arguments["operation"]
+                    ) or (
+                        isinstance(item, ScenarioCriterion) and arguments["operation"] == "assist"
+                        and item.condition == "task_completed" and item.target_id == arguments.get("task_ref")
+                    )
+                    if not bound:
+                        raise _PlanningRejected("entity criterion does not match requested operation", "target-bound entity criterion")
             goal_id = decision_id or "ga_goal_" + content_hash({
                 "decision": decision.model_dump(mode="json"), "available_intents": allowed,
             })[:32]

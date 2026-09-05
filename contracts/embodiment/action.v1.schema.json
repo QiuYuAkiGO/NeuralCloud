@@ -82,6 +82,50 @@
       "title": "ActionIntent",
       "type": "object"
     },
+    "EntityInteractionCriterion": {
+      "additionalProperties": false,
+      "properties": {
+        "actor_ref": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "title": "Actor Ref",
+          "type": "string"
+        },
+        "condition": {
+          "const": "operation_recorded",
+          "default": "operation_recorded",
+          "title": "Condition",
+          "type": "string"
+        },
+        "kind": {
+          "const": "entity_interaction",
+          "default": "entity_interaction",
+          "title": "Kind",
+          "type": "string"
+        },
+        "operation": {
+          "enum": [
+            "approach",
+            "avoid",
+            "request",
+            "respond",
+            "refuse",
+            "assist",
+            "commit",
+            "renegotiate"
+          ],
+          "title": "Operation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "actor_ref",
+        "operation"
+      ],
+      "title": "EntityInteractionCriterion",
+      "type": "object"
+    },
     "FileCriterion": {
       "additionalProperties": false,
       "properties": {
@@ -415,6 +459,7 @@
         "discriminator": {
           "mapping": {
             "a11y_node": "#/$defs/A11yNodeCriterion",
+            "entity_interaction": "#/$defs/EntityInteractionCriterion",
             "file": "#/$defs/FileCriterion",
             "intentional_noop": "#/$defs/IntentionalNoopCriterion",
             "pointer": "#/$defs/PointerCriterion",
@@ -449,6 +494,9 @@
           },
           {
             "$ref": "#/$defs/ScenarioCriterion"
+          },
+          {
+            "$ref": "#/$defs/EntityInteractionCriterion"
           }
         ]
       },

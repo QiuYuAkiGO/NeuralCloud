@@ -127,6 +127,13 @@ class ScenarioCriterion(StrictContract):
     target_id: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_.-]+$", strict=True)
 
 
+class EntityInteractionCriterion(StrictContract):
+    kind: Literal["entity_interaction"] = "entity_interaction"
+    condition: Literal["operation_recorded"] = "operation_recorded"
+    actor_ref: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]*$", strict=True)
+    operation: Literal["approach", "avoid", "request", "respond", "refuse", "assist", "commit", "renegotiate"]
+
+
 ActionCriterion = Annotated[
     WindowCriterion
     | FileCriterion
@@ -135,7 +142,8 @@ ActionCriterion = Annotated[
     | A11yNodeCriterion
     | PointerCriterion
     | IntentionalNoopCriterion
-    | ScenarioCriterion,
+    | ScenarioCriterion
+    | EntityInteractionCriterion,
     Field(discriminator="kind"),
 ]
 

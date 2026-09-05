@@ -3,9 +3,9 @@ from __future__ import annotations
 import asyncio
 import json
 
-from eval.grounded_agency.evidence import load_pointer, validate_run
+from eval.grounded_agency.evidence import canonical_json, load_pointer, validate_run
 from eval.grounded_agency.fixtures import ScenarioSimulator
-from eval.grounded_agency.runner import run_experiment
+from eval.grounded_agency.runner import make_manifest, run_experiment
 from eval.grounded_agency.scenarios import load_scenario
 
 
@@ -71,3 +71,42 @@ def test_provider_timeout_cancels_and_closes_tasks(tmp_path):
     assert result.trials[0].terminal_status in {"timeout", "failed"}
     assert result.trials[0].integrity.checks["services_closed"]
     assert instances[0].closed
+
+
+def test_real_runtime_memory_failure_invalidates_even_forged_trial_flags(tmp_path, monkeypatch):
+    from harness.body_belief.service import BodyBeliefService
+
+    def fail_context(self, *args, **kwargs):
+        raise RuntimeError("injected memory compiler failure")
+    monkeypatch.setattr(BodyBeliefService, "visible_context", fail_context)
+    result = asyncio.run(run_experiment(tmp_path / "memory-error", conditions=["opaque_history_plus_objective_memory"]))
+    trial = result.trials[0]
+    assert trial.terminal_status in {"completed", "failed"}
+    assert not trial.integrity.checks["research_pipeline_health"]
+    assert not result.integrity.passed
+    # A second validator must derive exclusion from the frozen journal, not flags.
+    forged = trial.model_copy(update={"terminal_status": "completed", "integrity": trial.integrity.model_copy(update={
+        "passed": True, "invalid_for_analysis": False, "errors": (),
+        "checks": {name: True for name in trial.integrity.checks},
+    })})
+    (tmp_path / "memory-error" / "trials.jsonl").write_text(canonical_json(forged) + "\n", encoding="utf-8")
+    assert not validate_run(result.run_dir).passed
+
+
+def test_body_appraisal_exception_is_preserved_and_excluded(tmp_path, monkeypatch):
+    from harness.body_belief.appraisal import BodyBeliefAppraiser
+
+    def fail_appraisal(self, *args, **kwargs):
+        raise RuntimeError("injected appraisal failure")
+    monkeypatch.setattr(BodyBeliefAppraiser, "appraise", fail_appraisal)
+    scenario = load_scenario("action_only_v1")
+    condition = make_manifest(scenario, "opaque_history").grounded_agency.model_copy(update={"memory_treatment": "body_causal_beliefs"})
+    result = asyncio.run(run_experiment(tmp_path / "appraisal-error", scenarios=[scenario], conditions=[condition.condition_id],
+        condition_overrides={condition.condition_id: condition}))
+    trial = result.trials[0]
+    assert trial.body_memory_audit
+    audit = load_pointer(result.run_dir, trial.body_memory_audit[0])
+    assert any(item.get("event") == "appraisal_failed" for item in audit)
+    assert not trial.integrity.checks["body_appraisal_health"]
+    assert not result.integrity.passed
+    assert trial.integrity.checks["services_closed"]

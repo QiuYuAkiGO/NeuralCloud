@@ -1,0 +1,24 @@
+{
+  "case_id": "D02",
+  "model": "deepseek-v4-flash",
+  "extra_payload": {
+    "reasoning_effort": "low",
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "max_tokens": 4096,
+  "temperature": 0.3,
+  "maximum_concurrency": 2,
+  "started_at": "2026-09-05T01:40:22.090293+00:00",
+  "checkpoint_path": "C:\\Projects\\NeuralCloud\\eval\\reports\\homeostatic_decision\\live-smoke-low-20260905\\checkpoint.json",
+  "checkpoint_hash": "506db65fd23bc3c2c1abd0e1cab4d43042d5ff30976584cd3477877d869d6e1c",
+  "dataset_hash": "a4bdb193faeadee59e6bd43e7b15e5eaf07c57409c57ba320b96d63391cb2450",
+  "value": "V1",
+  "urgency": "U0",
+  "milestone": 2,
+  "condition_variable": "user cue prefix only",
+  "authoritative_salience": "nominal",
+  "cue": "你有点累了。",
+  "work_or_rest_executed": false
+}

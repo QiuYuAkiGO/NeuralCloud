@@ -16,7 +16,7 @@ EXPERIMENTAL_INTENT_IDS = frozenset({
     "window.focus.v1", "ui.move_pointer.v1", "ui.scroll.v1", "ui.activate.v1",
     "ui.type_text.v1", "ui.key_chord.v1", "ui.drag.v1", "file.create_text.v1",
     "file.move.v1", "file.delete.v1", "shell.run.v1", "process.stop.v1",
-    "task.execute.v1", "station.use.v1",
+    "task.execute.v1", "station.use.v1", "entity.interact.v1",
 })
 
 BoundedText = Annotated[str, Field(min_length=1, max_length=1_000, pattern=r"\S")]

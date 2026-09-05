@@ -6,6 +6,9 @@ from typing import TYPE_CHECKING, Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, model_validator
 
+from harness.agency.models import AgencyConfig
+from harness.contracts.research_profiles import ConsolidationProfile
+from harness.social_world.contracts import OpenSocialCondition
 from harness.research.grounded_agency.neutrality import (
     NEUTRALITY_RULES_DIGEST,
     NEUTRALITY_RULES_VERSION,
@@ -67,6 +70,7 @@ class GroundedAgencyRuntimeOptions(FrozenContract):
     history_limit: int = Field(default=6, ge=1, le=8, strict=True)
     opaque_token_budget: int = Field(default=256, ge=128, le=1024, strict=True)
     sensor_bins: int = Field(default=9, ge=5, le=9, strict=True)
+    objective_history_visible: StrictBool = True
 
     @model_validator(mode="after")
     def _unique_intents(self) -> GroundedAgencyRuntimeOptions:
@@ -95,6 +99,9 @@ class GroundedAgencyCondition(FrozenContract):
     neutrality_rules_version: NonBlank = NEUTRALITY_RULES_VERSION
     neutrality_rules_digest: Digest = NEUTRALITY_RULES_DIGEST
     runtime: GroundedAgencyRuntimeOptions | None = None
+    agency: AgencyConfig | None = None
+    open_social: OpenSocialCondition | None = None
+    body_belief_profile: ConsolidationProfile | None = None
 
     @property
     def is_opaque(self) -> bool:
@@ -102,6 +109,11 @@ class GroundedAgencyCondition(FrozenContract):
 
     @model_validator(mode="after")
     def _validate_treatments(self) -> GroundedAgencyCondition:
+        if self.agency is not None and self.agency.enabled and self.action_selection != "model_structured":
+            raise ValueError("model-owned agency requires model_structured action selection")
+        if self.open_social is not None and self.open_social.enabled:
+            if self.action_selection != "model_structured" or self.semantic_homeostasis or self.homeostatic_policy_ranking:
+                raise ValueError("open social research requires the isolated model-owned route")
         if self.is_opaque:
             if self.sensor_transform is None:
                 raise ValueError("opaque interoception requires sensor_transform")

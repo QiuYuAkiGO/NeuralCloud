@@ -16,6 +16,7 @@ from harness.contracts.experimental_decisions import (
     ExperimentalDecision,
 )
 from harness.research.grounded_agency.hashes import canonical_json
+from harness.social_world.contracts import EntityInteractionArguments
 
 
 MAX_DECISION_BYTES = 1_100_000
@@ -39,6 +40,7 @@ EXPERIMENTAL_INTENT_PROFILES = {
     **_INTENT_PROFILES,
     "task.execute.v1": _IntentProfile(_TaskArguments, "low", True, (), frozenset({"scenario"})),
     "station.use.v1": _IntentProfile(_StationArguments, "low", True, (), frozenset({"scenario"})),
+    "entity.interact.v1": _IntentProfile(EntityInteractionArguments, "low", True, (), frozenset({"entity_interaction", "scenario"})),
 }
 
 

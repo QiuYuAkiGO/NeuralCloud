@@ -1,0 +1,276 @@
+{
+  "schema_version": "homeostasis-state-v2",
+  "revision": 4,
+  "profile_id": "functional-proxy-v1",
+  "profile_revision": 3,
+  "dimensions": {
+    "energy_reserve": {
+      "dimension": "energy_reserve",
+      "value": 0.397,
+      "velocity": 0.0,
+      "posterior": {
+        "low": 0.7850399456537575,
+        "in_band": 0.20753496262639792,
+        "high": 0.007425091719844623
+      },
+      "target_band": [
+        0.55,
+        0.78
+      ],
+      "precision": 0.9,
+      "dominant_evidence": [
+        "eval_4",
+        "eval_3"
+      ],
+      "updated_at": "2026-09-05T08:00:01Z"
+    },
+    "cognitive_load": {
+      "dimension": "cognitive_load",
+      "value": 0.69725,
+      "velocity": 0.0,
+      "posterior": {
+        "low": 0.013632682969142534,
+        "in_band": 0.2688454652589613,
+        "high": 0.7175218517718962
+      },
+      "target_band": [
+        0.25,
+        0.55
+      ],
+      "precision": 0.9,
+      "dominant_evidence": [
+        "eval_4",
+        "eval_3"
+      ],
+      "updated_at": "2026-09-05T08:00:01Z"
+    },
+    "safety_predictability": {
+      "dimension": "safety_predictability",
+      "value": 0.676,
+      "velocity": 0.018000000000000016,
+      "posterior": {
+        "low": 0.19223520872666783,
+        "in_band": 0.5750010354833294,
+        "high": 0.23276375579000275
+      },
+      "target_band": [
+        0.55,
+        0.78
+      ],
+      "precision": 0.9,
+      "dominant_evidence": [
+        "eval_4",
+        "eval_3"
+      ],
+      "updated_at": "2026-09-05T08:00:01Z"
+    },
+    "competence": {
+      "dimension": "competence",
+      "value": 0.665,
+      "velocity": 0.04500000000000004,
+      "posterior": {
+        "low": 0.15060462659840476,
+        "in_band": 0.5637765787228585,
+        "high": 0.28561879467873674
+      },
+      "target_band": [
+        0.5,
+        0.75
+      ],
+      "precision": 0.9,
+      "dominant_evidence": [
+        "eval_4",
+        "eval_3"
+      ],
+      "updated_at": "2026-09-05T08:00:01Z"
+    },
+    "autonomy": {
+      "dimension": "autonomy",
+      "value": 0.6859400000000001,
+      "velocity": 0.005940000000000056,
+      "posterior": {
+        "low": 0.19386604426958104,
+        "in_band": 0.5751825260922495,
+        "high": 0.2309514296381695
+      },
+      "target_band": [
+        0.55,
+        0.8
+      ],
+      "precision": 0.9,
+      "dominant_evidence": [
+        "eval_4",
+        "eval_3"
+      ],
+      "updated_at": "2026-09-05T08:00:01Z"
+    },
+    "social_connection": {
+      "dimension": "social_connection",
+      "value": 0.62,
+      "velocity": 0.0,
+      "posterior": {
+        "low": 0.21194155761708544,
+        "in_band": 0.5761168847658291,
+        "high": 0.21194155761708544
+      },
+      "target_band": [
+        0.5,
+        0.74
+      ],
+      "precision": 0.9,
+      "dominant_evidence": [
+        "eval_4",
+        "eval_3"
+      ],
+      "updated_at": "2026-09-05T08:00:01Z"
+    },
+    "novelty": {
+      "dimension": "novelty",
+      "value": 0.7598,
+      "velocity": 0.0,
+      "posterior": {
+        "low": 0.03084173400728984,
+        "in_band": 0.3696309726321695,
+        "high": 0.5995272933605407
+      },
+      "target_band": [
+        0.35,
+        0.68
+      ],
+      "precision": 0.9,
+      "dominant_evidence": [
+        "eval_4",
+        "eval_3"
+      ],
+      "updated_at": "2026-09-05T08:00:01Z"
+    }
+  },
+  "core_affect": {
+    "valence": 0.24144900793650795,
+    "arousal": 0.7842374999999999,
+    "dominance": 0.6756466666666667,
+    "confidence": 0.9
+  },
+  "emotion": {
+    "label": "strained",
+    "intensity": 0.5489662499999999,
+    "entered_at": "2026-09-05T08:00:00Z",
+    "minimum_hold_seconds": 180,
+    "supporting_factors": [
+      "energy_reserve:low",
+      "cognitive_load:high"
+    ]
+  },
+  "candidates": [
+    {
+      "policy_id": "simplify",
+      "label": "分解当前任务并降低刺激",
+      "source_drive": "cognitive_load",
+      "expected_impacts": {
+        "cognitive_load": -0.1,
+        "competence": 0.02
+      },
+      "reversible": true,
+      "success_criteria": [
+        "cognitive_load moves toward target band"
+      ],
+      "efe": {
+        "pragmatic_value": -0.14725,
+        "ambiguity": 0.09999999999999998,
+        "risk": 0.024000000000000004,
+        "information_gain": 0.024999999999999994,
+        "total": -0.12324999999999998
+      },
+      "rank": 1
+    },
+    {
+      "policy_id": "rest",
+      "label": "降低交互强度并恢复资源",
+      "source_drive": "energy_reserve",
+      "expected_impacts": {
+        "energy_reserve": 0.1,
+        "cognitive_load": -0.05
+      },
+      "reversible": true,
+      "success_criteria": [
+        "energy_reserve moves toward target band"
+      ],
+      "efe": {
+        "pragmatic_value": -0.13770000000000002,
+        "ambiguity": 0.09999999999999998,
+        "risk": 0.030000000000000006,
+        "information_gain": 0.024999999999999994,
+        "total": -0.10770000000000002
+      },
+      "rank": 2
+    },
+    {
+      "policy_id": "explore",
+      "label": "安排一项轻量探索",
+      "source_drive": "novelty",
+      "expected_impacts": {
+        "novelty": 0.09
+      },
+      "reversible": true,
+      "success_criteria": [
+        "novelty moves toward target band"
+      ],
+      "efe": {
+        "pragmatic_value": -0.04388999999999999,
+        "ambiguity": 0.09999999999999998,
+        "risk": 0.018,
+        "information_gain": 0.024999999999999994,
+        "total": -0.025889999999999993
+      },
+      "rank": 3
+    }
+  ],
+  "acknowledged_receive_seq": 4,
+  "acknowledged_event_id": "eval_4",
+  "last_heartbeat_at": null,
+  "updated_at": "2026-09-05T08:00:01Z",
+  "stable_snapshot_ref": "snapshot://functional-proxy-v1/4",
+  "watchdog": [],
+  "interoceptive_summary": {
+    "schema_version": "homeostatic-interoception-v1",
+    "profile_ref": "functional-proxy-v1@3",
+    "snapshot_revision": 4,
+    "salience": "marked",
+    "dominant_needs": [
+      {
+        "dimension": "cognitive_load",
+        "direction": "high",
+        "normalized_deviation": 0.368125,
+        "trend": "steady",
+        "confidence": 0.9,
+        "semantic_need": "需要降低负荷并简化当前任务"
+      },
+      {
+        "dimension": "energy_reserve",
+        "direction": "low",
+        "normalized_deviation": 0.34,
+        "trend": "steady",
+        "confidence": 0.9,
+        "semantic_need": "需要降低消耗并恢复可用精力"
+      },
+      {
+        "dimension": "novelty",
+        "direction": "high",
+        "normalized_deviation": 0.295556,
+        "trend": "steady",
+        "confidence": 0.9,
+        "semantic_need": "需要减少新刺激并回到熟悉节奏"
+      }
+    ],
+    "emotion_hint": {
+      "label": "strained",
+      "intensity": 0.5489662499999999
+    },
+    "policy_refs": [
+      "simplify",
+      "rest",
+      "explore"
+    ],
+    "episode_signature": "homeostasis:40ba244a96305198aa0e"
+  }
+}

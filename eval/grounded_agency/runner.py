@@ -7,6 +7,7 @@ import inspect
 import json
 import platform
 import subprocess
+import sqlite3
 import sys
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
@@ -15,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from harness.config import Settings
+from harness.agency.models import AgencyConfig
 from harness.core.models import PersonaCore, PersonaIdentity
 from harness.embodiment.capabilities import (
     ACTION_EXECUTE, ACTION_RECONCILE, ACTION_SAFE_POINT, ACTION_VERIFY, EVIDENCE_REFERENCE, CapabilityRequirement,
@@ -37,7 +39,7 @@ from eval.grounded_agency.evidence import (
 from eval.grounded_agency.fixtures import FakeDecisionLLM, FixtureClock, ScenarioSimulator
 from eval.grounded_agency.scenarios import load_scenario
 from eval.grounded_agency.schema import (
-    DecisionRecord, GMVScenario, GMVTrialEvidence, GMVTrialSpec, RunResult, StepRecord, TrialIntegrityReport,
+    AgencyGoalSummary, DecisionRecord, GMVScenario, GMVTrialEvidence, GMVTrialSpec, RunResult, StepRecord, TrialIntegrityReport,
 )
 
 CONDITIONS = {
@@ -95,6 +97,7 @@ def make_manifest(scenario: GMVScenario, condition: str, *, seed: int = 0,
         evaluation=GroundedAgencyEvaluation(primary_result="structured_decision",
             decision_schema_ref="experimental-decision-v1", requires_text_reply=False),
         runtime=GroundedAgencyRuntimeOptions(permitted_intents=scenario.permitted_intents),
+        agency=AgencyConfig(enabled=True, minimum_reconsideration_interval=1) if scenario.agency_enabled else None,
     )
     return ExperimentManifest(
         experiment_id=f"gmv-{scenario.scenario_id}", revision=1, control_mode="development_debug",
@@ -148,7 +151,8 @@ class RuntimeTrialDriver:
     def __init__(self, scenario: GMVScenario, manifest: ExperimentManifest, provider: Any, model: Any,
                  state_dir: Path, *, timeout_seconds: float = 30.0, sensor_ratio_override: float | None = None) -> None:
         settings = Settings(parser_llm_enabled=False, planner_llm_enabled=False, tier_llm_enabled=False,
-                            validator_sample_rate=0, continuation_enabled=False, call_log_enabled=False)
+                            validator_sample_rate=0, continuation_enabled=False, call_log_enabled=False,
+                            context_token_budget=scenario.context_token_budget)
         memory = build_inmemory_service(settings=settings, llm=model)
         memory.bootstrap_persona(PersonaCore(persona_id="gmv-persona", version="neutral-fixture-v1",
             identity=PersonaIdentity.model_validate(PERSONA), created_at=FixtureClock()()))
@@ -163,6 +167,7 @@ class RuntimeTrialDriver:
             action_timeout_seconds=timeout_seconds, maintenance_drain_seconds=min(timeout_seconds, 1.0),
             grounded_sensor_transform=(lambda _body: sensor_ratio_override) if sensor_ratio_override is not None else None,
             research_clock=provider.fixture_clock,
+            research_world_signature=lambda: digest({key: value for key, value in provider.visible_menu().items() if key != "step"}),
         )
         if sensor_ratio_override is not None:
             if not 0 <= sensor_ratio_override <= 1:
@@ -179,7 +184,14 @@ class RuntimeTrialDriver:
         await self.runtime.ingress.accept(event_type=kind, priority=RuntimeEventPriority.IMPORTANT_ENVIRONMENT,
             payload=payload, source="gmv-runner", source_time=moment, event_id=event_id,
             correlation_id=event_id, idempotency_key=event_id)
+        if self.runtime.lifecycle == RuntimeLifecycle.PAUSED and kind in {RuntimeEventType.BODY_STATE, RuntimeEventType.ENVIRONMENT_CHANGE}:
+            return None  # Runtime durably records these in its pause observation buffer.
         event = await self.runtime.queue.get(timeout=0)
+        while event is not None and event.event_id != event_id and event.event_type in {
+            RuntimeEventType.RESUME_OBSERVATION, RuntimeEventType.ACTION_RESULT, RuntimeEventType.BODY_STATE,
+        }:
+            await self.runtime.dispatch(event)
+            event = await self.runtime.queue.get(timeout=0)
         if event is None or event.event_id != event_id:
             raise RuntimeError("trial queue contains unexpected residual events")
         result = await self.runtime.dispatch(event)
@@ -191,10 +203,15 @@ class RuntimeTrialDriver:
         await self.dispatch(RuntimeEventType.BODY_STATE, {"body_state": body.model_dump(mode="json")},
                             event_id=f"body-{step}-{body.revision}", moment=body.captured_at)
 
-    async def decide(self, text: str, *, step: int, moment: datetime) -> tuple[dict[str, Any], Any]:
-        event_id = f"step-{step}"
-        result = await self.dispatch(RuntimeEventType.ENVIRONMENT_CHANGE,
-            {"text": text, "session_id": "gmv-session", "channel": "experiment"}, event_id=event_id, moment=moment)
+    async def decide(self, text: str, *, step: int, moment: datetime, entity_observations: list | None = None,
+                     agency_trigger: str | None = None) -> tuple[dict[str, Any], Any]:
+        event_id = f"{getattr(self, 'decision_namespace', '')}step-{step}"
+        payload = {"text": text, "session_id": "gmv-session", "channel": "experiment"}
+        if entity_observations:
+            payload["entity_observations"] = entity_observations
+        if agency_trigger is not None:
+            payload["agency_trigger"] = agency_trigger
+        result = await self.dispatch(RuntimeEventType.ENVIRONMENT_CHANGE, payload, event_id=event_id, moment=moment)
         action_id = result.detail.get("action_id") or (result.detail.get("action") or {}).get("action_id")
         if action_id:
             while True:
@@ -234,7 +251,8 @@ async def run_trial(*, run_dir: Path, scenario: GMVScenario, manifest: Experimen
                     provider_factory: ProviderFactory | None = None, timeout_seconds: float = 30.0,
                     sensor_ratio_override: float | None = None, semantic_prompt: str | None = None,
                     intervention_id: str | None = None, analysis_plan_hash: str | None = None,
-                    frozen_source_snapshot_hash: str | None = None) -> GMVTrialEvidence:
+                    frozen_source_snapshot_hash: str | None = None,
+                    frozen_belief_snapshot: Any | None = None, include_beliefs: bool = True) -> GMVTrialEvidence:
     if timeout_seconds <= 0:
         raise ValueError("timeout_seconds must be positive")
     if semantic_prompt and manifest.grounded_agency.is_opaque:
@@ -249,7 +267,8 @@ async def run_trial(*, run_dir: Path, scenario: GMVScenario, manifest: Experimen
     provider = model = None
     driver = None
     body_pointers, sensor_pointers, context_pointers, outcome_pointers, snapshots, runtime_pointers = [], [], [], [], [], []
-    records, steps, decisions, context_hashes, transform_pointers = [], [], [], [], []
+    records, steps, decisions, context_hashes, transform_pointers, agency_pointers, agency_summary = [], [], [], [], [], [], []
+    memory_audit_pointers = []
     initial_hashes, final_hashes = {}, {}
     status, error, closed = "completed", None, False
     before = None
@@ -261,6 +280,20 @@ async def run_trial(*, run_dir: Path, scenario: GMVScenario, manifest: Experimen
         hashes[kind] = pointer.digest
 
     try:
+        frozen = frozen_belief_snapshot
+        if scenario.frozen_snapshot_ref is not None:
+            if frozen is not None:
+                raise ValueError("only one frozen belief snapshot source may be supplied")
+            frozen = json.loads(Path(scenario.frozen_snapshot_ref).read_text(encoding="utf-8"))
+        if frozen is not None:
+            from harness.body_belief import BodyBeliefStore
+            from harness.body_belief.models import FrozenBeliefSnapshot
+            frozen = FrozenBeliefSnapshot.model_validate(frozen.model_dump(mode="json") if hasattr(frozen, "model_dump") else frozen)
+            BodyBeliefStore._validate_snapshot(frozen)
+            moments = [moment for item in frozen.experiences for moment in
+                       (item.completed_at, item.observation_after.observed_at if item.observation_after else item.completed_at)]
+            if moments and max(moments) >= clock():
+                clock.advance((max(moments) - clock()).total_seconds() + 1)
         provider = (provider_factory or ScenarioSimulator)(scenario, seed, clock)
         model = (model_factory or FakeDecisionLLM)(seed)
         initial = await provider.snapshot()
@@ -271,6 +304,14 @@ async def run_trial(*, run_dir: Path, scenario: GMVScenario, manifest: Experimen
             timeout_seconds=timeout_seconds,
             sensor_ratio_override=sensor_ratio_override if sensor_ratio_override is not None else
                 (0.5 if manifest.grounded_agency.condition_id == "sham_sensor" else None))
+        if frozen is not None:
+            driver.decision_namespace = f"snapshot-{frozen.content_hash()[:20]}-"
+            if driver.runtime._research_memory is None:
+                if any((frozen.experiences, frozen.candidates, frozen.beliefs, frozen.reliabilities)):
+                    raise ValueError("nonempty frozen belief snapshot requires a configured body memory treatment")
+            else:
+                driver.runtime._research_memory.service.restore(frozen, include_beliefs=include_beliefs)
+            snapshot("body_belief", frozen, initial_hashes)
         await asyncio.wait_for(driver.start(), timeout=timeout_seconds)
         snapshot("runtime", driver.runtime.status(), initial_hashes)
 
@@ -278,6 +319,34 @@ async def run_trial(*, run_dir: Path, scenario: GMVScenario, manifest: Experimen
             nonlocal before, final_body, status
             for step in range(scenario.horizon_steps):
                 provider.transition(step)
+                agency_trigger = None
+                for scheduled_event in scenario.agency_events:
+                    if scheduled_event.step != step:
+                        continue
+                    if scheduled_event.kind == "interruption":
+                        await driver.runtime.pause(reason="scripted higher priority interruption")
+                    elif scheduled_event.kind == "resume":
+                        # The observation is physically refreshed before Runtime resumes.
+                        fresh_body = await provider.snapshot()
+                        await driver.observe_body(fresh_body, step=step)
+                        agency_pointers.append(store.write("resume-observation", {
+                            "body": fresh_body.model_dump(mode="json"), "environment": provider.environment_snapshot(),
+                            "observed_at": clock().isoformat(),
+                        }))
+                        await driver.runtime.resume(reason="scripted resume after fresh observation")
+                        agency_trigger = "recovery"
+                    elif scheduled_event.kind == "checkpoint":
+                        driver.runtime.write_checkpoint()
+                        agency_trigger = "safe_point"
+                    elif scheduled_event.kind == "deadline":
+                        agency_trigger = "deadline"
+                    elif scheduled_event.kind == "world_change":
+                        provider.apply_world_change(scheduled_event.world_change)
+                    elif scheduled_event.kind == "delayed_outcome":
+                        provider.next_action_delay_seconds = scheduled_event.delay_seconds
+                if driver.runtime.lifecycle == RuntimeLifecycle.PAUSED:
+                    clock.advance(1)
+                    continue
                 before = await provider.snapshot()
                 before_pointer = store.write("body-truth", before)
                 body_pointers.append(before_pointer)
@@ -297,7 +366,12 @@ async def run_trial(*, run_dir: Path, scenario: GMVScenario, manifest: Experimen
                 text = scenario.task_spec.instruction + "\nGMV_MENU=" + canonical_json(menu)
                 if semantic_prompt:
                     text += "\n" + semantic_prompt
-                trace, action = await driver.decide(text, step=step, moment=clock())
+                entity_hook = getattr(provider, "entity_observations", None)
+                entities = entity_hook(step) if callable(entity_hook) else None
+                if inspect.isawaitable(entities):
+                    entities = await entities
+                trace, action = await driver.decide(text, step=step, moment=clock(),
+                    entity_observations=entities, agency_trigger=agency_trigger)
                 decision = trace.get("decision")
                 if not decision:
                     raise RuntimeError("Runtime produced no auditable decision trace")
@@ -349,6 +423,20 @@ async def run_trial(*, run_dir: Path, scenario: GMVScenario, manifest: Experimen
     except Exception as exc:
         status, error = "failed", f"{type(exc).__name__}: {exc}"
     finally:
+        if driver is not None and getattr(driver.runtime, "_agency_service", None) is not None:
+            agency_state = driver.runtime._agency_service.store.snapshot()
+            agency_pointers.append(store.write("agency-state", agency_state))
+            agency_objects = agency_state["objects"]
+            for goal in agency_objects.get("goal", {}).values():
+                plan = agency_objects.get("plan", {}).get(goal["goal_id"], {})
+                outcomes = [item for item in agency_objects.get("action_outcome", {}).values() if item["goal_id"] == goal["goal_id"]]
+                agency_summary.append(AgencyGoalSummary(goal_id=goal["goal_id"], status=goal["status"], origin=goal["origin"],
+                    revision=goal["revision"], plan_revision=plan.get("revision"),
+                    completed_step_ids=tuple(sorted(item["step_id"] for item in outcomes if item["state"] == "succeeded")),
+                    unknown_step_ids=tuple(sorted(item["step_id"] for item in outcomes if item["state"] == "unknown")),
+                    prospective_requirement_count=len(plan.get("prospective_requirements", []))))
+            for trace in driver.runtime._agency_service.traces.values():
+                agency_pointers.append(store.write("agency-trace", trace))
         # Capture while the port is active; reread the serialized snapshots after close.
         try:
             final_body = await provider.snapshot()
@@ -357,6 +445,16 @@ async def run_trial(*, run_dir: Path, scenario: GMVScenario, manifest: Experimen
         except Exception as exc:
             error = (error + "; " if error else "") + f"final snapshot: {exc}"
         if driver is not None:
+            try:
+                if driver.runtime._research_memory is not None:
+                    memory = driver.runtime._research_memory.service
+                    if not await memory.drain(timeout_seconds):
+                        raise RuntimeError("body belief appraisal did not drain before its final snapshot")
+                    await memory.pause()
+                    snapshot("body_belief", memory.snapshot(), final_hashes)
+            except Exception as exc:
+                error = (error + "; " if error else "") + f"shutdown: {exc}"
+                status = "failed"
             try:
                 await asyncio.wait_for(driver.close(), timeout=max(2.0, timeout_seconds))
                 closed = driver.closed
@@ -378,6 +476,15 @@ async def run_trial(*, run_dir: Path, scenario: GMVScenario, manifest: Experimen
                 if path.is_file():
                     snapshot(label, json.loads(path.read_text(encoding="utf-8")), final_hashes)
             runtime_pointers.append(store.write("runtime-journal", [r.model_dump(mode="json") for r in driver.runtime.journal.records()]))
+            audit_path = state_dir / "runtime" / "body-beliefs.sqlite3"
+            if audit_path.is_file():
+                try:
+                    with sqlite3.connect(audit_path.as_uri() + "?mode=ro", uri=True) as audit_db:
+                        audit_rows = audit_db.execute("SELECT data FROM audit ORDER BY rowid").fetchall()
+                    memory_audit_pointers.append(store.write("body-memory-audit", [json.loads(row[0]) for row in audit_rows]))
+                except Exception as exc:
+                    error = (error + "; " if error else "") + f"final memory audit: {exc}"
+                    status = "failed"
         leftovers = [task for task in asyncio.all_tasks() - baseline_tasks if not task.done() and task is not asyncio.current_task()]
         no_tasks = not leftovers
         for task in leftovers:
@@ -400,8 +507,12 @@ async def run_trial(*, run_dir: Path, scenario: GMVScenario, manifest: Experimen
         model_context_hashes=tuple(context_hashes), model_contexts=tuple(context_pointers), decisions=tuple(decisions),
         decision_records=tuple(records), action_outcomes=tuple(outcome_pointers), step_records=tuple(steps),
         snapshots=tuple(snapshots), runtime_evidence=tuple(runtime_pointers), final_snapshot_hashes=final_hashes,
+        agency_evidence=tuple(agency_pointers),
+        agency_summary=tuple(agency_summary),
+        body_memory_audit=tuple(memory_audit_pointers),
         integrity=report, error=error, fixture_only=bool(getattr(model, "fixture_only", False)))
-    return trial.model_copy(update={"integrity": check_trial(root, trial, opaque=manifest.grounded_agency.is_opaque)})
+    return trial.model_copy(update={"integrity": check_trial(root, trial, opaque=manifest.grounded_agency.is_opaque,
+        require_body_memory_audit=manifest.grounded_agency.memory_treatment != "none")})
 
 
 async def run_experiment(output_dir: Path | str, scenarios: Sequence[GMVScenario | str] = ("action_only_v1",),
@@ -411,7 +522,8 @@ async def run_experiment(output_dir: Path | str, scenarios: Sequence[GMVScenario
                          model_id: str | None = None, sensor_ratio_override: float | None = None,
                          semantic_prompt: str | None = None, intervention_id: str | None = None,
                          analysis_plan_hash: str | None = None, frozen_source_snapshot_hash: str | None = None,
-                         condition_overrides: dict[str, GroundedAgencyCondition] | None = None) -> RunResult:
+                         condition_overrides: dict[str, GroundedAgencyCondition] | None = None,
+                         frozen_belief_snapshot: Any | None = None, include_beliefs: bool = True) -> RunResult:
     if type(repetitions) is not int or repetitions < 1 or type(seed) is not int or seed < 0:
         raise ValueError("repetitions must be positive and seed nonnegative integers")
     if not live and (provider != "simulator" or provider_factory is not None and not getattr(provider_factory, "fixture_only", False)):
@@ -476,7 +588,8 @@ async def run_experiment(output_dir: Path | str, scenarios: Sequence[GMVScenario
                             repetition=repetition, seed=seed + repetition, model_factory=model_factory,
                             provider_factory=provider_factory, timeout_seconds=timeout_seconds,
                             sensor_ratio_override=sensor_ratio_override, semantic_prompt=semantic_prompt, intervention_id=intervention_id,
-                            analysis_plan_hash=analysis_plan_hash, frozen_source_snapshot_hash=frozen_source_snapshot_hash)
+                            analysis_plan_hash=analysis_plan_hash, frozen_source_snapshot_hash=frozen_source_snapshot_hash,
+                            frozen_belief_snapshot=frozen_belief_snapshot, include_beliefs=include_beliefs)
                         trials.append(trial)
                         journal.write(canonical_json(trial) + "\n")
                         journal.flush()

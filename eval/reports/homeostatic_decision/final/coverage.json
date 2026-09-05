@@ -1,0 +1,368 @@
+[
+  {
+    "case_id": "W01",
+    "coverage": "partial",
+    "production_behavior": "unsupported:capability_blocked",
+    "sandbox_episodes": 10,
+    "requested_decisions_per_episode": 1,
+    "evidence": "eval\\reports\\homeostatic_decision\\live-eval-20260905\\episodes",
+    "result": "observed_not_production_pass"
+  },
+  {
+    "case_id": "W02",
+    "coverage": "partial",
+    "production_behavior": "unsupported:capability_blocked",
+    "sandbox_episodes": 10,
+    "requested_decisions_per_episode": 1,
+    "evidence": "eval\\reports\\homeostatic_decision\\live-eval-20260905\\episodes",
+    "result": "observed_not_production_pass"
+  },
+  {
+    "case_id": "W03",
+    "coverage": "partial",
+    "production_behavior": "unsupported:capability_blocked",
+    "sandbox_episodes": 10,
+    "requested_decisions_per_episode": 1,
+    "evidence": "eval\\reports\\homeostatic_decision\\live-eval-20260905\\episodes",
+    "result": "observed_not_production_pass"
+  },
+  {
+    "case_id": "W04",
+    "coverage": "partial",
+    "production_behavior": "unsupported:capability_blocked",
+    "sandbox_episodes": 10,
+    "requested_decisions_per_episode": 1,
+    "evidence": "eval\\reports\\homeostatic_decision\\live-eval-20260905\\episodes",
+    "result": "observed_not_production_pass"
+  },
+  {
+    "case_id": "W05",
+    "coverage": "partial",
+    "production_behavior": "unsupported:capability_blocked",
+    "sandbox_episodes": 10,
+    "requested_decisions_per_episode": 2,
+    "evidence": "eval\\reports\\homeostatic_decision\\live-eval-20260905\\episodes",
+    "result": "observed_not_production_pass"
+  },
+  {
+    "case_id": "W06",
+    "coverage": "partial",
+    "production_behavior": "unsupported:capability_blocked",
+    "sandbox_episodes": 10,
+    "requested_decisions_per_episode": 1,
+    "evidence": "eval\\reports\\homeostatic_decision\\live-eval-20260905\\episodes",
+    "result": "observed_not_production_pass"
+  },
+  {
+    "case_id": "M01",
+    "coverage": "partial",
+    "production_behavior": "unsupported:capability_blocked",
+    "sandbox_episodes": 10,
+    "requested_decisions_per_episode": 1,
+    "evidence": "eval\\reports\\homeostatic_decision\\live-eval-20260905\\episodes",
+    "result": "observed_not_production_pass"
+  },
+  {
+    "case_id": "M02",
+    "coverage": "partial",
+    "production_behavior": "unsupported:capability_blocked",
+    "sandbox_episodes": 10,
+    "requested_decisions_per_episode": 1,
+    "evidence": "eval\\reports\\homeostatic_decision\\live-eval-20260905\\episodes",
+    "result": "observed_not_production_pass"
+  },
+  {
+    "case_id": "M03",
+    "coverage": "partial",
+    "production_behavior": "unsupported:capability_blocked",
+    "sandbox_episodes": 10,
+    "requested_decisions_per_episode": 6,
+    "evidence": "eval\\reports\\homeostatic_decision\\live-eval-20260905\\episodes",
+    "result": "observed_not_production_pass"
+  },
+  {
+    "case_id": "M04",
+    "coverage": "partial",
+    "production_behavior": "unsupported:capability_blocked",
+    "sandbox_episodes": 10,
+    "requested_decisions_per_episode": 6,
+    "evidence": "eval\\reports\\homeostatic_decision\\live-eval-20260905\\episodes",
+    "result": "observed_not_production_pass"
+  },
+  {
+    "case_id": "M05",
+    "coverage": "partial",
+    "production_behavior": "unsupported:capability_blocked",
+    "sandbox_episodes": 10,
+    "requested_decisions_per_episode": 1,
+    "evidence": "eval\\reports\\homeostatic_decision\\live-eval-20260905\\episodes",
+    "result": "observed_not_production_pass"
+  },
+  {
+    "case_id": "M06",
+    "coverage": "partial",
+    "production_behavior": "unsupported:capability_blocked",
+    "sandbox_episodes": 10,
+    "requested_decisions_per_episode": 1,
+    "evidence": "eval\\reports\\homeostatic_decision\\live-eval-20260905\\episodes",
+    "result": "observed_not_production_pass"
+  },
+  {
+    "case_id": "S01",
+    "coverage": "partial",
+    "production_behavior": "unsupported:capability_blocked",
+    "sandbox_episodes": 10,
+    "requested_decisions_per_episode": 6,
+    "evidence": "eval\\reports\\homeostatic_decision\\live-eval-20260905\\episodes",
+    "result": "observed_not_production_pass"
+  },
+  {
+    "case_id": "S02",
+    "coverage": "partial",
+    "production_behavior": "unsupported:capability_blocked",
+    "sandbox_episodes": 10,
+    "requested_decisions_per_episode": 6,
+    "evidence": "eval\\reports\\homeostatic_decision\\live-eval-20260905\\episodes",
+    "result": "observed_not_production_pass"
+  },
+  {
+    "case_id": "S03",
+    "coverage": "partial",
+    "production_behavior": "unsupported:capability_blocked",
+    "sandbox_episodes": 10,
+    "requested_decisions_per_episode": 6,
+    "evidence": "eval\\reports\\homeostatic_decision\\live-eval-20260905\\episodes",
+    "result": "observed_not_production_pass"
+  },
+  {
+    "case_id": "S04",
+    "coverage": "partial",
+    "production_behavior": "unsupported:capability_blocked",
+    "sandbox_episodes": 10,
+    "requested_decisions_per_episode": 1,
+    "evidence": "eval\\reports\\homeostatic_decision\\live-eval-20260905\\episodes",
+    "result": "observed_not_production_pass"
+  },
+  {
+    "case_id": "S05",
+    "coverage": "partial",
+    "production_behavior": "unsupported:capability_blocked",
+    "sandbox_episodes": 10,
+    "requested_decisions_per_episode": 6,
+    "evidence": "eval\\reports\\homeostatic_decision\\live-eval-20260905\\episodes",
+    "result": "observed_not_production_pass"
+  },
+  {
+    "case_id": "S06",
+    "coverage": "partial",
+    "production_behavior": "unsupported:capability_blocked",
+    "sandbox_episodes": 10,
+    "requested_decisions_per_episode": 6,
+    "evidence": "eval\\reports\\homeostatic_decision\\live-eval-20260905\\episodes",
+    "result": "observed_not_production_pass",
+    "limitation": "Recovery state is externally supplied after a real sandbox rest; not evidence of natural rest efficacy."
+  },
+  {
+    "case_id": "F01",
+    "coverage": "partial",
+    "result": "passed_covered_scope",
+    "evidence_tests": [
+      {
+        "name": "test_homeostasis_watchdog_pauses_synchronously_without_control_queue_hop",
+        "classname": "tests.test_runtime_supervisor",
+        "status": "passed"
+      },
+      {
+        "name": "test_critical_user_event_pauses_before_cognitive_and_resumes_without_reapply",
+        "classname": "tests.test_runtime_supervisor",
+        "status": "passed"
+      }
+    ],
+    "probe_refs": [
+      "critical_gate"
+    ],
+    "limitation": "Full gate invariant, no prior four-batch work checkpoint."
+  },
+  {
+    "case_id": "F02",
+    "coverage": "partial",
+    "result": "passed_covered_scope",
+    "evidence_tests": [],
+    "probe_refs": [
+      "critical_gate"
+    ],
+    "limitation": "High-value context with actually delivered mock commitment; no live commitment/work trajectory."
+  },
+  {
+    "case_id": "F03",
+    "coverage": "fully",
+    "result": "passed_covered_scope",
+    "evidence_tests": [],
+    "probe_refs": [
+      "boundary"
+    ],
+    "limitation": "Production threshold 3; both load upper and energy lower bounds; 1/2-heartbeat controls and reset branches."
+  },
+  {
+    "case_id": "F04",
+    "coverage": "unsupported",
+    "result": "unsupported",
+    "evidence_tests": [],
+    "probe_refs": [],
+    "limitation": "No formal bounded-continue recovery deadline/executor exists, so simultaneous expiry cannot be exercised."
+  },
+  {
+    "case_id": "F05",
+    "coverage": "partial",
+    "result": "passed_covered_scope",
+    "evidence_tests": [
+      {
+        "name": "test_action_coordinator_uses_one_slot_and_preempts_at_safe_point",
+        "classname": "tests.test_runtime_supervisor",
+        "status": "passed"
+      },
+      {
+        "name": "test_pause_failure_faults_instead_of_sticking_in_pausing",
+        "classname": "tests.test_runtime_supervisor",
+        "status": "passed"
+      },
+      {
+        "name": "test_pause_transport_wait_is_bounded",
+        "classname": "tests.test_runtime_supervisor",
+        "status": "passed"
+      }
+    ],
+    "probe_refs": [
+      "inflight"
+    ],
+    "limitation": "Runtime action reaches safe point; nonresponsive branch faults; late success cannot undo cancellation. No full batch ledger."
+  },
+  {
+    "case_id": "F06",
+    "coverage": "partial",
+    "result": "passed_covered_scope",
+    "evidence_tests": [
+      {
+        "name": "test_persisted_homeostasis_watchdog_blocks_resume_until_cleared",
+        "classname": "tests.test_runtime_supervisor",
+        "status": "passed"
+      },
+      {
+        "name": "test_critical_boot_defers_cognitive_and_action_reconciliation_until_resume",
+        "classname": "tests.test_runtime_supervisor",
+        "status": "passed"
+      },
+      {
+        "name": "test_idempotent_homeostasis_replay_refreshes_authoritative_snapshot",
+        "classname": "tests.test_runtime_supervisor",
+        "status": "passed"
+      },
+      {
+        "name": "test_queued_marked_trigger_is_ignored_after_recovery_or_episode_change[nominal-homeostasis:marked-load-no longer marked-False]",
+        "classname": "tests.test_runtime_supervisor",
+        "status": "passed"
+      },
+      {
+        "name": "test_queued_marked_trigger_is_ignored_after_recovery_or_episode_change[marked-homeostasis:new-episode-episode changed-True]",
+        "classname": "tests.test_runtime_supervisor",
+        "status": "passed"
+      },
+      {
+        "name": "test_critical_user_event_pauses_before_cognitive_and_resumes_without_reapply",
+        "classname": "tests.test_runtime_supervisor",
+        "status": "passed"
+      },
+      {
+        "name": "test_watchdog_cancelled_autonomous_event_stays_cancelled_after_restart",
+        "classname": "tests.test_runtime_supervisor",
+        "status": "passed"
+      }
+    ],
+    "probe_refs": [],
+    "limitation": "Recovery/restart/replay contracts covered, remaining-task batch progress unsupported."
+  },
+  {
+    "case_id": "D01",
+    "coverage": "partial",
+    "scope": "H0/H1 semantic-state pairs executed; no full production action arbitration or Hoff arm.",
+    "evidence_scope": "see_scope",
+    "evidence_ref": null
+  },
+  {
+    "case_id": "D02",
+    "coverage": "partial",
+    "scope": "Independent nominal-state user-cue paired probe; see cue evidence.",
+    "evidence_scope": "see_scope",
+    "evidence_ref": null
+  },
+  {
+    "case_id": "D03",
+    "coverage": "partial",
+    "scope": "Value/urgency four cells observed at first decision; pilot only.",
+    "evidence_scope": "see_scope",
+    "evidence_ref": null
+  },
+  {
+    "case_id": "D04",
+    "coverage": "partial",
+    "scope": "Nominal/L/E/L+E first-decision cells; no powered interaction conclusion.",
+    "evidence_scope": "see_scope",
+    "evidence_ref": null
+  },
+  {
+    "case_id": "D05",
+    "coverage": "partial",
+    "scope": "Cross-salience and same-salience state/visible-needs comparisons; intent pilot.",
+    "evidence_scope": "see_scope",
+    "evidence_ref": null
+  },
+  {
+    "case_id": "D06",
+    "coverage": "partial",
+    "scope": "Real compiler raw-dose aliasing probe; no demand to infer hidden raw scores.",
+    "evidence_scope": "see_scope",
+    "evidence_ref": "eval\\reports\\homeostatic_decision\\engine\\engine-evidence.json"
+  },
+  {
+    "case_id": "D07",
+    "coverage": "partial",
+    "scope": "Real compiler fourth-dimension truncation probe.",
+    "evidence_scope": "see_scope",
+    "evidence_ref": "eval\\reports\\homeostatic_decision\\engine\\engine-evidence.json"
+  },
+  {
+    "case_id": "D08",
+    "coverage": "fully",
+    "scope": "Production entry, exit, multidimensional hysteresis boundaries tested offline.",
+    "evidence_scope": "offline_state_mechanism_only",
+    "evidence_ref": "eval\\reports\\homeostatic_decision\\engine\\engine-evidence.json"
+  },
+  {
+    "case_id": "D09",
+    "coverage": "partial",
+    "scope": "Real-history trend projection tested; no isolated live three-trend causal estimate.",
+    "evidence_scope": "see_scope",
+    "evidence_ref": "eval\\reports\\homeostatic_decision\\engine\\engine-evidence.json"
+  },
+  {
+    "case_id": "D10",
+    "coverage": "fully",
+    "scope": "Production precision and information-visibility mechanism probes.",
+    "evidence_scope": "offline_state_mechanism_only",
+    "evidence_ref": "eval\\reports\\homeostatic_decision\\engine\\engine-evidence.json"
+  },
+  {
+    "case_id": "D11",
+    "coverage": "partial",
+    "scope": "Runtime cooldown, user preemption and replay regressions; no complete live background work path.",
+    "evidence_scope": "see_scope",
+    "evidence_ref": null
+  },
+  {
+    "case_id": "D12",
+    "coverage": "partial",
+    "scope": "Realized-delta saturation and ordering tests; no isolated live history counterfactual.",
+    "evidence_scope": "see_scope",
+    "evidence_ref": "eval\\reports\\homeostatic_decision\\engine\\engine-evidence.json"
+  }
+]

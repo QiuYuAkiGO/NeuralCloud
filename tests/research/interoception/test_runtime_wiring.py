@@ -154,6 +154,8 @@ async def crash_without_checkpoint(runtime):
     await runtime.homeostasis.close()
     if runtime._opaque_store is not None:
         runtime._opaque_store.close()
+    if runtime._research_memory is not None:
+        await runtime._research_memory.service.close()
     await runtime.queue.close()
     runtime.instance_lock.release()
 

@@ -128,6 +128,8 @@ python -m gui.server  # 兼容的单进程 GUI
 
 `start.ps1` / `stop.ps1` 保留为 NeuralCloud 四进程的低层启停器（已在运行则原子重启，分服务日志写入 `logs/`）；它们不会检查或安装前置依赖，也不会部署 MistyAI。日常双工程开发请使用 `dev.ps1`。`start.sh` / `stop.sh` 当前仍是兼容的单进程 GUI 路径。
 
+可直接运行 `./start.ps1`，无需重复填写参数：manifest/profile 依次使用待激活配置、上次启动配置或内置 demo 默认值。若配置使用本机 MistyAI（`http://127.0.0.1:8787` 或 `http://localhost:8787`）且未提供令牌，脚本会从 `dev.ps1` 已配置的 WSL 服务读取现有凭据；优先使用该工程记录的 WSL 发行版，默认 `Ubuntu-24.04`。显式令牌/令牌文件仍优先，远程 MistyAI 仍需单独配置凭据。
+
 默认 **demo 模式**：内存记忆 + MockLLM + 小雾（Misty）出厂预设（`presets/builtin/misty.json`）。该预设完整导入相邻 MistyDigitalBody 冻结设定包 v0.2.0 的姓名、年龄、生日、身高、爱好、人格、表达基线、自我外观认知与背景物品，并以干净关系/记忆状态启动，避免继承旧角色经历。旧 Vaelith 模板仍保留在预设库中，但不再是默认角色。顶栏「预设」可打开/套用模板；调试与对话写回 `data/presets/` 工作副本。可在顶栏「设置」切换模式：`demo`（Mock）、`live`（任意 OpenAI 兼容端点）、`ollama`（未填 URL 时默认 `http://127.0.0.1:11434/v1`）。端点变量为 `NC_LLM_BASE_URL` / `NC_LLM_API_KEY`（代码默认 `http://127.0.0.1:8080/v1`）；另可配 `NC_AUX_LLM_*` 辅助小模型端点。切换模式时不会丢掉当前预设存档；对话阶段才会请求 LLM。
 
 ### live 模式本地模型栈（推荐）

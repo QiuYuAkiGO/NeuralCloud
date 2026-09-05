@@ -20,7 +20,8 @@ def register_scenario(scenario: GMVScenario, *, replace: bool = False) -> None:
 
 
 def scenario_ids() -> tuple[str, ...]:
-    return tuple(_REGISTRY)
+    from eval.grounded_agency.agency_scenarios import long_horizon_scenarios
+    return tuple(dict.fromkeys((*_REGISTRY, *(scenario.scenario_id for scenario in long_horizon_scenarios()))))
 
 
 def load_scenario(source: str | Path | GMVScenario) -> GMVScenario:
@@ -28,6 +29,10 @@ def load_scenario(source: str | Path | GMVScenario) -> GMVScenario:
         return GMVScenario.model_validate(source.model_dump(mode="json"))
     if str(source) in _REGISTRY:
         return load_scenario(_REGISTRY[str(source)])
+    from eval.grounded_agency.agency_scenarios import long_horizon_scenarios
+    for scenario in long_horizon_scenarios():
+        if scenario.scenario_id == str(source):
+            return scenario
     path = Path(source)
     if path.suffix.lower() in {".yaml", ".yml"}:
         try:

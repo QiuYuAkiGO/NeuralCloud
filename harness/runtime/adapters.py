@@ -473,6 +473,20 @@ class PipelineCognitiveAdapter:
             if observations and ga.sensor_transform is None:
                 raise ValueError("opaque observations supplied to a non-opaque condition")
             additional_segments: list[ContextSegment] = []
+            for raw_segment in payload.get("research_context", []):
+                segment = ContextSegment.model_validate(raw_segment)
+                if segment.kind not in {"body_memory", "persistent_goals", "entity_observation", "entity_memory"}:
+                    raise ValueError("unsupported research context segment")
+                if ga.memory_treatment == "none" and segment.kind == "body_memory":
+                    raise ValueError("body memory is not visible in this treatment")
+                if segment.kind == "persistent_goals" and (ga.agency is None or not ga.agency.enabled):
+                    raise ValueError("persistent goals are disabled in this treatment")
+                if segment.kind.startswith("entity_"):
+                    if ga.open_social is None or not ga.open_social.enabled:
+                        raise ValueError("entity context is disabled in this treatment")
+                    if segment.kind == "entity_memory" and ga.open_social.entity_memory == "none":
+                        raise ValueError("entity memory is not visible in this treatment")
+                additional_segments.append(segment)
             if ga.semantic_homeostasis and payload.get("interoception") is not None:
                 from harness.compiler.compiler import _interoception_text
 
@@ -487,6 +501,7 @@ class PipelineCognitiveAdapter:
                 situation, opaque_interoception=observations, opaque_token_budget=options.opaque_token_budget,
                 additional_segments=additional_segments,
                 required_user_context=True,
+                required_additional_context=True,
             )
             messages = context.render_messages()
             self.pipeline.compiler.validate_final_messages(messages, manifest=manifest)
@@ -552,6 +567,7 @@ class PipelineCognitiveAdapter:
                 manifest_hash=manifest.content_hash(), artifact_identity=ga.artifact_identity.model_dump(mode="json"),
                 observation_hashes=[content_hash(item) for item in observations], prepare_id=prepared.prepare_id,
                 compiled_decision=decision.model_dump(mode="json"),
+                research_context=[segment.model_dump(mode="json") for segment in additional_segments],
             )
             self.research_traces[command.event_id] = trace
             self._cursor = max(self._cursor, command.receive_seq)

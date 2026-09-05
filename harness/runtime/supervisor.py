@@ -258,6 +258,10 @@ class RuntimeSupervisor:
         body_client: MistyBodyClient | None = None,
         grounded_sensor_transform: Callable[[Any], Any] | None = None,
         research_clock: Callable[[], datetime] | None = None,
+        body_belief_service: Any | None = None,
+        agency_service: Any | None = None,
+        social_world_service: Any | None = None,
+        research_world_signature: Callable[[], str] | None = None,
     ) -> None:
         self.manifest = manifest
         self.cognitive = cognitive
@@ -271,6 +275,12 @@ class RuntimeSupervisor:
         self._grounded_body = None
         self._grounded_sensor_transform = grounded_sensor_transform
         self._research_clock = research_clock or utc_now
+        self._research_world_signature = research_world_signature
+        self._research_memory = None
+        self._agency_service = None
+        self._social_world_service = None
+        self._social_appraisal_tasks: set[asyncio.Task] = set()
+        self._agency_decision_bindings: dict[str, dict[str, str]] = {}
         if manifest.grounded_agency is not None:
             from harness.research.grounded_agency.manifest import GroundedAgencyRuntimeOptions
 
@@ -286,6 +296,41 @@ class RuntimeSupervisor:
                     history_limit=self._grounded_options.history_limit,
                     max_tokens=self._grounded_options.opaque_token_budget,
                     bin_count=self._grounded_options.sensor_bins,
+                )
+                if body_belief_service is None:
+                    from harness.body_belief import BodyBeliefAppraiser, BodyBeliefService, BodyBeliefStore
+
+                    llm = getattr(getattr(cognitive, "pipeline", None), "llm", None)
+                    treatment = manifest.grounded_agency.memory_treatment
+                    if treatment == "body_causal_beliefs" and llm is None:
+                        raise ValueError("body_causal_beliefs requires an explicit appraisal service for remote Cognitive")
+                    body_belief_service = BodyBeliefService(
+                        BodyBeliefStore(self.state_dir / "body-beliefs.sqlite3", profile=manifest.grounded_agency.body_belief_profile),
+                        appraiser=BodyBeliefAppraiser(llm) if treatment == "body_causal_beliefs" else None,
+                        memory_treatment=treatment,
+                        objective_history_visible=self._grounded_options.objective_history_visible,
+                    )
+                from harness.runtime.research_memory import ResearchMemoryBridge
+
+                self._research_memory = ResearchMemoryBridge(body_belief_service, context_key=manifest.environment)
+            agency = manifest.grounded_agency.agency
+            if agency is not None and agency.enabled:
+                from harness.agency import AgencyService
+
+                llm = getattr(getattr(cognitive, "pipeline", None), "llm", None)
+                if agency_service is None and llm is None:
+                    raise ValueError("long-horizon agency requires an explicit model service for remote Cognitive")
+                self._agency_service = agency_service or AgencyService(
+                    self.state_dir / "agency.sqlite3", llm, config=agency, clock=self._research_clock,
+                    permitted_intents=self._grounded_options.permitted_intents,
+                )
+            social = manifest.grounded_agency.open_social
+            if social is not None and social.enabled:
+                from harness.social_world import SocialWorldService
+
+                self._social_world_service = social_world_service or SocialWorldService(
+                    self.state_dir / "entity-memory.sqlite3", social,
+                    session_id=manifest.experiment_id,
                 )
         self.journal = journal or RuntimeJournal(
             self.state_dir / "journal",
@@ -607,6 +652,7 @@ class RuntimeSupervisor:
             raise
         try:
             previous_lifecycle = self._restore_runtime_indexes()
+            await self._restore_research_memory()
             await self._transition(RuntimeLifecycle.RECOVERING, reason="boot recovery started")
             if self.journal.truncated_tail_bytes:
                 self._append_journal(
@@ -681,6 +727,16 @@ class RuntimeSupervisor:
                 else "recovery complete"
             )
             await self._transition(target, reason=transition_reason)
+            if self._research_memory is not None:
+                if target == RuntimeLifecycle.RUNNING:
+                    await self._research_memory.service.resume()
+                else:
+                    await self._research_memory.service.pause()
+            if self._agency_service is not None:
+                if target == RuntimeLifecycle.RUNNING:
+                    await self._agency_service.resume()
+                else:
+                    await self._agency_service.pause(timeout=self.maintenance_drain_seconds)
             if homeostasis_watchdog:
                 self._homeostasis_watchdog_signature = (
                     self._homeostasis_snapshot.revision,
@@ -699,7 +755,8 @@ class RuntimeSupervisor:
         except Exception as exc:
             if self.lifecycle not in {RuntimeLifecycle.FAULTED, RuntimeLifecycle.PAUSED}:
                 await self._transition(RuntimeLifecycle.FAULTED, reason=f"recovery failed: {exc}")
-            self.instance_lock.release()
+            if not self._research_workers_pending():
+                self.instance_lock.release()
             raise
 
     async def run(self) -> None:
@@ -853,6 +910,11 @@ class RuntimeSupervisor:
             self._append_journal("maintenance_drain", data={"completed": drained})
             if not drained:
                 raise RuntimeStateError("cognitive maintenance did not drain within deadline")
+            if self._research_memory is not None:
+                await self._research_memory.service.pause()
+                if not await self._research_memory.service.drain(self.maintenance_drain_seconds):
+                    raise RuntimeStateError("body belief maintenance did not drain within deadline")
+            await self._pause_research_agency()
             await self._transition(RuntimeLifecycle.PAUSED, reason=reason)
         except Exception as exc:
             error_detail = str(exc).strip() or type(exc).__name__
@@ -917,6 +979,10 @@ class RuntimeSupervisor:
                 f"{embodiment_status.state.value}"
             )
         await self.cognitive.resume_maintenance()
+        if self._research_memory is not None:
+            await self._research_memory.service.resume()
+        if self._agency_service is not None:
+            await self._agency_service.resume()
         resumed_at = utc_now()
         summary = self.pause_observations.build(resumed_at=resumed_at)
         await self._transition(RuntimeLifecycle.RUNNING, reason=reason)
@@ -1008,6 +1074,16 @@ class RuntimeSupervisor:
             drained = await self.cognitive.pause_maintenance(timeout=self.maintenance_drain_seconds)
             if not drained:
                 raise RuntimeStateError("cognitive maintenance did not drain during shutdown")
+            await self._pause_research_agency()
+            if self._research_memory is not None:
+                await self._research_memory.service.pause()
+                if not await self._research_memory.service.drain(self.maintenance_drain_seconds):
+                    raise RuntimeStateError("body belief maintenance did not drain during shutdown")
+                await self._research_memory.service.close()
+            if self._agency_service is not None:
+                await self._agency_service.close()
+            if self._social_world_service is not None:
+                self._social_world_service.close()
             self.write_checkpoint()
             await self.cognitive.close()
             await self.homeostasis.close()
@@ -1020,7 +1096,17 @@ class RuntimeSupervisor:
             await self._transition(RuntimeLifecycle.FAULTED, reason=f"graceful stop failed: {exc}")
             raise
         finally:
-            self.instance_lock.release()
+            if not self._research_workers_pending():
+                self.instance_lock.release()
+
+    def _research_workers_pending(self) -> bool:
+        """Keep exclusive state ownership while an uncancellable model worker runs."""
+        tasks = list(self._social_appraisal_tasks)
+        if self._research_memory is not None:
+            tasks.extend(self._research_memory.service._tasks.values())
+        if self._agency_service is not None and self._agency_service._inflight is not None:
+            tasks.append(self._agency_service._inflight)
+        return any(not task.done() for task in tasks)
 
     def write_checkpoint(self) -> RuntimeCheckpoint:
         checkpoint = RuntimeCheckpoint(
@@ -1665,6 +1751,21 @@ class RuntimeSupervisor:
             self._terminal_episode_id = self._body_episode_id
             self.embodiment.set_terminal("body provider reported terminal state")
             await self.action_coordinator.request_preemption(reason="body provider reported terminal state")
+        if self._research_memory is not None:
+            try:
+                visible = self._opaque_store.observations(now=self._research_clock())
+                self._append_journal("body_memory_observed", event=event,
+                                     data={"observations": [item.model_dump(mode="json") for item in visible]})
+                await self._research_memory.observe(visible)
+            except Exception as exc:
+                self._append_journal(
+                    "body_memory_observation_failed", event=event,
+                    data={"error_type": type(exc).__name__, "analysis_eligible": False},
+                )
+        if self._agency_service is not None and self._opaque_store is not None:
+            from harness.runtime.research_agency import observe
+
+            observe(self, self._opaque_store.observations(now=self._research_clock()))
         return EventDispatchResult(
             event_id=event.event_id, receive_seq=event.receive_seq, process_seq=process_seq,
             status="completed", decision_kind="body_observation",
@@ -1744,10 +1845,15 @@ class RuntimeSupervisor:
         if event.event_type == RuntimeEventType.HEARTBEAT:
             self._last_heartbeat_at = utc_now()
             await self._refresh_embodiment()
-        if event.event_type not in {
+        agency_heartbeat = False
+        if event.event_type == RuntimeEventType.HEARTBEAT and self._agency_service is not None:
+            from harness.runtime.research_agency import heartbeat_due
+
+            agency_heartbeat = heartbeat_due(self)
+        if (event.event_type not in {
             RuntimeEventType.USER_MESSAGE, RuntimeEventType.ENVIRONMENT_CHANGE,
             RuntimeEventType.GOAL_RECONSIDERATION, RuntimeEventType.IDLE,
-        } or self._agency_state != AgencyState.AVAILABLE:
+        } and not agency_heartbeat) or self._agency_state != AgencyState.AVAILABLE:
             return EventDispatchResult(
                 event_id=event.event_id, receive_seq=event.receive_seq, process_seq=process_seq,
                 status="completed", decision_kind="no_action",
@@ -1760,6 +1866,16 @@ class RuntimeSupervisor:
             )
         sampled_at = self._research_clock()
         observations = self._opaque_store.observations(now=sampled_at) if self._opaque_store else ()
+        if self._research_memory is not None:
+            try:
+                self._append_journal("body_memory_observed", event=event,
+                                     data={"observations": [item.model_dump(mode="json") for item in observations]})
+                await self._research_memory.observe(observations)
+            except Exception as exc:
+                self._append_journal(
+                    "body_memory_observation_failed", event=event,
+                    data={"error_type": type(exc).__name__, "analysis_eligible": False},
+                )
         self._append_journal(
             "grounded_observation_sampled", event=event,
             data={"sampled_at": sampled_at.isoformat()},
@@ -1783,10 +1899,39 @@ class RuntimeSupervisor:
             "opaque_interoception": [item.model_dump(mode="json") for item in observations],
             "provider_intents": provider_intents,
         }
+        if self._research_memory is not None:
+            try:
+                segment = self._research_memory.context(observations)
+                if segment is not None:
+                    payload["research_context"] = [segment.model_dump(mode="json")]
+            except Exception as exc:
+                self._append_journal(
+                    "body_memory_context_failed", event=event,
+                    data={"error_type": type(exc).__name__, "analysis_eligible": False},
+                )
         if ga.action_selection == "engineered_argmin":
             payload["policies"] = await self.homeostasis.propose_policies(version_vector=self.version_vector)
         if ga.semantic_homeostasis and self._interoception is not None:
             payload["interoception"] = self._interoception.model_dump(mode="json", exclude={"evidence_refs"})
+        research_segments = await self._social_research_context(event)
+        if research_segments:
+            payload.setdefault("research_context", []).extend(segment.model_dump(mode="json") for segment in research_segments)
+        arbitration = None
+        if self._agency_service is not None:
+            from harness.core.inference import ContextSegment
+            from harness.runtime.research_agency import reconsider
+
+            arbitration, segment = await reconsider(
+                self, event, observations,
+                [ContextSegment.model_validate(item) for item in payload.get("research_context", [])], provider_intents,
+            )
+            if segment is not None:
+                payload.setdefault("research_context", []).append(segment.model_dump(mode="json"))
+            if agency_heartbeat and (not arbitration.model_called or arbitration.decision.operation in {"no_change", "pause", "abandon"}):
+                return EventDispatchResult(
+                    event_id=event.event_id, receive_seq=event.receive_seq, process_seq=process_seq,
+                    status="completed", decision_kind="no_action", detail={"agency": arbitration.model_dump(mode="json")},
+                )
         envelope = self._make_command(
             event, command_type="PrepareResponse", idempotency_key=self._prepare_idempotency_key(event),
             expected_revision=self._cognitive_snapshot.revision, payload=payload,
@@ -1798,17 +1943,138 @@ class RuntimeSupervisor:
         if prepared.expires_at <= utc_now():
             raise LateDomainResultError("research decision expired before execution")
         trace = getattr(self.cognitive, "research_traces", {}).get(event.event_id)
+        if self._agency_service is not None and trace is not None and isinstance(prepared.decision, GoalProposal):
+            from harness.runtime.research_agency import unresolved_plan_reason
+
+            blocked = unresolved_plan_reason(self, trace.get("decision", {}), arbitration)
+            if blocked is not None:
+                deferred = DeferDecision(reason=blocked, required_evidence=["verified plan resumption or action reconciliation"])
+                prepared = prepared.model_copy(update={"decision": deferred})
+                trace.update(compiled_decision=deferred.model_dump(mode="json"), runtime_guard=blocked)
         if trace is not None:
+            trace = {**trace, "visible_observations": [item.model_dump(mode="json") for item in observations],
+                     "research_episode_id": self._body_episode_id or "runtime-episode"}
+            if self._research_memory is not None:
+                self._research_memory.remember(event.event_id, trace)
             self._append_journal("grounded_decision", event=event, data=trace)
+            if self._agency_service is not None:
+                from harness.runtime.research_agency import bind_decision
+
+                bind_decision(self, event.event_id, trace, arbitration)
         if isinstance(prepared.decision, ReplyDecision) and ga.report_channel != "normal":
             raise DomainCommandError("action-only research cannot deliver a ReplyDecision")
         detail = await self._handle_decision(event, prepared, prepared.decision)
+        if isinstance(prepared.decision, (NoActionDecision, DeferDecision)):
+            self._record_grounded_experience(
+                event, evidence=prepared.decision.model_dump(mode="json"), success=True, verified=True,
+            )
         self._cognitive_snapshot = await self.cognitive.get_snapshot()
         return EventDispatchResult(
             event_id=event.event_id, receive_seq=event.receive_seq, process_seq=process_seq,
             status="completed", decision_kind=str(detail.get("effective_decision_kind") or prepared.decision.kind),
             detail=detail,
         )
+
+    def _record_grounded_experience(self, event: RuntimeEvent, *, evidence, success: bool, verified: bool) -> None:
+        if self._research_memory is None:
+            return
+        try:
+            saved = next((record.data for record in self.journal.records()
+                          if record.record_type == "body_experience_outcome" and record.event_id == event.event_id), None)
+            if saved is None:
+                saved = {"decision_id": event.event_id, "evidence": evidence,
+                         "completed_at": self._research_clock().isoformat(), "success": success, "verified": verified,
+                         "outcome_ref": self._research_memory.outcome_reference(event.event_id, success=success, verified=verified)}
+                self._append_journal("body_experience_outcome", event=event, data=saved)
+            recorded = self._research_memory.complete(
+                event.event_id, evidence=saved["evidence"], completed_at=datetime.fromisoformat(saved["completed_at"]),
+                success=saved["success"], verified=saved["verified"],
+            )
+            if recorded:
+                self._append_journal("body_experience_pending", event=event, data={"decision_id": event.event_id})
+        except Exception as exc:
+            self._append_journal("body_experience_recording_failed", event=event,
+                                 data={"error": str(exc), "analysis_eligible": False})
+
+    async def _pause_research_agency(self) -> None:
+        if self._agency_service is not None:
+            from harness.runtime.research_agency import checkpoint_goals
+
+            if not await self._agency_service.pause(timeout=self.maintenance_drain_seconds):
+                raise RuntimeStateError("agency model call did not drain")
+            checkpoint_goals(self)
+        if self._social_appraisal_tasks:
+            _, pending = await asyncio.wait(self._social_appraisal_tasks, timeout=self.maintenance_drain_seconds)
+            if pending:
+                raise RuntimeStateError("entity appraisal did not drain")
+
+    async def _restore_research_memory(self) -> None:
+        bridge = self._research_memory
+        if bridge is None:
+            return
+        from harness.research.interoception.contracts import OpaqueInteroceptiveObservation
+
+        await bridge.service.pause()
+        for record in self.journal.records():
+            if record.record_type == "body_experience_outcome":
+                data = record.data
+                bridge.complete(
+                    data["decision_id"], evidence=data["evidence"],
+                    completed_at=datetime.fromisoformat(data["completed_at"]),
+                    success=data["success"], verified=data["verified"],
+                )
+            elif record.record_type == "body_memory_observed":
+                await bridge.observe(tuple(OpaqueInteroceptiveObservation.model_validate(item)
+                                           for item in record.data["observations"]))
+
+    async def _social_research_context(self, event: RuntimeEvent):
+        service = self._social_world_service
+        if service is None:
+            return []
+        from harness.social_world.contracts import EntityObservation
+
+        if self._social_appraisal_tasks:
+            _, pending = await asyncio.wait(self._social_appraisal_tasks, timeout=self.command_timeout_seconds)
+            if pending:
+                raise DomainCommandError("previous entity appraisal is still running")
+        raw_events = event.payload.get("entity_observations", [])
+        if "entity_observation" in event.payload:
+            raw_events = [*raw_events, event.payload["entity_observation"]]
+        for raw in raw_events:
+            observation = EntityObservation.model_validate(raw)
+            service.observe(observation)
+            self._append_journal("entity_observation_recorded", event=event, data=observation.model_dump(mode="json"))
+            if service.condition.entity_memory == "general_beliefs":
+                llm = getattr(getattr(self.cognitive, "pipeline", None), "llm", None)
+                if llm is None:
+                    raise DomainCommandError("entity appraisal requires an explicit local model port")
+                task = asyncio.create_task(asyncio.to_thread(service.appraise, llm))
+                self._social_appraisal_tasks.add(task)
+                task.add_done_callback(self._social_appraisal_tasks.discard)
+                completion_state = {"late": False}
+
+                def record_appraisal(completed, *, state=completion_state, causal_event=event):
+                    if completed.cancelled():
+                        return
+                    try:
+                        result = completed.result()
+                        self._append_journal("entity_appraisal", event=causal_event, data={
+                            **result.model_dump(mode="json"), "late_completion": state["late"],
+                            "analysis_eligible": not state["late"],
+                        })
+                    except Exception as exc:
+                        self._append_journal("entity_appraisal_failed", event=causal_event,
+                                             data={"error_type": type(exc).__name__, "analysis_eligible": False})
+
+                task.add_done_callback(record_appraisal)
+                try:
+                    await asyncio.wait_for(asyncio.shield(task), timeout=self.command_timeout_seconds)
+                except Exception as exc:
+                    self._append_journal("entity_appraisal_failed", event=event, data={"error": str(exc), "analysis_eligible": False})
+                    if isinstance(exc, TimeoutError):
+                        completion_state["late"] = True
+                        raise DomainCommandError("entity appraisal exceeded its deadline") from exc
+        return [segment for segment in (service.current_observation(), service.model_context()) if segment.text]
 
     async def _handle_body_state(
         self,
@@ -2508,11 +2774,20 @@ class RuntimeSupervisor:
                 event=effective_outcome_event,
             )
             await self._update_homeostasis(result, event=effective_outcome_event)
+        self._record_grounded_experience(
+            original_event, evidence=evidence.model_dump(mode="json"),
+            success=action.state == ActionExecutionState.SUCCEEDED,
+            verified=action.state in {ActionExecutionState.SUCCEEDED, ActionExecutionState.FAILED},
+        )
         self._append_journal(
             "action_completed",
             event=effective_outcome_event,
             data={"action": action.model_dump(mode="json")},
         )
+        if self._agency_service is not None:
+            from harness.runtime.research_agency import record_action
+
+            record_action(self, original_event.event_id, action)
         self._append_journal(
             "action_interaction_committed",
             event=effective_outcome_event,
@@ -3689,6 +3964,16 @@ class RuntimeSupervisor:
                 self._terminal_episode_id = checkpoint.body_episode_id
                 self._terminal_body_revision = checkpoint.body_revision
         self._restore_grounded_body(records)
+        if self._agency_service is not None:
+            for record in records:
+                if record.record_type == "persistent_goal_decision_bound":
+                    self._agency_decision_bindings[record.data["decision_id"]] = {
+                        "goal_id": record.data["goal_id"], "step_id": record.data["step_id"],
+                    }
+        if self._research_memory is not None:
+            for record in records:
+                if record.record_type == "grounded_decision" and record.event_id:
+                    self._research_memory.remember(record.event_id, record.data)
         return previous_lifecycle
 
     async def _restore_pending_events(self) -> None:

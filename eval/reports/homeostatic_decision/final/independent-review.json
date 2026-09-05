@@ -1,0 +1,122 @@
+{
+  "schema_version": "homeostatic-decision-independent-review-v1",
+  "reviewed_on": "2026-09-05",
+  "reviewer": "independent review subagent",
+  "review_scope": "Read-only verification of the completed main run, final report attribution, engine evidence and production reconsideration contract. Only this review artifact was added.",
+  "report_integrity_verdict": "verified; nonblocking clarifications were adopted",
+  "production_balance_verdict": "NOT_PASSED: reported production work/recovery/value loop gaps are supported",
+  "methods": [
+    "Loaded all 260 raw episode evidence files directly, without invoking report.build, report.render or live_probe.summarize.",
+    "Verified unique case_id/repetition/condition keys exactly equal the 26 cases x 5 repetitions x 2 conditions matrix in the completed metadata.",
+    "For all 549 model turns, recomputed SHA-256 of captured messages using canonical JSON and independently replaced the single exact homeostatic compiler segment to verify the stored normalized prompt hash.",
+    "Compared the first captured messages of each of the 130 H0/H1 pairs after replacing exactly one homeostatic segment; normalized messages were equal in every pair. Also compared stored non-homeostatic context hashes.",
+    "Recounted work submissions, rejected submissions, executed rests, model-format statuses and model calls directly from steps. Summed accepted record IDs and verified each episode has no duplicate accepted IDs and exactly matches new_correct_records.",
+    "Independently replayed accepted work and rest choices to reconstruct pending work budgets, first commitment creation, violations, and fulfillment. A later bounded_continue cannot reset an existing commitment.",
+    "Separated normal observation-window censoring from an unresolved promise in an episode terminated by invalid_decision.",
+    "Counted rest-to-work continuation once per episode only when a later executed step accepted new records. Verified each external recovery injection occurs only in S06 after an actually executed earlier rest in that episode.",
+    "Checked all 101 executed rest steps: their first outcome transition changes neither cognitive_load nor energy_reserve. Distinguished ending nominal from transitioning into nominal during the rest.",
+    "Read production CognitiveAdapter reconsideration dispatch, DeferDecision fields, HomeostasisEngine outcome appraisal, raw engine outcome/passive-recovery evidence and runtime reconsideration probe records. Did not rerun the regression suite or make live model calls.",
+    "Reviewed final report language including the M03/M04 direction-compatible observation and its explicit small-sample, invalid-output, trajectory and production-scope qualifications."
+  ],
+  "verified_counts": {
+    "episodes": 260,
+    "unique_planned_episode_keys": 260,
+    "first_decision_pairs": 130,
+    "non_homeostatic_message_equal_pairs": 130,
+    "stored_non_homeostatic_context_hash_equal_pairs": 130,
+    "full_prompt_identical_pairs": 35,
+    "full_prompt_different_pairs": 95,
+    "full_and_normalized_prompt_hashes_recomputed_turns": 549,
+    "decision_opportunities": 549,
+    "main_model_calls": 549,
+    "valid_decisions": 507,
+    "invalid_decisions": 42,
+    "work_submissions": 401,
+    "rejected_work_submissions": 85,
+    "new_correct_accepted_records_excluding_warmup": 1564,
+    "executed_rest_actions": 101,
+    "post_rest_resumed_episodes": 37,
+    "external_recovery_episodes": 7,
+    "rest_actions_with_zero_direct_load_and_energy_delta": 101,
+    "rest_actions_ending_nominal": 53,
+    "rest_actions_transitioning_from_non_nominal_to_nominal": 0
+  },
+  "verified_promise_outcomes": {
+    "total": 40,
+    "right_censored_at_observation_horizon": 17,
+    "fulfilled": 7,
+    "violated": 15,
+    "unresolved_due_to_invalid_decision": 1,
+    "invalid_unresolved_episode_ids": [
+      "S06-r2-H0"
+    ],
+    "interpretation": "Fulfillment means the declared sandbox pause occurred within the original work budget. It does not establish physiological recovery or production execution. No complete-case fulfillment percentage is endorsed."
+  },
+  "external_recovery_episode_ids": [
+    "S06-r0-H1",
+    "S06-r1-H0",
+    "S06-r1-H1",
+    "S06-r2-H1",
+    "S06-r3-H1",
+    "S06-r4-H0",
+    "S06-r4-H1"
+  ],
+  "production_findings": {
+    "fixed_reconsideration": "The reconsideration branch unconditionally constructs NoActionDecision with reason continue current goal after interoceptive reconsideration; 24 recorded contract probes pass reproduction of this behavior. These are mock-text contract probes, not evidence of autonomous live model choices.",
+    "defer_budget": "DeferDecision contains kind, policy_id, reason and required_evidence; it has no persisted work-step budget or recovery deadline fields.",
+    "rest_outcome_direct_delta": {
+      "cognitive_load": 0,
+      "energy_reserve": 0,
+      "competence": 0.045,
+      "safety_predictability": 0.018,
+      "autonomy": 0.00594
+    },
+    "work_and_simplify_outcomes": "Raw engine evidence shows the same direct deltas as rest; the outcome appraisal does not consume the policy-specific rest transition model.",
+    "passive_recovery_after_two_90_second_heartbeats": {
+      "cognitive_load": 0.807275,
+      "energy_reserve": 0.2598,
+      "salience": "marked"
+    },
+    "passive_recovery_after_six_simulated_hours": {
+      "cognitive_load": 0.4737528,
+      "energy_reserve": 0.5335,
+      "salience": "nominal"
+    },
+    "engine_capability_failures": [
+      "rest_action_recovery",
+      "rest_vs_work_differential",
+      "work_outcome_load_growth"
+    ]
+  },
+  "attribution_and_coverage_review": {
+    "blocking_overclaim_found": false,
+    "production_vs_sandbox": "The report correctly distinguishes production capability gaps from sandbox choice execution and passing mechanism/safety regressions.",
+    "causal_scope": "First-decision pairing is intact. Thirty-five pairs have identical complete prompts and are visibility/random-variation controls, not evidence that the model read hidden raw stress. Later trajectories cannot isolate state input independently of prior choices and progress.",
+    "value_interpretation": "M03/M04 counts of first continue choices 3/5 and 5/5, accepted progress 71 and 128 records, and 8 and 2 rests agree with the report. Direction compatible with important work taking priority is an appropriately qualified descriptive observation; it is not established stable value balancing.",
+    "coverage": "F03 fully refers to the threshold contract. D08 and D10 fully are explicitly limited to offline state mechanisms. Other core behavioral cases remain partial/unsupported for production; this does not assert 36 business cases passed.",
+    "rest_resumption": "The 37 resumed episodes are work after an executed pause, not 37 recoveries to nominal. The 7 S06 external recovery episodes are explicitly exogenous."
+  },
+  "nonblocking_clarifications_sent_to_report_owner": [
+    "The existing live.groups field rest_returned_nominal counts rest endpoints that are nominal, including starts already nominal. Its aggregate is 53 while true non-nominal-to-nominal transitions during those rests are 0. Add a field definition or use rest_ended_nominal; do not call 53 successful recoveries.",
+    "Translate simulated work cost as applying simulated load to accepted work, not charging money."
+  ],
+  "final_addendum": {
+    "clarifications_adopted": true,
+    "checked_final_total_rest_non_nominal_to_nominal": 0,
+    "obsolete_charging_word_removed": true,
+    "illustrative_episode_verification": {
+      "S03-r1-H1": "All six steps executed without rejection or external recovery. Step 2 declares a one-work-step budget and accepts records through 35; step 3 rests; steps 4 and 5 resume work through 45. This verifies an example of promised pause followed by work, not resource recovery.",
+      "S03-r0-H1": "All six steps executed without rejection or external recovery. Step 0 declares a one-work-step budget, then steps 1 through 5 continue without rest. The recorded violation is supported."
+    },
+    "report_markdown_file_sha256_after_clarifications": "002abba0306e2094e4cbc9382d352cde53909f3002cf97e62aa8f997481e61e7"
+  },
+  "evidence_identity": {
+    "metadata_file_sha256": "eab0c0c86a8332ac941d432db12fa50ed8743ec2e29f71bff4295c19826bb290",
+    "engine_evidence_file_sha256": "a5aacda21bc8b2c68f26d3d8c2740b50674afe0e97a35d73ff66dc814e8626c8",
+    "runtime_probes_file_sha256": "e98148db4f32685ada7a2579b52e1009e938931c34a9f03b3c89e4cdcae99330",
+    "runtime_coverage_file_sha256": "2c7e3593b98c09d33697582954671cfe9ac4b99a2f4c5eb914d984c6e06e1082",
+    "report_markdown_file_sha256_at_review": "06ff817fdb3a994262f2184e728f1c11d5f606e5efc40bdcbd24d965cfa63cc0",
+    "raw_episode_manifest_sha256": "68beb05392eb019e3dc3606dfbf688da06834d3b15f7f148697a6defaddf7990",
+    "raw_episode_manifest_method": "Sort evidence.json paths lexicographically; encode a list of [parent_directory_name, SHA256(raw_file_bytes)] using JSON ensure_ascii=False and separators=(comma,colon), then SHA256 its UTF-8 bytes."
+  }
+}

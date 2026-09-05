@@ -53,6 +53,8 @@ def test_ablations_rescue_require_explicit_same_snapshot():
     assert {cell.restore_component for cell in cells if cell.ablation == "R1"} == {"A1", "A2", "A3", "A4", "A5"}
     current = next(cell for cell in cells if cell.cell_id == "A.normal.A3")
     assert prepare_intervention(GMVScenario(scenario_id="s"), condition(), current).condition.interoception_treatment == "opaque_current"
+    with pytest.raises(ValueError, match="no-op"):
+        prepare_intervention(GMVScenario(scenario_id="s"), condition(), current.model_copy(update={"prompt": "low"}))
 
 
 def test_matrix_scheduler_actually_dispatches_independent_interventions():

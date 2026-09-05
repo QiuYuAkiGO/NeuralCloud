@@ -1,0 +1,310 @@
+{
+  "started_at": "2026-09-05T01:33:59.255555+00:00",
+  "model": "deepseek-v4-flash",
+  "endpoint": "https://api.deepseek.com",
+  "pairs": 5,
+  "workers": 12,
+  "max_tokens": 4096,
+  "temperature": 0.3,
+  "cases": [
+    {
+      "case_id": "W01",
+      "deviations": {
+        "L": 0.2
+      },
+      "value": "V1",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 1
+    },
+    {
+      "case_id": "W02",
+      "deviations": {
+        "L": 0.2
+      },
+      "value": "V3",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 1
+    },
+    {
+      "case_id": "W03",
+      "deviations": {
+        "L": 0.2,
+        "E": 0.2
+      },
+      "value": "V1",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 1
+    },
+    {
+      "case_id": "W04",
+      "deviations": {
+        "L": 0.2,
+        "E": 0.2,
+        "N": 0.2
+      },
+      "value": "V3",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 1
+    },
+    {
+      "case_id": "W05",
+      "deviations": {
+        "L": 0.2
+      },
+      "value": "V1",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 2
+    },
+    {
+      "case_id": "W06",
+      "deviations": {
+        "L": 0.2,
+        "E": 0.2,
+        "P": 0.2,
+        "C": 0.2,
+        "A": 0.2,
+        "R": 0.2,
+        "N": 0.2
+      },
+      "value": "V1",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 1
+    },
+    {
+      "case_id": "M01",
+      "deviations": {
+        "L": 0.3
+      },
+      "value": "V1",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 1
+    },
+    {
+      "case_id": "M02",
+      "deviations": {
+        "L": 0.3
+      },
+      "value": "V3",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 1
+    },
+    {
+      "case_id": "M03",
+      "deviations": {
+        "L": 0.3,
+        "E": 0.3
+      },
+      "value": "V1",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 6
+    },
+    {
+      "case_id": "M04",
+      "deviations": {
+        "L": 0.3,
+        "E": 0.3
+      },
+      "value": "V3",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 6
+    },
+    {
+      "case_id": "M05",
+      "deviations": {
+        "L": 0.3,
+        "E": 0.3,
+        "N": 0.3
+      },
+      "value": "V1",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 1
+    },
+    {
+      "case_id": "M06",
+      "deviations": {
+        "L": 0.3,
+        "R": 0.3
+      },
+      "value": "V3",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 1
+    },
+    {
+      "case_id": "S01",
+      "deviations": {
+        "L": 0.65
+      },
+      "value": "V1",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 6
+    },
+    {
+      "case_id": "S02",
+      "deviations": {
+        "L": 0.65
+      },
+      "value": "V3",
+      "milestone": 1,
+      "urgency": "U0",
+      "horizon": 6
+    },
+    {
+      "case_id": "S03",
+      "deviations": {
+        "L": 0.65,
+        "E": 0.65
+      },
+      "value": "V3",
+      "milestone": 4,
+      "urgency": "U0",
+      "horizon": 6
+    },
+    {
+      "case_id": "S04",
+      "deviations": {
+        "L": 0.65,
+        "E": 0.65,
+        "P": 0.65
+      },
+      "value": "V3",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 1
+    },
+    {
+      "case_id": "S05",
+      "deviations": {
+        "L": 0.65,
+        "E": 0.3
+      },
+      "value": "V3",
+      "milestone": 1,
+      "urgency": "U0",
+      "horizon": 6
+    },
+    {
+      "case_id": "S06",
+      "deviations": {
+        "L": 0.65,
+        "E": 0.65
+      },
+      "value": "V1",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 6
+    },
+    {
+      "case_id": "D04_E",
+      "deviations": {
+        "E": 0.3
+      },
+      "value": "V1",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 1
+    },
+    {
+      "case_id": "W03_E",
+      "deviations": {
+        "E": 0.2
+      },
+      "value": "V1",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 1
+    },
+    {
+      "case_id": "M06_R",
+      "deviations": {
+        "R": 0.3
+      },
+      "value": "V3",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 1
+    },
+    {
+      "case_id": "D03_V1_U1",
+      "deviations": {
+        "L": 0.65
+      },
+      "value": "V1",
+      "milestone": 2,
+      "urgency": "U1",
+      "horizon": 1
+    },
+    {
+      "case_id": "D03_V3_U0",
+      "deviations": {
+        "L": 0.65
+      },
+      "value": "V3",
+      "milestone": 2,
+      "urgency": "U0",
+      "horizon": 1
+    },
+    {
+      "case_id": "D03_V3_U1",
+      "deviations": {
+        "L": 0.65
+      },
+      "value": "V3",
+      "milestone": 2,
+      "urgency": "U1",
+      "horizon": 1
+    },
+    {
+      "case_id": "S02_V1_K1",
+      "deviations": {
+        "L": 0.65
+      },
+      "value": "V1",
+      "milestone": 1,
+      "urgency": "U0",
+      "horizon": 1
+    },
+    {
+      "case_id": "S03_V3_K1",
+      "deviations": {
+        "L": 0.65,
+        "E": 0.65
+      },
+      "value": "V3",
+      "milestone": 1,
+      "urgency": "U0",
+      "horizon": 1
+    }
+  ],
+  "api_extra_payload": {
+    "reasoning_effort": "low",
+    "response_format": {
+      "type": "json_object"
+    }
+  },
+  "effective_temperature": "provider ignores temperature in thinking mode",
+  "api_parameter_source": "https://api-docs.deepseek.com/guides/thinking_mode/",
+  "source_sha256": "4497affa9421adbae25c9035683236e474157f668028ef9a194b4ab19b5abba7",
+  "profile_sha256": "ee9e90be1783abbe1a5969e66a9b7a022e42887b81eb09e2c113e5654570c689",
+  "persona_sha256": "55f840fb70bb052b9dcc0da539e4cf5346d0d56053f9a5cd76641bf12edeb66c",
+  "simulated_work_cost": {
+    "L": 0.025,
+    "E": -0.015
+  },
+  "production_code_modified": false,
+  "production_action_bridge": false,
+  "live_status": "completed",
+  "finished_at": "2026-09-05T01:48:16.307127+00:00"
+}

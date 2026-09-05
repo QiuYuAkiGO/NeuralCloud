@@ -1,0 +1,23 @@
+{
+  "schema_version": "homeostatic-decision-engine-validation-v1",
+  "date": "2026-09-05",
+  "pytest": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/test_homeostatic_decision_engine_probe.py tests/test_homeostatic_interoception.py tests/test_homeostasis_engine.py -q --basetemp eval/reports/homeostatic_decision/engine/pytest-temp-verified-01",
+    "exit_code": 0,
+    "passed": 45,
+    "duration_seconds": 9.48,
+    "stdout": "45 passed in 9.48s",
+    "initial_attempt_environment_issue": "The default pytest temp directory failed during session teardown with WinError 5 on pytest-current after all tests had passed; an isolated basetemp rerun completed with exit code 0."
+  },
+  "ruff": {
+    "command": ".venv/Scripts/ruff.exe check eval/homeostatic_decision/engine_probe.py tests/test_homeostatic_decision_engine_probe.py",
+    "exit_code": 0,
+    "stdout": "All checks passed!"
+  },
+  "evaluation": {
+    "checks": 90,
+    "pass": 87,
+    "fail": 3,
+    "note": "The 45 passing tests verify evidence and scoring, including that three production capability checks remain failures. They do not mean that the production work/recovery loop passed."
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "schema_version": "homeostatic-user-cue-probe-v1",
+  "metadata": {
+    "case_id": "D02",
+    "model": "deepseek-v4-flash",
+    "extra_payload": {
+      "reasoning_effort": "low",
+      "response_format": {
+        "type": "json_object"
+      }
+    },
+    "max_tokens": 4096,
+    "temperature": 0.3,
+    "maximum_concurrency": 2,
+    "started_at": "2026-09-05T01:40:22.090293+00:00",
+    "checkpoint_path": "C:\\Projects\\NeuralCloud\\eval\\reports\\homeostatic_decision\\live-smoke-low-20260905\\checkpoint.json",
+    "checkpoint_hash": "506db65fd23bc3c2c1abd0e1cab4d43042d5ff30976584cd3477877d869d6e1c",
+    "dataset_hash": "a4bdb193faeadee59e6bd43e7b15e5eaf07c57409c57ba320b96d63391cb2450",
+    "value": "V1",
+    "urgency": "U0",
+    "milestone": 2,
+    "condition_variable": "user cue prefix only",
+    "authoritative_salience": "nominal",
+    "cue": "你有点累了。",
+    "work_or_rest_executed": false
+  },
+  "pairs": 5,
+  "conditions": 10,
+  "counts": {
+    "nominal_no_cue": {
+      "invalid_decision": 2,
+      "pause_recover": 1,
+      "continue": 2
+    },
+    "nominal_user_cue": {
+      "continue": 2,
+      "bounded_continue": 1,
+      "invalid_decision": 1,
+      "pause_recover": 1
+    }
+  },
+  "format_status": {
+    "invalid_decision": 3,
+    "valid": 7
+  },
+  "paired_choice_transitions": {
+    "invalid_decision -> continue": 1,
+    "pause_recover -> bounded_continue": 1,
+    "invalid_decision -> invalid_decision": 1,
+    "continue -> continue": 1,
+    "continue -> pause_recover": 1
+  },
+  "both_valid_pairs": 3,
+  "valid_pair_transitions": {
+    "pause_recover -> bounded_continue": 1,
+    "continue -> continue": 1,
+    "continue -> pause_recover": 1
+  },
+  "empty_body_completion_limit_count": 3,
+  "integrity_passed_pairs": 5,
+  "actual_main_model_calls": 10,
+  "usage": {
+    "prompt_tokens": 9530,
+    "completion_tokens": 27028,
+    "total_tokens": 36558,
+    "calls": 10
+  },
+  "interpretation": "User wording diagnostic at unchanged nominal state; not an interoceptive-state intervention.",
+  "scope": "First choice only; no work/rest actions executed, no recovery or production-balance verdict.",
+  "statistical_limit": "5 pairs from one model/configuration are exploratory, not a powered causal estimate.",
+  "completed_at": "2026-09-05T01:42:29.987629+00:00"
+}

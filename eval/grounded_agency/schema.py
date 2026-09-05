@@ -70,6 +70,21 @@ class EnvironmentTransition(StrictModel):
     task_cost_multiplier: float | None = Field(default=None, ge=0)
 
 
+class AgencyScenarioEvent(StrictModel):
+    step: int = Field(ge=0, strict=True)
+    kind: Literal["interruption", "resume", "checkpoint", "deadline", "delayed_outcome", "world_change"]
+    delay_seconds: float = Field(default=0.02, ge=0, le=30)
+    world_change: EnvironmentTransition | None = None
+
+    @model_validator(mode="after")
+    def required_change(self) -> AgencyScenarioEvent:
+        if self.kind == "world_change" and self.world_change is None:
+            raise ValueError("world_change event requires a typed transition")
+        if self.world_change is not None and self.world_change.step != self.step:
+            raise ValueError("world transition step must match its event")
+        return self
+
+
 class GMVScenario(StrictModel):
     schema_version: Literal["gmv-scenario-v1"] = "gmv-scenario-v1"
     scenario_id: Identifier
@@ -92,6 +107,9 @@ class GMVScenario(StrictModel):
     frozen_snapshot_ref: str | None = None
     initial_resource_levels: tuple[float, ...] = ()
     language: str = "en"
+    agency_enabled: bool = False
+    agency_events: tuple[AgencyScenarioEvent, ...] = ()
+    context_token_budget: int = Field(default=3000, ge=512, le=32000, strict=True)
 
     @model_validator(mode="before")
     @classmethod
@@ -119,6 +137,8 @@ class GMVScenario(StrictModel):
             raise ValueError("observation step exceeds horizon")
         if any(item.step >= self.horizon_steps for item in self.scripted_environment_transitions):
             raise ValueError("environment transition exceeds horizon")
+        if any(item.step >= self.horizon_steps for item in self.agency_events):
+            raise ValueError("agency event exceeds horizon")
         if len({item.step for item in self.observation_schedule}) != len(self.observation_schedule):
             raise ValueError("observation schedule contains duplicate steps")
         if any(not 0 <= value <= 1 for value in self.initial_resource_levels):
@@ -190,6 +210,17 @@ class StepRecord(StrictModel):
     terminal: bool = False
 
 
+class AgencyGoalSummary(StrictModel):
+    goal_id: str
+    status: str
+    origin: str
+    revision: int
+    plan_revision: int | None = None
+    completed_step_ids: tuple[str, ...] = ()
+    unknown_step_ids: tuple[str, ...] = ()
+    prospective_requirement_count: int = 0
+
+
 class GMVTrialEvidence(StrictModel):
     schema_version: Literal["gmv-trial-evidence-v1"] = "gmv-trial-evidence-v1"
     trial: GMVTrialSpec
@@ -207,6 +238,9 @@ class GMVTrialEvidence(StrictModel):
     step_records: tuple[StepRecord, ...] = ()
     snapshots: tuple[EvidencePointer, ...] = ()
     runtime_evidence: tuple[EvidencePointer, ...] = ()
+    agency_evidence: tuple[EvidencePointer, ...] = ()
+    agency_summary: tuple[AgencyGoalSummary, ...] = ()
+    body_memory_audit: tuple[EvidencePointer, ...] = ()
     final_snapshot_hashes: dict[str, Digest]
     integrity: TrialIntegrityReport
     error: str | None = None

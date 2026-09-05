@@ -13,7 +13,7 @@ from harness.research.grounded_agency.neutrality import NeutralityScanner
 from harness.research.manifest import ExperimentManifest
 
 from eval.grounded_agency.schema import (
-    EvidencePointer, GMVScenario, GMVTrialEvidence, RunIntegrityReport, TrialIntegrityReport,
+    AgencyGoalSummary, EvidencePointer, GMVScenario, GMVTrialEvidence, RunIntegrityReport, TrialIntegrityReport,
 )
 
 TREATMENT_FIELDS = frozenset({
@@ -97,10 +97,11 @@ def condition_diff_allowed(left: ExperimentManifest, right: ExperimentManifest) 
 
 def trial_pointers(trial: GMVTrialEvidence) -> tuple[EvidencePointer, ...]:
     return (trial.body_truth_events + trial.sensor_observations + trial.sensor_transform_records + trial.model_contexts
-            + trial.action_outcomes + trial.snapshots + trial.runtime_evidence)
+            + trial.action_outcomes + trial.snapshots + trial.runtime_evidence + trial.agency_evidence + trial.body_memory_audit)
 
 
-def check_trial(run_dir: Path, trial: GMVTrialEvidence, *, opaque: bool) -> TrialIntegrityReport:
+def check_trial(run_dir: Path, trial: GMVTrialEvidence, *, opaque: bool,
+                require_body_memory_audit: bool = False) -> TrialIntegrityReport:
     errors: list[str] = []
     payloads: dict[str, Any] = {}
     for pointer in trial_pointers(trial):
@@ -115,6 +116,22 @@ def check_trial(run_dir: Path, trial: GMVTrialEvidence, *, opaque: bool) -> Tria
     decisions = {record.decision_id: record for record in trial.decision_records}
     outcomes = [payloads[p.path] for p in trial.action_outcomes if p.path in payloads]
     sensors = [payloads[p.path] for p in trial.sensor_observations if p.path in payloads]
+    agency_states = [payloads[p.path] for p in trial.agency_evidence if p.kind == "agency-state" and p.path in payloads]
+    expected_agency_summary = []
+    if agency_states:
+        objects = agency_states[-1]["objects"]
+        for goal in objects.get("goal", {}).values():
+            plan = objects.get("plan", {}).get(goal["goal_id"], {})
+            linked = [item for item in objects.get("action_outcome", {}).values() if item["goal_id"] == goal["goal_id"]]
+            expected_agency_summary.append(AgencyGoalSummary(goal_id=goal["goal_id"], status=goal["status"], origin=goal["origin"],
+                revision=goal["revision"], plan_revision=plan.get("revision"),
+                completed_step_ids=tuple(sorted(item["step_id"] for item in linked if item["state"] == "succeeded")),
+                unknown_step_ids=tuple(sorted(item["step_id"] for item in linked if item["state"] == "unknown")),
+                prospective_requirement_count=len(plan.get("prospective_requirements", []))))
+    agency_traces = [payloads[p.path] for p in trial.agency_evidence if p.kind == "agency-trace" and p.path in payloads]
+    runtime_journals = [payloads[p.path] for p in trial.runtime_evidence if p.kind == "runtime-journal" and p.path in payloads]
+    research_failures = {"body_memory_observation_failed", "body_memory_context_failed", "body_experience_recording_failed", "entity_appraisal_failed"}
+    audit_payloads = [payloads[p.path] for p in trial.body_memory_audit if p.path in payloads]
     checks = {
         "evidence_digests": not errors,
         "initial_final_snapshots_readable": bool(all_snapshot_hashes) and all(sha in snapshot_by_hash for sha in all_snapshot_hashes),
@@ -123,6 +140,19 @@ def check_trial(run_dir: Path, trial: GMVTrialEvidence, *, opaque: bool) -> Tria
             item["truth_ref"]["truth_hash"] in {pointer.digest for pointer in trial.body_truth_events}
             and item["transform_record_ref"] in {pointer.digest for pointer in trial.sensor_transform_records}
             for item in sensors
+        ),
+        "agency_summary_binding": tuple(expected_agency_summary) == trial.agency_summary,
+        "agency_context_hashes": all(digest(trace["messages"]) == trace["input_context_hash"] for trace in agency_traces),
+        "agency_context_neutrality": all(NeutralityScanner().scan(trace["messages"], opaque=opaque).passed for trace in agency_traces),
+        "research_pipeline_health": bool(runtime_journals) and all(
+            record.get("record_type") not in research_failures and record.get("data", {}).get("analysis_eligible") is not False
+            for journal in runtime_journals for record in journal
+        ),
+        "body_memory_audit_present": not require_body_memory_audit or bool(audit_payloads),
+        "body_appraisal_health": all(
+            item.get("event") != "appraisal_failed"
+            and not (item.get("event") == "appraisal" and item.get("result", {}).get("success") is False)
+            for audit in audit_payloads for item in audit
         ),
         "context_manifest_binding": all(item.get("manifest_hash") == trial.trial.manifest_hash for item in contexts),
         "context_hashes": tuple(item.get("context_hash") for item in contexts) == trial.model_context_hashes
@@ -161,10 +191,12 @@ def validate_run(run_dir: Path | str, *, write_report: bool = False) -> RunInteg
             for sha, path in metadata["manifests"].items()
         }
         checks["manifest_hashes"] = all(sha == manifest.content_hash() for sha, manifest in manifests.items())
-        checks["scenario_hashes"] = all(
-            digest(GMVScenario.model_validate(json.loads(safe_path(root, value["path"]).read_text(encoding="utf-8")))) == sha
-            for sha, value in metadata["scenarios"].items()
-        )
+        checks["scenario_hashes"] = True
+        for sha, value in metadata["scenarios"].items():
+            raw = json.loads(safe_path(root, value["path"]).read_text(encoding="utf-8"))
+            GMVScenario.model_validate(raw)
+            # Optional later-stage defaults must not change an older file's identity.
+            checks["scenario_hashes"] &= digest(raw) == sha
         for line in (root / "trials.jsonl").read_text(encoding="utf-8").splitlines():
             if line.strip():
                 trials.append(GMVTrialEvidence.model_validate_json(line))
@@ -180,7 +212,8 @@ def validate_run(run_dir: Path | str, *, write_report: bool = False) -> RunInteg
         )
         for trial in trials:
             manifest = manifests[trial.trial.manifest_hash]
-            checks[f"trial:{trial.trial.trial_id}"] = check_trial(root, trial, opaque=manifest.grounded_agency.is_opaque).passed
+            checks[f"trial:{trial.trial.trial_id}"] = check_trial(root, trial, opaque=manifest.grounded_agency.is_opaque,
+                require_body_memory_audit=manifest.grounded_agency.memory_treatment != "none").passed
         checks["run_closed"] = metadata.get("completed_at") is not None and metadata.get("services_closed") is True
     except (OSError, ValueError, KeyError, TypeError) as exc:
         errors.append(f"run evidence cannot be validated: {exc}")
@@ -202,6 +235,7 @@ def normalized_trial_evidence(trial: GMVTrialEvidence) -> bytes:
     payload.pop("started_at")
     payload.pop("completed_at")
     payload.pop("runtime_evidence")
+    payload.pop("agency_evidence")
     payload.pop("snapshots")
     payload["trial"].pop("state_path")
     for key in ("initial_snapshot_hashes",):

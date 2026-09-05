@@ -139,6 +139,41 @@ function Test-ValidMistyAIBaseUrl([AllowEmptyString()][string]$Value) {
     return $true
 }
 
+function Get-LocalMistyAIServiceToken([string]$BaseUrl) {
+    # Only the local endpoint managed by dev.ps1 may reuse its WSL credential.
+    # Explicit credentials and remote deployments keep their existing behavior.
+    $origin = [uri]$BaseUrl
+    if ($origin.Scheme -ne "http" -or $origin.Port -ne 8787 -or
+        $origin.DnsSafeHost.ToLowerInvariant() -notin @("127.0.0.1", "localhost")) {
+        return $null
+    }
+    try {
+        $launcher = Import-Module -Name (Join-Path $Root "tools\launcher\Launcher.psm1") -PassThru -ErrorAction Stop
+        $token = & $launcher {
+            param([string]$LaunchRoot)
+            $paths = Get-LauncherDataPaths
+            $state = Read-LauncherState -Path $paths.state
+            $distro = "Ubuntu-24.04"
+            if ($state.neuralcloud_root -and $state.mistyai_distro -and
+                [System.IO.Path]::GetFullPath([string]$state.neuralcloud_root).TrimEnd('\', '/').Equals(
+                    $LaunchRoot.TrimEnd('\', '/'), [System.StringComparison]::OrdinalIgnoreCase
+                )) {
+                $distro = [string]$state.mistyai_distro
+            }
+            Read-MistyAIServiceToken -Distro $distro
+        } $Root
+    } catch {
+        # Do not include subprocess output or credentials in configuration errors.
+        Stop-Configuration (
+            "MistyAI credentials could not be loaded automatically from WSL. " +
+            "Prepare the local service with dev.ps1 up, or supply " +
+            "-MistyAITokenFile/NC_MISTYAI_TOKEN_FILE or NC_MISTYAI_TOKEN."
+        )
+    }
+    Write-Host "Using existing MistyAI service credentials from WSL."
+    return $token
+}
+
 function Test-RequiredEmbodimentReady(
     [object]$Status,
     [string]$ExpectedProvider,
@@ -386,11 +421,16 @@ if ($effectiveProvider -eq "mistyai") {
             )
         }
         $tokenCheck = $null
-    } elseif (Test-UnsafeMistyAIToken "$env:NC_MISTYAI_TOKEN") {
-        Stop-Configuration (
-            "MistyAI requires -MistyAITokenFile/NC_MISTYAI_TOKEN_FILE " +
-            "or a non-placeholder NC_MISTYAI_TOKEN of at least 16 characters"
-        )
+    } else {
+        if (-not $effectiveMistyAIToken) {
+            $effectiveMistyAIToken = Get-LocalMistyAIServiceToken $effectiveMistyAIBaseUrl
+        }
+        if (Test-UnsafeMistyAIToken $effectiveMistyAIToken) {
+            Stop-Configuration (
+                "MistyAI requires -MistyAITokenFile/NC_MISTYAI_TOKEN_FILE " +
+                "or a non-placeholder NC_MISTYAI_TOKEN of at least 16 characters"
+            )
+        }
     }
 }
 

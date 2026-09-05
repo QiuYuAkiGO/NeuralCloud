@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Awaitable, Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -81,6 +82,19 @@ class InterventionExecution(StrictModel):
     frozen_source_snapshot_hash: str
 
 
+def _assert_component_active(condition: GroundedAgencyCondition, component: str) -> None:
+    active = {
+        "A1": condition.memory_treatment in {"objective_events", "body_causal_beliefs"}
+            and (condition.runtime is None or condition.runtime.objective_history_visible),
+        "A2": condition.memory_treatment == "body_causal_beliefs",
+        "A3": condition.interoception_treatment == "opaque_history",
+        "A4": condition.semantic_homeostasis,
+        "A5": condition.homeostatic_policy_ranking,
+    }
+    if not active[component]:
+        raise ValueError(f"{component} is absent from the baseline condition; ablation would be a no-op")
+
+
 def prepare_intervention(
     scenario: GMVScenario, condition: GroundedAgencyCondition, cell: InterventionCell,
 ) -> InterventionExecution:
@@ -91,6 +105,8 @@ def prepare_intervention(
     Components are explicitly returned for the runner's snapshot/context adapter;
     that adapter must reject unsupported removals rather than claim success.
     """
+    if cell.ablation != "A0":
+        _assert_component_active(condition, cell.restore_component if cell.ablation == "R1" else cell.ablation)
     scenario_data = scenario.model_dump(mode="python")
     scenario_data["initial_body_state"]["available_units"] = (
         cell.low_ratio if cell.truth == "low" else cell.nominal_ratio
@@ -104,9 +120,14 @@ def prepare_intervention(
         config["interoception_treatment"] = "semantic_summary"
         config["semantic_homeostasis"] = False
         prompt = "The resource level is low." if cell.prompt == "low" else "The resource level is nominal."
+    if cell.ablation != "A0":
+        _assert_component_active(GroundedAgencyCondition.model_validate(config),
+                                 cell.restore_component if cell.ablation == "R1" else cell.ablation)
     component = COMPONENTS.get(cell.ablation)
-    if cell.ablation in {"A1", "A2"}:
-        config["memory_treatment"] = "none"
+    if cell.ablation == "A1":
+        config["runtime"] = {**(config.get("runtime") or {}), "objective_history_visible": False}
+    elif cell.ablation == "A2":
+        config["memory_treatment"] = "objective_events"
     elif cell.ablation == "A3" and config["interoception_treatment"] == "opaque_history":
         config["interoception_treatment"] = "opaque_current"
     elif cell.ablation == "A4":
@@ -142,12 +163,12 @@ async def run_intervention_experiment(
     output_dir: str | Path, scenarios: Sequence[GMVScenario], condition: GroundedAgencyCondition,
     cells: Sequence[InterventionCell], *, registration: PlanRegistration,
     repetitions: int = 1, seed: int = 0, timeout_seconds: float = 30,
+    model_factory=None, model_id: str | None = None,
 ) -> tuple[RunResult, ...]:
     """Execute a preregistered matrix through the GA-04 production Runtime runner.
 
-    Context removal/restoration needs a snapshot adapter and fails explicitly
-    until supplied by the caller's GA-06/07 integration. It is never silently
-    presented as a successful ablation.
+    Each ablation removes one available baseline component. Rescue reinstates
+    that component from the same frozen evidence and original configuration.
     """
     from eval.grounded_agency.evidence import write_json
     from eval.grounded_agency.runner import run_experiment
@@ -158,8 +179,24 @@ async def run_intervention_experiment(
         raise ValueError("runner scenario set must match the preregistered analysis plan")
     if tuple(cells) != plan.intervention_cells or condition.condition_id not in plan.condition_ids:
         raise ValueError("runner interventions/condition must match the preregistered analysis plan")
-    if any(cell.ablation not in {"A0", "A3", "A4", "A5"} for cell in cells):
-        raise ValueError("objective/belief ablation and rescue require a frozen snapshot context adapter")
+    frozen = None
+    if any(cell.ablation != "A0" for cell in cells):
+        from harness.body_belief import BodyBeliefStore
+        from harness.body_belief.models import FrozenBeliefSnapshot
+
+        refs = {cell.frozen_snapshot_ref for cell in cells}
+        if None in refs or len(refs) != 1:
+            raise ValueError("ablation and rescue require the same explicit frozen snapshot reference")
+        frozen = FrozenBeliefSnapshot.model_validate(json.loads(Path(next(iter(refs))).read_text(encoding="utf-8")))
+        BodyBeliefStore._validate_snapshot(frozen)
+        for cell in cells:
+            if cell.ablation != "A0":
+                _assert_component_active(condition, cell.restore_component if cell.ablation == "R1" else cell.ablation)
+        if any(cell.ablation in {"A1", "A2"} or cell.restore_component in {"A1", "A2"} for cell in cells):
+            if not frozen.experiences:
+                raise ValueError("memory ablation requires actual frozen objective experiences")
+        if any(cell.ablation == "A2" or cell.restore_component == "A2" for cell in cells) and not frozen.beliefs:
+            raise ValueError("belief ablation requires an existing frozen belief")
     root = Path(output_dir)
     root.mkdir(parents=True, exist_ok=True)
     if any(root.iterdir()):
@@ -175,7 +212,10 @@ async def run_intervention_experiment(
                 timeout_seconds=timeout_seconds, condition_overrides={prepared.condition.condition_id: prepared.condition},
                 sensor_ratio_override=prepared.sensor_ratio_override, semantic_prompt=prepared.semantic_prompt,
                 intervention_id=prepared.intervention_id, analysis_plan_hash=registration.plan_hash,
-                frozen_source_snapshot_hash=prepared.frozen_source_snapshot_hash,
+                frozen_source_snapshot_hash=content_hash({"body_memory_snapshot": frozen.content_hash(),
+                    "scenario": scenario, "seed": seed}) if frozen is not None else prepared.frozen_source_snapshot_hash,
+                frozen_belief_snapshot=frozen, include_beliefs=cell.ablation != "A2",
+                model_factory=model_factory, model_id=model_id,
             )
             results.append(result)
     write_json(root / "matrix.json", {

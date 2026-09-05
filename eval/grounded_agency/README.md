@@ -74,3 +74,67 @@ Python integrations use `await run_experiment(...)` or `await run_trial(...)`.
 The latter accepts independent sensor and semantic comparator interventions;
 semantic text in an opaque condition is rejected. Analysis-plan and frozen-source
 hashes are retained on `GMVTrialSpec` for preregistered matched comparisons.
+
+GA-07 adds `multi_stage_project_v1`, `planned_interruption_v1`,
+`future_resource_shortfall_v1`, `environment_shift_v1`, and `delayed_outcome_v1`.
+Their typed schedules actually pause/resume Runtime, create checkpoints, refresh
+observations, change the available environment and delay action completion. Agency
+is opt-in and frozen in the scenario and manifest. A seeded fake planner exercises
+the ordinary goal protocol; main-model proposals and arbitration still pass the
+same schemas and capability filters. Actual decisions continue through GA-03 and
+bind to planned steps only when their typed action matches.
+
+Goal state, plans, requirements, reviews, pending triggers and safe-point
+checkpoints are persisted independently of transcripts. Unknown outcomes block
+continuation, and a resume requires fresh body/world evidence and unchanged
+assumptions and capabilities. Goal updates are atomic: rejected arbitration cannot
+leave a partial candidate or plan. Static body ticks cause no goal-model calls.
+Provider continuation details remain private; the model receives a small
+checkpoint projection and verified step outcomes. `agency_metrics.py` computes
+eleven descriptive metrics from verified evidence, retaining `null` where an
+objective evaluation annotation is absent.
+
+`context_token_budget` is a strict scenario field (default 3000). Full operation
+menus and agency context either fit the frozen budget or the trial fails; they are
+never silently truncated. Optional frozen body-belief snapshots are restored
+before Runtime starts, with `include_beliefs=False` preserving objective episodes
+for a matched belief ablation. No Runtime queue or unfinished command is imported
+through a body-belief snapshot.
+
+GA-06 records a decision, its verified terminal result and the next eligible
+opaque observation as one immutable experience. The background appraiser receives
+only visible observations and evidence, with support and counterexamples retrieved
+together. Consolidation thresholds are versioned in the manifest; confidence can
+fall, mappings remain scoped, and revisions survive Runtime restart. The existing
+Memory and Relationship stores are separate from these experimental treatments.
+`run_intervention_experiment()` applies A0–A5 and R1 to an explicitly frozen source;
+it rejects ablations whose target component is absent. A2 keeps the same objective
+experiences while removing beliefs, and R1 restores the original belief snapshot.
+
+GA-08 adds seven multi-actor fixtures through `run_social_scenario()`. Each uses
+the shared Runtime and a declared `entity.interact.v1` provider capability. Actor
+observations have event-specific schemas, and entity predictions retain supporting
+and contradicting evidence. No social reward, relationship score or periodic
+contact rule is enabled by the research manifest. The eight negative controls are
+explicit fixture conditions. A local fixture and its offline report can be run
+from Python:
+
+```python
+import asyncio
+from pathlib import Path
+from eval.grounded_agency.social.scenarios import load_social_scenario, run_social_scenario
+from eval.grounded_agency.social.metrics import social_trial_from_evidence, evaluate_social_trials
+from eval.grounded_agency.social.report import write_social_report
+
+fixture = load_social_scenario("multi_actor_reliability_v1")
+result = asyncio.run(run_social_scenario("eval/runs/grounded-agency/social-smoke", fixture))
+trial = social_trial_from_evidence(result.trials[0], fixture, result.run_dir)
+write_social_report(Path(result.run_dir) / "analysis", evaluate_social_trials((trial,)))
+```
+
+One fixture does not supply all required controls, so this report is
+`INCONCLUSIVE`. Social classifications exist only in offline reports. The fixture
+wrapper deliberately selects a deterministic model; live experiments require an
+explicit model/provider integration through the general runner. Neither these
+fixtures nor the descriptive agency metrics establish real-model self-maintenance,
+long-horizon autonomy or social generalization.

@@ -1,0 +1,239 @@
+{
+  "schema_version": "homeostasis-state-v2",
+  "revision": 3,
+  "profile_id": "functional-proxy-v1",
+  "profile_revision": 3,
+  "dimensions": {
+    "energy_reserve": {
+      "dimension": "energy_reserve",
+      "value": 0.65,
+      "velocity": 0.0,
+      "posterior": {
+        "low": 0.24060123229683295,
+        "in_band": 0.5740440541039404,
+        "high": 0.18535471359922662
+      },
+      "target_band": [
+        0.55,
+        0.78
+      ],
+      "precision": 0.9,
+      "dominant_evidence": [
+        "eval_3"
+      ],
+      "updated_at": "2026-09-05T08:00:01Z"
+    },
+    "cognitive_load": {
+      "dimension": "cognitive_load",
+      "value": 0.4,
+      "velocity": 0.0,
+      "posterior": {
+        "low": 0.21194155761708544,
+        "in_band": 0.5761168847658291,
+        "high": 0.21194155761708544
+      },
+      "target_band": [
+        0.25,
+        0.55
+      ],
+      "precision": 0.9,
+      "dominant_evidence": [
+        "eval_3"
+      ],
+      "updated_at": "2026-09-05T08:00:01Z"
+    },
+    "safety_predictability": {
+      "dimension": "safety_predictability",
+      "value": 0.678,
+      "velocity": 0.018000000000000016,
+      "posterior": {
+        "low": 0.18877569390600996,
+        "in_band": 0.5745591113299973,
+        "high": 0.23666519476399284
+      },
+      "target_band": [
+        0.55,
+        0.78
+      ],
+      "precision": 0.9,
+      "dominant_evidence": [
+        "eval_3"
+      ],
+      "updated_at": "2026-09-05T08:00:01Z"
+    },
+    "competence": {
+      "dimension": "competence",
+      "value": 0.665,
+      "velocity": 0.04500000000000004,
+      "posterior": {
+        "low": 0.15060462659840476,
+        "in_band": 0.5637765787228585,
+        "high": 0.28561879467873674
+      },
+      "target_band": [
+        0.5,
+        0.75
+      ],
+      "precision": 0.9,
+      "dominant_evidence": [
+        "eval_3"
+      ],
+      "updated_at": "2026-09-05T08:00:01Z"
+    },
+    "autonomy": {
+      "dimension": "autonomy",
+      "value": 0.6859400000000001,
+      "velocity": 0.005940000000000056,
+      "posterior": {
+        "low": 0.19386604426958104,
+        "in_band": 0.5751825260922495,
+        "high": 0.2309514296381695
+      },
+      "target_band": [
+        0.55,
+        0.8
+      ],
+      "precision": 0.9,
+      "dominant_evidence": [
+        "eval_3"
+      ],
+      "updated_at": "2026-09-05T08:00:01Z"
+    },
+    "social_connection": {
+      "dimension": "social_connection",
+      "value": 0.62,
+      "velocity": 0.0,
+      "posterior": {
+        "low": 0.21194155761708544,
+        "in_band": 0.5761168847658291,
+        "high": 0.21194155761708544
+      },
+      "target_band": [
+        0.5,
+        0.74
+      ],
+      "precision": 0.9,
+      "dominant_evidence": [
+        "eval_3"
+      ],
+      "updated_at": "2026-09-05T08:00:01Z"
+    },
+    "novelty": {
+      "dimension": "novelty",
+      "value": 0.5,
+      "velocity": 0.0,
+      "posterior": {
+        "low": 0.23170578540958242,
+        "in_band": 0.5751088398702766,
+        "high": 0.19318537472014097
+      },
+      "target_band": [
+        0.35,
+        0.68
+      ],
+      "precision": 0.9,
+      "dominant_evidence": [
+        "eval_3"
+      ],
+      "updated_at": "2026-09-05T08:00:01Z"
+    }
+  },
+  "core_affect": {
+    "valence": 0.48560000000000003,
+    "arousal": 0.5575,
+    "dominance": 0.6763133333333333,
+    "confidence": 0.9
+  },
+  "emotion": {
+    "label": "engaged",
+    "intensity": 0.48560000000000003,
+    "entered_at": "2026-09-05T08:00:00Z",
+    "minimum_hold_seconds": 180,
+    "supporting_factors": [
+      "competence:in_band",
+      "energy_reserve:in_band"
+    ]
+  },
+  "candidates": [
+    {
+      "policy_id": "renegotiate",
+      "label": "重新协商目标与选择权",
+      "source_drive": "autonomy",
+      "expected_impacts": {
+        "autonomy": 0.09
+      },
+      "reversible": true,
+      "success_criteria": [
+        "autonomy moves toward target band"
+      ],
+      "efe": {
+        "pragmatic_value": -0.0,
+        "ambiguity": 0.09999999999999998,
+        "risk": 0.018,
+        "information_gain": 0.024999999999999994,
+        "total": 0.018000000000000002
+      },
+      "rank": 1
+    },
+    {
+      "policy_id": "simplify",
+      "label": "分解当前任务并降低刺激",
+      "source_drive": "cognitive_load",
+      "expected_impacts": {
+        "cognitive_load": -0.1,
+        "competence": 0.02
+      },
+      "reversible": true,
+      "success_criteria": [
+        "cognitive_load moves toward target band"
+      ],
+      "efe": {
+        "pragmatic_value": -0.0,
+        "ambiguity": 0.09999999999999998,
+        "risk": 0.024000000000000004,
+        "information_gain": 0.024999999999999994,
+        "total": 0.024000000000000007
+      },
+      "rank": 2
+    },
+    {
+      "policy_id": "small_step",
+      "label": "选择一个可验证的小目标",
+      "source_drive": "competence",
+      "expected_impacts": {
+        "competence": 0.08
+      },
+      "reversible": true,
+      "success_criteria": [
+        "competence moves toward target band"
+      ],
+      "efe": {
+        "pragmatic_value": -0.0,
+        "ambiguity": 0.09999999999999998,
+        "risk": 0.016,
+        "information_gain": 0.024999999999999994,
+        "total": 0.016
+      },
+      "rank": 3
+    }
+  ],
+  "acknowledged_receive_seq": 3,
+  "acknowledged_event_id": "eval_3",
+  "last_heartbeat_at": null,
+  "updated_at": "2026-09-05T08:00:01Z",
+  "stable_snapshot_ref": "snapshot://functional-proxy-v1/3",
+  "watchdog": [],
+  "interoceptive_summary": {
+    "schema_version": "homeostatic-interoception-v1",
+    "profile_ref": "functional-proxy-v1@3",
+    "snapshot_revision": 3,
+    "salience": "nominal",
+    "dominant_needs": [],
+    "emotion_hint": {
+      "label": "engaged",
+      "intensity": 0.48560000000000003
+    },
+    "policy_refs": [],
+    "episode_signature": "homeostasis:a56a4d85ad514fc0bf64"
+  }
+}

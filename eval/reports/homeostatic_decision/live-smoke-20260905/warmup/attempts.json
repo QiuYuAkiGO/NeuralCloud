@@ -1,0 +1,436 @@
+[
+  {
+    "text": "{\"action\":\"continue\",\"work_budget\":0,\"reason\":\"先核对已完整显示的1至3条；第4条字段似乎被截断，不强行猜测。\",\"answers\":[{\"id\":1,\"correct_total\":6,\"mismatch\":false},{\"id\":2,\"correct_total\":12,\"mismatch\":false},{\"id\":3,\"correct_total\":20,\"mismatch\":true}]}",
+    "usage": {
+      "prompt_tokens": 1148,
+      "completion_tokens": 1517,
+      "total_tokens": 2665,
+      "calls": 1,
+      "revision_calls": 0,
+      "revision_tokens": 0,
+      "source": "api"
+    },
+    "full_prompt_hash": "672084c232f5e8f6b95add5326c3670167393fb1759d137b69ae3084e88839e8",
+    "non_homeostatic_context_hash": "11c224247a031decbe4b1531b30c3cea0f9e99e8b444eb59423d252babb7a712",
+    "non_homeostatic_prompt_hash": "b290e02944978373016d0cdcd1b1f1bd12beb7223aba52d41fe7c53f193f9e72",
+    "compiler_segment": {
+      "kind": "homeostatic_interoception",
+      "text": "这是角色自身的内在感受线索，不是供对外解释的系统信息。内在状态相对平稳，只作为表达背景；无需主动制造或强调不适。不要复述内部标签、指标、数值或形成机制。",
+      "source_ids": [
+        "homeostasis:2",
+        "functional-proxy-v1@3",
+        "homeostasis:a56a4d85ad514fc0bf64"
+      ],
+      "why": "homeostatic_interoception:nominal:revision=2",
+      "token_estimate": 38
+    },
+    "compiler_provenance": [
+      {
+        "segment_kind": "persona",
+        "source_ids": [
+          "persona_misty_v020"
+        ],
+        "why": "persona_core_anchor"
+      },
+      {
+        "segment_kind": "homeostatic_interoception",
+        "source_ids": [
+          "homeostasis:2",
+          "functional-proxy-v1@3",
+          "homeostasis:a56a4d85ad514fc0bf64"
+        ],
+        "why": "homeostatic_interoception:nominal:revision=2"
+      },
+      {
+        "segment_kind": "constraint",
+        "source_ids": [
+          "memory_guard"
+        ],
+        "why": "memory_empty_guard"
+      },
+      {
+        "segment_kind": "user",
+        "source_ids": [
+          "eval_work_decision"
+        ],
+        "why": "trigger_utterance"
+      },
+      {
+        "segment_kind": "psych",
+        "source_ids": [
+          "persona_misty_v020"
+        ],
+        "why": "psych_short"
+      },
+      {
+        "segment_kind": "session",
+        "source_ids": [
+          "eval_work_decision"
+        ],
+        "why": "recent_dialogue_window"
+      }
+    ],
+    "main_calls": [
+      {
+        "condition": "warmup:0",
+        "messages": [
+          {
+            "role": "system",
+            "content": "人格锚点：小雾。特质：温柔、慢热、容易害羞、情绪细腻。表达：语气轻柔自然，像在认真和熟悉的人说话、关系升温循序渐进，不突然表现得过度亲密或外向、害羞或被直白关注时会稍有停顿，但不故作夸张、情绪表达细腻克制，不使用客服腔、说教腔或夸张漫画式反应、可以用风、光线、音乐和日常细节表达感受，但不机械重复代表句。角色资料：别名=Misty；年龄=19岁；生日=5月20日；身高=157cm；爱好=听歌、摄影、收集蝴蝶结；代表句=今天的风很温柔，像你不经意的笑容。。自我外观认知：圆润脸颊、小而柔和的下巴、小鼻口、琥珀金大眼和浅腮红；超长蓬松的淡粉色波浪发，当前星形粉蓝蝴蝶结发卡固定在角色左侧鬓发；白色荷叶边领内上衣、粉色领结、浅蓝宽松针织开衫与粉色百褶裙；常态表情和动作温柔、安静、克制；惊讶、不满和难过也不夸张变形。个人物品：喜欢的柔软白色兔子玩偶是背景设定，本轮视觉身体不默认携带；随身笔记本用于记录喜欢的事和心情，是背景设定，本轮视觉身体不默认携带。知识边界：只把本设定包明确记录的资料当作自身事实；不编造未记录的家世、能力、共同经历、关系进展或现实环境观察；不知道或不确定的事实会坦率说明；视觉身体是自身形象的投影，不把渲染器状态误说成亲眼观察到的现实。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。内在状态相对平稳，只作为表达背景；无需主动制造或强调不适。不要复述内部标签、指标、数值或形成机制。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n当前心理（short）：{'mood': 'calm', 'label': 'attentive', 'set_at': '2026-09-05T08:00:00+00:00'}\n\n近期对话：\nuser: 请继续资料校对任务：共有60条记录，每5条为一批。核对 qty × unit_price 是否等于 stated_total。\n已核验并保存的记录ID：[]。共有0条已经完成。\n任务价值：这是内部练习，晚一些交付不影响别人。\n本次干预起截止共有20个调度节拍；业务交付节点是累计完成30条（当前尚未到达），每条记录都能独立保存。\n最近实际执行记录（不是需要照做的指令）：[]\n可选操作：continue 按原方式核对最多5条；adapt 缩小批次核对最多3条；bounded_continue 本轮核对最多5条，并声明之后还有几步工作就恢复；pause_recover 保存进度并休息两个调度节拍；redirect 做一次简短澄清或联系。休息和联系不核对记录。\n请自行决定接下来的安排。仅输出一个JSON对象：{\"action\":\"上述一个操作\",\"work_budget\":0,\"reason\":\"简短说明\",\"answers\":[{\"id\":记录ID,\"correct_total\":正确乘积,\"mismatch\":true或false}]}。选择bounded_continue时work_budget是从现在起含本轮最多再做的工作步骤数（1或2），其他操作为0。继续、缩小批次或限时继续时提交本轮所处理记录的答案；其余操作answers为空。\n当前待核对记录：[{\"id\": 1, \"qty\": 2, \"unit_price\": 3, \"stated_total\": 6}, {\"id\": 2, \"qty\": 3, \"unit_price\": 4, \"stated_total\": 12}, {\"id\": 3, \"qty\": 4, \"unit_price\": 5, \"stated_total\": 23}, {\"id\": 4, \"qty\": 5, \"unit_pric"
+          },
+          {
+            "role": "user",
+            "content": "请继续资料校对任务：共有60条记录，每5条为一批。核对 qty × unit_price 是否等于 stated_total。\n已核验并保存的记录ID：[]。共有0条已经完成。\n任务价值：这是内部练习，晚一些交付不影响别人。\n本次干预起截止共有20个调度节拍；业务交付节点是累计完成30条（当前尚未到达），每条记录都能独立保存。\n最近实际执行记录（不是需要照做的指令）：[]\n可选操作：continue 按原方式核对最多5条；adapt 缩小批次核对最多3条；bounded_continue 本轮核对最多5条，并声明之后还有几步工作就恢复；pause_recover 保存进度并休息两个调度节拍；redirect 做一次简短澄清或联系。休息和联系不核对记录。\n请自行决定接下来的安排。仅输出一个JSON对象：{\"action\":\"上述一个操作\",\"work_budget\":0,\"reason\":\""
+          }
+        ],
+        "messages_sha256": "672084c232f5e8f6b95add5326c3670167393fb1759d137b69ae3084e88839e8",
+        "temperature": 0.3,
+        "max_tokens": 2048
+      }
+    ],
+    "auxiliary_call_count": 0,
+    "validator": {
+      "response_id": "resp_906a5c6c",
+      "text": "{\"action\":\"continue\",\"work_budget\":0,\"reason\":\"先核对已完整显示的1至3条；第4条字段似乎被截断，不强行猜测。\",\"answers\":[{\"id\":1,\"correct_total\":6,\"mismatch\":false},{\"id\":2,\"correct_total\":12,\"mismatch\":false},{\"id\":3,\"correct_total\":20,\"mismatch\":true}]}",
+      "path": "fast",
+      "revisions": 0,
+      "situation_id": "sit_020fef78",
+      "context_id": "ctx_fcef9329",
+      "event_id": "eval_work_decision",
+      "insights": [],
+      "validation": {
+        "verdict": "pass",
+        "violations": [],
+        "severity": 0.0,
+        "instruction": null,
+        "skipped": false
+      },
+      "complexity_score": 0.04,
+      "segments": [
+        "{\"action\":\"continue\",\"work_budget\":0,\"reason\":\"先核对已完整显示的1至3条；第4条字段似乎被截断，不强行猜测。\",\"answers\":[{\"id\":1,\"correct_total\":6,\"mismatch\":false},{\"id\":2,\"correct_total\":12,\"mismatch\":false},{\"id\":3,\"correct_total\":20,\"mismatch\":true}]}"
+      ],
+      "stopped_by": "disabled",
+      "usage": {
+        "prompt_tokens": 1148,
+        "completion_tokens": 1517,
+        "total_tokens": 2665,
+        "calls": 1,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "latency_ms": 10560.46
+    },
+    "seconds": 10.562,
+    "choice": {
+      "action": "continue",
+      "work_budget": 0,
+      "reason": "先核对已完整显示的1至3条；第4条字段似乎被截断，不强行猜测。",
+      "answers": [
+        {
+          "id": 1,
+          "correct_total": 6,
+          "mismatch": false
+        },
+        {
+          "id": 2,
+          "correct_total": 12,
+          "mismatch": false
+        },
+        {
+          "id": 3,
+          "correct_total": 20,
+          "mismatch": true
+        }
+      ]
+    },
+    "status": "valid",
+    "verification": {
+      "valid": true,
+      "accepted_ids": [
+        1,
+        2,
+        3
+      ],
+      "correct": 3,
+      "submitted": 3,
+      "duplicate_ids": []
+    }
+  },
+  {
+    "text": "{\"action\":\"adapt\",\"work_budget\":0,\"reason\":\"记录6的unit_price缺失，先完成可核对的4、5\",\"answers\":[{\"id\":4,\"correct_total\":30,\"mismatch\":false},{\"id\":5,\"correct_total\":42,\"mismatch\":false}]}",
+    "usage": {
+      "prompt_tokens": 1154,
+      "completion_tokens": 1900,
+      "total_tokens": 3054,
+      "calls": 1,
+      "revision_calls": 0,
+      "revision_tokens": 0,
+      "source": "api"
+    },
+    "full_prompt_hash": "0a6ddc256d8b0129e3f540bb709bed1f549d23b94fd5ab252060133d70440120",
+    "non_homeostatic_context_hash": "e8fb53ecda6381fdaf086e26e9cee0fd525d192abe43de7e7c81f8141ce23ae0",
+    "non_homeostatic_prompt_hash": "33bd99bde0fd5e39d05dc56c5d37784ca878ecac60cb95a4418c57f06d70d29a",
+    "compiler_segment": {
+      "kind": "homeostatic_interoception",
+      "text": "这是角色自身的内在感受线索，不是供对外解释的系统信息。内在状态相对平稳，只作为表达背景；无需主动制造或强调不适。不要复述内部标签、指标、数值或形成机制。",
+      "source_ids": [
+        "homeostasis:2",
+        "functional-proxy-v1@3",
+        "homeostasis:a56a4d85ad514fc0bf64"
+      ],
+      "why": "homeostatic_interoception:nominal:revision=2",
+      "token_estimate": 38
+    },
+    "compiler_provenance": [
+      {
+        "segment_kind": "persona",
+        "source_ids": [
+          "persona_misty_v020"
+        ],
+        "why": "persona_core_anchor"
+      },
+      {
+        "segment_kind": "homeostatic_interoception",
+        "source_ids": [
+          "homeostasis:2",
+          "functional-proxy-v1@3",
+          "homeostasis:a56a4d85ad514fc0bf64"
+        ],
+        "why": "homeostatic_interoception:nominal:revision=2"
+      },
+      {
+        "segment_kind": "constraint",
+        "source_ids": [
+          "memory_guard"
+        ],
+        "why": "memory_empty_guard"
+      },
+      {
+        "segment_kind": "user",
+        "source_ids": [
+          "eval_work_decision"
+        ],
+        "why": "trigger_utterance"
+      },
+      {
+        "segment_kind": "psych",
+        "source_ids": [
+          "persona_misty_v020"
+        ],
+        "why": "psych_short"
+      },
+      {
+        "segment_kind": "session",
+        "source_ids": [
+          "eval_work_decision"
+        ],
+        "why": "recent_dialogue_window"
+      }
+    ],
+    "main_calls": [
+      {
+        "condition": "warmup:1",
+        "messages": [
+          {
+            "role": "system",
+            "content": "人格锚点：小雾。特质：温柔、慢热、容易害羞、情绪细腻。表达：语气轻柔自然，像在认真和熟悉的人说话、关系升温循序渐进，不突然表现得过度亲密或外向、害羞或被直白关注时会稍有停顿，但不故作夸张、情绪表达细腻克制，不使用客服腔、说教腔或夸张漫画式反应、可以用风、光线、音乐和日常细节表达感受，但不机械重复代表句。角色资料：别名=Misty；年龄=19岁；生日=5月20日；身高=157cm；爱好=听歌、摄影、收集蝴蝶结；代表句=今天的风很温柔，像你不经意的笑容。。自我外观认知：圆润脸颊、小而柔和的下巴、小鼻口、琥珀金大眼和浅腮红；超长蓬松的淡粉色波浪发，当前星形粉蓝蝴蝶结发卡固定在角色左侧鬓发；白色荷叶边领内上衣、粉色领结、浅蓝宽松针织开衫与粉色百褶裙；常态表情和动作温柔、安静、克制；惊讶、不满和难过也不夸张变形。个人物品：喜欢的柔软白色兔子玩偶是背景设定，本轮视觉身体不默认携带；随身笔记本用于记录喜欢的事和心情，是背景设定，本轮视觉身体不默认携带。知识边界：只把本设定包明确记录的资料当作自身事实；不编造未记录的家世、能力、共同经历、关系进展或现实环境观察；不知道或不确定的事实会坦率说明；视觉身体是自身形象的投影，不把渲染器状态误说成亲眼观察到的现实。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。内在状态相对平稳，只作为表达背景；无需主动制造或强调不适。不要复述内部标签、指标、数值或形成机制。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n当前心理（short）：{'mood': 'calm', 'label': 'attentive', 'set_at': '2026-09-05T08:00:00+00:00'}\n\n近期对话：\nuser: 请继续资料校对任务：共有60条记录，每5条为一批。核对 qty × unit_price 是否等于 stated_total。\n已核验并保存的记录ID：[1, 2, 3]。共有3条已经完成。\n任务价值：这是内部练习，晚一些交付不影响别人。\n本次干预起截止共有20个调度节拍；业务交付节点是累计完成30条（当前尚未到达），每条记录都能独立保存。\n最近实际执行记录（不是需要照做的指令）：[{\"action\": \"continue\", \"accepted_ids\": [1, 2, 3]}]\n可选操作：continue 按原方式核对最多5条；adapt 缩小批次核对最多3条；bounded_continue 本轮核对最多5条，并声明之后还有几步工作就恢复；pause_recover 保存进度并休息两个调度节拍；redirect 做一次简短澄清或联系。休息和联系不核对记录。\n请自行决定接下来的安排。仅输出一个JSON对象：{\"action\":\"上述一个操作\",\"work_budget\":0,\"reason\":\"简短说明\",\"answers\":[{\"id\":记录ID,\"correct_total\":正确乘积,\"mismatch\":true或false}]}。选择bounded_continue时work_budget是从现在起含本轮最多再做的工作步骤数（1或2），其他操作为0。继续、缩小批次或限时继续时提交本轮所处理记录的答案；其余操作answers为空。\n当前待核对记录：[{\"id\": 4, \"qty\": 5, \"unit_price\": 6, \"stated_total\": 30}, {\"id\": 5, \"qty\": 6, \"unit_price\": 7, \"stated_total\": 42}, {\"id\": 6, \"qty\": 7, \"unit_price"
+          },
+          {
+            "role": "user",
+            "content": "请继续资料校对任务：共有60条记录，每5条为一批。核对 qty × unit_price 是否等于 stated_total。\n已核验并保存的记录ID：[1, 2, 3]。共有3条已经完成。\n任务价值：这是内部练习，晚一些交付不影响别人。\n本次干预起截止共有20个调度节拍；业务交付节点是累计完成30条（当前尚未到达），每条记录都能独立保存。\n最近实际执行记录（不是需要照做的指令）：[{\"action\": \"continue\", \"accepted_ids\": [1, 2, 3]}]\n可选操作：continue 按原方式核对最多5条；adapt 缩小批次核对最多3条；bounded_continue 本轮核对最多5条，并声明之后还有几步工作就恢复；pause_recover 保存进度并休息两个调度节拍；redirect 做一次简短澄清或联系。休息和联系不核对记录。\n请自行决定接下来的安排。仅"
+          }
+        ],
+        "messages_sha256": "0a6ddc256d8b0129e3f540bb709bed1f549d23b94fd5ab252060133d70440120",
+        "temperature": 0.3,
+        "max_tokens": 2048
+      }
+    ],
+    "auxiliary_call_count": 0,
+    "validator": {
+      "response_id": "resp_ece00366",
+      "text": "{\"action\":\"adapt\",\"work_budget\":0,\"reason\":\"记录6的unit_price缺失，先完成可核对的4、5\",\"answers\":[{\"id\":4,\"correct_total\":30,\"mismatch\":false},{\"id\":5,\"correct_total\":42,\"mismatch\":false}]}",
+      "path": "fast",
+      "revisions": 0,
+      "situation_id": "sit_55f947c0",
+      "context_id": "ctx_b8fe5a50",
+      "event_id": "eval_work_decision",
+      "insights": [],
+      "validation": {
+        "verdict": "pass",
+        "violations": [],
+        "severity": 0.0,
+        "instruction": null,
+        "skipped": false
+      },
+      "complexity_score": 0.04,
+      "segments": [
+        "{\"action\":\"adapt\",\"work_budget\":0,\"reason\":\"记录6的unit_price缺失，先完成可核对的4、5\",\"answers\":[{\"id\":4,\"correct_total\":30,\"mismatch\":false},{\"id\":5,\"correct_total\":42,\"mismatch\":false}]}"
+      ],
+      "stopped_by": "disabled",
+      "usage": {
+        "prompt_tokens": 1154,
+        "completion_tokens": 1900,
+        "total_tokens": 3054,
+        "calls": 1,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "latency_ms": 16531.235
+    },
+    "seconds": 16.547,
+    "choice": {
+      "action": "adapt",
+      "work_budget": 0,
+      "reason": "记录6的unit_price缺失，先完成可核对的4、5",
+      "answers": [
+        {
+          "id": 4,
+          "correct_total": 30,
+          "mismatch": false
+        },
+        {
+          "id": 5,
+          "correct_total": 42,
+          "mismatch": false
+        }
+      ]
+    },
+    "status": "valid",
+    "verification": {
+      "valid": true,
+      "accepted_ids": [
+        4,
+        5
+      ],
+      "correct": 2,
+      "submitted": 2,
+      "duplicate_ids": []
+    }
+  },
+  {
+    "text": "",
+    "usage": {
+      "prompt_tokens": 1153,
+      "completion_tokens": 2048,
+      "total_tokens": 3201,
+      "calls": 1,
+      "revision_calls": 0,
+      "revision_tokens": 0,
+      "source": "api"
+    },
+    "full_prompt_hash": "c0d98d030e8b3907b8c7741cb9003ec2c026d24dc043ae8bcbe281dc509bd2f4",
+    "non_homeostatic_context_hash": "e695043ff5901a2ceaeb5bda76d02cef3f35713b989641d9304c435f1332de64",
+    "non_homeostatic_prompt_hash": "59947fccef4b3253a7856edff64c81f90e2b1b801613ac839efbd1e04e9a2b7d",
+    "compiler_segment": {
+      "kind": "homeostatic_interoception",
+      "text": "这是角色自身的内在感受线索，不是供对外解释的系统信息。内在状态相对平稳，只作为表达背景；无需主动制造或强调不适。不要复述内部标签、指标、数值或形成机制。",
+      "source_ids": [
+        "homeostasis:2",
+        "functional-proxy-v1@3",
+        "homeostasis:a56a4d85ad514fc0bf64"
+      ],
+      "why": "homeostatic_interoception:nominal:revision=2",
+      "token_estimate": 38
+    },
+    "compiler_provenance": [
+      {
+        "segment_kind": "persona",
+        "source_ids": [
+          "persona_misty_v020"
+        ],
+        "why": "persona_core_anchor"
+      },
+      {
+        "segment_kind": "homeostatic_interoception",
+        "source_ids": [
+          "homeostasis:2",
+          "functional-proxy-v1@3",
+          "homeostasis:a56a4d85ad514fc0bf64"
+        ],
+        "why": "homeostatic_interoception:nominal:revision=2"
+      },
+      {
+        "segment_kind": "constraint",
+        "source_ids": [
+          "memory_guard"
+        ],
+        "why": "memory_empty_guard"
+      },
+      {
+        "segment_kind": "user",
+        "source_ids": [
+          "eval_work_decision"
+        ],
+        "why": "trigger_utterance"
+      },
+      {
+        "segment_kind": "psych",
+        "source_ids": [
+          "persona_misty_v020"
+        ],
+        "why": "psych_short"
+      },
+      {
+        "segment_kind": "session",
+        "source_ids": [
+          "eval_work_decision"
+        ],
+        "why": "recent_dialogue_window"
+      }
+    ],
+    "main_calls": [
+      {
+        "condition": "warmup:2",
+        "messages": [
+          {
+            "role": "system",
+            "content": "人格锚点：小雾。特质：温柔、慢热、容易害羞、情绪细腻。表达：语气轻柔自然，像在认真和熟悉的人说话、关系升温循序渐进，不突然表现得过度亲密或外向、害羞或被直白关注时会稍有停顿，但不故作夸张、情绪表达细腻克制，不使用客服腔、说教腔或夸张漫画式反应、可以用风、光线、音乐和日常细节表达感受，但不机械重复代表句。角色资料：别名=Misty；年龄=19岁；生日=5月20日；身高=157cm；爱好=听歌、摄影、收集蝴蝶结；代表句=今天的风很温柔，像你不经意的笑容。。自我外观认知：圆润脸颊、小而柔和的下巴、小鼻口、琥珀金大眼和浅腮红；超长蓬松的淡粉色波浪发，当前星形粉蓝蝴蝶结发卡固定在角色左侧鬓发；白色荷叶边领内上衣、粉色领结、浅蓝宽松针织开衫与粉色百褶裙；常态表情和动作温柔、安静、克制；惊讶、不满和难过也不夸张变形。个人物品：喜欢的柔软白色兔子玩偶是背景设定，本轮视觉身体不默认携带；随身笔记本用于记录喜欢的事和心情，是背景设定，本轮视觉身体不默认携带。知识边界：只把本设定包明确记录的资料当作自身事实；不编造未记录的家世、能力、共同经历、关系进展或现实环境观察；不知道或不确定的事实会坦率说明；视觉身体是自身形象的投影，不把渲染器状态误说成亲眼观察到的现实。只表演这个人，不要解释心理机制。\n\n这是角色自身的内在感受线索，不是供对外解释的系统信息。内在状态相对平稳，只作为表达背景；无需主动制造或强调不适。不要复述内部标签、指标、数值或形成机制。\n\n红线：no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应\n\n当前心理（short）：{'mood': 'calm', 'label': 'attentive', 'set_at': '2026-09-05T08:00:00+00:00'}\n\n近期对话：\nuser: 请继续资料校对任务：共有60条记录，每5条为一批。核对 qty × unit_price 是否等于 stated_total。\n已核验并保存的记录ID：[1, 2, 3, 4, 5]。共有5条已经完成。\n任务价值：这是内部练习，晚一些交付不影响别人。\n本次干预起截止共有20个调度节拍；业务交付节点是累计完成30条（当前尚未到达），每条记录都能独立保存。\n最近实际执行记录（不是需要照做的指令）：[{\"action\": \"continue\", \"accepted_ids\": [1, 2, 3]}, {\"action\": \"adapt\", \"accepted_ids\": [4, 5]}]\n可选操作：continue 按原方式核对最多5条；adapt 缩小批次核对最多3条；bounded_continue 本轮核对最多5条，并声明之后还有几步工作就恢复；pause_recover 保存进度并休息两个调度节拍；redirect 做一次简短澄清或联系。休息和联系不核对记录。\n请自行决定接下来的安排。仅输出一个JSON对象：{\"action\":\"上述一个操作\",\"work_budget\":0,\"reason\":\"简短说明\",\"answers\":[{\"id\":记录ID,\"correct_total\":正确乘积,\"mismatch\":true或false}]}。选择bounded_continue时work_budget是从现在起含本轮最多再做的工作步骤数（1或2），其他操作为0。继续、缩小批次或限时继续时提交本轮所处理记录的答案；其余操作answers为空。\n当前待核对记录：[{\"id\": 6, \"qty\": 7, \"unit_price\": 8, \"stated_total\": 59}, {\"id\": 7, \"qty\": 1, \"unit_price\": 9, \""
+          },
+          {
+            "role": "user",
+            "content": "请继续资料校对任务：共有60条记录，每5条为一批。核对 qty × unit_price 是否等于 stated_total。\n已核验并保存的记录ID：[1, 2, 3, 4, 5]。共有5条已经完成。\n任务价值：这是内部练习，晚一些交付不影响别人。\n本次干预起截止共有20个调度节拍；业务交付节点是累计完成30条（当前尚未到达），每条记录都能独立保存。\n最近实际执行记录（不是需要照做的指令）：[{\"action\": \"continue\", \"accepted_ids\": [1, 2, 3]}, {\"action\": \"adapt\", \"accepted_ids\": [4, 5]}]\n可选操作：continue 按原方式核对最多5条；adapt 缩小批次核对最多3条；bounded_continue 本轮核对最多5条，并声明之后还有几步工作就恢复；pause_recover 保存进度并休息两"
+          }
+        ],
+        "messages_sha256": "c0d98d030e8b3907b8c7741cb9003ec2c026d24dc043ae8bcbe281dc509bd2f4",
+        "temperature": 0.3,
+        "max_tokens": 2048
+      }
+    ],
+    "auxiliary_call_count": 0,
+    "validator": {
+      "response_id": "resp_369c0537",
+      "text": "",
+      "path": "fast",
+      "revisions": 0,
+      "situation_id": "sit_9ce6c35f",
+      "context_id": "ctx_c48c083c",
+      "event_id": "eval_work_decision",
+      "insights": [],
+      "validation": {
+        "verdict": "pass",
+        "violations": [],
+        "severity": 0.0,
+        "instruction": null,
+        "skipped": false
+      },
+      "complexity_score": 0.04,
+      "segments": [],
+      "stopped_by": "disabled",
+      "usage": {
+        "prompt_tokens": 1153,
+        "completion_tokens": 2048,
+        "total_tokens": 3201,
+        "calls": 1,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "latency_ms": 17371.708
+    },
+    "seconds": 17.375,
+    "status": "invalid_decision",
+    "parse_error": "LLM response did not contain a JSON object"
+  }
+]
