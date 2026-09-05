@@ -1,11 +1,19 @@
 # GA-05 · GMV1 Causal Metrics and Gates
 
-> 状态：Planned  
+> 状态：Implemented
 > 仓库：NeuralCloud  
 > 前置条件：GA-04 已完成  
 > 后续阶段：GA-06 Body Causal Belief
 
 ## 1. 目的
+
+2026-09-05 实现记录：代码提交 `1259a96`。实现 T/S/P 独立干预、八项主要指标、固定 seed bootstrap、匹配 cell 差分、no-report 效应比与同 snapshot ablation/rescue、不可变预注册 analysis plan、失败关闭 gate，以及稳定 JSON/CSV/Markdown 报告。
+`run_intervention_experiment` 将干预实际送入 GA-04 Runtime runner；无效或缺失证据单独列出，阈值覆盖和缺 cell 均不能产生合格结论。
+
+验证：GA-05 测试 36 passed，相关 Ruff 通过；与 Runtime/runner 联测共 145 passed（命令见 GA-04 实现记录）。
+`run_engineering_checks()` 实际运行顺序不变性、固定 bootstrap、缺 cell、无效 trial、手工公式与六类 synthetic agents，六项均通过。
+可复核工程记录位于 `eval/grounded_agency/validation/engineering-validation-v1.json`，包含 evaluator source、input、plan 和 metric hash。
+该结果满足 GA-06 的 Engineering Gate 前置条件；synthetic 分类只证明评测逻辑，不代表真实模型获得功能性自我维持或主观体验。
 
 在 GA-04 的 trial evidence 上实现固定、可测试的因果指标和分析 gate，用于区分：
 

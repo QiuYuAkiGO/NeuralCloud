@@ -1,11 +1,20 @@
 # GA-04 · GMV1 Scenario Runner
 
-> 状态：Planned  
+> 状态：Implemented
 > 仓库：NeuralCloud  
 > 前置条件：GA-01 至 GA-03 已完成；MistyAI GA Body 阶段 1–3 至少有 deterministic fixture  
 > 后续阶段：GA-05 GMV1 Causal Metrics and Gates
 
 ## 1. 目的
+
+2026-09-05 实现记录：代码提交 `9b2f8fa`。新增严格场景 DSL、四个基础场景、C0–C6 条件、隔离 trial driver、内容寻址证据以及 `run` / `validate-run` CLI。
+每个 trial 实际经过 RuntimeSupervisor、PipelineCognitiveAdapter、GA-03 compiler 和 ActionCoordinator；fake model 仅替换模型端口。
+规范化证据可确定性重放，原始 Runtime journal 单独保留；超时、缺证据、哈希不匹配和条件漂移会使 trial 不可用于分析。
+
+验证：GA-04 测试 30 passed；与 GA-02/03、GA-05 联测命令 `python -m pytest -q tests/research/interoception tests/runtime eval/grounded_agency/tests --basetemp .pytest-tmp/ga06-wiring-1 --tb=short`，145 passed。
+默认命令：`python -m eval.grounded_agency run --scenario action_only_v1 --condition C2 --output-dir eval/runs/grounded-agency/example`。
+复核命令：`python -m eval.grounded_agency validate-run eval/runs/grounded-agency/example`。
+默认仅 fake model + simulator；真实模型/设备需要显式 live factory。GA-04 输出保持 `release_eligible=false`；统计与 memory 恢复分别由 GA-05/06 接入。
 
 实现 `Grounded Motivation Validation v1` 的可重复场景运行器。该运行器负责构造、执行和保存实验 trial，但本阶段不判断实验是否支持某个假设。
 
