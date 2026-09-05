@@ -1,7 +1,7 @@
 # Grounded Agency 研究实施路线
 
-> 状态：Planning  
-> 目标分支：`codex/homeostasis-stability`  
+> 状态：GA-01 Implemented；GA-02 至 GA-08 Planned
+> 开发分支：`codex/grounded-agency`（上游：本地 `codex/homeostasis-stability`）
 > 跨仓库依赖：`QiuYuAkiGO/MistyAI`  
 > 文档用途：把后续研究拆成可由单轮 Coding Agent 独立实现、测试和提交的阶段。
 
@@ -72,7 +72,9 @@
 
 ## 5. 分支与提交建议
 
-NeuralCloud 每阶段使用独立子分支：
+本路线在 `codex/grounded-agency` 上按阶段独立实现与提交；该分支从
+`codex/homeostasis-stability` 的 `1334c43049f13c557abda1716582185d117e5e0e` 创建并跟踪它。
+需要并行开发时，可从研究开发分支创建阶段子分支，例如：
 
 ```text
 codex/ga-01-neutral-contract
@@ -81,7 +83,8 @@ codex/ga-03-model-owned-decision
 ...
 ```
 
-完成后依次合并回 `codex/homeostasis-stability`，不得直接推送到 `master`。
+阶段子分支完成后先合并回 `codex/grounded-agency`，整体验收后再合并回
+`codex/homeostasis-stability`，不得直接推送到 `master`。
 
 MistyAI 每阶段也建议使用独立子分支，完成后合并回当前主开发分支。跨仓库阶段必须在 manifest 和评测报告中同时记录两侧提交 SHA。
 
