@@ -1,11 +1,21 @@
 # GA-03 · Model-owned Structured Decision
 
-> 状态：Planned  
+> 状态：Implemented
 > 仓库：NeuralCloud  
 > 前置条件：GA-01、GA-02 已完成  
 > 后续阶段：GA-04 GMV1 Scenario Runner
 
 ## 1. 目的
+
+2026-09-05 实现记录：代码提交 `26528fb`，与 GA-02 一并接通生产 Runtime → Cognitive → ActionCoordinator。
+新增五种严格 decision、主模型 JSON 调用和有限修复、安全 compiler；模型输出不能修改权限或审批字段。
+有效 intent 是 manifest、provider 与注册 profile 的交集；provider 未声明能力时关闭动作入口。
+研究任务和菜单完整进入上下文，超预算显式失败；核心路径不调用旧 Homeostasis ranking 或 outcome 更新，无默认恢复动作。
+
+验证：`python -m pytest -q tests/research/interoception tests/research/grounded_agency tests/cognitive tests/runtime --basetemp .pytest-tmp/ga02-03-commit-1 --tb=short`，476 passed；相关源文件与测试 Ruff 通过。
+真实 Runtime 测试覆盖五种决定、缺失 capability、零文本交付、重启、完整菜单与预算不足。
+远程 Cognitive 服务通过 `NC_COGNITIVE_MANIFEST_PATH`（回退 `NC_RUNTIME_MANIFEST_PATH`）绑定同一研究 manifest；变更条件必须使用隔离状态目录。
+新增 task/station profile 用于显式支持它们的评测 provider；尚未声称 MistyAI 或真实模型验证通过。
 
 建立一条由主角色模型自己完成动作选择的研究路径，避免 HomeostasisEngine、Runtime 或固定 policy 表替模型回答“现在应该做什么”。
 

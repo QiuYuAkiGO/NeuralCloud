@@ -1,11 +1,20 @@
 # GA-02 · Opaque Interoception Channel
 
-> 状态：Planned  
+> 状态：Implemented
 > 仓库：NeuralCloud  
 > 前置条件：GA-01 已完成；MistyAI 已提供稳定的 `BodyStateSnapshot` 事实源  
 > 后续阶段：GA-03 Model-owned Structured Decision
 
 ## 1. 目的
+
+2026-09-05 实现记录：代码提交 `26528fb` 与 GA-03 共用一次完整 Runtime 接线提交。
+新增 `harness/research/interoception/` 的严格契约、可重放 transform、有限字母表 renderer 和 SQLite store。
+Runtime 将完整真值与 mapping 留在私有 journal，仅向 Cognitive 发送 opaque observation；采样使用可信时钟，外部事件时间不能提前释放延迟样本。
+拒绝陈旧或冲突 revision 后不改变内存状态，重启可重建采样记录与 terminal 状态。
+
+验证：`python -m pytest -q tests/research/interoception tests/research/grounded_agency tests/cognitive tests/runtime --basetemp .pytest-tmp/ga02-03-commit-1 --tb=short`，476 passed；相关源文件与测试 Ruff 通过。
+覆盖 direct/inverted、noise/delay、episode 映射、重复和恢复、current/history 真实模型输入、真值隔离与最终 messages 扫描。
+第一版只执行 `ordinal_symbols` 编码；其他编码显式拒绝。未运行真实设备或真实模型实验。
 
 建立一条从身体真值到模型可见内部信号的严格分层路径：
 
