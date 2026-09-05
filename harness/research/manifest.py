@@ -5,12 +5,13 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal, Mapping
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from harness.embodiment.capabilities import CapabilityRequirement
+from harness.research.grounded_agency.manifest import GroundedAgencyBinding, GroundedAgencyCondition
 
 ControlMode = Literal["development_debug", "study_runtime"]
 SelectionCondition = Literal["argmin_efe", "llm_top3", "llm_open"]
@@ -109,6 +110,7 @@ class ExperimentManifest(BaseModel):
         default_factory=HomeostaticExpressionCondition
     )
     embodiment: EmbodimentCondition = Field(default_factory=EmbodimentCondition)
+    grounded_agency: GroundedAgencyCondition | None = None
 
     @model_validator(mode="after")
     def _validate_study_authority(self) -> ExperimentManifest:
@@ -126,6 +128,14 @@ class ExperimentManifest(BaseModel):
             if missing:
                 raise ValueError(f"study_runtime manifest missing: {', '.join(missing)}")
         expression_mode = self.homeostatic_expression.mode
+        if self.grounded_agency is not None:
+            ga = self.grounded_agency
+            if ga.is_opaque and expression_mode != "off":
+                raise ValueError("opaque interoception requires homeostatic_expression.mode=off")
+            if ga.action_selection == "model_structured" and self.condition == "argmin_efe":
+                raise ValueError("model_structured forbids condition=argmin_efe")
+            if ga.action_selection == "engineered_argmin" and self.condition != "argmin_efe":
+                raise ValueError("engineered_argmin requires condition=argmin_efe")
         if expression_mode != "off":
             _profile_id, separator, revision_text = self.homeostatic_profile.rpartition("@")
             try:
@@ -153,8 +163,12 @@ class ExperimentManifest(BaseModel):
         return f"manifest://{self.experiment_id}/r{self.revision}"
 
     def canonical_json(self) -> str:
+        # An absent opt-in extension must not invalidate existing journal hashes.
+        payload = self.model_dump(mode="json")
+        if self.grounded_agency is None:
+            payload.pop("grounded_agency")
         return json.dumps(
-            self.model_dump(mode="json"),
+            payload,
             ensure_ascii=False,
             sort_keys=True,
             separators=(",", ":"),
@@ -162,6 +176,36 @@ class ExperimentManifest(BaseModel):
 
     def content_hash(self) -> str:
         return hashlib.sha256(self.canonical_json().encode("utf-8")).hexdigest()
+
+    def bind_condition(self) -> GroundedAgencyBinding:
+        if self.grounded_agency is None:
+            raise ValueError("grounded_agency must be configured before binding a condition")
+        return GroundedAgencyBinding(
+            experiment_id=self.experiment_id,
+            condition_id=self.grounded_agency.condition_id,
+            revision=self.revision,
+            manifest_hash=self.content_hash(),
+        )
+
+    def with_revision(self, **updates: Any) -> ExperimentManifest:
+        """Validate a replacement configuration under a strictly newer revision."""
+        payload = {**self.model_dump(mode="json"), "revision": self.revision + 1, **updates}
+        candidate = type(self).model_validate(payload)
+        if candidate.experiment_id != self.experiment_id:
+            raise ValueError("a manifest revision must retain experiment_id")
+        if candidate.revision <= self.revision:
+            raise ValueError("a manifest revision must increase revision")
+        return candidate
+
+    def model_copy(self, *, update: Mapping[str, Any] | None = None, deep: bool = False) -> ExperimentManifest:
+        # Pydantic's default copy bypasses validators; preserve it only for legacy callers.
+        if self.grounded_agency is None and (update or {}).get("grounded_agency") is None:
+            return super().model_copy(update=update, deep=deep)
+        candidate = type(self).model_validate({**self.model_dump(mode="json"), **(update or {})})
+        if candidate.content_hash() != self.content_hash():
+            if candidate.experiment_id != self.experiment_id or candidate.revision <= self.revision:
+                raise ValueError("grounded agency changes require a new manifest revision")
+        return candidate
 
 
 def load_experiment_manifest(path: Path) -> ExperimentManifest:

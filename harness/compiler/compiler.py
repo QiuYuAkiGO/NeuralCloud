@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from harness.config import Settings, get_settings
 from harness.core.inference import (
@@ -16,6 +16,14 @@ from harness.core.inference import (
 )
 from harness.core.models import PersonaCore, ScoredMemory
 from harness.homeostasis.models import HomeostaticInteroceptiveSummary
+from harness.research.grounded_agency.manifest import GroundedAgencyBinding
+from harness.research.grounded_agency.neutrality import (
+    NEUTRALITY_RULES_DIGEST,
+    NEUTRALITY_RULES_VERSION,
+    NeutralityReport,
+    NeutralityScanner,
+)
+from harness.research.manifest import ExperimentManifest
 
 
 MEMORY_EMPTY_CONSTRAINT = (
@@ -85,6 +93,31 @@ def fit_text(text: str, budget: int) -> str:
 class ContextCompiler:
     def __init__(self, settings: Settings | None = None) -> None:
         self.settings = settings or get_settings()
+
+    def validate_final_messages(
+        self,
+        messages: list[dict[str, Any]],
+        *,
+        manifest: ExperimentManifest,
+        binding: GroundedAgencyBinding | None = None,
+    ) -> NeutralityReport | None:
+        """Check the exact outbound payload after rendering and all prompt additions.
+
+        Callers must send these messages unchanged after validation. GA-01 exposes
+        this opt-in boundary; it does not install a new Runtime/model call route.
+        ModelContext provenance and evaluator-only configuration are never scanned.
+        """
+        if binding is not None:
+            binding.assert_matches(manifest)
+        condition = manifest.grounded_agency
+        if condition is None:
+            return None
+        if (
+            condition.neutrality_rules_version != NEUTRALITY_RULES_VERSION
+            or condition.neutrality_rules_digest != NEUTRALITY_RULES_DIGEST
+        ):
+            raise ValueError("manifest neutrality rules do not match the installed scanner")
+        return NeutralityScanner().assert_neutral(messages, opaque=condition.is_opaque)
 
     def compile(
         self,
