@@ -105,10 +105,10 @@ def test_composite_snapshot_profile_validation_and_revision(tmp_path) -> None:
         revision = client.post(
             "/v1/homeostasis/profile/revisions",
             headers=headers,
-            json={"base_revision": 2, "profile": profile},
+            json={"base_revision": 3, "profile": profile},
         )
         assert revision.status_code == 200
-        assert revision.json()["profile_ref"] == "functional-proxy-v1@3"
+        assert revision.json()["profile_ref"] == "functional-proxy-v1@4"
         assert revision.json()["restart_required"] is True
 
 
@@ -119,7 +119,7 @@ def test_study_runtime_rejects_profile_revision(tmp_path) -> None:
         response = client.post(
             "/v1/homeostasis/profile/revisions",
             headers=headers,
-            json={"base_revision": 2, "profile": profile},
+            json={"base_revision": 3, "profile": profile},
         )
         assert response.status_code == 403
 

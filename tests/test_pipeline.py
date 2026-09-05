@@ -4,9 +4,13 @@ import json
 from pathlib import Path
 
 from harness.config import Settings
-from harness.core.inference import ValidationResult
+from harness.core.inference import InteroceptiveState, ValidationResult
 from harness.core.models import CuratorOp, CuratorOutput, InteractionEvent
-from harness.llm.client import REVISED_IN_CHARACTER_REPLY
+from harness.llm.client import (
+    MockLLM,
+    REVISED_IN_CHARACTER_REPLY,
+    VIOLATING_CARE_REPLY,
+)
 from harness.pipeline.gateway import Gateway
 from harness.pipeline.pipeline import InferencePipeline
 from infra.trace.recorder import JsonlTracer
@@ -140,6 +144,62 @@ def test_session_window_keeps_recent_turns(service) -> None:
     assert turns[-1].role == "character"
 
 
+def test_user_path_never_retrieves_autonomous_assessment_rationale(service) -> None:
+    secret = "ASSESSMENT_RATIONALE_PRIVATE_MARKER"
+    service.record_event(
+        InteractionEvent(
+            event_id="reflection_private_marker",
+            timestamp=NOW,
+            channel="internal",
+            speaker="character",
+            modality="text",
+            raw_text=secret,
+            session_id="sess_reflection_filter",
+            evidence=["autonomous-text:audit-only"],
+        ),
+        generate_insight=False,
+        curate=False,
+        event_type="internal_reflection",
+        now=NOW,
+    )
+    stages: dict[str, object] = {}
+
+    class Observer:
+        def on_stage(self, kind, result, payload) -> None:
+            del payload
+            stages[kind] = result
+
+    llm = MockLLM(chat_script=["收到。"])
+    pipeline = InferencePipeline(
+        service,
+        settings=Settings(
+            validator_sample_rate=0.0,
+            record_interaction=False,
+            continuation_enabled=False,
+        ),
+        llm=llm,
+        observer=Observer(),
+    )
+
+    pipeline.respond(
+        "请继续。",
+        now=NOW,
+        session_id="sess_reflection_filter",
+    )
+
+    situation = stages["state_build"]
+    assert all(
+        memory.episodic is None
+        or memory.episodic.event_type != "internal_reflection"
+        for memory in situation.relevant_memories
+    )
+    compiled = stages["compile"]
+    assert secret not in "\n".join(segment.text for segment in compiled.segments)
+    assert secret not in "\n".join(
+        message["content"] for call in llm.chat_calls for message in call
+    )
+
+
 def test_custom_speaker_name_in_session_and_event(service) -> None:
     pipeline = InferencePipeline(
         service,
@@ -167,6 +227,241 @@ def test_gateway_standardizes_raw_text() -> None:
     assert event.session_id == "sess_g"
     assert event.channel == "chat"
     assert event.speaker == "user"
+
+
+def _marked_homeostatic_context() -> dict:
+    return {
+        "schema_version": "homeostatic-interoception-v1",
+        "profile_ref": "functional-proxy-v1@3",
+        "snapshot_revision": 12,
+        "salience": "marked",
+        "dominant_needs": [
+            {
+                "dimension": "cognitive_load",
+                "direction": "high",
+                "normalized_deviation": 0.75,
+                "trend": "worsening",
+                "confidence": 0.9,
+                "semantic_need": "需要降低负荷并简化当前任务",
+            }
+        ],
+        "emotion_hint": {"label": "strained", "intensity": 0.8},
+        "policy_refs": ["reduce_load"],
+        "episode_signature": "homeostasis:pipeline-test",
+    }
+
+
+def test_fast_path_always_revises_homeostatic_mechanism_leak(service) -> None:
+    llm = MockLLM(
+        chat_script=["我的内稳态系统显示 cognitive_load 偏离度=0.75。"]
+    )
+    pipeline = InferencePipeline(
+        service,
+        settings=Settings(
+            validator_sample_rate=0.0,
+            record_interaction=False,
+            continuation_enabled=False,
+        ),
+        llm=llm,
+    )
+
+    final = pipeline.respond(
+        "早上好。",
+        now=NOW,
+        session_id="sess_homeostatic_safety",
+        homeostatic_interoception=_marked_homeostatic_context(),
+    )
+
+    assert final.path == "fast"
+    assert final.revisions == 1
+    assert final.validation is not None
+    assert final.validation.verdict == "pass"
+    assert "内稳态系统" not in final.text
+    assert "cognitive_load" not in final.text
+
+
+def test_grounded_resource_allows_abstract_low_energy_expression(service) -> None:
+    llm = MockLLM(chat_script=["我现在精力有点低，想把事情说简单一点。"])
+    pipeline = InferencePipeline(
+        service,
+        settings=Settings(
+            validator_sample_rate=0.0,
+            record_interaction=False,
+            continuation_enabled=False,
+        ),
+        llm=llm,
+    )
+    grounded_resource = InteroceptiveState(
+        resource_label="internal_resource",
+        level="low",
+        trend=-0.2,
+        time_to_action_limit_seconds=900,
+        confidence=1.0,
+        captured_at=NOW,
+        evidence_refs=["body-state:test:12"],
+    )
+
+    final = pipeline.respond(
+        "早上好。",
+        now=NOW,
+        session_id="sess_grounded_homeostasis",
+        interoception=grounded_resource,
+        homeostatic_interoception=_marked_homeostatic_context(),
+    )
+
+    assert final.text == "我现在精力有点低，想把事情说简单一点。"
+    assert final.revisions == 0
+    assert final.validation is not None
+    assert final.validation.verdict == "pass"
+    prompt = "\n".join(
+        message["content"] for call in llm.chat_calls for message in call
+    )
+    assert "精力偏低" in prompt
+    assert "internal_resource" not in prompt
+    assert "level=" not in prompt
+    assert "trend=" not in prompt
+    assert "900" not in prompt
+    assert NOW.isoformat() not in prompt
+
+
+def test_repeated_homeostatic_safety_leak_fails_closed(service) -> None:
+    leak = "我的内稳态系统显示 cognitive_load 偏离度=0.75。"
+    llm = MockLLM(chat_routes={"": leak})
+    pipeline = InferencePipeline(
+        service,
+        settings=Settings(
+            validator_sample_rate=0.0,
+            max_revisions=1,
+            record_interaction=False,
+            continuation_enabled=False,
+        ),
+        llm=llm,
+    )
+
+    final = pipeline.respond(
+        "早上好。",
+        now=NOW,
+        session_id="sess_homeostatic_fail_closed",
+        homeostatic_interoception=_marked_homeostatic_context(),
+    )
+
+    assert len(llm.chat_calls) == 2
+    assert final.revisions == 1
+    assert final.text == ""
+    assert final.segments == []
+    assert final.validation is not None
+    assert final.validation.verdict == "revise"
+    assert "homeostatic_mechanism_leakage" in final.validation.violations
+
+
+def test_repeated_unsupported_physical_claim_fails_closed_without_summary(service) -> None:
+    leak = "我饿了，胃也很疼。"
+    llm = MockLLM(chat_routes={"": leak})
+    pipeline = InferencePipeline(
+        service,
+        settings=Settings(
+            validator_sample_rate=0.0,
+            max_revisions=1,
+            record_interaction=False,
+            continuation_enabled=False,
+        ),
+        llm=llm,
+    )
+
+    final = pipeline.respond(
+        "早上好。",
+        now=NOW,
+        session_id="sess_physical_safety_without_summary",
+    )
+
+    assert len(llm.chat_calls) == 2
+    assert final.revisions == 1
+    assert final.validation is not None
+    assert "unsupported_physical_claim" in final.validation.violations
+    assert final.text == ""
+    assert final.segments == []
+    assert final.validation.verdict == "revise"
+
+
+def test_fast_path_cannot_skip_unsupported_cardiorespiratory_claim(service) -> None:
+    leak = "I cannot breathe. My heart is racing."
+    llm = MockLLM(chat_routes={"": leak})
+    pipeline = InferencePipeline(
+        service,
+        settings=Settings(
+            validator_sample_rate=0.0,
+            max_revisions=1,
+            record_interaction=False,
+            continuation_enabled=False,
+        ),
+        llm=llm,
+    )
+
+    final = pipeline.respond(
+        "Good morning.",
+        now=NOW,
+        session_id="sess_cardiorespiratory_safety_without_summary",
+    )
+
+    assert len(llm.chat_calls) == 2
+    assert final.revisions == 1
+    assert final.text == ""
+    assert final.validation is not None
+    assert final.validation.verdict == "revise"
+    assert "unsupported_physical_claim" in final.validation.violations
+
+
+def test_repeated_mechanism_leak_fails_closed_without_summary(service) -> None:
+    leak = "我的内稳态系统显示 cognitive_load=0.75。"
+    llm = MockLLM(chat_routes={"": leak})
+    pipeline = InferencePipeline(
+        service,
+        settings=Settings(
+            validator_sample_rate=0.0,
+            max_revisions=1,
+            record_interaction=False,
+            continuation_enabled=False,
+        ),
+        llm=llm,
+    )
+
+    final = pipeline.respond(
+        "早上好。",
+        now=NOW,
+        session_id="sess_mechanism_safety_without_summary",
+    )
+
+    assert len(llm.chat_calls) == 2
+    assert final.revisions == 1
+    assert final.validation is not None
+    assert "homeostatic_mechanism_leakage" in final.validation.violations
+    assert final.text == ""
+
+
+def test_ordinary_persona_violation_keeps_existing_exhaustion_behavior(service) -> None:
+    llm = MockLLM(chat_routes={"": VIOLATING_CARE_REPLY})
+    pipeline = InferencePipeline(
+        service,
+        settings=Settings(
+            validator_sample_rate=0.0,
+            max_revisions=0,
+            record_interaction=False,
+            continuation_enabled=False,
+        ),
+        llm=llm,
+    )
+
+    final = pipeline.respond(
+        "早上好。",
+        now=NOW,
+        session_id="sess_persona_exhaustion",
+        homeostatic_interoception=_marked_homeostatic_context(),
+    )
+
+    assert final.text == VIOLATING_CARE_REPLY
+    assert final.validation is not None
+    assert "direct_care_expression" in final.validation.violations
+    assert "homeostatic_mechanism_leakage" not in final.validation.violations
 
 
 def test_trace_covers_inference_stages(service, tmp_path: Path) -> None:

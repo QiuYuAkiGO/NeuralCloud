@@ -38,6 +38,7 @@ from harness.contracts.envelope import (
 )
 from harness.core.inference import ContextSegment, FinalResponse, InteroceptiveState, SessionTurn
 from harness.core.models import InteractionEvent
+from harness.homeostasis.models import HomeostaticInteroceptiveSummary
 from harness.pipeline.pipeline import InferencePipeline
 
 
@@ -137,6 +138,53 @@ def _utc_now() -> datetime:
     return datetime.now(UTC)
 
 
+def _validated_homeostatic_interoception(
+    command: DomainCommandEnvelope[dict[str, Any]],
+) -> HomeostaticInteroceptiveSummary | None:
+    profile_marker = command.payload.get("homeostatic_profile_ref")
+    require_summary = False
+    if profile_marker is not None:
+        if not isinstance(profile_marker, str) or not profile_marker.strip():
+            raise ValueError("homeostatic_profile_ref must be a non-empty string")
+        _, separator, revision_text = profile_marker.rpartition("@")
+        if not separator:
+            raise ValueError("homeostatic_profile_ref must end with @<revision>")
+        try:
+            profile_revision = int(revision_text)
+        except ValueError as exc:
+            raise ValueError(
+                "homeostatic_profile_ref must end with an integer revision"
+            ) from exc
+        if profile_revision < 1:
+            raise ValueError("homeostatic_profile_ref revision must be positive")
+        require_summary = profile_revision >= 3
+
+    raw = command.payload.get("homeostatic_interoception")
+    if raw is None:
+        if require_summary:
+            raise ValueError(
+                "homeostatic interoception is required for profile revision 3 or later"
+            )
+        return None
+    summary = HomeostaticInteroceptiveSummary.model_validate(raw)
+    if profile_marker is not None and summary.profile_ref != profile_marker:
+        raise ValueError(
+            "homeostatic interoception profile mismatch: "
+            f"summary={summary.profile_ref}, marker={profile_marker}"
+        )
+    if command.version_vector is None:
+        raise ValueError("homeostatic interoception requires a version vector")
+    expected_revision = command.version_vector.homeostasis_state
+    if summary.snapshot_revision != expected_revision:
+        raise ValueError(
+            "homeostatic interoception revision mismatch: "
+            f"summary={summary.snapshot_revision}, version_vector={expected_revision}"
+        )
+    if summary.salience == "critical":
+        raise ValueError("critical homeostatic state must pause before cognitive invocation")
+    return summary
+
+
 class PipelineCognitiveAdapter:
     """Idempotent PrepareResponse/CommitInteraction boundary for M2 Pipeline.
 
@@ -226,6 +274,15 @@ class PipelineCognitiveAdapter:
             reconsideration = mode == "reconsideration"
             internal = autonomous or reconsideration
             session_id = str(payload.get("session_id") or self.default_session_id)
+            try:
+                homeostatic_interoception = _validated_homeostatic_interoception(command)
+            except Exception as exc:
+                result = self._failure(command, f"invalid homeostatic interoception: {exc}")
+                self._remember(command, result)
+                self._persist_state()
+                return DomainCommandResult[PreparedResponse].model_validate(
+                    result.model_dump(mode="json")
+                )
             assessment = None
             if autonomous:
                 try:
@@ -251,23 +308,41 @@ class PipelineCognitiveAdapter:
             context_segments: list[ContextSegment] = []
             if isinstance(interoception_payload, dict):
                 if "resource_label" in interoception_payload:
-                    interoception = InteroceptiveState.model_validate(interoception_payload)
+                    cognitive_payload = dict(interoception_payload)
+                    source_revision = cognitive_payload.pop("source_revision", None)
+                    if "evidence_refs" not in cognitive_payload:
+                        if not isinstance(source_revision, int) or source_revision < 0:
+                            raise ValueError(
+                                "redacted interoception requires a non-negative source_revision"
+                            )
+                        cognitive_payload["evidence_refs"] = [
+                            f"body-state:{source_revision}"
+                        ]
+                    interoception = InteroceptiveState.model_validate(cognitive_payload)
                 elif "resource_level" in interoception_payload:
                     level = float(interoception_payload["resource_level"])
                     trend = float(interoception_payload["resource_trend"])
-                    time_to_limit = interoception_payload.get("estimated_time_to_limit_seconds")
-                    text = f"Interoceptive resource measurement: level={level:.4f}; trend={trend:.4f}"
-                    if time_to_limit is not None:
-                        text += f"; estimated_time_to_limit_seconds={int(time_to_limit)}"
-                    context_segments.append(
-                        ContextSegment(
-                            kind="interoception",
-                            text=text,
-                            source_ids=[
-                                f"body-state:{int(interoception_payload['source_revision'])}"
-                            ],
-                            why="current_resource_measurement",
-                        )
+                    if level <= 0.1:
+                        semantic_level = "critical"
+                    elif level < 0.3:
+                        semantic_level = "low"
+                    elif level < 0.7:
+                        semantic_level = "nominal"
+                    elif level < 0.98:
+                        semantic_level = "high"
+                    else:
+                        semantic_level = "full"
+                    source_revision = int(interoception_payload["source_revision"])
+                    interoception = InteroceptiveState(
+                        resource_label="internal_resource",
+                        level=semantic_level,
+                        trend=max(-1.0, min(1.0, trend)),
+                        time_to_action_limit_seconds=interoception_payload.get(
+                            "estimated_time_to_limit_seconds"
+                        ),
+                        confidence=float(interoception_payload.get("confidence", 1.0)),
+                        captured_at=source_time,
+                        evidence_refs=[f"body-state:{source_revision}"],
                     )
             try:
                 if autonomous and assessment is not None:
@@ -284,6 +359,7 @@ class PipelineCognitiveAdapter:
                         now=command.issued_at,
                         call_id=payload.get("call_id"),
                         interoception=interoception,
+                        homeostatic_interoception=homeostatic_interoception,
                     )
                 else:
                     final = await asyncio.to_thread(
@@ -293,6 +369,7 @@ class PipelineCognitiveAdapter:
                         call_id=payload.get("call_id"),
                         context_segments=context_segments,
                         interoception=interoception,
+                        homeostatic_interoception=homeostatic_interoception,
                     )
                 now = _utc_now()
                 read_versions = command.version_vector or self._version_vector()
@@ -382,6 +459,7 @@ class PipelineCognitiveAdapter:
             channel = str(payload.get("channel") or "chat")
             assessment_id = assessment_id_for(command.idempotency_key)
             try:
+                homeostatic_interoception = _validated_homeostatic_interoception(command)
                 run = await asyncio.to_thread(
                     run_or_load_assessment,
                     pipeline=self.pipeline,
@@ -392,6 +470,7 @@ class PipelineCognitiveAdapter:
                     channel=channel,
                     homeostasis=dict(payload.get("homeostasis") or {}),
                     policies=[dict(item) for item in (payload.get("policies") or [])],
+                    homeostatic_interoception=homeostatic_interoception,
                 )
                 memory_ref: str | None = None
                 if run.decision == "speak":

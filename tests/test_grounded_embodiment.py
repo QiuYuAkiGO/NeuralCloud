@@ -215,7 +215,7 @@ def test_absolute_observation_uses_frozen_gain_without_coupling(tmp_path) -> Non
     asyncio.run(scenario())
 
 
-def test_context_compiler_uses_neutral_or_blinded_resource_labels() -> None:
+def test_context_compiler_renders_only_semantic_resource_context() -> None:
     for label in ("internal_resource", "resource_A"):
         interoception = InteroceptiveState(
             resource_label=label,
@@ -234,7 +234,13 @@ def test_context_compiler_uses_neutral_or_blinded_resource_labels() -> None:
         )
         context = ContextCompiler(Settings(context_token_budget=500)).compile(situation)
         segment = next(item for item in context.segments if item.kind == "interoception")
-        assert label in segment.text
+        assert "精力偏低" in segment.text
+        assert "精力还在下降" in segment.text
+        assert label not in segment.text
+        assert "level=" not in segment.text
+        assert "trend=" not in segment.text
+        assert "1200" not in segment.text
+        assert NOW.isoformat() not in segment.text
         assert "emotion" not in segment.text
         assert "recommend" not in segment.text
         assert "threshold" not in segment.text

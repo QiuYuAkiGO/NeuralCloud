@@ -3,15 +3,19 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
+from harness.compiler.compiler import render_homeostatic_interoception
+from harness.homeostasis.models import HomeostaticInteroceptiveSummary
 from harness.llm.client import ChatResult, resolve_aux_endpoint
+from harness.validator.validator import contains_homeostatic_mechanism_leak
 
-AUTONOMOUS_PROMPT_VERSION = "autonomous-assessment-v1"
+AUTONOMOUS_PROMPT_VERSION = "autonomous-assessment-v2"
 _FINAL_BODY_MARKER = "--- FINAL BODY ---"
 _ATTEMPTS_MARKER = "--- ATTEMPTS ---"
 
@@ -19,6 +23,8 @@ _SYSTEM = """你负责判断角色是否应在没有用户新消息时主动开�
 这不是让你代替角色说话，而是一次私下、克制的内部判断。
 只有当现在开口对关系、边界、安全或明确的内在需要确有价值时才选择 SPEAK；
 普通的时间流逝、轻微波动、无明确对象的冲动都选择 SILENT。
+较明显的内在需要可以成为开口理由，但并不强制 SPEAK；仍需判断此刻表达感受、需要或边界是否自然且有价值。
+不要在理由中复述任何内部标签、指标、数值、策略编号或形成机制。
 
 输出必须是纯文本：首个非空行只能是 SILENT 或 SPEAK。
 之后用简短自然语言记录判断理由。不要输出 JSON、Markdown 代码块或准备发送给用户的话。
@@ -41,6 +47,7 @@ class AssessmentRun:
     evaluator: Literal["aux", "main_fallback", "forced_silent"]
     model_version: str
     prompt_version: str
+    input_hash: str
     evaluated_at: datetime
     record_ref: str
     attempts: tuple[AssessmentAttempt, ...] = ()
@@ -67,6 +74,8 @@ def parse_assessment_output(text: str) -> tuple[Literal["silent", "speak"], str]
     body = "\n".join(lines[first + 1 :]).strip()
     if marker == "speak" and not body:
         return None
+    if contains_homeostatic_mechanism_leak(body):
+        return None
     return marker, body  # type: ignore[return-value]
 
 
@@ -80,11 +89,9 @@ def run_or_load_assessment(
     channel: str,
     homeostasis: dict[str, Any],
     policies: list[dict[str, Any]],
+    homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
 ) -> AssessmentRun:
     target = assessment_record_path(log_dir, assessment_id, evaluated_at)
-    if target.is_file():
-        return load_assessment_record(target)
-
     messages = _assessment_messages(
         pipeline=pipeline,
         evaluated_at=evaluated_at,
@@ -92,7 +99,27 @@ def run_or_load_assessment(
         channel=channel,
         homeostasis=homeostasis,
         policies=policies,
+        homeostatic_interoception=homeostatic_interoception,
     )
+    input_hash = hashlib.sha256(
+        json.dumps(
+            messages,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    if target.is_file():
+        try:
+            cached = load_assessment_record(target)
+        except (KeyError, TypeError, ValueError):
+            cached = None
+        if cached is not None:
+            if (
+                cached.prompt_version == AUTONOMOUS_PROMPT_VERSION
+                and cached.input_hash == input_hash
+            ):
+                return cached
     attempts: list[AssessmentAttempt] = []
     decision: Literal["silent", "speak"] = "silent"
     body = "判定模型不可用，保持静默。"
@@ -155,6 +182,7 @@ def run_or_load_assessment(
         evaluator=evaluator,
         model_version=model_version,
         prompt_version=AUTONOMOUS_PROMPT_VERSION,
+        input_hash=input_hash,
         evaluated_at=evaluated_at,
         record_ref=str(target),
         attempts=tuple(attempts),
@@ -181,13 +209,17 @@ def load_assessment_record(path: Path) -> AssessmentRun:
     if evaluator not in {"aux", "main_fallback", "forced_silent"}:
         raise ValueError(f"invalid assessment evaluator in {path}")
     evaluated_at = datetime.fromisoformat(metadata["evaluated_at"])
+    body = body_text.strip()
+    if (decision == "speak" and not body) or contains_homeostatic_mechanism_leak(body):
+        raise ValueError(f"unsafe assessment body in {path}")
     return AssessmentRun(
         assessment_id=metadata["assessment_id"],
         decision=decision,  # type: ignore[arg-type]
-        body=body_text.strip(),
+        body=body,
         evaluator=evaluator,  # type: ignore[arg-type]
         model_version=metadata["model_version"],
         prompt_version=metadata["prompt_version"],
+        input_hash=metadata.get("input_hash", ""),
         evaluated_at=evaluated_at,
         record_ref=str(path.resolve()),
         attempts=(AssessmentAttempt("record", "valid", output=attempts_text.strip()),),
@@ -204,13 +236,14 @@ def _write_assessment_record(path: Path, run: AssessmentRun) -> None:
             attempts.append(attempt.error.rstrip())
     content = "\n".join(
         [
-            "AUTONOMOUS_ASSESSMENT_V1",
+            "AUTONOMOUS_ASSESSMENT_V2",
             f"assessment_id: {run.assessment_id}",
             f"evaluated_at: {run.evaluated_at.isoformat()}",
             f"decision: {run.decision}",
             f"evaluator: {run.evaluator}",
             f"model_version: {run.model_version}",
             f"prompt_version: {run.prompt_version}",
+            f"input_hash: {run.input_hash}",
             _FINAL_BODY_MARKER,
             run.body,
             _ATTEMPTS_MARKER,
@@ -235,6 +268,7 @@ def _assessment_messages(
     channel: str,
     homeostasis: dict[str, Any],
     policies: list[dict[str, Any]],
+    homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
 ) -> list[dict[str, str]]:
     snapshot = pipeline.memory.get_state(now=evaluated_at)
     persona = snapshot.persona.identity if snapshot.persona else None
@@ -265,26 +299,14 @@ def _assessment_messages(
         lines.append(
             f"环境：presence={snapshot.world.user_presence}，activity={snapshot.world.user_activity}"
         )
-    state = dict(homeostasis.get("snapshot") or homeostasis)
-    emotion = state.get("emotion") or {}
-    if isinstance(emotion, dict) and emotion:
+    if homeostatic_interoception is not None:
         lines.append(
-            f"内稳态情绪：{emotion.get('label', 'unknown')}，强度={emotion.get('intensity', '?')}"
-        )
-    dimensions = state.get("dimensions") or {}
-    if isinstance(dimensions, dict) and dimensions:
-        values = []
-        for name, item in dimensions.items():
-            value = item.get("value") if isinstance(item, dict) else item
-            values.append(f"{name}={value}")
-        lines.append("内稳态维度：" + "，".join(values))
-    if policies:
-        policy_lines = []
-        for policy in policies:
-            policy_lines.append(
-                f"rank={policy.get('rank', '?')} {policy.get('policy_id', '?')}：{policy.get('label', '')}"
+            "角色的内在表达线索："
+            + render_homeostatic_interoception(
+                homeostatic_interoception,
+                purpose="assessment",
             )
-        lines.append("候选策略：\n" + "\n".join(policy_lines))
+        )
     if recent:
         dialogue = "\n".join(f"{turn.speaker or turn.role}：{turn.text}" for turn in recent)
         lines.append("最近真实对话：\n" + dialogue)

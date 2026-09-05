@@ -47,7 +47,15 @@ class SituationStateBuilder:
         fut_state = self._pool.submit(copy_context().run, self._get_state, moment)
         fut_mem = self._pool.submit(copy_context().run, self.memory.query, query)
         snapshot = fut_state.result()
-        memories = fut_mem.result()
+        # Autonomous-assessment rationales are durable audit artifacts, not
+        # conversational evidence. Older state directories may contain them,
+        # so exclude them at the shared retrieval boundary for every path.
+        memories = [
+            memory
+            for memory in fut_mem.result()
+            if memory.episodic is None
+            or memory.episodic.event_type != "internal_reflection"
+        ]
 
         persona_ref = snapshot.persona.persona_id if snapshot.persona else None
         psych_short = dict(snapshot.psych.short) if snapshot.psych else {}

@@ -9,7 +9,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 SCHEMA_VERSION = "state-v1"
-PROMPT_VERSION = "memory-v1"
+PROMPT_VERSION = "homeostatic-interoception-v1"
 DEFAULT_EMBEDDING_DIM = 1024
 DEFAULT_EMBEDDING_BASE_URL = "http://127.0.0.1:8080/v1"
 

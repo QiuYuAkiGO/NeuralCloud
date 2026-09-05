@@ -448,7 +448,7 @@ python -m gui.server   # http://127.0.0.1:8766
 | GUI | `NC_GUI_CONFIG`（默认 `data/gui_settings.json`）、`NC_GUI_PRESETS`（默认 `data/presets/`） |
 | Embodiment | `NC_EMBODIMENT_PROVIDER`（`none`/`mistyai`/`simulator`）；MistyAI 的 `NC_MISTYAI_BASE_URL` / `NC_MISTYAI_TOKEN` / timeout / poll；Simulator 的 seed / offline / observation-only / physiology |
 
-版本戳：`NC_SCHEMA_VERSION`（state-v1）/ `NC_PROMPT_VERSION`（memory-v1）/ `NC_MODEL_VERSION`，随每条 trace 落盘。
+版本戳：`NC_SCHEMA_VERSION`（state-v1）/ `NC_PROMPT_VERSION`（homeostatic-interoception-v1）/ `NC_MODEL_VERSION`，随每条 trace 落盘。
 
 **注意**：`get_settings()` 有进程内 `lru_cache`；测试或多次改环境变量时应显式构造 `Settings(...)` 传入 Service，不要依赖缓存。
 

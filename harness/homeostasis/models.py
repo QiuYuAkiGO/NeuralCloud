@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 from datetime import datetime
 from typing import Literal
@@ -17,6 +19,10 @@ DimensionName = Literal[
     "social_connection",
     "novelty",
 ]
+
+HomeostaticSalience = Literal["nominal", "noticeable", "marked", "critical"]
+HomeostaticDeviationDirection = Literal["low", "high"]
+HomeostaticTrend = Literal["worsening", "steady", "recovering"]
 
 DIMENSIONS: tuple[DimensionName, ...] = (
     "energy_reserve",
@@ -84,6 +90,11 @@ class HomeostaticProfile(BaseModel):
     emotion_minimum_hold_seconds: int = Field(default=180, ge=0, le=86400)
     max_heartbeat_step_seconds: int = Field(default=90, ge=1, le=3600)
     watchdog_boundary_heartbeats: int | None = Field(default=None, ge=2, le=60)
+    interoception_profile_version: str = "interoception-v1"
+    salience_noticeable_enter: float = Field(default=0.25, ge=0.0, le=1.0)
+    salience_marked_enter: float = Field(default=0.50, ge=0.0, le=1.0)
+    salience_noticeable_exit: float = Field(default=0.15, ge=0.0, le=1.0)
+    salience_marked_exit: float = Field(default=0.35, ge=0.0, le=1.0)
 
     @field_validator("source_precision")
     @classmethod
@@ -120,6 +131,24 @@ class HomeostaticProfile(BaseModel):
         if expected_semantics is not None and self.coupling_semantics != expected_semantics:
             raise ValueError(
                 f"{self.coupling_matrix_version} requires coupling_semantics={expected_semantics}"
+            )
+        if not (
+            self.salience_noticeable_exit
+            < self.salience_noticeable_enter
+            < self.salience_marked_enter
+        ):
+            raise ValueError(
+                "salience thresholds must satisfy noticeable_exit < "
+                "noticeable_enter < marked_enter"
+            )
+        if not (
+            self.salience_noticeable_exit
+            < self.salience_marked_exit
+            < self.salience_marked_enter
+        ):
+            raise ValueError(
+                "salience thresholds must satisfy noticeable_exit < "
+                "marked_exit < marked_enter"
             )
         return self
 
@@ -231,10 +260,59 @@ class PolicyCandidate(BaseModel):
     rank: int = Field(ge=1)
 
 
+class HomeostaticDominantNeed(BaseModel):
+    """One model-safe semantic need derived from a homeostatic factor."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    dimension: DimensionName
+    direction: HomeostaticDeviationDirection
+    normalized_deviation: float = Field(ge=0.0, le=1.0)
+    trend: HomeostaticTrend
+    confidence: float = Field(ge=0.0, le=1.0)
+    semantic_need: str = Field(min_length=1, max_length=160)
+
+    @model_validator(mode="after")
+    def _validate_canonical_semantics(self) -> HomeostaticDominantNeed:
+        expected = _SEMANTIC_NEEDS.get((self.dimension, self.direction))
+        if expected is None or self.semantic_need != expected:
+            raise ValueError(
+                "semantic_need must be the canonical text for dimension and direction"
+            )
+        return self
+
+
+class HomeostaticEmotionHint(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    label: str = Field(min_length=1, max_length=64)
+    intensity: float = Field(ge=0.0, le=1.0)
+
+
+class HomeostaticInteroceptiveSummary(BaseModel):
+    """Versioned, model-safe projection of the authoritative factor state."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    schema_version: Literal["homeostatic-interoception-v1"] = (
+        "homeostatic-interoception-v1"
+    )
+    profile_ref: str = Field(min_length=1, max_length=160)
+    snapshot_revision: int = Field(ge=0)
+    salience: HomeostaticSalience
+    dominant_needs: list[HomeostaticDominantNeed] = Field(
+        default_factory=list,
+        max_length=3,
+    )
+    emotion_hint: HomeostaticEmotionHint | None = None
+    policy_refs: list[str] = Field(default_factory=list, max_length=3)
+    episode_signature: str = Field(min_length=1, max_length=96)
+
+
 class HomeostaticSnapshot(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    schema_version: Literal["homeostasis-state-v1"] = "homeostasis-state-v1"
+    schema_version: Literal["homeostasis-state-v2"] = "homeostasis-state-v2"
     revision: int = Field(default=0, ge=0)
     profile_id: str
     profile_revision: int = Field(ge=1)
@@ -248,11 +326,36 @@ class HomeostaticSnapshot(BaseModel):
     updated_at: AwareDatetime
     stable_snapshot_ref: str | None = None
     watchdog: list[str] = Field(default_factory=list)
+    interoceptive_summary: HomeostaticInteroceptiveSummary | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_v1_payload(cls, value: object) -> object:
+        """Accept persisted v1 snapshots; the engine supplies their derived summary."""
+
+        if isinstance(value, dict) and value.get("schema_version") == "homeostasis-state-v1":
+            migrated = dict(value)
+            migrated["schema_version"] = "homeostasis-state-v2"
+            migrated.setdefault("interoceptive_summary", None)
+            return migrated
+        return value
 
     @model_validator(mode="after")
     def _validate_dimensions(self) -> HomeostaticSnapshot:
         if set(self.dimensions) != set(DIMENSIONS):
             raise ValueError("snapshot must contain all seven dimensions")
+        if self.interoceptive_summary is not None:
+            if self.interoceptive_summary.snapshot_revision != self.revision:
+                raise ValueError("interoceptive summary revision must match snapshot revision")
+            expected_ref = f"{self.profile_id}@{self.profile_revision}"
+            if self.interoceptive_summary.profile_ref != expected_ref:
+                raise ValueError("interoceptive summary profile_ref must match snapshot")
+            if bool(self.watchdog) != (
+                self.interoceptive_summary.salience == "critical"
+            ):
+                raise ValueError(
+                    "snapshot watchdog presence must match critical summary salience"
+                )
         return self
 
 
@@ -301,7 +404,7 @@ def initial_snapshot(profile: HomeostaticProfile, *, now: datetime) -> Homeostat
         entered_at=now,
         minimum_hold_seconds=profile.emotion_minimum_hold_seconds,
     )
-    return HomeostaticSnapshot(
+    snapshot = HomeostaticSnapshot(
         profile_id=profile.profile_id,
         profile_revision=profile.revision,
         dimensions=factors,
@@ -309,3 +412,197 @@ def initial_snapshot(profile: HomeostaticProfile, *, now: datetime) -> Homeostat
         emotion=emotion,
         updated_at=now,
     )
+    return snapshot.model_copy(
+        update={
+            "interoceptive_summary": build_interoceptive_summary(
+                profile,
+                revision=snapshot.revision,
+                factors=factors,
+                affect=affect,
+                emotion=emotion,
+                candidates=[],
+                watchdog=[],
+            )
+        }
+    )
+
+
+_SEMANTIC_NEEDS: dict[
+    tuple[DimensionName, HomeostaticDeviationDirection], str
+] = {
+    ("energy_reserve", "low"): "需要降低消耗并恢复可用精力",
+    ("energy_reserve", "high"): "有余力承担更充分的投入",
+    ("cognitive_load", "low"): "需要适量参与以保持专注",
+    ("cognitive_load", "high"): "需要降低负荷并简化当前任务",
+    ("safety_predictability", "low"): "需要更多确定性、澄清与安全边界",
+    ("safety_predictability", "high"): "可以容纳少量不确定性和变化",
+    ("competence", "low"): "需要一个可验证的小进展来恢复把握",
+    ("competence", "high"): "需要更有挑战、能发挥能力的目标",
+    ("autonomy", "low"): "需要保留选择权并重新协商边界",
+    ("autonomy", "high"): "可以主动承担更多选择和责任",
+    ("social_connection", "low"): "需要低压力的连接与被理解",
+    ("social_connection", "high"): "需要留出独处空间并降低社交密度",
+    ("novelty", "low"): "需要一点轻量的新鲜感或探索",
+    ("novelty", "high"): "需要减少新刺激并回到熟悉节奏",
+}
+
+
+def normalized_homeostatic_deviation(
+    profile: HomeostaticProfile,
+    factor: FactorBelief,
+) -> tuple[HomeostaticDeviationDirection | None, float]:
+    """Scale target-band departure to the relevant hard bound and clamp to one."""
+
+    low, high = factor.target_band
+    hard_low, hard_high = profile.dimensions[factor.dimension].hard_bounds
+    if factor.value < low:
+        span = low - hard_low
+        return "low", _bounded_ratio(low - factor.value, span)
+    if factor.value > high:
+        span = hard_high - high
+        return "high", _bounded_ratio(factor.value - high, span)
+    return None, 0.0
+
+
+def derive_homeostatic_salience(
+    profile: HomeostaticProfile,
+    factors: dict[DimensionName, FactorBelief],
+    *,
+    previous: HomeostaticSalience | None = None,
+    watchdog: list[str] | None = None,
+) -> HomeostaticSalience:
+    """Derive a hysteretic salience tier independently of emotion labeling."""
+
+    if watchdog:
+        return "critical"
+    deviations = [normalized_homeostatic_deviation(profile, item)[1] for item in factors.values()]
+    noticeable_enter_count = sum(
+        _meets_threshold(value, profile.salience_noticeable_enter) for value in deviations
+    )
+    if (
+        any(_meets_threshold(value, profile.salience_marked_enter) for value in deviations)
+        or noticeable_enter_count >= 2
+    ):
+        return "marked"
+    if previous in {"marked", "critical"}:
+        if (
+            any(_meets_threshold(value, profile.salience_marked_exit) for value in deviations)
+            or sum(
+                _meets_threshold(value, profile.salience_noticeable_exit)
+                for value in deviations
+            )
+            >= 2
+        ):
+            return "marked"
+        if any(
+            _meets_threshold(value, profile.salience_noticeable_exit)
+            for value in deviations
+        ):
+            return "noticeable"
+        return "nominal"
+    if previous == "noticeable":
+        if any(
+            _meets_threshold(value, profile.salience_noticeable_exit)
+            for value in deviations
+        ):
+            return "noticeable"
+        return "nominal"
+    if noticeable_enter_count:
+        return "noticeable"
+    return "nominal"
+
+
+def build_interoceptive_summary(
+    profile: HomeostaticProfile,
+    *,
+    revision: int,
+    factors: dict[DimensionName, FactorBelief],
+    affect: CoreAffect,
+    emotion: DerivedEmotion,
+    candidates: list[PolicyCandidate],
+    watchdog: list[str],
+    previous_salience: HomeostaticSalience | None = None,
+    salience: HomeostaticSalience | None = None,
+) -> HomeostaticInteroceptiveSummary:
+    """Build the deterministic semantic projection consumed by response systems."""
+
+    resolved_salience = salience or derive_homeostatic_salience(
+        profile,
+        factors,
+        previous=previous_salience,
+        watchdog=watchdog,
+    )
+    if bool(watchdog) != (resolved_salience == "critical"):
+        raise ValueError(
+            "watchdog presence must match critical interoceptive salience"
+        )
+    ranked: list[
+        tuple[float, int, DimensionName, HomeostaticDeviationDirection, FactorBelief]
+    ] = []
+    for order, dimension in enumerate(DIMENSIONS):
+        factor = factors[dimension]
+        direction, deviation = normalized_homeostatic_deviation(profile, factor)
+        if direction is not None and _meets_threshold(
+            deviation,
+            profile.salience_noticeable_exit,
+        ):
+            ranked.append((deviation, order, dimension, direction, factor))
+    ranked.sort(key=lambda item: (-item[0], item[1]))
+    needs: list[HomeostaticDominantNeed] = []
+    for deviation, _order, dimension, direction, factor in ranked[:3]:
+        if abs(factor.velocity) <= 1e-9:
+            trend: HomeostaticTrend = "steady"
+        else:
+            moving_lower = factor.velocity < 0.0
+            worsening = moving_lower if direction == "low" else not moving_lower
+            trend = "worsening" if worsening else "recovering"
+        needs.append(
+            HomeostaticDominantNeed(
+                dimension=dimension,
+                direction=direction,
+                normalized_deviation=round(deviation, 6),
+                trend=trend,
+                confidence=factor.precision,
+                semantic_need=_SEMANTIC_NEEDS[(dimension, direction)],
+            )
+        )
+    need_dimensions = {item.dimension for item in needs}
+    policy_refs = [
+        item.policy_id for item in candidates if item.source_drive in need_dimensions
+    ][:3]
+    signature_payload = {
+        "profile_ref": profile.profile_ref,
+        "salience": resolved_salience,
+        "needs": sorted([item.dimension, item.direction] for item in needs),
+        "watchdog": sorted(watchdog),
+    }
+    digest = hashlib.sha256(
+        json.dumps(signature_payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:20]
+    emotion_label = emotion.label
+    if resolved_salience in {"marked", "critical"} and emotion_label == "settled":
+        emotion_label = "strained" if affect.arousal > 0.55 else "attentive"
+    return HomeostaticInteroceptiveSummary(
+        profile_ref=profile.profile_ref,
+        snapshot_revision=revision,
+        salience=resolved_salience,
+        dominant_needs=needs,
+        emotion_hint=HomeostaticEmotionHint(
+            label=emotion_label,
+            intensity=emotion.intensity,
+        ),
+        policy_refs=policy_refs,
+        episode_signature=f"homeostasis:{digest}",
+    )
+
+
+def _bounded_ratio(numerator: float, denominator: float) -> float:
+    if denominator <= 1e-12:
+        return 1.0 if numerator > 0.0 else 0.0
+    return max(0.0, min(1.0, numerator / denominator))
+
+
+def _meets_threshold(value: float, threshold: float) -> bool:
+    """Treat decimal profile thresholds as inclusive despite float round-off."""
+
+    return value >= threshold - 1e-9

@@ -29,6 +29,19 @@ def _profile() -> HomeostaticProfile:
     return load_profile("presets/homeostasis/functional-proxy-v1.json")
 
 
+def _snapshot_at_revision(revision: int):
+    snapshot = initial_snapshot(_profile(), now=NOW)
+    assert snapshot.interoceptive_summary is not None
+    return snapshot.model_copy(
+        update={
+            "revision": revision,
+            "interoceptive_summary": snapshot.interoceptive_summary.model_copy(
+                update={"snapshot_revision": revision}
+            ),
+        }
+    )
+
+
 def _command(*, sequence: int = 1, expected_revision: int = 0, at: datetime = NOW):
     return DomainCommandEnvelope[dict](
         command_type="ApplyEvent",
@@ -364,7 +377,7 @@ def test_sqlite_ledger_bounds_cache_and_replays_evicted_command(tmp_path) -> Non
 
 def test_legacy_json_ledger_is_imported_without_rewriting_source(tmp_path) -> None:
     legacy = tmp_path / "command-ledger.json"
-    snapshot = initial_snapshot(_profile(), now=NOW).model_copy(update={"revision": 1})
+    snapshot = _snapshot_at_revision(1)
     (tmp_path / "snapshot.json").write_text(
         snapshot.model_dump_json(indent=2),
         encoding="utf-8",
@@ -444,9 +457,7 @@ def test_sqlite_commit_failure_does_not_advance_memory_or_idempotency(
 
 def test_sqlite_ledger_rejects_key_overwrite_and_snapshot_rollback(tmp_path) -> None:
     ledger = CommandLedger(tmp_path)
-    first_snapshot = initial_snapshot(_profile(), now=NOW).model_copy(
-        update={"revision": 1}
-    )
+    first_snapshot = _snapshot_at_revision(1)
     first_trace = HomeostaticTransitionTrace(
         revision=1,
         command_type="ApplyEvent",
@@ -479,7 +490,7 @@ def test_sqlite_ledger_rejects_key_overwrite_and_snapshot_rollback(tmp_path) -> 
         trace=first_trace,
     )
 
-    second_snapshot = first_snapshot.model_copy(update={"revision": 2})
+    second_snapshot = _snapshot_at_revision(2)
     second_trace = {**first_trace, "revision": 2, "event_id": "evt-second"}
     second_result = first_result.model_copy(
         update={
@@ -531,7 +542,7 @@ def test_corrupt_legacy_migration_is_not_marked_complete(tmp_path) -> None:
 
 
 def test_legacy_result_cannot_advance_beyond_authoritative_snapshot(tmp_path) -> None:
-    snapshot = initial_snapshot(_profile(), now=NOW).model_copy(update={"revision": 1})
+    snapshot = _snapshot_at_revision(1)
     (tmp_path / "snapshot.json").write_text(
         snapshot.model_dump_json(indent=2),
         encoding="utf-8",

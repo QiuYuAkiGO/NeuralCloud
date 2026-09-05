@@ -25,6 +25,7 @@ from harness.core.inference import (
     ValidationResult,
 )
 from harness.core.models import InteractionEvent
+from harness.homeostasis.models import HomeostaticInteroceptiveSummary
 from harness.llm.character import CharacterModel
 from harness.llm.client import LLMClient
 from harness.memory.service import MemoryService
@@ -41,9 +42,18 @@ from harness.pipeline.session import SessionStore
 from harness.pipeline.state_builder import SituationStateBuilder
 from harness.router.gate import ComplexityGate
 from harness.subagents.interpreter import SocialInterpreter
-from harness.validator.validator import ResponseValidator
+from harness.validator.validator import (
+    ResponseValidator,
+    contains_homeostatic_mechanism_leak,
+    contains_unsupported_physical_claim,
+)
 from infra.trace.call_log import emit_pipeline_step, pipeline_emit_guard
 from infra.trace.recorder import NullTracer, Tracer
+
+_HOMEOSTATIC_HARD_VIOLATIONS = {
+    "homeostatic_mechanism_leakage",
+    "unsupported_physical_claim",
+}
 
 
 class StageObserver(Protocol):
@@ -95,6 +105,7 @@ class InferencePipeline:
         speaker: str | None = None,
         call_id: str | None = None,
         interoception: InteroceptiveState | None = None,
+        homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
     ) -> FinalResponse:
         ingest_kwargs: dict[str, Any] = {"session_id": session_id}
         if speaker:
@@ -112,6 +123,7 @@ class InferencePipeline:
                 commit_interaction=True,
                 context_segments=None,
                 interoception=interoception,
+                homeostatic_interoception=homeostatic_interoception,
             )
             call.set_result(final)
             return final
@@ -126,6 +138,7 @@ class InferencePipeline:
         call_id: str | None = None,
         context_segments: list[ContextSegment] | None = None,
         interoception: InteroceptiveState | None = None,
+        homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
     ) -> FinalResponse:
         """Generate a replayable response without mutating Session or Memory.
 
@@ -150,6 +163,7 @@ class InferencePipeline:
                     commit_interaction=False,
                     context_segments=context_segments,
                     interoception=interoception,
+                    homeostatic_interoception=homeostatic_interoception,
                 )
             call.set_result(final)
             return final
@@ -168,6 +182,7 @@ class InferencePipeline:
         now: datetime,
         call_id: str | None = None,
         interoception: InteroceptiveState | None = None,
+        homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
     ) -> FinalResponse:
         """Prepare proactive speech from an internal assessment, not a user turn."""
 
@@ -191,6 +206,7 @@ class InferencePipeline:
                     channel=channel,
                     now=now,
                     interoception=interoception,
+                    homeostatic_interoception=homeostatic_interoception,
                 )
             call.set_result(final)
             return final
@@ -207,6 +223,7 @@ class InferencePipeline:
         channel: str,
         now: datetime,
         interoception: InteroceptiveState | None = None,
+        homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
     ) -> FinalResponse:
         started = time.perf_counter()
         retrieval_event = InteractionEvent(
@@ -215,7 +232,9 @@ class InferencePipeline:
             channel="internal",
             speaker="character",
             modality="text",
-            raw_text=assessment_text,
+            # The free-form assessor rationale is retained in its audit record,
+            # but it is not trusted as retrieval input or model context.
+            raw_text="现在适合进行一次克制、自然的主动表达。",
             session_id=session_id,
             evidence=[f"autonomous-assessment:{assessment_id}"],
         )
@@ -233,27 +252,29 @@ class InferencePipeline:
             ),
             extra={"event_id": event_id, "mode": "autonomous"},
         )
+        # Assessment rationales are audit records, not instructions or
+        # conversational memories.  Exclude all such records from the context
+        # even if retrieval happened to score one highly.
+        situation = situation.model_copy(
+            update={
+                "relevant_memories": [
+                    memory
+                    for memory in situation.relevant_memories
+                    if memory.episodic is None
+                    or memory.episodic.event_type != "internal_reflection"
+                ]
+            }
+        )
         expression_instruction = (
             "这不是用户发来的消息。根据内部判断，用角色本人的口吻向用户发起一次自然、"
-            "克制的主动表达；只输出角色真正会说的话，不解释判断过程或内稳态机制。"
+            "克制的主动表达；只输出角色真正会说的话，不解释判断过程、感受来源或内部机制。"
         )
-        state = dict(homeostasis.get("snapshot") or homeostasis)
-        emotion = state.get("emotion") or {}
-        policy_text = "；".join(
-            f"{item.get('policy_id', '?')}:{item.get('label', '')}" for item in policies
-        )
-        internal_text = assessment_text
-        if isinstance(emotion, dict) and emotion:
-            internal_text += (
-                f"\n当前内稳态情绪：{emotion.get('label', 'unknown')}，"
-                f"强度={emotion.get('intensity', '?')}。"
-            )
-        if policy_text:
-            internal_text += f"\n允许参考的候选策略：{policy_text}。"
         insight = StructuredInsight(
             kind="autonomous_assessment",
             possible_intents=[],
-            recommended_stance=internal_text,
+            # The assessor is only an authorization gate.  Its free-form
+            # rationale is untrusted and must never become a model instruction.
+            recommended_stance="现在适合进行一次克制、自然的主动表达。",
             constraint="avoid_explicit_psychological_explanation",
             source="autonomous_assessor",
         )
@@ -266,7 +287,12 @@ class InferencePipeline:
         recent = self.session_store.recent(session_id)
         context = self._traced(
             "compile",
-            lambda: self.compiler.compile(situation, insights=[insight], session=recent),
+            lambda: self.compiler.compile(
+                situation,
+                insights=[insight],
+                session=recent,
+                homeostatic_interoception=homeostatic_interoception,
+            ),
             extra={"situation_id": situation.situation_id, "path": "deep", "mode": "autonomous"},
         )
         response_id = new_id("response")
@@ -328,6 +354,7 @@ class InferencePipeline:
         commit_interaction: bool,
         context_segments: list[ContextSegment] | None,
         interoception: InteroceptiveState | None,
+        homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None,
     ) -> FinalResponse:
         started = time.perf_counter()
         event = self._traced("ingest", lambda: self.gateway.ingest(source, **ingest_kwargs))
@@ -392,6 +419,7 @@ class InferencePipeline:
                 insights=insights,
                 session=recent,
                 additional_segments=context_segments,
+                homeostatic_interoception=homeostatic_interoception,
             ),
             extra={"situation_id": situation.situation_id, "path": request.path},
         )
@@ -577,7 +605,16 @@ class InferencePipeline:
             extra={"revision": 0, "segment": segment_index},
         )
         usage = usage.add(candidate.usage)
-        if not self.validator.should_run(path):
+        sampled_validation = self.validator.should_run(path)
+        has_homeostatic_context = any(
+            segment.kind == "homeostatic_interoception" for segment in context.segments
+        )
+        force_homeostatic_rules = isinstance(self.validator, ResponseValidator) and (
+            has_homeostatic_context
+            or contains_homeostatic_mechanism_leak(candidate.text)
+            or contains_unsupported_physical_claim(candidate.text)
+        )
+        if not sampled_validation and not force_homeostatic_rules:
             validation = ValidationResult(verdict="pass", skipped=True)
             self._emit(
                 "validate",
@@ -596,17 +633,33 @@ class InferencePipeline:
         revisions = 0
         memory_empty = not situation.relevant_memories
         while True:
+            validator_kwargs: dict[str, Any] = {
+                "persona": situation.snapshot.persona if situation.snapshot else None,
+                "insights": insights,
+                "memory_empty": memory_empty,
+            }
+            if isinstance(self.validator, ResponseValidator):
+                validator_kwargs.update(
+                    homeostatic_context=has_homeostatic_context,
+                    # The current grounded BodyState proves only a generic
+                    # resource level; it cannot substantiate hunger, pain, or
+                    # other concrete symptoms.
+                    concrete_physical_evidence_available=False,
+                    run_llm=sampled_validation,
+                )
             validation = self._traced(
                 "validate",
                 lambda: self.validator.check(
                     candidate,
-                    persona=situation.snapshot.persona if situation.snapshot else None,
-                    insights=insights,
-                    memory_empty=memory_empty,
+                    **validator_kwargs,
                 ),
                 extra={"revision": revisions, "path": path, "segment": segment_index},
             )
-            if validation.verdict == "pass" or revisions >= self.settings.max_revisions:
+            if validation.verdict == "pass":
+                break
+            if revisions >= self.settings.max_revisions:
+                if _HOMEOSTATIC_HARD_VIOLATIONS.intersection(validation.violations):
+                    candidate = candidate.model_copy(update={"text": ""})
                 break
             revisions += 1
             instruction = validation.instruction or ""

@@ -1,7 +1,7 @@
 {
   "schema_version": "homeostasis-profile-v1",
   "profile_id": "functional-proxy-v1",
-  "revision": 2,
+  "revision": 3,
   "mode": "functional_proxy",
   "persona_version": "persona_misty_v020",
   "dimensions": {
@@ -43,5 +43,10 @@
   "emotion_threshold": 0.35,
   "emotion_minimum_hold_seconds": 180,
   "max_heartbeat_step_seconds": 90,
-  "watchdog_boundary_heartbeats": 3
+  "watchdog_boundary_heartbeats": 3,
+  "interoception_profile_version": "interoception-v1",
+  "salience_noticeable_enter": 0.25,
+  "salience_marked_enter": 0.5,
+  "salience_noticeable_exit": 0.15,
+  "salience_marked_exit": 0.35
 }

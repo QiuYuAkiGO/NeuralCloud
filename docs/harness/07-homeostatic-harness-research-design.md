@@ -710,7 +710,7 @@ LLM 文本生成本身允许非确定，但每次输出、采样参数和结构�
 - 真实工作环境的授权范围、高影响确认、备份、撤权和暂停责任写入每个 manifest。
 - development/debug mode 与 study/runtime mode 的写权限边界明确，正式研究不能调用未授权热改入口。
 - 当前已实现、已有扩展点、设计接口、迁移前置能力和目标架构的表述可以分别核对，不把文档接口声称为现有代码。
-- 文档始终以“V2 研究提案”描述，不声称当前代码已经支持上述能力。
+- 文档中的完整 A/B/C/EFE 与三条件主动推断仍以“V2 研究提案”描述；已经落地的语义内感受摘要与表达链路在第 17 节单独标明，不把局部实现扩大为完整方案。
 
 ---
 
@@ -720,7 +720,7 @@ LLM 文本生成本身允许非确定，但每次输出、采样参数和结构�
 - **并列状态：** 现有 L/M/S `PsychState` 保留；未来 `Homeostasis` 是类型化并列子系统，`short.mood` 只提供派生兼容视图。现有 `RelationshipState` 作为关系特定输入，不与全局 `social_connection` 合并。
 - **Persona 边界：** 数据库触发器继续禁止 UPDATE/DELETE；in-memory debug bypass 只允许在 development/debug mode 使用。批准后的重构通过新的 `persona_id/version` 和新 manifest 表达。
 - **记忆边界：** 现有 evidence、candidate、consolidation 与 tier 规则继续约束长期事实。Homeostasis 只提供检索偏置和证据上下文，不直接改 tier 或写语义事实。
-- **推理接入：** `FinalResponse` 已由 adapter 映射为 `ReplyDecision`，Homeostasis 候选由 Runtime 心跳读取；`InteroceptiveSummary` 注入和完整三条件裁量仍待实现。
+- **推理接入：** `FinalResponse` 已由 adapter 映射为 `ReplyDecision`，Homeostasis 候选由 Runtime 心跳读取；`HomeostaticInteroceptiveSummary` 已按同一 state revision 注入普通回复与主动评估/表达，并支持 `marked` 触发、用户抢占和 `critical` 同周期暂停。完整三条件 A/B/C/EFE 裁量仍待实现。
 - **身体端口：** 当前代码只存在 `PerceptionBackend.observe(...) -> WorldState` 扩展点；统一 `Observation` 流和 `ActionBackend` 都是尚未实现的目标接口。
 - **服务迁移：** service revision、acknowledged event cursor、幂等 command ledger、持久 Session 和 prepare/commit 边界已落地；Windows `start.ps1` 已完成四进程开发编排。
 - **可追踪性：** 现有 JSONL trace、CallLog 和 compiler provenance 扩展为完整内稳态因果链，但 Runtime journal 与领域 store 分别保持编排和状态事实权威性。
@@ -838,7 +838,7 @@ accept RuntimeEvent + append journal
 - Runtime 根据 manifest 构造 `argmin_efe`、`llm_top3` 或 `llm_open` 允许集合；Cognitive 的结构化输出必须引用允许集合内的 `policy_id`。
 - `RetrievalQuery` 增加类型化 homeostatic bias；`ScoreBreakdown` 增加状态相关、信息增益和反证原因，而不是把权重拼进自由文本。
 - 检索返回 `RetrievalBundle`，分别保留 state-consistent evidence、counterevidence、配额和 `counterevidence_exhausted`；只要存在合格反证至少返回一条，目标配额为情绪相关候选的 25%。
-- `ContextCompiler` 增加高优先级 `InteroceptiveSummary` segment，不向角色模型暴露原始 A/B/C、完整 belief 或 EFE 内部矩阵。
+- `ContextCompiler` 的高优先级 `HomeostaticInteroceptiveSummary` segment 已实现：只渲染固定自然语言需要，不向角色模型暴露维度名、数值、原始 A/B/C、完整 belief 或 EFE 内部矩阵。检索偏置和完整三条件策略裁量仍属于本阶段后续范围。
 
 验收门：三个条件只改变最终允许选择集合；Persona、初始 snapshot、候选全集、可行性检查和 EFE 评分完全一致；trace 能重建 chosen/argmin、rank divergence、counterfactual 与 prediction error。
 

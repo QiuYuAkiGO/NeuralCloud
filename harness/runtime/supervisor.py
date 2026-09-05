@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import inspect
 import json
 import os
@@ -124,6 +125,10 @@ _TRANSITIONS: dict[RuntimeLifecycle, frozenset[RuntimeLifecycle]] = {
     RuntimeLifecycle.STOPPED: frozenset(),
 }
 
+_HOMEOSTATIC_COGNITIVE_RESERVED_PAYLOAD_KEYS = frozenset(
+    {"homeostatic_interoception", "homeostatic_profile_ref", "interoception"}
+)
+
 
 class RuntimeIngress:
     def __init__(self, supervisor: RuntimeSupervisor) -> None:
@@ -170,6 +175,18 @@ class RuntimeIngress:
             event=event,
             data={"event": event.model_dump(mode="json")},
         )
+        if event.event_type == RuntimeEventType.USER_MESSAGE:
+            # Make user preemption effective as soon as the ingress record is
+            # durable.  Publishing and queue insertion both await, so deferring
+            # this bookkeeping until accept() returns would leave a running
+            # autonomous reply eligible while an async observer is handling the
+            # already-accepted user event.
+            self.supervisor._pending_user_ingress_event_ids.add(event.event_id)
+            self.supervisor._remember_user_event(event)
+            self.supervisor._cancel_pending_autonomous(
+                reason="new user activity superseded autonomous output",
+                event=event,
+            )
         await self.supervisor._publish("event.accepted", event.model_dump(mode="json"))
 
         if (
@@ -184,6 +201,11 @@ class RuntimeIngress:
             )
             return event
         queued = await self.supervisor.queue.put(event)
+        if event.event_type == RuntimeEventType.USER_MESSAGE:
+            # Queue insertion has now produced an authoritative outcome: the
+            # normal user path is visible to eligibility checks, or an
+            # explicitly low-priority malformed ingress was dropped.
+            self.supervisor._pending_user_ingress_event_ids.discard(event.event_id)
         shed_events = self.supervisor.queue.take_shedding_events()
         for shed in shed_events:
             self.supervisor._append_journal(
@@ -317,6 +339,15 @@ class RuntimeSupervisor:
         self._needs_refill = False
         self._action_context: dict[str, dict[str, Any]] = {}
         self._homeostasis_watchdog_signature: tuple[int, tuple[str, ...]] | None = None
+        self._homeostatic_salience: str | None = None
+        self._homeostatic_episode_signature: str | None = None
+        self._homeostatic_marked_attempts: dict[str, datetime] = {}
+        self._cancelled_autonomous_event_ids: set[str] = set()
+        self._pending_user_ingress_event_ids: set[str] = set()
+        # A watchdog may pause after Homeostasis committed an event but before
+        # Cognitive saw it.  These revisions let an explicit resume continue
+        # from Cognitive without applying the same homeostatic transition again.
+        self._homeostasis_continuations: dict[str, int] = {}
         self.pause_observations = PauseObservationBuffer()
         self.ingress = RuntimeIngress(self)
         self.instance_lock = SingleInstanceLock(
@@ -422,8 +453,6 @@ class RuntimeSupervisor:
     async def submit_event(self, **kwargs: Any) -> RuntimeEvent | None:
         try:
             event = await self.ingress.accept(**kwargs)
-            if event is not None and event.event_type == RuntimeEventType.USER_MESSAGE:
-                self._remember_user_event(event)
             return event
         except QueueCapacityError:
             self._needs_refill = True
@@ -561,14 +590,41 @@ class RuntimeSupervisor:
                     data={"bytes": self.journal.truncated_tail_bytes},
                 )
             homeostasis_watchdog = await self._check_services()
+            if homeostasis_watchdog:
+                await self._defer_reconciliation_for_homeostasis_watchdog(
+                    homeostasis_watchdog,
+                    phase="boot_initial_check",
+                )
             embodiment_status = await self.embodiment.activate()
             self._append_journal(
                 "embodiment_activated",
                 data={"embodiment": embodiment_status.model_dump(mode="json")},
             )
-            await self._reconcile_incomplete_commands()
-            homeostasis_watchdog = await self._check_services()
-            unresolved_action = await self._restore_and_reconcile_actions()
+            unresolved_action = False
+            if not homeostasis_watchdog:
+                await self._reconcile_incomplete_commands(services=frozenset({"homeostasis"}))
+                homeostasis_watchdog = await self._check_services()
+                if homeostasis_watchdog:
+                    await self._defer_reconciliation_for_homeostasis_watchdog(
+                        homeostasis_watchdog,
+                        phase="boot_after_homeostasis_reconciliation",
+                    )
+            if not homeostasis_watchdog:
+                await self._reconcile_incomplete_commands(services=frozenset({"cognitive"}))
+                homeostasis_watchdog = await self._check_services()
+                if homeostasis_watchdog:
+                    await self._defer_reconciliation_for_homeostasis_watchdog(
+                        homeostasis_watchdog,
+                        phase="boot_after_cognitive_reconciliation",
+                    )
+                else:
+                    unresolved_action = await self._restore_and_reconcile_actions()
+                    homeostasis_watchdog = await self._check_services()
+                    if homeostasis_watchdog:
+                        await self._defer_reconciliation_for_homeostasis_watchdog(
+                            homeostasis_watchdog,
+                            phase="boot_after_action_reconciliation",
+                        )
             await self._restore_pending_events()
             if self.journal.records():
                 now = utc_now()
@@ -607,6 +663,7 @@ class RuntimeSupervisor:
                     homeostasis_watchdog,
                 )
             if target == RuntimeLifecycle.RUNNING:
+                await self._schedule_current_marked_trigger()
                 self.scheduler.start()
                 self._start_embodiment_guards()
             else:
@@ -787,7 +844,47 @@ class RuntimeSupervisor:
     async def resume(self, *, reason: str = "explicit researcher resume") -> None:
         if self.lifecycle != RuntimeLifecycle.PAUSED:
             raise RuntimeStateError(f"cannot resume from {self.lifecycle}")
-        await self._check_services()
+        homeostasis_watchdog = await self._check_services()
+        if homeostasis_watchdog:
+            raise RuntimeStateError(
+                "cannot resume while homeostasis watchdog remains active: "
+                + ", ".join(homeostasis_watchdog)
+            )
+        await self._reconcile_incomplete_commands(services=frozenset({"homeostasis"}))
+        homeostasis_watchdog = await self._check_services()
+        if homeostasis_watchdog:
+            await self._defer_reconciliation_for_homeostasis_watchdog(
+                homeostasis_watchdog,
+                phase="resume_after_homeostasis_reconciliation",
+            )
+            raise RuntimeStateError(
+                "cannot resume after homeostasis reconciliation activated watchdog: "
+                + ", ".join(homeostasis_watchdog)
+            )
+        await self._reconcile_incomplete_commands(services=frozenset({"cognitive"}))
+        homeostasis_watchdog = await self._check_services()
+        if homeostasis_watchdog:
+            await self._defer_reconciliation_for_homeostasis_watchdog(
+                homeostasis_watchdog,
+                phase="resume_after_cognitive_reconciliation",
+            )
+            raise RuntimeStateError(
+                "cannot resume while homeostasis watchdog is active: "
+                + ", ".join(homeostasis_watchdog)
+            )
+        unresolved_action = await self._restore_and_reconcile_actions()
+        if unresolved_action:
+            raise RuntimeStateError("cannot resume while action reconciliation is unresolved")
+        homeostasis_watchdog = await self._check_services()
+        if homeostasis_watchdog:
+            await self._defer_reconciliation_for_homeostasis_watchdog(
+                homeostasis_watchdog,
+                phase="resume_after_action_reconciliation",
+            )
+            raise RuntimeStateError(
+                "cannot resume after action reconciliation activated homeostasis watchdog: "
+                + ", ".join(homeostasis_watchdog)
+            )
         await self._refresh_embodiment()
         embodiment_status = self.embodiment.status()
         if self._required_embodiment_blocks_runtime(embodiment_status):
@@ -799,6 +896,7 @@ class RuntimeSupervisor:
         resumed_at = utc_now()
         summary = self.pause_observations.build(resumed_at=resumed_at)
         await self._transition(RuntimeLifecycle.RUNNING, reason=reason)
+        await self._schedule_current_marked_trigger()
         # An explicit researcher resume permits one new heartbeat to reassess
         # the same persisted condition at a newer Homeostasis revision.
         self._homeostasis_watchdog_signature = None
@@ -818,8 +916,41 @@ class RuntimeSupervisor:
         if self.lifecycle != RuntimeLifecycle.FAULTED:
             raise RuntimeStateError(f"cannot recover from {self.lifecycle}")
         await self._transition(RuntimeLifecycle.RECOVERING, reason=reason)
-        await self._check_services()
-        await self._reconcile_incomplete_commands()
+        homeostasis_watchdog = await self._check_services()
+        if homeostasis_watchdog:
+            await self._defer_reconciliation_for_homeostasis_watchdog(
+                homeostasis_watchdog,
+                phase="recover_initial_check",
+            )
+            self.pause_observations.begin(utc_now())
+            return
+        await self._reconcile_incomplete_commands(services=frozenset({"homeostasis"}))
+        homeostasis_watchdog = await self._check_services()
+        if homeostasis_watchdog:
+            await self._defer_reconciliation_for_homeostasis_watchdog(
+                homeostasis_watchdog,
+                phase="recover_after_homeostasis_reconciliation",
+            )
+            self.pause_observations.begin(utc_now())
+            return
+        await self._reconcile_incomplete_commands(services=frozenset({"cognitive"}))
+        homeostasis_watchdog = await self._check_services()
+        if homeostasis_watchdog:
+            await self._defer_reconciliation_for_homeostasis_watchdog(
+                homeostasis_watchdog,
+                phase="recover_after_cognitive_reconciliation",
+            )
+            self.pause_observations.begin(utc_now())
+            return
+        await self._restore_and_reconcile_actions()
+        homeostasis_watchdog = await self._check_services()
+        if homeostasis_watchdog:
+            await self._defer_reconciliation_for_homeostasis_watchdog(
+                homeostasis_watchdog,
+                phase="recover_after_action_reconciliation",
+            )
+            self.pause_observations.begin(utc_now())
+            return
         await self._transition(RuntimeLifecycle.PAUSED, reason="recovery reconciled; resume required")
         self.pause_observations.begin(utc_now())
 
@@ -918,7 +1049,10 @@ class RuntimeSupervisor:
     async def reject_action(self, action_id: str, *, reason: str) -> ActionExecution:
         action = await self.action_coordinator.reject(action_id, reason=reason)
         self._append_journal("action_rejected", data={"action": action.model_dump(mode="json")})
-        await self._complete_goal_action(action)
+        # Apply the terminal outcome through the event queue.  Directly
+        # mutating Homeostasis here can race the single Runtime dispatch loop
+        # while it is preparing or delivering a user response.
+        await self._submit_action_result(action)
         return action
 
     async def resolve_action(self, action_id: str, *, result: ActionBackendResult) -> ActionExecution:
@@ -1091,7 +1225,7 @@ class RuntimeSupervisor:
                 )
             if not action.terminal:
                 raise DomainCommandError(f"action {action_id} result arrived before terminal state")
-            await self._complete_goal_action(action)
+            await self._complete_goal_action(action, outcome_event=event)
             return EventDispatchResult(
                 event_id=event.event_id,
                 receive_seq=event.receive_seq,
@@ -1103,6 +1237,7 @@ class RuntimeSupervisor:
         if event.event_type == RuntimeEventType.IDLE:
             ineligible = self._autonomous_ineligible(event)
             if ineligible is not None:
+                self._cancelled_autonomous_event_ids.discard(event.event_id)
                 return EventDispatchResult(
                     event_id=event.event_id,
                     receive_seq=event.receive_seq,
@@ -1111,24 +1246,128 @@ class RuntimeSupervisor:
                     decision_kind="no_action",
                     detail={"reason": ineligible},
                 )
-        homeostasis_command = "ApplyHeartbeat" if event.event_type == RuntimeEventType.HEARTBEAT else "ApplyEvent"
-        homeostasis_envelope = self._make_command(
-            event,
-            command_type=homeostasis_command,
-            idempotency_key=f"homeostasis:{homeostasis_command}:{event.event_id}",
-            expected_revision=self._homeostasis_snapshot.revision,
-            payload={"event": event.model_dump(mode="json")},
-        )
-        method = (
-            self.homeostasis.apply_heartbeat
-            if event.event_type == RuntimeEventType.HEARTBEAT
-            else self.homeostasis.apply_event
-        )
-        homeostasis_result = await self._invoke_domain(
-            service="homeostasis", envelope=homeostasis_envelope, method=method, event=event
-        )
-        await self._update_homeostasis(homeostasis_result, event=event)
+        homeostasis_revision_before = self._homeostasis_snapshot.revision
+        continuation_revision = self._homeostasis_continuations.get(event.event_id)
+        continued_after_homeostasis = continuation_revision is not None
+        if continued_after_homeostasis:
+            assert continuation_revision is not None
+            if event.event_type != RuntimeEventType.USER_MESSAGE:
+                raise DomainCommandError("only user messages may resume after a homeostasis pause")
+            if continuation_revision > self._homeostasis_snapshot.revision:
+                raise DomainCommandError(
+                    "deferred homeostasis revision is newer than the current snapshot"
+                )
+            self._append_journal(
+                "homeostasis_continuation_resumed",
+                event=event,
+                process_seq=process_seq,
+                data={"homeostasis_revision": continuation_revision},
+            )
+            homeostasis_watchdog = False
+        else:
+            homeostasis_command = (
+                "ApplyHeartbeat"
+                if event.event_type == RuntimeEventType.HEARTBEAT
+                else "ApplyEvent"
+            )
+            homeostasis_envelope = self._make_command(
+                event,
+                command_type=homeostasis_command,
+                idempotency_key=f"homeostasis:{homeostasis_command}:{event.event_id}",
+                expected_revision=self._homeostasis_snapshot.revision,
+                payload={"event": event.model_dump(mode="json")},
+            )
+            method = (
+                self.homeostasis.apply_heartbeat
+                if event.event_type == RuntimeEventType.HEARTBEAT
+                else self.homeostasis.apply_event
+            )
+            homeostasis_result = await self._invoke_domain(
+                service="homeostasis", envelope=homeostasis_envelope, method=method, event=event
+            )
+            homeostasis_watchdog = await self._update_homeostasis(
+                homeostasis_result,
+                event=event,
+            )
+
+        homeostatic_interoception = self._response_homeostatic_interoception()
+        causal_context = self._homeostatic_causal_fields(homeostatic_interoception)
+        if (
+            continued_after_homeostasis
+            and event.event_type == RuntimeEventType.USER_MESSAGE
+            and homeostatic_interoception is not None
+            and self.manifest.homeostatic_expression.mode == "full"
+        ):
+            # The event already changed Homeostasis before the watchdog pause,
+            # so resume must not apply it twice.  It still represents the user
+            # expression opportunity for the recovered, current summary.
+            await self._maybe_schedule_marked_trigger(
+                event,
+                homeostatic_interoception,
+                source_revision=self._homeostasis_snapshot.revision,
+            )
+        if homeostasis_watchdog:
+            if event.event_type == RuntimeEventType.USER_MESSAGE:
+                await self._defer_user_after_homeostasis(event, causal_context)
+                status = "deferred"
+            else:
+                status = "completed"
+            return EventDispatchResult(
+                event_id=event.event_id,
+                receive_seq=event.receive_seq,
+                process_seq=process_seq,
+                status=status,
+                decision_kind="watchdog_pause",
+                detail={
+                    **causal_context,
+                    "lifecycle": self.lifecycle.value,
+                    "reason": "homeostasis reported an unsafe or unstable state",
+                },
+            )
+        if event.event_type == RuntimeEventType.IDLE:
+            stale_marked_reason = self._homeostatic_marked_trigger_ineligible(
+                event,
+                source_revision=homeostasis_revision_before,
+                summary=homeostatic_interoception,
+            )
+            if stale_marked_reason is not None:
+                self._cancelled_autonomous_event_ids.discard(event.event_id)
+                self._append_journal(
+                    "homeostatic_marked_trigger_stale",
+                    event=event,
+                    process_seq=process_seq,
+                    data={"reason": stale_marked_reason, **causal_context},
+                )
+                return EventDispatchResult(
+                    event_id=event.event_id,
+                    receive_seq=event.receive_seq,
+                    process_seq=process_seq,
+                    status="ignored",
+                    decision_kind="no_action",
+                    detail={"reason": stale_marked_reason, **causal_context},
+                )
+            marked_cooldown_reason = self._ordinary_idle_marked_cooldown_reason(
+                event,
+                summary=homeostatic_interoception,
+            )
+            if marked_cooldown_reason is not None:
+                self._cancelled_autonomous_event_ids.discard(event.event_id)
+                self._append_journal(
+                    "homeostatic_marked_idle_suppressed",
+                    event=event,
+                    process_seq=process_seq,
+                    data={"reason": marked_cooldown_reason, **causal_context},
+                )
+                return EventDispatchResult(
+                    event_id=event.event_id,
+                    receive_seq=event.receive_seq,
+                    process_seq=process_seq,
+                    status="ignored",
+                    decision_kind="no_action",
+                    detail={"reason": marked_cooldown_reason, **causal_context},
+                )
         if event.event_type == RuntimeEventType.HEARTBEAT:
+            scheduled_after_user_receive_seq = self._causal_user_receive_seq(event)
             self._last_heartbeat_at = utc_now()
             await self._refresh_embodiment()
             await self.check_watchdog()
@@ -1136,6 +1375,7 @@ class RuntimeSupervisor:
             if (
                 self.lifecycle == RuntimeLifecycle.RUNNING
                 and self.queue.empty()
+                and not self._pending_user_ingress_event_ids
                 and self.action_coordinator.current is None
             ):
                 policies = await self.homeostasis.propose_policies(
@@ -1145,7 +1385,7 @@ class RuntimeSupervisor:
                     payload: dict[str, Any] = {
                         "mode": "autonomous",
                         "policies": policies,
-                        "scheduled_after_user_receive_seq": self._last_user_receive_seq,
+                        "scheduled_after_user_receive_seq": scheduled_after_user_receive_seq,
                         "channel": self._last_user_channel,
                     }
                     if self._last_user_session_id is not None:
@@ -1165,6 +1405,7 @@ class RuntimeSupervisor:
                 detail={
                     "homeostasis_revision": self._homeostasis_snapshot.revision,
                     "autonomous_candidates": len(policies),
+                    **causal_context,
                 },
             )
         if event.event_type not in {
@@ -1177,7 +1418,10 @@ class RuntimeSupervisor:
                 receive_seq=event.receive_seq,
                 process_seq=process_seq,
                 status="completed",
-                detail={"homeostasis_revision": self._homeostasis_snapshot.revision},
+                detail={
+                    "homeostasis_revision": self._homeostasis_snapshot.revision,
+                    **causal_context,
+                },
             )
 
         assessment: AutonomousAssessment | None = None
@@ -1188,11 +1432,26 @@ class RuntimeSupervisor:
                 idempotency_key=f"cognitive:assess:{event.event_id}",
                 expected_revision=self._cognitive_snapshot.revision,
                 payload={
-                    "homeostasis": self._homeostasis_snapshot.payload,
+                    "homeostasis": self._homeostasis_payload_for_cognitive(),
                     "policies": list(event.payload.get("policies") or []),
                     "session_id": event.payload.get("session_id"),
                     "channel": event.payload.get("channel") or "chat",
+                    "trigger_reason": event.payload.get("trigger_reason"),
+                    **(
+                        {
+                            "homeostatic_interoception": homeostatic_interoception,
+                            "homeostatic_profile_ref": self.manifest.homeostatic_profile,
+                        }
+                        if homeostatic_interoception is not None
+                        else {}
+                    ),
                 },
+            )
+            self._journal_homeostatic_route(
+                event=event,
+                command_id=assess_envelope.command_id,
+                target="AssessAutonomous",
+                summary=homeostatic_interoception,
             )
             assess_result = await self._invoke_domain(
                 service="cognitive",
@@ -1204,6 +1463,7 @@ class RuntimeSupervisor:
             self._cognitive_snapshot = await self.cognitive.get_snapshot()
             ineligible = self._autonomous_ineligible(event)
             if assessment.decision == "silent" or ineligible is not None:
+                self._cancelled_autonomous_event_ids.discard(event.event_id)
                 return EventDispatchResult(
                     event_id=event.event_id,
                     receive_seq=event.receive_seq,
@@ -1217,22 +1477,30 @@ class RuntimeSupervisor:
                         "assessment_evaluator": assessment.evaluator,
                         "internal_memory_ref": assessment.internal_memory_ref,
                         "reason": ineligible or "autonomous assessment chose silence",
+                        **causal_context,
                     },
                 )
 
+        cognitive_event_payload = {
+            key: value
+            for key, value in event.payload.items()
+            if key not in _HOMEOSTATIC_COGNITIVE_RESERVED_PAYLOAD_KEYS
+        }
         prepare_envelope = self._make_command(
             event,
             command_type="PrepareResponse",
             idempotency_key=self._prepare_idempotency_key(event),
             expected_revision=self._cognitive_snapshot.revision,
             payload={
-                **event.payload,
+                **cognitive_event_payload,
                 "source_time": event.source_time,
                 "call_id": event.correlation_id,
                 **(
-                    {"interoception": self._interoception.model_dump(mode="json")}
-                    if self.manifest.embodiment.mode == "grounded"
-                    and self._interoception is not None
+                    {
+                        "homeostatic_interoception": homeostatic_interoception,
+                        "homeostatic_profile_ref": self.manifest.homeostatic_profile,
+                    }
+                    if homeostatic_interoception is not None
                     else {}
                 ),
                 **(
@@ -1243,7 +1511,7 @@ class RuntimeSupervisor:
                         "assessment_id": assessment.assessment_id,
                         "record_ref": assessment.record_ref,
                         "internal_memory_ref": assessment.internal_memory_ref,
-                        "homeostasis": self._homeostasis_snapshot.payload,
+                        "homeostasis": self._homeostasis_payload_for_cognitive(),
                         "policies": list(event.payload.get("policies") or []),
                     }
                     if assessment is not None
@@ -1260,16 +1528,19 @@ class RuntimeSupervisor:
                 ),
                 **(
                     {
-                        "interoception": self._interoception.model_dump(
-                            mode="json",
-                            exclude={"evidence_refs"},
-                        )
+                        "interoception": self._interoception_payload_for_cognitive()
                     }
                     if self._interoception is not None
                     and self.manifest.embodiment.mode in {"grounded", "active"}
                     else {}
                 ),
             },
+        )
+        self._journal_homeostatic_route(
+            event=event,
+            command_id=prepare_envelope.command_id,
+            target="PrepareResponse",
+            summary=homeostatic_interoception,
         )
         prepare_result = await self._invoke_domain(
             service="cognitive",
@@ -1278,6 +1549,24 @@ class RuntimeSupervisor:
             event=event,
         )
         prepared = PreparedResponse.model_validate(prepare_result.result)
+        if event.event_type == RuntimeEventType.IDLE:
+            ineligible = self._autonomous_ineligible(event)
+            if ineligible is not None:
+                self._cancelled_autonomous_event_ids.discard(event.event_id)
+                self._append_journal(
+                    "autonomous_cancelled_after_prepare",
+                    event=event,
+                    process_seq=process_seq,
+                    data={"prepare_id": prepared.prepare_id, "reason": ineligible, **causal_context},
+                )
+                return EventDispatchResult(
+                    event_id=event.event_id,
+                    receive_seq=event.receive_seq,
+                    process_seq=process_seq,
+                    status="ignored",
+                    decision_kind="no_action",
+                    detail={"prepare_id": prepared.prepare_id, "reason": ineligible, **causal_context},
+                )
         if utc_now() >= prepared.expires_at:
             raise LateDomainResultError(
                 f"prepared response {prepared.prepare_id} expired before delivery"
@@ -1285,14 +1574,28 @@ class RuntimeSupervisor:
         decision: ReplyDecision | GoalProposal | NoActionDecision | DeferDecision = TypeAdapter(
             CharacterDecision
         ).validate_python(prepared.decision)
-        detail = await self._handle_decision(event, prepared, decision)
+        detail = await self._handle_decision(
+            event,
+            prepared,
+            decision,
+            homeostatic_context=causal_context,
+        )
+        if continued_after_homeostasis:
+            self._homeostasis_continuations.pop(event.event_id, None)
+            self._append_journal(
+                "homeostasis_continuation_consumed",
+                event=event,
+                process_seq=process_seq,
+                data=causal_context,
+            )
+        self._cancelled_autonomous_event_ids.discard(event.event_id)
         return EventDispatchResult(
             event_id=event.event_id,
             receive_seq=event.receive_seq,
             process_seq=process_seq,
             status="completed",
             decision_kind=str(detail.get("effective_decision_kind") or decision.kind),
-            detail=detail,
+            detail={**detail, **causal_context},
         )
 
     async def _handle_body_state(
@@ -1338,6 +1641,7 @@ class RuntimeSupervisor:
             )
 
         mode = self.manifest.embodiment.mode
+        homeostasis_watchdog = False
         if mode in {"grounded", "active"}:
             observation = EmbodimentHomeostaticObservation(
                 source="system_sensor",
@@ -1359,7 +1663,21 @@ class RuntimeSupervisor:
                 method=self.homeostasis.assimilate_observation,
                 event=event,
             )
-            await self._update_homeostasis(result, event=event)
+            homeostasis_watchdog = await self._update_homeostasis(result, event=event)
+        if homeostasis_watchdog:
+            return EventDispatchResult(
+                event_id=event.event_id,
+                receive_seq=event.receive_seq,
+                process_seq=process_seq,
+                status="completed",
+                decision_kind="watchdog_pause",
+                detail={
+                    "mode": mode,
+                    "body_state_revision": snapshot.revision,
+                    "homeostasis_revision": self._homeostasis_snapshot.revision,
+                    "lifecycle": self.lifecycle.value,
+                },
+            )
 
         reconsider = terminal
         if (
@@ -1485,7 +1803,21 @@ class RuntimeSupervisor:
             method=self.homeostasis.apply_observation,
             event=event,
         )
-        await self._update_homeostasis(result, event=event)
+        homeostasis_watchdog = await self._update_homeostasis(result, event=event)
+        if homeostasis_watchdog:
+            return EventDispatchResult(
+                event_id=event.event_id,
+                receive_seq=event.receive_seq,
+                process_seq=process_seq,
+                status="completed",
+                decision_kind="watchdog_pause",
+                detail={
+                    **trace,
+                    "homeostasis_updated": True,
+                    "homeostasis_revision": self._homeostasis_snapshot.revision,
+                    "lifecycle": self.lifecycle.value,
+                },
+            )
         if self._agency_state == AgencyState.DEGRADED:
             self._agency_state = AgencyState.AVAILABLE
             self._degraded_reasons = [
@@ -1558,6 +1890,21 @@ class RuntimeSupervisor:
             evidence_refs=snapshot.evidence_refs,
         )
 
+    def _interoception_payload_for_cognitive(self) -> dict[str, Any]:
+        """Project body state without forwarding provider evidence identifiers."""
+
+        interoception = self._interoception
+        if interoception is None:
+            raise RuntimeStateError("interoception is unavailable")
+        payload = interoception.model_dump(mode="json", exclude={"evidence_refs"})
+        if isinstance(interoception, CognitiveInteroceptiveState):
+            if self._body_revision is None:
+                raise RuntimeStateError(
+                    "legacy interoception is missing its body-state revision"
+                )
+            payload["source_revision"] = self._body_revision
+        return payload
+
     def _append_body_analysis_trace(self, trace: dict[str, Any]) -> None:
         path = self.state_dir / "body-analysis.jsonl"
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -1574,7 +1921,24 @@ class RuntimeSupervisor:
         event: RuntimeEvent,
         prepared: PreparedResponse,
         decision: ReplyDecision | GoalProposal | NoActionDecision | DeferDecision,
+        *,
+        homeostatic_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        causal = homeostatic_context or {}
+        if event.event_type == RuntimeEventType.IDLE:
+            ineligible = self._autonomous_ineligible(event)
+            if ineligible is not None:
+                self._cancelled_autonomous_event_ids.discard(event.event_id)
+                self._append_journal(
+                    "autonomous_cancelled_before_effect",
+                    event=event,
+                    data={"prepare_id": prepared.prepare_id, "reason": ineligible, **causal},
+                )
+                return {
+                    "prepare_id": prepared.prepare_id,
+                    "reason": ineligible,
+                    "effective_decision_kind": "no_action",
+                }
         if isinstance(decision, ReplyDecision):
             deadline = min(prepared.expires_at, utc_now() + timedelta(seconds=self.action_timeout_seconds))
             delivery_key = f"delivery:{prepared.prepare_id}"
@@ -1584,25 +1948,62 @@ class RuntimeSupervisor:
                     f"delivery result is unknown for prepare {prepared.prepare_id}; researcher confirmation required"
                 )
             if delivery is None:
-                self._append_journal(
-                    "reply_delivery_intent",
-                    event=event,
-                    idempotency_key=delivery_key,
-                    data={"prepare_id": prepared.prepare_id, "channel": decision.channel},
-                )
                 async with self._foreground_lock:
-                    delivery = await self.delivery_backend.deliver(
-                        text=decision.text,
-                        segments=list(decision.segments),
-                        channel=decision.channel,
-                        idempotency_key=delivery_key,
-                        deadline=deadline,
-                    )
+                    # User ingress does not take this lock, but it can only run at
+                    # an await boundary.  Keeping this final check, durable intent,
+                    # and invocation start in one synchronous critical section
+                    # closes the running-IDLE cancellation race.
+                    if event.event_type == RuntimeEventType.IDLE:
+                        ineligible = self._autonomous_ineligible(event)
+                        if ineligible is not None:
+                            self._cancelled_autonomous_event_ids.discard(event.event_id)
+                            self._append_journal(
+                                "autonomous_cancelled_before_delivery",
+                                event=event,
+                                data={
+                                    "prepare_id": prepared.prepare_id,
+                                    "reason": ineligible,
+                                    **causal,
+                                },
+                            )
+                            return {
+                                "prepare_id": prepared.prepare_id,
+                                "reason": ineligible,
+                                "effective_decision_kind": "no_action",
+                            }
+                    delivery, uncertain = self._find_delivery_result(prepared.prepare_id)
+                    if uncertain:
+                        raise UnknownDeliveryStateError(
+                            "delivery result is unknown for prepare "
+                            f"{prepared.prepare_id}; researcher confirmation required"
+                        )
+                    if delivery is None:
+                        self._append_journal(
+                            "reply_delivery_intent",
+                            event=event,
+                            idempotency_key=delivery_key,
+                            data={
+                                "prepare_id": prepared.prepare_id,
+                                "channel": decision.channel,
+                                **causal,
+                            },
+                        )
+                        delivery = await self.delivery_backend.deliver(
+                            text=decision.text,
+                            segments=list(decision.segments),
+                            channel=decision.channel,
+                            idempotency_key=delivery_key,
+                            deadline=deadline,
+                        )
             self._append_journal(
                 "reply_delivery",
                 event=event,
                 idempotency_key=delivery_key,
-                data={"prepare_id": prepared.prepare_id, "result": delivery.model_dump(mode="json")},
+                data={
+                    "prepare_id": prepared.prepare_id,
+                    "result": delivery.model_dump(mode="json"),
+                    **causal,
+                },
             )
             delivery_evidence = DeliveryEvidence(
                 prepare_id=prepared.prepare_id,
@@ -1846,11 +2247,20 @@ class RuntimeSupervisor:
         _, pending = await asyncio.wait(tasks, timeout=timeout)
         return not pending
 
-    async def _complete_goal_action(self, action: ActionExecution) -> None:
+    async def _complete_goal_action(
+        self,
+        action: ActionExecution,
+        *,
+        outcome_event: RuntimeEvent | None = None,
+    ) -> None:
         context = self._action_context.get(action.action_id)
         if context is None or not action.terminal:
             return
-        event: RuntimeEvent = context["event"]
+        original_event: RuntimeEvent = context["event"]
+        effective_outcome_event = outcome_event or self._action_outcome_causal_event(
+            action,
+            original_event=original_event,
+        )
         prepared: PreparedResponse = context["prepared"]
         outcome = action.outcome or {}
         evidence_refs = [
@@ -1866,9 +2276,12 @@ class RuntimeSupervisor:
             evidence_refs=evidence_refs,
             external_effect_ref=outcome.get("external_effect_ref"),
         )
-        await self._commit_prepared(event, prepared, evidence)
+        # The prepared interaction belongs to the original goal-producing
+        # event, while outcome application and its causal trace belong to the
+        # ACTION_RESULT (when one exists).
+        await self._commit_prepared(original_event, prepared, evidence)
         outcome_command = self._make_command(
-            event,
+            effective_outcome_event,
             command_type="ApplyOutcome",
             idempotency_key=f"homeostasis:outcome:{action.idempotency_key}",
             expected_revision=self._homeostasis_snapshot.revision,
@@ -1878,17 +2291,53 @@ class RuntimeSupervisor:
             service="homeostasis",
             envelope=outcome_command,
             method=self.homeostasis.apply_outcome,
-            event=event,
+            event=effective_outcome_event,
         )
-        await self._update_homeostasis(result, event=event)
-        self._append_journal("action_completed", event=event, data={"action": action.model_dump(mode="json")})
+        await self._update_homeostasis(result, event=effective_outcome_event)
+        self._append_journal(
+            "action_completed",
+            event=effective_outcome_event,
+            data={"action": action.model_dump(mode="json")},
+        )
         self._append_journal(
             "action_interaction_committed",
-            event=event,
+            event=effective_outcome_event,
             idempotency_key=action.idempotency_key,
             data={"action_id": action.action_id, "prepare_id": prepared.prepare_id},
         )
         self._action_context.pop(action.action_id, None)
+
+    def _action_outcome_causal_event(
+        self,
+        action: ActionExecution,
+        *,
+        original_event: RuntimeEvent,
+    ) -> RuntimeEvent:
+        """Build stable non-user provenance for direct/recovered action outcomes."""
+
+        digest = hashlib.sha256(action.idempotency_key.encode("utf-8")).hexdigest()[:32]
+        event_id = f"event_action_outcome_{digest}"
+        return RuntimeEvent(
+            event_id=event_id,
+            receive_seq=original_event.receive_seq,
+            correlation_id=original_event.correlation_id,
+            event_type=RuntimeEventType.ACTION_RESULT,
+            priority=RuntimeEventPriority.ACTION_RESULT,
+            source="runtime_action_outcome",
+            source_time=action.updated_at,
+            received_at=utc_now(),
+            idempotency_key=f"action-outcome-causal:{digest}",
+            manifest_revision=original_event.manifest_revision,
+            payload={
+                "action_id": action.action_id,
+                "state": action.state.value,
+                "synthetic_causal_event": True,
+                "original_event_id": original_event.event_id,
+            },
+            first_receive_seq=original_event.sequence_range[0],
+            last_receive_seq=original_event.sequence_range[1],
+            coalesced_count=original_event.coalesced_count,
+        )
 
     async def _commit_prepared(
         self,
@@ -2072,6 +2521,16 @@ class RuntimeSupervisor:
             raise DomainCommandError(
                 "homeostasis health/snapshot watchdog state is inconsistent"
             )
+        if self.manifest.homeostatic_expression.mode != "off":
+            summary = self._validated_homeostatic_interoception(required=True)
+            if (summary or {}).get("salience") == "critical" and not snapshot_watchdog:
+                raise DomainCommandError(
+                    "critical homeostatic interoception has no watchdog evidence"
+                )
+            if snapshot_watchdog and (summary or {}).get("salience") != "critical":
+                raise DomainCommandError(
+                    "homeostasis watchdog is missing critical interoceptive salience"
+                )
         self._degraded_reasons = [
             reason
             for reason in self._degraded_reasons
@@ -2087,6 +2546,31 @@ class RuntimeSupervisor:
             },
         )
         return snapshot_watchdog
+
+    async def _defer_reconciliation_for_homeostasis_watchdog(
+        self,
+        reasons: tuple[str, ...],
+        *,
+        phase: str,
+    ) -> None:
+        self._homeostasis_watchdog_signature = (
+            self._homeostasis_snapshot.revision,
+            reasons,
+        )
+        reason = (
+            "recovery complete; homeostasis watchdog requires pause; "
+            "reconciliation deferred: " + ", ".join(reasons)
+        )
+        self._append_journal(
+            "reconciliation_deferred_homeostasis_watchdog",
+            data={
+                "phase": phase,
+                "homeostasis_revision": self._homeostasis_snapshot.revision,
+                "reasons": list(reasons),
+            },
+        )
+        if self.lifecycle == RuntimeLifecycle.RECOVERING:
+            await self._transition(RuntimeLifecycle.PAUSED, reason=reason, durable=True)
 
     @staticmethod
     def _validate_health(
@@ -2119,16 +2603,41 @@ class RuntimeSupervisor:
             )
 
     def _validate_homeostasis_contract(self, snapshot: DomainSnapshot) -> None:
-        profile = snapshot.payload.get("profile")
+        payload = snapshot.payload
+        nested_state = payload.get("snapshot")
+        state = nested_state if isinstance(nested_state, dict) else payload
+        if self.manifest.homeostatic_expression.mode != "off":
+            self._validated_interoceptive_summary_from_payload(
+                payload,
+                expected_revision=snapshot.revision,
+                required=True,
+            )
+        profile = payload.get("profile")
         if not isinstance(profile, dict):
             if self.manifest.homeostatic_profile == "passive-v1":
+                return
+            if isinstance(nested_state, dict):
+                profile_id = state.get("profile_id")
+                profile_revision = state.get("profile_revision")
+                if not isinstance(profile_id, str) or not isinstance(profile_revision, int):
+                    raise DomainCommandError(
+                        "homeostasis result snapshot profile identity is incomplete"
+                    )
+                result_profile_ref = f"{profile_id}@{profile_revision}"
+                if result_profile_ref != self.manifest.homeostatic_profile:
+                    raise DomainCommandError(
+                        "homeostasis result snapshot profile does not match the manifest"
+                    )
+                if state.get("schema_version") != self.manifest.schema_version:
+                    raise DomainCommandError(
+                        "homeostasis result snapshot schema does not match the manifest"
+                    )
                 return
             raise DomainCommandError("homeostasis snapshot is missing its profile")
         profile_id = profile.get("profile_id")
         profile_revision = profile.get("revision")
         if not isinstance(profile_id, str) or not isinstance(profile_revision, int):
             raise DomainCommandError("homeostasis snapshot profile identity is incomplete")
-        state = snapshot.payload
         if (
             state.get("profile_id") != profile_id
             or state.get("profile_revision") != profile_revision
@@ -2162,30 +2671,101 @@ class RuntimeSupervisor:
         result: DomainCommandResult[Any],
         *,
         event: RuntimeEvent,
-    ) -> None:
-        revision = result.committed_revision or self._homeostasis_snapshot.revision
-        self._homeostasis_snapshot = self._homeostasis_snapshot.model_copy(
-            update={
-                "revision": revision,
-                "acknowledged_receive_seq": result.acknowledged_receive_seq or 0,
-                "acknowledged_event_id": result.acknowledged_event_id,
-                "component_revisions": {"state": revision},
-                "payload": result.result or {},
-            }
-        )
-        await self._route_homeostasis_watchdog(result, event=event)
+    ) -> bool:
+        previous = self._homeostasis_snapshot
+        effective_result = result
+        if result.status == "idempotent_replay":
+            authoritative = await asyncio.wait_for(
+                self.homeostasis.get_snapshot(),
+                timeout=self.command_timeout_seconds,
+            )
+            self._validate_snapshot(authoritative, "homeostasis")
+            replay_revision = int(result.committed_revision or 0)
+            if authoritative.revision < max(previous.revision, replay_revision):
+                raise DomainCommandError(
+                    "authoritative homeostasis snapshot regressed during idempotent replay"
+                )
+            if self.manifest.homeostatic_expression.mode != "off":
+                self._validate_homeostasis_contract(authoritative)
+            self._homeostasis_snapshot = authoritative
+            effective_result = result.model_copy(
+                update={
+                    "committed_revision": authoritative.revision,
+                    "acknowledged_receive_seq": authoritative.acknowledged_receive_seq,
+                    "acknowledged_event_id": authoritative.acknowledged_event_id,
+                    "result": authoritative.payload,
+                }
+            )
+            self._append_journal(
+                "homeostasis_idempotent_replay_refreshed",
+                event=event,
+                data={
+                    "replayed_revision": replay_revision,
+                    "previous_runtime_revision": previous.revision,
+                    "authoritative_revision": authoritative.revision,
+                },
+            )
+        else:
+            revision = int(result.committed_revision or previous.revision)
+            if revision < previous.revision:
+                raise DomainCommandError(
+                    "homeostasis result revision regressed below the Runtime snapshot"
+                )
+            candidate = previous.model_copy(
+                update={
+                    "revision": revision,
+                    "acknowledged_receive_seq": max(
+                        previous.acknowledged_receive_seq,
+                        int(result.acknowledged_receive_seq or 0),
+                    ),
+                    "acknowledged_event_id": (
+                        result.acknowledged_event_id or previous.acknowledged_event_id
+                    ),
+                    "component_revisions": {"state": revision},
+                    "payload": result.result or {},
+                }
+            )
+            if self.manifest.homeostatic_expression.mode != "off":
+                self._validate_homeostasis_contract(candidate)
+            self._homeostasis_snapshot = candidate
+        reasons = await self._route_homeostasis_watchdog(effective_result, event=event)
+        mode = self.manifest.homeostatic_expression.mode
+        if mode != "off":
+            summary = self._validated_homeostatic_interoception(required=True)
+            assert summary is not None
+            if (summary or {}).get("salience") == "critical" and not reasons:
+                raise DomainCommandError(
+                    "critical homeostatic interoception has no watchdog evidence"
+                )
+            if reasons and (summary or {}).get("salience") != "critical":
+                raise DomainCommandError(
+                    "homeostasis watchdog is missing critical interoceptive salience"
+                )
+            causal = self._homeostatic_causal_fields(summary)
+            self._append_journal(
+                "homeostatic_interoception_observed",
+                event=event,
+                data={"rollout_mode": mode, **causal},
+            )
+            if not reasons and mode == "full":
+                await self._maybe_schedule_marked_trigger(
+                    event,
+                    summary,
+                    source_revision=previous.revision,
+                )
+        return bool(reasons)
 
     async def _route_homeostasis_watchdog(
         self,
         result: DomainCommandResult[Any],
         *,
         event: RuntimeEvent,
-    ) -> None:
+    ) -> tuple[str, ...]:
         payload = result.result if isinstance(result.result, dict) else {}
         reasons = self._homeostasis_watchdog_reasons(payload)
         if not reasons:
             self._homeostasis_watchdog_signature = None
-            return
+            return ()
         if "homeostasis" not in self._degraded_reasons:
             self._degraded_reasons.append("homeostasis")
         revision = int(
@@ -2193,7 +2773,7 @@ class RuntimeSupervisor:
         )
         signature = (revision, reasons)
         if signature == self._homeostasis_watchdog_signature:
-            return
+            return reasons
         decision = WatchdogDecision(
             action=WatchdogAction.PAUSE,
             reason="homeostasis reported an unsafe or unstable state",
@@ -2206,20 +2786,427 @@ class RuntimeSupervisor:
         serialized = decision.model_dump(mode="json")
         self._append_journal("watchdog_decision", event=event, data=serialized)
         await self._publish("watchdog", serialized)
+        self._homeostasis_watchdog_signature = signature
+        self._cancel_pending_autonomous(
+            reason="homeostasis watchdog requires an immediate pause",
+            event=event,
+        )
         if self.lifecycle == RuntimeLifecycle.RUNNING:
-            queued = await self.submit_event(
-                event_type=RuntimeEventType.WATCHDOG,
-                priority=RuntimeEventPriority.CONTROL,
-                source="homeostasis",
-                source_time=result.completed_at,
-                correlation_id=event.correlation_id,
-                idempotency_key=f"homeostasis-watchdog:{revision}",
-                payload=serialized,
+            await self.pause(reason=decision.reason)
+            self._append_journal(
+                "homeostasis_watchdog_paused_synchronously",
+                event=event,
+                data={
+                    "homeostasis_revision": revision,
+                    "reasons": list(reasons),
+                    "lifecycle": self.lifecycle.value,
+                },
             )
-            if queued is not None:
-                self._homeostasis_watchdog_signature = signature
-        else:
-            self._homeostasis_watchdog_signature = signature
+        return reasons
+
+    def _validated_interoceptive_summary_from_payload(
+        self,
+        payload: dict[str, Any],
+        *,
+        expected_revision: int,
+        required: bool,
+    ) -> dict[str, Any] | None:
+        top_level = payload.get("interoceptive_summary")
+        snapshot = payload.get("snapshot")
+        embedded: Any = None
+        if isinstance(snapshot, dict):
+            embedded = snapshot.get("interoceptive_summary")
+            if required and (not isinstance(top_level, dict) or not isinstance(embedded, dict)):
+                raise DomainCommandError(
+                    "homeostasis result must carry matching top-level and snapshot summaries"
+                )
+            if isinstance(top_level, dict) and isinstance(embedded, dict) and top_level != embedded:
+                raise DomainCommandError(
+                    "homeostasis top-level and snapshot interoceptive summaries differ"
+                )
+        summary = top_level if isinstance(top_level, dict) else embedded
+        validated = self._validate_interoceptive_summary(
+            summary if isinstance(summary, dict) else None,
+            expected_revision=expected_revision,
+            required=required,
+        )
+        if validated is None:
+            return None
+
+        state = snapshot if isinstance(snapshot, dict) else payload
+        state_profile_id = state.get("profile_id")
+        state_profile_revision = state.get("profile_revision")
+        if state_profile_id is not None or state_profile_revision is not None:
+            if not isinstance(state_profile_id, str) or not isinstance(
+                state_profile_revision, int
+            ):
+                raise DomainCommandError(
+                    "homeostasis state profile identity is incomplete"
+                )
+            embedded_profile_ref = f"{state_profile_id}@{state_profile_revision}"
+            if validated.get("profile_ref") != embedded_profile_ref:
+                raise DomainCommandError(
+                    "homeostatic interoception profile does not match its snapshot"
+                )
+        return validated
+
+    def _validate_interoceptive_summary(
+        self,
+        summary: dict[str, Any] | None,
+        *,
+        expected_revision: int,
+        required: bool,
+    ) -> dict[str, Any] | None:
+        if summary is None:
+            if required:
+                raise DomainCommandError(
+                    "homeostasis response is missing homeostatic interoception"
+                )
+            return None
+        if summary.get("schema_version") != "homeostatic-interoception-v1":
+            raise DomainCommandError("homeostatic interoception schema is incompatible")
+        if summary.get("profile_ref") != self.manifest.homeostatic_profile:
+            raise DomainCommandError(
+                "homeostatic interoception profile does not match the manifest"
+            )
+        revision = summary.get("snapshot_revision")
+        if not isinstance(revision, int) or revision != expected_revision:
+            raise DomainCommandError(
+                "homeostatic interoception revision does not match VersionVector.homeostasis_state"
+            )
+        if summary.get("salience") not in {"nominal", "noticeable", "marked", "critical"}:
+            raise DomainCommandError("homeostatic interoception salience is invalid")
+        signature = summary.get("episode_signature")
+        if not isinstance(signature, str) or not signature.strip():
+            raise DomainCommandError("homeostatic interoception episode signature is missing")
+        return summary
+
+    def _validated_homeostatic_interoception(
+        self,
+        *,
+        required: bool,
+    ) -> dict[str, Any] | None:
+        return self._validated_interoceptive_summary_from_payload(
+            self._homeostasis_snapshot.payload,
+            expected_revision=self.version_vector.homeostasis_state,
+            required=required,
+        )
+
+    def _response_homeostatic_interoception(self) -> dict[str, Any] | None:
+        if self.manifest.homeostatic_expression.mode not in {"responses", "full"}:
+            return None
+        return self._validated_homeostatic_interoception(required=True)
+
+    def _homeostasis_payload_for_cognitive(self) -> dict[str, Any]:
+        payload = self._homeostasis_snapshot.payload
+        if self.manifest.homeostatic_expression.mode in {"responses", "full"}:
+            return payload
+        # In off/shadow modes the semantic projection must not influence either
+        # autonomous assessment or the main model through the legacy snapshot.
+        sanitized = dict(payload)
+        sanitized.pop("interoceptive_summary", None)
+        snapshot = sanitized.get("snapshot")
+        if isinstance(snapshot, dict):
+            sanitized_snapshot = dict(snapshot)
+            sanitized_snapshot.pop("interoceptive_summary", None)
+            sanitized["snapshot"] = sanitized_snapshot
+        return sanitized
+
+    @staticmethod
+    def _homeostatic_causal_fields(
+        summary: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        if summary is None:
+            return {}
+        canonical = json.dumps(
+            summary,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        return {
+            "homeostasis_revision": int(summary["snapshot_revision"]),
+            "homeostatic_summary_hash": hashlib.sha256(canonical).hexdigest(),
+            "homeostatic_salience": str(summary["salience"]),
+            "homeostatic_episode_signature": str(summary["episode_signature"]),
+        }
+
+    def _journal_homeostatic_route(
+        self,
+        *,
+        event: RuntimeEvent,
+        command_id: str,
+        target: str,
+        summary: dict[str, Any] | None,
+    ) -> None:
+        if summary is None:
+            return
+        self._append_journal(
+            "homeostatic_interoception_routed",
+            event=event,
+            command_id=command_id,
+            data={"target": target, **self._homeostatic_causal_fields(summary)},
+        )
+
+    async def _maybe_schedule_marked_trigger(
+        self,
+        event: RuntimeEvent | None,
+        summary: dict[str, Any],
+        *,
+        source_revision: int,
+    ) -> None:
+        # Freeze the user-activity baseline before policy proposal yields.  For
+        # a causal event, a user receive sequence newer than that event must not
+        # be treated as preceding the autonomous trigger merely because it
+        # arrived while Homeostasis or policy proposal was awaiting I/O.
+        scheduled_after_user_receive_seq = self._causal_user_receive_seq(event)
+        if self.manifest.homeostatic_expression.mode != "full":
+            return
+        salience = str(summary["salience"])
+        signature = str(summary["episode_signature"])
+        self._homeostatic_salience = salience
+        self._homeostatic_episode_signature = signature
+        if salience != "marked":
+            return
+
+        now = utc_now()
+        is_user_opportunity = (
+            event is not None and event.event_type == RuntimeEventType.USER_MESSAGE
+        )
+        is_idle_opportunity = (
+            event is not None
+            and event.event_type == RuntimeEventType.IDLE
+            and event.payload.get("trigger_reason") == "homeostasis_marked"
+        )
+        if is_idle_opportunity and event is not None:
+            scheduled_revision = event.payload.get("source_homeostasis_revision")
+            source_signature = event.payload.get("source_episode_signature")
+            is_idle_opportunity = (
+                isinstance(scheduled_revision, int)
+                and scheduled_revision == source_revision
+                and source_signature == signature
+            )
+        if is_user_opportunity or is_idle_opportunity:
+            self._homeostatic_marked_attempts[signature] = now
+            self._append_journal(
+                "homeostatic_marked_expression_opportunity",
+                event=event,
+                data={
+                    "opportunity": event.event_type.value if event is not None else "recovery",
+                    **self._homeostatic_causal_fields(summary),
+                },
+            )
+            return
+
+        if self.lifecycle in {RuntimeLifecycle.BOOTING, RuntimeLifecycle.RECOVERING}:
+            self._append_journal(
+                "homeostatic_marked_trigger_deferred_lifecycle",
+                event=event,
+                data={
+                    "lifecycle": self.lifecycle.value,
+                    **self._homeostatic_causal_fields(summary),
+                },
+            )
+            return
+
+        last_attempt = self._homeostatic_marked_attempts.get(signature)
+        cooldown = timedelta(
+            seconds=self.manifest.homeostatic_expression.marked_cooldown_seconds
+        )
+        cooldown_elapsed = last_attempt is None or now - last_attempt >= cooldown
+        # A prior attempt for the same episode always owns the cooldown window.
+        # Crossing out of and back into ``marked`` must not reset it; only a new
+        # signature (which has no attempt entry) is immediately eligible.
+        if not cooldown_elapsed:
+            return
+
+        pending_marked = next(
+            (
+                queued
+                for queued in self.queue.snapshot()
+                if queued.event_type == RuntimeEventType.IDLE
+                and queued.payload.get("trigger_reason") == "homeostasis_marked"
+                and queued.payload.get("source_episode_signature") == signature
+            ),
+            None,
+        )
+        if pending_marked is not None and last_attempt is None:
+            self._homeostatic_marked_attempts[signature] = now
+            self._append_journal(
+                "homeostatic_marked_trigger_reused",
+                event=event,
+                data={
+                    "trigger_event_id": pending_marked.event_id,
+                    **self._homeostatic_causal_fields(summary),
+                },
+            )
+            return
+
+        try:
+            policies = await self.homeostasis.propose_policies(
+                version_vector=self.version_vector
+            )
+        except Exception as exc:
+            self._append_journal(
+                "homeostatic_marked_trigger_failed",
+                event=event,
+                data={
+                    "error": str(exc).strip() or type(exc).__name__,
+                    **self._homeostatic_causal_fields(summary),
+                },
+            )
+            return
+        payload: dict[str, Any] = {
+            "mode": "autonomous",
+            "trigger_reason": "homeostasis_marked",
+            "policies": policies,
+            "scheduled_after_user_receive_seq": scheduled_after_user_receive_seq,
+            "channel": self._last_user_channel,
+            "source_homeostasis_revision": summary["snapshot_revision"],
+            "source_episode_signature": signature,
+        }
+        if self._last_user_session_id is not None:
+            payload["session_id"] = self._last_user_session_id
+        scheduled = await self.submit_event(
+            event_type=RuntimeEventType.IDLE,
+            # This priority prevents a continuous perception stream from
+            # starving a marked expression, while CONTROL and USER stay ahead.
+            priority=RuntimeEventPriority.IMPORTANT_ENVIRONMENT,
+            source="homeostasis",
+            payload=payload,
+        )
+        if scheduled is None:
+            return
+        self._homeostatic_marked_attempts[signature] = now
+        self._append_journal(
+            "homeostatic_marked_trigger_scheduled",
+            event=event,
+            data={
+                "trigger_event_id": scheduled.event_id,
+                "priority": int(scheduled.priority),
+                "cooldown_seconds": (
+                    self.manifest.homeostatic_expression.marked_cooldown_seconds
+                ),
+                **self._homeostatic_causal_fields(summary),
+            },
+        )
+
+    async def _schedule_current_marked_trigger(self) -> None:
+        if self.manifest.homeostatic_expression.mode != "full":
+            return
+        if self._pending_user_ingress_event_ids:
+            return
+        current = self._response_homeostatic_interoception()
+        if current is None or current.get("salience") != "marked":
+            return
+        pending_user = next(
+            (
+                queued
+                for queued in self.queue.snapshot()
+                if queued.event_type == RuntimeEventType.USER_MESSAGE
+            ),
+            None,
+        )
+        if pending_user is not None:
+            # A restored or resumed user message owns the next expression
+            # opportunity and will receive this exact authoritative summary.
+            await self._maybe_schedule_marked_trigger(
+                pending_user,
+                current,
+                source_revision=self._homeostasis_snapshot.revision,
+            )
+            return
+        await self._maybe_schedule_marked_trigger(
+            None,
+            current,
+            source_revision=self._homeostasis_snapshot.revision,
+        )
+
+    def _homeostatic_marked_trigger_ineligible(
+        self,
+        event: RuntimeEvent,
+        *,
+        source_revision: int,
+        summary: dict[str, Any] | None,
+    ) -> str | None:
+        if event.payload.get("trigger_reason") != "homeostasis_marked":
+            return None
+        scheduled_revision = event.payload.get("source_homeostasis_revision")
+        scheduled_signature = event.payload.get("source_episode_signature")
+        if not isinstance(scheduled_revision, int) or scheduled_revision != source_revision:
+            return "homeostasis-marked trigger source revision is stale"
+        if not isinstance(scheduled_signature, str) or not scheduled_signature:
+            return "homeostasis-marked trigger source signature is missing"
+        if summary is None or summary.get("salience") != "marked":
+            return "homeostasis is no longer marked"
+        if summary.get("episode_signature") != scheduled_signature:
+            return "homeostasis-marked episode changed while the trigger was queued"
+        return None
+
+    def _ordinary_idle_marked_cooldown_reason(
+        self,
+        event: RuntimeEvent,
+        *,
+        summary: dict[str, Any] | None,
+    ) -> str | None:
+        if event.payload.get("trigger_reason") == "homeostasis_marked":
+            return None
+        if summary is None or summary.get("salience") != "marked":
+            return None
+        signature = summary.get("episode_signature")
+        if not isinstance(signature, str) or not signature:
+            return None
+        last_attempt = self._homeostatic_marked_attempts.get(signature)
+        if last_attempt is None:
+            return None
+        cooldown = timedelta(
+            seconds=self.manifest.homeostatic_expression.marked_cooldown_seconds
+        )
+        if utc_now() - last_attempt >= cooldown:
+            return None
+        return "ordinary idle is suppressed by the homeostasis-marked episode cooldown"
+
+    def _cancel_pending_autonomous(
+        self,
+        *,
+        reason: str,
+        event: RuntimeEvent,
+    ) -> None:
+        for queued in self.queue.snapshot():
+            if queued.event_type != RuntimeEventType.IDLE:
+                continue
+            if queued.event_id in self._cancelled_autonomous_event_ids:
+                continue
+            self._cancelled_autonomous_event_ids.add(queued.event_id)
+            self._append_journal(
+                "autonomous_expression_cancelled",
+                event=event,
+                data={
+                    "cancelled_event_id": queued.event_id,
+                    "reason": reason,
+                    "trigger_reason": queued.payload.get("trigger_reason"),
+                },
+            )
+
+    async def _defer_user_after_homeostasis(
+        self,
+        event: RuntimeEvent,
+        causal_context: dict[str, Any],
+    ) -> None:
+        revision = self._homeostasis_snapshot.revision
+        self._homeostasis_continuations[event.event_id] = revision
+        self._append_journal(
+            "homeostasis_continuation_deferred",
+            event=event,
+            data={"homeostasis_revision": revision, **causal_context},
+        )
+        self.journal.flush()
+        await self.queue.put(event)
+        self._append_journal(
+            "event_requeued",
+            event=event,
+            data={"reason": "homeostasis_watchdog_pause", "resume_stage": "cognitive"},
+        )
 
     @staticmethod
     def _homeostasis_watchdog_reasons(payload: dict[str, Any]) -> tuple[str, ...]:
@@ -2327,9 +3314,20 @@ class RuntimeSupervisor:
         if channel:
             self._last_user_channel = channel
 
+    def _causal_user_receive_seq(self, event: RuntimeEvent | None) -> int:
+        """Freeze the newest user sequence that causally precedes an event."""
+
+        if event is None:
+            return self._last_user_receive_seq
+        return min(self._last_user_receive_seq, event.receive_seq)
+
     def _autonomous_ineligible(self, event: RuntimeEvent) -> str | None:
+        if event.event_id in self._cancelled_autonomous_event_ids:
+            return "autonomous output was cancelled"
         if self.lifecycle != RuntimeLifecycle.RUNNING:
             return f"runtime lifecycle is {self.lifecycle.value}"
+        if self._pending_user_ingress_event_ids:
+            return "new user activity is entering the queue"
         if self._agency_state != AgencyState.AVAILABLE:
             return f"agency state is {self._agency_state.value}"
         if self.action_coordinator.current is not None:
@@ -2380,6 +3378,39 @@ class RuntimeSupervisor:
                     accepted = RuntimeEvent.model_validate(payload)
                     if accepted.event_type == RuntimeEventType.USER_MESSAGE:
                         self._remember_user_event(accepted)
+                        self._pending_user_ingress_event_ids.add(accepted.event_id)
+            if record.record_type == "homeostatic_interoception_observed":
+                salience = record.data.get("homeostatic_salience")
+                signature = record.data.get("homeostatic_episode_signature")
+                if isinstance(salience, str):
+                    self._homeostatic_salience = salience
+                if isinstance(signature, str) and signature:
+                    self._homeostatic_episode_signature = signature
+            if record.record_type in {
+                "homeostatic_marked_trigger_scheduled",
+                "homeostatic_marked_trigger_reused",
+                "homeostatic_marked_expression_opportunity",
+            }:
+                signature = record.data.get("homeostatic_episode_signature")
+                if isinstance(signature, str) and signature:
+                    self._homeostatic_marked_attempts[signature] = record.recorded_at
+            if record.record_type == "autonomous_expression_cancelled":
+                cancelled_event_id = record.data.get("cancelled_event_id")
+                if isinstance(cancelled_event_id, str) and cancelled_event_id:
+                    self._cancelled_autonomous_event_ids.add(cancelled_event_id)
+            elif (
+                record.record_type == "processing_completed"
+                and record.event_id
+                and record.data.get("status") in {"completed", "ignored"}
+            ):
+                self._cancelled_autonomous_event_ids.discard(record.event_id)
+                self._pending_user_ingress_event_ids.discard(record.event_id)
+            if record.record_type == "homeostasis_continuation_deferred" and record.event_id:
+                revision = record.data.get("homeostasis_revision")
+                if isinstance(revision, int):
+                    self._homeostasis_continuations[record.event_id] = revision
+            elif record.record_type == "homeostasis_continuation_consumed" and record.event_id:
+                self._homeostasis_continuations.pop(record.event_id, None)
             if record.record_type == "action_proposed":
                 goal_id = (record.data.get("action") or {}).get("goal_id")
                 if goal_id:
@@ -2492,18 +3523,25 @@ class RuntimeSupervisor:
                 for event_type, source, first, last in completed_ranges
             )
             if event_id in completed or event_id in queued_ids or covered:
+                self._pending_user_ingress_event_ids.discard(event_id)
                 continue
             if event.event_type in CONTROL_EVENT_TYPES or event.event_type == RuntimeEventType.HEARTBEAT:
                 continue
             try:
                 await self.queue.put(event)
                 queued_ids.add(event.event_id)
+                if event.event_type == RuntimeEventType.USER_MESSAGE:
+                    self._pending_user_ingress_event_ids.discard(event.event_id)
             except QueueCapacityError:
                 self._reconciliation_backlog += 1
                 self._needs_refill = True
                 break
 
-    async def _reconcile_incomplete_commands(self) -> None:
+    async def _reconcile_incomplete_commands(
+        self,
+        *,
+        services: frozenset[str] | None = None,
+    ) -> None:
         intents: dict[str, RuntimeJournalRecord] = {}
         results: set[str] = set()
         for record in self.journal.records():
@@ -2518,6 +3556,8 @@ class RuntimeSupervisor:
             service = record.data.get("service")
             if not envelope_data or service not in {"cognitive", "homeostasis"}:
                 self._reconciliation_backlog += 1
+                continue
+            if services is not None and service not in services:
                 continue
             envelope = self._renew_command_window(
                 DomainCommandEnvelope[dict[str, Any]].model_validate(envelope_data)
@@ -2563,13 +3603,15 @@ class RuntimeSupervisor:
                     event = RuntimeEvent.model_validate(event_payload)
                     accepted[event.event_id] = event
             action_payload = record.data.get("action")
-            if action_payload:
+            if isinstance(action_payload, dict):
                 action = ActionExecution.model_validate(action_payload)
                 latest[action.action_id] = action
                 prepared_payload = record.data.get("prepared")
                 if prepared_payload:
                     prepared[action.action_id] = PreparedResponse.model_validate(prepared_payload)
-            if record.record_type == "action_execution_intent" and action_payload:
+            if record.record_type == "action_execution_intent" and isinstance(
+                action_payload, dict
+            ):
                 execution_intents.add(action.action_id)
             if record.record_type == "action_interaction_committed":
                 action_id = record.data.get("action_id")
@@ -2620,7 +3662,14 @@ class RuntimeSupervisor:
                 continue
             if action.terminal and action_id in self._action_context:
                 try:
-                    await self._complete_goal_action(action)
+                    original_event: RuntimeEvent = self._action_context[action_id]["event"]
+                    await self._complete_goal_action(
+                        action,
+                        outcome_event=self._action_outcome_causal_event(
+                            action,
+                            original_event=original_event,
+                        ),
+                    )
                 except Exception:
                     unresolved = True
         return unresolved

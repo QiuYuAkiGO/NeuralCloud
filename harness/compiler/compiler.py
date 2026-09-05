@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from harness.config import Settings, get_settings
 from harness.core.inference import (
     ContextBudget,
@@ -13,12 +15,50 @@ from harness.core.inference import (
     StructuredInsight,
 )
 from harness.core.models import PersonaCore, ScoredMemory
+from harness.homeostasis.models import HomeostaticInteroceptiveSummary
 
 
 MEMORY_EMPTY_CONSTRAINT = (
     "no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、"
     "引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应"
 )
+
+_HOMEOSTATIC_EMOTION_TEXT = {
+    "strained": "内在感受偏紧绷",
+    "lonely": "有些孤单，更需要真实的连接",
+    "engaged": "有投入和靠近的意愿",
+    "settled": "内在相对安稳",
+    "attentive": "内在更警觉、谨慎",
+}
+_HOMEOSTATIC_NEED_TEXT = {
+    ("energy_reserve", "low"): "需要降低消耗并恢复可用精力",
+    ("energy_reserve", "high"): "有余力承担更充分的投入",
+    ("cognitive_load", "low"): "需要适量参与以保持专注",
+    ("cognitive_load", "high"): "需要降低负荷并简化当前任务",
+    ("safety_predictability", "low"): "需要更多确定性、澄清与安全边界",
+    ("safety_predictability", "high"): "可以容纳少量不确定性和变化",
+    ("competence", "low"): "需要一个可验证的小进展来恢复把握",
+    ("competence", "high"): "需要更有挑战、能发挥能力的目标",
+    ("autonomy", "low"): "需要保留选择权并重新协商边界",
+    ("autonomy", "high"): "可以主动承担更多选择和责任",
+    ("social_connection", "low"): "需要低压力的连接与被理解",
+    ("social_connection", "high"): "需要留出独处空间并降低社交密度",
+    ("novelty", "low"): "需要一点轻量的新鲜感或探索",
+    ("novelty", "high"): "需要减少新刺激并回到熟悉节奏",
+}
+_HOMEOSTATIC_TREND_TEXT = {
+    "worsening": "，而且这种倾向正在增强",
+    "steady": "，这种倾向暂时稳定",
+    "recovering": "，不过这种倾向正在缓和",
+}
+
+_INTEROCEPTIVE_RESOURCE_TEXT = {
+    "critical": "精力已经不足以继续消耗，需要立刻停下并等待恢复",
+    "low": "精力偏低，需要节省消耗并把事情简化",
+    "nominal": "精力处在可正常应对的范围",
+    "high": "精力比较充足，可以保持投入",
+    "full": "精力很充足，可以承担更充分的投入",
+}
 
 
 def estimate_tokens(text: str) -> int:
@@ -53,6 +93,7 @@ class ContextCompiler:
         insights: list[StructuredInsight] | None = None,
         session: list[SessionTurn] | None = None,
         additional_segments: list[ContextSegment] | None = None,
+        homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
     ) -> ModelContext:
         insights = insights or []
         session = session or []
@@ -60,6 +101,20 @@ class ContextCompiler:
         total = self.settings.context_token_budget
         remaining = total
         segments: list[ContextSegment] = []
+
+        homeostatic: HomeostaticInteroceptiveSummary | None = None
+        homeostatic_text = ""
+        homeostatic_tokens = 0
+        if homeostatic_interoception is not None:
+            homeostatic = HomeostaticInteroceptiveSummary.model_validate(
+                homeostatic_interoception
+            )
+            homeostatic_text = render_homeostatic_interoception(homeostatic)
+            homeostatic_tokens = estimate_tokens(homeostatic_text)
+            if not homeostatic_text or homeostatic_tokens > total:
+                raise ValueError(
+                    "complete homeostatic interoception exceeds context token budget"
+                )
 
         persona = situation.snapshot.persona if situation.snapshot else None
         persona_text = _persona_anchor(persona)
@@ -70,8 +125,21 @@ class ContextCompiler:
             source_ids=[persona.persona_id] if persona else [],
             why="persona_core_anchor",
             remaining=remaining,
-            preferred=min(400, remaining),
+            preferred=min(400, max(0, remaining - homeostatic_tokens)),
         )
+
+        if homeostatic is not None:
+            remaining = _push_required(
+                segments,
+                kind="homeostatic_interoception",
+                text=homeostatic_text,
+                source_ids=homeostatic_interoception_source_ids(homeostatic),
+                why=(
+                    "homeostatic_interoception:"
+                    f"{homeostatic.salience}:revision={homeostatic.snapshot_revision}"
+                ),
+                remaining=remaining,
+            )
 
         constraint_lines = [ins.constraint for ins in insights if ins.constraint]
         empty_memory = not situation.relevant_memories
@@ -235,6 +303,32 @@ def _push(
     return remaining - tokens
 
 
+def _push_required(
+    segments: list[ContextSegment],
+    *,
+    kind: str,
+    text: str,
+    source_ids: list[str],
+    why: str,
+    remaining: int,
+) -> int:
+    """Append an all-or-nothing segment that must reach the model intact."""
+
+    tokens = estimate_tokens(text)
+    if not text or tokens > remaining:
+        raise ValueError(f"complete {kind} exceeds context token budget")
+    segments.append(
+        ContextSegment(
+            kind=kind,
+            text=text,
+            source_ids=source_ids,
+            why=why,
+            token_estimate=tokens,
+        )
+    )
+    return remaining - tokens
+
+
 def _persona_anchor(persona: PersonaCore | None) -> str:
     if persona is None:
         return "人格锚点：未知角色。用短句、保持人物口吻。"
@@ -304,16 +398,90 @@ def _interoception_text(state: object) -> str:
     from harness.core.inference import InteroceptiveState
 
     value = InteroceptiveState.model_validate(state)
-    limit = (
-        "unknown"
-        if value.time_to_action_limit_seconds is None
-        else str(value.time_to_action_limit_seconds)
-    )
+    if value.trend < -1e-9:
+        trend_text = "，而且精力还在下降"
+    elif value.trend > 1e-9:
+        trend_text = "，不过精力正在恢复"
+    else:
+        trend_text = "，目前相对稳定"
     return (
-        f"interoception {value.resource_label}: level={value.level}; "
-        f"trend={value.trend:.3f}; time_to_action_limit_seconds={limit}; "
-        f"confidence={value.confidence:.2f}; captured_at={value.captured_at.isoformat()}"
+        "这是有可靠依据支持的精力感受，只作为自然表达与选择的背景："
+        f"{_INTEROCEPTIVE_RESOURCE_TEXT[value.level]}{trend_text}。"
+        "不要复述测量方式、内部标签、数值或时间估计。"
     )
+
+
+def render_homeostatic_interoception(
+    state: HomeostaticInteroceptiveSummary | dict,
+    *,
+    purpose: Literal["response", "assessment"] = "response",
+) -> str:
+    """Render only the semantic projection, never raw factor names or scores."""
+
+    value = HomeostaticInteroceptiveSummary.model_validate(state)
+    if value.salience == "critical":
+        raise ValueError("critical homeostatic state must pause before model invocation")
+    if value.salience == "nominal":
+        guidance = (
+            "内在状态相对平稳；它本身不足以成为主动打扰用户的理由。"
+            if purpose == "assessment"
+            else "内在状态相对平稳，只作为表达背景；无需主动制造或强调不适。"
+        )
+        return (
+            "这是角色自身的内在感受线索，不是供对外解释的系统信息。"
+            + guidance
+            + "不要复述内部标签、指标、数值或形成机制。"
+        )
+
+    needs = [
+        _HOMEOSTATIC_NEED_TEXT[(item.dimension, item.direction)]
+        + _HOMEOSTATIC_TREND_TEXT[item.trend]
+        for item in value.dominant_needs
+    ]
+    need_text = "；".join(dict.fromkeys(needs))
+    emotion_text = ""
+    if value.emotion_hint is not None:
+        emotion_text = _HOMEOSTATIC_EMOTION_TEXT.get(value.emotion_hint.label, "")
+        if value.salience == "marked" and value.emotion_hint.label == "settled":
+            emotion_text = ""
+
+    if purpose == "assessment":
+        if value.salience == "noticeable":
+            guidance = (
+                "这些倾向已有所显现，可纳入是否开口的判断，但不要仅因轻微波动而说话。"
+            )
+        else:
+            guidance = (
+                "这些需要已经较明显，可把自然表达感受、需要或边界视为开口价值；"
+                "仍应结合关系和时机，也允许保持沉默。"
+            )
+    elif value.salience == "noticeable":
+        guidance = "让这些倾向自然影响语气和选择；可以含蓄，不必逐项明说。"
+    else:
+        guidance = (
+            "把这些需要作为高优先级表达线索：自然表达感受、需要或边界；"
+            "可以直接或含蓄，若情境不合适也不必强行说明。"
+        )
+
+    parts = ["这是角色自身的内在感受线索，不是供对外解释的系统信息。"]
+    if need_text:
+        parts.append(f"当前更需要：{need_text}。")
+    if emotion_text:
+        parts.append(f"感受底色：{emotion_text}。")
+    parts.append(guidance)
+    parts.append("不要复述内部标签、指标、数值或形成机制，也不要机械照抄这些措辞。")
+    return "".join(parts)
+
+
+def homeostatic_interoception_source_ids(
+    state: HomeostaticInteroceptiveSummary | dict,
+) -> list[str]:
+    value = HomeostaticInteroceptiveSummary.model_validate(state)
+    return [
+        f"homeostasis:{value.snapshot_revision}",
+        value.profile_ref,
+        value.episode_signature,
+    ]
 
 
 def _insight_text(insight: StructuredInsight) -> str:

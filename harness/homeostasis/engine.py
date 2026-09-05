@@ -26,10 +26,15 @@ from harness.homeostasis.models import (
     FactorBelief,
     HomeostaticObservation as LegacyHomeostaticObservation,
     HomeostaticProfile,
+    HomeostaticInteroceptiveSummary,
+    HomeostaticSalience,
     HomeostaticSnapshot,
     HomeostaticTransitionTrace,
     PolicyCandidate,
+    build_interoceptive_summary,
+    derive_homeostatic_salience,
     initial_snapshot,
+    normalized_homeostatic_deviation,
 )
 from harness.homeostasis.ledger import CommandLedger
 from harness.runtime.adapters import DomainSnapshot, ServiceHealth
@@ -88,8 +93,27 @@ class HomeostasisEngine:
         self.snapshot = initial_snapshot(profile, now=self._started_at)
         self._load()
         self._validate_profile_identity()
+        self._upgrade_legacy_snapshot_schema()
+        candidates = self._rank_policies(self.snapshot.dimensions)
+        summary = self.snapshot.interoceptive_summary
+        if (
+            summary is None
+            or summary.snapshot_revision != self.snapshot.revision
+            or summary.profile_ref != self.profile.profile_ref
+        ):
+            summary = self._derive_interoceptive_summary(
+                revision=self.snapshot.revision,
+                factors=self.snapshot.dimensions,
+                affect=self.snapshot.core_affect,
+                emotion=self.snapshot.emotion,
+                candidates=candidates,
+                watchdog=self.snapshot.watchdog,
+            )
         self.snapshot = self.snapshot.model_copy(
-            update={"candidates": self._rank_policies(self.snapshot.dimensions)}
+            update={
+                "candidates": candidates,
+                "interoceptive_summary": summary,
+            }
         )
 
     async def health(self) -> ServiceHealth:
@@ -173,7 +197,7 @@ class HomeostasisEngine:
                     )
                 self._repair_projections_if_needed()
                 restored = DomainCommandResult[dict[str, Any]].model_validate(previous["result"])
-                return restored.model_copy(update={"status": "idempotent_replay", "idempotency_hit": True})
+                return self._enrich_replay(restored)
             if command.is_expired(now=self._clock()):
                 return self._failure(command, request_hash, "command deadline expired", "rejected")
             if command.expected_revision is not None and command.expected_revision != self.snapshot.revision:
@@ -248,7 +272,28 @@ class HomeostasisEngine:
             )
             watchdog = self._watchdog(factors, boundary_streaks)
             affect = self._derive_affect(factors)
-            emotion = self._derive_emotion(affect, factors, effective_at)
+            salience = derive_homeostatic_salience(
+                self.profile,
+                factors,
+                previous=self._previous_salience(),
+                watchdog=watchdog,
+            )
+            emotion = self._derive_emotion(
+                affect,
+                factors,
+                effective_at,
+                salience=salience,
+            )
+            candidates = self._rank_policies(factors)
+            summary = self._derive_interoceptive_summary(
+                revision=revision,
+                factors=factors,
+                affect=affect,
+                emotion=emotion,
+                candidates=candidates,
+                watchdog=watchdog,
+                salience=salience,
+            )
             next_snapshot = HomeostaticSnapshot(
                 revision=revision,
                 profile_id=self.profile.profile_id,
@@ -256,7 +301,7 @@ class HomeostasisEngine:
                 dimensions=factors,
                 core_affect=affect,
                 emotion=emotion,
-                candidates=self._rank_policies(factors),
+                candidates=candidates,
                 acknowledged_receive_seq=max(
                     self.snapshot.acknowledged_receive_seq, command.receive_seq
                 ),
@@ -269,6 +314,7 @@ class HomeostasisEngine:
                     else self.snapshot.stable_snapshot_ref
                 ),
                 watchdog=watchdog,
+                interoceptive_summary=summary,
             )
             trace = HomeostaticTransitionTrace(
                 revision=revision,
@@ -304,6 +350,7 @@ class HomeostasisEngine:
                 result={
                     "revision": revision,
                     "snapshot": next_snapshot.model_dump(mode="json"),
+                    "interoceptive_summary": summary.model_dump(mode="json"),
                     "trace": trace.model_dump(mode="json"),
                 },
                 completed_at=self._clock(),
@@ -350,7 +397,7 @@ class HomeostasisEngine:
                     return self._failure(command, request_hash, "idempotency key reused with different request", "conflict")
                 self._repair_projections_if_needed()
                 restored = DomainCommandResult[dict[str, Any]].model_validate(previous["result"])
-                return restored.model_copy(update={"status": "idempotent_replay", "idempotency_hit": True})
+                return self._enrich_replay(restored)
             if command.is_expired(now=self._clock()):
                 return self._failure(command, request_hash, "command deadline expired", "rejected")
             if command.expected_revision is not None and command.expected_revision != self.snapshot.revision:
@@ -366,8 +413,6 @@ class HomeostasisEngine:
             effective_at = max(occurred_at, self.snapshot.updated_at)
             appraisal = self._appraise(event, kind=kind, event_id=command.event_id)
             factors, applied, coupling = self._integrate(appraisal, effective_at, heartbeat=kind == "heartbeat")
-            affect = self._derive_affect(factors)
-            emotion = self._derive_emotion(affect, factors, effective_at)
             boundary_streaks, boundary_sides = self._next_boundary_heartbeat_streaks(
                 factors,
                 heartbeat=kind == "heartbeat",
@@ -376,6 +421,28 @@ class HomeostasisEngine:
             revision = self.snapshot.revision + 1
             heartbeat_at = effective_at if kind == "heartbeat" else self.snapshot.last_heartbeat_at
             candidates = self._rank_policies(factors)
+            affect = self._derive_affect(factors)
+            salience = derive_homeostatic_salience(
+                self.profile,
+                factors,
+                previous=self._previous_salience(),
+                watchdog=watchdog,
+            )
+            emotion = self._derive_emotion(
+                affect,
+                factors,
+                effective_at,
+                salience=salience,
+            )
+            summary = self._derive_interoceptive_summary(
+                revision=revision,
+                factors=factors,
+                affect=affect,
+                emotion=emotion,
+                candidates=candidates,
+                watchdog=watchdog,
+                salience=salience,
+            )
             next_snapshot = HomeostaticSnapshot(
                 revision=revision,
                 profile_id=self.profile.profile_id,
@@ -394,6 +461,7 @@ class HomeostasisEngine:
                     else self.snapshot.stable_snapshot_ref
                 ),
                 watchdog=watchdog,
+                interoceptive_summary=summary,
             )
             trace = HomeostaticTransitionTrace(
                 revision=revision,
@@ -411,6 +479,7 @@ class HomeostasisEngine:
             result_payload = {
                 "revision": revision,
                 "snapshot": next_snapshot.model_dump(mode="json"),
+                "interoceptive_summary": summary.model_dump(mode="json"),
                 "trace": trace.model_dump(mode="json"),
             }
             result = DomainCommandResult[dict[str, Any]](
@@ -611,8 +680,10 @@ class HomeostasisEngine:
     def _derive_affect(self, factors: dict[DimensionName, FactorBelief]) -> CoreAffect:
         deviations: dict[DimensionName, float] = {}
         for dimension, factor in factors.items():
-            low, high = factor.target_band
-            deviations[dimension] = max(low - factor.value, factor.value - high, 0.0)
+            deviations[dimension] = normalized_homeostatic_deviation(
+                self.profile,
+                factor,
+            )[1]
         mean_deviation = sum(deviations.values()) / len(deviations)
         safety = factors["safety_predictability"].value
         autonomy = factors["autonomy"].value
@@ -631,25 +702,33 @@ class HomeostasisEngine:
         affect: CoreAffect,
         factors: dict[DimensionName, FactorBelief],
         now: datetime,
+        *,
+        salience: HomeostaticSalience,
     ) -> DerivedEmotion:
         support = sorted(
             DIMENSIONS,
             key=lambda key: 1.0 - factors[key].posterior["in_band"],
             reverse=True,
         )[:2]
-        if affect.valence < -self.profile.emotion_threshold and affect.arousal > 0.55:
+        materially_unstable = salience in {"marked", "critical"}
+        if materially_unstable and affect.arousal > 0.55:
+            label = "strained"
+        elif affect.valence < -self.profile.emotion_threshold and affect.arousal > 0.55:
             label = "strained"
         elif factors["social_connection"].posterior["low"] > 0.55:
             label = "lonely"
         elif affect.valence > self.profile.emotion_threshold and affect.dominance > 0.55:
             label = "engaged"
-        elif affect.arousal < 0.35:
+        elif affect.arousal < 0.35 and not materially_unstable:
             label = "settled"
         else:
             label = "attentive"
         previous = self.snapshot.emotion
         held = (now - previous.entered_at).total_seconds() < previous.minimum_hold_seconds
-        if held and previous.intensity >= abs(affect.valence):
+        force_material_label = materially_unstable and (
+            label == "strained" or previous.label == "settled"
+        )
+        if held and previous.intensity >= abs(affect.valence) and not force_material_label:
             return previous
         return DerivedEmotion(
             label=label,
@@ -660,6 +739,98 @@ class HomeostasisEngine:
                 f"{key}:{max(factors[key].posterior, key=lambda band: factors[key].posterior[band])}"
                 for key in support
             ],
+        )
+
+    def _previous_salience(self) -> HomeostaticSalience | None:
+        summary = self.snapshot.interoceptive_summary
+        return summary.salience if summary is not None else None
+
+    def _derive_interoceptive_summary(
+        self,
+        *,
+        revision: int,
+        factors: dict[DimensionName, FactorBelief],
+        affect: CoreAffect,
+        emotion: DerivedEmotion,
+        candidates: list[PolicyCandidate],
+        watchdog: list[str],
+        salience: HomeostaticSalience | None = None,
+    ) -> HomeostaticInteroceptiveSummary:
+        return build_interoceptive_summary(
+            self.profile,
+            revision=revision,
+            factors=factors,
+            affect=affect,
+            emotion=emotion,
+            candidates=candidates,
+            watchdog=watchdog,
+            previous_salience=self._previous_salience(),
+            salience=salience,
+        )
+
+    def _enrich_replay(
+        self,
+        restored: DomainCommandResult[dict[str, Any]],
+    ) -> DomainCommandResult[dict[str, Any]]:
+        """Add the v2 projection to legacy successful replay payloads."""
+
+        payload = dict(restored.result or {})
+        if isinstance(payload.get("interoceptive_summary"), dict):
+            return restored.model_copy(
+                update={"status": "idempotent_replay", "idempotency_hit": True}
+            )
+
+        raw_snapshot = payload.get("snapshot")
+        if isinstance(raw_snapshot, dict):
+            historical = HomeostaticSnapshot.model_validate(raw_snapshot)
+            if historical.interoceptive_summary is not None:
+                summary = historical.interoceptive_summary
+            elif (
+                historical.profile_id == self.profile.profile_id
+                and historical.profile_revision == self.profile.revision
+            ):
+                summary = self._derive_interoceptive_summary(
+                    revision=historical.revision,
+                    factors=historical.dimensions,
+                    affect=historical.core_affect,
+                    emotion=historical.emotion,
+                    candidates=historical.candidates,
+                    watchdog=historical.watchdog,
+                )
+            else:
+                # Old profile material is no longer authoritative enough to safely
+                # recreate semantic text; return the current signed projection.
+                historical = self.snapshot
+                summary = self.snapshot.interoceptive_summary
+        else:
+            # The oldest ledger format stored only revision + trace. Enrich it with
+            # the current authoritative projection without rewriting ledger history.
+            historical = self.snapshot
+            summary = self.snapshot.interoceptive_summary
+
+        if summary is None:  # Defensive: __init__ establishes this invariant.
+            raise RuntimeError("homeostasis snapshot is missing interoceptive summary")
+        payload.update(
+            {
+                "revision": historical.revision,
+                "snapshot": historical.model_copy(
+                    update={"interoceptive_summary": summary}
+                ).model_dump(mode="json"),
+                "interoceptive_summary": summary.model_dump(mode="json"),
+            }
+        )
+        return restored.model_copy(
+            update={
+                "status": "idempotent_replay",
+                "idempotency_hit": True,
+                # A legacy result without a snapshot cannot represent the
+                # schema-migration revision.  Once it is enriched with the
+                # authoritative v2 snapshot, keep the transport revision in
+                # lockstep so Runtime never observes a regressing revision or
+                # a summary/version-vector mismatch.
+                "committed_revision": historical.revision,
+                "result": payload,
+            }
         )
 
     def _rank_policies(self, factors: dict[DimensionName, FactorBelief]) -> list[PolicyCandidate]:
@@ -788,33 +959,99 @@ class HomeostasisEngine:
         for dimension in DIMENSIONS:
             previous = self.snapshot.dimensions[dimension]
             spec = self.profile.dimensions[dimension]
-            value = _clamp(previous.value, spec.hard_bounds[0], spec.hard_bounds[1])
             factors[dimension] = previous.model_copy(
                 update={
-                    "value": value,
-                    "velocity": value - previous.value,
-                    "posterior": self._posterior(value, spec.baseline_band),
+                    "posterior": self._posterior(previous.value, spec.baseline_band),
                     "target_band": spec.baseline_band,
-                    "updated_at": self._started_at,
                 }
             )
         affect = self._derive_affect(factors)
-        emotion = self._derive_emotion(affect, factors, self._started_at)
+        watchdog = list(self.snapshot.watchdog)
+        salience = derive_homeostatic_salience(
+            self.profile,
+            factors,
+            previous=self._previous_salience(),
+            watchdog=watchdog,
+        )
+        emotion = self._derive_emotion(
+            affect,
+            factors,
+            self._started_at,
+            salience=salience,
+        )
+        revision = self.snapshot.revision + 1
+        candidates = self._rank_policies(factors)
+        summary = self._derive_interoceptive_summary(
+            revision=revision,
+            factors=factors,
+            affect=affect,
+            emotion=emotion,
+            candidates=candidates,
+            watchdog=watchdog,
+            salience=salience,
+        )
         self.snapshot = self.snapshot.model_copy(
             update={
-                "revision": self.snapshot.revision + 1,
+                "revision": revision,
                 "profile_revision": self.profile.revision,
                 "dimensions": factors,
                 "core_affect": affect,
                 "emotion": emotion,
-                "candidates": self._rank_policies(factors),
-                "updated_at": self._started_at,
-                "stable_snapshot_ref": f"snapshot://{self.profile.profile_id}/profile-migration-r{self.profile.revision}",
-                "watchdog": [],
+                "candidates": candidates,
+                "stable_snapshot_ref": (
+                    f"snapshot://{self.profile.profile_id}/profile-migration-r{self.profile.revision}"
+                    if not watchdog
+                    else self.snapshot.stable_snapshot_ref
+                ),
+                "watchdog": watchdog,
+                "interoceptive_summary": summary,
             }
         )
-        self._boundary_heartbeat_streaks = {}
-        self._boundary_heartbeat_sides = {}
+        self._persist()
+
+    def _upgrade_legacy_snapshot_schema(self) -> None:
+        """Materialize a v2 summary once without modifying factor evidence."""
+
+        if self.snapshot.interoceptive_summary is not None:
+            return
+        factors = self.snapshot.dimensions
+        affect = self._derive_affect(factors)
+        salience = derive_homeostatic_salience(
+            self.profile,
+            factors,
+            watchdog=self.snapshot.watchdog,
+        )
+        emotion = self._derive_emotion(
+            affect,
+            factors,
+            self.snapshot.updated_at,
+            salience=salience,
+        )
+        revision = self.snapshot.revision + 1
+        candidates = self._rank_policies(factors)
+        summary = self._derive_interoceptive_summary(
+            revision=revision,
+            factors=factors,
+            affect=affect,
+            emotion=emotion,
+            candidates=candidates,
+            watchdog=self.snapshot.watchdog,
+            salience=salience,
+        )
+        self.snapshot = self.snapshot.model_copy(
+            update={
+                "revision": revision,
+                "core_affect": affect,
+                "emotion": emotion,
+                "candidates": candidates,
+                "interoceptive_summary": summary,
+                "stable_snapshot_ref": (
+                    f"snapshot://{self.profile.profile_id}/schema-migration-v2"
+                    if not self.snapshot.watchdog
+                    else self.snapshot.stable_snapshot_ref
+                ),
+            }
+        )
         self._persist()
 
     def _load(self) -> None:

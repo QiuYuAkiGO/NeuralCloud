@@ -16,6 +16,15 @@ ControlMode = Literal["development_debug", "study_runtime"]
 SelectionCondition = Literal["argmin_efe", "llm_top3", "llm_open"]
 
 
+class HomeostaticExpressionCondition(BaseModel):
+    """Rollout controls for semantic homeostatic expression context."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    mode: Literal["off", "shadow", "responses", "full"] = "off"
+    marked_cooldown_seconds: int = Field(default=1800, ge=60, le=86400)
+
+
 class EmbodimentCondition(BaseModel):
     """Frozen embodiment capabilities plus legacy MistyAI body settings."""
 
@@ -96,6 +105,9 @@ class ExperimentManifest(BaseModel):
     retention: str = Field(min_length=1)
     watchdog_action: str = Field(min_length=1)
     timezone: str = Field(default="Asia/Shanghai", min_length=1)
+    homeostatic_expression: HomeostaticExpressionCondition = Field(
+        default_factory=HomeostaticExpressionCondition
+    )
     embodiment: EmbodimentCondition = Field(default_factory=EmbodimentCondition)
 
     @model_validator(mode="after")
@@ -113,6 +125,27 @@ class ExperimentManifest(BaseModel):
             missing = [name for name, value in required.items() if not value]
             if missing:
                 raise ValueError(f"study_runtime manifest missing: {', '.join(missing)}")
+        expression_mode = self.homeostatic_expression.mode
+        if expression_mode != "off":
+            _profile_id, separator, revision_text = self.homeostatic_profile.rpartition("@")
+            try:
+                profile_revision = int(revision_text) if separator else 0
+            except ValueError:
+                profile_revision = 0
+            if not _profile_id.strip() or profile_revision < 3:
+                raise ValueError(
+                    "homeostatic expression requires a profile reference at revision 3 or later"
+                )
+            if self.schema_version != "homeostasis-state-v2":
+                raise ValueError(
+                    "homeostatic expression requires schema_version=homeostasis-state-v2"
+                )
+        if expression_mode in {"responses", "full"} and (
+            self.prompt_version != "homeostatic-interoception-v1"
+        ):
+            raise ValueError(
+                "response injection requires prompt_version=homeostatic-interoception-v1"
+            )
         return self
 
     @property
