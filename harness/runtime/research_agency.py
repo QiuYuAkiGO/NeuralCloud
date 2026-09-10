@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from harness.agency.models import AgencyOutcome, GoalCheckpoint, GoalTrigger, ResumeObservation
 from harness.core.inference import ContextSegment
 from harness.research.grounded_agency.hashes import canonical_json, content_hash
@@ -17,6 +19,42 @@ def _belief_revision(runtime) -> str:
 
 def _world(runtime) -> dict:
     return runtime._agency_service.store.get("runtime", "world") or {"hash": content_hash({}), "text": ""}
+
+
+def _resume_observations(runtime, observations, provider_intents):
+    """Bind each resume to fresh physical observations and its own outcome."""
+    service = runtime._agency_service
+    world = _world(runtime)
+    if not world.get("observed_at"):
+        return {}
+    captured_at = runtime._body_captured_at
+    if observations:
+        # A delayed sensor becomes visible later than the physical observation;
+        # releasing an old sample must not satisfy a new observation requirement.
+        captured_at = next((item.truth_ref.captured_at for item in runtime._opaque_store.envelopes()
+                            if item.observation == observations[-1]), None)
+    if captured_at is None:
+        return {}
+    observed_at = min(captured_at, datetime.fromisoformat(world["observed_at"]))
+    proofs = {}
+    for goal in service.store.goals():
+        checkpoint = service.store.checkpoint(goal.goal_id)
+        if goal.status != "paused" or checkpoint is None:
+            continue
+        outcome = service.store.get("action_outcome", checkpoint.action_id or "")
+        reconciled = bool(outcome and outcome["goal_id"] == goal.goal_id
+                          and outcome["state"] in {"succeeded", "failed"} and outcome["evidence_refs"])
+        proofs[goal.goal_id] = ResumeObservation(
+            observed_at=observed_at, world_evidence_refs=(world["hash"],),
+            body_state_ref=content_hash(observations[-1]) if observations else content_hash("no_observation"),
+            provider_intents=tuple(provider_intents), assumptions_hold=world["hash"] in checkpoint.world_state_refs,
+            continuation_usable=checkpoint.action_status != "unknown" or reconciled,
+            body_allows_next_step=bool(provider_intents),
+            belief_revision_matches=(checkpoint.continuation or {}).get("belief_revision_hash") == _belief_revision(runtime),
+            action_reconciled=reconciled,
+            reconciliation_evidence_ref=outcome["evidence_refs"][0] if reconciled else None,
+        )
+    return proofs
 
 
 def observe(runtime, observations) -> None:
@@ -87,8 +125,14 @@ def checkpoint_goals(runtime, *, goal_id: str | None = None) -> None:
     current = runtime.action_coordinator.current
     if current is not None and not current.terminal:
         raise RuntimeError("persistent goals require an action safe point before checkpointing")
+    # The coordinator clears `current` on terminal outcomes, including UNKNOWN.
+    # Uncommitted action contexts still own those executions and their evidence.
+    actions = [runtime.action_coordinator.get(action_id) for action_id in runtime._action_context]
     if current is not None:
-        record_action(runtime, current.goal_id, current)
+        actions.append(current)
+    actions = [action for action in actions if action is not None]
+    for action in actions:
+        record_action(runtime, action.goal_id, action)
     samples = runtime._opaque_store.observations(now=runtime._research_clock()) if runtime._opaque_store else ()
     for goal in service.store.goals():
         if goal.status != "active" or (goal_id is not None and goal.goal_id != goal_id):
@@ -99,8 +143,9 @@ def checkpoint_goals(runtime, *, goal_id: str | None = None) -> None:
         completed = tuple(item["step_id"] for item in service.store.all("action_outcome")
                           if item["goal_id"] == goal.goal_id and item["state"] == "succeeded")
         next_step = service.next_step(goal.goal_id)
-        binding = runtime._agency_decision_bindings.get(current.goal_id, {}) if current else {}
-        bound_action = current if binding.get("goal_id") == goal.goal_id else None
+        bound = [action for action in actions
+                 if runtime._agency_decision_bindings.get(action.goal_id, {}).get("goal_id") == goal.goal_id]
+        bound_action = max(bound, key=lambda action: action.updated_at) if bound else None
         checkpoint = GoalCheckpoint(
             goal_id=goal.goal_id, plan_revision=plan.revision, completed_step_ids=completed,
             next_step_id=next_step["step_id"] if next_step else None,
@@ -133,7 +178,8 @@ async def reconsider(runtime, event, observations, segments, provider_intents):
         text = str(event.payload.get("text") or "")
         objective = [item.text for item in segments if item.kind == "entity_observation"]
         signature = runtime._research_world_signature() if runtime._research_world_signature else text
-        service.store.put("runtime", "world", {"hash": content_hash([signature, objective]), "text": text})
+        service.store.put("runtime", "world", {"hash": content_hash([signature, objective]), "text": text,
+                                               "observed_at": now.isoformat()})
     world = _world(runtime)
     observation_refs = tuple(content_hash(item) for item in observations)
     source_refs = tuple(ref for segment in segments for ref in segment.source_ids)
@@ -146,17 +192,6 @@ async def reconsider(runtime, event, observations, segments, provider_intents):
     if explicit_trigger in {"recovery", "safe_point", "deadline"}:
         trigger_kind = explicit_trigger
     evidence_refs = tuple(dict.fromkeys((world["hash"], *observation_refs, *source_refs)))
-    paused = [service.store.checkpoint(goal.goal_id) for goal in service.store.goals() if goal.status == "paused"]
-    paused = [item for item in paused if item is not None]
-    resume_observation = ResumeObservation(
-        observed_at=now, world_evidence_refs=(world["hash"],),
-        body_state_ref=content_hash(observations[-1]) if observations else content_hash("no_observation"),
-        provider_intents=tuple(provider_intents),
-        assumptions_hold=all(world["hash"] in item.world_state_refs for item in paused),
-        continuation_usable=all(item.action_status != "unknown" for item in paused),
-        body_allows_next_step=bool(provider_intents),
-        belief_revision_matches=all((item.continuation or {}).get("belief_revision_hash") == _belief_revision(runtime) for item in paused),
-    ) if paused else None
     result = await service.reconsider(
         GoalTrigger(kind=trigger_kind, evidence_refs=(world["hash"],), observed_at=now,
                     signature=content_hash([trigger_kind, world["hash"], str(event.payload.get("text") or "")])),
@@ -165,10 +200,21 @@ async def reconsider(runtime, event, observations, segments, provider_intents):
         body_beliefs=tuple({"text": segment.text, "source_refs": segment.source_ids} for segment in segments if segment.kind == "body_memory"),
         world_context={"observed": world["text"], "task": str(event.payload.get("text") or ""),
                        "entity_context": [segment.text for segment in segments if segment.kind.startswith("entity_")]},
-        resume_observation=resume_observation, opaque=runtime.manifest.grounded_agency.is_opaque,
+        resume_observations=_resume_observations(runtime, observations, provider_intents),
+        opaque=runtime.manifest.grounded_agency.is_opaque,
     )
     if result.trace_ref is not None:
         runtime._append_journal("persistent_goal_arbitration", event=event, data=service.traces[result.trace_ref])
+    if result.decision.operation == "replan" and result.applied and result.goal_id is not None:
+        checkpoint = service.store.checkpoint(result.goal_id)
+        if checkpoint is not None and service.store.goal(result.goal_id).status == "paused":
+            checkpoint = checkpoint.model_copy(update={
+                "continuation": {"provider_continuation": None, "belief_revision_hash": _belief_revision(runtime)},
+                "world_state_refs": (world["hash"],),
+            })
+            service.store.save_checkpoint(checkpoint)
+            runtime._append_journal("persistent_goal_checkpoint", event=event,
+                                    data={**checkpoint.model_dump(mode="json"), "reason": "model_replan"})
     if result.decision.operation == "pause":
         await runtime.action_coordinator.request_preemption(reason="model requested goal pause")
         if not await runtime._drain_action_tasks(timeout=runtime.maintenance_drain_seconds):

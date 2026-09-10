@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Protocol
 
 from harness.compiler.compiler import ContextCompiler
@@ -49,6 +50,9 @@ from harness.validator.validator import (
 )
 from infra.trace.call_log import emit_pipeline_step, pipeline_emit_guard
 from infra.trace.recorder import NullTracer, Tracer
+from infra.trace.request_spans import current_trace_context, new_span_id, trace_scope
+
+logger = logging.getLogger(__name__)
 
 _HOMEOSTATIC_HARD_VIOLATIONS = {
     "homeostatic_mechanism_leakage",
@@ -703,32 +707,51 @@ class InferencePipeline:
 
     def _traced(self, kind: str, fn, extra: dict[str, Any] | None = None) -> Any:
         started = time.perf_counter()
-        result = fn()
-        payload: dict[str, Any] = {"latency_ms": round((time.perf_counter() - started) * 1000, 3)}
-        if extra:
-            payload.update(extra)
-        if kind == "gate" and isinstance(result, tuple):
-            payload["path"] = result[1].path
-            payload["score"] = result[1].score
-        if kind == "validate" and hasattr(result, "verdict"):
-            payload["verdict"] = result.verdict
-            payload["violations"] = list(result.violations)
-        if kind == "ingest" and hasattr(result, "event_id"):
-            payload["event_id"] = result.event_id
-            payload["session_id"] = result.session_id
-        if kind == "generate" and hasattr(result, "text"):
-            _, marker = strip_marker(result.text)
-            payload["continuation"] = marker
-            usage = getattr(result, "usage", None)
-            if usage is not None:
-                payload["prompt_tokens"] = usage.prompt_tokens
-                payload["completion_tokens"] = usage.completion_tokens
-                payload["total_tokens"] = usage.total_tokens
-                payload["token_source"] = usage.source
-        self._emit(kind, result, payload)
-        return result
+        started_at = datetime.now(UTC).isoformat()
+        with trace_scope(stage=kind, span_id=new_span_id("stage"), parent_span_id=current_trace_context().get("span_id")):
+            try:
+                result = fn()
+            except BaseException as exc:
+                payload = {
+                    **(extra or {}), "status": "error", "error_type": type(exc).__name__,
+                    "started_at": started_at, "completed_at": datetime.now(UTC).isoformat(),
+                    "latency_ms": round((time.perf_counter() - started) * 1000, 3),
+                }
+                try:
+                    self._emit(kind, None, payload)
+                except BaseException as diagnostic_exc:
+                    logger.warning("failed stage telemetry write failed (%s)", type(diagnostic_exc).__name__)
+                raise
+            payload = {
+                "status": "success", "started_at": started_at,
+                "completed_at": datetime.now(UTC).isoformat(),
+                "latency_ms": round((time.perf_counter() - started) * 1000, 3),
+            }
+            if extra:
+                payload.update(extra)
+            if kind == "gate" and isinstance(result, tuple):
+                payload["path"] = result[1].path
+                payload["score"] = result[1].score
+            if kind == "validate" and hasattr(result, "verdict"):
+                payload["verdict"] = result.verdict
+                payload["violations"] = list(result.violations)
+            if kind == "ingest" and hasattr(result, "event_id"):
+                payload["event_id"] = result.event_id
+                payload["session_id"] = result.session_id
+            if kind == "generate" and hasattr(result, "text"):
+                _, marker = strip_marker(result.text)
+                payload["continuation"] = marker
+                usage = getattr(result, "usage", None)
+                if usage is not None:
+                    payload["prompt_tokens"] = usage.prompt_tokens
+                    payload["completion_tokens"] = usage.completion_tokens
+                    payload["total_tokens"] = usage.total_tokens
+                    payload["token_source"] = usage.source
+            self._emit(kind, result, payload)
+            return result
 
     def _emit(self, kind: str, result: Any, payload: dict[str, Any]) -> None:
+        payload = {**current_trace_context(), **payload}
         with pipeline_emit_guard():
             self.tracer.record(kind, payload)
         emit_pipeline_step(self.memory.call_log, kind, result, payload)

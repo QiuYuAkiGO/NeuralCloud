@@ -1,9 +1,16 @@
 # Grounded Agency 研究实施路线
 
-> 状态：GA-01 Implemented；GA-02 至 GA-08 Planned
+> 状态：GA-01 至 GA-08 工程实现已接入；研究假设与真实模型效果尚未验证
 > 开发分支：`codex/grounded-agency`（上游：本地 `codex/homeostasis-stability`）
 > 跨仓库依赖：`QiuYuAkiGO/MistyAI`  
 > 文档用途：把后续研究拆成可由单轮 Coding Agent 独立实现、测试和提交的阶段。
+
+本次按用户要求继续实现 GA-02–08，并按设计目的复核真实 Runtime 路径。
+验证范围包括可重放输入、模型动作选择、因果干预、经验与 belief、目标恢复以及开放社会评测；
+确定性 fixture 只证明工程机制。GA-07 所要求的真实模型功能性自我维持候选结果、
+GA-08 的长期社会泛化均仍需显式开展独立实验，不能由测试通过推出。
+
+最新验证结果、修复项与解释边界见 [设计目的验证记录](validation-2026-09-05.md)。
 
 ## 1. 总目标
 

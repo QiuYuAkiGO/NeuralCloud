@@ -10,6 +10,7 @@ profile for that intent.
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import PurePosixPath, PureWindowsPath
 from typing import Annotated, Any, Literal
@@ -319,6 +320,36 @@ class _PlanningRejected(ValueError):
 
 class ActionDecisionPlanner:
     """Compile an explicit request or the top autonomous policy, never prose."""
+
+    def compile_user_action(
+        self,
+        request: StructuredActionRequest,
+        *,
+        goal: str,
+        provider_intents: Iterable[str],
+        permitted_intents: Iterable[str],
+    ) -> GoalProposal | DeferDecision:
+        """Compile a model-selected user task under the existing security profiles.
+
+        Runtime owns both capability sets. A user task does not need a fabricated
+        Homeostasis candidate; the local policy below only supplies its identity
+        to the same strict compiler used by explicit action requests.
+        """
+        if request.intent.intent_id not in set(provider_intents) & set(permitted_intents):
+            return DeferDecision(
+                policy_id=request.policy_id,
+                reason="action is unavailable in the current provider and task capability intersection",
+                required_evidence=["provider-supported and task-permitted GUI intent"],
+            )
+        result = self.decide(
+            {
+                "action_request": request.model_dump(mode="json"),
+                "policies": [{"policy_id": request.policy_id, "label": goal, "rank": 1}],
+            },
+            mode="user_task",
+        )
+        assert isinstance(result, (GoalProposal, DeferDecision))
+        return result
 
     def decide(
         self,

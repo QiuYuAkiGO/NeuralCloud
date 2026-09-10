@@ -119,13 +119,51 @@ class GoalStore:
 
     def save_plan(self, plan: GoalPlan) -> None:
         plan = GoalPlan.model_validate(plan.model_dump(mode="json"))
-        goal = self.goal(plan.goal_id)
-        if goal.status in {"completed", "abandoned"}:
-            raise ValueError("cannot plan a terminal goal")
-        prior = self.plan(plan.goal_id)
-        if plan.revision != (prior.revision + 1 if prior else 1):
-            raise ValueError("plan revision must increase exactly once")
-        self.put("plan", plan.goal_id, plan)
+        with self.atomic():
+            goal = self.goal(plan.goal_id)
+            if goal.status in {"completed", "abandoned"}:
+                raise ValueError("cannot plan a terminal goal")
+            prior = self.plan(plan.goal_id)
+            if plan.revision != (prior.revision + 1 if prior else 1):
+                raise ValueError("plan revision must increase exactly once")
+            checkpoint = self.checkpoint(plan.goal_id)
+            outcomes = [item for item in self.all("action_outcome") if item["goal_id"] == plan.goal_id]
+            if any(item["state"] == "unknown" for item in outcomes):
+                raise ValueError("unknown effects must be reconciled before replanning")
+            if checkpoint is not None and checkpoint.action_status == "unknown":
+                reconciled = self.get("action_outcome", checkpoint.action_id or "")
+                if reconciled is None or reconciled["state"] == "unknown":
+                    raise ValueError("unknown checkpoint effects must be reconciled before replanning")
+            executed = {item["step_id"] for item in outcomes}
+            if checkpoint is not None:
+                executed.update(checkpoint.completed_step_ids)
+            if prior is not None:
+                old_steps = {step.step_id: step for step in prior.steps}
+                new_steps = {step.step_id: step for step in plan.steps}
+                for identifier in executed:
+                    if identifier not in new_steps or identifier not in old_steps:
+                        raise ValueError("replan must retain executed step identities and their evidence")
+                    old_decision = {key: value for key, value in old_steps[identifier].decision.items() if key != "confidence"}
+                    new_decision = {key: value for key, value in new_steps[identifier].decision.items() if key != "confidence"}
+                    if canonical_json(old_decision) != canonical_json(new_decision):
+                        raise ValueError("replan cannot bind an executed step to a different decision")
+            self.put("plan", plan.goal_id, plan)
+            if goal.status == "paused":
+                if checkpoint is None:
+                    raise ValueError("paused replan requires its persisted safe-point checkpoint")
+                completed = set(checkpoint.completed_step_ids) | {
+                    item["step_id"] for item in outcomes if item["state"] == "succeeded"
+                }
+                next_step = next((step for step in plan.steps
+                                  if step.step_id not in completed and set(step.depends_on) <= completed), None)
+                # Rebind the model's new plan to the original physical safe point.
+                # This is not a new observation and must not fabricate its time.
+                self.save_checkpoint(checkpoint.model_copy(update={
+                    "plan_revision": plan.revision,
+                    "completed_step_ids": tuple(step.step_id for step in plan.steps if step.step_id in completed),
+                    "next_step_id": next_step.step_id if next_step is not None else None,
+                    "world_state_refs": plan.world_evidence_refs,
+                }))
 
     def checkpoint(self, goal_id: str) -> GoalCheckpoint | None:
         raw = self.get("checkpoint", goal_id)

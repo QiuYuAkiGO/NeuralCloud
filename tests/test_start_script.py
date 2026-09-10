@@ -104,6 +104,11 @@ function Start-Process {
         token_file = [string]$env:NC_MISTYAI_TOKEN_FILE
         base_url = [string]$env:NC_MISTYAI_BASE_URL
         provider = [string]$env:NC_EMBODIMENT_PROVIDER
+        runtime_state_dir = [string]$env:NC_RUNTIME_STATE_DIR
+        cognitive_state_path = [string]$env:NC_COGNITIVE_STATE_PATH
+        homeostasis_state_dir = [string]$env:NC_HOMEOSTASIS_STATE_DIR
+        gui_config = [string]$env:NC_GUI_CONFIG
+        gui_presets = [string]$env:NC_GUI_PRESETS
     } | ConvertTo-Json -Compress | Add-Content -LiteralPath (Join-Path $global:StartTestRoot 'launches.jsonl')
     $global:StartTestProcessId += 1
     return [pscustomobject]@{ Id = $global:StartTestProcessId; StartTime = (Get-Date) }
@@ -323,3 +328,31 @@ def test_required_misty_manifest_rejects_provider_override_before_launch(
     assert result.returncode == 1
     assert expected_error in result.stdout.lower()
     assert "Starting " not in result.stdout
+
+
+@pytest.mark.skipif(POWERSHELL is None, reason="PowerShell is unavailable")
+def test_acceptance_state_is_isolated_and_tokens_are_not_printed(tmp_path):
+    source = tmp_path / "settings-source.json"
+    source.write_text(json.dumps({"api_key": "fixture-local-model-key", "model": "fixture"}))
+    state = tmp_path / "acceptance state"
+    result, launches, _ = _run_isolated_start(
+        tmp_path, "-StateRoot", str(state), saved_configuration="default",
+        environment={"NC_GUI_CONFIG": str(source)},
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert len(launches) == 4
+    for launch in launches:
+        assert Path(launch["runtime_state_dir"]) == state / "runtime"
+        assert Path(launch["cognitive_state_path"]) == state / "cognitive" / "state.json"
+        assert Path(launch["homeostasis_state_dir"]) == state / "homeostasis"
+        assert Path(launch["gui_config"]) == state / "gui_settings.json"
+        assert Path(launch["gui_presets"]) == state / "presets"
+    assert (state / "gui_settings.json").read_bytes() == source.read_bytes()
+    assert not (tmp_path / "data" / "runtime" / "active-start.json").exists()
+    assert (state / "runtime" / "active-start.json").exists()
+    registry = json.loads((tmp_path / ".neuralcloud.pids.json").read_text(encoding="utf-8-sig"))
+    for name in ("control", "service"):
+        secret_file = Path(registry[f"{name}_token_file"])
+        token = secret_file.read_text()
+        assert len(token) >= 32 and token not in result.stdout + result.stderr
+    assert "fixture-local-model-key" not in result.stdout + result.stderr

@@ -80,8 +80,8 @@ def create_app():
     service_token = os.environ.get("NC_SERVICE_TOKEN", "development-service-token")
     control_token = os.environ.get("NC_CONTROL_TOKEN", "development-control-token")
     manifest = load_experiment_manifest(manifest_path)
-    cognitive = HttpCognitiveClient(cognitive_url, service_token=service_token)
-    homeostasis = HttpHomeostasisClient(homeostasis_url, service_token=service_token)
+    cognitive = HttpCognitiveClient(cognitive_url, service_token=service_token, timeout=manifest.command_timeout_seconds)
+    homeostasis = HttpHomeostasisClient(homeostasis_url, service_token=service_token, timeout=manifest.command_timeout_seconds)
     provider_default = getattr(manifest.embodiment, "body_provider", "none")
     provider_name = os.environ.get("NC_EMBODIMENT_PROVIDER", provider_default).strip().lower()
     embodiment_client: MistyAIClient | None = None
@@ -146,7 +146,7 @@ def create_app():
             PerceptionGuard(
                 perception_backend,
                 supervisor.submit_event,
-                interval_seconds=provider_poll_seconds,
+                interval_seconds=manifest.embodiment.poll_interval_seconds,
                 max_state_age_seconds=manifest.embodiment.max_state_age_seconds,
                 source="embodiment",
             )

@@ -1,0 +1,215 @@
+{
+  "schema_version": "basic-live-chat-evidence-v1",
+  "date": "2026-09-09",
+  "started_at": "2026-09-09T05:45:56.165707+00:00",
+  "status": "INCONCLUSIVE",
+  "scope": "isolated production CognitiveServiceHost with live configured models; four rounds and restart",
+  "runtime_http_gui_delivery_tested": false,
+  "delivery_method": "evaluator writes actual ReplyDecision segments to an isolated local receipt, then supplies DeliveryEvidence",
+  "model_quality_claim": "requires review of captured real replies; no mock outputs",
+  "configuration_source": "gui.persist.load_gui_settings()",
+  "temporary_root": ".test-tmp\\basic-live-retest-8fde1f407b",
+  "command_timeout_seconds": 120.0,
+  "attempts": [
+    {
+      "round": 1,
+      "prompt": "你好呀，可以介绍一下你自己吗？你叫什么、今年几岁，生日是哪一天？",
+      "status": "PASS",
+      "started_at": "2026-09-09T05:46:03.207276+00:00",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.004
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 5153.988
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 4.353
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 0.168
+        },
+        {
+          "stage": "interpret",
+          "elapsed_ms": 3462.412
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.393
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 1666.958
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 2277.69,
+          "verdict": "pass",
+          "violations": []
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "context_checks": [
+        {
+          "identity_and_boundaries_complete": true,
+          "has_rain_photo_name": false,
+          "context_sha256": "b11bb37f2e18b2e6805855f2ff6dfbfa9655e005e8ea52e65886f396f76c0d4e"
+        }
+      ],
+      "prepare_elapsed_seconds": 12.59299999999348,
+      "prepare_status": "applied",
+      "prepare_side_effect_free": true,
+      "prepare_id": "prep_f79bd8ff",
+      "reply": "啊……你好。我叫小雾，也可以叫我Misty。今年19岁，生日是5月20日……嗯，是个蛮温柔的时节呢。",
+      "segments": [
+        "啊……你好。我叫小雾，也可以叫我Misty。今年19岁，生日是5月20日……嗯，是个蛮温柔的时节呢。"
+      ],
+      "read_versions": {
+        "runtime_goal": 0,
+        "runtime_action": 0,
+        "cognitive_world": 0,
+        "cognitive_relationship": 0,
+        "cognitive_memory": 0,
+        "cognitive_session": 0,
+        "cognitive_maintenance": 0,
+        "homeostasis_state": 0
+      },
+      "final_validation": {
+        "verdict": "pass",
+        "violations": [],
+        "severity": 0.0,
+        "instruction": null,
+        "skipped": false
+      },
+      "path": "deep",
+      "usage": {
+        "prompt_tokens": 673,
+        "completion_tokens": 96,
+        "total_tokens": 769,
+        "calls": 1,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_fb68f706",
+        "prepare_id": "prep_f79bd8ff",
+        "delivered_at": "2026-09-09T05:46:15.822832Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "啊……你好。我叫小雾，也可以叫我Misty。今年19岁，生日是5月20日……嗯，是个蛮温柔的时节呢。"
+        ],
+        "external_ref": "local-receipt:delivery-1.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 51.23399999999674,
+      "commit_status": "applied",
+      "committed_revision": 1,
+      "persona_unchanged": true,
+      "within_runtime_command_budget": true
+    },
+    {
+      "round": 2,
+      "prompt": "我今天拍了一张雨后窗边的照片，想给它取名《雨后微光》。你觉得这个名字怎么样？",
+      "status": "RUNNING",
+      "started_at": "2026-09-09T05:47:07.062748+00:00",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.003
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 5032.252
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 3.943
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 7.254
+        },
+        {
+          "stage": "interpret",
+          "elapsed_ms": 7717.072
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.43
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 2749.9
+        }
+      ],
+      "context_checks": [
+        {
+          "identity_and_boundaries_complete": true,
+          "has_rain_photo_name": true,
+          "context_sha256": "2aecce08cfb0e19269cff70c0041ac26c76045059f5dde66f0a76cec6e8a2799"
+        }
+      ]
+    }
+  ],
+  "restarts": [],
+  "production_settings_modified": [],
+  "isolation_overrides": [
+    "temporary preset/state/trace directories",
+    "select builtin misty",
+    "in-memory injection of existing GUI settings"
+  ],
+  "configurations": [
+    {
+      "fingerprint": "cc908701e977cd2948e7cbfbac13612a9062faefebb33ca96fba563ebf910984",
+      "values": {
+        "llm_base_url": "https://api.deepseek.com",
+        "llm_model": "deepseek-v4-flash",
+        "aux_llm_base_url": null,
+        "aux_llm_model": null,
+        "llm_timeout": 60.0,
+        "llm_json_max_tokens": 512,
+        "model_version": "live",
+        "prompt_version": "homeostatic-interoception-v1",
+        "schema_version": "state-v1",
+        "parser_llm_enabled": true,
+        "planner_llm_enabled": false,
+        "tier_llm_enabled": true,
+        "validator_sample_rate": 1.0,
+        "max_revisions": 2,
+        "context_token_budget": 3000,
+        "session_window": 10,
+        "continuation_enabled": true,
+        "max_reply_segments": 3,
+        "embedding": {
+          "backend": "mock",
+          "reachable": false,
+          "base_url": "http://127.0.0.1:8080/v1",
+          "model": "bge-m3"
+        },
+        "persona_id": "persona_misty_v020",
+        "persona_sha256": "5eb5b5cf2353a90091e253c0dab1bf5a1dedd0cfa4bf25f396afd3e7bf7eb656"
+      }
+    }
+  ],
+  "health_probe": {
+    "samples": 319,
+    "failures": 0,
+    "maximum_elapsed_seconds": 0.01600000000325963
+  },
+  "finished_at": "2026-09-09T05:47:25.894404+00:00",
+  "interruption": "The foreground test process ended before completing four rounds; partial evidence retained, no full pass claimed."
+}

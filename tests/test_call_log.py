@@ -61,7 +61,7 @@ def test_respond_success_writes_one_call_log(service, tmp_path: Path) -> None:
     assert "retrieval" in kinds
 
 
-def test_respond_error_writes_nothing(service, tmp_path: Path) -> None:
+def test_respond_error_writes_partial_evidence(service, tmp_path: Path) -> None:
     _enable_call_log(service, tmp_path)
     pipeline = InferencePipeline(service, settings=service.settings)
 
@@ -71,7 +71,12 @@ def test_respond_error_writes_nothing(service, tmp_path: Path) -> None:
     pipeline.parser.parse = boom  # type: ignore[method-assign]
     with pytest.raises(RuntimeError, match="parse failed"):
         pipeline.respond("早上好。", now=NOW, session_id="sess_hi")
-    assert list_call_logs(service.settings) == []
+    payload, = _payloads(tmp_path)
+    assert payload["ok"] is False
+    assert payload["error"]["type"] == "RuntimeError"
+    assert payload["latency_ms"] >= 0
+    assert [step["kind"] for step in payload["steps"]] == ["ingest", "parse"]
+    assert payload["steps"][-1]["meta"]["status"] == "error"
 
 
 def test_respond_nests_record_event(service, tmp_path: Path) -> None:
@@ -104,7 +109,7 @@ def test_query_success_strips_embeddings(service, tmp_path: Path) -> None:
     assert payloads[0]["steps"][0]["kind"] == "retrieval"
 
 
-def test_failed_memory_write_does_not_log(service, tmp_path: Path) -> None:
+def test_failed_memory_write_logs_failure_evidence(service, tmp_path: Path) -> None:
     seed_running_example(service)
     _enable_call_log(service, tmp_path)
     event = service.stores.episodic.get("evt_04010")
@@ -127,4 +132,8 @@ def test_failed_memory_write_does_not_log(service, tmp_path: Path) -> None:
     assert persona is not None
     with pytest.raises(PersonaLockedError):
         service.update_persona(persona)
-    assert _payloads(tmp_path) == []
+    payloads = _payloads(tmp_path)
+    assert {payload["kind"] for payload in payloads} == {"record_event", "force_write_semantic"}
+    assert all(payload["ok"] is False for payload in payloads)
+    assert all(payload["error"]["type"] == "EvidenceRequiredError" for payload in payloads)
+    assert all(payload["latency_ms"] >= 0 for payload in payloads)

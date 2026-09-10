@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -124,6 +124,7 @@ class AgencyService:
                          provider_intents: Iterable[str] = (), opaque_observations: Iterable[Any] = (),
                          body_beliefs: Iterable[Any] = (), world_context: dict[str, Any] | None = None,
                          resume_observation: ResumeObservation | None = None, safe_checkpoint: GoalCheckpoint | None = None,
+                         resume_observations: Mapping[str, ResumeObservation] | None = None,
                          opaque: bool = True) -> AgencyEvaluation:
         if self._closed:
             raise RuntimeError("agency service is closed")
@@ -188,7 +189,9 @@ class AgencyService:
                             self.store.save_checkpoint(safe_checkpoint)
                         applied = apply_arbitration(self.store, output.arbitration, config=self.config,
                             provider_intents=provider_intents, permitted_intents=self.permitted_intents,
-                            evidence_refs=tuple(sorted(references)), resume_observation=resume_observation)
+                            evidence_refs=tuple(sorted(references)), resume_observation=(
+                                resume_observations.get(output.arbitration.selected_goal_id)
+                                if resume_observations is not None else resume_observation))
                         applied = bool(applied or output.candidate is not None or output.plan is not None or output.review is not None)
                     evaluation = AgencyEvaluation(decision=output.arbitration, applied=applied, reason="model arbitration validated",
                         goal_id=output.arbitration.selected_goal_id, trace_ref=trace_id, model_called=True)

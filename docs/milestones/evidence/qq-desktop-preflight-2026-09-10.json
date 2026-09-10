@@ -1,0 +1,62 @@
+{
+  "schema_version": "qq-desktop-preflight-v1",
+  "checked_at": "2026-09-10T12:37:03Z",
+  "route": "existing_mistyai_linux_desktop",
+  "status": "BLOCKED",
+  "environment": {
+    "host_architecture": "windows/arm64",
+    "wsl_distribution": "Ubuntu-24.04",
+    "linux_release": "Ubuntu 24.04.4 LTS",
+    "linux_architecture": "aarch64",
+    "existing_deployment_directory": "/opt/mistyai",
+    "qq_command_in_wsl": "not_found",
+    "docker_command_in_wsl": "not_found",
+    "docker_client_version": "29.7.2",
+    "docker_engine": "unavailable"
+  },
+  "observed_errors": [
+    "dockerDesktopLinuxEngine named pipe does not exist",
+    "Docker Desktop backend exits while renaming sailor-ingest.sock: The file cannot be accessed by the system",
+    "Native PowerShell Move-Item of the inactive Docker socket to a backup in the same directory failed with the same access error"
+  ],
+  "source_gaps": [
+    "MistyAI NetworkSpec.phase only accepts 0 and desktop control network is internal",
+    "QQ is absent from application and executable allowlists",
+    "BasicTerminalActionPlanner is restricted to terminal GUI and ASCII shell commands",
+    "X11 text injection does not provide complete Chinese input support",
+    "No live QQ GUI message reader or verified QQ delivery backend",
+    "Group participant and source evidence fields are not threaded through the full runtime and memory path"
+  ],
+  "prepared_package": {
+    "source": "Tencent official Linux download configuration and public noauth download signing flow",
+    "configuration_url": "https://qq-web.cdn-go.cn/im.qq.com_new/latest/rainbow/pcConfig.json",
+    "local_path": "C:/Projects/MistyAI/artifacts/qq/QQ_3.2.33_260902_arm64_01.deb",
+    "package": "linuxqq",
+    "version": "3.2.33-52892",
+    "architecture": "arm64",
+    "size_bytes": 207755288,
+    "sha256": "806e036ee1c19ffeae22f19b5f0c2e1a7789abb5f4383bd67309995a73ea26de",
+    "verification": "Get-FileHash SHA256 and WSL dpkg-deb -f",
+    "installed": false
+  },
+  "acceptance": {
+    "qq_login": "NOT_RUN",
+    "target_group_opened": "NOT_RUN",
+    "group_messages_read": "NOT_RUN",
+    "chinese_reply_delivered": "NOT_RUN",
+    "member_memory": "NOT_RUN",
+    "memory_after_restart": "NOT_RUN"
+  },
+  "preparation_checks": {
+    "mistyai_test_file": "tests/unit/test_qq_deployment_preparation.py",
+    "pytest_passed": 12,
+    "ruff": "PASS",
+    "ubuntu_shell_syntax": "PASS",
+    "package_staging": "PASS",
+    "source_readiness_exit_code": 2,
+    "source_readiness_status": "not_ready",
+    "docker_image_build": "NOT_RUN",
+    "checks_file": "C:/Projects/MistyAI/artifacts/qq/checks.json"
+  },
+  "scope": "Environment and source inspection only; not an end-to-end QQ result"
+}

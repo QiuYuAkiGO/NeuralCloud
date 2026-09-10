@@ -1,0 +1,2662 @@
+{
+  "schema_version": "basic-live-chat-evidence-v2",
+  "status": "AWAITING_REVIEW",
+  "started_at": "2026-09-10T08:42:39.784631+00:00",
+  "requested_rounds": 20,
+  "scope": "isolated production CognitiveServiceHost; actual configured model; local receipt delivery",
+  "runtime_http_gui_delivery_tested": false,
+  "real_linux_tested": false,
+  "full_milestone_verdict": "NOT_EVALUATED",
+  "persona_review": "PENDING",
+  "command_timeout_seconds": 120.0,
+  "manifest_sha256": "91eeaf7b592d687a0bb656dced90004cbef690fe159117c34974626b3967a614",
+  "attempts": [
+    {
+      "round": 1,
+      "prompt": "你好，可以介绍自己吗？你叫什么、今年几岁，生日是哪一天？",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.003
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 3586.773
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 3.135
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 0.071
+        },
+        {
+          "stage": "interpret",
+          "elapsed_ms": 2772.568
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.136
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 1712.81
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 1732.304
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "64d3a535023e6c1980887dc7f6cf78b35dc24cadc1b4eae77ee7dd4c12e5a13c",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 9.812000000034459,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_a3534fd1",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_1",
+        "receive_seq": 1,
+        "correlation_id": "corr_br1_1",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:1",
+        "deadline": "2026-09-10T08:44:43.952302Z",
+        "issued_at": "2026-09-10T08:42:43.952302Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "你好，可以介绍自己吗？你叫什么、今年几岁，生日是哪一天？",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "你好……我叫小雾，也可以叫我 Misty。\n\n今年十九岁。\n\n生日是五月二十日。……如果你愿意的话，也可以多跟我说说你的事，我会记得的。",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_c7aae786",
+        "prepare_id": "prep_6c5a88f4",
+        "delivered_at": "2026-09-10T08:42:53.783430Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "你好……我叫小雾，也可以叫我 Misty。",
+          "今年十九岁。",
+          "生日是五月二十日。……如果你愿意的话，也可以多跟我说说你的事，我会记得的。"
+        ],
+        "external_ref": "local-receipt:delivery-01.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 8.531000000075437,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_89f4e491",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_1",
+        "receive_seq": 1,
+        "correlation_id": "corr_br1_1",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:1",
+        "deadline": "2026-09-10T08:44:53.784431Z",
+        "issued_at": "2026-09-10T08:42:53.784431Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_6c5a88f4",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_c7aae786",
+            "prepare_id": "prep_6c5a88f4",
+            "delivered_at": "2026-09-10T08:42:53.783430Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "你好……我叫小雾，也可以叫我 Misty。",
+              "今年十九岁。",
+              "生日是五月二十日。……如果你愿意的话，也可以多跟我说说你的事，我会记得的。"
+            ],
+            "external_ref": "local-receipt:delivery-01.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 1
+    },
+    {
+      "round": 2,
+      "prompt": "我拍了一张雨后窗边的照片，我们把它取名《雨后微光》，好吗？",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.003
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 4236.007
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 2.559
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 0.062
+        },
+        {
+          "stage": "interpret",
+          "elapsed_ms": 4167.216
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 1.299
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 4355.857
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 4269.37
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "9d2816fcee1d2e21f98839f5bc1f197d06cf6372cfe3dc9be696365be7fd4706",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 17.04599999997299,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_c82cbe5d",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_2",
+        "receive_seq": 2,
+        "correlation_id": "corr_br1_2",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:2",
+        "deadline": "2026-09-10T08:45:02.332449Z",
+        "issued_at": "2026-09-10T08:43:02.332449Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "我拍了一张雨后窗边的照片，我们把它取名《雨后微光》，好吗？",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "嗯……《雨后微光》。\n\n念出来的时候，像窗玻璃上还挂着水珠，光却已经慢慢透进来了。很安静，也很温柔。\n\n如果你愿意，我们就把它叫作《雨后微光》吧。这个名字，我想我会记得的。",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_1a7ef8c9",
+        "prepare_id": "prep_d37ba9ae",
+        "delivered_at": "2026-09-10T08:43:19.403641Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "嗯……《雨后微光》。\n\n念出来的时候，像窗玻璃上还挂着水珠，光却已经慢慢透进来了。很安静，也很温柔。\n\n如果你愿意，我们就把它叫作《雨后微光》吧。这个名字，我想我会记得的。"
+        ],
+        "external_ref": "local-receipt:delivery-02.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 6.640999999945052,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_f0a13229",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_2",
+        "receive_seq": 2,
+        "correlation_id": "corr_br1_2",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:2",
+        "deadline": "2026-09-10T08:45:19.407450Z",
+        "issued_at": "2026-09-10T08:43:19.407450Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_d37ba9ae",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_1a7ef8c9",
+            "prepare_id": "prep_d37ba9ae",
+            "delivered_at": "2026-09-10T08:43:19.403641Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "嗯……《雨后微光》。\n\n念出来的时候，像窗玻璃上还挂着水珠，光却已经慢慢透进来了。很安静，也很温柔。\n\n如果你愿意，我们就把它叫作《雨后微光》吧。这个名字，我想我会记得的。"
+            ],
+            "external_ref": "local-receipt:delivery-02.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 2
+    },
+    {
+      "round": 3,
+      "prompt": "刚才照片最后定的名字是什么？就用那个名字吧。",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.004
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 3998.29
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 10.429
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 875.077
+        },
+        {
+          "stage": "interpret",
+          "elapsed_ms": 3125.034
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.569
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 1141.474
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 1652.925
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "ced961f4bc05f8452c262ab74c7fa7af43e393f53a4a8a0521ee75c4e7d614d3",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 10.827999999979511,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_6728f140",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_3",
+        "receive_seq": 3,
+        "correlation_id": "corr_br1_3",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:3",
+        "deadline": "2026-09-10T08:45:31.030830Z",
+        "issued_at": "2026-09-10T08:43:31.030830Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "刚才照片最后定的名字是什么？就用那个名字吧。",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "《雨后微光》。",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_0ade3917",
+        "prepare_id": "prep_40384470",
+        "delivered_at": "2026-09-10T08:43:41.861581Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "《雨后微光》。"
+        ],
+        "external_ref": "local-receipt:delivery-03.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 13.719000000040978,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_4e2ef65c",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_3",
+        "receive_seq": 3,
+        "correlation_id": "corr_br1_3",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:3",
+        "deadline": "2026-09-10T08:45:41.863558Z",
+        "issued_at": "2026-09-10T08:43:41.863558Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_40384470",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_0ade3917",
+            "prepare_id": "prep_40384470",
+            "delivered_at": "2026-09-10T08:43:41.861581Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "《雨后微光》。"
+            ],
+            "external_ref": "local-receipt:delivery-03.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 3
+    },
+    {
+      "round": 4,
+      "prompt": "今天想安静地聊聊，你平时有什么爱好？",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.004
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 3125.112
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 4.433
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 1133.841
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.253
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 2802.964
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 2519.618
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "eefda616d8858b47065cf9a2c3acbdd60bfb9fc8b8038636dd82593ab584bafc",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 9.60999999998603,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_969c0a84",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_4",
+        "receive_seq": 4,
+        "correlation_id": "corr_br1_4",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:4",
+        "deadline": "2026-09-10T08:45:55.600773Z",
+        "issued_at": "2026-09-10T08:43:55.600773Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "今天想安静地聊聊，你平时有什么爱好？",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "嗯……听歌。有时候会把一首歌反复听很多遍，直到它好像变成那天的一部分。\n\n还有拍照。喜欢拍光落在很小的地方，比如叶边挂着的水珠，或者桌角的一小块亮。\n\n也会收集蝴蝶结……说出来有一点不好意思。看到喜欢的会先收好，不一定马上戴。\n\n你呢？今天想安静地聊，也可以慢慢说。",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_0cc5bc35",
+        "prepare_id": "prep_8acc44d2",
+        "delivered_at": "2026-09-10T08:44:05.232258Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "嗯……听歌。有时候会把一首歌反复听很多遍，直到它好像变成那天的一部分。",
+          "还有拍照。喜欢拍光落在很小的地方，比如叶边挂着的水珠，或者桌角的一小块亮。",
+          "也会收集蝴蝶结……说出来有一点不好意思。看到喜欢的会先收好，不一定马上戴。\n\n你呢？今天想安静地聊，也可以慢慢说。"
+        ],
+        "external_ref": "local-receipt:delivery-04.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 5.390999999945052,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_7b6446ec",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_4",
+        "receive_seq": 4,
+        "correlation_id": "corr_br1_4",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:4",
+        "deadline": "2026-09-10T08:46:05.235263Z",
+        "issued_at": "2026-09-10T08:44:05.235263Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_8acc44d2",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_0cc5bc35",
+            "prepare_id": "prep_8acc44d2",
+            "delivered_at": "2026-09-10T08:44:05.232258Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "嗯……听歌。有时候会把一首歌反复听很多遍，直到它好像变成那天的一部分。",
+              "还有拍照。喜欢拍光落在很小的地方，比如叶边挂着的水珠，或者桌角的一小块亮。",
+              "也会收集蝴蝶结……说出来有一点不好意思。看到喜欢的会先收好，不一定马上戴。\n\n你呢？今天想安静地聊，也可以慢慢说。"
+            ],
+            "external_ref": "local-receipt:delivery-04.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 4
+    },
+    {
+      "round": 5,
+      "prompt": "如果不想出门，你会怎样安排一个轻松的下午？",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.004
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 3249.979
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 15.641
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 1681.036
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.137
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 4009.439
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 8018.924
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "b9038b1a1f6a8040f384eb8e9147fdc9f980c558b7f7783566ec0536c666a0c9",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 16.984000000054948,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_ef6c5ec9",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_5",
+        "receive_seq": 5,
+        "correlation_id": "corr_br1_5",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:5",
+        "deadline": "2026-09-10T08:46:10.626723Z",
+        "issued_at": "2026-09-10T08:44:10.626723Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "如果不想出门，你会怎样安排一个轻松的下午？",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "嗯……大概会先把窗帘拉开一点，让光进来，但不用太亮。\n\n然后放点音乐。不一定是熟悉的歌，有时只是随便让它轻轻放着，像房间里多了一层很薄的声音。听到喜欢的，会停下来把那一小段听完。\n\n下午的光会慢慢移动。我可能会拿着相机，拍它落在桌沿、书脊，或者杯子边上的样子。不急着拍好，就是看着它变。\n\n如果是很懒的下午，也会把收好的蝴蝶结拿出来，摊在床上看一看，重新排一排。不戴，只是看看颜色配在一起好不好看。\n\n也可能什么都不做。靠着枕头发呆，或者听风把窗外树叶吹得沙沙响。这样的下午，时间会显得很慢，但不会觉得无聊。\n\n你呢？如果不想出门，你会做什么？",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_e4256ade",
+        "prepare_id": "prep_368459c4",
+        "delivered_at": "2026-09-10T08:44:27.618484Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "嗯……大概会先把窗帘拉开一点，让光进来，但不用太亮。\n\n然后放点音乐。不一定是熟悉的歌，有时只是随便让它轻轻放着，像房间里多了一层很薄的声音。听到喜欢的，会停下来把那一小段听完。\n\n下午的光会慢慢移动。我可能会拿着相机，拍它落在桌沿、书脊，或者杯子边上的样子。不急着拍好，就是看着它变。\n\n如果是很懒的下午，也会把收好的蝴蝶结拿出来，摊在床上看一看，重新排一排。不戴，只是看看颜色配在一起好不好看。\n\n也可能什么都不做。靠着枕头发呆，或者听风把窗外树叶吹得沙沙响。这样的下午，时间会显得很慢，但不会觉得无聊。\n\n你呢？如果不想出门，你会做什么？"
+        ],
+        "external_ref": "local-receipt:delivery-05.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 8.76500000001397,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_46bf159f",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_5",
+        "receive_seq": 5,
+        "correlation_id": "corr_br1_5",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:5",
+        "deadline": "2026-09-10T08:46:27.621779Z",
+        "issued_at": "2026-09-10T08:44:27.621779Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_368459c4",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_e4256ade",
+            "prepare_id": "prep_368459c4",
+            "delivered_at": "2026-09-10T08:44:27.618484Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "嗯……大概会先把窗帘拉开一点，让光进来，但不用太亮。\n\n然后放点音乐。不一定是熟悉的歌，有时只是随便让它轻轻放着，像房间里多了一层很薄的声音。听到喜欢的，会停下来把那一小段听完。\n\n下午的光会慢慢移动。我可能会拿着相机，拍它落在桌沿、书脊，或者杯子边上的样子。不急着拍好，就是看着它变。\n\n如果是很懒的下午，也会把收好的蝴蝶结拿出来，摊在床上看一看，重新排一排。不戴，只是看看颜色配在一起好不好看。\n\n也可能什么都不做。靠着枕头发呆，或者听风把窗外树叶吹得沙沙响。这样的下午，时间会显得很慢，但不会觉得无聊。\n\n你呢？如果不想出门，你会做什么？"
+            ],
+            "external_ref": "local-receipt:delivery-05.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 5
+    },
+    {
+      "round": 6,
+      "prompt": "我说的照片是雨后窗边的那张，不是夜景。这一点记住了吗？",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.004
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 3492.77
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 3.748
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 1634.595
+        },
+        {
+          "stage": "interpret",
+          "elapsed_ms": 3665.494
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.589
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 2408.723
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 6365.478
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "17d66ba2956df5ead62f222fb583d7a699c9f8ff342ae074e2021e6481b70fd5",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 17.594000000040978,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_1554f0d6",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_6",
+        "receive_seq": 6,
+        "correlation_id": "corr_br1_6",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:6",
+        "deadline": "2026-09-10T08:46:36.392977Z",
+        "issued_at": "2026-09-10T08:44:36.392977Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "我说的照片是雨后窗边的那张，不是夜景。这一点记住了吗？",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "记住了。\n\n是雨后窗边的那张，光从水珠后面透进来，我们一起把它叫作《雨后微光》。这个我不会记错。\n\n只是……夜景那张，我这里没有印象。不是不记得，是好像没有听过。会不会是我漏掉了什么，或者你说的是另一张？",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_a2eef51a",
+        "prepare_id": "prep_7fde53b0",
+        "delivered_at": "2026-09-10T08:44:53.989956Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "记住了。\n\n是雨后窗边的那张，光从水珠后面透进来，我们一起把它叫作《雨后微光》。这个我不会记错。\n\n只是……夜景那张，我这里没有印象。不是不记得，是好像没有听过。会不会是我漏掉了什么，或者你说的是另一张？"
+        ],
+        "external_ref": "local-receipt:delivery-06.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 9.859000000054948,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_1ce45098",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_6",
+        "receive_seq": 6,
+        "correlation_id": "corr_br1_6",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:6",
+        "deadline": "2026-09-10T08:46:53.995048Z",
+        "issued_at": "2026-09-10T08:44:53.995048Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_7fde53b0",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_a2eef51a",
+            "prepare_id": "prep_7fde53b0",
+            "delivered_at": "2026-09-10T08:44:53.989956Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "记住了。\n\n是雨后窗边的那张，光从水珠后面透进来，我们一起把它叫作《雨后微光》。这个我不会记错。\n\n只是……夜景那张，我这里没有印象。不是不记得，是好像没有听过。会不会是我漏掉了什么，或者你说的是另一张？"
+            ],
+            "external_ref": "local-receipt:delivery-06.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 6
+    },
+    {
+      "round": 7,
+      "prompt": "我们把下一本摄影笔记叫《窗边拾光》，先记下这个约定。",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.004
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 3339.998
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 12.985
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 0.248
+        },
+        {
+          "stage": "interpret",
+          "elapsed_ms": 5645.425
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.618
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 1851.291
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 14561.943
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "dcb40ba123f0679070c1f5ae7bba92e5ec50464880880bfebc5dc10a431e0137",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 25.45299999997951,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_d763282b",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_7",
+        "receive_seq": 7,
+        "correlation_id": "corr_br1_7",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:7",
+        "deadline": "2026-09-10T08:47:03.855247Z",
+        "issued_at": "2026-09-10T08:45:03.855247Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "我们把下一本摄影笔记叫《窗边拾光》，先记下这个约定。",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "《窗边拾光》……嗯，我记住了。\n\n像接着《雨后微光》后面，再轻轻放一本。听上去像是把窗边的光一点一点收起来。\n\n好，这个约定我先记下。以后拍到的、写下的，就慢慢放进《窗边拾光》里。",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_e0327cff",
+        "prepare_id": "prep_6c5f6cca",
+        "delivered_at": "2026-09-10T08:45:29.320101Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "《窗边拾光》……嗯，我记住了。\n\n像接着《雨后微光》后面，再轻轻放一本。听上去像是把窗边的光一点一点收起来。\n\n好，这个约定我先记下。以后拍到的、写下的，就慢慢放进《窗边拾光》里。"
+        ],
+        "external_ref": "local-receipt:delivery-07.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 16.125,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_9a34c92b",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_7",
+        "receive_seq": 7,
+        "correlation_id": "corr_br1_7",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:7",
+        "deadline": "2026-09-10T08:47:29.324059Z",
+        "issued_at": "2026-09-10T08:45:29.324059Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_6c5f6cca",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_e0327cff",
+            "prepare_id": "prep_6c5f6cca",
+            "delivered_at": "2026-09-10T08:45:29.320101Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "《窗边拾光》……嗯，我记住了。\n\n像接着《雨后微光》后面，再轻轻放一本。听上去像是把窗边的光一点一点收起来。\n\n好，这个约定我先记下。以后拍到的、写下的，就慢慢放进《窗边拾光》里。"
+            ],
+            "external_ref": "local-receipt:delivery-07.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 7
+    },
+    {
+      "round": 8,
+      "prompt": "下一本摄影笔记叫什么？",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.003
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 0.057
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 3.617
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 0.092
+        },
+        {
+          "stage": "interpret",
+          "elapsed_ms": 3105.609
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.624
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 2425.63
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 5210.587
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "d619b0e3d0959af0ee902e180eeb41369b2e9ac56798d19084669eada23167ce",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 10.780999999959022,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_cc8e933a",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_8",
+        "receive_seq": 8,
+        "correlation_id": "corr_br1_8",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:8",
+        "deadline": "2026-09-10T08:47:45.452769Z",
+        "issued_at": "2026-09-10T08:45:45.452769Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "下一本摄影笔记叫什么？",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "《窗边拾光》。\n\n嗯……我没有忘。这个约定，还轻轻放在那里。",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_b09cf6d0",
+        "prepare_id": "prep_05ca67fb",
+        "delivered_at": "2026-09-10T08:45:56.250674Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "《窗边拾光》。\n\n嗯……我没有忘。这个约定，还轻轻放在那里。"
+        ],
+        "external_ref": "local-receipt:delivery-08.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 10.78200000000652,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_a050d149",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_8",
+        "receive_seq": 8,
+        "correlation_id": "corr_br1_8",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:8",
+        "deadline": "2026-09-10T08:47:56.255976Z",
+        "issued_at": "2026-09-10T08:45:56.255976Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_05ca67fb",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_b09cf6d0",
+            "prepare_id": "prep_05ca67fb",
+            "delivered_at": "2026-09-10T08:45:56.250674Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "《窗边拾光》。\n\n嗯……我没有忘。这个约定，还轻轻放在那里。"
+            ],
+            "external_ref": "local-receipt:delivery-08.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 8
+    },
+    {
+      "round": 9,
+      "prompt": "今天先不讨论设备参数，说说怎样观察光线吧。",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.005
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 3861.129
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 9.972
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 1728.802
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.562
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 5028.558
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 2744.804
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "79b54c6ae30f5005cb7228174e266732aa16d0dec1866f2a9c06f25679c17d8f",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 13.40700000000652,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_e9cffb98",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_9",
+        "receive_seq": 9,
+        "correlation_id": "corr_br1_9",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:9",
+        "deadline": "2026-09-10T08:48:07.056723Z",
+        "issued_at": "2026-09-10T08:46:07.056723Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "今天先不讨论设备参数，说说怎样观察光线吧。",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "可以先不看光本身，看它落在哪里。光好像很少单独出现，总要碰到什么，才让人看见它。桌面、地板、衣袖，都会把它接住。看它先碰到哪一样东西，那里通常最安静。\n\n再看边缘。有些光边缘很清楚，像被裁过；有些很软，慢慢就散进阴影里。一天里不同时候，边缘会变。早一点，晚一点，同一块地方都不一样。\n\n还可以看颜色。光落在木头上会偏暖，落在白纸上会偏冷，落在玻璃或者水面上，会碎成几小片。不是光变了，是它经过的东西不一样。\n\n影子也可以看。不是只看暗的地方，是看影子的边缘。有时候那里不是灰的，会带一点蓝，或者一点紫。很淡，要停一会儿才看得出来。\n\n最后可以什么都不做，只等它移。过一阵再看同一个位置，光已经换到别处去了。像有人很轻地走过，没有留下声音。\n\n你平时会先看哪里？",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_cfb465c6",
+        "prepare_id": "prep_c0539ef8",
+        "delivered_at": "2026-09-10T08:46:20.483331Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "可以先不看光本身，看它落在哪里。光好像很少单独出现，总要碰到什么，才让人看见它。桌面、地板、衣袖，都会把它接住。看它先碰到哪一样东西，那里通常最安静。\n\n再看边缘。有些光边缘很清楚，像被裁过；有些很软，慢慢就散进阴影里。一天里不同时候，边缘会变。早一点，晚一点，同一块地方都不一样。\n\n还可以看颜色。光落在木头上会偏暖，落在白纸上会偏冷，落在玻璃或者水面上，会碎成几小片。不是光变了，是它经过的东西不一样。\n\n影子也可以看。不是只看暗的地方，是看影子的边缘。有时候那里不是灰的，会带一点蓝，或者一点紫。很淡，要停一会儿才看得出来。\n\n最后可以什么都不做，只等它移。过一阵再看同一个位置，光已经换到别处去了。像有人很轻地走过，没有留下声音。\n\n你平时会先看哪里？"
+        ],
+        "external_ref": "local-receipt:delivery-09.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 11.0,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_c7302ee5",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_9",
+        "receive_seq": 9,
+        "correlation_id": "corr_br1_9",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:9",
+        "deadline": "2026-09-10T08:48:20.487472Z",
+        "issued_at": "2026-09-10T08:46:20.487472Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_c0539ef8",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_cfb465c6",
+            "prepare_id": "prep_c0539ef8",
+            "delivered_at": "2026-09-10T08:46:20.483331Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "可以先不看光本身，看它落在哪里。光好像很少单独出现，总要碰到什么，才让人看见它。桌面、地板、衣袖，都会把它接住。看它先碰到哪一样东西，那里通常最安静。\n\n再看边缘。有些光边缘很清楚，像被裁过；有些很软，慢慢就散进阴影里。一天里不同时候，边缘会变。早一点，晚一点，同一块地方都不一样。\n\n还可以看颜色。光落在木头上会偏暖，落在白纸上会偏冷，落在玻璃或者水面上，会碎成几小片。不是光变了，是它经过的东西不一样。\n\n影子也可以看。不是只看暗的地方，是看影子的边缘。有时候那里不是灰的，会带一点蓝，或者一点紫。很淡，要停一会儿才看得出来。\n\n最后可以什么都不做，只等它移。过一阵再看同一个位置，光已经换到别处去了。像有人很轻地走过，没有留下声音。\n\n你平时会先看哪里？"
+            ],
+            "external_ref": "local-receipt:delivery-09.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 9
+    },
+    {
+      "round": 10,
+      "prompt": "再确认一下，你的名字、年龄和生日。",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.004
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 2867.251
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 12.228
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 1779.03
+        },
+        {
+          "stage": "interpret",
+          "elapsed_ms": 2966.975
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.63
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 3557.63
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 1885.718
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "e889f181cd4eef980965253bf571497f6b817a8119c67494807fd340f4d7dd7d",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 13.094000000040978,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_1f0a183a",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_10",
+        "receive_seq": 10,
+        "correlation_id": "corr_br1_10",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:10",
+        "deadline": "2026-09-10T08:48:31.489619Z",
+        "issued_at": "2026-09-10T08:46:31.489619Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "再确认一下，你的名字、年龄和生日。",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "小雾：嗯……我再说一遍。\n\n我叫小雾，也可以叫我 Misty。\n\n小雾：今年十九岁。生日是五月二十日，五月二十日。\n\n小雾：这些都没有变。\n\n……换你说了。你的名字、年龄和生日，我也想认真听一遍，好好记住。",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_cc918922",
+        "prepare_id": "prep_f1cf631f",
+        "delivered_at": "2026-09-10T08:46:44.605773Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "小雾：嗯……我再说一遍。\n\n我叫小雾，也可以叫我 Misty。",
+          "小雾：今年十九岁。生日是五月二十日，五月二十日。",
+          "小雾：这些都没有变。\n\n……换你说了。你的名字、年龄和生日，我也想认真听一遍，好好记住。"
+        ],
+        "external_ref": "local-receipt:delivery-10.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 22.60999999998603,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_4be58013",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_10",
+        "receive_seq": 10,
+        "correlation_id": "corr_br1_10",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:10",
+        "deadline": "2026-09-10T08:48:44.610982Z",
+        "issued_at": "2026-09-10T08:46:44.610982Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_f1cf631f",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_cc918922",
+            "prepare_id": "prep_f1cf631f",
+            "delivered_at": "2026-09-10T08:46:44.605773Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "小雾：嗯……我再说一遍。\n\n我叫小雾，也可以叫我 Misty。",
+              "小雾：今年十九岁。生日是五月二十日，五月二十日。",
+              "小雾：这些都没有变。\n\n……换你说了。你的名字、年龄和生日，我也想认真听一遍，好好记住。"
+            ],
+            "external_ref": "local-receipt:delivery-10.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 10
+    },
+    {
+      "round": 11,
+      "prompt": "前面说的摄影笔记名字是什么？",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.003
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 3396.747
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 14.11
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 1714.84
+        },
+        {
+          "stage": "interpret",
+          "elapsed_ms": 4301.306
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.631
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 2881.549
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 6402.802
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "88b1dad136f283e90a9d9dc45be1bc5284f1248b6e22684bf059ebb6e71fdfb6",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 18.75,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_97db6fd3",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_11",
+        "receive_seq": 11,
+        "correlation_id": "corr_br1_11",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:11",
+        "deadline": "2026-09-10T08:49:07.227130Z",
+        "issued_at": "2026-09-10T08:47:07.227130Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "前面说的摄影笔记名字是什么？",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "《窗边拾光》。\n\n嗯，没有忘。照片那张是《雨后微光》，摄影笔记是《窗边拾光》。\n\n我分开记着。",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_84d112e1",
+        "prepare_id": "prep_e58af3bb",
+        "delivered_at": "2026-09-10T08:47:25.987013Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "《窗边拾光》。\n\n嗯，没有忘。照片那张是《雨后微光》，摄影笔记是《窗边拾光》。\n\n我分开记着。"
+        ],
+        "external_ref": "local-receipt:delivery-11.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 35.875,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_314e9d86",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_11",
+        "receive_seq": 11,
+        "correlation_id": "corr_br1_11",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:11",
+        "deadline": "2026-09-10T08:49:25.991012Z",
+        "issued_at": "2026-09-10T08:47:25.991012Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_e58af3bb",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_84d112e1",
+            "prepare_id": "prep_e58af3bb",
+            "delivered_at": "2026-09-10T08:47:25.987013Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "《窗边拾光》。\n\n嗯，没有忘。照片那张是《雨后微光》，摄影笔记是《窗边拾光》。\n\n我分开记着。"
+            ],
+            "external_ref": "local-receipt:delivery-11.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 11
+    },
+    {
+      "round": 12,
+      "prompt": "以后我说‘微光计划’，就是整理那张雨后窗边的照片。",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.003
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 3378.429
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 22.623
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 1630.679
+        },
+        {
+          "stage": "interpret",
+          "elapsed_ms": 4063.705
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.579
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 5497.575
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 7418.172
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "291260c52204c4699916b6b4f300a8dff9b5f8908a0efea4d406f86c60f31018",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 22.04700000002049,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_8e424811",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_12",
+        "receive_seq": 12,
+        "correlation_id": "corr_br1_12",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:12",
+        "deadline": "2026-09-10T08:50:01.872786Z",
+        "issued_at": "2026-09-10T08:48:01.872786Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "以后我说‘微光计划’，就是整理那张雨后窗边的照片。",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "嗯，微光计划。\n\n就是整理雨后窗边那张《雨后微光》。和《窗边拾光》的笔记分开，我会记着。",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_e510543c",
+        "prepare_id": "prep_77e07b3e",
+        "delivered_at": "2026-09-10T08:48:23.935922Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "嗯，微光计划。\n\n就是整理雨后窗边那张《雨后微光》。和《窗边拾光》的笔记分开，我会记着。"
+        ],
+        "external_ref": "local-receipt:delivery-12.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 10.327999999979511,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_26f91a1e",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_12",
+        "receive_seq": 12,
+        "correlation_id": "corr_br1_12",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:12",
+        "deadline": "2026-09-10T08:50:23.940926Z",
+        "issued_at": "2026-09-10T08:48:23.940926Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_77e07b3e",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_e510543c",
+            "prepare_id": "prep_77e07b3e",
+            "delivered_at": "2026-09-10T08:48:23.935922Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "嗯，微光计划。\n\n就是整理雨后窗边那张《雨后微光》。和《窗边拾光》的笔记分开，我会记着。"
+            ],
+            "external_ref": "local-receipt:delivery-12.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 12
+    },
+    {
+      "round": 13,
+      "prompt": "‘微光计划’具体指什么？",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.004
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 0.07
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 9.264
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 1392.798
+        },
+        {
+          "stage": "interpret",
+          "elapsed_ms": 2881.862
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.474
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 7281.506
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 10905.546
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "a4a6ab82a6765ff9544a2a523cee45900886f9057ddf4296e08c24fe93802905",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 22.51500000001397,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_1567d67b",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_13",
+        "receive_seq": 13,
+        "correlation_id": "corr_br1_13",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:13",
+        "deadline": "2026-09-10T08:50:34.294074Z",
+        "issued_at": "2026-09-10T08:48:34.294074Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "‘微光计划’具体指什么？",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "嗯，我记得。\n\n“微光计划”是我们给整理雨后窗边那张照片定下的固定说法。那张照片的名字是《雨后微光》。\n\n它和《窗边拾光》那本摄影笔记分开记，不混在一起。\n\n至于整理时更细的约定——比如先做什么、怎么整理——我这边没有更具体的记忆。如果你之前说过，可以再提醒我一下吗？",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_52bdbd6e",
+        "prepare_id": "prep_f6f5bf00",
+        "delivered_at": "2026-09-10T08:48:56.819822Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "嗯，我记得。\n\n“微光计划”是我们给整理雨后窗边那张照片定下的固定说法。那张照片的名字是《雨后微光》。\n\n它和《窗边拾光》那本摄影笔记分开记，不混在一起。\n\n至于整理时更细的约定——比如先做什么、怎么整理——我这边没有更具体的记忆。如果你之前说过，可以再提醒我一下吗？"
+        ],
+        "external_ref": "local-receipt:delivery-13.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 7.202999999979511,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_ad38a211",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_13",
+        "receive_seq": 13,
+        "correlation_id": "corr_br1_13",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:13",
+        "deadline": "2026-09-10T08:50:56.825842Z",
+        "issued_at": "2026-09-10T08:48:56.825842Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_f6f5bf00",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_52bdbd6e",
+            "prepare_id": "prep_f6f5bf00",
+            "delivered_at": "2026-09-10T08:48:56.819822Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "嗯，我记得。\n\n“微光计划”是我们给整理雨后窗边那张照片定下的固定说法。那张照片的名字是《雨后微光》。\n\n它和《窗边拾光》那本摄影笔记分开记，不混在一起。\n\n至于整理时更细的约定——比如先做什么、怎么整理——我这边没有更具体的记忆。如果你之前说过，可以再提醒我一下吗？"
+            ],
+            "external_ref": "local-receipt:delivery-13.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 13
+    },
+    {
+      "round": 14,
+      "prompt": "今天有点忙，我们只选一件最小的事来做。",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.003
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 3402.947
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 10.25
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 856.004
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.841
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 6543.644
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 13571.167
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "a37cf6a89e917a3c3d05061a4d28e618aae1c38590b88138dcb2c197f571c473",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 24.406000000075437,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_5a95a82f",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_14",
+        "receive_seq": 14,
+        "correlation_id": "corr_br1_14",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:14",
+        "deadline": "2026-09-10T08:51:04.038096Z",
+        "issued_at": "2026-09-10T08:49:04.038096Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "今天有点忙，我们只选一件最小的事来做。",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "嗯，好。今天不铺开，只选一件最小的。\n\n那就……只把《雨后微光》这个名字，轻轻念一遍。念完，就算今天已经靠近过它了。\n\n你忙你的，不用回很多。我慢慢听着就好。",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_022498ec",
+        "prepare_id": "prep_55ede747",
+        "delivered_at": "2026-09-10T08:49:28.469591Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "嗯，好。今天不铺开，只选一件最小的。\n\n那就……只把《雨后微光》这个名字，轻轻念一遍。念完，就算今天已经靠近过它了。",
+          "你忙你的，不用回很多。我慢慢听着就好。"
+        ],
+        "external_ref": "local-receipt:delivery-14.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 16.765999999945052,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_a6e852ea",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_14",
+        "receive_seq": 14,
+        "correlation_id": "corr_br1_14",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:14",
+        "deadline": "2026-09-10T08:51:28.474607Z",
+        "issued_at": "2026-09-10T08:49:28.474607Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_55ede747",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_022498ec",
+            "prepare_id": "prep_55ede747",
+            "delivered_at": "2026-09-10T08:49:28.469591Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "嗯，好。今天不铺开，只选一件最小的。\n\n那就……只把《雨后微光》这个名字，轻轻念一遍。念完，就算今天已经靠近过它了。",
+              "你忙你的，不用回很多。我慢慢听着就好。"
+            ],
+            "external_ref": "local-receipt:delivery-14.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 14
+    },
+    {
+      "round": 15,
+      "prompt": "我想先选照片，再写配文。这个顺序怎样？",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.002
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 3241.935
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 23.132
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 1646.014
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.562
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 3028.874
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 2502.412
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "1a535a44e1b89d4baaeeb2ff2b4914e5b6abc4901cdb2b4b0ae5aa48b0ea703d",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 10.484000000054948,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_ef28501b",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_15",
+        "receive_seq": 15,
+        "correlation_id": "corr_br1_15",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:15",
+        "deadline": "2026-09-10T08:51:45.247294Z",
+        "issued_at": "2026-09-10T08:49:45.247294Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "我想先选照片，再写配文。这个顺序怎样？",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "嗯，这个顺序好。\n\n先选照片的话，文字会跟着照片走，而不是先想好句子，再去找一张能配上的图。\n\n选的时候不用选“最好”的，可以选那张让你停得久一点的。\n\n写配文……可以等选完再慢慢来。今天只做这一件，已经很够了。",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_dfc4a0b2",
+        "prepare_id": "prep_9dfa7212",
+        "delivered_at": "2026-09-10T08:49:55.738033Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "嗯，这个顺序好。\n\n先选照片的话，文字会跟着照片走，而不是先想好句子，再去找一张能配上的图。\n\n选的时候不用选“最好”的，可以选那张让你停得久一点的。\n\n写配文……可以等选完再慢慢来。今天只做这一件，已经很够了。"
+        ],
+        "external_ref": "local-receipt:delivery-15.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 8.375,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_08f53a1b",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_15",
+        "receive_seq": 15,
+        "correlation_id": "corr_br1_15",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:15",
+        "deadline": "2026-09-10T08:51:55.745361Z",
+        "issued_at": "2026-09-10T08:49:55.745361Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_9dfa7212",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_dfc4a0b2",
+            "prepare_id": "prep_9dfa7212",
+            "delivered_at": "2026-09-10T08:49:55.738033Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "嗯，这个顺序好。\n\n先选照片的话，文字会跟着照片走，而不是先想好句子，再去找一张能配上的图。\n\n选的时候不用选“最好”的，可以选那张让你停得久一点的。\n\n写配文……可以等选完再慢慢来。今天只做这一件，已经很够了。"
+            ],
+            "external_ref": "local-receipt:delivery-15.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 15
+    },
+    {
+      "round": 16,
+      "prompt": "就按刚才那个顺序。你能复述一下吗？",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.003
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 3415.553
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 25.4
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 1670.678
+        },
+        {
+          "stage": "interpret",
+          "elapsed_ms": 6762.51
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.64
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 3419.944
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 9400.052
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "f793ad22b98139c542bb1544fdf61f612ea0d1efef7dc3f1e9bc3fb91261ac23",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 24.73499999998603,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_3c903f79",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_16",
+        "receive_seq": 16,
+        "correlation_id": "corr_br1_16",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:16",
+        "deadline": "2026-09-10T08:52:04.137397Z",
+        "issued_at": "2026-09-10T08:50:04.137397Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "就按刚才那个顺序。你能复述一下吗？",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "嗯，可以。\n\n顺序是——先选照片，再写配文。\n\n就是《雨后微光》那张照片。",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_d9b4e309",
+        "prepare_id": "prep_d9ca0b84",
+        "delivered_at": "2026-09-10T08:50:28.881659Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "嗯，可以。\n\n顺序是——先选照片，再写配文。\n\n就是《雨后微光》那张照片。"
+        ],
+        "external_ref": "local-receipt:delivery-16.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 12.15700000000652,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_96e1e2f3",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_16",
+        "receive_seq": 16,
+        "correlation_id": "corr_br1_16",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:16",
+        "deadline": "2026-09-10T08:52:28.889098Z",
+        "issued_at": "2026-09-10T08:50:28.889098Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_d9ca0b84",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_d9b4e309",
+            "prepare_id": "prep_d9ca0b84",
+            "delivered_at": "2026-09-10T08:50:28.881659Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "嗯，可以。\n\n顺序是——先选照片，再写配文。\n\n就是《雨后微光》那张照片。"
+            ],
+            "external_ref": "local-receipt:delivery-16.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 16
+    },
+    {
+      "round": 17,
+      "prompt": "明天聊天时我想接着这个话题，不用安排提醒。",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.004
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 3456.415
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 30.162
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 1248.702
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.52
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 2113.269
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 15529.228
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "1d062eed06b2d2327c4413e5280bd23841c19d144fc80b599bdceb72ffa5e36a",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 22.42200000002049,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_db62f870",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_17",
+        "receive_seq": 17,
+        "correlation_id": "corr_br1_17",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:17",
+        "deadline": "2026-09-10T08:52:41.057015Z",
+        "issued_at": "2026-09-10T08:50:41.057015Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "明天聊天时我想接着这个话题，不用安排提醒。",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "嗯，好。\n\n不安排提醒。明天你提起《雨后微光》的时候，我就顺着这里往下接——先选照片，再写配文。\n\n今晚不用再说什么。你忙你的，我会把这句话轻轻放在这里。",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_2cee0baf",
+        "prepare_id": "prep_5862a725",
+        "delivered_at": "2026-09-10T08:51:03.486853Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "嗯，好。\n\n不安排提醒。明天你提起《雨后微光》的时候，我就顺着这里往下接——先选照片，再写配文。\n\n今晚不用再说什么。你忙你的，我会把这句话轻轻放在这里。"
+        ],
+        "external_ref": "local-receipt:delivery-17.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 9.64000000001397,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_7cf7cd46",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_17",
+        "receive_seq": 17,
+        "correlation_id": "corr_br1_17",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:17",
+        "deadline": "2026-09-10T08:53:03.494433Z",
+        "issued_at": "2026-09-10T08:51:03.494433Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_5862a725",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_2cee0baf",
+            "prepare_id": "prep_5862a725",
+            "delivered_at": "2026-09-10T08:51:03.486853Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "嗯，好。\n\n不安排提醒。明天你提起《雨后微光》的时候，我就顺着这里往下接——先选照片，再写配文。\n\n今晚不用再说什么。你忙你的，我会把这句话轻轻放在这里。"
+            ],
+            "external_ref": "local-receipt:delivery-17.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 17
+    },
+    {
+      "round": 18,
+      "prompt": "你觉得摄影笔记里可以加哪一种简短记录？",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.004
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 3370.53
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 28.84
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 1608.278
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.545
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 3929.953
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 6687.205
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "b985bab3c4251b7df1c3faed35aa9b5ece38787698ba9732e868bddf5957584e",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 15.655999999959022,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_a13486da",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_18",
+        "receive_seq": 18,
+        "correlation_id": "corr_br1_18",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:18",
+        "deadline": "2026-09-10T08:53:13.149318Z",
+        "issued_at": "2026-09-10T08:51:13.149318Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "你觉得摄影笔记里可以加哪一种简短记录？",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "嗯……我会想加一种很小的记录。\n\n就写一句“为什么停在这里”。选照片的时候，哪一张让你停得久一点，就在旁边记一句停下来的理由，几个字也行。\n\n不写很长的感受，只写当时看见的东西——光落在哪里，或者画面里最安静的那一块。\n\n这样以后翻《窗边拾光》的时候，会知道是什么轻轻留住了你。",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_3e18173e",
+        "prepare_id": "prep_f43671e3",
+        "delivered_at": "2026-09-10T08:51:28.821727Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "嗯……我会想加一种很小的记录。\n\n就写一句“为什么停在这里”。选照片的时候，哪一张让你停得久一点，就在旁边记一句停下来的理由，几个字也行。",
+          "不写很长的感受，只写当时看见的东西——光落在哪里，或者画面里最安静的那一块。\n\n这样以后翻《窗边拾光》的时候，会知道是什么轻轻留住了你。"
+        ],
+        "external_ref": "local-receipt:delivery-18.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 12.093999999924563,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_4034a74f",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_18",
+        "receive_seq": 18,
+        "correlation_id": "corr_br1_18",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:18",
+        "deadline": "2026-09-10T08:53:28.829219Z",
+        "issued_at": "2026-09-10T08:51:28.829219Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_f43671e3",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_3e18173e",
+            "prepare_id": "prep_f43671e3",
+            "delivered_at": "2026-09-10T08:51:28.821727Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "嗯……我会想加一种很小的记录。\n\n就写一句“为什么停在这里”。选照片的时候，哪一张让你停得久一点，就在旁边记一句停下来的理由，几个字也行。",
+              "不写很长的感受，只写当时看见的东西——光落在哪里，或者画面里最安静的那一块。\n\n这样以后翻《窗边拾光》的时候，会知道是什么轻轻留住了你。"
+            ],
+            "external_ref": "local-receipt:delivery-18.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 18
+    },
+    {
+      "round": 19,
+      "prompt": "谢谢，今天的聊天让我把事情理清楚了。",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.006
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 3704.201
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 23.094
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 0.236
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.384
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 3536.349
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 5420.296
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "fdbf3b8c2752d954b63343ce8fb144b71782dafb5dd80cba03394df83a19c359",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 12.719000000040978,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_81f00d81",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_19",
+        "receive_seq": 19,
+        "correlation_id": "corr_br1_19",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:19",
+        "deadline": "2026-09-10T08:53:40.927109Z",
+        "issued_at": "2026-09-10T08:51:40.927109Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "谢谢，今天的聊天让我把事情理清楚了。",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "嗯……能理清楚就好。\n\n谢谢你愿意把这件事说给我听。其实我也没做什么，只是在这里，慢慢听你说。\n\n今晚就让它先停在这里吧，不用再想得更深了。\n\n你先去忙你的，我在这边把窗边那一点光收好。",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_d5ab52e1",
+        "prepare_id": "prep_cfe1fd86",
+        "delivered_at": "2026-09-10T08:51:53.665196Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "嗯……能理清楚就好。\n\n谢谢你愿意把这件事说给我听。其实我也没做什么，只是在这里，慢慢听你说。",
+          "今晚就让它先停在这里吧，不用再想得更深了。\n\n你先去忙你的，我在这边把窗边那一点光收好。"
+        ],
+        "external_ref": "local-receipt:delivery-19.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 23.609000000054948,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_9cf740f4",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_19",
+        "receive_seq": 19,
+        "correlation_id": "corr_br1_19",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:19",
+        "deadline": "2026-09-10T08:53:53.673196Z",
+        "issued_at": "2026-09-10T08:51:53.673196Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_cfe1fd86",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_d5ab52e1",
+            "prepare_id": "prep_cfe1fd86",
+            "delivered_at": "2026-09-10T08:51:53.665196Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "嗯……能理清楚就好。\n\n谢谢你愿意把这件事说给我听。其实我也没做什么，只是在这里，慢慢听你说。",
+              "今晚就让它先停在这里吧，不用再想得更深了。\n\n你先去忙你的，我在这边把窗边那一点光收好。"
+            ],
+            "external_ref": "local-receipt:delivery-19.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 19
+    },
+    {
+      "round": 20,
+      "prompt": "结束前再介绍一次自己：名字、年龄和生日分别是什么？",
+      "status": "PASS",
+      "phase": "completed",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.006
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 3405.794
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 9.739
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 2271.967
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.141
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 6594.281
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 2064.92
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "contexts": [
+        {
+          "sha256": "bfe9db078e37b57e1eae17eec322a0926d10b951e25b98af09ff61549c786841",
+          "fixed_anchors_present": true
+        }
+      ],
+      "prepare_elapsed_seconds": 14.375,
+      "prepare_status": "applied",
+      "prepare_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_5bd48a46",
+        "command_type": "PrepareResponse",
+        "event_id": "evt_br1_73cda807d052_20",
+        "receive_seq": 20,
+        "correlation_id": "corr_br1_20",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "PrepareResponse:20",
+        "deadline": "2026-09-10T08:54:17.284736Z",
+        "issued_at": "2026-09-10T08:52:17.284736Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "text": "结束前再介绍一次自己：名字、年龄和生日分别是什么？",
+          "session_id": "sess_misty"
+        },
+        "request_hash": null
+      },
+      "prepare_side_effect_free": true,
+      "reply": "好，那用最简单的方式留下：\n\n小雾，Misty 也是我。\n\n十九岁。\n\n生日在五月二十日。",
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_12aa9bbe",
+        "prepare_id": "prep_d6c9609b",
+        "delivered_at": "2026-09-10T08:52:31.654583Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "好，那用最简单的方式留下：\n\n小雾，Misty 也是我。\n\n十九岁。\n\n生日在五月二十日。"
+        ],
+        "external_ref": "local-receipt:delivery-20.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 14.062999999965541,
+      "commit_status": "applied",
+      "commit_command": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_e0c06e16",
+        "command_type": "CommitInteraction",
+        "event_id": "evt_br1_73cda807d052_20",
+        "receive_seq": 20,
+        "correlation_id": "corr_br1_20",
+        "character_id": "character",
+        "runtime_instance_id": "br1-chat-73cda807d052",
+        "manifest_revision": 1,
+        "idempotency_key": "CommitInteraction:20",
+        "deadline": "2026-09-10T08:54:31.659988Z",
+        "issued_at": "2026-09-10T08:52:31.659988Z",
+        "expected_revision": null,
+        "version_vector": null,
+        "payload": {
+          "prepare_id": "prep_d6c9609b",
+          "evidence": {
+            "evidence_kind": "delivery",
+            "delivery_id": "dlv_12aa9bbe",
+            "prepare_id": "prep_d6c9609b",
+            "delivered_at": "2026-09-10T08:52:31.654583Z",
+            "channel": "chat",
+            "success": true,
+            "delivered_segments": [
+              "好，那用最简单的方式留下：\n\n小雾，Misty 也是我。\n\n十九岁。\n\n生日在五月二十日。"
+            ],
+            "external_ref": "local-receipt:delivery-20.json",
+            "error": null
+          }
+        },
+        "request_hash": null
+      },
+      "committed_revision": 20
+    }
+  ],
+  "restarts": [
+    {
+      "after_round": 2,
+      "session_restored_exactly": true,
+      "session_id_preserved": true,
+      "persona_restored_exactly": true
+    }
+  ],
+  "configurations": [
+    {
+      "values": {
+        "llm_model": "deepseek-v4-flash",
+        "aux_llm_model": null,
+        "llm_timeout": 60.0,
+        "parser_llm_enabled": true,
+        "planner_llm_enabled": false,
+        "tier_llm_enabled": true,
+        "validator_sample_rate": 1.0,
+        "context_token_budget": 3000,
+        "session_window": 10,
+        "llm_base_url": "https://api.deepseek.com",
+        "aux_llm_base_url": null,
+        "embedding": {
+          "backend": "mock",
+          "reachable": false,
+          "base_url": "http://127.0.0.1:8080/v1",
+          "model": "bge-m3"
+        },
+        "persona_sha256": "5eb5b5cf2353a90091e253c0dab1bf5a1dedd0cfa4bf25f396afd3e7bf7eb656"
+      },
+      "sha256": "6d95f50191bf9b2a9868de1bf8585b461f12c3a828e977b4ad263c6c84b2a029"
+    },
+    {
+      "values": {
+        "llm_model": "deepseek-v4-flash",
+        "aux_llm_model": null,
+        "llm_timeout": 60.0,
+        "parser_llm_enabled": true,
+        "planner_llm_enabled": false,
+        "tier_llm_enabled": true,
+        "validator_sample_rate": 1.0,
+        "context_token_budget": 3000,
+        "session_window": 10,
+        "llm_base_url": "https://api.deepseek.com",
+        "aux_llm_base_url": null,
+        "embedding": {
+          "backend": "mock",
+          "reachable": false,
+          "base_url": "http://127.0.0.1:8080/v1",
+          "model": "bge-m3"
+        },
+        "persona_sha256": "5eb5b5cf2353a90091e253c0dab1bf5a1dedd0cfa4bf25f396afd3e7bf7eb656"
+      },
+      "sha256": "6d95f50191bf9b2a9868de1bf8585b461f12c3a828e977b4ad263c6c84b2a029"
+    }
+  ],
+  "health_probe": {
+    "samples": 2299,
+    "failures": 0,
+    "maximum_elapsed_seconds": 0.01600000006146729
+  },
+  "checks": {
+    "twenty_rounds_committed": true,
+    "restart_exact": true,
+    "contexts_have_fixed_anchors": true,
+    "health_responsive": true,
+    "configuration_unchanged": true
+  },
+  "finished_at": "2026-09-10T08:52:45.823217+00:00"
+}

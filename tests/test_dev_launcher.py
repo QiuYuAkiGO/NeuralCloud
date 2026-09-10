@@ -5,6 +5,8 @@ import os
 import re
 import shutil
 import subprocess
+import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -132,6 +134,10 @@ $invoker = {
     } elseif ($file -in @('py.exe', 'python.exe', 'python')) {
         if ($joined -match '(?:^| )-m uv(?: |$)') { $stdout = 'uv 0.12.9' } else { $stdout = '3.12.9' }
     } elseif ($file -eq 'docker.exe') {
+        if ($request.TimeoutSeconds -le 0) { throw 'Docker probes must have a deadline' }
+        if ($arguments -contains 'info' -and $env:NC_TEST_DOCKER_PROBE_TIMEOUT -eq '1') {
+            return [pscustomobject]@{ ExitCode = 124; StdOut = ''; StdErr = 'probe timed out' }
+        }
         if ($arguments -contains 'info') { $stdout = 'linux' } else { $stdout = 'Docker Compose version v2.39.0' }
     } elseif ($file -eq 'wsl.exe') {
         if ($arguments.Count -ge 2 -and $arguments[0] -eq '--list' -and $arguments[1] -eq '--quiet') {
@@ -1398,6 +1404,8 @@ def test_start_process_registry_v2_records_full_service_identity(tmp_path: Path)
         }}
 
         $Root = [System.IO.Path]::GetFullPath({_ps_literal(runtime_root)})
+        $StateRoot = ''
+        $effectiveStateRoot = Join-Path $Root 'data'
         $RegistryPath = Join-Path $Root '.neuralcloud.pids.json'
         $LogDir = Join-Path $Root 'logs'
         [void](New-Item -ItemType Directory -Path $LogDir -Force)
@@ -3549,3 +3557,263 @@ def test_combined_mistyai_logs_fail_fast_when_mistyctl_fails(
     assert executable_check < working_directory < mistyctl_logs < journal_logs
     assert "if test -x /opt/mistyai/.venv/bin/mistyctl" not in script
     assert "|| true" not in script
+
+
+@pytest.mark.parametrize("shell", list(dict.fromkeys([POWERSHELL, WINDOWS_POWERSHELL])))
+def test_external_probe_timeout_stops_only_the_process_it_started(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, shell: str | None,
+) -> None:
+    if shell is None:
+        pytest.skip("Windows PowerShell is unavailable")
+    monkeypatch.setattr(sys.modules[__name__], "POWERSHELL", shell)
+    probe_pid = tmp_path / "probe.pid"
+    code = (
+        "import os, pathlib, time; "
+        f"pathlib.Path({str(probe_pid)!r}).write_text(str(os.getpid())); time.sleep(30)"
+    )
+    result = _invoke_module_json(
+        tmp_path,
+        f"""
+        $watch = [System.Diagnostics.Stopwatch]::StartNew()
+        $response = Invoke-LauncherExternalCommand `
+            -FilePath {_ps_literal(sys.executable)} `
+            -ArgumentList @('-c', {_ps_literal(code)}) -TimeoutSeconds 1
+        $probePid = [int](Get-Content -Raw -LiteralPath {_ps_literal(probe_pid)})
+        [pscustomobject]@{{
+            response = $response
+            elapsed = $watch.Elapsed.TotalSeconds
+            probe_running = [bool](Get-Process -Id $probePid -ErrorAction SilentlyContinue)
+        }}
+        """,
+    )
+
+    assert result["response"]["exit_code"] == 124
+    assert result["response"]["timed_out"] is True
+    assert "timed out" in result["response"]["stderr"].lower()
+    assert result["probe_running"] is False
+    assert result["elapsed"] < 5
+
+
+@pytest.mark.parametrize("shell", list(dict.fromkeys([POWERSHELL, WINDOWS_POWERSHELL])))
+def test_probe_output_deadline_does_not_kill_a_child_that_inherited_its_pipe(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, shell: str | None,
+) -> None:
+    if shell is None:
+        pytest.skip("Windows PowerShell is unavailable")
+    monkeypatch.setattr(sys.modules[__name__], "POWERSHELL", shell)
+    child_done = tmp_path / "child-finished.txt"
+    child_code = (
+        "import pathlib, time; time.sleep(3); "
+        f"pathlib.Path({str(child_done)!r}).write_text('survived')"
+    )
+    parent_code = f"import subprocess, sys; subprocess.Popen([sys.executable, '-c', {child_code!r}])"
+    result = _invoke_module_json(
+        tmp_path,
+        f"""
+        $watch = [System.Diagnostics.Stopwatch]::StartNew()
+        $response = Invoke-LauncherExternalCommand `
+            -FilePath {_ps_literal(sys.executable)} `
+            -ArgumentList @('-c', {_ps_literal(parent_code)}) -TimeoutSeconds 1
+        [pscustomobject]@{{ response = $response; elapsed = $watch.Elapsed.TotalSeconds }}
+        """,
+    )
+
+    assert result["response"]["exit_code"] == 124
+    assert result["response"]["timed_out"] is True
+    assert result["elapsed"] < 2.8
+    deadline = time.monotonic() + 6
+    while not child_done.exists() and time.monotonic() < deadline:
+        time.sleep(0.05)
+    assert child_done.read_text() == "survived"
+
+
+def test_wsl_probe_timeout_is_forwarded_without_changing_the_distribution(tmp_path: Path) -> None:
+    result = _invoke_module_json(
+        tmp_path,
+        """
+        $script:requests = New-Object System.Collections.Generic.List[object]
+        $response = Invoke-LauncherWslCommand -Distro 'Ubuntu-24.04' `
+            -Script 'printf probe' -TimeoutSeconds 7 -CommandInvoker {
+                param($request)
+                [void]$script:requests.Add($request)
+                return [pscustomobject]@{ exit_code = 124; stdout = ''; stderr = 'timed out' }
+            }
+        $ordinary = Invoke-LauncherExternalCommand -FilePath 'mock-build' -CommandInvoker {
+            param($request)
+            [void]$script:requests.Add($request)
+            return [pscustomobject]@{ exit_code = 0; stdout = ''; stderr = '' }
+        }
+        [pscustomobject]@{ response = $response; requests = $script:requests.ToArray() }
+        """,
+    )
+
+    assert result["response"]["timed_out"] is True
+    requests = result["requests"]
+    assert len(requests) == 2
+    assert requests[0]["TimeoutSeconds"] == 7
+    assert requests[0]["ArgumentList"][:2] == ["--distribution", "Ubuntu-24.04"]
+    assert "--shutdown" not in requests[0]["ArgumentList"]
+    assert "--terminate" not in requests[0]["ArgumentList"]
+    assert requests[1]["TimeoutSeconds"] == 0
+
+
+@pytest.mark.parametrize("socket_name", ["sailor-ingest.sock", "engine.sock"])
+def test_docker_socket_diagnostic_is_redacted_and_points_to_bounded_recovery(
+    tmp_path: Path, socket_name: str,
+) -> None:
+    secret = "socket-diagnostic-secret-123456789"
+    result = _invoke_module_json(
+        tmp_path,
+        f"""
+        Get-LauncherDockerFailureSummary -Result ([pscustomobject]@{{
+            exit_code = 1; stdout = ''
+            stderr = 'bind {socket_name}: address in use; Authorization: Bearer {secret}'
+        }})
+        """,
+    )
+
+    assert "socket startup failure" in result["current"]
+    assert secret not in json.dumps(result)
+    assert "tools/docker/Start-DockerDesktop.ps1" in result["remediation"]
+
+
+def test_doctor_docker_timeout_is_action_required_with_recovery_guidance(tmp_path: Path) -> None:
+    runner, neural_root, mistyai_root = _write_mocked_doctor_runner(tmp_path)
+    runner.write_text(
+        runner.read_text(encoding="utf-8").replace(
+            "Import-Module -Name $ModulePath -Force",
+            """$testModule = Import-Module -Name $ModulePath -Force -PassThru
+& $testModule {
+    function script:Get-MistyAIInstallationChecks { return @() }
+    function script:Get-LauncherPortOwners { return @() }
+}""",
+        ),
+        encoding="utf-8",
+    )
+    completed = _run_script(
+        runner,
+        "-ModulePath", str(LAUNCHER_MODULE), "-NeuralRoot", str(neural_root),
+        "-MistyRoot", str(mistyai_root), "-JsonMode",
+        environment={"NC_TEST_DOCKER_PROBE_TIMEOUT": "1"},
+    )
+    report = _json_stdout(completed)
+
+    assert completed.returncode == 10
+    assert report["status"] == "action_required"
+    docker_check = next(item for item in report["checks"] if item["id"] == "windows.docker_desktop")
+    assert "timed out" in docker_check["current"]
+    assert "tools/docker/Start-DockerDesktop.ps1" in docker_check["remediation"]
+
+
+def _run_bash_with_fake_docker(script: str, *, docker_exit: int) -> subprocess.CompletedProcess[str]:
+    # Use a standalone shell, never the Windows bash.exe shim that starts WSL.
+    if os.name == "nt":
+        bash = Path(os.environ.get("ProgramFiles", "C:/Program Files")) / "Git/bin/bash.exe"
+        if not bash.is_file():
+            pytest.skip("Standalone Git Bash is unavailable")
+    else:
+        bash = shutil.which("bash")
+        if bash is None:
+            pytest.skip("Bash is unavailable")
+    prelude = f"""
+docker() {{ return {docker_exit}; }}
+timeout() {{ shift 3; "$@"; }}
+systemctl() {{
+  case "$1" in is-active) printf 'inactive\\n';; is-enabled) printf 'disabled\\n';; esac
+}}
+"""
+    return subprocess.run(
+        [str(bash), "--noprofile", "--norc", "-c", prelude + script],
+        capture_output=True, text=True, timeout=10, check=False,
+    )
+
+
+@pytest.mark.parametrize(("docker_exit", "expected"), [(0, "stopped"), (1, "unavailable"), (124, "unavailable")])
+def test_compose_state_shell_distinguishes_query_failure_from_no_containers(
+    docker_exit: int, expected: str,
+) -> None:
+    module = LAUNCHER_MODULE.read_text(encoding="utf-8-sig")
+    match = re.search(r"function Get-MistyAIServiceState \{.*?\$script = @'\n(.*?)\n'@", module, re.S)
+    assert match is not None
+    completed = _run_bash_with_fake_docker(match.group(1), docker_exit=docker_exit)
+
+    assert completed.returncode == 0, completed.stderr
+    assert f"compose={expected}\n" in completed.stdout
+
+
+@pytest.mark.parametrize("exit_code", [1, 124])
+def test_mistyai_probe_rejects_partial_success_output_after_failure(tmp_path: Path, exit_code: int) -> None:
+    result = _invoke_module_json(
+        tmp_path,
+        f"""
+        $state = Get-MistyAIServiceState -Distro 'Ubuntu-24.04' -CommandInvoker {{
+            param($request)
+            if ($request.TimeoutSeconds -le 0) {{ throw 'state probe must have a deadline' }}
+            return [pscustomobject]@{{ exit_code = {exit_code}; stdout = 'compose=stopped'; stderr = 'query failed' }}
+        }}
+        [pscustomobject]@{{ state = $state }}
+        """,
+    )
+    assert result["state"]["compose"] == "unavailable"
+    assert result["state"]["running"] is False
+
+
+@pytest.mark.parametrize("docker_exit", [1, 124])
+def test_compose_shutdown_verification_shell_fails_when_daemon_query_fails(docker_exit: int) -> None:
+    module = LAUNCHER_MODULE.read_text(encoding="utf-8-sig")
+    match = re.search(r"\$composeStopScript = @'\n(.*?)\n'@", module, re.S)
+    assert match is not None
+    # Execute the real post-down verification against a fake Docker function.
+    verification = match.group(1).split("/opt/mistyai/.venv/bin/mistyctl env down --json\n", 1)[1]
+    completed = _run_bash_with_fake_docker("set -euo pipefail\ndocker_bin=docker\n" + verification, docker_exit=docker_exit)
+
+    assert completed.returncode == 70
+    assert "Cannot verify MistyAI Compose shutdown" in completed.stderr
+
+
+def test_down_retains_compose_ownership_when_shutdown_query_cannot_be_verified(tmp_path: Path) -> None:
+    state_path = tmp_path / "unverified-down.json"
+    result = _invoke_module_json(
+        tmp_path,
+        f"""
+        function Get-MistyAIDeploymentOwnership {{
+            return [pscustomobject]@{{ probe_succeeded = $true; current = 'managed'; current_fingerprint = '' }}
+        }}
+        $state = Get-LauncherDefaultState
+        $state.mistyai_distro = 'Ubuntu-24.04'
+        $state.owned.mistyai.compose = $true
+        $paths = [pscustomobject]@{{ state = {_ps_literal(state_path)} }}
+        $failure = 0
+        try {{
+            Invoke-LauncherDownCommand -Root {_ps_literal(tmp_path)} -Distro 'Ubuntu-24.04' `
+                -State $state -Paths $paths -CommandInvoker {{
+                    param($request)
+                    if ([string]$request.ArgumentList[-1] -match 'env down --json') {{
+                        return [pscustomobject]@{{ exit_code = 70; stdout = ''; stderr = 'Cannot verify MistyAI Compose shutdown; Docker query failed' }}
+                    }}
+                    return [pscustomobject]@{{ exit_code = 0; stdout = ''; stderr = '' }}
+                }} | Out-Null
+        }} catch {{ $failure = Get-LauncherFailureCode -ErrorRecord $_ -Default 40 }}
+        [pscustomobject]@{{ failure = $failure; state = Get-Content -Raw -LiteralPath {_ps_literal(state_path)} | ConvertFrom-Json }}
+        """,
+    )
+
+    assert result["failure"] == 20
+    assert result["state"]["install_phase"] == "stop_failed"
+    assert result["state"]["owned"]["mistyai"]["compose"] is True
+
+
+def test_status_does_not_call_an_unavailable_daemon_stopped(tmp_path: Path) -> None:
+    result = _invoke_module_json(
+        tmp_path,
+        f"""
+        function Test-NeuralCloudRegistryHealth {{ return [pscustomobject]@{{ running = $false; services = @() }} }}
+        function Get-MistyAIServiceState {{
+            return [pscustomobject]@{{ body = 'inactive'; operator = 'inactive'; compose = 'unavailable'; running = $false }}
+        }}
+        Invoke-LauncherStatusCommand -Root {_ps_literal(tmp_path)} -Distro 'Ubuntu-24.04'
+        """,
+    )
+
+    assert result["status"] == "unavailable"
+    assert result["exit_code"] == 10

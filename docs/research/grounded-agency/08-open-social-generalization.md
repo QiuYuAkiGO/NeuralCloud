@@ -1,11 +1,17 @@
 # GA-08 · Open Social Generalization
 
-> 状态：Planned  
+> 状态：Implemented（工程机制；真实社会泛化待实验验证）
 > 仓库：NeuralCloud  
 > 前置条件：GA-07 已完成；自我维持、身体因果学习和长期目标能力已分别通过非社会场景验证  
 > 阶段性质：最终开放泛化阶段
 
 ## 1. 目的
+
+2026-09-05 实现记录：基础代码见 `3f38b10`。`harness/social_world/` 实现按事件类型校验的多实体事实、一般实体预测、支持/反证与上下文投影；`eval/grounded_agency/social/` 提供七个场景、八个 negative controls、九项描述性指标及离线报告。
+所有交互经 GA-03 和声明的普通 provider capability 执行，研究条件关闭既有社会增量、关系摘要、固定联系策略与社会奖励。
+
+指标从真实 entity appraisal 和 Runtime goal/action journal 投影，预测只与其完成之后的可验证结果关联；缺未来结果或缺对照时保留缺失值/`INCONCLUSIVE`。报告呈现接近、回避、等待、拒绝、帮助与不介入，不以温柔文本或互动量代替行为证据。
+完整命令、实际覆盖与边界见 [设计目的验证记录](validation-2026-09-05.md)。当前 wrapper 使用确定性 fixture；没有运行真实模型长期实验，未建立关怀、关系或陪伴样行为的科学结论。
 
 检验此前形成的一般能力在包含持续他者的开放环境中是否自然泛化，而不是新增一个“关系陪伴系统”。
 

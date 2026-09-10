@@ -77,6 +77,34 @@ class EmbodimentCondition(BaseModel):
         return self
 
 
+class BasicTerminalCondition(BaseModel):
+    """Explicit permission for user-requested, verified desktop-terminal tasks."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    enabled: bool = False
+    terminal_app_id: str = Field(default="org.xfce.Terminal", min_length=1, max_length=128)
+    max_steps: int = Field(default=12, ge=1, le=30)
+    task_timeout_seconds: int = Field(default=600, ge=30, le=1800)
+    approval_timeout_seconds: int = Field(default=180, ge=1, le=600)
+    permitted_intents: tuple[str, ...] = (
+        "app.open.v1", "window.focus.v1", "ui.activate.v1", "ui.type_text.v1",
+        "ui.key_chord.v1", "control.observe.v1", "control.wait.v1",
+    )
+
+    @model_validator(mode="after")
+    def _validate_intents(self):
+        allowed = {
+            "app.open.v1", "window.focus.v1", "ui.activate.v1", "ui.type_text.v1",
+            "ui.key_chord.v1", "control.observe.v1", "control.wait.v1",
+        }
+        if not self.permitted_intents or set(self.permitted_intents) - allowed:
+            raise ValueError("basic terminal permits desktop interaction intents only")
+        if len(set(self.permitted_intents)) != len(self.permitted_intents):
+            raise ValueError("basic terminal intents must be unique")
+        return self
+
+
 class ExperimentManifest(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -88,6 +116,7 @@ class ExperimentManifest(BaseModel):
     persona_version: str = Field(min_length=1)
     homeostatic_profile: str = Field(min_length=1)
     heartbeat_seconds: int = Field(default=60, ge=1, le=3600)
+    command_timeout_seconds: float = Field(default=30.0, ge=1, le=300, allow_inf_nan=False)
     policy_horizon: int = Field(default=3, ge=1, le=3)
     random_seed: int = Field(ge=0)
     initial_snapshot_ref: str = Field(min_length=1)
@@ -110,10 +139,19 @@ class ExperimentManifest(BaseModel):
         default_factory=HomeostaticExpressionCondition
     )
     embodiment: EmbodimentCondition = Field(default_factory=EmbodimentCondition)
+    basic_terminal: BasicTerminalCondition = Field(default_factory=BasicTerminalCondition)
     grounded_agency: GroundedAgencyCondition | None = None
 
     @model_validator(mode="after")
     def _validate_study_authority(self) -> ExperimentManifest:
+        if self.basic_terminal.enabled:
+            if self.grounded_agency is not None:
+                raise ValueError("basic terminal tasks and grounded-agency research must use separate manifests")
+            required = {item.capability for item in self.embodiment.capability_requirements if item.required}
+            if self.embodiment.mode == "off" or not {
+                "action.execute.v1", "action.verify.v1", "observation.snapshot.v1", "evidence.reference.v1",
+            }.issubset(required):
+                raise ValueError("basic terminal requires embodied execution, verification, observation and evidence")
         try:
             ZoneInfo(self.timezone)
         except ZoneInfoNotFoundError as exc:
@@ -165,6 +203,10 @@ class ExperimentManifest(BaseModel):
     def canonical_json(self) -> str:
         # An absent opt-in extension must not invalidate existing journal hashes.
         payload = self.model_dump(mode="json")
+        if self.command_timeout_seconds == 30.0:
+            payload.pop("command_timeout_seconds")
+        if not self.basic_terminal.enabled:
+            payload.pop("basic_terminal")
         if self.grounded_agency is None:
             payload.pop("grounded_agency")
         else:
@@ -204,6 +246,8 @@ class ExperimentManifest(BaseModel):
     def model_copy(self, *, update: Mapping[str, Any] | None = None, deep: bool = False) -> ExperimentManifest:
         # Pydantic's default copy bypasses validators; preserve it only for legacy callers.
         if self.grounded_agency is None and (update or {}).get("grounded_agency") is None:
+            if self.basic_terminal.enabled or "basic_terminal" in (update or {}):
+                return type(self).model_validate({**self.model_dump(mode="json"), **(update or {})})
             return super().model_copy(update=update, deep=deep)
         candidate = type(self).model_validate({**self.model_dump(mode="json"), **(update or {})})
         if candidate.content_hash() != self.content_hash():

@@ -172,6 +172,27 @@ def event_severity(topic: str, payload: dict[str, Any]) -> str:
     return "info"
 
 
+def _stage_identity(stage: dict[str, Any]) -> tuple[str, str] | None:
+    meta = stage.get("meta") if isinstance(stage.get("meta"), dict) else {}
+    span_id = stage.get("span_id") or meta.get("span_id")
+    name = stage.get("stage") or stage.get("kind")
+    source_id = span_id or stage.get("source_id")
+    return (str(name), str(source_id)) if name and source_id else None
+
+
+def _merge_stages(existing: list[dict[str, Any]], incoming: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    merged = list(existing)
+    identities = {_stage_identity(item) for item in existing if _stage_identity(item) is not None}
+    for item in incoming:
+        identity = _stage_identity(item)
+        if identity is not None and identity in identities:
+            continue
+        merged.append(item)
+        if identity is not None:
+            identities.add(identity)
+    return merged
+
+
 def _percentile(values: list[float], percentile: float) -> float | None:
     if not values:
         return None
@@ -311,9 +332,13 @@ class MonitorStore:
             or clean.get("ts")
         )
         data = clean.get("data") if isinstance(clean.get("data"), dict) else {}
+        meta = clean.get("meta") if isinstance(clean.get("meta"), dict) else {}
         run_id = clean.get("run_id") or data.get("run_id")
-        event_id = clean.get("event_id") or data.get("event_id")
-        correlation_id = clean.get("correlation_id") or data.get("correlation_id") or run_id
+        event_id = clean.get("event_id") or meta.get("event_id") or data.get("event_id")
+        correlation_id = clean.get("correlation_id") or meta.get("correlation_id") or data.get("correlation_id")
+        identity = _stage_identity(clean) if topic.startswith("cognitive.") else None
+        if source_ref is None and identity is not None and run_id:
+            source_ref = f"stage:{run_id}:{identity[0]}:{identity[1]}"
         domain = source or normalized_topic.split(".", 1)[0]
         severity = event_severity(normalized_topic, clean)
         payload_json = json.dumps(clean, ensure_ascii=False, separators=(",", ":"), default=str)
@@ -326,6 +351,11 @@ class MonitorStore:
                     ).fetchone()
                     if row:
                         correlation_id = row["correlation_id"]
+                if not correlation_id and run_id:
+                    row = self._connection.execute(
+                        "SELECT correlation_id FROM monitor_runs WHERE run_id=?", (str(run_id),),
+                    ).fetchone()
+                    correlation_id = (row["correlation_id"] if row else None) or run_id
                 cursor = self._connection.execute(
                     """
                     INSERT OR IGNORE INTO monitor_events(
@@ -384,70 +414,107 @@ class MonitorStore:
         )
 
     def append_call_log(self, path: Path, payload: dict[str, Any]) -> None:
-        if str(payload.get("kind") or "") != "respond":
+        if str(payload.get("kind") or "") not in {"respond", "prepare_response", "prepare_autonomous_response"}:
             return
         call_id = str(payload.get("call_id") or path.stem)
         started_at = _iso(payload.get("ts"))
         steps = list(payload.get("steps") or [])
         result = payload.get("result") if isinstance(payload.get("result"), dict) else {}
+        metadata = payload.get("source_metadata") if isinstance(payload.get("source_metadata"), dict) else {}
+        correlation_id = payload.get("correlation_id") or metadata.get("correlation_id")
+        event_id = payload.get("event_id") or metadata.get("event_id") or result.get("event_id")
+        stage_rows = []
         for index, step in enumerate(steps):
             if not isinstance(step, dict):
                 continue
             stage = str(step.get("kind") or "step")
+            meta = {
+                **{key: value for key, value in metadata.items() if key in {"correlation_id", "event_id", "command_id", "phase"}},
+                **(step.get("meta") if isinstance(step.get("meta"), dict) else {}),
+            }
+            stage_failed = meta.get("status") == "error"
             event_payload = {
-                "type": "final" if stage == "final" else "stage",
+                "type": "error" if stage_failed else "final" if stage == "final" else "stage",
                 "run_id": call_id,
+                "correlation_id": correlation_id,
+                "event_id": event_id,
                 "stage": stage,
                 "latency_ms": step.get("latency_ms", 0),
                 "data": step.get("data") or {},
-                "meta": step.get("meta") or {},
+                "meta": meta,
             }
+            identity = _stage_identity(event_payload)
+            source_id = f"stage:{call_id}:{identity[0]}:{identity[1]}" if identity else f"call:{call_id}:{index}"
             self.append_event(
                 "cognitive.ui",
                 event_payload,
-                observed_at=started_at,
+                observed_at=meta.get("completed_at") or started_at,
                 source="call_log",
-                source_ref=f"call:{call_id}:{index}",
+                source_ref=source_id,
                 project=False,
             )
+            stage_rows.append(sanitize_payload({
+                "stage": stage, "latency_ms": step.get("latency_ms", 0),
+                "data": step.get("data") or {}, "meta": meta, "source_id": source_id,
+            }))
         usage = result.get("usage") if isinstance(result.get("usage"), dict) else {}
-        completed_at = _iso(
-            datetime.fromisoformat(started_at) + timedelta(milliseconds=float(payload.get("latency_ms") or 0))
+        failed = payload.get("ok") is False or any(item["meta"].get("status") == "error" for item in stage_rows)
+        status = "failed" if failed else "completed" if payload.get("ok") is True or result else "running"
+        error_payload = payload.get("error")
+        error = (error_payload.get("message") or error_payload.get("type")) if isinstance(error_payload, dict) else error_payload
+        if failed and not error:
+            error = "pipeline call failed"
+        completed_at = (
+            _iso(payload.get("completed_at") or (
+                datetime.fromisoformat(started_at) + timedelta(milliseconds=float(payload.get("latency_ms") or 0))
+            )) if status != "running" else None
         )
         with self._lock:
-            row = self._connection.execute("SELECT seq, stages_json FROM monitor_runs WHERE run_id=?", (call_id,)).fetchone()
-            stages_json = row["stages_json"] if row else json.dumps(steps, ensure_ascii=False, default=str)
+            row = self._connection.execute("SELECT * FROM monitor_runs WHERE run_id=?", (call_id,)).fetchone()
+            existing_stages = json.loads(row["stages_json"]) if row else []
+            stages_json = json.dumps(_merge_stages(existing_stages, stage_rows), ensure_ascii=False, default=str)
+            if row and (row["status"] == "failed" or status == "running"):
+                status = row["status"]
+                completed_at = completed_at or row["completed_at"]
+            updated_at = completed_at or started_at
             self._connection.execute(
                 """
                 INSERT INTO monitor_runs(
                     run_id, correlation_id, event_id, started_at, completed_at, updated_at,
                     status, path, latency_ms, prompt_tokens, completion_tokens,
                     total_tokens, revisions, error, stages_json
-                ) VALUES(?, ?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?, ?, ?, NULL, ?)
+                ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(run_id) DO UPDATE SET
-                    completed_at=excluded.completed_at,
+                    correlation_id=excluded.correlation_id,
+                    event_id=COALESCE(excluded.event_id, monitor_runs.event_id),
+                    started_at=MIN(excluded.started_at, monitor_runs.started_at),
+                    completed_at=COALESCE(excluded.completed_at, monitor_runs.completed_at),
                     updated_at=excluded.updated_at,
-                    status='completed',
-                    path=excluded.path,
-                    latency_ms=excluded.latency_ms,
+                    status=excluded.status,
+                    path=COALESCE(excluded.path, monitor_runs.path),
+                    latency_ms=COALESCE(excluded.latency_ms, monitor_runs.latency_ms),
                     prompt_tokens=excluded.prompt_tokens,
                     completion_tokens=excluded.completion_tokens,
                     total_tokens=excluded.total_tokens,
-                    revisions=excluded.revisions
+                    revisions=excluded.revisions,
+                    error=COALESCE(excluded.error, monitor_runs.error),
+                    stages_json=excluded.stages_json
                 """,
                 (
                     call_id,
-                    call_id,
-                    result.get("event_id"),
+                    correlation_id or (row["correlation_id"] if row else None) or call_id,
+                    event_id,
                     started_at,
                     completed_at,
-                    completed_at,
+                    updated_at,
+                    status,
                     result.get("path"),
-                    float(payload.get("latency_ms") or result.get("latency_ms") or 0),
-                    int(usage.get("prompt_tokens") or 0),
-                    int(usage.get("completion_tokens") or 0),
-                    int(usage.get("total_tokens") or 0),
-                    int(result.get("revisions") or 0),
+                    payload.get("latency_ms", result.get("latency_ms")),
+                    int(usage.get("prompt_tokens", row["prompt_tokens"] if row else 0) or 0),
+                    int(usage.get("completion_tokens", row["completion_tokens"] if row else 0) or 0),
+                    int(usage.get("total_tokens", row["total_tokens"] if row else 0) or 0),
+                    int(result.get("revisions", row["revisions"] if row else 0) or 0),
+                    str(error) if error else None,
                     stages_json,
                 ),
             )
@@ -462,24 +529,24 @@ class MonitorStore:
         stages = json.loads(existing["stages_json"]) if existing else []
         stage = payload.get("stage")
         if stage:
-            stages.append(
-                sanitize_payload(
-                    {
-                        "stage": stage,
-                        "latency_ms": payload.get("latency_ms", 0),
-                        "data": payload.get("data") or {},
-                        "meta": payload.get("meta") or {},
-                    }
-                )
-            )
+            stages = _merge_stages(stages, [sanitize_payload({
+                "stage": stage,
+                "latency_ms": payload.get("latency_ms", 0),
+                "data": payload.get("data") or {},
+                "meta": payload.get("meta") or {},
+            })])
         kind = str(payload.get("type") or "stage")
         data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+        meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else {}
         usage = data.get("usage") if isinstance(data.get("usage"), dict) else {}
-        status = "failed" if kind == "error" else "completed" if kind == "final" or stage == "final" else "running"
-        error = data.get("message") if status == "failed" else None
+        status = "failed" if kind == "error" or meta.get("status") == "error" else "completed" if kind == "final" or stage == "final" else "running"
+        error = (data.get("message") or meta.get("error_type") or "pipeline stage failed") if status == "failed" else None
+        if existing and (existing["status"] == "failed" or status == "running"):
+            status = existing["status"]
         started_at = existing["started_at"] if existing else observed_at
-        completed_at = observed_at if status in {"completed", "failed"} else (existing["completed_at"] if existing else None)
-        latency = data.get("latency_ms") if status == "completed" else (existing["latency_ms"] if existing else None)
+        completed_at = (existing["completed_at"] if existing else None) or (observed_at if status in {"completed", "failed"} else None)
+        latency = data.get("latency_ms") if kind == "final" or stage == "final" else (existing["latency_ms"] if existing else None)
+        correlation_id = payload.get("correlation_id") or meta.get("correlation_id") or data.get("correlation_id")
         self._connection.execute(
             """
             INSERT INTO monitor_runs(
@@ -488,6 +555,7 @@ class MonitorStore:
                 total_tokens, revisions, error, stages_json
             ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(run_id) DO UPDATE SET
+                correlation_id=excluded.correlation_id,
                 event_id=COALESCE(excluded.event_id, monitor_runs.event_id),
                 completed_at=COALESCE(excluded.completed_at, monitor_runs.completed_at),
                 updated_at=excluded.updated_at,
@@ -503,8 +571,8 @@ class MonitorStore:
             """,
             (
                 run_id,
-                run_id,
-                data.get("event_id"),
+                correlation_id or (existing["correlation_id"] if existing else None) or run_id,
+                payload.get("event_id") or meta.get("event_id") or data.get("event_id"),
                 started_at,
                 completed_at,
                 observed_at,
@@ -933,7 +1001,7 @@ class MonitorRecorder:
 
     async def _ingest_journal_once(self) -> None:
         while True:
-            records = self.journal.records_after(self._last_journal_seq, limit=500)
+            records = await asyncio.to_thread(self.journal.records_after, self._last_journal_seq, limit=500)
             if not records:
                 return
             for record in records:
@@ -968,7 +1036,7 @@ class MonitorRecorder:
 
     def _backfill(self) -> None:
         cutoff = utc_now() - timedelta(days=self.store.retention_days)
-        for record in self.journal.records():
+        for record in self.journal.iter_records():
             self._last_journal_seq = max(self._last_journal_seq, record.record_seq)
             if record.recorded_at >= cutoff:
                 self.store.append_journal(record)

@@ -223,6 +223,24 @@ class RuntimeTrialDriver:
         action = self.runtime.action_coordinator.get(action_id) if action_id else None
         return self.cognitive.research_traces.get(event_id, {}), action
 
+    def pending_service_tasks(self) -> set[asyncio.Task]:
+        """Inspect only this driver's services, never the caller's event loop.
+
+        Research tasks may wrap uncancellable thread workers. Keep their task
+        handles and service ownership intact until they actually finish.
+        """
+        runtime = self.runtime
+        tasks = set(runtime._action_tasks.values()) | set(runtime._social_appraisal_tasks)
+        if runtime._research_memory is not None:
+            tasks.update(runtime._research_memory.service._tasks.values())
+        if runtime._agency_service is not None and runtime._agency_service._inflight is not None:
+            tasks.add(runtime._agency_service._inflight)
+        for service in (runtime._perception_guard, runtime._body_state_guard, runtime.body_monitor):
+            task = getattr(service, "_task", None)
+            if task is not None:
+                tasks.add(task)
+        return {task for task in tasks if not task.done()}
+
     async def close(self) -> None:
         try:
             try:
@@ -237,6 +255,11 @@ class RuntimeTrialDriver:
                     await asyncio.gather(*pending, return_exceptions=True)
                 await self.runtime.stop(reason="bounded trial cleanup after cancelled backend")
         finally:
+            if self.pending_service_tasks():
+                # Closing the model or provider underneath an active worker
+                # would turn a bounded failure into a write-after-close race.
+                self.closed = False
+                raise RuntimeError("trial-owned services are still running; ports remain open until workers drain")
             for target in (self.provider, self.model):
                 method = getattr(target, "aclose", None) or getattr(target, "close", None)
                 if method is not None:
@@ -263,7 +286,6 @@ async def run_trial(*, run_dir: Path, scenario: GMVScenario, manifest: Experimen
     store = EvidenceStore(root, trial_id)
     clock = FixtureClock()
     started_at = datetime.now(UTC)
-    baseline_tasks = set(asyncio.all_tasks())
     provider = model = None
     driver = None
     body_pointers, sensor_pointers, context_pointers, outcome_pointers, snapshots, runtime_pointers = [], [], [], [], [], []
@@ -485,12 +507,11 @@ async def run_trial(*, run_dir: Path, scenario: GMVScenario, manifest: Experimen
                 except Exception as exc:
                     error = (error + "; " if error else "") + f"final memory audit: {exc}"
                     status = "failed"
-        leftovers = [task for task in asyncio.all_tasks() - baseline_tasks if not task.done() and task is not asyncio.current_task()]
-        no_tasks = not leftovers
-        for task in leftovers:
-            task.cancel()
-        if leftovers:
-            await asyncio.gather(*leftovers, return_exceptions=True)
+        # A different trial or caller may have started tasks during this trial.
+        # Service registries establish ownership; loop-wide set differences do
+        # not. A pending thread worker invalidates the trial without pretending
+        # that cancelling its asyncio wrapper stopped the underlying work.
+        no_tasks = driver is None or not driver.pending_service_tasks()
 
     report = TrialIntegrityReport(passed=True, invalid_for_analysis=False,
         checks={"services_closed": closed, "no_background_tasks": no_tasks}) if closed and no_tasks else TrialIntegrityReport(

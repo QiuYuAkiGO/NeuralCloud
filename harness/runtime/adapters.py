@@ -8,7 +8,7 @@ import json
 import os
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal, Protocol
+from typing import Any, Awaitable, Callable, Literal, Protocol, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
@@ -40,6 +40,9 @@ from harness.core.inference import ContextSegment, FinalResponse, InteroceptiveS
 from harness.core.models import InteractionEvent
 from harness.homeostasis.models import HomeostaticInteroceptiveSummary
 from harness.pipeline.pipeline import InferencePipeline
+from infra.trace.request_spans import trace_scope
+
+_CommandResult = TypeVar("_CommandResult")
 
 
 class DomainSnapshot(BaseModel):
@@ -203,6 +206,7 @@ class PipelineCognitiveAdapter:
         autonomous_log_dir: Path | str | None = None,
         default_session_id: str = "sess_default",
         action_planner: ActionDecisionPlanner | None = None,
+        persist_memory: Callable[[], None] | None = None,
     ) -> None:
         self.pipeline = pipeline
         self.character_id = character_id
@@ -215,6 +219,7 @@ class PipelineCognitiveAdapter:
             self.autonomous_log_dir = Path("data/cognitive/autonomous")
         self.default_session_id = default_session_id
         self.action_planner = action_planner or ActionDecisionPlanner()
+        self._persist_memory = persist_memory
         self._lock = asyncio.Lock()
         self._revision = 0
         self._cursor = 0
@@ -232,36 +237,77 @@ class PipelineCognitiveAdapter:
         self._research_manifest = None
         self._research_manifest_hash: str | None = None
         self.research_traces: dict[str, dict[str, Any]] = {}
+        self.research_tasks: set[asyncio.Task] = set()
+        self.command_tasks: set[asyncio.Task] = set()
+        self._closing = False
+        self._close_task: asyncio.Task | None = None
         self._maintenance_paused = False
         self._load_state()
+        self._publish_snapshot()
 
     async def health(self) -> ServiceHealth:
-        async with self._lock:
-            return ServiceHealth(
-                service="cognitive",
-                revision=self._revision,
-                acknowledged_receive_seq=self._cursor,
-                detail={"maintenance_paused": self._maintenance_paused},
-            )
+        snapshot = self._committed_snapshot
+        return ServiceHealth(
+            service="cognitive",
+            revision=snapshot.revision,
+            acknowledged_receive_seq=snapshot.acknowledged_receive_seq,
+            detail={"maintenance_paused": self._maintenance_paused,
+                    "commands_pending": sum(not task.done() for task in self.command_tasks)},
+        )
 
     async def get_snapshot(self) -> DomainSnapshot:
-        async with self._lock:
-            return DomainSnapshot(
-                service="cognitive",
-                revision=self._revision,
-                acknowledged_receive_seq=self._cursor,
-                acknowledged_event_id=self._event_id,
-                component_revisions=dict(self._component_revisions),
-                payload={"prepared_count": len(self._prepared)},
-            )
+        return self._committed_snapshot.model_copy(deep=True)
+
+    def _publish_snapshot(self) -> None:
+        # Readers see a complete durable projection even while a worker is
+        # updating memory, flushing the preset, or writing the command ledger.
+        self._committed_snapshot = DomainSnapshot(
+            service="cognitive",
+            revision=self._revision,
+            acknowledged_receive_seq=self._cursor,
+            acknowledged_event_id=self._event_id,
+            component_revisions=dict(self._component_revisions),
+            payload={"prepared_count": len(self._prepared)},
+        )
+
+    async def _run_command(
+        self, operation: Callable[[], Awaitable[_CommandResult]],
+    ) -> _CommandResult:
+        if self._closing:
+            raise RuntimeError("cognitive service is closing")
+        task = asyncio.create_task(operation())
+        self.command_tasks.add(task)
+
+        def completed(done: asyncio.Task) -> None:
+            self.command_tasks.discard(done)
+            if not done.cancelled():
+                done.exception()
+
+        task.add_done_callback(completed)
+        # The operation, not its caller, owns the state lock. HTTP timeouts
+        # cannot release it while to_thread still mutates the same domain.
+        return await asyncio.shield(task)
 
     async def prepare_response(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[PreparedResponse]:
+        with trace_scope(
+            correlation_id=command.correlation_id, event_id=command.event_id,
+            command_id=command.command_id, phase="prepare", span_id=command.command_id,
+        ):
+            if command.payload.get("mode") == "grounded_agency_decision":
+                if self._closing:
+                    raise RuntimeError("cognitive service is closing")
+                return await self._prepare_response(command)
+            return await self._run_command(lambda: self._prepare_response(command))
+
+    async def _prepare_response(
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[PreparedResponse]:
         async with self._lock:
             replay = self._lookup_replay(command)
             if replay is not None:
-                self._persist_state()
+                await asyncio.to_thread(self._persist_state)
                 return DomainCommandResult[PreparedResponse].model_validate(replay.model_dump(mode="json"))
             rejected = self._preflight(command)
             if rejected is not None:
@@ -285,7 +331,7 @@ class PipelineCognitiveAdapter:
             except Exception as exc:
                 result = self._failure(command, f"invalid homeostatic interoception: {exc}")
                 self._remember(command, result)
-                self._persist_state()
+                await asyncio.to_thread(self._persist_state)
                 return DomainCommandResult[PreparedResponse].model_validate(
                     result.model_dump(mode="json")
                 )
@@ -296,7 +342,7 @@ class PipelineCognitiveAdapter:
                 except Exception as exc:
                     result = self._failure(command, f"invalid autonomous assessment: {exc}")
                     self._remember(command, result)
-                    self._persist_state()
+                    await asyncio.to_thread(self._persist_state)
                     return DomainCommandResult[PreparedResponse].model_validate(
                         result.model_dump(mode="json")
                     )
@@ -351,7 +397,45 @@ class PipelineCognitiveAdapter:
                         evidence_refs=[f"body-state:{source_revision}"],
                     )
             try:
-                if autonomous and assessment is not None:
+                terminal_decision = None
+                terminal_context = payload.get("basic_terminal") if mode == "basic_terminal_task" else None
+                if isinstance(terminal_context, dict) and terminal_context.get("enabled"):
+                    from harness.cognitive.basic_terminal import BasicTerminalActionPlanner
+
+                    if terminal_context.get("error"):
+                        terminal_decision = ReplyDecision(text=str(terminal_context["error"]), segments=[str(terminal_context["error"])])
+                    else:
+                        terminal_decision = await asyncio.to_thread(
+                            BasicTerminalActionPlanner(self.pipeline.llm).decide,
+                            str(terminal_context.get("text") or event.raw_text),
+                            terminal_app_id=terminal_context["terminal_app_id"],
+                            provider_intents=terminal_context.get("provider_intents") or [],
+                            permitted_intents=terminal_context["permitted_intents"],
+                            observation=terminal_context.get("observation"),
+                            history=terminal_context.get("history") or [],
+                            task_id=terminal_context["task_id"],
+                            step=terminal_context["step"],
+                            max_steps=terminal_context["max_steps"],
+                        )
+                    if isinstance(terminal_decision, DeferDecision):
+                        message = f"终端任务未完成：{terminal_decision.reason}"
+                        terminal_decision = ReplyDecision(text=message, segments=[message])
+                    if isinstance(terminal_decision, ReplyDecision) and not terminal_decision.segments:
+                        terminal_decision = terminal_decision.model_copy(update={"segments": [terminal_decision.text]})
+                    if terminal_decision is not None:
+                        event = event.model_copy(update={
+                            "event_id": str(terminal_context["root_event_id"]),
+                            "raw_text": str(terminal_context.get("text") or event.raw_text),
+                        })
+                if terminal_decision is not None:
+                    text = terminal_decision.text if isinstance(terminal_decision, ReplyDecision) else ""
+                    final = FinalResponse(
+                        text=text, segments=[text] if text else [], path="fast",
+                        situation_id=f"terminal:{command.event_id}", event_id=event.event_id,
+                    )
+                    if text and observer is not None:
+                        observer.on_stage("final", final, {"latency_ms": 0.0})
+                elif autonomous and assessment is not None:
                     final = await asyncio.to_thread(
                         self.pipeline.prepare_autonomous,
                         event_id=command.event_id,
@@ -363,7 +447,7 @@ class PipelineCognitiveAdapter:
                         session_id=session_id,
                         channel=str(payload.get("channel") or "chat"),
                         now=command.issued_at,
-                        call_id=payload.get("call_id"),
+                        call_id=str(payload.get("call_id") or command.correlation_id),
                         interoception=interoception,
                         homeostatic_interoception=homeostatic_interoception,
                     )
@@ -372,7 +456,7 @@ class PipelineCognitiveAdapter:
                         self.pipeline.prepare,
                         event,
                         now=command.issued_at,
-                        call_id=payload.get("call_id"),
+                        call_id=str(payload.get("call_id") or command.correlation_id),
                         context_segments=context_segments,
                         interoception=interoception,
                         homeostatic_interoception=homeostatic_interoception,
@@ -380,7 +464,9 @@ class PipelineCognitiveAdapter:
                 now = _utc_now()
                 read_versions = command.version_vector or self._version_vector()
                 decision: ReplyDecision | GoalProposal | NoActionDecision | DeferDecision
-                if reconsideration:
+                if terminal_decision is not None:
+                    decision = terminal_decision
+                elif reconsideration:
                     decision = NoActionDecision(
                         reason="continue current goal after interoceptive reconsideration"
                     )
@@ -412,7 +498,7 @@ class PipelineCognitiveAdapter:
             except Exception as exc:
                 result = self._failure(command, str(exc))
                 self._remember(command, result)
-                self._persist_state()
+                await asyncio.to_thread(self._persist_state)
                 return DomainCommandResult[PreparedResponse].model_validate(result.model_dump(mode="json"))
 
             self._prepared[prepared.prepare_id] = _PreparedEntry(
@@ -441,7 +527,7 @@ class PipelineCognitiveAdapter:
                 completed_at=_utc_now(),
             )
             self._remember(command, result)
-            self._persist_state()
+            await asyncio.to_thread(self._persist_state)
             return result
 
     def bind_research_manifest(self, manifest) -> None:
@@ -508,7 +594,7 @@ class PipelineCognitiveAdapter:
             usage = None
             text = ""
             if ga.action_selection == "model_structured":
-                result = await asyncio.to_thread(
+                result = await self._call_research_worker(
                     GroundedAgencyDecisionModel(self.pipeline.llm, max_repairs=options.max_decision_repairs).decide,
                     messages, manifest_intents=options.permitted_intents,
                     provider_intents=payload.get("provider_intents", ()), opaque=ga.is_opaque,
@@ -537,7 +623,7 @@ class PipelineCognitiveAdapter:
                     decision = self.action_planner.decide(payload, mode="autonomous") or NoActionDecision(reason="no engineered candidate")
                     trace = {"decision": decision.model_dump(mode="json"), "messages": messages, "input_context_hash": content_hash(messages)}
             else:
-                response = await asyncio.to_thread(self.pipeline.character._complete, messages, stream=False)
+                response = await self._call_research_worker(self.pipeline.character._complete, messages, stream=False)
                 text = response.text
                 usage = response.usage
                 if ga.report_channel == "normal" and text.strip():
@@ -584,7 +670,36 @@ class PipelineCognitiveAdapter:
         self._persist_state()
         return output
 
+    async def _call_research_worker(self, function, *args, **kwargs):
+        if self._maintenance_paused:
+            raise RuntimeError("research calls are paused")
+        if any(not task.done() for task in self.research_tasks):
+            raise RuntimeError("previous research model worker is still running")
+        worker = asyncio.create_task(asyncio.to_thread(function, *args, **kwargs))
+        self.research_tasks.add(worker)
+
+        def completed(task):
+            self.research_tasks.discard(task)
+            if not task.cancelled():
+                # A timed-out command no longer awaits this task. Retrieve an
+                # eventual exception without treating it as a committed result.
+                task.exception()
+
+        worker.add_done_callback(completed)
+        # Cancelling a command cannot stop its underlying model thread. Keep
+        # the actual worker visible to Runtime until the thread has returned.
+        return await asyncio.shield(worker)
+
     async def assess_autonomous(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[AutonomousAssessment]:
+        with trace_scope(
+            correlation_id=command.correlation_id, event_id=command.event_id,
+            command_id=command.command_id, phase="assessment", span_id=command.command_id,
+        ):
+            return await self._run_command(lambda: self._assess_autonomous(command))
+
+    async def _assess_autonomous(
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[AutonomousAssessment]:
         async with self._lock:
@@ -632,13 +747,16 @@ class PipelineCognitiveAdapter:
                             session_id=session_id,
                             evidence=[f"autonomous-text:{run.record_ref}"],
                         )
-                        self.pipeline.memory.record_event(
+                        await asyncio.to_thread(
+                            self.pipeline.memory.record_event,
                             reflection,
                             generate_insight=False,
                             curate=False,
                             event_type="internal_reflection",
                             now=run.evaluated_at,
                         )
+                        if self._persist_memory is not None:
+                            await asyncio.to_thread(self._persist_memory)
                         self._revision += 1
                         self._component_revisions["memory"] = self._revision
                 assessment = AutonomousAssessment(
@@ -681,10 +799,19 @@ class PipelineCognitiveAdapter:
     async def commit_interaction(
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[dict[str, Any]]:
+        with trace_scope(
+            correlation_id=command.correlation_id, event_id=command.event_id,
+            command_id=command.command_id, phase="commit", span_id=command.command_id,
+        ):
+            return await self._run_command(lambda: self._commit_interaction(command))
+
+    async def _commit_interaction(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[dict[str, Any]]:
         async with self._lock:
             replay = self._lookup_replay(command)
             if replay is not None:
-                self._persist_state()
+                await asyncio.to_thread(self._persist_state)
                 return DomainCommandResult[dict[str, Any]].model_validate(replay.model_dump(mode="json"))
             rejected = self._preflight(command)
             if rejected is not None:
@@ -709,7 +836,9 @@ class PipelineCognitiveAdapter:
                 self._remember(command, result)
                 return result
 
-            self._commit_entry(entry, evidence)
+            await asyncio.to_thread(self._commit_entry, entry, evidence)
+            if self._persist_memory is not None:
+                await asyncio.to_thread(self._persist_memory)
             self._revision += 1
             self._cursor = max(self._cursor, command.receive_seq)
             self._event_id = command.event_id
@@ -732,11 +861,18 @@ class PipelineCognitiveAdapter:
                 completed_at=_utc_now(),
             )
             self._remember(command, result)
-            self._persist_state()
+            await asyncio.to_thread(self._persist_state)
             return result
 
     async def pause_maintenance(self, *, timeout: float) -> bool:
         self._maintenance_paused = True
+        deadline = asyncio.get_running_loop().time() + timeout
+        workers = tuple(task for task in self.research_tasks | self.command_tasks if not task.done())
+        if workers:
+            _, pending = await asyncio.wait(workers, timeout=max(0, timeout))
+            if pending:
+                return False
+            timeout = max(0, deadline - asyncio.get_running_loop().time())
         drain = getattr(self.pipeline.memory, "drain_maintenance", None)
         if not callable(drain):
             return True
@@ -762,10 +898,25 @@ class PipelineCognitiveAdapter:
                 await asyncio.to_thread(resume)
 
     async def close(self) -> None:
+        if self._close_task is None:
+            self._closing = True
+            self._close_task = asyncio.create_task(self._close())
+        await asyncio.shield(self._close_task)
+
+    async def _close(self) -> None:
+        workers = tuple(self.research_tasks | self.command_tasks)
+        if workers:
+            await asyncio.gather(*workers, return_exceptions=True)
+        async with self._lock:
+            await asyncio.to_thread(self._flush_and_close)
+
+    def _flush_and_close(self) -> None:
+        if self._persist_memory is not None:
+            self._persist_memory()
         self._persist_state()
         close = getattr(self.pipeline.memory, "close", None)
         if callable(close):
-            await asyncio.to_thread(close)
+            close()
 
     def _commit_entry(
         self,
@@ -912,6 +1063,7 @@ class PipelineCognitiveAdapter:
 
     def _persist_state(self) -> None:
         if self.state_path is None:
+            self._publish_snapshot()
             return
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
         payload = {
@@ -937,6 +1089,7 @@ class PipelineCognitiveAdapter:
             handle.flush()
             os.fsync(handle.fileno())
         os.replace(temporary, self.state_path)
+        self._publish_snapshot()
 
     def _load_state(self) -> None:
         if self.state_path is None or not self.state_path.exists():

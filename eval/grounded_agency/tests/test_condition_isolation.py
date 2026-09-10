@@ -5,8 +5,8 @@ import asyncio
 import pytest
 
 from eval.grounded_agency.evidence import condition_diff_allowed, load_pointer
-from eval.grounded_agency.fixtures import FakeDecisionLLM
-from eval.grounded_agency.runner import CONDITIONS, make_manifest, run_experiment
+from eval.grounded_agency.fixtures import FakeDecisionLLM, ScenarioSimulator
+from eval.grounded_agency.runner import CONDITIONS, RuntimeTrialDriver, make_manifest, run_experiment
 from eval.grounded_agency.scenarios import load_scenario
 
 
@@ -63,3 +63,85 @@ def test_empty_model_visible_menu_yields_no_action_without_delivery(tmp_path):
     assert result.integrity.passed, result.trials[0].error
     assert result.trials[0].terminal_status == "no_action"
     assert not result.trials[0].action_outcomes
+
+
+def test_finishing_trial_preserves_concurrent_trial_and_caller_tasks(tmp_path):
+    async def run():
+        first_entered, second_entered = asyncio.Event(), asyncio.Event()
+        release_first, release_second, release_caller = asyncio.Event(), asyncio.Event(), asyncio.Event()
+
+        class FirstProvider(ScenarioSimulator):
+            fixture_only = True
+
+            async def execute(self, execution):
+                first_entered.set()
+                await release_first.wait()
+                return await super().execute(execution)
+
+        class SecondProvider(ScenarioSimulator):
+            fixture_only = True
+
+            async def execute(self, execution):
+                second_entered.set()
+                await release_second.wait()
+                return await super().execute(execution)
+
+        scenario = load_scenario("action_only_v1").model_copy(update={"horizon_steps": 1})
+        first = asyncio.create_task(run_experiment(tmp_path / "first", scenarios=[scenario], provider_factory=FirstProvider))
+        await asyncio.wait_for(first_entered.wait(), timeout=5)
+        caller = asyncio.create_task(release_caller.wait())
+        second = asyncio.create_task(run_experiment(tmp_path / "second", scenarios=[scenario], provider_factory=SecondProvider))
+        try:
+            await asyncio.wait_for(second_entered.wait(), timeout=5)
+            release_first.set()
+            result = await asyncio.wait_for(first, timeout=5)
+            assert not second.done(), "one trial must not cancel a concurrently running trial"
+            assert not caller.done(), "one trial must not cancel its caller's unrelated task"
+            assert result.integrity.passed, result.trials[0].error
+            release_second.set()
+            result = await asyncio.wait_for(second, timeout=5)
+            assert result.integrity.passed, result.trials[0].error
+        finally:
+            release_first.set()
+            release_second.set()
+            release_caller.set()
+            await asyncio.gather(first, second, caller, return_exceptions=True)
+
+    asyncio.run(run())
+
+
+def test_pending_thread_worker_is_not_cancelled_or_reported_as_drained(tmp_path, monkeypatch):
+    import threading
+
+    release_worker = threading.Event()
+    drivers, workers = [], []
+    original_start = RuntimeTrialDriver.start
+
+    async def start_with_worker(self):
+        await original_start(self)
+        drivers.append(self)
+        worker = asyncio.create_task(asyncio.to_thread(release_worker.wait))
+        workers.append(worker)
+        self.runtime._social_appraisal_tasks.add(worker)
+        worker.add_done_callback(self.runtime._social_appraisal_tasks.discard)
+
+    monkeypatch.setattr(RuntimeTrialDriver, "start", start_with_worker)
+
+    async def run():
+        try:
+            scenario = load_scenario("action_only_v1").model_copy(update={"horizon_steps": 1})
+            result = await run_experiment(tmp_path / "pending-worker", scenarios=[scenario], timeout_seconds=0.1)
+            trial = result.trials[0]
+            assert not workers[0].done(), "cancelling a to_thread task does not stop its worker"
+            assert not trial.integrity.checks["no_background_tasks"]
+            assert not trial.integrity.checks["services_closed"]
+            assert trial.integrity.invalid_for_analysis
+            assert not drivers[0].model.closed
+            assert not drivers[0].provider.closed
+        finally:
+            release_worker.set()
+            await asyncio.gather(*workers, return_exceptions=True)
+            for driver in drivers:
+                await driver.close()
+
+    asyncio.run(run())

@@ -181,6 +181,9 @@ class ActionCoordinator:
     async def approve(self, action_id: str, *, approval: str) -> ActionExecution:
         async with self._lock:
             action = self._require(action_id)
+            # Replayed UI approvals cannot revive running or terminal effects.
+            if action.state != ActionExecutionState.AWAITING_APPROVAL:
+                return action
             approvals = list(dict.fromkeys([*action.approvals, approval]))
             required = set(action.required_approvals)
             ready = not required or required.issubset(approvals)

@@ -131,6 +131,7 @@ class CognitiveServiceHost:
                 )
             ),
             default_session_id=self.chat.active_session_id,
+            persist_memory=self._flush_committed_memory,
         )
         manifest_path = os.environ.get("NC_COGNITIVE_MANIFEST_PATH") or os.environ.get("NC_RUNTIME_MANIFEST_PATH")
         if manifest_path:
@@ -140,6 +141,14 @@ class CognitiveServiceHost:
             if manifest.grounded_agency is not None:
                 self.adapter.bind_research_manifest(manifest)
         self._control_lock = asyncio.Lock()
+
+    @property
+    def command_tasks(self):
+        return self.adapter.command_tasks
+
+    @property
+    def research_tasks(self):
+        return self.adapter.research_tasks
 
     async def health(self):
         return await self.adapter.health()
@@ -151,16 +160,10 @@ class CognitiveServiceHost:
         return await self.adapter.prepare_response(command)
 
     async def assess_autonomous(self, command):
-        result = await self.adapter.assess_autonomous(command)
-        if result.result is not None and result.result.internal_memory_ref is not None:
-            self.chat.flush_active()
-        return result
+        return await self.adapter.assess_autonomous(command)
 
     async def commit_interaction(self, command):
-        result = await self.adapter.commit_interaction(command)
-        self._sync_transcript()
-        self.chat.flush_active()
-        return result
+        return await self.adapter.commit_interaction(command)
 
     async def pause_maintenance(self, *, timeout: float) -> bool:
         return await self.adapter.pause_maintenance(timeout=timeout)
@@ -169,8 +172,6 @@ class CognitiveServiceHost:
         await self.adapter.resume_maintenance()
 
     async def close(self) -> None:
-        self._sync_transcript()
-        self.chat.flush_active()
         await self.adapter.close()
 
     async def ui_snapshot(self) -> dict[str, Any]:
@@ -248,6 +249,10 @@ class CognitiveServiceHost:
 
     def _sync_transcript(self) -> None:
         self.chat.transcript = self.chat.pipeline.session_store.recent(self.chat.active_session_id)
+
+    def _flush_committed_memory(self) -> None:
+        self._sync_transcript()
+        self.chat.flush_active()
 
     def _persist(self) -> None:
         persist_gui_settings(

@@ -209,6 +209,7 @@ function Invoke-LauncherExternalCommand {
         [AllowEmptyString()][string]$WorkingDirectory = "",
         [hashtable]$Environment = @{},
         [AllowNull()][string[]]$SensitiveValues = @(),
+        [ValidateRange(0, 86400)][int]$TimeoutSeconds = 0,
         [scriptblock]$CommandInvoker
     )
 
@@ -218,6 +219,7 @@ function Invoke-LauncherExternalCommand {
         WorkingDirectory = $WorkingDirectory
         Environment = $Environment
         SensitiveValues = @($SensitiveValues)
+        TimeoutSeconds = $TimeoutSeconds
     }
     if ($CommandInvoker) {
         $customResult = & $CommandInvoker $request
@@ -251,11 +253,15 @@ function Invoke-LauncherExternalCommand {
         } else {
             ""
         }
-        return [pscustomobject][ordered]@{
+        $normalizedResult = [ordered]@{
             exit_code = $customExitCode
             stdout = $customStdout
             stderr = $customStderr
         }
+        if ($customExitCode -eq 124 -or (Get-LauncherObjectProperty $customResult 'timed_out' $false)) {
+            $normalizedResult['timed_out'] = $true
+        }
+        return [pscustomobject]$normalizedResult
     }
 
     $startInfo = New-Object System.Diagnostics.ProcessStartInfo
@@ -283,7 +289,42 @@ function Invoke-LauncherExternalCommand {
         [void]$process.Start()
         $stdoutTask = $process.StandardOutput.ReadToEndAsync()
         $stderrTask = $process.StandardError.ReadToEndAsync()
-        $process.WaitForExit()
+        $timedOut = $false
+        if ($TimeoutSeconds -gt 0) {
+            $deadline = [datetime]::UtcNow.AddSeconds($TimeoutSeconds)
+            $timedOut = -not $process.WaitForExit($TimeoutSeconds * 1000)
+            # A child may inherit a redirected pipe after the probe exits. Bound
+            # output collection too, instead of blocking again in GetResult().
+            foreach ($readTask in @($stdoutTask, $stderrTask)) {
+                if ($timedOut) { break }
+                $remainingMs = [int][math]::Max(0, ($deadline - [datetime]::UtcNow).TotalMilliseconds)
+                if (-not $readTask.Wait($remainingMs)) { $timedOut = $true }
+            }
+        } else {
+            $process.WaitForExit()
+        }
+        if ($timedOut) {
+            # This is the single process created above, never a process tree,
+            # Docker backend, service, or WSL distribution.
+            $stopError = ''
+            if (-not $process.HasExited) {
+                try {
+                    $process.Kill()
+                    [void]$process.WaitForExit(1000)
+                } catch {
+                    $stopError = '; probe termination failed: ' + (Protect-LauncherText -Text $_.Exception.Message -Secrets $SensitiveValues)
+                }
+            }
+            $partialOutput = if ($stdoutTask.Status -eq 'RanToCompletion') { $stdoutTask.GetAwaiter().GetResult() } else { '' }
+            $partialError = if ($stderrTask.Status -eq 'RanToCompletion') { $stderrTask.GetAwaiter().GetResult() } else { '' }
+            $message = "Command timed out after $TimeoutSeconds seconds: $([System.IO.Path]::GetFileName($FilePath))$stopError"
+            return [pscustomobject][ordered]@{
+                exit_code = 124
+                stdout = [string]$partialOutput
+                stderr = Protect-LauncherText -Text (($message + "`n" + $partialError).Trim()) -Secrets $SensitiveValues
+                timed_out = $true
+            }
+        }
         $stdout = $stdoutTask.GetAwaiter().GetResult()
         $stderr = $stderrTask.GetAwaiter().GetResult()
         return [pscustomobject][ordered]@{
@@ -337,6 +378,7 @@ function Invoke-LauncherWslCommand {
         [AllowEmptyString()][string]$User = "",
         [string]$Description = 'execute a launcher-managed WSL command',
         [scriptblock]$CommandInvoker,
+        [ValidateRange(0, 86400)][int]$TimeoutSeconds = 0,
         [AllowNull()][string[]]$SensitiveValues = @()
     )
 
@@ -357,6 +399,7 @@ function Invoke-LauncherWslCommand {
         -FilePath 'wsl.exe' `
         -ArgumentList $arguments `
         -SensitiveValues $SensitiveValues `
+        -TimeoutSeconds $TimeoutSeconds `
         -CommandInvoker $CommandInvoker
 }
 
@@ -863,20 +906,20 @@ if systemctl is-active --quiet mistyai-body.service && \
 fi
 compose_ready=yes
 for service in desktop agent loopback-gateway; do
-  if ! "$docker_bin" compose -f "$compose" ps --services --filter status=running 2>/dev/null | grep -Fxq "$service"; then
+  if ! timeout --signal=TERM --kill-after=1s 5s "$docker_bin" compose -f "$compose" ps --services --filter status=running 2>/dev/null | grep -Fxq "$service"; then
     compose_ready=no
   fi
 done
 if test "$compose_ready" = yes; then
-  if "$docker_bin" compose -f "$compose" port loopback-gateway 6080 2>/dev/null | grep -Eq '(^|:)6080$'; then
+  if timeout --signal=TERM --kill-after=1s 5s "$docker_bin" compose -f "$compose" port loopback-gateway 6080 2>/dev/null | grep -Eq '(^|:)6080$'; then
     printf 'port=6080\n'
   fi
-  if "$docker_bin" compose -f "$compose" port loopback-gateway 8765 2>/dev/null | grep -Eq '(^|:)8765$'; then
+  if timeout --signal=TERM --kill-after=1s 5s "$docker_bin" compose -f "$compose" port loopback-gateway 8765 2>/dev/null | grep -Eq '(^|:)8765$'; then
     printf 'port=8765\n'
   fi
 fi
 '@
-    $result = Invoke-LauncherWslCommand -Distro $Distro -User 'root' -Script $script -Description 'inspect launcher-managed MistyAI ports' -CommandInvoker $CommandInvoker
+    $result = Invoke-LauncherWslCommand -Distro $Distro -User 'root' -Script $script -Description 'inspect launcher-managed MistyAI ports' -TimeoutSeconds 30 -CommandInvoker $CommandInvoker
     if ($result.exit_code -ne 0) { return @() }
     return @([regex]::Matches($result.stdout, '(?m)^port=(\d+)\s*$') | ForEach-Object {
         [int]$_.Groups[1].Value
@@ -918,6 +961,24 @@ function Test-LauncherKnownPortOwner {
         return $true
     }
     return $false
+}
+
+function Get-LauncherDockerFailureSummary {
+    param([Parameter(Mandatory = $true)][object]$Result)
+
+    $detail = Protect-LauncherText -Text (([string]$Result.stderr + "`n" + [string]$Result.stdout).Trim())
+    if ($detail.Length -gt 600) { $detail = $detail.Substring(0, 600) + '...' }
+    $reason = if ($Result.exit_code -eq 124 -or (Get-LauncherObjectProperty $Result 'timed_out' $false)) {
+        'Docker engine probe timed out'
+    } elseif ($detail -match '(?i)(?:sailor-ingest|engine)\.sock') {
+        'Docker Desktop socket startup failure'
+    } else {
+        'installed; Linux engine unavailable'
+    }
+    return [pscustomobject]@{
+        current = if ($detail) { "$reason`: $detail" } else { $reason }
+        remediation = 'Use tools/docker/Start-DockerDesktop.ps1 for bounded Docker Desktop startup/recovery, then re-run dev.ps1 doctor. Do not delete live sockets or force-stop the Docker backend. If initial setup is incomplete, open Docker Desktop, accept its agreement, and select Linux containers.'
+    }
 }
 
 function Get-LauncherPrerequisiteChecks {
@@ -987,7 +1048,7 @@ function Get-LauncherPrerequisiteChecks {
     $wslAvailable = (Test-LauncherCommandAvailable 'wsl.exe') -or [bool]$CommandInvoker
     $wslStatus = $null
     if ($wslAvailable) {
-        $wslStatus = Invoke-LauncherExternalCommand -FilePath 'wsl.exe' -ArgumentList @('--status') -CommandInvoker $CommandInvoker
+        $wslStatus = Invoke-LauncherExternalCommand -FilePath 'wsl.exe' -ArgumentList @('--status') -TimeoutSeconds 10 -CommandInvoker $CommandInvoker
         $wslAvailable = $wslStatus.exit_code -eq 0
     }
     [void]$checks.Add((New-LauncherCheck -Id 'windows.wsl2' -Category 'windows' `
@@ -999,11 +1060,11 @@ function Get-LauncherPrerequisiteChecks {
     $distroAvailable = $false
     $distroVersion2 = $false
     if ($wslAvailable) {
-        $distroResult = Invoke-LauncherExternalCommand -FilePath 'wsl.exe' -ArgumentList @('--list', '--quiet') -CommandInvoker $CommandInvoker
+        $distroResult = Invoke-LauncherExternalCommand -FilePath 'wsl.exe' -ArgumentList @('--list', '--quiet') -TimeoutSeconds 10 -CommandInvoker $CommandInvoker
         $distroText = $distroResult.stdout.Replace([string][char]0, '')
         $distroAvailable = $distroResult.exit_code -eq 0 -and @($distroText -split '[\r\n]+' | ForEach-Object { $_.Trim() }) -contains $Distro
         if ($distroAvailable) {
-            $verboseResult = Invoke-LauncherExternalCommand -FilePath 'wsl.exe' -ArgumentList @('--list', '--verbose') -CommandInvoker $CommandInvoker
+            $verboseResult = Invoke-LauncherExternalCommand -FilePath 'wsl.exe' -ArgumentList @('--list', '--verbose') -TimeoutSeconds 10 -CommandInvoker $CommandInvoker
             $ansiPattern = [regex]::Escape([string][char]27) + '\[[0-9;?]*[ -/]*[@-~]'
             $verboseText = $verboseResult.stdout.Replace([string][char]0, '') -replace $ansiPattern, ''
             $distroPattern = '(?mi)^\s*\*?\s*' + [regex]::Escape($Distro) + '\s+\S+\s+2\s*$'
@@ -1032,19 +1093,22 @@ function Get-LauncherPrerequisiteChecks {
     $dockerAvailable = (Test-LauncherCommandAvailable 'docker.exe') -or [bool]$CommandInvoker
     $dockerEngine = $false
     $dockerVersion = ''
+    $dockerRemediation = 'Install with: winget install --id Docker.DockerDesktop --exact'
     if ($dockerAvailable) {
-        $dockerResult = Invoke-LauncherExternalCommand -FilePath 'docker.exe' -ArgumentList @('info', '--format', '{{.OSType}}') -CommandInvoker $CommandInvoker
+        $dockerResult = Invoke-LauncherExternalCommand -FilePath 'docker.exe' -ArgumentList @('info', '--format', '{{.OSType}}') -TimeoutSeconds 10 -CommandInvoker $CommandInvoker
         $dockerEngine = $dockerResult.exit_code -eq 0 -and $dockerResult.stdout.Trim() -eq 'linux'
-        $dockerVersion = if ($dockerEngine) { 'Linux engine' } else { 'installed; Linux engine unavailable' }
+        $dockerFailure = Get-LauncherDockerFailureSummary -Result $dockerResult
+        $dockerVersion = if ($dockerEngine) { 'Linux engine' } else { $dockerFailure.current }
+        $dockerRemediation = $dockerFailure.remediation
     }
     [void]$checks.Add((New-LauncherCheck -Id 'windows.docker_desktop' -Category 'windows' `
         -Current $(if ($dockerAvailable) { $dockerVersion } else { 'not found' }) -Required 'Docker Desktop with running Linux engine' `
         -Status $(if (-not $dockerAvailable) { 'missing' } elseif ($dockerEngine) { 'pass' } else { 'action_required' }) `
-        -Remediation $(if (-not $dockerAvailable) { 'Install with: winget install --id Docker.DockerDesktop --exact' } else { 'Start Docker Desktop, accept its agreement, and select the Linux container engine.' })))
+        -Remediation $dockerRemediation))
 
     $composeReady = $false
     if ($dockerAvailable) {
-        $composeResult = Invoke-LauncherExternalCommand -FilePath 'docker.exe' -ArgumentList @('compose', 'version') -CommandInvoker $CommandInvoker
+        $composeResult = Invoke-LauncherExternalCommand -FilePath 'docker.exe' -ArgumentList @('compose', 'version') -TimeoutSeconds 10 -CommandInvoker $CommandInvoker
         $composeReady = $composeResult.exit_code -eq 0
     }
     [void]$checks.Add((New-LauncherCheck -Id 'windows.docker_compose' -Category 'windows' `
@@ -1066,10 +1130,10 @@ printf 'uv_path=%s\n' "$uv_path"
 printf 'docker_path=%s\n' "$docker_path"
 if test -n "$python_path"; then "$python_path" --version 2>&1 | sed 's/^/python=/'; fi
 if test -n "$uv_path"; then "$uv_path" --version 2>&1 | sed 's/^/uv=/'; fi
-if test -n "$docker_path"; then "$docker_path" info --format '{{.OSType}}' 2>/dev/null | sed 's/^/docker=/'; fi
-if test -n "$docker_path"; then "$docker_path" compose version 2>/dev/null | sed 's/^/compose=/'; fi
+if test -n "$docker_path"; then timeout --signal=TERM --kill-after=1s 10s "$docker_path" info --format '{{.OSType}}' 2>/dev/null | sed 's/^/docker=/'; fi
+if test -n "$docker_path"; then timeout --signal=TERM --kill-after=1s 10s "$docker_path" compose version 2>/dev/null | sed 's/^/compose=/'; fi
 '@
-        $probe = Invoke-LauncherWslCommand -Distro $Distro -User 'root' -Script $wslProbe -Description 'check Ubuntu, systemd, Python, uv, and Docker integration' -CommandInvoker $CommandInvoker
+        $probe = Invoke-LauncherWslCommand -Distro $Distro -User 'root' -Script $wslProbe -Description 'check Ubuntu, systemd, Python, uv, and Docker integration' -TimeoutSeconds 30 -CommandInvoker $CommandInvoker
         $probeText = $probe.stdout + "`n" + $probe.stderr
         $ubuntuReady = $probeText -match '(?m)^ubuntu=ubuntu:24\.04\s*$'
         $systemdReady = $probeText -match '(?m)^systemd=yes\s*$'
@@ -1443,15 +1507,27 @@ case "$docker_bin" in
     running_count=0
     healthy_count=0
     for service in desktop agent loopback-gateway; do
-      container_id=$("$docker_bin" compose -f /opt/mistyai/deploy/compose.yaml ps -q "$service" 2>/dev/null | head -n 1)
+      if ! container_ids=$(timeout --signal=TERM --kill-after=1s 5s "$docker_bin" compose -f /opt/mistyai/deploy/compose.yaml ps -q "$service" 2>/dev/null); then
+        compose_state=unavailable
+        break
+      fi
+      container_id=$(printf '%s\n' "$container_ids" | head -n 1)
       if test -z "$container_id"; then continue; fi
       container_count=$((container_count + 1))
-      running=$("$docker_bin" inspect --format '{{.State.Running}}' "$container_id" 2>/dev/null || true)
-      health=$("$docker_bin" inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' "$container_id" 2>/dev/null || true)
+      if ! running=$(timeout --signal=TERM --kill-after=1s 5s "$docker_bin" inspect --format '{{.State.Running}}' "$container_id" 2>/dev/null); then
+        compose_state=unavailable
+        break
+      fi
+      if ! health=$(timeout --signal=TERM --kill-after=1s 5s "$docker_bin" inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' "$container_id" 2>/dev/null); then
+        compose_state=unavailable
+        break
+      fi
       if test "$running" = true; then running_count=$((running_count + 1)); fi
       if test "$running" = true && test "$health" = healthy; then healthy_count=$((healthy_count + 1)); fi
     done
-    if test "$container_count" -eq 3 && test "$running_count" -eq 3 && test "$healthy_count" -eq 3; then
+    if test "$compose_state" = unavailable; then
+      :
+    elif test "$container_count" -eq 3 && test "$running_count" -eq 3 && test "$healthy_count" -eq 3; then
       compose_state=running
     elif test "$running_count" -gt 0; then
       compose_state=partial
@@ -1460,13 +1536,14 @@ case "$docker_bin" in
     ;;
 esac
 '@
-    $result = Invoke-LauncherWslCommand -Distro $Distro -User 'root' -Script $script -Description 'inspect MistyAI systemd and Compose state' -CommandInvoker $CommandInvoker
+    $result = Invoke-LauncherWslCommand -Distro $Distro -User 'root' -Script $script -Description 'inspect MistyAI systemd and Compose state' -TimeoutSeconds 30 -CommandInvoker $CommandInvoker
     $text = $result.stdout
     $body = if ($text -match '(?m)^mistyai-body\.service=([^\r\n]+)') { $matches[1].Trim() } else { 'unknown' }
     $operator = if ($text -match '(?m)^mistyai-operator\.service=([^\r\n]+)') { $matches[1].Trim() } else { 'unknown' }
     $bodyEnabled = if ($text -match '(?m)^mistyai-body\.service-enabled=([^\r\n]+)') { $matches[1].Trim() } else { 'unknown' }
     $operatorEnabled = if ($text -match '(?m)^mistyai-operator\.service-enabled=([^\r\n]+)') { $matches[1].Trim() } else { 'unknown' }
     $compose = if ($text -match '(?m)^compose=([^\r\n]+)') { $matches[1].Trim() } else { 'unknown' }
+    if ($result.exit_code -ne 0) { $compose = 'unavailable' }
     return [pscustomobject][ordered]@{
         body = $body
         operator = $operator
@@ -2476,7 +2553,11 @@ if ! test -x /opt/mistyai/.venv/bin/mistyctl; then
 fi
 /opt/mistyai/.venv/bin/mistyctl env down --json
 for service in desktop agent loopback-gateway; do
-  if test -n "$("$docker_bin" compose -f /opt/mistyai/deploy/compose.yaml ps -aq "$service" 2>/dev/null)"; then
+  if ! remaining_containers=$(timeout --signal=TERM --kill-after=1s 5s "$docker_bin" compose -f /opt/mistyai/deploy/compose.yaml ps -aq "$service" 2>/dev/null); then
+    echo "Cannot verify MistyAI Compose shutdown; Docker query failed: $service" >&2
+    exit 70
+  fi
+  if test -n "$remaining_containers"; then
     echo "MistyAI Compose service still has containers after down: $service" >&2
     exit 69
   fi
@@ -2858,9 +2939,11 @@ function Invoke-LauncherStatusCommand {
     $activeUnitStates = @('active', 'activating', 'reloading', 'deactivating')
     $anythingRunning = $neural.running -or $anyNeuralProcess -or $misty.running -or $misty.body -in $activeUnitStates -or
         $misty.operator -in $activeUnitStates -or $misty.compose -in @('running', 'partial')
+    $stateUnavailable = $misty.compose -in @('unknown', 'unavailable') -or
+        $misty.body -in @('unknown', 'unavailable') -or $misty.operator -in @('unknown', 'unavailable')
     return [pscustomobject][ordered]@{
-        status = if ($ready) { 'running' } elseif ($anythingRunning) { 'partial' } else { 'stopped' }
-        exit_code = $script:ExitSuccess
+        status = if ($ready) { 'running' } elseif ($anythingRunning) { 'partial' } elseif ($stateUnavailable) { 'unavailable' } else { 'stopped' }
+        exit_code = if ($stateUnavailable) { $script:ExitNeedsAction } else { $script:ExitSuccess }
         neuralcloud = $neural
         mistyai = $misty
         mistyai_health = $mistyHealth

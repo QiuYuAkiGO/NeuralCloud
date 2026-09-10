@@ -150,3 +150,65 @@ def test_failed_boot_only_retains_lock_for_live_research_worker(tmp_path, monkey
                 await runtime.stop()
 
     asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("legacy_report", (False, True))
+def test_timed_out_main_model_keeps_worker_and_instance_owned(tmp_path, legacy_report):
+    started, release = threading.Event(), threading.Event()
+    runtime, _, provider, _ = research_runtime(tmp_path, [], manifest=research_manifest(legacy=legacy_report))
+
+    class BlockingDecision:
+        def complete_chat_result(self, *args, **kwargs):
+            started.set()
+            assert release.wait(5)
+            return ChatResult(text="Observed." if legacy_report else '{"kind":"no_action","confidence":0.8}')
+
+    runtime.cognitive.pipeline.llm = BlockingDecision()
+    runtime.cognitive.pipeline.character.llm = runtime.cognitive.pipeline.llm
+
+    async def scenario():
+        await runtime.boot_and_recover()
+        runtime.maintenance_drain_seconds = .01
+        competitor = SingleInstanceLock(runtime.instance_lock.path, runtime_instance_id="second-instance")
+        worker = prepare = None
+        try:
+            event = await runtime.submit_event(event_type=RuntimeEventType.ENVIRONMENT_CHANGE,
+                priority=RuntimeEventPriority.IMPORTANT_ENVIRONMENT, source="fixture", payload={"text": "Inspect the current view."})
+            command = runtime._make_command(event, command_type="PrepareResponse", idempotency_key="blocked-decision",
+                expected_revision=runtime._cognitive_snapshot.revision,
+                payload={"mode": "grounded_agency_decision", "grounded_manifest_hash": runtime.manifest.content_hash(),
+                         "text": "Inspect the current view.", "provider_intents": provider.supported_intents})
+            prepare = asyncio.create_task(runtime.cognitive.prepare_response(command))
+            assert await asyncio.to_thread(started.wait, 1)
+            with pytest.raises(TimeoutError):
+                await asyncio.wait_for(prepare, timeout=.01)
+            assert prepare.cancelled()
+            assert len(runtime.cognitive.research_tasks) == 1
+            worker = next(iter(runtime.cognitive.research_tasks))
+            assert not worker.done()
+            assert not await runtime.cognitive.pause_maintenance(timeout=.01)
+            with pytest.raises(RuntimeStateError, match="did not drain"):
+                await runtime.stop()
+            assert runtime.lifecycle == RuntimeLifecycle.FAULTED
+            assert runtime.instance_lock.owned and runtime._research_workers_pending()
+            with pytest.raises(InstanceLockError):
+                competitor.acquire()
+            release.set()
+            await worker
+            assert not runtime.cognitive.research_tasks
+            assert event.event_id not in runtime.cognitive.research_traces
+            assert not runtime.cognitive._prepared
+            await runtime.stop(reason="actual decision worker finished")
+            assert not runtime.instance_lock.owned
+            competitor.acquire()
+        finally:
+            release.set()
+            if worker is not None:
+                await worker
+            if prepare is not None and not prepare.done():
+                await prepare
+            competitor.release()
+            if runtime.lifecycle != RuntimeLifecycle.STOPPED:
+                await runtime.stop()
+
+    asyncio.run(scenario())

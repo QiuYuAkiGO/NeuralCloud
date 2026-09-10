@@ -68,6 +68,7 @@ class RuntimeEventType(StrEnum):
     APPROVAL_RESULT = "approval_result"
     ACTION_RESULT = "action_result"
     USER_MESSAGE = "user_message"
+    TERMINAL_CONTINUATION = "terminal_continuation"
     ENVIRONMENT_CHANGE = "environment_change"
     PERCEPTION = "perception"
     BODY_STATE = "body_state"

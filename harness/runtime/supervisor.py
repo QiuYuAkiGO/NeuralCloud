@@ -7,7 +7,7 @@ import hashlib
 import inspect
 import json
 import os
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Iterable
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
@@ -127,7 +127,7 @@ _TRANSITIONS: dict[RuntimeLifecycle, frozenset[RuntimeLifecycle]] = {
 
 _HOMEOSTATIC_COGNITIVE_RESERVED_PAYLOAD_KEYS = frozenset(
     {"homeostatic_interoception", "homeostatic_profile_ref", "interoception",
-     "opaque_interoception", "grounded_manifest_hash", "provider_intents", "research_context"}
+     "opaque_interoception", "grounded_manifest_hash", "provider_intents", "research_context", "basic_terminal"}
 )
 
 
@@ -184,6 +184,8 @@ class RuntimeIngress:
             # already-accepted user event.
             self.supervisor._pending_user_ingress_event_ids.add(event.event_id)
             self.supervisor._remember_user_event(event)
+            if self.supervisor._basic_terminal is not None:
+                self.supervisor._basic_terminal.interrupt_for_user(event)
             self.supervisor._cancel_pending_autonomous(
                 reason="new user activity superseded autonomous output",
                 event=event,
@@ -252,7 +254,7 @@ class RuntimeSupervisor:
         body_state_guard: BodyStateGuard | None = None,
         delivery_backend: DeliveryBackend | None = None,
         watchdog: RuntimeWatchdog | None = None,
-        command_timeout_seconds: float = 30.0,
+        command_timeout_seconds: float | None = None,
         action_timeout_seconds: float = 120.0,
         maintenance_drain_seconds: float = 5.0,
         body_client: MistyBodyClient | None = None,
@@ -338,6 +340,13 @@ class RuntimeSupervisor:
             character_id=character_id,
             manifest_revision=manifest.revision,
         )
+        # Seek metadata only: command payloads remain in the journal's bounded
+        # tail/on disk. New idempotency keys must not scan all historical data.
+        self._command_intent_seqs: dict[str, int] = {}
+        self._prepare_intent_seqs: dict[str, tuple[int, int]] = {}
+        self._command_result_seqs: dict[str | None, int] = {}
+        self._command_index_cursor = 0
+        self._sync_command_index()
         self.checkpoint_store = checkpoint_store or CheckpointStore(self.state_dir / "checkpoint.json")
         self.queue = queue or PriorityEventQueue()
         self.scheduler = scheduler or RealTimeScheduler(manifest.heartbeat_seconds)
@@ -356,7 +365,7 @@ class RuntimeSupervisor:
             self.action_coordinator.capability_check = self.embodiment.supports
         self.delivery_backend = delivery_backend or InMemoryDeliveryBackend()
         self.watchdog = watchdog or RuntimeWatchdog()
-        self.command_timeout_seconds = command_timeout_seconds
+        self.command_timeout_seconds = manifest.command_timeout_seconds if command_timeout_seconds is None else command_timeout_seconds
         self.action_timeout_seconds = action_timeout_seconds
         self.maintenance_drain_seconds = maintenance_drain_seconds
         condition = manifest.embodiment
@@ -397,6 +406,7 @@ class RuntimeSupervisor:
         self._listeners: list[RuntimeListener] = []
         self._lifecycle_lock = asyncio.Lock()
         self._foreground_lock = asyncio.Lock()
+        self._approval_lock = asyncio.Lock()
         self._action_tasks: dict[str, asyncio.Task[None]] = {}
         self._perception_guard: PerceptionGuard | None = None
         self._body_state_guard = body_state_guard
@@ -436,6 +446,11 @@ class RuntimeSupervisor:
             if body_client is not None
             else None
         )
+        self._basic_terminal = None
+        if manifest.basic_terminal.enabled:
+            from harness.runtime.basic_terminal import BasicTerminalRuntime
+
+            self._basic_terminal = BasicTerminalRuntime(self)
 
     @property
     def version_vector(self) -> VersionVector:
@@ -652,6 +667,8 @@ class RuntimeSupervisor:
             raise
         try:
             previous_lifecycle = self._restore_runtime_indexes()
+            if self._basic_terminal is not None:
+                self._basic_terminal.recover()
             await self._restore_research_memory()
             await self._transition(RuntimeLifecycle.RECOVERING, reason="boot recovery started")
             if self.journal.truncated_tail_bytes:
@@ -696,9 +713,9 @@ class RuntimeSupervisor:
                             phase="boot_after_action_reconciliation",
                         )
             await self._restore_pending_events()
-            if self.journal.records():
+            if self.journal.last_record_seq:
                 now = utc_now()
-                previous_time = self._last_runtime_time or self.journal.records()[-1].recorded_at
+                previous_time = self._last_runtime_time or next(self.journal.iter_records(reverse=True)).recorded_at
                 self._append_journal(
                     "time_discontinuity",
                     data={
@@ -972,6 +989,17 @@ class RuntimeSupervisor:
                 + ", ".join(homeostasis_watchdog)
             )
         await self._refresh_embodiment()
+        if self.manifest.grounded_agency is not None and self.pause_observations.first_receive_seq is not None:
+            # Pause keeps observation ingress durable but does not dispatch it.
+            # Reconcile physical samples before assessing a goal continuation;
+            # a summary or the current wall clock cannot replace those samples.
+            first = self.pause_observations.first_receive_seq
+            last = self.pause_observations.last_receive_seq
+            pending_body = [RuntimeEvent.model_validate(record.data["event"]) for record in self.journal.iter_records()
+                            if record.record_type == "event_accepted" and record.data.get("event", {}).get("event_type") == "body_state"
+                            and first <= record.data["event"]["receive_seq"] <= last]
+            for body_event in pending_body:
+                await self._handle_grounded_body(body_event, self._process_seq)
         embodiment_status = self.embodiment.status()
         if self._required_embodiment_blocks_runtime(embodiment_status):
             raise RuntimeStateError(
@@ -1102,6 +1130,8 @@ class RuntimeSupervisor:
     def _research_workers_pending(self) -> bool:
         """Keep exclusive state ownership while an uncancellable model worker runs."""
         tasks = list(self._social_appraisal_tasks)
+        tasks.extend(getattr(self.cognitive, "research_tasks", ()))
+        tasks.extend(getattr(self.cognitive, "command_tasks", ()))
         if self._research_memory is not None:
             tasks.extend(self._research_memory.service._tasks.values())
         if self._agency_service is not None and self._agency_service._inflight is not None:
@@ -1148,15 +1178,19 @@ class RuntimeSupervisor:
         return checkpoint
 
     async def approve_action(self, action_id: str, *, approval: str) -> ActionExecution:
-        action = await self.action_coordinator.approve(action_id, approval=approval)
-        self._append_journal("action_approved", data={"action": action.model_dump(mode="json")})
-        if action.state == ActionExecutionState.READY and self.lifecycle == RuntimeLifecycle.RUNNING:
-            context = self._action_context.get(action_id)
-            action = await self._start_action(
-                action,
-                event=context.get("event") if context else None,
-            )
-        return action
+        async with self._approval_lock:
+            existing = self.action_coordinator.get(action_id)
+            if existing is not None and existing.state != ActionExecutionState.AWAITING_APPROVAL:
+                return existing
+            action = await self.action_coordinator.approve(action_id, approval=approval)
+            self._append_journal("action_approved", data={"action": action.model_dump(mode="json")})
+            if action.state == ActionExecutionState.READY and self.lifecycle == RuntimeLifecycle.RUNNING:
+                context = self._action_context.get(action_id)
+                action = await self._start_action(
+                    action,
+                    event=context.get("event") if context else None,
+                )
+            return action
 
     async def reject_action(self, action_id: str, *, reason: str) -> ActionExecution:
         action = await self.action_coordinator.reject(action_id, reason=reason)
@@ -1352,6 +1386,13 @@ class RuntimeSupervisor:
             )
         if self.manifest.grounded_agency is not None:
             return await self._dispatch_grounded_event(event, process_seq)
+        if event.event_type == RuntimeEventType.TERMINAL_CONTINUATION:
+            task = self._basic_terminal.tasks.get(str(event.payload.get("terminal_task_id") or "")) if self._basic_terminal else None
+            if task is None or event.payload.get("step") != len(task["history"]):
+                return EventDispatchResult(
+                    event_id=event.event_id, receive_seq=event.receive_seq, process_seq=process_seq,
+                    status="ignored", decision_kind="no_action", detail={"reason": "terminal task no longer active"},
+                )
         if event.event_type == RuntimeEventType.IDLE:
             ineligible = self._autonomous_ineligible(event)
             if ineligible is not None:
@@ -1489,6 +1530,8 @@ class RuntimeSupervisor:
             self._last_heartbeat_at = utc_now()
             await self._refresh_embodiment()
             await self.check_watchdog()
+            if self._basic_terminal is not None and self.lifecycle == RuntimeLifecycle.RUNNING:
+                await self._basic_terminal.expire_pending_approvals()
             policies: list[dict[str, Any]] = []
             if (
                 self.lifecycle == RuntimeLifecycle.RUNNING
@@ -1530,6 +1573,7 @@ class RuntimeSupervisor:
             RuntimeEventType.USER_MESSAGE,
             RuntimeEventType.IDLE,
             RuntimeEventType.GOAL_RECONSIDERATION,
+            RuntimeEventType.TERMINAL_CONTINUATION,
         }:
             return EventDispatchResult(
                 event_id=event.event_id,
@@ -1604,6 +1648,13 @@ class RuntimeSupervisor:
             for key, value in event.payload.items()
             if key not in _HOMEOSTATIC_COGNITIVE_RESERVED_PAYLOAD_KEYS
         }
+        # This authority-bearing context is always built from Runtime's frozen
+        # configuration and a fresh provider observation, never client input.
+        if cognitive_event_payload.get("mode") == "basic_terminal_task":
+            cognitive_event_payload.pop("mode")
+        terminal_context = await self._basic_terminal.context(event) if self._basic_terminal is not None else None
+        if terminal_context is not None:
+            cognitive_event_payload.update({"mode": "basic_terminal_task", "basic_terminal": terminal_context})
         prepare_envelope = self._make_command(
             event,
             command_type="PrepareResponse",
@@ -1692,12 +1743,28 @@ class RuntimeSupervisor:
         decision: ReplyDecision | GoalProposal | NoActionDecision | DeferDecision = TypeAdapter(
             CharacterDecision
         ).validate_python(prepared.decision)
+        if self._basic_terminal is not None:
+            terminal_stop = self._basic_terminal.stop_reason(event) if terminal_context is not None else None
+            if terminal_stop and isinstance(decision, GoalProposal):
+                await self._commit_prepared(event, prepared, DecisionEvidence(
+                    prepare_id=prepared.prepare_id, recorded_at=utc_now(),
+                    decision_kind="no_action", reason=terminal_stop,
+                ))
+                detail = {"effective_decision_kind": "no_action", "reason": terminal_stop}
+                self._basic_terminal.finish_decision(event, prepared, detail)
+                return EventDispatchResult(
+                    event_id=event.event_id, receive_seq=event.receive_seq, process_seq=process_seq,
+                    status="ignored", decision_kind="no_action", detail=detail,
+                )
+            self._basic_terminal.bind(event, prepared)
         detail = await self._handle_decision(
             event,
             prepared,
             decision,
             homeostatic_context=causal_context,
         )
+        if self._basic_terminal is not None:
+            self._basic_terminal.finish_decision(event, prepared, detail)
         if continued_after_homeostasis:
             self._homeostasis_continuations.pop(event.event_id, None)
             self._append_journal(
@@ -1801,7 +1868,7 @@ class RuntimeSupervisor:
                 captured_at=snapshot.captured_at, evidence_refs=[f"body-state:{snapshot.revision}"],
             )
 
-    def _restore_grounded_body(self, records: list[RuntimeJournalRecord]) -> None:
+    def _restore_grounded_body(self, records: Iterable[RuntimeJournalRecord]) -> None:
         """Rebuild body authority and a missing sensor cache from the durable journal."""
         if self.manifest.grounded_agency is None:
             return
@@ -1979,7 +2046,7 @@ class RuntimeSupervisor:
         if self._research_memory is None:
             return
         try:
-            saved = next((record.data for record in self.journal.records()
+            saved = next((record.data for record in self.journal.iter_records()
                           if record.record_type == "body_experience_outcome" and record.event_id == event.event_id), None)
             if saved is None:
                 saved = {"decision_id": event.event_id, "evidence": evidence,
@@ -2015,7 +2082,7 @@ class RuntimeSupervisor:
         from harness.research.interoception.contracts import OpaqueInteroceptiveObservation
 
         await bridge.service.pause()
-        for record in self.journal.records():
+        for record in self.journal.iter_records():
             if record.record_type == "body_experience_outcome":
                 data = record.data
                 bridge.complete(
@@ -2060,6 +2127,7 @@ class RuntimeSupervisor:
                         result = completed.result()
                         self._append_journal("entity_appraisal", event=causal_event, data={
                             **result.model_dump(mode="json"), "late_completion": state["late"],
+                            "appraised_at": self._research_clock().isoformat(),
                             "analysis_eligible": not state["late"],
                         })
                     except Exception as exc:
@@ -2591,13 +2659,24 @@ class RuntimeSupervisor:
                         "effective_decision_kind": "defer",
                     }
             self._goal_revision += 1
+            action_deadline = min(
+                prepared.expires_at,
+                utc_now() + timedelta(seconds=self.action_timeout_seconds),
+            )
+            terminal_item = None
+            if self._basic_terminal is not None and decision.policy_id.startswith("basic_terminal_"):
+                terminal_item = self._basic_terminal.contexts.get(event.event_id)
+                if terminal_item is not None and decision.required_approvals:
+                    # Preparing a plan has a short RPC deadline. Human approval
+                    # has its own bounded window, within the original task.
+                    action_deadline = min(
+                        utc_now() + timedelta(seconds=self.manifest.basic_terminal.approval_timeout_seconds),
+                        datetime.fromisoformat(terminal_item["task"]["deadline"]),
+                    )
             action = await self.action_coordinator.propose(
                 decision,
                 idempotency_key=f"action:{prepared.prepare_id}:{decision.goal_id}",
-                deadline=min(
-                    prepared.expires_at,
-                    utc_now() + timedelta(seconds=self.action_timeout_seconds),
-                ),
+                deadline=action_deadline,
                 version_vector=prepared.read_versions,
                 risk_class=decision.permission_class,
             )
@@ -2605,6 +2684,18 @@ class RuntimeSupervisor:
                 "event": event,
                 "prepared": prepared,
             }
+            if terminal_item is not None:
+                observed = terminal_item["context"].get("observation") or {}
+                # Retain only target identity while approval is pending; command
+                # text remains the exact text shown in the proposed action.
+                self._action_context[action.action_id]["terminal_target"] = {
+                    "active_window": observed.get("active_window"),
+                    "windows": observed.get("windows", []),
+                    "a11y_nodes": [
+                        {key: node[key] for key in ("app_id", "window_id", "role", "name") if key in node}
+                        for node in observed.get("a11y_nodes", [])
+                    ],
+                }
             self._append_journal(
                 "action_proposed",
                 event=event,
@@ -2635,6 +2726,38 @@ class RuntimeSupervisor:
         *,
         event: RuntimeEvent | None,
     ) -> ActionExecution:
+        action_context = self._action_context.get(action.action_id)
+        source_decision = action_context["prepared"].decision if action_context else None
+        if (
+            self._basic_terminal is not None and event is not None
+            and isinstance(source_decision, GoalProposal)
+            and (source_decision.policy_id or "").startswith("basic_terminal_")
+        ):
+            terminal_stop = self._basic_terminal.stop_reason(event, require_active=True)
+            observation_evidence: dict[str, Any] = {}
+            if terminal_stop is None:
+                try:
+                    action, observation_evidence = await self._refresh_basic_terminal_target(action, event, action_context)
+                except (ValueError, TimeoutError) as exc:
+                    terminal_stop = f"终端操作执行前复核失败，已取消操作：{exc}"
+                latest = self.action_coordinator.get(action.action_id)
+                if latest is not None and latest.state != ActionExecutionState.READY:
+                    # A concurrent approval may already have started this action,
+                    # or the user may have rejected it while observe was pending.
+                    return latest
+                # Observing may have yielded while a newer user message arrived.
+                terminal_stop = terminal_stop or self._basic_terminal.stop_reason(event, require_active=True)
+            if terminal_stop:
+                rejected = await self.action_coordinator.reject(action.action_id, reason=terminal_stop)
+                self._append_journal("action_blocked", event=event, data={"action": rejected.model_dump(mode="json")})
+                await self._submit_action_result(rejected)
+                return rejected
+            if observation_evidence:
+                self.action_coordinator.restore(action)
+                self._append_journal(
+                    "action_target_revalidated", event=event, idempotency_key=action.idempotency_key,
+                    data={"action": action.model_dump(mode="json"), **observation_evidence},
+                )
         if self.manifest.embodiment.mode != "off" and (
             self.embodiment.status().state == EmbodimentState.TERMINAL
             or not self.embodiment.supports(ACTION_EXECUTE)
@@ -2673,6 +2796,75 @@ class RuntimeSupervisor:
         )
         self._action_tasks[reserved.action_id] = task
         return reserved
+
+    async def _refresh_basic_terminal_target(
+        self, action: ActionExecution, event: RuntimeEvent, context: dict[str, Any],
+    ) -> tuple[ActionExecution, dict[str, Any]]:
+        from harness.cognitive.basic_terminal import BasicTerminalActionPlanner, normalize_terminal_observation
+
+        spec = action.embodied_action
+        if spec is None:
+            raise ValueError("missing typed GUI action")
+        intent_id = spec.intent.intent_id
+        if intent_id in {"app.open.v1", "control.observe.v1", "control.wait.v1"}:
+            return action, {}
+        if self._perception_guard is None or not context.get("terminal_target"):
+            raise ValueError("missing original target or desktop observation backend")
+        remaining = (action.deadline - utc_now()).total_seconds()
+        if remaining <= 0:
+            raise ValueError("approval deadline expired")
+        try:
+            snapshot = await asyncio.wait_for(
+                self._perception_guard.backend.observe(), timeout=min(self.command_timeout_seconds, remaining),
+            )
+        except Exception as exc:
+            raise ValueError(f"desktop observation unavailable ({type(exc).__name__})") from exc
+        observation_age = (utc_now() - snapshot.captured_at).total_seconds()
+        if observation_age < -self.manifest.embodiment.future_clock_tolerance_seconds:
+            raise ValueError("desktop observation is in the future")
+        if observation_age > self.manifest.embodiment.max_state_age_seconds:
+            raise ValueError("desktop observation is stale")
+        observed = normalize_terminal_observation(snapshot, terminal_app_id=self.manifest.basic_terminal.terminal_app_id)
+        original = context["terminal_target"]
+        active = observed.get("active_window") or {}
+        original_active = original.get("active_window") or {}
+        if intent_id != "window.focus.v1" and (
+            not original_active.get("window_id")
+            or active.get("window_id") != original_active["window_id"]
+        ):
+            raise ValueError("the approved terminal window is no longer focused")
+
+        arguments = dict(spec.intent.arguments)
+        selector = arguments.get("selector")
+        if selector is not None:
+            def target(observation):
+                matches = [
+                    node for node in observation.get("a11y_nodes", [])
+                    if all(selector.get(key) is None or node.get(key) == selector[key]
+                           for key in ("app_id", "window_id", "role", "name"))
+                    and node.get("window_id") in {None, active.get("window_id")}
+                ]
+                # Identical anonymous nodes cannot be distinguished after a
+                # refresh. Do not silently retarget an approved text input.
+                if len(matches) != 1 or selector.get("occurrence", 0) != 0:
+                    raise ValueError("the approved terminal node is missing or ambiguous")
+                return {key: matches[0].get(key) for key in ("app_id", "window_id", "role", "name")}
+
+            if target(original) != target(observed):
+                raise ValueError("the approved terminal node changed")
+            arguments["selector"] = {**selector, "observation_id": observed.get("observation_id")}
+        refreshed_spec = spec.model_copy(update={"intent": spec.intent.model_copy(update={"arguments": arguments})})
+        task_id = str(event.payload.get("terminal_task_id") or event.event_id)
+        task = self._basic_terminal.tasks.get(task_id)
+        if task is None:
+            raise ValueError("terminal task is no longer active")
+        BasicTerminalActionPlanner._validate_target(
+            refreshed_spec, observed, task["history"], self.manifest.basic_terminal.terminal_app_id, task_id,
+        )
+        return action.model_copy(update={"embodied_action": refreshed_spec}), {
+            "observation_id": observed.get("observation_id"),
+            "evidence_refs": observed.get("evidence_refs", []),
+        }
 
     async def _run_action(self, action_id: str) -> None:
         try:
@@ -2795,6 +2987,8 @@ class RuntimeSupervisor:
             data={"action_id": action.action_id, "prepare_id": prepared.prepare_id},
         )
         self._action_context.pop(action.action_id, None)
+        if self._basic_terminal is not None:
+            await self._basic_terminal.action_completed(original_event, action, evidence)
 
     def _action_outcome_causal_event(
         self,
@@ -2851,31 +3045,19 @@ class RuntimeSupervisor:
         return result
 
     def _prepare_idempotency_key(self, event: RuntimeEvent) -> str:
+        self._sync_command_index()
         base = f"cognitive:prepare:{event.event_id}"
-        intents = [
-            record
-            for record in self.journal.records()
-            if record.record_type == "domain_command_intent"
-            and record.event_id == event.event_id
-            and record.data.get("service") == "cognitive"
-            and (record.data.get("envelope") or {}).get("command_type") == "PrepareResponse"
-        ]
-        if not intents:
+        indexed_intent = self._prepare_intent_seqs.get(event.event_id)
+        if indexed_intent is None:
             return base
-        latest = intents[-1]
-        result_record = next(
-            (
-                record
-                for record in reversed(self.journal.records())
-                if record.command_id == latest.command_id
-                and record.record_type in {"domain_command_result", "domain_command_late_result"}
-            ),
-            None,
-        )
-        if result_record is None:
+        intent_seq, intent_count = indexed_intent
+        latest = self._indexed_command_record(intent_seq)
+        result_seq = self._command_result_seqs.get(latest.command_id)
+        if result_seq is None:
             return latest.idempotency_key or base
+        result_record = self._indexed_command_record(result_seq)
         if result_record.record_type == "domain_command_late_result":
-            return f"{base}:reconcile:{len(intents)}"
+            return f"{base}:reconcile:{intent_count}"
         try:
             result = result_record.data["result"]
             prepared = PreparedResponse.model_validate(result["result"])
@@ -2883,7 +3065,7 @@ class RuntimeSupervisor:
             prepared = None
         if prepared is not None and utc_now() < prepared.expires_at:
             return latest.idempotency_key or base
-        return f"{base}:reconcile:{len(intents)}"
+        return f"{base}:reconcile:{intent_count}"
 
     def _make_command(
         self,
@@ -2894,11 +3076,10 @@ class RuntimeSupervisor:
         payload: dict[str, Any],
         expected_revision: int | None,
     ) -> DomainCommandEnvelope[dict[str, Any]]:
-        for record in reversed(self.journal.records()):
-            if record.record_type != "domain_command_intent":
-                continue
-            if record.idempotency_key != idempotency_key:
-                continue
+        self._sync_command_index()
+        intent_seq = self._command_intent_seqs.get(idempotency_key)
+        if intent_seq is not None:
+            record = self._indexed_command_record(intent_seq)
             previous = record.data.get("envelope")
             if previous:
                 envelope = DomainCommandEnvelope[dict[str, Any]].model_validate(previous)
@@ -2919,6 +3100,45 @@ class RuntimeSupervisor:
             version_vector=self.version_vector,
             payload=payload,
         )
+
+    def _sync_command_index(self) -> None:
+        """Rebuild at startup or catch up only newly appended journal pages.
+
+        The catch-up also covers emergency-buffer appends whose write raised,
+        and direct journal appends used by recovery tools and test fixtures.
+        """
+        boundary = self.journal.last_record_seq
+        while self._command_index_cursor < boundary:
+            records = self.journal.records_after(
+                self._command_index_cursor,
+                limit=min(500, boundary - self._command_index_cursor),
+            )
+            if not records:
+                raise RuntimeStateError("command journal index is missing its next record")
+            for record in records:
+                if record.record_seq != self._command_index_cursor + 1:
+                    raise RuntimeStateError("command journal index sequence is not contiguous")
+                if record.record_type == "domain_command_intent":
+                    envelope = record.data.get("envelope")
+                    if record.idempotency_key is not None and envelope:
+                        self._command_intent_seqs[record.idempotency_key] = record.record_seq
+                    if (
+                        record.event_id is not None
+                        and record.data.get("service") == "cognitive"
+                        and isinstance(envelope, dict)
+                        and envelope.get("command_type") == "PrepareResponse"
+                    ):
+                        _, count = self._prepare_intent_seqs.get(record.event_id, (0, 0))
+                        self._prepare_intent_seqs[record.event_id] = (record.record_seq, count + 1)
+                elif record.record_type in {"domain_command_result", "domain_command_late_result"}:
+                    self._command_result_seqs[record.command_id] = record.record_seq
+                self._command_index_cursor = record.record_seq
+
+    def _indexed_command_record(self, record_seq: int) -> RuntimeJournalRecord:
+        records = self.journal.records_after(record_seq - 1, limit=1)
+        if not records or records[0].record_seq != record_seq:
+            raise RuntimeStateError(f"command journal index points to missing record {record_seq}")
+        return records[0]
 
     def _renew_command_window(
         self,
@@ -3772,9 +3992,11 @@ class RuntimeSupervisor:
                 idempotency_key=idempotency_key,
                 data=data,
             )
+            self._sync_command_index()
             self._journal_writable = not self.journal.degraded
             return record
         except JournalUnavailableError:
+            self._sync_command_index()
             self._journal_writable = False
             if "journal" not in self._degraded_reasons:
                 self._degraded_reasons.append("journal")
@@ -3849,10 +4071,9 @@ class RuntimeSupervisor:
         return lambda event: event.event_type in CONTROL_EVENT_TYPES
 
     def _restore_runtime_indexes(self) -> RuntimeLifecycle | None:
-        records = self.journal.records()
         previous_lifecycle: RuntimeLifecycle | None = None
         journaled_goals: set[str] = set()
-        for record in records:
+        for record in self.journal.iter_records():
             if record.receive_seq:
                 self._receive_seq = max(self._receive_seq, record.receive_seq)
             if record.process_seq:
@@ -3963,15 +4184,15 @@ class RuntimeSupervisor:
             if checkpoint.agency_state == AgencyState.TERMINAL:
                 self._terminal_episode_id = checkpoint.body_episode_id
                 self._terminal_body_revision = checkpoint.body_revision
-        self._restore_grounded_body(records)
+        self._restore_grounded_body(self.journal.iter_records())
         if self._agency_service is not None:
-            for record in records:
+            for record in self.journal.iter_records():
                 if record.record_type == "persistent_goal_decision_bound":
                     self._agency_decision_bindings[record.data["decision_id"]] = {
                         "goal_id": record.data["goal_id"], "step_id": record.data["step_id"],
                     }
         if self._research_memory is not None:
-            for record in records:
+            for record in self.journal.iter_records():
                 if record.record_type == "grounded_decision" and record.event_id:
                     self._research_memory.remember(record.event_id, record.data)
         return previous_lifecycle
@@ -3982,7 +4203,7 @@ class RuntimeSupervisor:
         completed: set[str] = set()
         completed_ranges: list[tuple[str, str, int, int]] = []
         started: dict[str, RuntimeJournalRecord] = {}
-        for record in self.journal.records():
+        for record in self.journal.iter_records():
             if record.record_type == "event_accepted":
                 payload = record.data.get("event")
                 if payload:
@@ -4044,7 +4265,7 @@ class RuntimeSupervisor:
     ) -> None:
         intents: dict[str, RuntimeJournalRecord] = {}
         results: set[str] = set()
-        for record in self.journal.records():
+        for record in self.journal.iter_records():
             if record.record_type == "domain_command_intent" and record.command_id:
                 intents[record.command_id] = record
             elif record.record_type in {"domain_command_result", "domain_command_late_result"} and record.command_id:
@@ -4079,7 +4300,7 @@ class RuntimeSupervisor:
 
     def _find_delivery_result(self, prepare_id: str) -> tuple[DeliveryResult | None, bool]:
         intent = False
-        for record in self.journal.records():
+        for record in self.journal.iter_records():
             if record.data.get("prepare_id") != prepare_id:
                 continue
             if record.record_type == "reply_delivery_intent":
@@ -4096,7 +4317,7 @@ class RuntimeSupervisor:
         prepared: dict[str, PreparedResponse] = {}
         execution_intents: set[str] = set()
         interaction_committed: set[str] = set()
-        for record in self.journal.records():
+        for record in self.journal.iter_records():
             if record.record_type == "event_accepted":
                 event_payload = record.data.get("event")
                 if event_payload:
@@ -4128,7 +4349,7 @@ class RuntimeSupervisor:
             proposed_event_id: str | None = next(
                 (
                     record.event_id
-                    for record in reversed(self.journal.records())
+                    for record in self.journal.iter_records(reverse=True)
                     if record.record_type == "action_proposed"
                     and record.event_id is not None
                     and (record.data.get("action") or {}).get("action_id") == action_id

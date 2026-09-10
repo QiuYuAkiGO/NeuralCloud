@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 
 from harness.config import Settings, get_settings
 from harness.core.inference import TokenUsage
+from infra.trace.request_spans import model_request_span, trace_scope
 
 logger = logging.getLogger(__name__)
 
@@ -118,14 +119,15 @@ class OpenAICompatClient:
     def complete_json(
         self, *, system: str, user: str, max_tokens: int | None = None
     ) -> dict[str, Any]:
-        content = self.complete_chat_result(
-            [
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
-            temperature=0.1,
-            max_tokens=max_tokens,
-        ).text
+        with trace_scope(model_role="aux"):
+            content = self.complete_chat_result(
+                [
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
+                temperature=0.1,
+                max_tokens=max_tokens,
+            ).text
         return parse_json_object(content)
 
     def complete_chat(
@@ -156,15 +158,19 @@ class OpenAICompatClient:
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
         headers = {"Authorization": f"Bearer {self.settings.llm_api_key}"}
-        response = self._client.post(
-            f"{self.settings.llm_base_url.rstrip('/')}/chat/completions",
-            json=payload,
-            headers=headers,
-        )
-        response.raise_for_status()
-        body = response.json()
-        text = str(body["choices"][0]["message"]["content"])
-        return ChatResult(text=text, usage=usage_from_api_payload(body.get("usage"), messages, text))
+        with model_request_span(self.settings, role="main") as span:
+            response = self._client.post(
+                f"{self.settings.llm_base_url.rstrip('/')}/chat/completions",
+                json=payload,
+                headers=headers,
+            )
+            span["http_status"] = response.status_code
+            response.raise_for_status()
+            body = response.json()
+            text = str(body["choices"][0]["message"]["content"])
+            usage = usage_from_api_payload(body.get("usage"), messages, text)
+            span.update(usage=usage.model_dump(mode="json"), usage_source=usage.source)
+            return ChatResult(text=text, usage=usage)
 
 
 def _filled(value: str | None) -> bool:
@@ -235,7 +241,8 @@ class RoutingLLMClient:
     def complete_json(
         self, *, system: str, user: str, max_tokens: int | None = None
     ) -> dict[str, Any]:
-        return self._aux.complete_json(system=system, user=user, max_tokens=max_tokens)
+        with trace_scope(model_role="aux"):
+            return self._aux.complete_json(system=system, user=user, max_tokens=max_tokens)
 
     def complete_chat(
         self,
@@ -244,7 +251,8 @@ class RoutingLLMClient:
         temperature: float = 0.7,
         stream: bool = False,
     ) -> str:
-        return self._main.complete_chat(messages, temperature=temperature, stream=stream)
+        with trace_scope(model_role="main"):
+            return self._main.complete_chat(messages, temperature=temperature, stream=stream)
 
     def complete_chat_result(
         self,
@@ -254,12 +262,13 @@ class RoutingLLMClient:
         stream: bool = False,
         max_tokens: int | None = None,
     ) -> ChatResult:
-        return self._main.complete_chat_result(
-            messages,
-            temperature=temperature,
-            stream=stream,
-            max_tokens=max_tokens,
-        )
+        with trace_scope(model_role="main"):
+            return self._main.complete_chat_result(
+                messages,
+                temperature=temperature,
+                stream=stream,
+                max_tokens=max_tokens,
+            )
 
     @property
     def aux_distinct(self) -> bool:
@@ -276,12 +285,13 @@ class RoutingLLMClient:
 
         if not self.aux_distinct:
             raise RuntimeError("a distinct auxiliary model is not configured")
-        return self._aux.complete_chat_result(
-            messages,
-            temperature=temperature,
-            stream=False,
-            max_tokens=max_tokens,
-        )
+        with trace_scope(model_role="aux"):
+            return self._aux.complete_chat_result(
+                messages,
+                temperature=temperature,
+                stream=False,
+                max_tokens=max_tokens,
+            )
 
     def close(self) -> None:
         if self._aux is not self._main:

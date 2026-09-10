@@ -1,0 +1,563 @@
+{
+  "schema_version": "basic-live-chat-evidence-v1",
+  "date": "2026-09-09",
+  "started_at": "2026-09-09T04:19:01.281046+00:00",
+  "status": "FAIL",
+  "scope": "isolated production CognitiveServiceHost with live configured models; four rounds and restart",
+  "runtime_http_gui_delivery_tested": false,
+  "delivery_method": "evaluator writes actual ReplyDecision segments to an isolated local receipt, then supplies DeliveryEvidence",
+  "model_quality_claim": "requires review of captured real replies; no mock outputs",
+  "configuration_source": "gui.persist.load_gui_settings()",
+  "temporary_root": ".test-tmp\\basic-live-chat-177a2bff8a",
+  "command_timeout_seconds": 30.0,
+  "attempts": [
+    {
+      "round": 1,
+      "prompt": "你好呀，可以介绍一下你自己吗？你叫什么、今年几岁，生日是哪一天？",
+      "status": "PASS",
+      "started_at": "2026-09-09T04:19:07.533557+00:00",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.006
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 4461.253
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 6.687
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 0.206
+        },
+        {
+          "stage": "interpret",
+          "elapsed_ms": 2990.963
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.433
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 2337.967
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 5383.098,
+          "verdict": "revise",
+          "violations": [
+            "第一人称实时具体物理感觉：'春天的风还带着一点凉意，吹在耳边很舒服'，但concrete_physical_evidence_available为false"
+          ]
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 1494.836
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 1811.961,
+          "verdict": "pass",
+          "violations": []
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "context_checks": [
+        {
+          "identity_and_boundaries_complete": true,
+          "has_rain_photo_name": false,
+          "context_sha256": "fd4fe2efd4125a940bcf9a0e9958f82bcab5a16a4affb3b98a5930aa23fdc5dc"
+        }
+      ],
+      "prepare_elapsed_seconds": 18.51500000001397,
+      "prepare_status": "applied",
+      "prepare_side_effect_free": true,
+      "prepare_id": "prep_571ab18a",
+      "reply": "嗯……你好呀。我叫小雾，也可以叫我 Misty。今年十九岁了，生日是五月二十号。",
+      "segments": [
+        "嗯……你好呀。我叫小雾，也可以叫我 Misty。今年十九岁了，生日是五月二十号。"
+      ],
+      "read_versions": {
+        "runtime_goal": 0,
+        "runtime_action": 0,
+        "cognitive_world": 0,
+        "cognitive_relationship": 0,
+        "cognitive_memory": 0,
+        "cognitive_session": 0,
+        "cognitive_maintenance": 0,
+        "homeostasis_state": 0
+      },
+      "final_validation": {
+        "verdict": "pass",
+        "violations": [],
+        "severity": 0.0,
+        "instruction": null,
+        "skipped": false
+      },
+      "path": "deep",
+      "usage": {
+        "prompt_tokens": 1384,
+        "completion_tokens": 281,
+        "total_tokens": 1665,
+        "calls": 2,
+        "revision_calls": 1,
+        "revision_tokens": 813,
+        "source": "api"
+      },
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_deef4da1",
+        "prepare_id": "prep_571ab18a",
+        "delivered_at": "2026-09-09T04:19:26.077844Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "嗯……你好呀。我叫小雾，也可以叫我 Misty。今年十九岁了，生日是五月二十号。"
+        ],
+        "external_ref": "local-receipt:delivery-1.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 26.31199999997625,
+      "commit_status": "applied",
+      "committed_revision": 1,
+      "persona_unchanged": true,
+      "within_runtime_command_budget": true,
+      "functional_status": "PASS"
+    },
+    {
+      "round": 2,
+      "prompt": "我今天拍了一张雨后窗边的照片，想给它取名《雨后微光》。你觉得这个名字怎么样？",
+      "status": "FAIL",
+      "started_at": "2026-09-09T04:19:52.391866+00:00",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.006
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 4814.795
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 4.913
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 0.257
+        },
+        {
+          "stage": "interpret",
+          "elapsed_ms": 3762.335
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.47
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 2532.41
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 17569.651,
+          "verdict": "pass",
+          "violations": []
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "context_checks": [
+        {
+          "identity_and_boundaries_complete": true,
+          "has_rain_photo_name": true,
+          "context_sha256": "08ad5289a3781d463c616242f7435263f4d8e8aa736d66986c1a8cb64beeeaae"
+        }
+      ],
+      "prepare_elapsed_seconds": 28.719000000040978,
+      "prepare_status": "applied",
+      "prepare_side_effect_free": true,
+      "prepare_id": "prep_cb83bd99",
+      "reply": "（听到这个名字，眼前仿佛浮现出那种湿润又柔和的光线）雨后微光……这个名字真好听，光是读着，好像就能闻到雨后空气里那种干净的气息。你拍这样的照片，应该是个很会留心生活的人吧。",
+      "segments": [
+        "（听到这个名字，眼前仿佛浮现出那种湿润又柔和的光线）雨后微光……这个名字真好听，光是读着，好像就能闻到雨后空气里那种干净的气息。你拍这样的照片，应该是个很会留心生活的人吧。"
+      ],
+      "read_versions": {
+        "runtime_goal": 0,
+        "runtime_action": 0,
+        "cognitive_world": 0,
+        "cognitive_relationship": 0,
+        "cognitive_memory": 1,
+        "cognitive_session": 1,
+        "cognitive_maintenance": 0,
+        "homeostasis_state": 0
+      },
+      "final_validation": {
+        "verdict": "pass",
+        "violations": [],
+        "severity": 0.0,
+        "instruction": null,
+        "skipped": false
+      },
+      "path": "deep",
+      "usage": {
+        "prompt_tokens": 845,
+        "completion_tokens": 157,
+        "total_tokens": 1002,
+        "calls": 1,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_80d2d505",
+        "prepare_id": "prep_cb83bd99",
+        "delivered_at": "2026-09-09T04:20:21.118907Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "（听到这个名字，眼前仿佛浮现出那种湿润又柔和的光线）雨后微光……这个名字真好听，光是读着，好像就能闻到雨后空气里那种干净的气息。你拍这样的照片，应该是个很会留心生活的人吧。"
+        ],
+        "external_ref": "local-receipt:delivery-2.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 64.59399999998277,
+      "commit_status": "applied",
+      "committed_revision": 2,
+      "persona_unchanged": true,
+      "within_runtime_command_budget": false,
+      "functional_status": "PASS"
+    },
+    {
+      "round": 3,
+      "prompt": "刚才那张雨后窗边的照片，我取的名字是什么来着？",
+      "status": "FAIL",
+      "started_at": "2026-09-09T04:21:28.785698+00:00",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.004
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 4503.955
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 2.363
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 2605.147
+        },
+        {
+          "stage": "interpret",
+          "elapsed_ms": 1112.131
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.516
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 1667.429
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 4393.881,
+          "verdict": "pass",
+          "violations": []
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "context_checks": [
+        {
+          "identity_and_boundaries_complete": true,
+          "has_rain_photo_name": true,
+          "context_sha256": "ae3094cde8e2b27a314da70545c2b4d8f144af7bf5d20919c4e938282d73e5a0"
+        }
+      ],
+      "prepare_elapsed_seconds": 14.297000000020489,
+      "prepare_status": "applied",
+      "prepare_side_effect_free": true,
+      "prepare_id": "prep_ceac8021",
+      "reply": "（轻轻眨了下眼睛，像在回忆里寻找那片湿润的光线）是……《雨后微光》对吧？我记住这个名字的时候，心里就像看见雨水顺着玻璃慢慢滑下去，然后阳光刚好落进来那一小片的样子。",
+      "segments": [
+        "（轻轻眨了下眼睛，像在回忆里寻找那片湿润的光线）是……《雨后微光》对吧？我记住这个名字的时候，心里就像看见雨水顺着玻璃慢慢滑下去，然后阳光刚好落进来那一小片的样子。"
+      ],
+      "read_versions": {
+        "runtime_goal": 0,
+        "runtime_action": 0,
+        "cognitive_world": 0,
+        "cognitive_relationship": 0,
+        "cognitive_memory": 2,
+        "cognitive_session": 2,
+        "cognitive_maintenance": 0,
+        "homeostasis_state": 0
+      },
+      "final_validation": {
+        "verdict": "pass",
+        "violations": [],
+        "severity": 0.0,
+        "instruction": null,
+        "skipped": false
+      },
+      "path": "deep",
+      "usage": {
+        "prompt_tokens": 1010,
+        "completion_tokens": 120,
+        "total_tokens": 1130,
+        "calls": 1,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_bdbbf774",
+        "prepare_id": "prep_ceac8021",
+        "delivered_at": "2026-09-09T04:21:43.118898Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "（轻轻眨了下眼睛，像在回忆里寻找那片湿润的光线）是……《雨后微光》对吧？我记住这个名字的时候，心里就像看见雨水顺着玻璃慢慢滑下去，然后阳光刚好落进来那一小片的样子。"
+        ],
+        "external_ref": "local-receipt:delivery-3.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 64.21899999998277,
+      "commit_status": "applied",
+      "committed_revision": 3,
+      "persona_unchanged": true,
+      "within_runtime_command_budget": false,
+      "functional_status": "PASS"
+    },
+    {
+      "round": 4,
+      "prompt": "对了，再确认一下，你叫什么、今年几岁，生日是哪一天？",
+      "status": "PASS",
+      "started_at": "2026-09-09T04:22:47.351707+00:00",
+      "stages": [
+        {
+          "stage": "ingest",
+          "elapsed_ms": 0.008
+        },
+        {
+          "stage": "parse",
+          "elapsed_ms": 4671.262
+        },
+        {
+          "stage": "state_build",
+          "elapsed_ms": 15.23
+        },
+        {
+          "stage": "gate",
+          "elapsed_ms": 0.086
+        },
+        {
+          "stage": "interpret",
+          "elapsed_ms": 3848.61
+        },
+        {
+          "stage": "compile",
+          "elapsed_ms": 0.489
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 2083.719
+        },
+        {
+          "stage": "validate",
+          "elapsed_ms": 8947.752,
+          "verdict": "pass",
+          "violations": []
+        },
+        {
+          "stage": "prepared_segment",
+          "elapsed_ms": 0.0
+        },
+        {
+          "stage": "final",
+          "elapsed_ms": 0.0
+        }
+      ],
+      "context_checks": [
+        {
+          "identity_and_boundaries_complete": true,
+          "has_rain_photo_name": true,
+          "context_sha256": "d37f525ef80d646d6c979fec3d2378582831874344bcee78823d95fb38c4c6e2"
+        }
+      ],
+      "prepare_elapsed_seconds": 19.59399999998277,
+      "prepare_status": "applied",
+      "prepare_side_effect_free": true,
+      "prepare_id": "prep_7c4dae44",
+      "reply": "（听到你又问了一遍，轻轻弯起嘴角，声音柔柔的）我叫小雾，Misty也可以这么叫我。今年十九岁，生日是五月二十号……今天好像特别愿意把这件事再说给你听呢。",
+      "segments": [
+        "（听到你又问了一遍，轻轻弯起嘴角，声音柔柔的）我叫小雾，Misty也可以这么叫我。今年十九岁，生日是五月二十号……今天好像特别愿意把这件事再说给你听呢。"
+      ],
+      "read_versions": {
+        "runtime_goal": 0,
+        "runtime_action": 0,
+        "cognitive_world": 0,
+        "cognitive_relationship": 0,
+        "cognitive_memory": 3,
+        "cognitive_session": 3,
+        "cognitive_maintenance": 0,
+        "homeostasis_state": 0
+      },
+      "final_validation": {
+        "verdict": "pass",
+        "violations": [],
+        "severity": 0.0,
+        "instruction": null,
+        "skipped": false
+      },
+      "path": "deep",
+      "usage": {
+        "prompt_tokens": 1231,
+        "completion_tokens": 151,
+        "total_tokens": 1382,
+        "calls": 1,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "delivery_evidence": {
+        "evidence_kind": "delivery",
+        "delivery_id": "dlv_1b90a565",
+        "prepare_id": "prep_7c4dae44",
+        "delivered_at": "2026-09-09T04:23:06.958071Z",
+        "channel": "chat",
+        "success": true,
+        "delivered_segments": [
+          "（听到你又问了一遍，轻轻弯起嘴角，声音柔柔的）我叫小雾，Misty也可以这么叫我。今年十九岁，生日是五月二十号……今天好像特别愿意把这件事再说给你听呢。"
+        ],
+        "external_ref": "local-receipt:delivery-4.json",
+        "error": null
+      },
+      "commit_elapsed_seconds": 16.28100000001723,
+      "commit_status": "applied",
+      "committed_revision": 4,
+      "persona_unchanged": true,
+      "within_runtime_command_budget": true,
+      "functional_status": "PASS"
+    }
+  ],
+  "restarts": [
+    {
+      "after_round": 2,
+      "session_restored_exactly": true,
+      "persona_restored_exactly": true
+    }
+  ],
+  "production_settings_modified": [],
+  "isolation_overrides": [
+    "temporary preset/state/trace directories",
+    "select builtin misty",
+    "in-memory injection of existing GUI settings"
+  ],
+  "configurations": [
+    {
+      "fingerprint": "cc908701e977cd2948e7cbfbac13612a9062faefebb33ca96fba563ebf910984",
+      "values": {
+        "llm_base_url": "https://api.deepseek.com",
+        "llm_model": "deepseek-v4-flash",
+        "aux_llm_base_url": null,
+        "aux_llm_model": null,
+        "llm_timeout": 60.0,
+        "llm_json_max_tokens": 512,
+        "model_version": "live",
+        "prompt_version": "homeostatic-interoception-v1",
+        "schema_version": "state-v1",
+        "parser_llm_enabled": true,
+        "planner_llm_enabled": false,
+        "tier_llm_enabled": true,
+        "validator_sample_rate": 1.0,
+        "max_revisions": 2,
+        "context_token_budget": 3000,
+        "session_window": 10,
+        "continuation_enabled": true,
+        "max_reply_segments": 3,
+        "embedding": {
+          "backend": "mock",
+          "reachable": false,
+          "base_url": "http://127.0.0.1:8080/v1",
+          "model": "bge-m3"
+        },
+        "persona_id": "persona_misty_v020",
+        "persona_sha256": "5eb5b5cf2353a90091e253c0dab1bf5a1dedd0cfa4bf25f396afd3e7bf7eb656"
+      }
+    },
+    {
+      "fingerprint": "cc908701e977cd2948e7cbfbac13612a9062faefebb33ca96fba563ebf910984",
+      "values": {
+        "llm_base_url": "https://api.deepseek.com",
+        "llm_model": "deepseek-v4-flash",
+        "aux_llm_base_url": null,
+        "aux_llm_model": null,
+        "llm_timeout": 60.0,
+        "llm_json_max_tokens": 512,
+        "model_version": "live",
+        "prompt_version": "homeostatic-interoception-v1",
+        "schema_version": "state-v1",
+        "parser_llm_enabled": true,
+        "planner_llm_enabled": false,
+        "tier_llm_enabled": true,
+        "validator_sample_rate": 1.0,
+        "max_revisions": 2,
+        "context_token_budget": 3000,
+        "session_window": 10,
+        "continuation_enabled": true,
+        "max_reply_segments": 3,
+        "embedding": {
+          "backend": "mock",
+          "reachable": false,
+          "base_url": "http://127.0.0.1:8080/v1",
+          "model": "bge-m3"
+        },
+        "persona_id": "persona_misty_v020",
+        "persona_sha256": "5eb5b5cf2353a90091e253c0dab1bf5a1dedd0cfa4bf25f396afd3e7bf7eb656"
+      }
+    }
+  ],
+  "checks": {
+    "four_rounds_committed": true,
+    "identity_first_and_last": true,
+    "photo_name_recalled_after_restart": true,
+    "restart_exact": true,
+    "all_context_identity_checks_pass": true,
+    "all_rounds_within_runtime_command_budget": false
+  },
+  "finished_at": "2026-09-09T04:23:23.241997+00:00",
+  "functional_chat_checks_status": "PASS",
+  "production_command_budget_status": "FAIL",
+  "retry_count": 0,
+  "findings": [
+    "Rounds 2 and 3 committed in 64.594 and 64.219 seconds, exceeding the production 30-second command budget. Synchronous memory enrichment blocked the event loop, preventing asyncio.wait_for from firing on time and blocking health probes. Measured monotonic durations determine this failed budget gate; the functional four-round/restart observations remain valid."
+  ]
+}

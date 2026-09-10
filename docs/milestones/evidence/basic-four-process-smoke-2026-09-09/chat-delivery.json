@@ -1,0 +1,118 @@
+{
+  "mode": "demo",
+  "real_model": false,
+  "records": [
+    {
+      "character_id": "character",
+      "checksum": "dfe30d3244b90dee203dc047759bf4609691aef73570dc3a5707fbc818b76a3e",
+      "command_id": null,
+      "correlation_id": "run_00144782",
+      "data": {
+        "homeostasis_revision": 109,
+        "homeostatic_episode_signature": "homeostasis:a56a4d85ad514fc0bf64",
+        "homeostatic_salience": "nominal",
+        "homeostatic_summary_hash": "d99e17ee5c08e63006309bb2c7d971705f26836af64cd7923755b6aa1be5223b",
+        "prepare_id": "prep_15586697",
+        "result": {
+          "delivered_segments": [
+            "……知道了。"
+          ],
+          "error": null,
+          "external_ref": "memory-delivery:delivery:prep_15586697",
+          "success": true
+        }
+      },
+      "event_id": "evt_adace30b",
+      "idempotency_key": "delivery:prep_15586697",
+      "manifest_revision": 3,
+      "prev_hash": "31314ebf79ef2cf970d17238dc7aac8fa97dbc4ad9342272fd1e99e1e983b1a1",
+      "process_seq": null,
+      "receive_seq": 109,
+      "record_seq": 828,
+      "record_type": "reply_delivery",
+      "recorded_at": "2026-09-09T05:42:38.687091Z",
+      "runtime_instance_id": "rt_ce1e0888",
+      "schema_version": "runtime-journal-v1"
+    },
+    {
+      "character_id": "character",
+      "checksum": "f0dc924c414e1dfeb8108ffa6e2498e64f98113e647748518958f15177317bdf",
+      "command_id": "cmd_fb544d4f",
+      "correlation_id": "run_00144782",
+      "data": {
+        "result": {
+          "acknowledged_event_id": "evt_adace30b",
+          "acknowledged_receive_seq": 109,
+          "command_id": "cmd_fb544d4f",
+          "command_type": "CommitInteraction",
+          "committed_revision": 1,
+          "completed_at": "2026-09-09T05:42:38.707815Z",
+          "error": null,
+          "idempotency_hit": false,
+          "request_hash": "a84ab5e947f8976859490c26185807740e087c9f8e0dcf9551bc183b55c86671",
+          "result": {
+            "evidence_kind": "delivery",
+            "prepare_id": "prep_15586697",
+            "revision": 1
+          },
+          "schema_version": "service-contract-v1",
+          "status": "applied"
+        },
+        "service": "cognitive"
+      },
+      "event_id": "evt_adace30b",
+      "idempotency_key": "cognitive:commit:prep_15586697",
+      "manifest_revision": 3,
+      "prev_hash": "2a1fefcd3418bf75943c835ad23a3d6b7dc2d4e6c15af92dfad243b273d2a2a1",
+      "process_seq": null,
+      "receive_seq": 109,
+      "record_seq": 830,
+      "record_type": "domain_command_result",
+      "recorded_at": "2026-09-09T05:42:38.720825Z",
+      "runtime_instance_id": "rt_ce1e0888",
+      "schema_version": "runtime-journal-v1"
+    },
+    {
+      "character_id": "character",
+      "checksum": "a2fbdc70ea3575e23b6866845ddb50a901b3fef5209e5bc79a77570900588bde",
+      "command_id": null,
+      "correlation_id": "run_00144782",
+      "data": {
+        "completed_at": "2026-09-09T05:42:38.729248Z",
+        "decision_kind": "reply",
+        "detail": {
+          "cognitive_revision": 1,
+          "delivered": true,
+          "delivery": {
+            "delivered_segments": [
+              "……知道了。"
+            ],
+            "error": null,
+            "external_ref": "memory-delivery:delivery:prep_15586697",
+            "success": true
+          },
+          "homeostasis_revision": 109,
+          "homeostatic_episode_signature": "homeostasis:a56a4d85ad514fc0bf64",
+          "homeostatic_salience": "nominal",
+          "homeostatic_summary_hash": "d99e17ee5c08e63006309bb2c7d971705f26836af64cd7923755b6aa1be5223b",
+          "prepare_id": "prep_15586697"
+        },
+        "event_id": "evt_adace30b",
+        "process_seq": 109,
+        "receive_seq": 109,
+        "status": "completed"
+      },
+      "event_id": "evt_adace30b",
+      "idempotency_key": null,
+      "manifest_revision": 3,
+      "prev_hash": "f0dc924c414e1dfeb8108ffa6e2498e64f98113e647748518958f15177317bdf",
+      "process_seq": 109,
+      "receive_seq": 109,
+      "record_seq": 831,
+      "record_type": "processing_completed",
+      "recorded_at": "2026-09-09T05:42:38.729248Z",
+      "runtime_instance_id": "rt_ce1e0888",
+      "schema_version": "runtime-journal-v1"
+    }
+  ]
+}

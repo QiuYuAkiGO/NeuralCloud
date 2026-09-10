@@ -7,6 +7,7 @@ param(
     [string]$EmbodimentProvider = "auto",
     [string]$MistyAIBaseUrl,
     [string]$MistyAITokenFile,
+    [string]$StateRoot,
     [ValidateRange(1, 65535)][int]$GuiPort = 8766,
     [ValidateRange(1, 65535)][int]$RuntimePort = 8770,
     [ValidateRange(1, 65535)][int]$CognitivePort = 8771,
@@ -15,11 +16,20 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Root = $PSScriptRoot
+$effectiveStateRoot = Join-Path $Root "data"
+if ($StateRoot) {
+    if ([System.IO.Path]::IsPathRooted($StateRoot)) {
+        $effectiveStateRoot = [System.IO.Path]::GetFullPath($StateRoot)
+    } else {
+        $effectiveStateRoot = [System.IO.Path]::GetFullPath((Join-Path $Root $StateRoot))
+    }
+}
 $RegistryPath = Join-Path $Root ".neuralcloud.pids.json"
 $LegacyPidPath = Join-Path $Root ".gui.pid"
 $LogDir = Join-Path $Root "logs"
-$PendingPath = Join-Path $Root "data\runtime\pending-start.json"
-$ActivePath = Join-Path $Root "data\runtime\active-start.json"
+if ($StateRoot) { $LogDir = Join-Path $effectiveStateRoot "logs" }
+$PendingPath = Join-Path $effectiveStateRoot "runtime\pending-start.json"
+$ActivePath = Join-Path $effectiveStateRoot "runtime\active-start.json"
 $DefaultManifest = Join-Path $Root "presets\runtime\development-demo.json"
 $DefaultProfile = Join-Path $Root "presets\homeostasis\functional-proxy-v1.json"
 $started = New-Object System.Collections.Generic.List[object]
@@ -47,6 +57,9 @@ function Write-ProcessRegistry {
         started_at = $launchStartedAt
         manifest_path = $ManifestPath
         profile_path = $ProfilePath
+        state_root = $effectiveStateRoot
+        control_token_file = $(if ($StateRoot) { Join-Path $effectiveStateRoot "control.token" } else { $null })
+        service_token_file = $(if ($StateRoot) { Join-Path $effectiveStateRoot "service.token" } else { $null })
         services = @($started | ForEach-Object { $_ })
     }
     $temporary = "$RegistryPath.$([guid]::NewGuid().ToString('N')).tmp"
@@ -457,8 +470,20 @@ foreach ($port in $ports) {
 }
 
 New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $effectiveStateRoot "runtime") -Force | Out-Null
 $serviceToken = ([guid]::NewGuid().ToString("N") + [guid]::NewGuid().ToString("N"))
 $controlToken = ([guid]::NewGuid().ToString("N") + [guid]::NewGuid().ToString("N"))
+if ($StateRoot) {
+    # The isolated acceptance directory is local private runtime state, not a report.
+    [System.IO.File]::WriteAllText((Join-Path $effectiveStateRoot "control.token"), $controlToken)
+    [System.IO.File]::WriteAllText((Join-Path $effectiveStateRoot "service.token"), $serviceToken)
+    $isolatedConfig = Join-Path $effectiveStateRoot "gui_settings.json"
+    $sourceConfig = Join-Path $Root "data\gui_settings.json"
+    if ($env:NC_GUI_CONFIG) { $sourceConfig = $env:NC_GUI_CONFIG }
+    if (-not (Test-Path -LiteralPath $isolatedConfig) -and (Test-Path -LiteralPath $sourceConfig -PathType Leaf)) {
+        Copy-Item -LiteralPath $sourceConfig -Destination $isolatedConfig
+    }
+}
 $environment = @{
     NC_MODE = $Mode
     NC_SERVICE_TOKEN = $serviceToken
@@ -473,9 +498,9 @@ $environment = @{
     NC_RUNTIME_MANIFEST_PATH = $ManifestPath
     NC_EMBODIMENT_PROVIDER = $effectiveProvider
     NC_HOMEOSTASIS_PROFILE_PATH = $ProfilePath
-    NC_RUNTIME_STATE_DIR = (Join-Path $Root "data\runtime")
-    NC_COGNITIVE_STATE_PATH = (Join-Path $Root "data\cognitive\state.json")
-    NC_HOMEOSTASIS_STATE_DIR = (Join-Path $Root "data\homeostasis")
+    NC_RUNTIME_STATE_DIR = (Join-Path $effectiveStateRoot "runtime")
+    NC_COGNITIVE_STATE_PATH = (Join-Path $effectiveStateRoot "cognitive\state.json")
+    NC_HOMEOSTASIS_STATE_DIR = (Join-Path $effectiveStateRoot "homeostasis")
     # Provider credentials are injected only while the Runtime child is created.
     NC_MISTYAI_BASE_URL = $null
     NC_MISTYAI_URL = $null
@@ -483,6 +508,12 @@ $environment = @{
     NC_MISTYAI_TOKEN_FILE = $null
     NC_MISTYAI_TIMEOUT_SECONDS = $null
     NC_MISTYAI_POLL_INTERVAL_SECONDS = $null
+}
+if ($StateRoot) {
+    $environment.NC_GUI_CONFIG = $isolatedConfig
+    $environment.NC_GUI_PRESETS = Join-Path $effectiveStateRoot "presets"
+    $environment.NC_TRACE_DIR = Join-Path $effectiveStateRoot "traces"
+    $environment.NC_CALL_LOG_DIR = Join-Path $effectiveStateRoot "calls"
 }
 $runtimeMistyAIEnvironment = @{}
 if ($effectiveProvider -eq "mistyai") {

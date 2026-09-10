@@ -2,7 +2,10 @@ import asyncio
 import json
 from datetime import timedelta
 
-from harness.agency.models import AgencyConfig, GoalTrigger
+import pytest
+
+from harness.agency.arbitration import validate_resume
+from harness.agency.models import AgencyConfig, AgencyOutcome, GoalCheckpoint, GoalTrigger, ResumeObservation
 from harness.agency.planner import AgencyService
 from harness.agency.scheduler import GoalScheduler
 from harness.agency.store import GoalStore
@@ -133,3 +136,96 @@ def test_review_is_accepted_from_the_main_model(tmp_path, goal, plan):
         assert service.store.all("review")
         await service.close()
     asyncio.run(run())
+
+
+def test_paused_replan_survives_restart_and_requires_fresh_resume(tmp_path, goal, plan):
+    path = tmp_path / "state.db"
+    config = AgencyConfig(enabled=True, minimum_reconsideration_interval=0)
+    draft = plan.model_dump(mode="json", exclude={"created_at", "revision"})
+    draft["world_evidence_refs"] = ["world-b"]
+    draft["steps"][0]["step_id"] = "replacement-step"
+    draft["steps"][0]["evidence_refs"] = ["world-b"]
+    replanning = {"plan": draft, "arbitration": {
+        "selected_goal_id": goal.goal_id, "operation": "replan", "confidence": 0.8}}
+    service = AgencyService(path, MockLLM(chat_script=[json.dumps(replanning)]), config=config,
+        clock=lambda: goal.created_at + timedelta(seconds=1), permitted_intents=("control.observe.v1",))
+    service.store.create_goal(goal)
+    service.store.save_plan(plan)
+    service.store.transition(goal.goal_id, "active")
+    original = GoalCheckpoint(goal_id=goal.goal_id, plan_revision=1, next_step_id="step-a",
+        continuation={"cursor": 1}, body_state_ref="body-a", world_state_refs=("world-a",),
+        paused_at=goal.created_at, safe_point="safe-a")
+    service.pause_goal(goal.goal_id, original)
+
+    async def run():
+        result = await service.reconsider(GoalTrigger(kind="environment_change", evidence_refs=("world-b",),
+            signature="new-world", observed_at=goal.created_at + timedelta(seconds=1)),
+            provider_intents=("control.observe.v1",))
+        assert result.applied, result.reason
+        assert service.store.goal(goal.goal_id).status == "paused"
+        checkpoint = service.store.checkpoint(goal.goal_id)
+        assert checkpoint.plan_revision == 2
+        assert checkpoint.next_step_id == "replacement-step"
+        assert checkpoint.world_state_refs == ("world-b",)
+        assert checkpoint.paused_at == original.paused_at
+        assert checkpoint.body_state_ref == original.body_state_ref
+        assert checkpoint.continuation == original.continuation
+        await service.close()
+
+        resumed = AgencyService(path, MockLLM(chat_script=[json.dumps({"arbitration": {
+            "selected_goal_id": goal.goal_id, "operation": "resume", "confidence": 0.8}})]),
+            config=config, clock=lambda: goal.created_at + timedelta(seconds=2), permitted_intents=("control.observe.v1",))
+        await resumed.resume()
+        with pytest.raises(ValueError, match="fresh observation"):
+            validate_resume(resumed.store, goal.goal_id, None)
+        proof = ResumeObservation(observed_at=goal.created_at + timedelta(seconds=2), world_evidence_refs=("world-b",),
+            body_state_ref="body-b", provider_intents=("control.observe.v1",), assumptions_hold=True,
+            continuation_usable=True, body_allows_next_step=True, belief_revision_matches=True)
+        result = await resumed.reconsider(GoalTrigger(kind="recovery", evidence_refs=("world-b",), signature="restart",
+            observed_at=proof.observed_at), provider_intents=proof.provider_intents,
+            resume_observations={goal.goal_id: proof})
+        assert result.applied, result.reason
+        assert resumed.next_step(goal.goal_id)["step_id"] == "replacement-step"
+        assert resumed.store.verify_integrity()
+        await resumed.close()
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("change", ["rename", "different_decision"])
+@pytest.mark.parametrize("state", ["succeeded", "failed", "unknown"])
+def test_replan_cannot_rebind_executed_steps(tmp_path, goal, plan, change, state):
+    store = GoalStore(tmp_path / "state.db")
+    store.create_goal(goal)
+    store.save_plan(plan)
+    store.transition(goal.goal_id, "active")
+    store.outcome(AgencyOutcome(outcome_id="outcome-a", goal_id=goal.goal_id, step_id="step-a", action_id="action-a",
+        state=state, evidence_refs=("outcome-ref",), observed_at=goal.created_at))
+    step = plan.steps[0].model_copy(update={"step_id": "replacement-step"} if change == "rename" else {
+        "decision": {"kind": "wait", "duration_ms": 1000, "confidence": 0.7}})
+    replacement = plan.model_copy(update={"revision": 2, "steps": (step,)})
+    with pytest.raises(ValueError, match="unknown effects|executed step"):
+        store.save_plan(replacement)
+    assert store.plan(goal.goal_id) == plan
+    assert store.verify_integrity()
+    store.close()
+
+
+def test_paused_replan_preserves_completed_progress(tmp_path, goal, plan):
+    store = GoalStore(tmp_path / "state.db")
+    store.create_goal(goal)
+    store.save_plan(plan)
+    store.transition(goal.goal_id, "active")
+    store.outcome(AgencyOutcome(outcome_id="outcome-a", goal_id=goal.goal_id, step_id="step-a", action_id="action-a",
+        state="succeeded", evidence_refs=("outcome-ref",), observed_at=goal.created_at))
+    checkpoint = GoalCheckpoint(goal_id=goal.goal_id, plan_revision=1, completed_step_ids=("step-a",),
+        world_state_refs=("world-a",), paused_at=goal.created_at, safe_point="verified-terminal",
+        action_id="action-a", action_status="succeeded")
+    store.save_checkpoint(checkpoint)
+    store.transition(goal.goal_id, "paused")
+    later = plan.steps[0].model_copy(update={"step_id": "step-b", "depends_on": ("step-a",)})
+    store.save_plan(plan.model_copy(update={"revision": 2, "steps": (*plan.steps, later)}))
+    updated = store.checkpoint(goal.goal_id)
+    assert updated.completed_step_ids == ("step-a",)
+    assert updated.next_step_id == "step-b"
+    assert updated.action_id == checkpoint.action_id and updated.safe_point == checkpoint.safe_point
+    store.close()

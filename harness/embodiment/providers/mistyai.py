@@ -646,6 +646,40 @@ class MistyAIPerceptionBackend:
         elif "degraded" in native.backend_health.values():
             confidence = 0.5
         extension = native.model_dump(mode="json", exclude={"frame"})
+        references = [EvidenceRef(
+            provider_id=PROVIDER_ID, ref=native.frame.evidence_ref,
+            digest=native.frame.sha256, media_type=native.frame.media_type, created_at=native.captured_at,
+        )]
+        if native.a11y_ref is not None:
+            digest = EVIDENCE_REF_PATTERN.fullmatch(native.a11y_ref).group(1)
+            content = await self.client.get_evidence(digest, expected_media_type="application/vnd.mistyai.a11y+json")
+            try:
+                tree = json.loads(content)
+                if not isinstance(tree, dict) or tree.get("schema_version") != "a11y-tree-v1":
+                    raise ValueError("invalid accessibility schema")
+                nodes = tree.get("nodes")
+                if not isinstance(nodes, list) or len(nodes) > 5_000:
+                    raise ValueError("invalid accessibility nodes")
+                projected = []
+                remaining_text = 131_072
+                for node in nodes:
+                    if not isinstance(node, dict):
+                        raise ValueError("invalid accessibility node")
+                    if node.get("protected") or "password" in str(node.get("role", "")).lower():
+                        continue
+                    item = {key: node[key] for key in ("app_id", "window_id", "role", "name", "rect") if key in node}
+                    text_value = node.get("text")
+                    if isinstance(text_value, str) and remaining_text > 0:
+                        item["text"] = text_value[-min(32_768, remaining_text):]
+                        remaining_text -= len(item["text"])
+                    projected.append(item)
+                extension["a11y_tree"] = {"schema_version": "a11y-tree-v1", "nodes": projected}
+            except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+                raise MistyAIError("provider returned invalid accessibility evidence", code="invalid_a11y_evidence") from exc
+            references.append(EvidenceRef(
+                provider_id=PROVIDER_ID, ref=native.a11y_ref, digest=digest,
+                media_type="application/vnd.mistyai.a11y+json", created_at=native.captured_at,
+            ))
         return PerceptionSnapshot(
             provider_id=PROVIDER_ID,
             body_instance_id=native.body_instance_id,
@@ -654,15 +688,7 @@ class MistyAIPerceptionBackend:
             summary=f"desktop observation revision {native.environment_revision}",
             confidence=confidence,
             freshness_seconds=max(0.0, (moment - native.captured_at).total_seconds()),
-            evidence_refs=[
-                EvidenceRef(
-                    provider_id=PROVIDER_ID,
-                    ref=native.frame.evidence_ref,
-                    digest=native.frame.sha256,
-                    media_type=native.frame.media_type,
-                    created_at=native.captured_at,
-                )
-            ],
+            evidence_refs=references,
             extensions={"mistyai.desktop.v1": extension},
         )
 
@@ -671,6 +697,13 @@ class MistyAICapabilityProvider:
     def __init__(self, client: MistyAIClient) -> None:
         self.client = client
         self._last_capabilities: NativeCapabilities | None = None
+
+    def supported_intents(self) -> frozenset[str]:
+        """Read only the provider's last validated capability response."""
+        if self._last_capabilities is None:
+            return frozenset()
+        return frozenset(skill for skill in self._last_capabilities.skills
+                         if re.fullmatch(r"[a-z][a-z0-9_.-]+\.v[0-9]+", skill))
 
     async def capabilities(self) -> ProviderCapabilities:
         native = await self.client.capabilities()

@@ -8,6 +8,9 @@
 
 **文档**：
 
+- **项目模块进度（持续更新）**：[docs/PROJECT_PROGRESS.md](docs/PROJECT_PROGRESS.md) — 模块状态、验收缺口、下一步与更新记录；模块变更时同步维护。
+- **BR-1 基本功能里程碑**：[目标与差距](docs/milestones/BASIC_RUNTIME_V1.md)、[测试案例](docs/milestones/BASIC_RUNTIME_V1_TEST_CASES.md)、[执行记录](docs/milestones/BASIC_RUNTIME_V1_EXECUTION.md) — 真实在线 8 小时、内稳态、Linux 桌面终端、对话与人设一致性。
+
 **内稳态 Harness 研究设计（V2；确定性开发纵切已实现）**：[docs/harness/07-homeostatic-harness-research-design.md](docs/harness/07-homeostatic-harness-research-design.md)
 
 **Runtime Supervisor 与三服务架构（V2 Runtime 核心与 Windows 四进程开发拓扑已实现）**：[docs/harness/08-runtime-supervisor.md](docs/harness/08-runtime-supervisor.md)

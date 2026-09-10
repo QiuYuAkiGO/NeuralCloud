@@ -311,6 +311,22 @@ class ContextCompiler:
                 preferred=min(200, remaining),
             )
 
+        # The immediately preceding exchange is needed to resolve follow-ups.
+        # Keep the newest turns before spending the remaining budget on recall.
+        session_budget = min(400, remaining)
+        visible_session = _fit_session(session, session_budget)
+        session_text = _session_text(visible_session)
+        if session_text:
+            remaining = _push(
+                segments,
+                kind="session",
+                text=session_text,
+                source_ids=[t.event_id or "session" for t in visible_session],
+                why="recent_dialogue_window",
+                remaining=remaining,
+                preferred=session_budget,
+            )
+
         top_k = self.settings.compiler_top_memories
         for memory in situation.relevant_memories[:top_k]:
             remaining = _push(
@@ -321,18 +337,6 @@ class ContextCompiler:
                 why=",".join(memory.why_retrieved) or "hybrid_retrieval",
                 remaining=remaining,
                 preferred=min(220, remaining),
-            )
-
-        session_text = _session_text(session)
-        if session_text:
-            remaining = _push(
-                segments,
-                kind="session",
-                text=session_text,
-                source_ids=[t.event_id or "session" for t in session],
-                why="recent_dialogue_window",
-                remaining=remaining,
-                preferred=min(400, remaining),
             )
 
         used = total - remaining
@@ -588,3 +592,22 @@ def _session_text(turns: list[SessionTurn]) -> str:
         return ""
     lines = [f"{turn.speaker or turn.role}: {turn.text}" for turn in turns]
     return "近期对话：\n" + "\n".join(lines)
+
+
+def _fit_session(turns: list[SessionTurn], budget: int) -> list[SessionTurn]:
+    """Keep a chronological suffix, without cutting off the newest exchange."""
+    kept: list[SessionTurn] = []
+    for turn in reversed(turns):
+        candidate = [turn, *kept]
+        if estimate_tokens(_session_text(candidate)) <= budget:
+            kept = candidate
+            continue
+        if not kept:
+            # A single long turn may exceed the whole window. Preserve its end
+            # and mark the omission rather than silently presenting old text.
+            prefix = f"近期对话：\n{turn.speaker or turn.role}: …"
+            available_chars = max(0, budget * 2 - len(prefix))
+            if available_chars:
+                kept = [turn.model_copy(update={"text": "…" + turn.text[-available_chars:]})]
+        break
+    return kept

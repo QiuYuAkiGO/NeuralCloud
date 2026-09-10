@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+from contextvars import copy_context
 from contextlib import contextmanager
 from datetime import UTC, datetime
 import time
@@ -41,7 +42,7 @@ from harness.memory.tier import (
 )
 from harness.memory.writer.curator import CuratorBackend, default_curator
 from harness.memory.writer.pipeline import WriterPipeline
-from infra.trace.call_log import CallAwareTracer, CallLog
+from infra.trace.call_log import CallAwareTracer, CallLog, detached_call_log
 from infra.trace.recorder import NullTracer, Tracer
 
 
@@ -265,8 +266,8 @@ class MemoryService:
         # The plan and the query embedding are independent; run them concurrently
         # so a live planner LLM and a remote embedding API overlap instead of
         # adding their round-trips.
-        fut_plan = self._retrieve_pool.submit(self.planner.plan, query)
-        fut_embed = self._retrieve_pool.submit(self.embeddings.embed_one, query.text)
+        fut_plan = self._retrieve_pool.submit(copy_context().run, self.planner.plan, query)
+        fut_embed = self._retrieve_pool.submit(copy_context().run, self.embeddings.embed_one, query.text)
         return fut_plan.result(), fut_embed.result()
 
     def query(self, query: RetrievalQuery) -> list[ScoredMemory]:
@@ -512,8 +513,14 @@ class MemoryService:
     def _submit_tier(self, fn) -> None:
         if not self._maintenance_accepting:
             return
-        fut = self._tier_pool.submit(self._tier_safe, fn)
+        fut = self._tier_pool.submit(copy_context().run, self._tier_with_context, fn)
         self._tier_pending.append(fut)
+
+    def _tier_with_context(self, fn) -> None:
+        # Maintenance can outlive the initiating call log. Keep its causal
+        # trace context, but give its eventual records an independent log.
+        with detached_call_log():
+            self._tier_safe(fn)
 
     def _tier_safe(self, fn) -> None:
         try:

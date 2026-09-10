@@ -583,11 +583,6 @@ class HomeostasisEngine:
         *,
         heartbeat: bool,
     ) -> tuple[dict[DimensionName, FactorBelief], dict[DimensionName, float], dict[DimensionName, float]]:
-        elapsed = max(0.0, (now - self.snapshot.updated_at).total_seconds())
-        if heartbeat:
-            elapsed = min(elapsed, float(self.profile.max_heartbeat_step_seconds))
-        else:
-            elapsed = 0.0
         requested_base_delta: dict[DimensionName, float] = {
             key: 0.0 for key in DIMENSIONS
         }
@@ -595,6 +590,19 @@ class HomeostasisEngine:
             current = self.snapshot.dimensions[dimension]
             spec = self.profile.dimensions[dimension]
             target = sum(spec.baseline_band) / 2.0
+            # A sensor sample or unrelated event advances the global snapshot
+            # clock without integrating every factor. Use each factor's clock
+            # so those events cannot consume its pending heartbeat recovery.
+            # A fresh reading still starts its own clock at capture time: it
+            # must not receive drift from before the observed physical state.
+            elapsed = (
+                min(
+                    max(0.0, (now - current.updated_at).total_seconds()),
+                    float(self.profile.max_heartbeat_step_seconds),
+                )
+                if heartbeat
+                else 0.0
+            )
             if elapsed:
                 direction = 1.0 if target > current.value else -1.0
                 if abs(target - current.value) < 1e-12:
@@ -653,7 +661,7 @@ class HomeostasisEngine:
                 target_band=spec.baseline_band,
                 precision=appraisal.precision,
                 dominant_evidence=(appraisal.evidence_refs + current.dominant_evidence)[:5],
-                updated_at=now,
+                updated_at=now if heartbeat or delta != 0.0 else current.updated_at,
             )
         reported_coupling = (
             realised_coupling

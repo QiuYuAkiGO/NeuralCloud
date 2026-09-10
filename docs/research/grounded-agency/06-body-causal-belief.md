@@ -1,11 +1,18 @@
 # GA-06 · Body Causal Belief
 
-> 状态：Planned  
+> 状态：Implemented（工程机制；真实模型学习效果待实验验证）
 > 仓库：NeuralCloud  
 > 前置条件：GA-05 的 Engineering Gate 已通过  
 > 后续阶段：GA-07 Long-horizon Agency
 
 ## 1. 目的
+
+2026-09-05 实现记录：基础代码见 `3f38b10`。`harness/body_belief/` 实现严格经验、候选、belief、sensor reliability、反证检索和版本化固化 profile；`harness/runtime/research_memory.py` 将实际 decision、可验证终态结果与后续 opaque sample 连接起来。
+事实记录和 appraisal 分离，暂停/停止等待真实后台任务；原始 truth、mapping 与 evaluator 标签留在私有证据侧。
+SQLite 审计、幂等记录和 Runtime journal 支持重启恢复，冻结快照可按 A0–A5/R1 做干预；A2 保留同一客观经历、移除 belief，R1 恢复原快照。
+
+验证覆盖真实 Runtime 生命周期及 fixture 的 act → 移除 belief 后 no_action → 恢复后 act。完整命令与结果见 [设计目的验证记录](validation-2026-09-05.md)。
+这些结果不证明真实模型已形成可迁移的因果知识，也不证明统计显著性。本阶段与 GA-07/08 的组合路径使用本地模型适配器；分布式服务需要显式提供对应领域服务，缺少端口会拒绝启用。
 
 让系统基于自己实际经历过的：
 

@@ -400,6 +400,16 @@ class HarnessChatService:
         world = snap.world
         return {
             "mode": self.mode,
+            "inference_config": {
+                key: getattr(self.settings, key) for key in (
+                    "context_token_budget", "session_window", "llm_timeout",
+                    "parser_llm_enabled", "planner_llm_enabled", "tier_llm_enabled",
+                    "validator_sample_rate", "call_log_enabled",
+                    "complexity_threshold", "max_revisions", "continuation_enabled",
+                    "max_reply_segments", "compiler_top_memories", "llm_json_max_tokens",
+                    "retrieval_top_k", "retrieval_weights", "aux_llm_num_ctx",
+                )
+            },
             "llm": {
                 "mode": self.mode,
                 "base_url": self.settings.llm_base_url,
