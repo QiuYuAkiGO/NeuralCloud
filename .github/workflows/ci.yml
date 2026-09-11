@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   windows-launcher:
-    runs-on: windows-2025
+    runs-on: windows-latest
     steps:
       - name: Check out NeuralCloud
         uses: actions/checkout@v4
