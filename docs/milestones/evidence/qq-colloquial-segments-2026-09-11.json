@@ -1,0 +1,294 @@
+{
+  "schema_version": "qq-colloquial-segments-implementation-v1",
+  "recorded_at": "2026-09-11T12:21:00.937807+00:00",
+  "status": "ENABLED_AWAITING_NEW_LIVE_SEGMENTED_SAMPLE",
+  "source_hash": "qq-unattended:ccbdd2f8089b7918a501a039ace5eeee4c2b090347ea0a6e25a5779e10a2f75c",
+  "prompt_version": "qq-group-turn-taking-v6",
+  "behavior": {
+    "default_style": "conversational",
+    "formal_when": "explicit_request_or_existing_gate_judgment",
+    "persona_model_preserved": true,
+    "speak_wait_preserved": true,
+    "max_bubbles": 3,
+    "forced_multiple_bubbles": false,
+    "continuation_generation_loop_enabled": false,
+    "existing_continuation_parser_reused": true,
+    "blank_paragraph_fallback": true,
+    "silently_truncated_text": false,
+    "child_receipts_and_click_proofs": true,
+    "per_logical_reply_cooldown_seconds": {
+      "direct": 10,
+      "ambient": 60
+    },
+    "cooldown_basis": "last_actual_segment_send",
+    "shared_send_deadline_seconds": 60,
+    "partial_delivery_context_retained": true,
+    "restart_replays_unsent_suffix": false,
+    "unknown_click_reconciliation": "read_only_at_most_3_reads_and_30_seconds_no_repeat_click",
+    "latency_end": "last_segment_and_aggregate_receipt_durably_persisted",
+    "acceptance_sample_unit": "one_complete_logical_reply_regardless_of_bubble_count"
+  },
+  "validation": {
+    "qq_and_shared_continuation_tests": {
+      "files": 55,
+      "passed": 1475,
+      "failed": 0,
+      "seconds": 166.65
+    },
+    "ruff": "passed",
+    "historical_receipts_readonly_compatibility": {
+      "checked": 3,
+      "passed": 3
+    },
+    "actual_model_synthetic_context_probes": [
+      {
+        "id": "group-style-20260911T113355",
+        "engineering_only": true,
+        "real_group_sends": 0,
+        "cases": [
+          {
+            "name": "conversational",
+            "action": "wait",
+            "outcome": "model_invalid",
+            "reply_style": "conversational",
+            "segment_count": 0,
+            "segment_characters": [],
+            "elapsed_ms": 8992.718,
+            "timings_ms": {
+              "gate": 3125.0,
+              "persona": 5047.0,
+              "total": 8969.0
+            },
+            "model_call_counts": {
+              "gate": 1,
+              "persona": 2
+            },
+            "reply_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "protocol_markers_visible": false
+          },
+          {
+            "name": "formal",
+            "action": "speak",
+            "outcome": "ready",
+            "reply_style": "formal",
+            "segment_count": 1,
+            "segment_characters": [
+              92
+            ],
+            "elapsed_ms": 7834.107,
+            "timings_ms": {
+              "gate": 2625.0,
+              "persona": 4390.0,
+              "total": 7828.0
+            },
+            "model_call_counts": {
+              "gate": 1,
+              "persona": 1
+            },
+            "reply_sha256": "39b7a1165869a6eebfdc3daa97d6f9d6db8d9b702889d87d27c4a85f1813ed02",
+            "protocol_markers_visible": false
+          }
+        ]
+      },
+      {
+        "id": "group-style-20260911T113508",
+        "engineering_only": true,
+        "real_group_sends": 0,
+        "cases": [
+          {
+            "name": "conversational",
+            "action": "speak",
+            "outcome": "ready",
+            "reply_style": "conversational",
+            "segment_count": 2,
+            "segment_characters": [
+              22,
+              36
+            ],
+            "elapsed_ms": 11334.377,
+            "timings_ms": {
+              "gate": 2156.0,
+              "persona": 8437.0,
+              "total": 11328.0
+            },
+            "model_call_counts": {
+              "gate": 1,
+              "persona": 2
+            },
+            "reply_sha256": "d8b34a944d7ef4308e82bc06ea9780d94f417a4e1ece9a59ad160aedd243b8d4",
+            "protocol_markers_visible": false
+          },
+          {
+            "name": "formal",
+            "action": "wait",
+            "outcome": "model_invalid",
+            "reply_style": "formal",
+            "segment_count": 0,
+            "segment_characters": [],
+            "elapsed_ms": 12153.451,
+            "timings_ms": {
+              "gate": 2922.0,
+              "persona": 8296.0,
+              "total": 12156.0
+            },
+            "model_call_counts": {
+              "gate": 1,
+              "persona": 1
+            },
+            "reply_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "protocol_markers_visible": false
+          }
+        ]
+      },
+      {
+        "id": "group-style-20260911T115714",
+        "engineering_only": true,
+        "real_group_sends": 0,
+        "cases": [
+          {
+            "name": "conversational",
+            "action": "speak",
+            "outcome": "ready",
+            "reply_style": "conversational",
+            "segment_count": 2,
+            "segment_characters": [
+              36,
+              35
+            ],
+            "elapsed_ms": 17865.536,
+            "timings_ms": {
+              "gate": 2875.0,
+              "persona": 14110.0,
+              "total": 17860.0
+            },
+            "model_call_counts": {
+              "gate": 1,
+              "persona": 3
+            },
+            "reply_sha256": "c155fda38d78cfd3464510ea3240f8b76fca51765b005ebd192c0a2502e4e4c1",
+            "protocol_markers_visible": false
+          },
+          {
+            "name": "formal",
+            "action": "speak",
+            "outcome": "ready",
+            "reply_style": "formal",
+            "segment_count": 1,
+            "segment_characters": [
+              107
+            ],
+            "elapsed_ms": 5146.189,
+            "timings_ms": {
+              "gate": 2094.0,
+              "persona": 1828.0,
+              "total": 5141.0
+            },
+            "model_call_counts": {
+              "gate": 1,
+              "persona": 1
+            },
+            "reply_sha256": "acdb8e3828babf2c8712a46c1e80243012fe15d41f865893986e03972b89423d",
+            "protocol_markers_visible": false
+          }
+        ]
+      }
+    ],
+    "model_probe_failures": "Earlier natural blank paragraphs were rejected as multiline single bubbles; bounded paragraph parsing fixed this. Final two cases both ready.",
+    "archived_real_qq_continuity_replay": {
+      "new_gui_actions": 0,
+      "new_sends": 0,
+      "freshness_clock_replayed_offline_only": true,
+      "cases": [
+        {
+          "name": "first",
+          "outcome": "own_bubble_only_confirmed",
+          "before_count": 2,
+          "after_count": 2,
+          "pre_png": "evidence://sha256/44bd94e386971c46a7284d7776b7e89f91e6721aead1346fed22df09bab1a843",
+          "post_png": "evidence://sha256/e535afea37d7a713571317cc264bb5530bb4f2ee413f9d213c71c5d6420f2344"
+        },
+        {
+          "name": "second",
+          "outcome": "own_bubble_only_confirmed",
+          "before_count": 3,
+          "after_count": 3,
+          "pre_png": "evidence://sha256/351aa747406112b8db513c9e78890178ced196fb0441fb2903b0e51962369e73",
+          "post_png": "evidence://sha256/c87006cb7bb89433912f06daa91dd923a816b15e15ccc0e748b8edf7062a6da6"
+        }
+      ]
+    },
+    "live_qq_input_preflight": {
+      "engineering_only": true,
+      "operator_assisted": true,
+      "real_sends": 0,
+      "source_hash_at_probe": "qq-unattended:45712f5bac7511d51b108c7ee58106b86090077a19c81eecac4d997453241717",
+      "segments": [
+        {
+          "index": 0,
+          "boundary_reached": true,
+          "owned_draft": true,
+          "cleaned": true,
+          "input_empty": true,
+          "reason": "desktop_operation_unavailable"
+        },
+        {
+          "index": 1,
+          "boundary_reached": true,
+          "owned_draft": true,
+          "cleaned": true,
+          "input_empty": true,
+          "reason": "desktop_operation_unavailable"
+        }
+      ],
+      "elapsed_ms": 15531.0,
+      "counters": {
+        "body_capture": 15,
+        "accessibility_projection": 14,
+        "fresh_frame_reuse": 15,
+        "accessibility_pair_retry": 1,
+        "group_card_blank_dismiss": 1,
+        "group_identity_full_verification": 1,
+        "profile_transition_retries": 1,
+        "self_identity_full_verification": 1,
+        "group_identity_cache_hit": 5,
+        "final_draft_ax_verified": 2,
+        "self_identity_cache_hit": 1
+      }
+    }
+  },
+  "environment_recovery": {
+    "unexpected_services_unavailable": true,
+    "initial_input_probes_failed_before_any_gui_action": [
+      "segment-staging-20260911T115954",
+      "segment-staging-20260911T120026"
+    ],
+    "docker_launcher": "tools/docker/Start-DockerDesktop.ps1 -RefreshRuntimeOnColdStart -WslDistro Ubuntu-24.04",
+    "journal": "20260911T120241576Z-2b2e8d5119e64bbab45b50605387ee1b.json",
+    "docker_and_wsl_restored": true,
+    "containers_restarted": true,
+    "saved_account_login_restored_without_scan": true,
+    "dedicated_window_rebound": true,
+    "agent_revision": "v7",
+    "worker_revision": "v4",
+    "long_term_memory_retained": true,
+    "upstream_shutdown_cause_established": false
+  },
+  "runtime": {
+    "pid": 39376,
+    "started_at": "2026-09-11T12:19:42.437760+00:00",
+    "state": "watching",
+    "running": true,
+    "build_hash": "qq-unattended:ccbdd2f8089b7918a501a039ace5eeee4c2b090347ea0a6e25a5779e10a2f75c",
+    "automatic_screen_capture": true,
+    "automatic_send": true,
+    "last_error_type": null
+  },
+  "runtime_verified_matches_source": true,
+  "new_version_real_segmented_delivery_verified": false,
+  "formal_acceptance": {
+    "started": false,
+    "passed": false,
+    "new_segmented_e2e_samples": 0,
+    "reason": "No new real segmented reply receipt yet; prior latency and observation continuity issues remain. Engineering and archived evidence are not formal samples."
+  }
+}

@@ -137,10 +137,17 @@ def _sources(config):
                       "sends": _records(ledger, "qq_watch_sends", "reservation_id", group, state="status"),
                       "receipts": _records(memory, "qq_reply_deliveries", "receipt_id", group),
                       "decisions": _records(memory, "qq_reply_decisions", "decision_id", group),
-                      "repairs": {}, "attempts": {}}
+                      "repairs": {}, "attempts": {}, "segments": {}, "segment_receipts": {}}
             for row in ledger.execute("SELECT a.record_json FROM qq_watch_delivery_attempts a JOIN qq_watch_sends s ON s.reservation_id=a.reservation_id WHERE s.group_id=?", (group,)):
                 attempt = json.loads(row[0])
                 result["attempts"].setdefault(attempt["reservation_id"], []).append(attempt)
+            if ledger.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='qq_watch_send_segments'").fetchone():
+                result["segments"] = _records(ledger, "qq_watch_send_segments", "child_id", group, state="status")
+                for row in ledger.execute("SELECT a.record_json FROM qq_watch_delivery_attempts a JOIN qq_watch_send_segments s ON s.child_id=a.reservation_id WHERE s.group_id=?", (group,)):
+                    attempt = json.loads(row[0])
+                    result["attempts"].setdefault(attempt["reservation_id"], []).append(attempt)
+            if memory.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='qq_reply_segment_deliveries'").fetchone():
+                result["segment_receipts"] = _records(memory, "qq_reply_segment_deliveries", "receipt_id", group)
             for prefix, connection in (("ledger", ledger), ("memory", memory)):
                 present = connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='qq_operator_delivery_repairs'").fetchone()
                 if present:
@@ -606,6 +613,8 @@ def _link_delivery(trace, event, sources):
     if not decision or len(sends) != 1 or len(receipts) != 1:
         raise AcceptanceError("delivery_chain_not_unique")
     send, receipt = sends[0], receipts[0]
+    if len(decision.get("reply_segments") or []) > 1 or send.get("segment_count", 0) > 1:
+        return _link_segmented_delivery(trace, event, decision, send, receipt, sources)
     proof = send.get("preclick_proof") or {}
     attempts = sources["attempts"].get(send["reservation_id"], [])
     reply_hash = hashlib.sha256(str(decision.get("reply", "")).encode("utf-8")).hexdigest()
@@ -656,6 +665,90 @@ def _link_delivery(trace, event, sources):
     return send, receipt, latency
 
 
+def _link_segmented_delivery(trace, event, decision, send, receipt, sources):
+    """One logical sample requires every independently verified, ordered bubble."""
+    texts = decision.get("reply_segments") or []
+    children = sorted((child for child in sources.get("segments", {}).values()
+                       if child.get("parent_id") == send["reservation_id"]), key=lambda child: child["segment_index"])
+    receipts = sorted((item for item in sources.get("segment_receipts", {}).values()
+                       if item.get("decision_id") == decision["decision_id"]), key=lambda item: item["segment_index"])
+    source = event.get("source_record_id")
+    body = decision.get("reply")
+    if (not 2 <= len(texts) <= 3 or len(children) != len(texts) or len(receipts) != len(texts)
+            or any(not isinstance(text, str) or not text.strip() or len(text) > 4000
+                   or any(ord(char) < 32 for char in text) for text in texts)
+            or body != "\n\n".join(texts) or receipt.get("delivered_text") != body
+            or send.get("reply_sha256") != hashlib.sha256(body.encode("utf-8")).hexdigest()
+            or send.get("segment_count") != len(texts) or send.get("status") != "sent" or event.get("state") != "sent"
+            or decision.get("action") != "speak" or decision.get("decision_source") != "model"
+            or decision.get("outcome") != "ready" or decision.get("error_type")
+            or decision.get("_stored_status") != "completed"
+            or send.get("decision_id") != decision["decision_id"] or event.get("decision_id") != decision["decision_id"]
+            or send.get("receipt_id") != receipt["receipt_id"]
+            or receipt.get("origin") != "decision" or receipt.get("verification") != "qq_ui_verified"
+            or receipt.get("delivered_segments") != texts
+            or receipt.get("segment_receipt_ids") != [item["receipt_id"] for item in receipts]
+            or not source or source not in receipt.get("source_record_ids", [])
+            or not set(receipt.get("source_record_ids", [])).issubset(decision.get("source_record_ids", []))
+            or set(receipt.get("evidence_refs", [])) != set(send.get("evidence_refs", []))):
+        raise AcceptanceError("segmented_delivery_chain_mismatch")
+    previous_delivery = _date(send["created_at"])
+    scopes, refs, addressed = set(), set(), set()
+    for index, (text, child, item) in enumerate(zip(texts, children, receipts)):
+        proof = child.get("proof") or {}
+        digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+        attempts = sources["attempts"].get(child["child_id"], [])
+        if (child.get("segment_index") != index or item.get("segment_index") != index
+                or child.get("segment_count") != len(texts) or item.get("segment_count") != len(texts)
+                or child.get("text") != text or item.get("delivered_text") != text
+                or child.get("reply_sha256") != digest or proof.get("reply_sha256") != digest
+                or child.get("plan_sha256") != send.get("reply_sha256")
+                or child.get("status") != "sent" or child.get("receipt_id") != item.get("receipt_id")
+                or child.get("decision_id") != decision["decision_id"] or child.get("event_id") != event["event_id"]
+                or child.get("run_id") != send.get("run_id")
+                or proof.get("reservation_id") != child["child_id"]
+                or any(value.get("group_id") != event["group_id"] for value in (decision, send, receipt, child, item, proof))
+                or any(value.get("self_member_id") != send.get("self_member_id") for value in (receipt, item, proof))
+                or not send.get("self_member_id") or item.get("verification") != "qq_ui_verified"
+                or source not in item.get("source_record_ids", []) or source not in proof.get("source_record_ids", [])
+                or not set(item.get("source_record_ids", [])).issubset(decision.get("source_record_ids", []))
+                or not item.get("evidence_refs") or set(item["evidence_refs"]) != set(child.get("evidence_refs", []))
+                or not proof.get("frame_evidence_ref") or not proof.get("context_signature")
+                or proof.get("before_outgoing_count") is None
+                or not proof.get("window_id") or not proof.get("body_instance_id")
+                or not proof.get("environment_revision") or not proof.get("title_pixels_sha256")
+                or not 1 <= child.get("attempt_count", 0) <= 3 or len(attempts) != child["attempt_count"]
+                or len([attempt for attempt in attempts if attempt["phase"] == "sent" and attempt.get("proof") == proof]) != 1
+                or any(attempt["phase"] not in {"sent", "precheck_failed"} for attempt in attempts)):
+            raise AcceptanceError("segment_evidence_mismatch")
+        acknowledged, observed = child.get("click_acknowledged_at"), child.get("click_observed_at")
+        if (acknowledged is None) == (observed is None):
+            raise AcceptanceError("segment_actual_click_timing_missing")
+        if observed is not None and child.get("click_observed_evidence_ref") not in item["evidence_refs"]:
+            raise AcceptanceError("segment_actual_click_observation_unlinked")
+        started, verified = _date(child["click_started_at"]), _date(proof["verified_at"])
+        if (not previous_delivery <= verified <= started <= _date(acknowledged or observed) <= _date(item["delivered_at"])
+                or not 0 <= (started - verified).total_seconds() <= 15
+                or child.get("deadline_at") != send.get("deadline_at")
+                or not child.get("deadline_at") or started >= _date(child["deadline_at"])):
+            raise AcceptanceError("segment_timing_order_invalid")
+        previous_delivery = _date(item["delivered_at"])
+        scopes.add((proof["window_id"], proof["body_instance_id"], proof["environment_revision"], proof["title_pixels_sha256"]))
+        refs.update(item["evidence_refs"])
+        addressed.update(item["source_record_ids"])
+    if (len(scopes) != 1 or refs != set(receipt["evidence_refs"])
+            or addressed != set(receipt["source_record_ids"]) or previous_delivery > _date(receipt["delivered_at"])):
+        raise AcceptanceError("segment_aggregate_mismatch")
+    stages = [stage for stage in trace.get("stages", []) if stage.get("name") == "receipt_persisted" and stage.get("outcome") == "ok"]
+    if len(stages) != 1:
+        raise AcceptanceError("durable_receipt_timing_missing")
+    latency = stages[0]["end_offset_ms"] / 1000
+    if (not math.isfinite(latency) or not 0 <= latency <= trace["elapsed_ms"] / 1000
+            or latency + 2 < (_date(receipt["delivered_at"]) - _date(trace["first_seen_at"])).total_seconds()):
+        raise AcceptanceError("durable_receipt_timing_invalid")
+    return send, receipt, latency
+
+
 def report_run(run_dir, *, write=False, now=None):
     """Build a redacted report; slow/failing turns are never relabeled as waits."""
     manifest, config = _load(run_dir)
@@ -689,7 +782,7 @@ def report_run(run_dir, *, write=False, now=None):
         if abs(wall_delta - delta) > 5:
             reasons.add("wall_monotonic_discontinuity")
     metrics = {"warm_speak": [], "cold_speak": [], "natural_wait": []}
-    turns, pending, observation_attempts = [], 0, []
+    turns, pending, observation_attempts, partial_deliveries = [], 0, [], []
     stage_durations, work_totals, preparations = {}, {}, {}
     try:
         sources = _sources(config)
@@ -778,6 +871,7 @@ def report_run(run_dir, *, write=False, now=None):
                     kind = "cold_speak" if counters.get("cold_path", 0) == 1 else "warm_speak"
                     metrics[kind].append(latency)
                     entry.update(reservation_id=_opaque(send["reservation_id"]), receipt_id=_opaque(receipt["receipt_id"]), latency_seconds=latency)
+                    entry["segment_count"] = max(1, send.get("segment_count", 0))
                     entry["click_timing_basis"] = "acknowledged" if send.get("click_acknowledged_at") is not None else "observed"
                     refs = list(receipt.get("evidence_refs", [])) + list(send.get("evidence_refs", []))
                     entry["evidence_reference_hashes"] = sorted({_digest(ref) for ref in refs})
@@ -792,11 +886,19 @@ def report_run(run_dir, *, write=False, now=None):
             send_event = new_events.get(send["event_id"])
             if send_event and (_date(send_event.get("first_seen_at") or send_event["observed_at"]) - _date(manifest["started_at"])).total_seconds() > DURATION_SECONDS:
                 continue
+            if send["status"] in {"partial", "uncertain"} and send.get("segment_count", 0):
+                children = [child for child in sources.get("segments", {}).values() if child.get("parent_id") == identifier]
+                partial_deliveries.append({"reservation_id": _opaque(identifier),
+                    "confirmed_segments": sum(child.get("status") == "sent" for child in children),
+                    "planned_segments": send["segment_count"], "status": send["status"],
+                    "reason": send.get("reason") if send.get("reason") in {
+                        "partial_superseded", "partial_expired", "partial_paused", "partial_failed", "partial_restart"
+                    } else "incomplete_segmented_reply"})
             if complete and send["status"] == "uncertain":
                 reasons.add("uncertain_send")
             if complete and send["status"] == "sent" and identifier not in linked_sends:
                 reasons.add("sent_without_terminal_trace")
-            if complete and send["status"] in {"reserved", "retry_wait", "click_started", "not_sent", "expired"}:
+            if complete and send["status"] in {"reserved", "retry_wait", "click_started", "not_sent", "expired", "partial"}:
                 reasons.add("uncompleted_send")
         if complete and pending:
             reasons.add("unterminated_turn")
@@ -845,6 +947,7 @@ def report_run(run_dir, *, write=False, now=None):
               "max_occlusion_gap_seconds": max((max(sample.get("metrics", {}).get("occlusion_gap_seconds", 0),
                     sample.get("metrics", {}).get("max_completed_gap_seconds", 0)) for sample in samples), default=0),
               "pending_turns": pending, "reasons": sorted(reasons), "turns": turns,
+              "partial_deliveries": partial_deliveries,
               "evidence_scope": "local_status_trace_ledger_receipt_correlation",
               "human_intervention_observability": "recorded_repairs_and_status_only",
               "server_acknowledgement_verified": False}

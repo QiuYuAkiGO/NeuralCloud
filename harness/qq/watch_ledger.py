@@ -21,6 +21,7 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, TypeAdapter, f
 from pydantic import model_validator
 
 from harness.qq.memory import QQID
+from harness.qq.segment_ledger import SegmentLedgerMixin
 
 
 class WatchLedgerError(ValueError):
@@ -53,7 +54,7 @@ class ScreenPlan(_Model):
     reason: str
 
 
-EventState = Literal["observed", "bound", "ready", "decided_wait", "ignored", "reserved", "retry_wait", "click_started", "sent", "uncertain", "not_sent", "rate_limited", "expired", "superseded", "failed"]
+EventState = Literal["observed", "bound", "ready", "decided_wait", "ignored", "reserved", "retry_wait", "click_started", "sent", "uncertain", "not_sent", "rate_limited", "expired", "superseded", "failed", "partial"]
 
 
 class AttributionAudit(_Model):
@@ -142,7 +143,7 @@ class SendReservation(_Model):
     run_id: str
     event_id: str
     decision_id: str
-    status: Literal["reserved", "retry_wait", "click_started", "sent", "uncertain", "not_sent", "expired", "superseded"]
+    status: Literal["reserved", "retry_wait", "click_started", "sent", "uncertain", "not_sent", "expired", "superseded", "partial"]
     created_at: AwareDatetime
     updated_at: AwareDatetime
     cooldown_seconds: float = Field(ge=0, le=86400)
@@ -164,6 +165,57 @@ class SendReservation(_Model):
     preclick_proof: PreClickProof | None = None
     receipt_id: str | None = None
     reconciled_at: AwareDatetime | None = None
+    # Zero selects the unchanged legacy single-send protocol.
+    segment_count: int = Field(default=0, ge=0, le=3)
+
+
+class SendSegment(_Model):
+    child_id: str
+    parent_id: str
+    group_id: QQID
+    run_id: str
+    event_id: str
+    decision_id: str
+    segment_index: int = Field(ge=0, le=2, strict=True)
+    segment_count: int = Field(ge=1, le=3, strict=True)
+    text: str = Field(min_length=1, max_length=4000, strict=True)
+    reply_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    plan_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    status: Literal["reserved", "retry_wait", "click_started", "sent", "uncertain", "cancelled"] = "reserved"
+    created_at: AwareDatetime
+    updated_at: AwareDatetime
+    deadline_at: AwareDatetime
+    next_retry_at: AwareDatetime | None = None
+    attempt_count: int = Field(default=0, ge=0, le=3)
+    reason: str | None = None
+    proof: PreClickProof | None = None
+    click_started_at: AwareDatetime | None = None
+    click_acknowledged_at: AwareDatetime | None = None
+    click_observed_at: AwareDatetime | None = None
+    click_observed_evidence_ref: str | None = None
+    receipt_id: str | None = None
+    receipt_fingerprint: str | None = None
+    delivered_at: AwareDatetime | None = None
+    evidence_refs: list[str] = Field(default_factory=list, max_length=32)
+    precheck_evidence_refs: list[str] = Field(default_factory=list, max_length=96)
+    postclick_evidence_refs: list[str] = Field(default_factory=list, max_length=128)
+
+    @model_validator(mode="after")
+    def bound_text(self):
+        if (self.segment_index >= self.segment_count or any(char in self.text for char in "\r\n\x85\u2028\u2029")
+                or hashlib.sha256(self.text.encode("utf-8")).hexdigest() != self.reply_sha256):
+            raise ValueError("invalid frozen reply segment")
+        if self.click_acknowledged_at is not None and self.click_observed_at is not None:
+            raise ValueError("a segment has only one conservative click upper bound")
+        return self
+
+    @property
+    def reservation_id(self) -> str:
+        return self.child_id
+
+    @property
+    def phase(self) -> str:
+        return self.status
 
 
 class LegacyAgentStepResult(_Model):
@@ -260,7 +312,7 @@ def plan_visible_transition(
     return ScreenPlan(status="new", overlap=overlap, new_indices=indices, reason="unique_ordered_append")
 
 
-class WatchLedger:
+class WatchLedger(SegmentLedgerMixin):
     """Single-group SQLite ledger; every mutation belongs to one active run.
 
     The parent directory must already exist and be private. Old runs cannot
@@ -299,6 +351,11 @@ class WatchLedger:
                     attempt_id TEXT PRIMARY KEY, reservation_id TEXT NOT NULL,
                     attempt_number INTEGER NOT NULL, phase TEXT NOT NULL, record_json TEXT NOT NULL,
                     UNIQUE(reservation_id,attempt_number));
+                CREATE TABLE IF NOT EXISTS qq_watch_send_segments (
+                    child_id TEXT PRIMARY KEY, parent_id TEXT NOT NULL,
+                    group_id TEXT NOT NULL, segment_index INTEGER NOT NULL,
+                    status TEXT NOT NULL, record_json TEXT NOT NULL,
+                    UNIQUE(parent_id,segment_index));
             """)
             connection.execute("BEGIN IMMEDIATE")
             columns = {row[1] for row in connection.execute("PRAGMA table_info(qq_watch_state)")}
@@ -358,9 +415,12 @@ class WatchLedger:
             pending = connection.execute("SELECT record_json FROM qq_watch_sends WHERE status IN ('reserved','retry_wait','click_started')").fetchall()
             for row in pending:
                 reservation = SendReservation.model_validate_json(row[0]).model_copy(update={"status": "uncertain", "updated_at": moment, "reason": "process_restarted_with_pending_send"})
+                if reservation.segment_count:
+                    status = self._quarantine_segments(connection, reservation, moment)
+                    reservation = reservation.model_copy(update={"status": status})
                 self._save_send(connection, reservation)
                 self._finish_attempt(connection, reservation.reservation_id, "uncertain", moment, reservation.reason)
-                event = self._event(connection, reservation.event_id, current_run=False).model_copy(update={"state": "uncertain", "reason": reservation.reason})
+                event = self._event(connection, reservation.event_id, current_run=False).model_copy(update={"state": reservation.status, "reason": reservation.reason})
                 self._save_event(connection, event)
             unfinished = connection.execute("SELECT record_json FROM qq_watch_events WHERE state IN ('observed','bound','ready')").fetchall()
             for row in unfinished:
@@ -691,6 +751,8 @@ class WatchLedger:
             return reservation
 
     def _begin_attempt(self, connection, reservation: SendReservation, moment: datetime) -> DeliveryAttempt:
+        if reservation.segment_count:
+            raise WatchLedgerError("a segmented parent must start a child attempt")
         if reservation.attempt_count >= 3:
             raise WatchLedgerError("at most two pre-click retries are permitted")
         if connection.execute("SELECT 1 FROM qq_watch_delivery_attempts WHERE reservation_id=? AND phase IN ('prechecking','click_started')", (reservation.reservation_id,)).fetchone():
@@ -756,6 +818,8 @@ class WatchLedger:
             result = []
             for row in connection.execute("SELECT record_json FROM qq_watch_sends WHERE status IN ('reserved','retry_wait')").fetchall():
                 reservation = SendReservation.model_validate_json(row[0])
+                if reservation.segment_count:
+                    continue
                 if reservation.run_id != self.run_id or reservation.preclick_proof is not None:
                     continue
                 status = None
@@ -892,6 +956,8 @@ class WatchLedger:
         refs = sorted(set(_identifier(ref) for ref in evidence_refs))
         with self._transaction() as (connection, _state):
             reservation = self._reservation(connection, reservation_id)
+            if reservation.segment_count:
+                raise WatchLedgerError("a segmented parent must use its child delivery protocol")
             if (reservation.run_id != self.run_id or reservation.status not in {"click_started", "uncertain"}
                     or reservation.click_started_at is None):
                 raise WatchLedgerError("only this run's possibly clicked intent can retain diagnostic evidence")
@@ -1000,6 +1066,8 @@ class WatchLedger:
             connection.execute("BEGIN IMMEDIATE")
             reservation = self._reservation(connection, reservation_id)
             event = self._event(connection, reservation.event_id, current_run=False)
+            if reservation.segment_count:
+                raise WatchLedgerError("a segmented parent requires all segment receipts before completion")
             connection.execute("""CREATE TABLE IF NOT EXISTS qq_operator_delivery_repairs (
                 repair_id TEXT PRIMARY KEY, original_reservation_id TEXT, state TEXT,
                 updated_at TEXT, evidence_json TEXT)""")

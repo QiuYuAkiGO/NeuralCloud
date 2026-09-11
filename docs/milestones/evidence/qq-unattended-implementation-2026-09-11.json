@@ -945,5 +945,14 @@
     "reference_worker_pid": 23944,
     "prompt_updated_for_cache_runtime": true,
     "repeated_user_test_requests": false
+  },
+  "latest_qq_style_increment": {
+    "report": "qq-colloquial-segments-2026-09-11.json",
+    "source_hash": "qq-unattended:ccbdd2f8089b7918a501a039ace5eeee4c2b090347ea0a6e25a5779e10a2f75c",
+    "pid": 39376,
+    "started_at": "2026-09-11T12:19:42.437760+00:00",
+    "enabled": true,
+    "new_live_segmented_delivery_verified": false,
+    "formal_acceptance_started": false
   }
 }

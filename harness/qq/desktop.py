@@ -145,6 +145,8 @@ class DeliveryResult:
     click_acknowledged_at: datetime | None = None
     click_observed_at: datetime | None = None
     click_observed_evidence_ref: str | None = None
+    post_send_frame: Frame | None = field(default=None, repr=False)
+    post_send_verification: GroupVerification | None = field(default=None, repr=False)
 
 
 def _pixels(png: bytes, regions: tuple[tuple[int, int, int, int], ...], *,
@@ -192,6 +194,7 @@ class DesktopBackend:
         self._attempted_reservations: set[str] = set()
         self._click_acknowledgements: dict[str, datetime] = {}
         self._click_observations: dict[str, tuple[datetime, str]] = {}
+        self._verified_segment_results: list[tuple[DeliveryResult, str, str]] = []
         self._a11y_frames: set[str] = set()
         self._latest_capture: Frame | None = None
         # Diagnostic evidence survives reuse-cache invalidation. Never used
@@ -1431,8 +1434,12 @@ class DesktopBackend:
                     raise DesktopError("new_outgoing_bubble_not_verified")
                 refs.extend(self.frame_evidence_refs(after))
                 self._owned_draft = None
-                return DeliveryResult("sent", list(dict.fromkeys(refs)), "fresh_outgoing_bubble_verified", datetime.now(timezone.utc),
-                                      phase="postcheck", click_acknowledged_at=acknowledged_at)
+                result = DeliveryResult("sent", list(dict.fromkeys(refs)), "fresh_outgoing_bubble_verified", datetime.now(timezone.utc),
+                    phase="postcheck", click_acknowledged_at=acknowledged_at, post_send_frame=after,
+                    post_send_verification=GroupVerification(staged_group.group_id, staged_group.display_name,
+                        list(dict.fromkeys([*staged_group.evidence_refs, *self.frame_evidence_refs(after)])), after, reading))
+                self._remember_segment_result(result, text)
+                return result
             except InterruptedError:
                 refs = failure_evidence()
                 return DeliveryResult("unknown" if callback_attempted else "not_sent", refs, "pause_requested", phase="click_started" if callback_attempted else "precheck",
@@ -1528,12 +1535,86 @@ class DesktopBackend:
                     observed_at, observed_ref = self._click_observations.setdefault(
                         reservation_id, (capture_completed_at, frame.evidence_ref))
                     refs.append(observed_ref)
-                return DeliveryResult("sent", list(dict.fromkeys(refs)), "read_only_outgoing_bubble_verified",
+                group = self._group
+                result = DeliveryResult("sent", list(dict.fromkeys(refs)), "read_only_outgoing_bubble_verified",
                                       datetime.now(timezone.utc), phase="postcheck", click_acknowledged_at=acknowledged_at,
-                                      click_observed_at=observed_at, click_observed_evidence_ref=observed_ref)
+                                      click_observed_at=observed_at, click_observed_evidence_ref=observed_ref,
+                                      post_send_frame=frame,
+                                      post_send_verification=GroupVerification(group.group_id, group.display_name,
+                                          list(dict.fromkeys([*group.evidence_refs, *self.frame_evidence_refs(frame)])), frame, reading)
+                                      if group is not None else None)
+                self._remember_segment_result(result, text)
+                return result
             except InterruptedError:
                 return DeliveryResult("unknown", refs, "pause_requested", phase="postcheck")
             except DesktopError as exc:
                 return DeliveryResult("unknown", refs, str(exc), phase="postcheck")
             except Exception:
                 return DeliveryResult("unknown", refs, "reconciliation_unavailable", phase="postcheck")
+
+    def _remember_segment_result(self, result: DeliveryResult, text: str) -> None:
+        self._verified_segment_results.append((result, text, self._identity_epoch))
+        del self._verified_segment_results[:-3]
+
+    def advance_segment_context(self, previous_frame: Frame, result: DeliveryResult,
+                                expected_text: str) -> tuple[Frame, GroupVerification]:
+        """Advance only across this backend's confirmed own bubble.
+
+        This performs no capture or action. An unrelated arrival in the exact
+        post-send frame ends the remaining draft, even though the preceding
+        bubble remains a successful delivery. A viewport scroll must preserve
+        a unique, nonempty ordered suffix of the original conversation.
+        """
+        with self._lock:
+            matched = next((entry for entry in self._verified_segment_results if entry[0] is result), None)
+            after, group = result.post_send_frame, result.post_send_verification
+            if (matched is None or matched[1:] != (expected_text, self._identity_epoch)
+                    or result.status != "sent" or after is None or group is None
+                    or group.chat_frame is not after or group.group_id != self.config.expected_group_id
+                    or after.evidence_ref not in result.evidence_refs
+                    or not self._frame_is_recent(after, 15)
+                    or previous_frame.window_id != after.window_id or after.window_id != self.config.window_id
+                    or previous_frame.active_window_id != after.active_window_id
+                    or after.active_window_id != self.config.window_id
+                    or previous_frame.window_rect != after.window_rect
+                    or previous_frame.capture_id not in self._a11y_frames or after.capture_id not in self._a11y_frames
+                    or previous_frame.a11y_tree is None or after.a11y_tree is None
+                    or not previous_frame.a11y_evidence_ref or not after.a11y_evidence_ref):
+                raise DesktopError("segment_continuity_unavailable")
+            before, reading = self.inspect(previous_frame), group.chat_screen
+            self._require_chat(previous_frame, before)
+            self._require_chat(after, reading)
+            if (reading.visible_draft != "" or before.uncertainties or reading.uncertainties
+                    or _title(before.group_title.display_name) != _title(reading.group_title.display_name)
+                    or _title(reading.group_title.display_name) != group.display_name
+                    or _pixels(previous_frame.png, (self.config.title_roi,)) != _pixels(after.png, (self.config.title_roi,))):
+                raise DesktopError("segment_context_changed")
+
+            def keys(frame, messages):
+                values = []
+                for message in messages:
+                    if (message.uncertainties or message.direction not in {"incoming", "outgoing"}
+                            or message.avatar is None or message.bubble is None):
+                        raise DesktopError("segment_context_changed")
+                    portrait = self._portrait_digest(frame, message.avatar)
+                    if portrait is None:
+                        raise DesktopError("segment_context_changed")
+                    values.append((message.direction, message.kind, message.display_name, message.text, portrait))
+                return values
+
+            old, new = keys(previous_frame, before.messages), keys(after, reading.messages)
+            if not new or new[-1][0:2] != ("outgoing", "text") or new[-1][3] != expected_text:
+                raise DesktopError("segment_context_changed")
+            remaining = new[:-1]
+            # Empty history can grow by one; an existing history may not vanish
+            # completely, because its relation to this viewport would be lost.
+            if (not old and remaining) or (old and (not remaining or len(remaining) > len(old)
+                    or old[-len(remaining):] != remaining)):
+                raise DesktopError("segment_context_changed")
+            if remaining:
+                matches = sum(old[start:start + len(remaining)] == remaining
+                              for start in range(len(old) - len(remaining) + 1))
+                if matches != 1:
+                    raise DesktopError("segment_context_changed")
+            self._group = group
+            return after, group

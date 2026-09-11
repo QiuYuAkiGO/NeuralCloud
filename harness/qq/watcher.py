@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import argparse
 from contextlib import contextmanager, nullcontext
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from collections import deque
 import hashlib
 import math
@@ -26,6 +26,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_vali
 from harness.qq.decision import decide_qq_reply, get_qq_delivery, record_qq_delivery
 from harness.qq.memory import QQID, QQVerifiedProfileInput, QQVisualMemoryStore, QQVisualObservationInput
 from harness.qq.session import QQSessionSettings
+from harness.qq.segment_delivery import SegmentedDeliveryMixin
 from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace, classify_error
 
 
@@ -149,9 +150,12 @@ class PendingTurn:
     retry_at: datetime | None = None
     recheck_request: str | None = None
     context_digest: str | None = None
+    segment_texts: tuple[str, ...] = ()
+    active_segment_text: str | None = None
+    confirmed_context_digests: set[str] = field(default_factory=set)
 
 
-class QQWatcher:
+class QQWatcher(SegmentedDeliveryMixin):
     def __init__(self, settings: WatcherSettings, *, desktop=None, decide=decide_qq_reply):
         self.settings = settings
         self.session = QQSessionSettings.model_validate_json(settings.session_config_path.read_text(encoding="utf-8"))
@@ -367,7 +371,8 @@ class QQWatcher:
 
     def _cleanup_owned_draft(self, turn) -> bool:
         """Bound UI cleanup independently; never renew a candidate's send deadline."""
-        text = getattr(turn.decision, "reply", None)
+        text = (turn.active_segment_text if turn.segment_texts
+                else getattr(turn.decision, "reply", None))
         cleanup = getattr(self.desktop, "discard_owned_draft", None)
         if not text or (hasattr(self.desktop, "_owned_draft") and self.desktop._owned_draft is None):
             return True
@@ -467,8 +472,10 @@ class QQWatcher:
         observer_status = self.observer.status()
         self._invalidate_identity_after_observer_gap(observer_status)
         pending_digest = observer_status.get("pending_digest")
-        if (pending_digest is not None and self._pending_turn is not None
-                and pending_digest != self._pending_turn.context_digest):
+        turn = self._pending_turn
+        accepted = (turn.confirmed_context_digests if turn is not None and turn.segment_texts
+                    else {turn.context_digest} if turn is not None else set())
+        if pending_digest is not None and turn is not None and pending_digest not in accepted:
             return True
         batch = self.observer.changes_after(self._observer_sequence)
         if batch.overflowed:
@@ -476,7 +483,13 @@ class QQWatcher:
             return True
         if not batch.observations:
             return False
-        turn = self._pending_turn
+        if turn is not None and turn.segment_texts:
+            # Check every transition, not only the last one: an external arrival
+            # cannot disappear behind a later confirmed own-only snapshot.
+            if all(item.digest in accepted for item in batch.observations):
+                self._observer_sequence = batch.latest_sequence
+                return False
+            return True
         if turn is not None and turn.context_digest == batch.observations[-1].digest:
             self._observer_sequence = batch.latest_sequence
             return False
@@ -486,6 +499,8 @@ class QQWatcher:
         turn = self._pending_turn
         if turn is None:
             return True
+        if turn.segment_texts and turn.reservation_id:
+            return self._terminate_segments(turn, "superseded")
         cleaned = self._cleanup_owned_draft(turn)
         if turn.reservation_id:
             self.ledger.supersede_send(turn.reservation_id, now=now())
@@ -543,12 +558,17 @@ class QQWatcher:
 
     def _recover_existing_receipts(self):
         for reservation in self.ledger.unsettled_sends():
+            if reservation.segment_count:
+                self._recover_segment_receipts(reservation)
+                continue
             receipt = get_qq_delivery(memory_db=self.session.memory_db, group_id=self.settings.group_id,
                                       decision_id=reservation.decision_id)
             if receipt is not None:
                 self.ledger.reconcile_sent(reservation.reservation_id, receipt=receipt, now=now())
 
     def _attempt_delivery(self, turn):
+        if turn.segment_texts:
+            return self._attempt_segmented_delivery(turn)
         attempt = self.ledger.start_send_attempt(turn.reservation_id, now=now())
         if attempt is None:
             self._cleanup_owned_draft(turn)
@@ -749,12 +769,22 @@ class QQWatcher:
             self._pending_turn = None
             return
         turn.reservation_id = reservation.reservation_id
+        if getattr(decision, "reply_segments", None):
+            from harness.qq.decision import effective_reply_segments
+            segments = effective_reply_segments(decision)
+            if len(segments) > 1:
+                turn.segment_texts = tuple(segments)
+                if turn.context_digest:
+                    turn.confirmed_context_digests.add(turn.context_digest)
+                self.ledger.initialize_segments(turn.reservation_id, texts=segments)
         self._attempt_delivery(turn)
 
     def _expire_pending(self) -> bool:
         turn = self._pending_turn
         if turn is None or not turn.deadline.expired:
             return True
+        if turn.segment_texts and turn.reservation_id:
+            return self._terminate_segments(turn, "expired")
         cleaned = self._cleanup_owned_draft(turn)
         if turn.reservation_id:
             self.ledger.start_send_attempt(turn.reservation_id, now=now())
