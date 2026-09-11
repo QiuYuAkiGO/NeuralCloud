@@ -2,13 +2,13 @@
 
 > 持续维护文档：模块实现、测试、验收或计划发生变化时，同步更新对应行和文末变更记录。
 >
-> 最近核对：**2026-09-10（Asia/Shanghai；本次增量为 QQ 桌面接入与巴别塔长轮采集）**。基线：`codex/grounded-agency`，HEAD `3f38b10`，**包含核对时的未提交修改**。本表描述当前工作区，不代表已合入主分支或已部署。
+> 最近核对：**2026-09-11（Asia/Shanghai；本次增量为 Docker 启动防护与 QQ 桌面实机接入，其余条目保留各自核对日期）**。基线：`codex/grounded-agency`，HEAD `159d55d`，**包含核对时的未提交修改**。本表描述当前工作区，不代表已合入主分支或已部署。
 
 当前认知 Harness 主体、Runtime、内稳态、具身接入和开发界面已有实现；Grounded Agency GA-01～GA-08 已有工程代码，但真实模型的自我维持、长期自主与社会泛化仍待实验验证。角色文本导入、专用启动情境链路、关系 belief/care 层和训练数据导出仍有明确缺口。
 
 **当前优先里程碑：[BR-1 基本功能可用](milestones/BASIC_RUNTIME_V1.md)**。用户确认真实在线/无干扰稳定 **8 小时**，通过 MistyAI **桌面终端**执行命令，并能对话、保持前后人设。已执行基础修复并建立[测试案例](milestones/BASIC_RUNTIME_V1_TEST_CASES.md)，真实 Linux 与 8 小时验收仍未完成；详细结果见[执行记录](milestones/BASIC_RUNTIME_V1_EXECUTION.md)。
 
-**2026-09-10 新增当前任务：[QQ-DESKTOP-1](milestones/QQ_DESKTOP_V1.md)**。使用现有 Linux 的真实 QQ 桌面验证群聊读取、回复与人物记忆；已准备官方 ARM64 安装包并核对部署和记忆缺口，Docker 启动失败，真实登录/群聊/记忆均未验收。BR-1 原有出口保留。
+**2026-09-10 新增当前任务：[QQ-DESKTOP-1](milestones/QQ_DESKTOP_V1.md)**。至 2026-09-11，Docker 启动防护已安装并通过两轮独立实机复验，见 [Docker 恢复说明](DOCKER_RECOVERY.md)。QQ 已登录并核验目标群，基础两人持久记忆、旧历史检索及专用服务重启后召回通过。用户已授权指定群自动截图和实际发送，[QQ 专用 watcher](QQ_WATCHER.md) 已实际完成第二次 @ 测试的采集、作者归属和 `speak`。自动交付多次被预点击核验误判阻断后，操作方以已授权 GUI 动作辅助发送同一份未改写、未重新生成的 38 字原回复，实际核验新气泡与空输入框；本轮新增 1 条，累计 2 条。后台已恢复，同进程继续采集且重复启动返回已有实例；这不等于无人辅助交付通过，自动发信稳定性及长期自主运行仍为 PARTIAL，标准 Runtime 与全量 Cognitive 社会关系未验收。当前 QQ 工程套件 **389 passed**、共享 LLM **28 passed**、Ruff 通过，见 [自动盯群与辅助交付实测](milestones/evidence/qq-autowatch-2026-09-11.json)；[多人记忆与专用决策实测](milestones/evidence/qq-multiperson-autonomy-2026-09-11.json)和[首轮登录与发送证据](milestones/evidence/qq-desktop-login-memory-2026-09-11.json)保留，BR-1 原有出口不变。
 
 ## 1. 状态与证据口径
 
@@ -46,7 +46,7 @@
 | NC-10 | Cognitive 服务与空闲主动表达 | 已实现（基础） | Prepare/Commit 与持久化；辅助模型 SILENT/SPEAK 判定、失败回退、用户消息抢占、主动表达审计。 | 主动说话不等于完整自主行动；生产工作重评缺口见 NC-20，模型自主研究路线见 GA-03/07。 | [cognitive](../harness/cognitive/)、[adapters](../harness/runtime/adapters.py)、[自主门控测试](../tests/test_autonomous_gate.py) | 2026-09-08 |
 | NC-11 | 内稳态引擎与稳定化 | 已实现（确定性机制）；8 小时现场待验收 | 七维、实际位移耦合、感知门控与持续边界 watchdog；按维度时间修复高频无变化/仅能量事件吞掉恢复时间；SQLite 有界账本。 | 8 小时加速动力学与真实耗尽保护回归通过；真实无干扰 8 小时、CPU/RSS/磁盘增长仍待验。 | [homeostasis](../harness/homeostasis/)、[稳定化方案](HOMEOSTASIS_STABILITY_PLAN.md)、[加速稳定性](../tests/test_basic_homeostasis_stability.py) | 2026-09-09 |
 | NC-12 | 内稳态表达与显著性调度 | 已实现；表达效果待验收 | 同 revision 内感摘要、显著性/迟滞；off/shadow/responses/full 模式；marked 主动评估、冷却与泄漏检查。 | 对具体配置验证表达是否适当及是否泄漏机制；不把表达变化当成工作/恢复决策闭环成功。 | [表达契约](HOMEOSTATIC_EXPRESSION.md)、[表达评测](../eval/homeostatic_expression/README.md)、[内感测试](../tests/test_homeostatic_interoception.py) | 2026-09-08 |
-| NC-13 | Embodiment Port 与动作执行 | 已实现；真实 Linux 待验收 | ports/协商/typed action/verify/reconcile；新增聊天终端规划、A11y Text 哈希读取、当前任务 BEGIN/EXIT 输出核验、批准前后目标复查。 | 外仓改动已测未部署；Docker Desktop 启动故障阻塞 Linux 联调。首次终端范围为单条 ASCII 命令，沿用现有批准权限。 | [embodiment](../harness/embodiment/)、[终端规划](../harness/cognitive/basic_terminal.py)、[终端案例](milestones/BASIC_RUNTIME_V1_TEST_CASES.md) | 2026-09-09 |
+| NC-13 | Embodiment Port 与动作执行 | 已实现；真实 Linux 待验收 | ports/协商/typed action/verify/reconcile；新增聊天终端规划、A11y Text 哈希读取、当前任务 BEGIN/EXIT 输出核验、批准前后目标复查。 | 外仓改动已测未部署；Docker 引擎已恢复，启动防护已安装并通过两轮独立实机复验，Linux 动作联调仍待验收。首次终端范围为单条 ASCII 命令，沿用现有批准权限。 | [embodiment](../harness/embodiment/)、[终端规划](../harness/cognitive/basic_terminal.py)、[终端案例](milestones/BASIC_RUNTIME_V1_TEST_CASES.md)、[Docker 恢复](DOCKER_RECOVERY.md) | 2026-09-11 |
 | NC-14 | 身体状态接入与事实投影 | 部分实现（grounded v1 已实现）；传感待验收 | MistyAI body-state 契约、DTO/adapter、身份与新鲜度检查；observe 仅记录，grounded v1 首批 energy 映射与 terminal 保护已接入。 | 核对真实 physiology 与异常行为；MistyAI active 模式未实现，旧 embodiment 的 body_memory/salience_bias/drive_preemption 仍禁用；GA 独立能力另计。 | [body](../harness/body/)、[body-state 设计](harness/11-mistyai-body-state-integration-code-design.md)、[body-state 测试](../tests/test_body_state_runtime.py)、[grounded 测试](../tests/test_grounded_embodiment.py) | 2026-09-08 |
 
 配置快照：核对时 [functional-proxy profile](../presets/homeostasis/functional-proxy-v1.json) 与两个 Runtime 预设均为 revision 3；稳定化方案中的 revision 2 是历史说明。[development-demo](../presets/runtime/development-demo.json) 与 [grounded-mistyai](../presets/runtime/grounded-mistyai-v1.json) 显式启用表达 `full`，后者同时启用 embodiment `grounded`；[GA 研究预设](../presets/research/grounded-agency/)的表达为 `off`。[manifest 类型](../harness/research/manifest.py)在省略配置时使用表达 `off`、身体 `off/none`。实际启用情况以选用的 manifest 为准。
@@ -60,7 +60,7 @@
 | NC-15 | 对话 GUI 与调试 | 已实现 | 三栏对话/推理时间线/状态展示；阶段与回复分段推送；调试、模型设置与配置持久化；Runtime facade。 | 按完整四进程拓扑复验交互；当前推送粒度不包含 token 流式。 | [gui](../gui/)、[GUI 测试](../tests/test_gui.py)、[调试测试](../tests/test_debug_panel.py) | 2026-09-08 |
 | NC-16 | 角色预设与存档 | 已实现（JSON 预设） | 小雾默认模板、Vaelith 可选模板；预设工作副本、切换、恢复、聊天/调试写回。 | TXT/Markdown 抽取、预览审核与独立实例装配属于 NC-21，不能视为已有导入功能。 | [presets](../gui/presets.py)、[内置模板](../presets/builtin/)、[预设测试](../tests/test_presets.py) | 2026-09-08 |
 | NC-17 | Trace、审计与运维面板 | 已实现；巴别塔现场待验收 | JSONL trace、调用日志；`/ops` 下钻、SQLite 监控与断线续传；新增巴别塔逐轮交付/提交、模型请求和实际输入内稳态版本关联。 | 执行固定 100 轮真实对话并核验原始 journal 与调用证据；监控失效隔离继续验证，展示窗口不代表长跑通过。 | [trace](../infra/trace/)、[monitor](../harness/runtime/monitor.py)、[运维前端](../gui/static/ops.js)、[监控测试](../tests/test_monitoring.py)、[巴别塔协议与运行说明](../eval/basic_runtime/README_BABEL.md) | 2026-09-10 |
-| NC-18 | 启停、部署与本地开发 | 已实现（Windows 主路径）；目标环境受阻 | dev 环境诊断和四进程联动；start.ps1 新增 StateRoot，隔离存档/角色/日志并生成本地采样令牌文件。 | 本机 WSL 可用、Docker Linux engine 启动失败；需环境恢复后部署外仓。类 Unix 脚本仍为兼容单 GUI 路径。 | [入门手册](GETTING_STARTED.md)、[启动器](../start.ps1)、[隔离启动回归](../tests/test_start_script.py)、[环境记录](milestones/BASIC_RUNTIME_V1_EXECUTION.md) | 2026-09-09 |
+| NC-18 | 启停、部署与本地开发 | 已实现（Windows 主路径）；Docker 启动防护已安装验收 | dev 环境诊断和四进程联动；start.ps1 新增 StateRoot，隔离存档/角色/日志并生成本地采样令牌文件。 | Docker Desktop 4.89.0 / Engine 29.7.2 已恢复；已安装入口独立两轮启动及本机、WSL、临时容器验证通过，原数据清单一致。直开原程序仍有复发风险，防护不表示上游故障已消失；外仓部署仍待验收。类 Unix 脚本仍为兼容单 GUI 路径。 | [入门手册](GETTING_STARTED.md)、[启动器](../start.ps1)、[隔离启动回归](../tests/test_start_script.py)、[环境记录](milestones/BASIC_RUNTIME_V1_EXECUTION.md)、[Docker 恢复](DOCKER_RECOVERY.md) | 2026-09-11 |
 | NC-19 | CI 与基础评测 | 已实现；效果基线待补 | pytest/Ruff CI、Windows 启动器与 MistyAI 跨进程门禁；记忆/推理场景、检索 benchmark、角色扮演 raw/harness 对照框架。 | 本次未读取远端 CI 结果。跨仓库 checkout 失败会跳过对应门禁；RP HarnessRunner 使用 MockEmbedding，CharacterRM 缺依赖/权重时跳过评分，不能据 smoke 推出真实效果。 | [CI](../.github/workflows/ci.yml)、[scenarios](../eval/scenarios/)、[RP 评测](../eval/rp/)、[检索报告](../eval/reports/retrieval_baseline.md) | 2026-09-08 |
 | NC-20 | 工作价值 / 恢复决策评测与闭环 | 部分实现；业务验收未通过 | 已有 engine/runtime/live probes 与 2026-09-05 报告；状态机制、保护与模型选择可分别取证。 | 生产重评仍固定继续；成功 rest 缺专用资源恢复；限时继续缺步数/恢复期限约束。修复后需生产路径复验，eval action bridge 与 GA 研究路不能替代。 | [评测说明](../eval/homeostatic_decision/README.md)、[历史失败报告](../eval/reports/homeostatic_decision/final/report.md)、[当前 adapter](../harness/runtime/adapters.py)、[当前 engine](../harness/homeostasis/engine.py) | 2026-09-08 |
 
@@ -89,7 +89,7 @@
 | NC-24 | Experience Evaluator 与训练数据导出 | 设计阶段 | trace、动作 evidence、评测报告与版本戳提供数据基础。 | 通用 Experience Evaluator、五类数据导出、Chosen/Rejected 构造、SFT/DPO 数据集版本管理尚未形成闭环。研究指标计算器不等同于该模块。 | [自主与数据方案](harness/04-autonomy-and-data.md)、[里程碑](harness/05-roadmap-and-stack.md)、[现有 trace](../infra/trace/) | 2026-09-08 |
 | NC-25 | 长跑、资源治理与实验验收 | 部分实现；BR-1 现场待验收 | journal 流式恢复/正文有界/稀疏定位已补；新增真实单调时钟只读 8 小时 soak，短测、假时钟、缺进程身份不记通过。 | 先完成 BR-1 8 小时与资源增长实测；认知账本/终态动作等增长仍需评估；原 M5 24–72h 另计。 | [journal](../harness/runtime/journal.py)、[8 小时采样器](../eval/basic_runtime/soak.py)、[案例](milestones/BASIC_RUNTIME_V1_TEST_CASES.md)、[原 M5](harness/05-roadmap-and-stack.md) | 2026-09-09 |
 
-新增模块 **NC-26 · QQ 桌面群聊与人物记忆**：部署准备阶段。当前缺少联网桌面配置、QQ 窗口规划/读取、中文输入支持、人物来源身份贯通及真实发送回执；[方案与十项现场用例](milestones/QQ_DESKTOP_V1.md)、[本次环境记录](milestones/evidence/qq-desktop-preflight-2026-09-10.json)提供核验依据。核对日期：2026-09-10。
+新增模块 **NC-26 · QQ 桌面群聊与人物记忆**：基础两人归属召回与 QQ 专用服务重启 PASS，自动交付稳定性 PARTIAL。专用 `8789` 服务的持久记忆、旧历史检索与决策缓存已有真实验证；[watcher](QQ_WATCHER.md) 已接通截图、新可见消息判定、本地观察去重、证据归属、多人上下文和 `speak/wait`。第二次真实 @ 测试已自动采集、绑定作者并进入 `speak`，原始 38 字回复最终经操作方 GUI 辅助发送，本轮新增 1 条、累计 2 条。后台恢复后同一 worker 采集数 2 → 4，持久事件/预留/总回执计数保持 1 / 1 / 2；这是记录与计数器核验，不是第二次独立气泡核验。自动 backend 的预点击核验仍曾误判阻断，不能把辅助交付记为全程自主通过。当前 QQ 工程套件 **389 passed**、共享 LLM **28 passed**、Ruff 通过；标准 Runtime、复杂同名、更正、多年规模及全量 Cognitive 社会关系未验收。见 [专用服务入口](QQ_SESSION.md)、[十项现场用例](milestones/QQ_DESKTOP_V1.md)及 [本轮自动盯群证据](milestones/evidence/qq-autowatch-2026-09-11.json)；[前阶段多人证据](milestones/evidence/qq-multiperson-autonomy-2026-09-11.json)、[首轮证据](milestones/evidence/qq-desktop-login-memory-2026-09-11.json)和[初始环境记录](milestones/evidence/qq-desktop-preflight-2026-09-10.json)保留历史。核对日期：2026-09-11。
 
 ## 7. 原始里程碑对应
 
@@ -147,6 +147,42 @@
 
 ## 10. 变更记录
 
+### 2026-09-11 · QQ 自动盯群实测（辅助发送已核验，自动交付仍为 PARTIAL）
+
+- 用户已授权在指定群自动截图并实际发送；[QQ 常驻 watcher](QQ_WATCHER.md) 已实现并实际运行，连接真实截图、新可见消息判定、观察账本去重、成员证据归属、多人持久记忆及 `speak/wait` 决策。
+- 第二次真实 @ 测试已由 watcher 采集、绑定作者，真实模型选择 `speak`。`DesktopBackend.deliver` 多次预点击尝试仍因当前账号资料、几何/上下文和动态画面核验误判而返回 `not_sent`，均未点击发送。
+- 2026-09-11 约 **04:14 UTC**，操作方通过已授权 GUI primitives 辅助发送原始 decision 的同一份 **38 字**正文，未改写或重新生成；实际核验群卡数字、当前账号卡和“我的QQ空间”标记、输入框精确正文，以及发送后右侧 Misty 新气泡和空输入框。本轮新增实际发送 **1 条**，累计 **2 条**。这证明辅助 GUI 交付，不证明整个自动 pipeline 无人辅助完成。
+- 辅助路径使用同一 worker lock 和持久 `prepared → click_started → sent` 账本，唯一回执与冷却已对齐，没有未知结果的尝试；具体脱敏回执/画面引用见 [QQ-DESKTOP-1](milestones/QQ_DESKTOP_V1.md)。候选正文、真实成员信息与截图只保存在私有证据中。
+- 后台 worker **23324** 于 **04:25:22.575327 UTC** 启动；**04:27:24 → 04:29:24 UTC** 连续样本中，同进程采集数 **2 → 4**，后续周期完成，心跳新鲜、采集/发送标记均 true，错误为空。重复启动返回 `already_running`。持久事件/预留/总回执计数保持 **1 / 1 / 2**，本次测试回执仍唯一；这是记录和计数器核验，不是第二次独立气泡核验。**04:27:55 UTC** 的认证 `8789` 服务 healthy，持久记忆/自动决策/采集/发送均 true，已记录成员 2 名。
+- 当前完整 QQ 工程套件 **389 passed / 84.85 秒**、共享 LLM **28 passed**，Ruff 通过，与历史分组回归不重复累计。[本轮证据](milestones/evidence/qq-autowatch-2026-09-11.json)标为 **PARTIAL / operator-assisted**；自动发信稳定性仍为部分完成，标准 Runtime、全量 Cognitive 社会关系、任意滚动/断网去重及长期无人值守收发未通过验收。
+
+### 2026-09-11 · QQ 多人持久记忆与专用自动决策（历史快照）
+
+- 新增并实际部署 [QQ 专用认证会话服务](QQ_SESSION.md)，通过 [Start-QQSession.ps1](../tools/qq/Start-QQSession.ps1) 在本机 `8789` 隐藏运行，实际启动及重复调用识别已有实例通过。status 确认持久记忆、专用自动决策及新核验观察入库触发决策已开启；自动截图、自动发送与标准 Runtime 均为 false。
+- collector 经真实 Agent 点击第二名成员的实际气泡头像并核验资料卡，视觉模型读取资料信息；通过 API 保存第二人的 profile 和第二条真实观察，当前为两成员/两观察。新观察自动触发 gate，实际 **1 call / 3527 tokens**，结果 `wait`、回复为空；没有发送。
+- 专用服务重启后两成员/两观察仍在，重复输入不新增也不重算；同一旧 decision ID 返回 cached。首轮唯一已发消息的外部回执仅关联已回应的那条内部观察 source ID，不把其他观察标为已回复，不伪造服务器消息 ID。
+- 新 Python 进程以近期额度 0、历史额度 5 查询，两名成员各命中一条旧记录。实际记忆检查请求未提供答案，gate `speak` 后 persona 正确分人并保留未核验声明；修复对未采集历史作绝对否定的问题后，重启服务并完成 v2 复验，**2 calls / 6622 tokens**，回复限定为“目前记录到”的范围。
+- 本轮无新 QQ 发送，累计仍为首轮经授权的 1 条。普通 Misty 主动代码虽已存在，本轮核对时标准 `8770/8771/8772` 服务没有运行；当前开启的是 QQ 专用决策层，不表示自动盯群回复或全量 Cognitive 社会关系已接通。
+- 本轮分组测试：memory **61 passed**（含原 30 项）、decision + draft **28 passed**、session **10 passed**、Windows PowerShell 5.1 启动器 **14 passed**，不与旧结果重复累计。真实进展及边界见 [多人记忆与专用决策实测](milestones/evidence/qq-multiperson-autonomy-2026-09-11.json)；不在 tracked 文档中保存真实成员账号、昵称或发言原文。
+
+### 2026-09-11 · QQ 桌面首轮实机接入（历史快照）
+
+- 构建官方 ARM64 QQ 镜像，补齐字体/音频运行依赖；新建独立 `mistyai-qq-online-test` project，明确声明 Phase 4 联网测试配置，保留 M0 环境及既有数据。
+- 保留非 root、cap-drop-ALL、NNP 与受限 seccomp，实际从桌面终端启动 QQ；三服务重建后截图/窗口/输入接口正常，无需手工 Xauthority 修复。
+- Mousepad 中文输入与 AT-SPI 回读完全一致。早期账密登录曾进入新设备安全验证；后续已完成扫码并核验登录账号，通过独立群卡确认目标群，点击真实气泡头像后核验一名成员资料。中文输入通过；用户明确授权后，collector 再次核验群卡及草稿，于 01:09:20 UTC 只点击一次发送，01:09:25 UTC 截图确认右侧蓝色气泡、输入框清空且无错误；01:10:38 UTC 延后截图气泡仍在。实际从已发气泡菜单复制并读取 X11 剪贴板，11 个字符与授权模型原文逐字一致，`exact_outgoing_text_match=true`。单条 GUI 发送通过，不声称有服务器消息 ID 或已读回执。
+- 新增独立 [QQ 观察 SQLite 与认证 API](QQ_OBSERVATIONS.md)：按群/成员查询、跨重启去重，来源冲突拒绝，无控制或发送副作用；35 项新测试加 11 项既有 API 测试通过。尚未连接真实采集器、Cognitive 或发送链路，不等同于人物记忆验收。
+- 新增独立 [视觉人物记忆](QQ_VISUAL_MEMORY.md)，真实私有库已写入 1 profile + 1 observation；重复同截图未新增，新 Python 进程回读成功，其他群/成员为空。GUI 不暴露稳定消息 ID，保持 `message_id=null`，不向正规消息库伪造来源 ID；人物陈述保留为作者断言，不自动合并身份。
+- 真实图片调用使用 `deepseek-v4-flash-vision-exp`，群/消息/资料卡信息已读取；昵称 emoji 遗漏由人工回读核对。第一次输入框草稿视觉 probe 被严格 schema 拒绝，重试成功；发送后模型识别到气泡、`visible_draft=null`，但昵称及波浪号 OCR 有误，精确正文以实际气泡复制为准。真实 `deepseek-v4-flash` + `misty-digitalbody-0.2.0` 已完成限定群/成员上下文的 persona `prepare`；首次输出夹带状态标题后修订了规则，后续经用户授权的草稿已发送一次。独立新进程真实模型回忆已核对 PASS，准确复述原文并保留作者归属、区分未经核验的账号关系声明。
+- 上述窗口操作由当前 collector 经真实 Agent 驱动，视觉与 persona 草稿模型调用分别计证；标准 Runtime 自动 QQ planner/Delivery 尚未接入。工程测试 vision + LLM **41 passed**、视觉人物记忆 **30 passed**、草稿 **8 passed**，不计作多人长期记忆或完整自主运行验收。
+- 专用 Body Service `8788` 和三容器均 healthy，restart count 为 0；NeuralCloud 实际客户端通过实例/联网配置/健康核验并获取、校验 QQ 窗口证据。GUI 需显式使用 `8769`。早期记录见 [实机摘要](milestones/evidence/qq-desktop-live-2026-09-11.json)，本轮结果见 [登录与视觉人物记忆脱敏证据](milestones/evidence/qq-desktop-login-memory-2026-09-11.json)。
+- 实机登录与后续边界详见 [QQ-DESKTOP-1](milestones/QQ_DESKTOP_V1.md)。账号密码、二维码、登录令牌及真实成员账号、昵称和原文不进入 tracked 报告；单条 GUI 发送已通过，自动持续收发、多人长期记忆及完整系统重启仍未验收。
+
+### 2026-09-11 · Docker 恢复与启动防护进展
+
+- Docker Desktop 4.89.0 / Engine 29.7.2 的 socket 目录启动故障已恢复。完整安装脚本无需外部预热的两轮独立启动分别耗时 **9.047 秒 / 8.797 秒**，两轮本机引擎、Ubuntu-24.04 接入及临时容器运行均通过；前后 **3 个容器、2 个带标签镜像 ID、4 个卷**清单一致。
+- 启动防护已安装至 `C:/Users/22850/AppData/Local/NeuralCloud/DockerStartup`；桌面 `Docker Desktop.lnk` 与既有 `HKCU Run` 入口已改用防护，原入口已备份，`StartupApproved` 与 `AutoStart=false` 保持不变。已安装入口的 healthy 复查通过，无新增恢复 journal，保活进程为 0。Helper 最终回归 **27 passed**，Launcher 回归 **143 passed**。
+- 正常退出后直开原 Docker 程序仍有复发风险；已安装防护是本机缓解措施，不表示上游故障已消失。依据见 [Docker 恢复说明](DOCKER_RECOVERY.md)、[两轮实机证据](../logs/docker-recovery/live-verification-20260911.json)、[安装入口记录](../logs/docker-recovery/installed-entries-20260911.json)、[入口复查](../logs/docker-recovery/entry-verification-20260911.json)。保留 09-10 预检 JSON 原始失败记录；Docker 恢复当时的 QQ 未验收状态属于历史快照，后续登录、视觉记忆和单条 GUI 发送进展见本日 QQ 条目，完整自动端到端仍未验收。
+
 ### 2026-09-10 · 巴别塔长轮对话协议与采集实现
 
 - 关联 NC-17、NC-25；基于 `codex/grounded-agency@3f38b10` 与当前未提交实现，新增 [90 段故事与 10 条感想问题](../eval/basic_runtime/babel_story.json)，完整完成时为 100 条用户输入与 100 条 Misty 逻辑回复。
@@ -158,7 +194,7 @@
 ### 2026-09-10 · QQ 真实桌面接入准备
 
 - 用户确认现有 Linux 与真实 QQ 桌面路径，建立 QQ-DESKTOP-1 与 NC-26；登录信息不进入仓库。
-- 实测现有 Ubuntu 24.04.4/aarch64，Docker Desktop 因 `sailor-ingest.sock` 访问错误退出；保留原环境与数据。
+- 当日初检为 Ubuntu 24.04.4/aarch64，Docker Desktop 因 `sailor-ingest.sock` 访问错误退出；该历史故障及后续恢复见 [Docker 恢复说明](DOCKER_RECOVERY.md)。
 - 取得并检查腾讯官方 ARM64 QQ deb；相邻 MistyAI 仓库准备 `deploy/qq/` 安装包校验、独立镜像构建上下文与就绪检查。
 - 核对到 phase 0 禁网、QQ 不在应用白名单、终端规划范围、中文输入与群聊人物记忆接线缺口。真实登录、读群、发送和重启记忆均为 NOT_RUN，未把部署准备记为接入完成。
 - 具体来源、状态和完成条件见 [QQ-DESKTOP-1](milestones/QQ_DESKTOP_V1.md)。
@@ -167,7 +203,7 @@
 
 - 用户确认真实 8 小时与 MistyAI 桌面终端路径，建立[五项门禁、差距与执行范围](milestones/BASIC_RUNTIME_V1.md)、[测试案例](milestones/BASIC_RUNTIME_V1_TEST_CASES.md)和[执行记录](milestones/BASIC_RUNTIME_V1_EXECUTION.md)。
 - 修复按维度恢复计时、最近会话裁剪、journal 正文增长和全历史命令扫描；接通显式聊天终端多步规划、证据读取与中断/审批复核；增加隔离启动与真实时钟 soak 工具。
-- 已运行工程回归和真实四轮模型/重启测试；真实模型慢提交时限失败保留，修复复验另记。Docker Desktop 故障阻塞真实 Linux 与 8 小时验收，未标记里程碑通过。
+- 已运行工程回归和真实四轮模型/重启测试；真实模型慢提交时限失败保留，修复复验另记。当次 Docker Desktop 故障阻塞真实 Linux 与 8 小时验收，未标记里程碑通过；后续 Docker 恢复不替代这些现场验收。
 - 保留原工作区 GA 等修改和原研究/业务未通过结论；完整命令与最终结果以执行记录为准。
 
 ### 2026-09-08 · 建立项目进度基线

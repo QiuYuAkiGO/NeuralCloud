@@ -10,9 +10,10 @@ function Get-DDPaths {
         Run = Join-Path $local 'Docker\run'
         Secrets = Join-Path $local 'docker-secrets-engine'
         Logs = Join-Path $local 'Docker\log\host'
-        Journal = Join-Path $PSScriptRoot '..\..\logs\docker-recovery'
+        Journal = Join-Path $local 'NeuralCloud\DockerRecovery\logs'
         Docker = Join-Path $install 'resources\bin\docker.exe'
         Desktop = Join-Path $install 'Docker Desktop.exe'
+        Wsl = Join-Path ([Environment]::GetFolderPath('System')) 'wsl.exe'
     }
 }
 
@@ -51,6 +52,128 @@ function Invoke-DDTimedProcess {
 function Invoke-DDProbe {
     param($Paths, [int]$TimeoutMilliseconds)
     Invoke-DDTimedProcess $Paths.Docker '--host npipe:////./pipe/dockerDesktopLinuxEngine info --format "{{.ServerVersion}}"' $TimeoutMilliseconds
+}
+
+function ConvertTo-DDWindowsArgument {
+    param([AllowEmptyString()][string]$Argument)
+    # ProcessStartInfo.ArgumentList is unavailable in Windows PowerShell 5.1.
+    # WSL parses option tokens before the Linux command; unnecessary quotes on flags
+    # can make --distribution a Linux command. Quote only arguments that require it.
+    if ($Argument.Length -gt 0 -and $Argument -notmatch '[\s"]') { return $Argument }
+    $quoted = [regex]::Replace($Argument, '(\\*)"', '$1$1\"')
+    $quoted = [regex]::Replace($quoted, '(\\+)$', '$1$1')
+    return '"' + $quoted + '"'
+}
+
+function Invoke-DDWslProbe {
+    param($Paths, [string]$Distro, [int]$TimeoutMilliseconds)
+    # The Linux timeout survives a killed Windows wsl.exe probe. Reserve startup/kill margin.
+    $linuxSeconds = [Math]::Max(0.001, $TimeoutMilliseconds * 0.7 / 1000.0)
+    $killSeconds = [Math]::Max(0.001, [Math]::Min(0.5, $TimeoutMilliseconds * 0.1 / 1000.0))
+    $duration = $linuxSeconds.ToString('0.000', [Globalization.CultureInfo]::InvariantCulture) + 's'
+    $killAfter = '--kill-after=' + $killSeconds.ToString('0.000', [Globalization.CultureInfo]::InvariantCulture) + 's'
+    $arguments = @(
+        '--distribution', $Distro, '--exec', '/usr/bin/timeout', $killAfter, $duration,
+        '/usr/bin/env', '-u', 'DOCKER_HOST', '-u', 'DOCKER_CONTEXT',
+        '-u', 'DOCKER_TLS_VERIFY', '-u', 'DOCKER_CERT_PATH',
+        '/usr/bin/docker', '--host', 'unix:///var/run/docker.sock', 'info', '--format', '{{.ServerVersion}}'
+    )
+    $encoded = ($arguments | ForEach-Object { ConvertTo-DDWindowsArgument $_ }) -join ' '
+    Invoke-DDTimedProcess $Paths.Wsl $encoded $TimeoutMilliseconds
+}
+
+function New-DDWslKeepAliveProcess {
+    param($Paths, [string]$Distro, [int]$LifetimeSeconds)
+    $arguments = @('--distribution', $Distro, '--exec', '/usr/bin/timeout',
+        '--kill-after=1s', ($LifetimeSeconds.ToString([Globalization.CultureInfo]::InvariantCulture) + 's'), '/bin/cat')
+    $process = [Diagnostics.Process]::new()
+    $process.StartInfo = [Diagnostics.ProcessStartInfo]@{
+        FileName = $Paths.Wsl
+        Arguments = (($arguments | ForEach-Object { ConvertTo-DDWindowsArgument $_ }) -join ' ')
+        UseShellExecute = $false; CreateNoWindow = $true
+        RedirectStandardInput = $true; RedirectStandardOutput = $true; RedirectStandardError = $true
+    }
+    return $process
+}
+
+function Stop-DDWslKeepAlive {
+    param([AllowNull()]$KeepAlive)
+    if ($null -eq $KeepAlive) { return }
+    $process = $KeepAlive.Process
+    try {
+        if ($KeepAlive.Started) {
+            try { $process.StandardInput.Close() } catch { }
+            if (-not $process.WaitForExit(1500)) {
+                # This is our keepalive wsl.exe only; never terminate a distribution or process tree.
+                try { $process.Kill() } catch [InvalidOperationException] { }
+                [void]$process.WaitForExit(1000)
+            }
+        }
+    } catch {
+        # Cleanup must not conceal the original startup/integration result.
+    } finally { $process.Dispose() }
+}
+
+function Start-DDWslKeepAlive {
+    param($Paths, [string]$Distro, [int]$ReadyTimeoutMilliseconds, [int]$LifetimeSeconds)
+    $process = New-DDWslKeepAliveProcess $Paths $Distro $LifetimeSeconds
+    $holder = @{ Process = $process; Started = $false; Stderr = $null }
+    $watch = [Diagnostics.Stopwatch]::StartNew()
+    $marker = 'NEURALCLOUD_DOCKER_WSL_READY_' + [guid]::NewGuid().ToString('N')
+    try {
+        [void]$process.Start()
+        $holder.Started = $true
+        $holder.Stderr = $process.StandardError.ReadToEndAsync()
+        $process.StandardInput.AutoFlush = $true
+        $write = $process.StandardInput.WriteLineAsync($marker)
+        $remaining = [Math]::Max(1, $ReadyTimeoutMilliseconds - [int]$watch.ElapsedMilliseconds)
+        if (-not $write.Wait($remaining)) { throw 'WSL keepalive marker write timed out.' }
+        while ($watch.ElapsedMilliseconds -lt $ReadyTimeoutMilliseconds) {
+            $line = $process.StandardOutput.ReadLineAsync()
+            $remaining = [Math]::Max(1, $ReadyTimeoutMilliseconds - [int]$watch.ElapsedMilliseconds)
+            if (-not $line.Wait($remaining)) { throw 'WSL keepalive readiness timed out.' }
+            if ($null -eq $line.Result) { throw 'WSL keepalive exited before returning its readiness marker.' }
+            if ($line.Result -eq $marker) {
+                if ($process.HasExited) { throw 'WSL keepalive exited during readiness verification.' }
+                return $holder
+            }
+        }
+        throw 'WSL keepalive readiness timed out.'
+    } catch {
+        Stop-DDWslKeepAlive $holder
+        throw "WSL prewarm failed for '${Distro}'; Docker startup and runtime recovery were not attempted: $($_.Exception.Message)"
+    }
+}
+
+function Complete-DDHealthyResult {
+    param($Paths, [string]$WslDistro, [int]$TimeoutSeconds, [int]$ProbeTimeoutSeconds,
+        [string]$Message, [AllowNull()]$Journal, [switch]$ReadOnly)
+    if ([string]::IsNullOrEmpty($WslDistro)) {
+        return @{ status = 'healthy'; exit_code = 0; message = $Message; journal = $Journal }
+    }
+    if ($ReadOnly) {
+        return @{ status = 'integration_not_checked'; exit_code = 10; journal = $Journal
+            wsl_distro = $WslDistro; integration_status = 'not_checked'
+            message = 'The local engine is healthy. WSL integration was not checked in read-only mode because invoking wsl.exe may start a stopped distribution. No startup or filesystem changes were performed.' }
+    }
+    $watch = [Diagnostics.Stopwatch]::StartNew()
+    try {
+        do {
+            $remaining = [Math]::Max(1, [int]($TimeoutSeconds * 1000 - $watch.ElapsedMilliseconds))
+            $probe = Invoke-DDWslProbe $Paths $WslDistro ([Math]::Min($ProbeTimeoutSeconds * 1000, $remaining))
+            if ($probe.Healthy) {
+                return @{ status = 'healthy'; exit_code = 0; message = "$Message WSL Docker access is ready."
+                    journal = $Journal; wsl_distro = $WslDistro; integration_status = 'ready' }
+            }
+            if ($watch.Elapsed.TotalSeconds -ge $TimeoutSeconds) { break }
+            Start-Sleep -Milliseconds ([Math]::Min(500, $remaining))
+        } while ($true)
+    } catch {
+        # An integration error must not reach the runtime-isolation/startup retry loop.
+    }
+    return @{ status = 'integration_not_ready'; exit_code = 30; journal = $Journal
+        wsl_distro = $WslDistro; integration_status = 'not_ready'
+        message = "The local engine passed its health check, but Docker access in WSL distribution '$WslDistro' did not become ready. Check Docker Desktop WSL integration and the distribution's docker/timeout commands. No additional startup or runtime recovery was attempted." }
 }
 
 function Get-DDProcesses {
@@ -219,12 +342,14 @@ function Backup-DDRuntime {
 function Start-DockerDesktopSafe {
     [CmdletBinding()]
     param([switch]$CheckOnly, [switch]$WhatIf, [switch]$RefreshRuntimeOnColdStart,
+        [string]$WslDistro = '',
         [ValidateRange(1, 600)][int]$TimeoutSeconds = 120,
         [ValidateRange(1, 30)][int]$ProbeTimeoutSeconds = 5)
     $mutex = $null
     $owned = $false
     $journal = $null
     $isolationUsed = $false
+    $wslKeepAlive = $null
     try {
         $mutex = [Threading.Mutex]::new($false, 'Global\NeuralCloud-DockerDesktop-Recovery-v1')
         try { $owned = $mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $owned = $true }
@@ -232,7 +357,8 @@ function Start-DockerDesktopSafe {
         $paths = Get-DDPaths
         $probe = Invoke-DDProbe $paths ($ProbeTimeoutSeconds * 1000)
         if ($probe.Healthy) {
-            return @{ status = 'healthy'; exit_code = 0; message = 'The local Docker Desktop Linux engine is healthy; no changes made.'; journal = $null }
+            return Complete-DDHealthyResult $paths $WslDistro $TimeoutSeconds $ProbeTimeoutSeconds `
+                'The local Docker Desktop Linux engine is healthy; no changes made.' $null -ReadOnly:($CheckOnly -or $WhatIf)
         }
         $running = @(Get-DDProcesses).Count -gt 0
         if ($CheckOnly -or $WhatIf) {
@@ -242,9 +368,16 @@ function Start-DockerDesktopSafe {
         if ($running) {
             $state = Wait-DDState $paths $TimeoutSeconds $ProbeTimeoutSeconds $null $null
             if ($state.State -eq 'healthy') {
-                return @{ status = 'healthy'; exit_code = 0; message = 'Existing Docker Desktop became healthy; no filesystem changes made.'; journal = $null }
+                return Complete-DDHealthyResult $paths $WslDistro $TimeoutSeconds $ProbeTimeoutSeconds `
+                    'Existing Docker Desktop became healthy; no filesystem changes made.' $null
             }
             throw 'Existing Docker processes did not become healthy before timeout. Close Docker Desktop fully and retry; no processes were killed or directories changed.'
+        }
+        if (-not [string]::IsNullOrEmpty($WslDistro)) {
+            $readySeconds = [Math]::Min($TimeoutSeconds, 30)
+            # Two startup attempts plus integration readiness, prewarm and bounded probe/cleanup margin.
+            $lifetimeSeconds = 3 * $TimeoutSeconds + $readySeconds + 2 * $ProbeTimeoutSeconds + 30
+            $wslKeepAlive = Start-DDWslKeepAlive $paths $WslDistro ($readySeconds * 1000) $lifetimeSeconds
         }
         if ($RefreshRuntimeOnColdStart) {
             $journal = Backup-DDRuntime $paths @{
@@ -260,7 +393,8 @@ function Start-DockerDesktopSafe {
             Start-DDHidden $paths
             $state = Wait-DDState $paths $TimeoutSeconds $ProbeTimeoutSeconds $snapshot $started
             if ($state.State -eq 'healthy') {
-                return @{ status = 'healthy'; exit_code = 0; message = 'Docker Desktop is healthy.'; journal = $journal }
+                return Complete-DDHealthyResult $paths $WslDistro $TimeoutSeconds $ProbeTimeoutSeconds `
+                    'Docker Desktop is healthy.' $journal
             }
             if ($state.State -ne 'repairable' -or $attempt -eq 1 -or $isolationUsed) {
                 throw 'Docker startup failed or timed out. No further retry is allowed; current processes, data and backups are preserved.'
@@ -271,6 +405,7 @@ function Start-DockerDesktopSafe {
     } catch {
         return @{ status = 'needs_action'; exit_code = 20; message = $_.Exception.Message; journal = $journal }
     } finally {
+        Stop-DDWslKeepAlive $wslKeepAlive
         if ($owned) { $mutex.ReleaseMutex() }
         if ($null -ne $mutex) { $mutex.Dispose() }
     }

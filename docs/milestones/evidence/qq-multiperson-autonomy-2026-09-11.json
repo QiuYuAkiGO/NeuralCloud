@@ -1,0 +1,225 @@
+{
+  "schema_version": "qq-multiperson-autonomy-verification-v1",
+  "recorded_at": "2026-09-11T01:54:03.527694+00:00",
+  "timezone": "Asia/Shanghai",
+  "status": "PASS_SCOPED_MULTIPERSON_MEMORY_AND_ENABLED_SPEECH_DECISIONS",
+  "previous_run": "qq-desktop-login-memory-2026-09-11.json",
+  "baseline": {
+    "NeuralCloud_head": "159d55d21919229c4d00c08705253a927a272ace",
+    "branch": "codex/grounded-agency",
+    "MistyAI_head": "26d4f0ae4a6cc0b8d6482cb23e215ece22345cc1",
+    "uncommitted_changes": true
+  },
+  "service": {
+    "url": "http://127.0.0.1:8789",
+    "module": "harness.qq.session",
+    "hidden_process": true,
+    "health": "healthy",
+    "started_at": "2026-09-11T01:51:08.315557+00:00",
+    "listener_pid": 27996,
+    "autonomous_decision_enabled": true,
+    "new_verified_observations_trigger_decision": true,
+    "automatic_screen_capture": false,
+    "automatic_send": false,
+    "standard_runtime_started": false,
+    "new_windows_autostart_entry": false,
+    "live_unauthenticated_status_http": 401,
+    "live_other_group_http": 403
+  },
+  "before_this_change": {
+    "qq_draft_always_prepared_text": true,
+    "qq_speak_wait_gate_enabled": false,
+    "standard_runtime_cognitive_homeostasis_ports_8770_8771_8772_listening": false,
+    "port_8766_was_qq_agent_gateway_not_neuralcloud_gui": true,
+    "existing_standard_runtime_inmemory_delivery_is_not_qq_delivery": true
+  },
+  "memory": {
+    "target_group": "1044946257",
+    "real_verified_members": 2,
+    "real_attributed_observations": 2,
+    "database_counts": {
+      "qq_visual_profiles": 2,
+      "qq_visual_observations": 2,
+      "qq_reply_decisions": 6,
+      "qq_reply_deliveries": 1
+    },
+    "private_persistent_sqlite": true,
+    "person_key": [
+      "group_id",
+      "member_id"
+    ],
+    "nickname_is_not_identity": true,
+    "source_evidence_and_unverified_claims_preserved": true,
+    "coverage": "partial_verified_observations",
+    "recent_and_historical_budget_per_member": true,
+    "history_candidate_scan": "all stored observations for each selected member",
+    "search_method": "normalized Chinese substrings and Latin/number terms; not semantic-vector recall",
+    "new_process_history_only_query": {
+      "recent_limit_per_member": 0,
+      "history_limit_per_member": 5,
+      "members_matched": 2,
+      "history_matches": 2,
+      "other_group_empty": true
+    },
+    "automatic_default_query_from_attributed_trigger": "PASS",
+    "derived_query_equals_actual_trigger_text": true,
+    "full_original_observation_not_truncated": true,
+    "query_truncation_limit_characters": 512,
+    "query_metadata_persisted": true,
+    "middle_history_outside_recent_and_earliest_window_test": "PASS_WITH_SYNTHETIC_TEST_DATA",
+    "second_member_profile_observation_id": "obs_9ae17b9b3a4b46578f8caf5ef2e9d901",
+    "second_member_profile_frame": "evidence://sha256/19cfa488ad6aa7d2ff685d50e1d040f021bf8d4eff1ea6bfb448dcf4aa0cda14",
+    "real_qq_message_ids_available": false,
+    "deduplication_scope": "capture item only"
+  },
+  "restart": {
+    "before_started_at": "2026-09-11T01:35:07.048251+00:00",
+    "after_started_at": "2026-09-11T01:38:47.626507+00:00",
+    "same_two_members_and_two_observations": true,
+    "same_original_decision_replayed_after_restart": true,
+    "same_capture_duplicate_created_new_observation": false,
+    "duplicate_triggered_new_model_call": false,
+    "latest_code_restart_retained_same_memory": true,
+    "launcher_idempotent_existing_instance_check": "PASS",
+    "initial_launcher_false_timeout": "Configured path resolved to Windows packaged-app alias; status now preserves configured absolute spelling",
+    "path_alias_regression_test": "PASS",
+    "whole_windows_or_standard_runtime_restart_tested": false
+  },
+  "live_decisions": {
+    "new_second_member_observation": {
+      "decision_id": "qq-decision:0bd75eb8c0ee4b848d4e8ec23df49f3f",
+      "action": "wait",
+      "decision_source": "model",
+      "usage": {
+        "prompt_tokens": 2812,
+        "completion_tokens": 715,
+        "total_tokens": 3527,
+        "calls": 1,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      }
+    },
+    "v1_recall": {
+      "decision_id": "qq-decision:cd6469329ecd48e691aa9175be98af6e",
+      "created_at": "2026-09-11T01:39:17.149893Z",
+      "action": "speak",
+      "decision_source": "model",
+      "prompt_version": "qq-group-turn-taking-v1",
+      "model": "deepseek-v4-flash",
+      "persona_version": "misty-digitalbody-0.2.0",
+      "usage": {
+        "prompt_tokens": 5779,
+        "completion_tokens": 666,
+        "total_tokens": 6445,
+        "calls": 2,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "new_decision": true,
+      "replayed": false,
+      "automatic_send": false
+    },
+    "v2_recall": {
+      "decision_id": "qq-decision:cab4fbfa5e694c2db0cfc6231812ea31",
+      "created_at": "2026-09-11T01:42:19.050192Z",
+      "action": "speak",
+      "decision_source": "model",
+      "prompt_version": "qq-group-turn-taking-v2",
+      "model": "deepseek-v4-flash",
+      "persona_version": "misty-digitalbody-0.2.0",
+      "usage": {
+        "prompt_tokens": 6082,
+        "completion_tokens": 540,
+        "total_tokens": 6622,
+        "calls": 2,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "new_decision": true,
+      "replayed": false,
+      "automatic_send": false
+    },
+    "v2_wait": {
+      "decision_id": "qq-decision:9e59cbbbd6034fbeafc858844ccad7cf",
+      "created_at": "2026-09-11T01:44:07.501294Z",
+      "action": "wait",
+      "decision_source": "model",
+      "prompt_version": "qq-group-turn-taking-v2",
+      "model": "deepseek-v4-flash",
+      "persona_version": "misty-digitalbody-0.2.0",
+      "usage": {
+        "prompt_tokens": 3161,
+        "completion_tokens": 135,
+        "total_tokens": 3296,
+        "calls": 1,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "new_decision": true,
+      "replayed": false,
+      "automatic_send": false
+    },
+    "v3_recall": {
+      "decision_id": "qq-decision:d26b4ffdc2964ef6926755bd4dcee0be",
+      "created_at": "2026-09-11T01:51:10.088293Z",
+      "action": "speak",
+      "decision_source": "model",
+      "prompt_version": "qq-group-turn-taking-v3",
+      "model": "deepseek-v4-flash",
+      "persona_version": "misty-digitalbody-0.2.0",
+      "usage": {
+        "prompt_tokens": 6576,
+        "completion_tokens": 670,
+        "total_tokens": 7246,
+        "calls": 2,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "new_decision": true,
+      "replayed": false,
+      "automatic_send": false
+    },
+    "v3_default_query_decision": {
+      "decision_id": "qq-decision:ed4d36586c6e4faca0f94bac5e5394a9",
+      "action": "wait",
+      "decision_source": "no_new_observations",
+      "prompt_version": "qq-group-turn-taking-v3",
+      "query_source": "trigger_observation",
+      "derived_query_truncated": false
+    },
+    "v3_default_query_replay_same_id": true,
+    "recall_prompt_did_not_include_answers": true,
+    "two_member_utterance_attribution_correct": true,
+    "account_relationship_claim_stayed_unverified": true,
+    "unrecorded_history_not_treated_as_never_happened_after_v2": true,
+    "v3_recall_output_limit": "One unsupported gendered pronoun appeared; no gender was stored as a member fact, and the draft was not sent."
+  },
+  "delivery": {
+    "new_qq_messages_sent_this_run": 0,
+    "previous_authorized_qq_messages_sent": 1,
+    "previous_ui_verified_delivery_registered": true,
+    "receipt_addressed_observations": 1,
+    "considered_observations_not_automatically_marked_as_answered": true,
+    "reply_generation_does_not_create_delivery_receipt": true
+  },
+  "regressions": {
+    "qq_group_and_existing_visual_memory": 61,
+    "qq_decision_and_existing_draft": 28,
+    "qq_session_api": 10,
+    "native_powershell_5_1_launcher": 14,
+    "ruff": "PASS",
+    "diff_check": "PASS"
+  },
+  "limits": [
+    "An authenticated collector still attributes and submits real QQ observations; automatic capture is not implemented.",
+    "The enabled service can choose speak or wait and prepare persona text; it cannot send to QQ.",
+    "This is QQ-scoped durable source memory, not a claim that global Cognitive social relationships are integrated.",
+    "Two-member live recall and service restart are tested; complex renames, correction/forgetting and years of production load are not.",
+    "Only metadata and evidence references are public here; member identities, message text, credentials and screenshots remain private."
+  ]
+}

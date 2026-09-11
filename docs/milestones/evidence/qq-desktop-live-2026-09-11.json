@@ -1,0 +1,75 @@
+{
+  "date": "2026-09-11",
+  "timezone": "Asia/Shanghai",
+  "status": "PARTIAL_WAITING_FOR_QQ_DEVICE_VERIFICATION",
+  "deployment": {
+    "instance": "misty-qq-test-01",
+    "environment_revision": 2,
+    "network_phase": 4,
+    "network_profile": "qq-desktop-test",
+    "image": "mistyai-desktop:qq-online-test-20260911-authfix",
+    "manifest_sha256": "b479cd87a25bba19ef263c10a1503aebd6c79ef316939d64c01271458e93a4bb",
+    "seccomp_sha256": "0cb15fe3d3f5eddb0e7e6a4b97ba0ad9a4aed880e3caab9b6475549666d06c74",
+    "ports": {
+      "agent": 8766,
+      "novnc": 6081
+    },
+    "xauthority_peer": "misty-qq-control-01",
+    "entrypoint_sha256": "1fb22e3a0396bc6ee31f5b9d164adf1164daadab438e47867015e48fce53224d"
+  },
+  "image_manifest_index": "sha256:082b6afd879741ab0787e8584436c8ca590ca801707d8592cfedd0faee6c4778",
+  "package": {
+    "name": "linuxqq",
+    "version": "3.2.33-52892",
+    "architecture": "arm64",
+    "sha256": "806e036ee1c19ffeae22f19b5f0c2e1a7789abb5f4383bd67309995a73ea26de"
+  },
+  "live_checks": {
+    "compose_desktop_agent_gateway": "PASS",
+    "observer_after_recreate_without_manual_auth_repair": "PASS",
+    "window_coordinates": "PASS",
+    "terminal_launch_misty_qq": "PASS",
+    "qq_window_app_id": "org.mistyai.QQ",
+    "chinese_mousepad_screenshot_and_atspi_readback": "PASS",
+    "chinese_test_text": "中文标点，test 123",
+    "chinese_frame_sha256": "8cd429c5e989a97cf66bd55448bf45307e15f7b59500b66fbb84adadb13c2dc1",
+    "qq_login": "WAITING_FOR_ACCOUNT_HOLDER_PHONE_QR_LOGIN",
+    "qq_login_page_atspi_text": "NOT_AVAILABLE",
+    "target_group_verified": false,
+    "group_reading": "NOT_RUN",
+    "qq_messages_sent": 0,
+    "real_member_memory_records": 0,
+    "cognitive_member_recall": "NOT_RUN"
+  },
+  "regressions": {
+    "qq_preparation": 23,
+    "xauthority_config": 5,
+    "x11_unicode_clipboard": 38,
+    "network_profile": 7,
+    "qq_observation_and_existing_control_api": 46,
+    "qq_windows_body_startup": 2
+  },
+  "boundaries": [
+    "Phase 4 permits desktop egress, not QQ-domain-only filtering.",
+    "Non-root, NNP, cap-drop-ALL and derived default-deny seccomp retained; full Chromium sandbox not independently certified.",
+    "QQ desktop operated through actual agent primitives; autonomous NeuralCloud QQ planner not implemented.",
+    "SQLite observation entry is separate from Cognitive and sending; no actual QQ message ingested.",
+    "Passwords, local API tokens and authentication QR codes excluded from this summary."
+  ],
+  "neuralcloud_client_probe": {
+    "client": "NeuralCloud MistyAIClient",
+    "base_url": "http://127.0.0.1:8788",
+    "body_instance_id": "misty-qq-test-01",
+    "network_phase": 4,
+    "policy_profile": "qq-desktop-test-default-deny",
+    "health": "healthy",
+    "environment_revision": 2,
+    "visible_qq_window": true,
+    "observation_id": "obs_e3b3136f0976405a971cb709d878cfdb",
+    "frame_and_a11y_evidence_verified_by_client": true,
+    "autonomous_runtime_started": false,
+    "group_reading_sending_memory": "NOT_RUN"
+  },
+  "snapshot_phase": "Historical deployment and pre-login verification; original results retained",
+  "current_status_source": "qq-desktop-login-memory-2026-09-11.json"
+}

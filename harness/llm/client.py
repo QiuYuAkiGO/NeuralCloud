@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import re
 from typing import Any, Protocol
 
@@ -29,7 +30,8 @@ class ChatResult(BaseModel):
 
 class LLMClient(Protocol):
     def complete_json(
-        self, *, system: str, user: str, max_tokens: int | None = None
+        self, *, system: str, user: str, max_tokens: int | None = None,
+        timeout_seconds: float | None = None,
     ) -> dict[str, Any]: ...
 
     def complete_chat(
@@ -47,6 +49,7 @@ class LLMClient(Protocol):
         temperature: float = 0.7,
         stream: bool = False,
         max_tokens: int | None = None,
+        timeout_seconds: float | None = None,
     ) -> ChatResult: ...
 
 
@@ -79,13 +82,25 @@ def approx_tokens(text: str) -> int:
     return max(1, (len(text) + 1) // 2)
 
 
-def estimate_chat_usage(messages: list[dict[str, str]], text: str) -> TokenUsage:
-    prompt = sum(approx_tokens(message.get("content") or "") for message in messages)
+def estimate_chat_usage(messages: list[dict[str, Any]], text: str) -> TokenUsage:
+    # Multimodal fallback counts only text. Image token costs are provider-specific;
+    # never count a data URL as prompt text or treat a content list as a string.
+    prompt = 0
+    for message in messages:
+        content = message.get("content") or ""
+        if isinstance(content, str):
+            prompt += approx_tokens(content)
+        elif isinstance(content, list):
+            prompt += sum(
+                approx_tokens(block["text"])
+                for block in content
+                if isinstance(block, dict) and block.get("type") == "text" and isinstance(block.get("text"), str)
+            )
     completion = approx_tokens(text)
     return TokenUsage(prompt_tokens=prompt, completion_tokens=completion, source="estimate")
 
 
-def usage_from_api_payload(raw: Any, messages: list[dict[str, str]], text: str) -> TokenUsage:
+def usage_from_api_payload(raw: Any, messages: list[dict[str, Any]], text: str) -> TokenUsage:
     if isinstance(raw, dict):
         prompt = int(raw.get("prompt_tokens") or 0)
         completion = int(raw.get("completion_tokens") or 0)
@@ -117,7 +132,8 @@ class OpenAICompatClient:
         self._client.close()
 
     def complete_json(
-        self, *, system: str, user: str, max_tokens: int | None = None
+        self, *, system: str, user: str, max_tokens: int | None = None,
+        timeout_seconds: float | None = None,
     ) -> dict[str, Any]:
         with trace_scope(model_role="aux"):
             content = self.complete_chat_result(
@@ -127,6 +143,7 @@ class OpenAICompatClient:
                 ],
                 temperature=0.1,
                 max_tokens=max_tokens,
+                **({} if timeout_seconds is None else {"timeout_seconds": timeout_seconds}),
             ).text
         return parse_json_object(content)
 
@@ -141,14 +158,20 @@ class OpenAICompatClient:
 
     def complete_chat_result(
         self,
-        messages: list[dict[str, str]],
+        messages: list[dict[str, Any]],
         *,
         temperature: float = 0.7,
         stream: bool = False,
         max_tokens: int | None = None,
+        timeout_seconds: float | None = None,
     ) -> ChatResult:
         if stream:
             raise NotImplementedError("streaming is reserved for a later milestone")
+        request_options: dict[str, Any] = {}
+        if timeout_seconds is not None:
+            if not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
+                raise ValueError("request timeout must be finite and positive")
+            request_options["timeout"] = timeout_seconds
         payload: dict[str, Any] = {
             **self._extra_payload,
             "model": self.settings.llm_model,
@@ -163,6 +186,7 @@ class OpenAICompatClient:
                 f"{self.settings.llm_base_url.rstrip('/')}/chat/completions",
                 json=payload,
                 headers=headers,
+                **request_options,
             )
             span["http_status"] = response.status_code
             response.raise_for_status()
@@ -239,10 +263,12 @@ class RoutingLLMClient:
         self._aux = aux
 
     def complete_json(
-        self, *, system: str, user: str, max_tokens: int | None = None
+        self, *, system: str, user: str, max_tokens: int | None = None,
+        timeout_seconds: float | None = None,
     ) -> dict[str, Any]:
         with trace_scope(model_role="aux"):
-            return self._aux.complete_json(system=system, user=user, max_tokens=max_tokens)
+            options = {} if timeout_seconds is None else {"timeout_seconds": timeout_seconds}
+            return self._aux.complete_json(system=system, user=user, max_tokens=max_tokens, **options)
 
     def complete_chat(
         self,
@@ -261,13 +287,16 @@ class RoutingLLMClient:
         temperature: float = 0.7,
         stream: bool = False,
         max_tokens: int | None = None,
+        timeout_seconds: float | None = None,
     ) -> ChatResult:
         with trace_scope(model_role="main"):
+            options = {} if timeout_seconds is None else {"timeout_seconds": timeout_seconds}
             return self._main.complete_chat_result(
                 messages,
                 temperature=temperature,
                 stream=stream,
                 max_tokens=max_tokens,
+                **options,
             )
 
     @property
@@ -280,6 +309,7 @@ class RoutingLLMClient:
         *,
         temperature: float = 0.1,
         max_tokens: int | None = None,
+        timeout_seconds: float | None = None,
     ) -> ChatResult:
         """Run a free-form text completion on the distinct helper endpoint."""
 
@@ -291,6 +321,7 @@ class RoutingLLMClient:
                 temperature=temperature,
                 stream=False,
                 max_tokens=max_tokens,
+                **({} if timeout_seconds is None else {"timeout_seconds": timeout_seconds}),
             )
 
     def close(self) -> None:
@@ -451,7 +482,8 @@ class MockLLM:
         self.chat_calls: list[list[dict[str, str]]] = []
 
     def complete_json(
-        self, *, system: str, user: str, max_tokens: int | None = None
+        self, *, system: str, user: str, max_tokens: int | None = None,
+        timeout_seconds: float | None = None,
     ) -> dict[str, Any]:
         self.calls.append((system, user))
         blob = system + "\n" + user
@@ -488,6 +520,7 @@ class MockLLM:
         temperature: float = 0.7,
         stream: bool = False,
         max_tokens: int | None = None,
+        timeout_seconds: float | None = None,
     ) -> ChatResult:
         if stream:
             raise NotImplementedError("streaming is reserved for a later milestone")

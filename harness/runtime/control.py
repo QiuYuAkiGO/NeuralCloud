@@ -11,6 +11,7 @@ from typing import Any
 
 from harness.homeostasis.models import HomeostaticProfile
 from harness.homeostasis.profiles import ProfileRevisionStore
+from harness.memory.qq_observations import QQObservationStore
 
 from harness.runtime.monitor import MonitorRecorder, window_since
 from harness.runtime.models import ActionBackendResult, DeliveryResult, RuntimeEventPriority, RuntimeEventType
@@ -113,6 +114,7 @@ def create_control_app(
     *,
     profile_store: ProfileRevisionStore | None = None,
     monitor: MonitorRecorder | None = None,
+    qq_observation_store: QQObservationStore | None = None,
 ):
     """Create a localhost-oriented FastAPI app.
 
@@ -133,6 +135,11 @@ def create_control_app(
             control.authenticate(authorization[len(prefix) :])
         except ControlAuthorizationError as exc:
             raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    if qq_observation_store is not None:
+        from harness.runtime.qq_observations import create_qq_observation_router
+
+        app.include_router(create_qq_observation_router(qq_observation_store, authenticate=authenticate))
 
     @app.get("/v1/status", dependencies=[Depends(authenticate)])
     async def status() -> dict[str, Any]:

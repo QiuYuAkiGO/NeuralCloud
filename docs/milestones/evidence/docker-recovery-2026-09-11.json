@@ -1,0 +1,165 @@
+{
+  "schema": "neuralcloud-docker-recovery-verification-v1",
+  "scope": "Docker Desktop startup and Ubuntu-24.04 integration; QQ end-to-end is not verified",
+  "status": "passed",
+  "verified_at_utc": "2026-09-10T16:35:41.0878388Z",
+  "source_baseline": "159d55d plus uncommitted Docker recovery changes",
+  "desktop_version": "4.89.0 (238018)",
+  "engine_version": "29.7.2",
+  "wsl_version": "2.7.12.0",
+  "architecture": "ARM64",
+  "mitigations": [
+    "Back up and recreate only the two confirmed runtime directories when Docker is fully stopped",
+    "Prewarm and temporarily hold the selected WSL distribution before cold start",
+    "Require both local engine and selected WSL Docker access before reporting success"
+  ],
+  "installed_script": "C:\\Users\\22850\\AppData\\Local\\NeuralCloud\\DockerStartup\\Start-DockerDesktop.ps1",
+  "verified_file_sha256": {
+    "Start-DockerDesktop.ps1": "EFECC69B9D096602343B0AB81E3078B8CBA18E8D58F66224DAB888A7768DC8CA",
+    "DockerDesktop.psm1": "32D9A2593FB6AFACF9D6D998580A77C03BB3E5F9A971A375FDDEAA3D45C07F26"
+  },
+  "live_steps": [
+    {
+      "name": "before_containers",
+      "exit_code": 0,
+      "elapsed_seconds": 0.109
+    },
+    {
+      "name": "before_images",
+      "exit_code": 0,
+      "elapsed_seconds": 0.125
+    },
+    {
+      "name": "before_volumes",
+      "exit_code": 0,
+      "elapsed_seconds": 0.063
+    },
+    {
+      "name": "healthy_start_no_change",
+      "exit_code": 0,
+      "elapsed_seconds": 2.468
+    },
+    {
+      "name": "cycle_1_graceful_stop",
+      "exit_code": 0,
+      "elapsed_seconds": 11.766
+    },
+    {
+      "name": "cycle_1_safe_cold_start",
+      "exit_code": 0,
+      "elapsed_seconds": 9.047
+    },
+    {
+      "name": "cycle_1_linux_engine",
+      "exit_code": 0,
+      "elapsed_seconds": 0.297
+    },
+    {
+      "name": "cycle_1_wsl_integration",
+      "exit_code": 0,
+      "elapsed_seconds": 0.531
+    },
+    {
+      "name": "cycle_1_container_smoke",
+      "exit_code": 0,
+      "elapsed_seconds": 0.484
+    },
+    {
+      "name": "cycle_2_graceful_stop",
+      "exit_code": 0,
+      "elapsed_seconds": 13.922
+    },
+    {
+      "name": "cycle_2_safe_cold_start",
+      "exit_code": 0,
+      "elapsed_seconds": 8.797
+    },
+    {
+      "name": "cycle_2_linux_engine",
+      "exit_code": 0,
+      "elapsed_seconds": 0.313
+    },
+    {
+      "name": "cycle_2_wsl_integration",
+      "exit_code": 0,
+      "elapsed_seconds": 0.468
+    },
+    {
+      "name": "cycle_2_container_smoke",
+      "exit_code": 0,
+      "elapsed_seconds": 0.422
+    },
+    {
+      "name": "after_containers",
+      "exit_code": 0,
+      "elapsed_seconds": 0.11
+    },
+    {
+      "name": "after_images",
+      "exit_code": 0,
+      "elapsed_seconds": 0.125
+    },
+    {
+      "name": "after_volumes",
+      "exit_code": 0,
+      "elapsed_seconds": 0.062
+    }
+  ],
+  "original_inventory": {
+    "containers": [
+      "58229d655dff4c6ea672d5f15c4154e510b8f36833acbe5af2ff0844637b6f16",
+      "c46b90ca25981f7557ea0726db25bd6f537e29f907f2df928f84ffa9527d7ddb",
+      "ca66edd2eb919f225c8c6d077dae92c4d8ddc3308547737207cd721a4d57000b"
+    ],
+    "images": [
+      "sha256:0c79e9ae5c7f642ef13272c30378ffe9f6cade7e6f639f8f55895737d086ad2d",
+      "sha256:33ceb71981b602c1a7443a53469e4dba065f7503eab3078a2d7a57a2ab987517"
+    ],
+    "volumes": [
+      "mistyai-m0_agent-state",
+      "mistyai-m0_body-data",
+      "mistyai-m0_desktop-runtime",
+      "mistyai-m0_x11-socket"
+    ]
+  },
+  "inventory_unchanged": true,
+  "configured_startup_entries": [
+    "Desktop Docker Desktop.lnk",
+    "Existing HKCU Run Docker Desktop value"
+  ],
+  "original_entry_backup": "C:\\Users\\22850\\AppData\\Local\\NeuralCloud\\DockerStartup\\entry-backup-20260911",
+  "startup_approval_unchanged": true,
+  "docker_auto_start": false,
+  "integrated_distros_unchanged": [
+    "FedoraLinux-44",
+    "Ubuntu-24.04"
+  ],
+  "entry_verification": {
+    "VerifiedAt": "2026-09-10T16:35:41.0878388Z",
+    "ExitCode": 0,
+    "Output": "Docker Desktop: healthy\nThe local Docker Desktop Linux engine is healthy; no changes made. WSL Docker access is ready.",
+    "HealthyInvocationCreatedNoJournal": true,
+    "AutoStart": false,
+    "IntegrateDefaultWsl": true,
+    "IntegratedDistros": [
+      "FedoraLinux-44",
+      "Ubuntu-24.04"
+    ],
+    "RemainingKeepAliveProcesses": 0
+  },
+  "regression_tests": {
+    "docker_recovery_passed": 27,
+    "dev_launcher_passed": 143
+  },
+  "limits": [
+    "No Windows reboot performed",
+    "Original Docker Desktop executable may still encounter upstream bugs when bypassing the protected entries",
+    "This mitigation covers reproduced faults and is not a guarantee against every future Docker or WSL failure"
+  ],
+  "local_evidence_directory": "C:\\Projects\\NeuralCloud\\logs\\docker-recovery",
+  "previous_failed_runs_retained": [
+    "live-verification-20260910.json",
+    "live-verification-20260911-probe-argv-failed.json",
+    "live-verification-20260911-wsl-mount-failed.json"
+  ]
+}

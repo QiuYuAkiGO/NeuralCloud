@@ -1,0 +1,213 @@
+{
+  "schema_version": "qq-single-live-test-v1",
+  "recorded_at": "2026-09-11T10:57:59.556266+00:00",
+  "functional_result": "automatic_gui_delivery_verified",
+  "latency_target_result": "exceeded_30_seconds",
+  "samples": 1,
+  "formal_eight_hour_run": false,
+  "operator_gui_actions_during_candidate": 0,
+  "worker_pid": 23944,
+  "worker_started_at": "2026-09-11T10:42:44.347279+00:00",
+  "build_hash": "qq-unattended:c2bb307c03942457ba1e53ac84ad16a57c50645fa44b12034fa9f02cd1ad186b",
+  "agent_version": "v7",
+  "linux_worker_version": "v4",
+  "trace_id": "qq-trace:275632bcaf70442793b2db83a25b68f4",
+  "event_id": "qq-watch-event:19b37232af6343e4b57ed5f2aee240e5",
+  "decision_id": "qq-decision:1a8aa005d6754adfa3d00ce4e10479e2",
+  "reservation_id": "qq-watch-send:1ed2a6353065470d83c2044e39234e2b",
+  "receipt_id": "qq-delivery:9177c5d62d6c4b04a02a01bbe3233c3c",
+  "first_seen_at": "2026-09-11T10:52:09.393372+00:00",
+  "receipt_recorded_at": "2026-09-11T10:52:52.271524+00:00",
+  "e2e_ms": 42875.0,
+  "latency_basis": "local_monotonic_first_observer_visibility_to_durable_receipt",
+  "user_endpoint_send_time_known": false,
+  "network_transit_before_visibility_measured": false,
+  "cohort": "known_member",
+  "cold_path": 0,
+  "identity_reverification_was_required": true,
+  "reclassified_as_cold_to_exclude_slow_sample": false,
+  "milestones_ms": {
+    "begin_successful_preparation": 8938.0,
+    "attribution_completed": 18531.0,
+    "decision_completed": 35984.0,
+    "click_started": 40547.0,
+    "click_acknowledged": 40969.0,
+    "receipt_persisted": 42875.0
+  },
+  "phase_ms": {
+    "observation_preparation_identity_and_memory": 18531.0,
+    "decision_including_gate_and_persona": 17437.0,
+    "gui_delivery_and_receipt": 6859.0,
+    "other_scheduling": 48.0
+  },
+  "model_phase_ms": {
+    "gate": 4812.0,
+    "persona": 11922.0,
+    "total": 17422.0
+  },
+  "model_call_counts": {
+    "gate": 1,
+    "persona": 2
+  },
+  "two_stage_pipeline_preserved": true,
+  "model": "deepseek-v4-flash",
+  "persona_version": "misty-digitalbody-0.2.0",
+  "static_parser_cache_miss": true,
+  "send_attempts": 1,
+  "reply_text_matches_model_and_reservation_hash": true,
+  "new_self_bubble_visually_checked": true,
+  "empty_editor_visually_checked": true,
+  "target_group_matches_config": true,
+  "observed_reply_characters": 81,
+  "evidence_refs": [
+    "evidence://sha256/000be7967f1ecf6516a43e3dd7cbb5f2c52f47f592e877d738789c7c1cd4067b",
+    "evidence://sha256/0429a10a99a522a4b265dd58d827852fb9c0cb51a1b5df885fa2a1c137e37b19",
+    "evidence://sha256/44bd94e386971c46a7284d7776b7e89f91e6721aead1346fed22df09bab1a843",
+    "evidence://sha256/47ca3ab2dc66fae9fc937c81f9d7bd22fe6a0568ff29d94492d0f31496828355",
+    "evidence://sha256/734d3d93757963c736f3fa8af0f56420d581e08fa8cdb382fb928747ad6af1b7",
+    "evidence://sha256/81810ea2b5724a38968cc7e1f754bea668088b0ff02c6e72cfc06667e0fe8934",
+    "evidence://sha256/81b402a50f077ebdfa0a0d2c95aa8e9f42957d69d6034d24dd7fe1ba427f3b5d",
+    "evidence://sha256/8f3e4aabf47f6260242cf505881139748f521ef0598c52dcaf4c4f8029659cf5",
+    "evidence://sha256/9cbddced1ea0d6b2e3111b55682341ec193ece1db5ec6d2e23517795f61cf28f",
+    "evidence://sha256/bdd6d1fbd989adf8be4f5b3cc0ad1bd3677cab72e4d4c89dea7da8a6fad3b7dc",
+    "evidence://sha256/e2aed7fbce82f84b2bacab69f6773d929f1c144f78c5182d1c0e4a7aae43d085",
+    "evidence://sha256/e535afea37d7a713571317cc264bb5530bb4f2ee413f9d213c71c5d6420f2344"
+  ],
+  "postsend_png_sha256": "e535afea37d7a713571317cc264bb5530bb4f2ee413f9d213c71c5d6420f2344",
+  "trace_counters": {
+    "preparation_attempts": 1,
+    "body_capture": 12,
+    "accessibility_projection": 11,
+    "fresh_frame_reuse": 10,
+    "group_card_blank_dismiss": 1,
+    "group_identity_full_verification": 1,
+    "accessibility_pair_retry": 1,
+    "self_identity_full_verification": 1,
+    "member_identity_full_verification": 1,
+    "cold_path": 0,
+    "model_calls": 3,
+    "gate_model_calls": 1,
+    "static_parse_cache_miss": 1,
+    "persona_model_calls": 2,
+    "decision_outcome_ready": 1,
+    "self_identity_cache_hit": 1,
+    "group_identity_cache_hit": 1,
+    "final_draft_ax_verified": 1,
+    "turn_sent": 1
+  },
+  "prior_failed_preparation": {
+    "trace_id": "qq-trace:cafecd0f5d8f482bb28e431a83a0be99",
+    "terminal_offset_ms": 4922.0,
+    "reason": "observation_gate_busy",
+    "extra_actor_body_capture": 1,
+    "included_in_e2e_ms": true
+  },
+  "pre_test_gaps": [
+    {
+      "reason": "invalid_timing",
+      "duration_ms": 11906,
+      "started_at": "2026-09-11T10:50:37.659069Z"
+    },
+    {
+      "reason": "invalid_timing",
+      "duration_ms": 11047,
+      "started_at": "2026-09-11T10:51:08.877754Z"
+    }
+  ],
+  "in_candidate_gap": {
+    "reason": "http_error",
+    "duration_ms": 3734,
+    "started_at": "2026-09-11T10:52:13.840410Z"
+  },
+  "limitations": [
+    "one sample does not establish latency P95 or eight-hour continuity",
+    "receipt verifies GUI evidence, not QQ server delivery or read status",
+    "previous invalid timing gaps still require diagnosis before formal acceptance",
+    "runtime counters include successful preparation; earlier failed preparation is retained separately"
+  ],
+  "memory_context_checks": {
+    "considered_observations": 8,
+    "same_member_earlier_observations": 5,
+    "group_member_profile_source_ids_exact": true,
+    "context_evidence_included": true
+  },
+  "followup_cache_hit_delivery": {
+    "trace_id": "qq-trace:f7e591dfda544350acc8abb40e3f58b7",
+    "event_id": "qq-watch-event:d5563889666341b1958652fbcc085b06",
+    "decision_id": "qq-decision:43af73a28e0b4d76b2bd61cc45e62145",
+    "reservation_id": "qq-watch-send:57362233ae074adbb4ae70c0fc92aea8",
+    "receipt_id": "qq-delivery:ca3f7856189e4849a08858c84c25a3ec",
+    "first_seen_at": "2026-09-11T10:57:10.653006+00:00",
+    "receipt_recorded_at": "2026-09-11T10:57:27.023130+00:00",
+    "e2e_ms": 16375.0,
+    "cohort": "known_member",
+    "cold_path": 0,
+    "context": "later naturally arriving direct followup; distinct input from the original requested test",
+    "stage_ms": {
+      "read_identity_and_memory": 1672,
+      "decision": 8437,
+      "send_and_receipt": 6187,
+      "other_scheduling": 79
+    },
+    "group_self_and_member_cache_hit": true,
+    "member_card_clicks": 0,
+    "model_call_counts": {
+      "gate": 1,
+      "persona": 1
+    },
+    "model_timings_ms": {
+      "gate": 4656.0,
+      "persona": 3125.0,
+      "total": 8421.0
+    },
+    "counters": {
+      "preparation_attempts": 1,
+      "body_capture": 5,
+      "accessibility_projection": 5,
+      "group_identity_cache_hit": 2,
+      "fresh_frame_reuse": 4,
+      "self_identity_cache_hit": 2,
+      "member_identity_cache_hit": 1,
+      "cold_path": 0,
+      "model_calls": 2,
+      "gate_model_calls": 1,
+      "static_parse_cache_hit": 1,
+      "persona_model_calls": 1,
+      "decision_outcome_ready": 1,
+      "final_draft_ax_verified": 1,
+      "turn_sent": 1
+    },
+    "unique_attempt_and_receipt": true,
+    "reply_text_matches": true,
+    "postsend_bubble_and_empty_editor_visually_checked": true,
+    "postsend_png_sha256": "c87006cb7bb89433912f06daa91dd923a816b15e15ccc0e748b8edf7062a6da6",
+    "evidence_refs": [
+      "evidence://sha256/0af53c086059b16fff2b6b1ac8f1fe222f31ecc81714a78014bf6b497f0b62d3",
+      "evidence://sha256/252be923037629250f97dcbba3845c3d5c68551e970db7608f17dd219279ca2d",
+      "evidence://sha256/351aa747406112b8db513c9e78890178ced196fb0441fb2903b0e51962369e73",
+      "evidence://sha256/40b6235c20229dc7f863c043f42dd8305bb9f70c12841464f130293342bd2f87",
+      "evidence://sha256/47ca3ab2dc66fae9fc937c81f9d7bd22fe6a0568ff29d94492d0f31496828355",
+      "evidence://sha256/734d3d93757963c736f3fa8af0f56420d581e08fa8cdb382fb928747ad6af1b7",
+      "evidence://sha256/78b5fd6cb3f8d3976214c1573beca7b0a3cae7893e162d7063d1b9ce05800507",
+      "evidence://sha256/81b402a50f077ebdfa0a0d2c95aa8e9f42957d69d6034d24dd7fe1ba427f3b5d",
+      "evidence://sha256/8f3e4aabf47f6260242cf505881139748f521ef0598c52dcaf4c4f8029659cf5",
+      "evidence://sha256/9cbddced1ea0d6b2e3111b55682341ec193ece1db5ec6d2e23517795f61cf28f",
+      "evidence://sha256/bdd6d1fbd989adf8be4f5b3cc0ad1bd3677cab72e4d4c89dea7da8a6fad3b7dc",
+      "evidence://sha256/c87006cb7bb89433912f06daa91dd923a816b15e15ccc0e748b8edf7062a6da6",
+      "evidence://sha256/d1cc45ba3d7d1d552c9ceba37bdc6363d1de67213db389fb729d51391ff932c5",
+      "evidence://sha256/ff1782a1a1d3b1196f6384390bd7d404c37ee458f507d75629e01fc114b04a52"
+    ],
+    "within_30_seconds": true
+  },
+  "observed_successful_deliveries": 2,
+  "latency_summary": {
+    "samples": 2,
+    "values_ms": [
+      42875,
+      16375
+    ],
+    "nearest_rank_p95_ms": 42875,
+    "p95_target_pass": false,
+    "formal_acceptance": false
+  }
+}

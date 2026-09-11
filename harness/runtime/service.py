@@ -10,6 +10,7 @@ from pathlib import Path
 import httpx
 
 from harness.homeostasis.profiles import ProfileRevisionStore
+from harness.memory.qq_observations import QQObservationStore
 from harness.embodiment.guards import BodyStateGuard
 from harness.embodiment.manager import EmbodimentManager
 from harness.embodiment.providers.mistyai import (
@@ -185,7 +186,12 @@ def create_app():
         manifest_dir=ROOT / "data" / "runtime" / "manifests",
         pending_path=ROOT / "data" / "runtime" / "pending-start.json",
     )
-    app = create_control_app(control, profile_store=profile_store, monitor=monitor)
+    app = create_control_app(
+        control,
+        profile_store=profile_store,
+        monitor=monitor,
+        qq_observation_store=QQObservationStore(state_dir / "qq-observations.sqlite3"),
+    )
 
     async def startup() -> None:
         await monitor.start()

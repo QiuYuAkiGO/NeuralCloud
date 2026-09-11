@@ -1,0 +1,206 @@
+{
+  "schema_version": "qq-autowatch-live-verification-v1",
+  "recorded_at": "2026-09-11T04:31:07.151062+00:00",
+  "status": "PARTIAL_AUTOWATCH_ENABLED_OPERATOR_ASSISTED_DELIVERY_VERIFIED",
+  "previous_run": "qq-multiperson-autonomy-2026-09-11.json",
+  "scope": {
+    "group_id": "1044946257",
+    "display_name": "PHANTOM-C",
+    "user_authorized_ongoing_capture_and_group_send": true,
+    "other_groups_enabled": false
+  },
+  "running_watcher": {
+    "service": "qq-desktop-watcher-v1",
+    "pid": 23324,
+    "started_at": "2026-09-11T04:25:22.575327+00:00",
+    "heartbeat_at": "2026-09-11T04:31:03.500060+00:00",
+    "running": true,
+    "automatic_screen_capture": true,
+    "automatic_send": true,
+    "last_capture_at": "2026-09-11T04:30:30.779998+00:00",
+    "captures": 6,
+    "state": "verifying_group",
+    "last_error_type": null
+  },
+  "settings": {
+    "poll_seconds": 15,
+    "cooldown_seconds": 60,
+    "poll_interval_excludes_model_and_gui_work": true,
+    "hidden_process": true,
+    "single_desktop_worker_lock": true,
+    "windows_autostart_added": false,
+    "normal_restart_starts_new_baseline": true,
+    "one_time_recovery_option_removed": true
+  },
+  "session": {
+    "status": "healthy",
+    "started_at": "2026-09-11T02:14:42.977635+00:00",
+    "persistent_memory": true,
+    "autonomous_decision_enabled": true,
+    "automatic_screen_capture": true,
+    "automatic_send": true
+  },
+  "memory": {
+    "real_verified_members": 2,
+    "database_counts": {
+      "qq_visual_profiles": 3,
+      "qq_visual_observations": 3,
+      "qq_reply_decisions": 7,
+      "qq_reply_deliveries": 2
+    },
+    "count_scope": "configured_group_only",
+    "person_key": [
+      "group_id",
+      "member_id"
+    ],
+    "coverage": "partial_verified_visible_observations",
+    "real_qq_server_message_ids_available": false
+  },
+  "test_trigger": {
+    "captured_by_watcher": true,
+    "attributed_to_actual_profile": true,
+    "stored_in_long_term_memory": true,
+    "autonomous_action": "speak",
+    "decision_id": "qq-decision:ee0968fc09fa49898338a237c3050c93",
+    "source_record_ids": [
+      "qq-visual:c0bf657597b9403c9d4f2acce48466bb"
+    ],
+    "watch_run_started_at": "2026-09-11T03:07:38.526096+00:00",
+    "original_auto_send_status": "not_sent",
+    "original_auto_send_reason": "member_roster_anchor_outside_region",
+    "operator_revalidation": {
+      "original_event_id": "qq-watch-event:0ecaf45d2d9a4d15b2802b894ab49f4a",
+      "original_digest": "f54599491e302af50a69106102b606889efe7eaaafe9a1c05406aee7b4ce49ba",
+      "current_digest": "7bde5a2a738a8940916f6b4b690ace81fd7b9578ba036d5681896122e948aef7",
+      "current_frame": "evidence://sha256/751af34f7856a1c4db4b90dc3e158d08e05a46bed0202ba73293834dae481068",
+      "author_evidence": [
+        "evidence://sha256/1b53a29b46768b1e704d7a56fad0b711b63cb49c2fb58365b87002fc74d94d7a",
+        "evidence://sha256/7f608c651ad7d1d3eeae969e87f4ba7edab8d22d069d5cfe1c102bf5fc57d5a5",
+        "evidence://sha256/a90aeaba400fd68225233308e5d8fcce5f04fa63ddd1aec110693239538956bd",
+        "evidence://sha256/002d1652eb30ec82f770d7b4d6e15de4d01f66b3efc56338fc53225bef0786c8"
+      ],
+      "same_source_record_id": "qq-visual:c0bf657597b9403c9d4f2acce48466bb",
+      "same_decision_id": "qq-decision:ee0968fc09fa49898338a237c3050c93"
+    }
+  },
+  "actual_delivery": {
+    "provenance": "operator_gui_primitives_with_visual_verification",
+    "same_original_model_decision_and_reply": true,
+    "new_qq_messages_verified_this_turn": 1,
+    "receipt_id": "qq-delivery:be2d8671ebbe4cd6805b205d83b531d2",
+    "delivered_at": "2026-09-11T04:14:46.381412Z",
+    "body_character_count": 38,
+    "evidence_refs": [
+      "evidence://sha256/75aa54a5986a0138bf764db169ef6c2c523ade81659f15dbab3bc3e1234dce78",
+      "evidence://sha256/7e0b14ee572b6f3891383e7e4ea10ff8c33d7ea4f0fe5ff934c48665ee68da01",
+      "evidence://sha256/ba441383c4fc6c170df28add3990e681e57ae002918514f23a54d8c424a16c7f",
+      "evidence://sha256/e42a45e4c80bedac4e964909823bebe7af915e4d6cc0c4abe54ee1d286724bed",
+      "evidence://sha256/f03065e78dbec8ae43e7ccfb993e13083936635f5fa7feda1eed7fd56f5d02d7",
+      "evidence://sha256/f38a51c5875a4660ebe69c4feb74244267d3ec81e3818d2039412bf75ad81c4e"
+    ],
+    "receipt_count_for_decision": 1,
+    "original_not_sent_attempt_preserved": true,
+    "durable_cooldown_until": "2026-09-11T04:15:46.381412+00:00",
+    "no_unresolved_operator_attempt": true,
+    "operator_visually_verified_group_card_self_card_draft_and_actual_outgoing_bubble": true,
+    "automatic_backend_pre_send_checks_not_claimed_passed": true,
+    "recipient_read_or_qq_server_ack_claimed": false
+  },
+  "continuity": {
+    "basis": "private_before_after_worker_snapshots_and_current_unique_decision_receipt",
+    "before": {
+      "pid": 23324,
+      "started_at": "2026-09-11T04:25:22.575327+00:00",
+      "heartbeat_at": "2026-09-11T04:27:22.869931+00:00",
+      "captures": 2,
+      "decisions": 0,
+      "deliveries": 0,
+      "last_capture_at": "2026-09-11T04:26:29.869611+00:00",
+      "recorded_at": "2026-09-11T04:27:24.710233+00:00",
+      "event_count": 1,
+      "send_reservation_count": 1,
+      "total_delivery_receipts": 2,
+      "test_decision_receipts": 1
+    },
+    "after": {
+      "pid": 23324,
+      "started_at": "2026-09-11T04:25:22.575327+00:00",
+      "heartbeat_at": "2026-09-11T04:29:23.207828+00:00",
+      "captures": 4,
+      "decisions": 0,
+      "deliveries": 0,
+      "last_capture_at": "2026-09-11T04:28:25.868667+00:00",
+      "recorded_at": "2026-09-11T04:29:24.059887+00:00",
+      "event_count": 1,
+      "send_reservation_count": 1,
+      "total_delivery_receipts": 2,
+      "test_decision_receipts": 1
+    },
+    "same_worker_as_current_status": true,
+    "capture_count_increased": true,
+    "event_reservation_and_receipt_counts_unchanged_during_window": true,
+    "original_decision_has_one_database_receipt": true,
+    "database_uniqueness_is_not_independent_qq_bubble_verification": true
+  },
+  "launcher_idempotence": {
+    "verified": true,
+    "basis": "operator_observed_Start-QQWatcher.ps1_result",
+    "result": "already_running",
+    "same_worker_pid": 23324
+  },
+  "repairs": [
+    {
+      "repair_id": "qq-operator-repair:ef04021bd8ac4cfd93cb82627f3406c6",
+      "original_reservation_id": "qq-watch-send:100c844373144cc98a299eb93acda9a8",
+      "status": "not_sent",
+      "updated_at": "2026-09-11T03:14:41.455067+00:00",
+      "evidence_refs": [
+        "evidence://sha256/8b34e4f33ff2fe992723c2213c1d5a4b5f08a75eac58e091bdf7a7016aababe0",
+        "evidence://sha256/65e14b2608fde9c24266ca216d27ddeb1e7c036cb5079d3f24683df582b55008"
+      ]
+    },
+    {
+      "repair_id": "qq-operator-repair:091e0b10088949258877dcdfb8296ec0",
+      "original_reservation_id": "qq-watch-send:100c844373144cc98a299eb93acda9a8",
+      "status": "not_sent",
+      "updated_at": "2026-09-11T03:23:29.926274+00:00",
+      "evidence_refs": []
+    },
+    {
+      "repair_id": "qq-operator-repair:0455237862e94293a058441fb84f0948",
+      "original_reservation_id": "qq-watch-send:100c844373144cc98a299eb93acda9a8",
+      "status": "not_sent",
+      "updated_at": "2026-09-11T03:59:16.776059+00:00",
+      "evidence_refs": [
+        "evidence://sha256/3f15dcbb8a2df9295ae7eed86c7e4bf1947f804249edf41f35e9b048c3dc8a91",
+        "evidence://sha256/551c83772768c99fbbf763aea64ec5f8b104af7bb47ba8ecef0fefeaac3b401e"
+      ]
+    },
+    {
+      "repair_id": "qq-operator-repair:9d6462c2a0d74fff8ce4507e00fcfe02",
+      "original_reservation_id": "qq-watch-send:100c844373144cc98a299eb93acda9a8",
+      "status": "sent",
+      "updated_at": "2026-09-11T04:15:11.529835+00:00",
+      "evidence_refs": [
+        "evidence://sha256/f38a51c5875a4660ebe69c4feb74244267d3ec81e3818d2039412bf75ad81c4e",
+        "evidence://sha256/ba441383c4fc6c170df28add3990e681e57ae002918514f23a54d8c424a16c7f",
+        "evidence://sha256/f03065e78dbec8ae43e7ccfb993e13083936635f5fa7feda1eed7fd56f5d02d7",
+        "evidence://sha256/7e0b14ee572b6f3891383e7e4ea10ff8c33d7ea4f0fe5ff934c48665ee68da01",
+        "evidence://sha256/e42a45e4c80bedac4e964909823bebe7af915e4d6cc0c4abe54ee1d286724bed",
+        "evidence://sha256/75aa54a5986a0138bf764db169ef6c2c523ade81659f15dbab3bc3e1234dce78"
+      ]
+    }
+  ],
+  "verification": {
+    "qq_tests_passed": 389,
+    "shared_llm_tests_passed": 28,
+    "ruff": "PASS",
+    "long_term_unattended_or_full_system_restart_tested": false,
+    "whole_trigger_to_send_without_operator_repair_tested": false
+  },
+  "known_limitations": [
+    "Visual verification can still fail closed on scene or geometry ambiguity.",
+    "No fully unattended incoming-trigger-to-GUI-send pass has been verified in this run.",
+    "Only visible, attributable observations are remembered; this is not complete group history."
+  ]
+}

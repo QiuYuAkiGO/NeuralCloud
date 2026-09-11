@@ -112,6 +112,7 @@ class MistyAIClient:
         evidence_timeout_seconds: float = DEFAULT_EVIDENCE_TIMEOUT_SECONDS,
         max_evidence_bytes: int = DEFAULT_MAX_EVIDENCE_BYTES,
         evidence_cache_entries: int = DEFAULT_EVIDENCE_CACHE_ENTRIES,
+        evidence_byte_cache_bytes: int = 0,
         max_evidence_refs: int = DEFAULT_MAX_EVIDENCE_REFS,
         client: httpx.AsyncClient | None = None,
     ) -> None:
@@ -121,12 +122,17 @@ class MistyAIClient:
             raise ValueError("maximum evidence size must be positive")
         if evidence_cache_entries <= 0:
             raise ValueError("evidence cache size must be positive")
+        if type(evidence_byte_cache_bytes) is not int or evidence_byte_cache_bytes < 0:
+            raise ValueError("evidence byte cache capacity must be a nonnegative integer")
         if max_evidence_refs <= 0:
             raise ValueError("maximum evidence reference count must be positive")
         self._owns_client = client is None
         self.evidence_timeout_seconds = evidence_timeout_seconds
         self.max_evidence_bytes = max_evidence_bytes
         self.evidence_cache_entries = evidence_cache_entries
+        self.evidence_byte_cache_bytes = evidence_byte_cache_bytes
+        self._evidence_content: OrderedDict[str, tuple[str, bytes]] = OrderedDict()
+        self._evidence_content_bytes = 0
         self.max_evidence_refs = max_evidence_refs
         self._verified_evidence: OrderedDict[str, str] = OrderedDict()
         self.client = client or httpx.AsyncClient(
@@ -136,8 +142,12 @@ class MistyAIClient:
         )
 
     async def close(self) -> None:
-        if self._owns_client:
-            await self.client.aclose()
+        try:
+            if self._owns_client:
+                await self.client.aclose()
+        finally:
+            self._evidence_content.clear()
+            self._evidence_content_bytes = 0
 
     async def capabilities(self) -> NativeCapabilities:
         return _validate_native(
@@ -153,13 +163,16 @@ class MistyAIClient:
             surface="health",
         )
 
-    async def observe(self) -> NativeObservation:
+    async def observe(self, *, a11y_scope: dict[str, Any] | None = None) -> NativeObservation:
+        payload: dict[str, Any] = {"schema_version": "body-contract-v1"}
+        if a11y_scope is not None:
+            payload["a11y_scope"] = a11y_scope
         observation = _validate_native(
             NativeObservation,
             await self._request(
                 "POST",
                 "/v1/observations:capture",
-                json={"schema_version": "body-contract-v1"},
+                json=payload,
             ),
             surface="observation",
         )
@@ -334,6 +347,17 @@ class MistyAIClient:
             if expected_media_type is not None
             else None
         )
+        cached = self._evidence_content.get(digest)
+        if cached is not None:
+            media_type, content = cached
+            if normalized_expected is not None and media_type != normalized_expected:
+                raise MistyAIError(
+                    "evidence media type does not match observation metadata",
+                    code="evidence_media_type_mismatch",
+                    details={"expected": normalized_expected, "actual": media_type},
+                )
+            self._evidence_content.move_to_end(digest)
+            return content
         try:
             async with asyncio.timeout(self.evidence_timeout_seconds):
                 async with self.client.stream(
@@ -399,7 +423,20 @@ class MistyAIClient:
                 details={"expected": digest, "actual": actual_digest},
             )
         self._remember_verified_evidence(digest, media_type)
-        return bytes(content)
+        verified_content = bytes(content)
+        # Immutable content-addressed bytes can serve a second consumer of the
+        # same observation. They never replace a fresh capture request.
+        if 0 < len(verified_content) <= self.evidence_byte_cache_bytes:
+            previous = self._evidence_content.pop(digest, None)
+            if previous is not None:
+                self._evidence_content_bytes -= len(previous[1])
+            self._evidence_content[digest] = (media_type, verified_content)
+            self._evidence_content_bytes += len(verified_content)
+            while (len(self._evidence_content) > self.evidence_cache_entries
+                   or self._evidence_content_bytes > self.evidence_byte_cache_bytes):
+                _, (_, evicted) = self._evidence_content.popitem(last=False)
+                self._evidence_content_bytes -= len(evicted)
+        return verified_content
 
     @staticmethod
     def _normalize_media_type(value: str | None) -> str:

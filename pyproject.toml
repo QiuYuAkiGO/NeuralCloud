@@ -20,6 +20,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+qq = [
+    "fastapi>=0.111",
+    "uvicorn>=0.30",
+    "Pillow>=10.4",
+]
 postgres = [
     "psycopg2-binary>=2.9",
 ]

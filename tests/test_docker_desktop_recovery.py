@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import ctypes
 import json
 import os
 from pathlib import Path
@@ -19,12 +20,32 @@ pytestmark = pytest.mark.skipif(os.name != "nt" or not PWSH, reason="requires Wi
 COMMON = r"""
 $script:Root = $env:TEST_DOCKER_ROOT
 $script:Starts = 0
+$script:KeepAliveStarts = 0
+$script:KeepAliveStops = 0
+$script:KeepAliveEvents = @()
 function script:Get-DDPaths {
     $local = Join-Path $script:Root 'local'
     @{ Local=$local; Run=(Join-Path $local 'Docker\run'); Secrets=(Join-Path $local 'docker-secrets-engine');
        Logs=(Join-Path $local 'Docker\log\host'); Journal=(Join-Path $script:Root 'journal'); Docker='mock'; Desktop='mock' }
 }
 function script:Invoke-DDProbe { @{Healthy=$false} }
+$script:OriginalWslProbe = (Get-Command Invoke-DDWslProbe).ScriptBlock
+$script:OriginalBackup = (Get-Command Backup-DDRuntime).ScriptBlock
+$script:OriginalStartKeepAlive = (Get-Command Start-DDWslKeepAlive).ScriptBlock
+$script:OriginalStopKeepAlive = (Get-Command Stop-DDWslKeepAlive).ScriptBlock
+function script:Invoke-DDWslProbe { throw 'Unexpected real WSL probe attempt' }
+function script:Start-DDWslKeepAlive {
+    $script:KeepAliveStarts++
+    $script:KeepAliveEvents += 'keepalive_start'
+    @{mock=$true}
+}
+function script:Stop-DDWslKeepAlive {
+    param($KeepAlive)
+    if ($null -ne $KeepAlive) {
+        $script:KeepAliveStops++
+        $script:KeepAliveEvents += 'keepalive_stop'
+    }
+}
 function script:Get-DDProcesses { @() }
 function script:Start-DDHidden { throw 'Unexpected real startup attempt' }
 $paths = Get-DDPaths
@@ -151,3 +172,202 @@ def test_probe_timeout_kills_only_its_own_process(tmp_path: Path) -> None:
     assert report["TimedOut"] is True
     assert report["Healthy"] is False
     assert time.monotonic() - before < 8
+
+
+def test_wsl_integration_waits_for_delayed_readiness_after_engine_start(tmp_path: Path) -> None:
+    report = run_mock(tmp_path, """
+        $script:WslChecks = 0
+        function script:Start-DDHidden { $script:Starts++ }
+        function script:Invoke-DDProbe { @{Healthy=($script:Starts -gt 0)} }
+        function script:Invoke-DDWslProbe {
+            $script:WslChecks++
+            @{Healthy=($script:WslChecks -ge 2)}
+        }
+        $result = Start-DockerDesktopSafe -WslDistro 'Ubuntu 24.04' -TimeoutSeconds 2
+        @{result=$result; starts=$script:Starts; wsl_checks=$script:WslChecks}
+    """)
+    assert report["result"]["status"] == "healthy"
+    assert report["result"]["integration_status"] == "ready"
+    assert report["result"]["wsl_distro"] == "Ubuntu 24.04"
+    assert report["starts"] == 1
+    assert report["wsl_checks"] == 2
+    assert not backups(tmp_path)
+
+
+def test_failed_wsl_integration_never_restarts_or_rotates_again(tmp_path: Path) -> None:
+    report = run_mock(tmp_path, """
+        $script:WslChecks = 0
+        function script:Start-DDHidden { $script:Starts++ }
+        function script:Invoke-DDProbe { @{Healthy=($script:Starts -gt 0)} }
+        function script:Invoke-DDWslProbe { $script:WslChecks++; @{Healthy=$false} }
+        $result = Start-DockerDesktopSafe -RefreshRuntimeOnColdStart -WslDistro 'Ubuntu-24.04' -TimeoutSeconds 1
+        @{result=$result; starts=$script:Starts; wsl_checks=$script:WslChecks; keepalive_stops=$script:KeepAliveStops}
+    """)
+    assert report["result"]["status"] == "integration_not_ready"
+    assert report["result"]["exit_code"] == 30
+    assert report["starts"] == 1
+    assert report["wsl_checks"] >= 2
+    assert len(backups(tmp_path)) == 2
+    assert report["keepalive_stops"] == 1
+
+
+@pytest.mark.parametrize("existing_start", [False, True])
+def test_already_healthy_and_existing_start_success_also_check_wsl(tmp_path: Path, existing_start: bool) -> None:
+    setup = (
+        "function script:Get-DDProcesses { @([pscustomobject]@{ProcessName='Docker Desktop'}) }; "
+        "function script:Wait-DDState { @{State='healthy'; Error=$null} }"
+        if existing_start else "function script:Invoke-DDProbe { @{Healthy=$true} }"
+    )
+    report = run_mock(tmp_path, setup + """
+        $script:WslChecks = 0
+        function script:Invoke-DDWslProbe { $script:WslChecks++; @{Healthy=$true} }
+        $result = Start-DockerDesktopSafe -RefreshRuntimeOnColdStart -WslDistro 'Ubuntu-24.04' -TimeoutSeconds 1
+        @{result=$result; starts=$script:Starts; wsl_checks=$script:WslChecks}
+    """)
+    assert report["result"]["integration_status"] == "ready"
+    assert report["wsl_checks"] == 1
+    assert report["starts"] == 0
+    assert not backups(tmp_path)
+    assert report["result"]["journal"] is None
+
+
+@pytest.mark.parametrize(("milliseconds", "duration", "kill_after"), [(5000, "3.500s", "0.500s"), (1000, "0.700s", "0.100s")])
+def test_wsl_probe_preserves_distro_as_one_argument_without_a_shell(tmp_path: Path, milliseconds: int, duration: str, kill_after: str) -> None:
+    report = run_mock(tmp_path, r"""
+        function script:Invoke-DDTimedProcess {
+            param($Executable, $Arguments, $TimeoutMilliseconds)
+            @{executable=$Executable; arguments=$Arguments; timeout=$TimeoutMilliseconds}
+        }
+        $paths.Wsl = 'mock-wsl'
+        & $script:OriginalWslProbe $paths 'Ubuntu "test" --shutdown \' PROBE_MS
+    """.replace("PROBE_MS", str(milliseconds)))
+    parse = ctypes.windll.shell32.CommandLineToArgvW
+    parse.argtypes = [ctypes.c_wchar_p, ctypes.POINTER(ctypes.c_int)]
+    parse.restype = ctypes.POINTER(ctypes.c_wchar_p)
+    count = ctypes.c_int()
+    pointer = parse("probe.exe " + report["arguments"], ctypes.byref(count))
+    assert pointer
+    try:
+        arguments = [pointer[index] for index in range(1, count.value)]
+    finally:
+        ctypes.windll.kernel32.LocalFree(ctypes.cast(pointer, ctypes.c_void_p))
+    assert arguments[:5] == ["--distribution", 'Ubuntu "test" --shutdown \\', "--exec", "/usr/bin/timeout", "--kill-after=" + kill_after]
+    assert arguments[5] == duration
+    assert arguments[-6:] == ["/usr/bin/docker", "--host", "unix:///var/run/docker.sock", "info", "--format", "{{.ServerVersion}}"]
+    assert report["timeout"] == milliseconds
+    # WSL treats unnecessarily quoted initial option tokens as a Linux command.
+    # A correct C-runtime argv round-trip alone cannot catch this WSL-specific behavior.
+    assert report["arguments"].startswith("--distribution ")
+    assert " --exec /usr/bin/timeout " in report["arguments"]
+    assert '"--distribution"' not in report["arguments"]
+    assert '"/usr/bin/docker"' not in report["arguments"]
+
+
+@pytest.mark.parametrize("flag", ["-CheckOnly", "-WhatIf"])
+def test_read_only_healthy_engine_does_not_wake_wsl(tmp_path: Path, flag: str) -> None:
+    report = run_mock(tmp_path, """
+        function script:Invoke-DDProbe { @{Healthy=$true} }
+        function script:Invoke-DDWslProbe { throw 'Read-only mode must not invoke WSL' }
+    """ + f"Start-DockerDesktopSafe {flag} -WslDistro 'Ubuntu-24.04'")
+    assert report["status"] == "integration_not_checked"
+    assert report["exit_code"] == 10
+    assert report["journal"] is None
+    assert not backups(tmp_path)
+
+
+def test_cold_wsl_keepalive_precedes_backup_and_start_and_is_released(tmp_path: Path) -> None:
+    report = run_mock(tmp_path, """
+        function script:Backup-DDRuntime {
+            param($Paths, $Evidence)
+            $script:KeepAliveEvents += 'backup'
+            & $script:OriginalBackup $Paths $Evidence
+        }
+        function script:Start-DDHidden {
+            $script:KeepAliveEvents += 'desktop_start'
+            $script:Starts++
+        }
+        function script:Invoke-DDProbe { @{Healthy=($script:Starts -gt 0)} }
+        function script:Invoke-DDWslProbe { @{Healthy=$true} }
+        $result = Start-DockerDesktopSafe -RefreshRuntimeOnColdStart -WslDistro 'Ubuntu-24.04' -TimeoutSeconds 1
+        @{result=$result; events=$script:KeepAliveEvents; starts=$script:KeepAliveStarts; stops=$script:KeepAliveStops}
+    """)
+    assert report["result"]["status"] == "healthy"
+    assert report["events"] == ["keepalive_start", "backup", "desktop_start", "keepalive_stop"]
+    assert report["starts"] == report["stops"] == 1
+
+
+@pytest.mark.parametrize("mode", ["healthy", "existing", "check_only", "what_if"])
+def test_non_cold_paths_do_not_create_wsl_keepalive(tmp_path: Path, mode: str) -> None:
+    setup = {
+        "healthy": "function script:Invoke-DDProbe { @{Healthy=$true} }",
+        "existing": "function script:Get-DDProcesses { @([pscustomobject]@{ProcessName='Docker Desktop'}) }; function script:Wait-DDState { @{State='healthy'; Error=$null} }",
+        "check_only": "",
+        "what_if": "",
+    }[mode]
+    flag = {"check_only": "-CheckOnly", "what_if": "-WhatIf"}.get(mode, "")
+    report = run_mock(tmp_path, setup + """
+        function script:Invoke-DDWslProbe { @{Healthy=$true} }
+    """ + f"$result = Start-DockerDesktopSafe -WslDistro 'Ubuntu-24.04' {flag}; " + """
+        @{result=$result; starts=$script:KeepAliveStarts; stops=$script:KeepAliveStops}
+    """)
+    assert report["starts"] == report["stops"] == 0
+    assert not backups(tmp_path)
+
+
+def test_wsl_prewarm_failure_does_not_start_or_modify_runtime(tmp_path: Path) -> None:
+    report = run_mock(tmp_path, """
+        function script:Start-DDWslKeepAlive { throw 'WSL readiness marker timed out' }
+        $result = Start-DockerDesktopSafe -RefreshRuntimeOnColdStart -WslDistro 'Ubuntu-24.04' -TimeoutSeconds 1
+        @{result=$result; starts=$script:Starts}
+    """)
+    assert report["result"]["exit_code"] == 20
+    assert "marker timed out" in report["result"]["message"]
+    assert report["starts"] == 0
+    assert not backups(tmp_path)
+    assert (tmp_path / "local/Docker/run/sentinel").read_text() == "run-data"
+
+
+@pytest.mark.parametrize("echo_marker", [True, False])
+def test_keepalive_marker_and_cleanup_with_owned_fake_process(tmp_path: Path, echo_marker: bool) -> None:
+    # Replace only wsl.exe with an owned PowerShell child; exercise real stdin/ready/cleanup code.
+    command = (
+        "[Console]::WriteLine([Console]::ReadLine()); [Console]::In.ReadToEnd() | Out-Null"
+        if echo_marker else "Start-Sleep -Seconds 30"
+    )
+    report = run_mock(tmp_path, r"""
+        $script:OwnStopCalls = 0
+        $script:OwnedPid = 0
+        function script:New-DDWslKeepAliveProcess {
+            $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes('CHILD_COMMAND'))
+            $process = [Diagnostics.Process]::new()
+            $process.StartInfo = [Diagnostics.ProcessStartInfo]@{
+                FileName=(Get-Process -Id $PID).Path
+                Arguments=('-NoProfile -NonInteractive -EncodedCommand ' + $encoded)
+                UseShellExecute=$false; CreateNoWindow=$true
+                RedirectStandardInput=$true; RedirectStandardOutput=$true; RedirectStandardError=$true
+            }
+            return $process
+        }
+        function script:Stop-DDWslKeepAlive {
+            param($holder)
+            $script:OwnedPid = $holder.Process.Id
+            $script:OwnStopCalls++
+            & $script:OriginalStopKeepAlive $holder
+        }
+        $outcome = 'ready'
+        $errorText = $null
+        try {
+            $holder = & $script:OriginalStartKeepAlive (Get-DDPaths) 'mock-distro' 3000 30
+            Stop-DDWslKeepAlive $holder
+        } catch {
+            $outcome = 'failed'
+            $errorText = $_.Exception.Message
+        }
+        @{outcome=$outcome; error=$errorText; stop_calls=$script:OwnStopCalls;
+            process_alive=($null -ne (Get-Process -Id $script:OwnedPid -ErrorAction SilentlyContinue))}
+    """.replace("CHILD_COMMAND", command))
+    assert report["outcome"] == ("ready" if echo_marker else "failed")
+    assert report["stop_calls"] == 1
+    assert report["process_alive"] is False
+    if not echo_marker:
+        assert "timed out" in report["error"]

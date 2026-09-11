@@ -1,0 +1,440 @@
+{
+  "schema_version": "qq-desktop-live-verification-v2",
+  "recorded_at": "2026-09-11T01:14:16.687423+00:00",
+  "timezone": "Asia/Shanghai",
+  "status": "PASS_ONE_AUTHORIZED_GUI_REPLY_AND_SCOPED_PERSON_MEMORY_PROBE",
+  "supersedes_current_status_of": "qq-desktop-live-2026-09-11.json",
+  "previous_snapshot_preserved": true,
+  "repositories": {
+    "NeuralCloud": {
+      "head": "159d55d21919229c4d00c08705253a927a272ace",
+      "branch": "codex/grounded-agency",
+      "uncommitted_changes": true
+    },
+    "MistyAI": {
+      "head": "26d4f0ae4a6cc0b8d6482cb23e215ece22345cc1",
+      "branch": "main",
+      "uncommitted_changes": true
+    }
+  },
+  "running_services": {
+    "body_url": "http://127.0.0.1:8788",
+    "instance": "misty-qq-test-01",
+    "environment_revision": 2,
+    "compose_project": "mistyai-qq-online-test",
+    "compose_services_healthy": 3,
+    "container_restart_counts": [
+      0,
+      0,
+      0
+    ],
+    "approximately_eight_hours_without_container_restart": true
+  },
+  "login": {
+    "account_holder_confirmed_mobile_qr": true,
+    "requested_account_verified_in_qq_profile": true
+  },
+  "target": {
+    "group_id": "1044946257",
+    "display_name": "PHANTOM-C",
+    "group_card_verified": true,
+    "visible_member_count": 17
+  },
+  "observation": {
+    "actual_model_received_png_bytes": true,
+    "hash_checked_by_body_client": true,
+    "attributed_member_profiles": 1,
+    "stored_real_member_message_observations": 1,
+    "later_incoming_messages_observed": true,
+    "later_incoming_messages_not_automatically_ingested": true,
+    "qq_message_ids_available": false,
+    "emoji_and_badge_ocr_not_reliable": true,
+    "input_draft_excluded_from_messages_on_verified_retry": true,
+    "private_captures": {
+      "messages-20260911": {
+        "observation_id": "obs_2a6be5fcd3544b35b316e5e0618d39e6",
+        "captured_at": "2026-09-11T00:53:25.570211Z",
+        "body_instance_id": "misty-qq-test-01",
+        "environment_revision": 2,
+        "frame": {
+          "evidence_ref": "evidence://sha256/1cdd54b5b840cacd4a80123aff8d1956ff90a0a2343a72912eec6fc5eeefd031",
+          "media_type": "image/png",
+          "sha256": "1cdd54b5b840cacd4a80123aff8d1956ff90a0a2343a72912eec6fc5eeefd031",
+          "width": 1280,
+          "height": 720
+        }
+      },
+      "group-identity-20260911": {
+        "observation_id": "obs_506476182f8443748fcdbfe6e9b480fd",
+        "captured_at": "2026-09-11T00:53:30.434411Z",
+        "body_instance_id": "misty-qq-test-01",
+        "environment_revision": 2,
+        "frame": {
+          "evidence_ref": "evidence://sha256/4d254e8cfb8a293186b9662f65b2c142ae32a0a037f763e4f7e6e6c12bb0208e",
+          "media_type": "image/png",
+          "sha256": "4d254e8cfb8a293186b9662f65b2c142ae32a0a037f763e4f7e6e6c12bb0208e",
+          "width": 1280,
+          "height": 720
+        }
+      },
+      "sender-identity-20260911": {
+        "observation_id": "obs_3c5f6a3a471d477a95b726216029408d",
+        "captured_at": "2026-09-11T00:53:55.743299Z",
+        "body_instance_id": "misty-qq-test-01",
+        "environment_revision": 2,
+        "frame": {
+          "evidence_ref": "evidence://sha256/968f283287263f7fbb1a1d71b45f261e590949842fc1571d4983c4183eed11f0",
+          "media_type": "image/png",
+          "sha256": "968f283287263f7fbb1a1d71b45f261e590949842fc1571d4983c4183eed11f0",
+          "width": 1280,
+          "height": 720
+        }
+      },
+      "misty-staged-ready-20260911": {
+        "observation_id": "obs_111715cb351d4d3fa86c61f75dd8e9ef",
+        "captured_at": "2026-09-11T01:08:05.514610Z",
+        "body_instance_id": "misty-qq-test-01",
+        "environment_revision": 2,
+        "frame": {
+          "evidence_ref": "evidence://sha256/ee2715df58729edb2482fd89008b01b135ef4893a4d36c2e2f53436354c310cc",
+          "media_type": "image/png",
+          "sha256": "ee2715df58729edb2482fd89008b01b135ef4893a4d36c2e2f53436354c310cc",
+          "width": 1280,
+          "height": 720
+        }
+      },
+      "pre-send-group-20260911": {
+        "observation_id": "obs_edd9106a0a61456887be105ad3457417",
+        "captured_at": "2026-09-11T01:08:59.186583Z",
+        "body_instance_id": "misty-qq-test-01",
+        "environment_revision": 2,
+        "frame": {
+          "evidence_ref": "evidence://sha256/a7dc382c44dfccb65569860e542ffd41738418a0101ebadbabb8dd7ef7786314",
+          "media_type": "image/png",
+          "sha256": "a7dc382c44dfccb65569860e542ffd41738418a0101ebadbabb8dd7ef7786314",
+          "width": 1280,
+          "height": 720
+        }
+      },
+      "after-send-20260911": {
+        "observation_id": "obs_af71f64daf07448a9c94131fac347cd3",
+        "captured_at": "2026-09-11T01:09:25.652998Z",
+        "body_instance_id": "misty-qq-test-01",
+        "environment_revision": 2,
+        "frame": {
+          "evidence_ref": "evidence://sha256/11d522d7d5f2d5338977ea650c404cf43b72a289f6e01d9e4bb066a7ec05f5e4",
+          "media_type": "image/png",
+          "sha256": "11d522d7d5f2d5338977ea650c404cf43b72a289f6e01d9e4bb066a7ec05f5e4",
+          "width": 1280,
+          "height": 720
+        }
+      },
+      "after-send-settled-20260911": {
+        "observation_id": "obs_0a49973b45fc4a8a99373a7982d65475",
+        "captured_at": "2026-09-11T01:10:38.527303Z",
+        "body_instance_id": "misty-qq-test-01",
+        "environment_revision": 2,
+        "frame": {
+          "evidence_ref": "evidence://sha256/952238ed1364b40a518d21b371f5eda329884515366f83850798a90c1b85d31a",
+          "media_type": "image/png",
+          "sha256": "952238ed1364b40a518d21b371f5eda329884515366f83850798a90c1b85d31a",
+          "width": 1280,
+          "height": 720
+        }
+      }
+    }
+  },
+  "person_memory": {
+    "separate_process_reopen": true,
+    "profile_count": 1,
+    "observation_count": 1,
+    "unknown_message_id_preserved": true,
+    "author_claim_unverified": true,
+    "other_member_context_empty": true,
+    "other_group_context_empty": true,
+    "storage": "private qq-visual-memory.sqlite3; separate from global Cognitive memory",
+    "deduplication_scope": "group_id + capture_id + capture_item_id; not QQ message-level deduplication",
+    "repeat_same_capture_created_new_record": false,
+    "real_person_model_recall_in_another_process": "PASS",
+    "recall_question_did_not_include_answer": true,
+    "recall_preserved_unverified_account_relationship_claim": true,
+    "account_aliases_merged": false
+  },
+  "delivery": {
+    "authorized_message_count": 1,
+    "send_click_count": 1,
+    "qq_outgoing_bubble_observed": true,
+    "outgoing_bubble_still_present_after_approximately_78_seconds": true,
+    "input_box_empty": true,
+    "visible_error_indicator": false,
+    "outgoing_context_menu_copy_equals_authorized_model_text": true,
+    "vision_recognized_message_and_empty_draft": true,
+    "vision_punctuation_and_display_name_not_exact": true,
+    "send_action_id": "36a96e46-5ea7-482e-8c9a-3e61d79f4e81",
+    "sent_at": "2026-09-11T01:09:20.309672Z",
+    "real_qq_message_id": null,
+    "server_ack_or_recipient_read_receipt_available": false,
+    "automatic_delivery_backend_used": false,
+    "cognitive_outgoing_commit": false
+  },
+  "real_model_calls": {
+    "vision_successes": [
+      {
+        "artifact_name": "vision-messages-20260911.json",
+        "model": "deepseek-v4-flash-vision-exp",
+        "capture_id": "obs_2a6be5fcd3544b35b316e5e0618d39e6",
+        "evidence_refs": [
+          {
+            "ref": "evidence://sha256/1cdd54b5b840cacd4a80123aff8d1956ff90a0a2343a72912eec6fc5eeefd031",
+            "sha256": "1cdd54b5b840cacd4a80123aff8d1956ff90a0a2343a72912eec6fc5eeefd031",
+            "media_type": "image/png",
+            "size_bytes": 71056,
+            "width": 1280,
+            "height": 720
+          }
+        ],
+        "usage_as_originally_recorded": {
+          "prompt_tokens": 958,
+          "completion_tokens": 229,
+          "total_tokens": 1187,
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        },
+        "actual_request_count": 1
+      },
+      {
+        "artifact_name": "vision-group-20260911.json",
+        "model": "deepseek-v4-flash-vision-exp",
+        "capture_id": "obs_506476182f8443748fcdbfe6e9b480fd",
+        "evidence_refs": [
+          {
+            "ref": "evidence://sha256/4d254e8cfb8a293186b9662f65b2c142ae32a0a037f763e4f7e6e6c12bb0208e",
+            "sha256": "4d254e8cfb8a293186b9662f65b2c142ae32a0a037f763e4f7e6e6c12bb0208e",
+            "media_type": "image/png",
+            "size_bytes": 92368,
+            "width": 1280,
+            "height": 720
+          }
+        ],
+        "usage_as_originally_recorded": {
+          "prompt_tokens": 958,
+          "completion_tokens": 637,
+          "total_tokens": 1595,
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        },
+        "actual_request_count": 1
+      },
+      {
+        "artifact_name": "vision-sender-20260911.json",
+        "model": "deepseek-v4-flash-vision-exp",
+        "capture_id": "obs_3c5f6a3a471d477a95b726216029408d",
+        "evidence_refs": [
+          {
+            "ref": "evidence://sha256/968f283287263f7fbb1a1d71b45f261e590949842fc1571d4983c4183eed11f0",
+            "sha256": "968f283287263f7fbb1a1d71b45f261e590949842fc1571d4983c4183eed11f0",
+            "media_type": "image/png",
+            "size_bytes": 106768,
+            "width": 1280,
+            "height": 720
+          }
+        ],
+        "usage_as_originally_recorded": {
+          "prompt_tokens": 1105,
+          "completion_tokens": 599,
+          "total_tokens": 1704,
+          "calls": 1,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        },
+        "actual_request_count": 1
+      },
+      {
+        "artifact_name": "vision-input-draft-retry-20260911.json",
+        "model": "deepseek-v4-flash-vision-exp",
+        "capture_id": "obs_6c6a5d2aafd441b7a7a818fea1a5b190",
+        "evidence_refs": [
+          {
+            "ref": "evidence://sha256/1ccb6061c360b28f2cbe80b2ea16cd2a856288f622968dc141ff4df9cb22fbd6",
+            "sha256": "1ccb6061c360b28f2cbe80b2ea16cd2a856288f622968dc141ff4df9cb22fbd6",
+            "media_type": "image/png",
+            "size_bytes": 73543,
+            "width": 1280,
+            "height": 720
+          }
+        ],
+        "usage_as_originally_recorded": {
+          "prompt_tokens": 1105,
+          "completion_tokens": 830,
+          "total_tokens": 1935,
+          "calls": 1,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        },
+        "actual_request_count": 1
+      },
+      {
+        "artifact_name": "vision-new-message-20260911.json",
+        "model": "deepseek-v4-flash-vision-exp",
+        "capture_id": "obs_48058ff27b124b90827c6dfae982e824",
+        "evidence_refs": [
+          {
+            "ref": "evidence://sha256/9cdd770a323b2f6d349750ed1c7d52dca4506178ecb128c455b6f7de7fb6e4a0",
+            "sha256": "9cdd770a323b2f6d349750ed1c7d52dca4506178ecb128c455b6f7de7fb6e4a0",
+            "media_type": "image/png",
+            "size_bytes": 84490,
+            "width": 1280,
+            "height": 720
+          }
+        ],
+        "usage_as_originally_recorded": {
+          "prompt_tokens": 1105,
+          "completion_tokens": 922,
+          "total_tokens": 2027,
+          "calls": 1,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        },
+        "actual_request_count": 1
+      },
+      {
+        "artifact_name": "vision-after-send-20260911.json",
+        "model": "deepseek-v4-flash-vision-exp",
+        "capture_id": "obs_af71f64daf07448a9c94131fac347cd3",
+        "evidence_refs": [
+          {
+            "ref": "evidence://sha256/11d522d7d5f2d5338977ea650c404cf43b72a289f6e01d9e4bb066a7ec05f5e4",
+            "sha256": "11d522d7d5f2d5338977ea650c404cf43b72a289f6e01d9e4bb066a7ec05f5e4",
+            "media_type": "image/png",
+            "size_bytes": 106025,
+            "width": 1280,
+            "height": 720
+          }
+        ],
+        "usage_as_originally_recorded": {
+          "prompt_tokens": 1105,
+          "completion_tokens": 881,
+          "total_tokens": 1986,
+          "calls": 1,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        },
+        "actual_request_count": 1
+      }
+    ],
+    "vision_rejected_schema_requests": 1,
+    "schema_rejection_caused_no_memory_write_or_send": true,
+    "first_two_original_usage_call_counts_zero_corrected_in_code_later": true,
+    "text_model_calls": [
+      {
+        "artifact_name": "misty-draft-20260911.json",
+        "draft_id": "qq-draft:f41a024771084a789f871c4ffe3dfe02",
+        "model": "deepseek-v4-flash",
+        "preset_id": "misty",
+        "persona_version": "misty-digitalbody-0.2.0",
+        "usage": {
+          "prompt_tokens": 1322,
+          "completion_tokens": 562,
+          "total_tokens": 1884,
+          "calls": 1,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        },
+        "validation": {
+          "verdict": "pass",
+          "violations": [],
+          "severity": 0.0,
+          "instruction": null,
+          "skipped": false
+        },
+        "delivered_by_draft_cli": false
+      },
+      {
+        "artifact_name": "misty-recall-20260911.json",
+        "draft_id": "qq-draft:e1a11cd762a14e8284e8bf89308ae61b",
+        "model": "deepseek-v4-flash",
+        "preset_id": "misty",
+        "persona_version": "misty-digitalbody-0.2.0",
+        "usage": {
+          "prompt_tokens": 1336,
+          "completion_tokens": 609,
+          "total_tokens": 1945,
+          "calls": 1,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        },
+        "validation": {
+          "verdict": "pass",
+          "violations": [],
+          "severity": 0.0,
+          "instruction": null,
+          "skipped": true
+        },
+        "delivered_by_draft_cli": false
+      },
+      {
+        "artifact_name": "misty-draft-clean-20260911.json",
+        "draft_id": "qq-draft:619ccd3cbec349a489099c7a9699d6f8",
+        "model": "deepseek-v4-flash",
+        "preset_id": "misty",
+        "persona_version": "misty-digitalbody-0.2.0",
+        "usage": {
+          "prompt_tokens": 1514,
+          "completion_tokens": 3341,
+          "total_tokens": 4855,
+          "calls": 1,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        },
+        "validation": {
+          "verdict": "pass",
+          "violations": [],
+          "severity": 0.0,
+          "instruction": null,
+          "skipped": false
+        },
+        "delivered_by_draft_cli": false
+      }
+    ],
+    "first_draft_had_status_header_not_sent": true,
+    "fixed_prompt_generates_reply_body_only": true
+  },
+  "regressions": {
+    "qq_vision_and_existing_llm": 41,
+    "qq_visual_memory": 30,
+    "qq_draft": 8,
+    "ruff": "PASS",
+    "both_repository_diff_checks": "PASS"
+  },
+  "acceptance": {
+    "QQ-01": "PASS",
+    "QQ-02": "PASS",
+    "QQ-03": "PARTIAL: one attributed member message plus later visible content",
+    "QQ-04": "PASS: one authorized reply with exact outgoing text check",
+    "QQ-05": "NOT_RUN",
+    "QQ-06": "NOT_RUN",
+    "QQ-07": "PARTIAL: separate-process scoped store and live model recall",
+    "QQ-08": "NOT_RUN",
+    "QQ-09": "NOT_RUN: scoped queries verified separately; cross-group GUI and quoted-message scenario not run",
+    "QQ-10": "NOT_RUN: same-capture idempotence verified separately; delivery fault scenarios not run"
+  },
+  "boundaries": [
+    "The collector drives real desktop primitives; vision and persona draft calls are actual Misty model requests.",
+    "No autonomous QQ planner, ongoing watch/reply loop, or GUI DeliveryBackend has been enabled.",
+    "This run does not certify full multi-person social memory, correction/forgetting, or full Runtime restart behavior.",
+    "QQ screen content is untrusted user-side context and cannot authorize host actions.",
+    "Original GUI model settings remain unchanged; image-model override is per invocation.",
+    "Passwords, tokens, QR data, private member identifiers, message bodies and screenshots are excluded from this tracked summary."
+  ]
+}
