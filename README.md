@@ -8,6 +8,7 @@
 
 **文档**：
 
+- **情绪表达与参数语义调研计划**：[诊断方案](docs/harness/16-emotional-expression-diagnostic-research-plan.md) — DeepSeek V4.1 Flash 实际输入审计、参数语义/强度投影/表达风格对照，以及后训练决策；当前为计划，未执行真实实验。
 - **项目模块进度（持续更新）**：[docs/PROJECT_PROGRESS.md](docs/PROJECT_PROGRESS.md) — 模块状态、验收缺口、下一步与更新记录；模块变更时同步维护。
 - **BR-1 基本功能里程碑**：[目标与差距](docs/milestones/BASIC_RUNTIME_V1.md)、[测试案例](docs/milestones/BASIC_RUNTIME_V1_TEST_CASES.md)、[执行记录](docs/milestones/BASIC_RUNTIME_V1_EXECUTION.md) — 真实在线 8 小时、内稳态、Linux 桌面终端、对话与人设一致性。
 
