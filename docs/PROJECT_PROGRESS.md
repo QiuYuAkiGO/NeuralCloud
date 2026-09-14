@@ -45,7 +45,7 @@
 | NC-09 | Runtime Supervisor | 已实现；8 小时待验收 | 事件队列/心跳/watchdog、认证、交付提交与恢复；journal 有界正文、流式恢复及命令序号索引；显式终端多步桥和新消息中断。 | 元数据和部分其他账本仍随历史增长；按 BR-1 验收真实进程/状态稳定性。 | [runtime](../harness/runtime/)、[journal 回归](../tests/test_runtime_journal_bounded.py)、[终端集成](../tests/test_basic_terminal_runtime.py)、[BR-1](milestones/BASIC_RUNTIME_V1.md) | 2026-09-09 |
 | NC-10 | Cognitive 服务与空闲主动表达 | 已实现（基础） | Prepare/Commit 与持久化；辅助模型 SILENT/SPEAK 判定、失败回退、用户消息抢占、主动表达审计。 | 主动说话不等于完整自主行动；生产工作重评缺口见 NC-20，模型自主研究路线见 GA-03/07。 | [cognitive](../harness/cognitive/)、[adapters](../harness/runtime/adapters.py)、[自主门控测试](../tests/test_autonomous_gate.py) | 2026-09-08 |
 | NC-11 | 内稳态引擎与稳定化 | 已实现（确定性机制）；8 小时现场待验收 | 七维、实际位移耦合、感知门控与持续边界 watchdog；按维度时间修复高频无变化/仅能量事件吞掉恢复时间；SQLite 有界账本。 | 8 小时加速动力学与真实耗尽保护回归通过；真实无干扰 8 小时、CPU/RSS/磁盘增长仍待验。 | [homeostasis](../harness/homeostasis/)、[稳定化方案](HOMEOSTASIS_STABILITY_PLAN.md)、[加速稳定性](../tests/test_basic_homeostasis_stability.py) | 2026-09-09 |
-| NC-12 | 内稳态表达与显著性调度 | 已实现；表达效果待验收 | 同 revision 内感摘要、显著性/迟滞；off/shadow/responses/full 模式；marked 主动评估、冷却与泄漏检查。 | 对具体配置验证表达是否适当及是否泄漏机制；不把表达变化当成工作/恢复决策闭环成功。 | [表达契约](HOMEOSTATIC_EXPRESSION.md)、[表达评测](../eval/homeostatic_expression/README.md)、[内感测试](../tests/test_homeostatic_interoception.py) | 2026-09-08 |
+| NC-12 | 内稳态表达与显著性调度 | 已实现；表达效果待验收 | 同 revision 内感摘要、显著性/迟滞；off/shadow/responses/full 模式；marked 主动评估、冷却与泄漏检查。 | 按[情绪表达调研计划](harness/16-emotional-expression-diagnostic-research-plan.md)先审计实际路径与参数可见性，再对照语义、强度投影、风格、校验与生成模式；计划已编写，真实诊断未运行。保留表达/决策验收边界。 | [表达契约](HOMEOSTATIC_EXPRESSION.md)、[表达评测](../eval/homeostatic_expression/README.md)、[内感测试](../tests/test_homeostatic_interoception.py) | 2026-09-08 |
 | NC-13 | Embodiment Port 与动作执行 | 已实现；真实 Linux 待验收 | ports/协商/typed action/verify/reconcile；新增聊天终端规划、A11y Text 哈希读取、当前任务 BEGIN/EXIT 输出核验、批准前后目标复查。 | 外仓改动已测未部署；Docker 引擎已恢复，启动防护已安装并通过两轮独立实机复验，Linux 动作联调仍待验收。首次终端范围为单条 ASCII 命令，沿用现有批准权限。 | [embodiment](../harness/embodiment/)、[终端规划](../harness/cognitive/basic_terminal.py)、[终端案例](milestones/BASIC_RUNTIME_V1_TEST_CASES.md)、[Docker 恢复](DOCKER_RECOVERY.md) | 2026-09-11 |
 | NC-14 | 身体状态接入与事实投影 | 部分实现（grounded v1 已实现）；传感待验收 | MistyAI body-state 契约、DTO/adapter、身份与新鲜度检查；observe 仅记录，grounded v1 首批 energy 映射与 terminal 保护已接入。 | 核对真实 physiology 与异常行为；MistyAI active 模式未实现，旧 embodiment 的 body_memory/salience_bias/drive_preemption 仍禁用；GA 独立能力另计。 | [body](../harness/body/)、[body-state 设计](harness/11-mistyai-body-state-integration-code-design.md)、[body-state 测试](../tests/test_body_state_runtime.py)、[grounded 测试](../tests/test_grounded_embodiment.py) | 2026-09-08 |
 
@@ -146,6 +146,13 @@
 ```
 
 ## 10. 变更记录
+
+### 2026-09-14 · 情绪表达与参数语义调研计划
+
+- 基于 `codex/grounded-agency@c3c7e523a1f287f4130ce0f094293e793f470e54` 编写[调研计划](harness/16-emotional-expression-diagnostic-research-plan.md)，针对用户反馈的云端 DeepSeek V4.1 Flash 表达不足，区分输入接线、参数定义、强度投影、人格约束、校验与生成配置等假设。
+- 将 QQ 专用表达是否接入内稳态列为优先审计项；源码调用点未显式传入摘要，不代表已核验用户当前线上路径。将参数语义补充与新增信息分开对照，避免混淆。
+- 明确真实请求证据、分阶段采样、盲评、统计口径、费用上限配置、原有发布门禁复用与后训练决策；opaque 核心研究条件继续隔离。
+- 本次仅新增计划并更新 README/NC-12 文档入口；没有修改运行代码或部署，没有执行付费模型调用、后训练、QQ 发送或产品测试。文档相对链接与表格结构已检查；既有模块验收日期及研究结论不变。
 
 ### 2026-09-11 · QQ 自动盯群实测（辅助发送已核验，自动交付仍为 PARTIAL）
 
