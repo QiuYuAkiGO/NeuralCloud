@@ -134,6 +134,7 @@ class CognitiveServiceHost:
             aux_base_url=persisted.aux_base_url,
             aux_model=persisted.aux_model,
             aux_api_key=persisted.aux_api_key,
+            validator_enabled=persisted.validator_enabled,
             user_name=persisted.user_name,
             character_name=persisted.character_name,
             library=library,
@@ -162,6 +163,8 @@ class CognitiveServiceHost:
             default_session_id=self.chat.active_session_id,
             persist_memory=self._flush_committed_memory,
             context_provider=self.shared.local_context,
+            archive_local=self.shared.archive_local,
+            archive_action=self.shared.archive_action,
         )
         from harness.runtime.emotion import shared_observation_input
         self.adapter.emotion_input_provider = lambda command: shared_observation_input(self, command)
@@ -185,6 +188,11 @@ class CognitiveServiceHost:
         self._control_lock = asyncio.Lock()
         from harness.cognitive.qq_memory import QQMemoryWorker
         self.qq_memory = QQMemoryWorker(self, control_path=state_path.parent / "qq-memory.control.json")
+        from harness.cognitive.daily_revision import DailyRevisionWorker
+        self.daily_revision = DailyRevisionWorker(self,
+            config_path=Path(os.environ.get("NC_DAILY_REVISION_CONFIG", str(state_path.parent / "daily-revision.config.json"))),
+            queue_path=state_path.parent / "daily-revision.sqlite3")
+        self._close_task = None
 
     @property
     def command_tasks(self):
@@ -196,7 +204,8 @@ class CognitiveServiceHost:
 
     async def health(self):
         health = await self.adapter.health()
-        return health.model_copy(update={"detail": {**health.detail, "qq_memory": self.qq_memory.status()}})
+        return health.model_copy(update={"detail": {**health.detail, "qq_memory": self.qq_memory.status(),
+            "daily_revision": self.daily_revision.status()}})
 
     async def get_snapshot(self):
         return await self.adapter.get_snapshot()
@@ -484,9 +493,16 @@ class CognitiveServiceHost:
 
     async def resume_maintenance(self) -> None:
         await self.adapter.resume_maintenance()
+        self.daily_revision.wake.set()
 
     async def close(self) -> None:
+        if self._close_task is None:
+            self._close_task = asyncio.create_task(self._close())
+        await asyncio.shield(self._close_task)
+
+    async def _close(self) -> None:
         try:
+            await self.daily_revision.close()
             await self.qq_memory.close()
             await self.adapter.close()
         finally:
@@ -498,16 +514,38 @@ class CognitiveServiceHost:
             await asyncio.to_thread(self.shared.sync_qq)
             await asyncio.to_thread(self.shared.sync_local)
             await self.qq_memory.start()
+            await self.daily_revision.start()
         except BaseException:
             self.owner_lease.release()
             raise
 
     async def ui_snapshot(self) -> dict[str, Any]:
         self._sync_transcript()
-        return {**self.chat.status(), **self.shared.ui(), "qq_memory": self.qq_memory.status()}
+        return {**self.chat.status(), **self.shared.ui(), "qq_memory": self.qq_memory.status(),
+                "daily_revision": self.daily_revision.status()}
 
     async def control(self, operation: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         body = payload or {}
+        # These authenticated maintenance operations schedule work immediately.
+        # They must not hold _control_lock while awaiting a provider or acquire
+        # it twice during a rollback's atomic commit.
+        if operation.startswith("daily_revision."):
+            action = operation.removeprefix("daily_revision.")
+            if action == "status" and not body:
+                return self.daily_revision.status(details=True)
+            if action == "history" and not (set(body) - {"limit"}):
+                return {"runs": self.daily_revision.history(**body)}
+            if action == "diff" and set(body) == {"run_id"}:
+                return self.daily_revision.diff(body["run_id"])
+            if action == "configure":
+                return self.daily_revision.configure(body)
+            if action in {"run", "dry_run"} and not (set(body) - {"day"}):
+                return await self.daily_revision.run_now(**body, dry_run=action == "dry_run")
+            if action == "retry" and set(body) == {"run_id"}:
+                return await self.daily_revision.retry(body["run_id"])
+            if action == "rollback" and set(body) == {"run_id"}:
+                return await self.daily_revision.rollback(body["run_id"])
+            raise ValueError("daily_revision_control_parameters_invalid")
         async with self._control_lock:
             if operation == "snapshot":
                 return await self.ui_snapshot()
@@ -588,6 +626,7 @@ class CognitiveServiceHost:
                 aux_base_url=body.get("aux_base_url"),
                 aux_model=body.get("aux_model"),
                 aux_api_key=body.get("aux_api_key"),
+                validator_enabled=body.get("validator_enabled"),
             )
             self.adapter.pipeline = self.chat.pipeline
         elif operation == "debug.relationship":

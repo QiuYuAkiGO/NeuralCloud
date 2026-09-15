@@ -1,0 +1,45 @@
+{
+  "date": "2026-09-12",
+  "scope": "NeuralCloud working tree: configurable web body, shared dialogue and autonomous observation",
+  "implementation_status": "implemented",
+  "online_acceptance": "pending_valid_tavily_api_key",
+  "capabilities": ["web.search.v1", "web.read.v1"],
+  "provider": "tavily",
+  "checks": {
+    "integrated_regression": {"passed": 399, "skipped": 1, "warnings": 2, "seconds": 160.49},
+    "final_startup_and_cognition_followup": {"passed": 80, "warnings": 2, "seconds": 4.07, "overlaps_integrated_regression": true},
+    "ruff_changed_python_files": "passed",
+    "git_diff_whitespace_check": "passed",
+    "isolated_gui_browser": ["layout", "save_pending_revision", "restart_required", "sanitized_connection_failure"],
+    "windows_key_permissions": "restricted_before_secret_write; owner and SYSTEM only"
+  },
+  "new_test_files": [
+    "tests/test_web_body.py",
+    "tests/test_web_runtime.py",
+    "tests/test_web_autonomous.py",
+    "tests/test_web_cognition.py",
+    "tests/test_web_config.py",
+    "tests/test_web_gui.py",
+    "tests/test_web_launcher.py"
+  ],
+  "verified_behaviors": [
+    "Independent search and read capability negotiation",
+    "Shared cognition search, extraction and single final response commit",
+    "Autonomous search followed by read on the next opportunity",
+    "Scoped source references and user links distinguished from fetched evidence",
+    "Partial extraction propagated without claiming full-page verification",
+    "Persistent quota and no replay after uncertain POST",
+    "Concurrent controllers do not dispatch the same identity twice",
+    "Search replay does not overwrite previously read content",
+    "Journal failure does not erase the durable completed request",
+    "Private immutable configuration revisions activated on restart",
+    "Legacy mode and unconfigured installations remain disabled"
+  ],
+  "limitations": [
+    "Provider calls used httpx MockTransport; real Tavily service was not called",
+    "Shared cognition integration used an isolated test model; real-model online behavior remains unverified",
+    "One POSIX permissions test was skipped on Windows",
+    "Two existing Starlette and anyio deprecation warnings remain",
+    "Production shared services were not restarted and no QQ messages were sent"
+  ]
+}

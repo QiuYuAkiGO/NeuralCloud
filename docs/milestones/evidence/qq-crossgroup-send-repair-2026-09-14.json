@@ -1,0 +1,302 @@
+{
+  "schema_version": "qq-crossgroup-send-repair-v1",
+  "checked_at": "2026-09-14T04:47:18.231095+00:00",
+  "historical_diagnosis": "qq-crossgroup-send-failure-2026-09-14.json",
+  "changes": [
+    "Wait for healthy fresh send observer within the original monotonic deadline, checking pause and newer context; retry only pre-executor provider guard races.",
+    "A new numeric account verification plus fresh bound home-chat frame and matching independent observer can satisfy a completed historical identity gap; open or newer gaps remain invalidating.",
+    "Read complete bounded AX header parent Text before child labels; do not synthesize text from Name.",
+    "Preserve bounded QQ error categories instead of classifying provider failures as model failures.",
+    "Expose durable verified segment and partial reply counts; recover last delivery time from exact verified receipts including partial prefixes."
+  ],
+  "boundaries": {
+    "original_reply_deadline_seconds": 60,
+    "expired_suffix_replayed": false,
+    "final_redundant_input_validation_restored": false,
+    "new_group_send_enabled": false,
+    "diagnostic_send_click_issued": false,
+    "post_repair_complete_reply_delivery_verified": false,
+    "continuous_observation_acceptance_claimed": false,
+    "historical_gap_records_preserved": true,
+    "note": "The historical first segment was verified, and the old suffix cannot be sent after expiry. The repaired provider/segment workflow is covered by synthetic integration tests; live checks reached preclick and completed automatic cross-group observation, without sending a diagnostic message."
+  },
+  "live_preclick": {
+    "kind": "preclick_only_gui_diagnostic",
+    "groups": [
+      {
+        "group_id": "1060979317",
+        "evidence_refs": [
+          "evidence://sha256/2c0d9a6238a0131586811b9749121b6173531429000af6e99e46821e489e0297",
+          "evidence://sha256/0d91e0202fe949acca10551ccb2050207e58be29d38ef817227e0346359c12f0",
+          "evidence://sha256/94d41d2bf2ee0e9038ed1e5e9ceb56e940cea87e6f01544f8eaee76ef9d952cd",
+          "evidence://sha256/e37194c682869fb63ee7f9453f6947bdab9f8ca1bb78f7ec360aa548c54c4895"
+        ]
+      },
+      {
+        "group_id": "1044946257",
+        "evidence_refs": [
+          "evidence://sha256/2ca0fe341b5fcfe5a214f54e97a66d4013221493ad1b558fd95cc286938abf4a",
+          "evidence://sha256/c2f07a96ed711b7d3d016d594f9c083dedf4d324d557bf4f113bdd776cfcc131",
+          "evidence://sha256/a2e395db18734122f7c31bfcb02909145e2e77b910dc6793aa64df12f55beb94",
+          "evidence://sha256/05cbd3e796a4d1816e973b6ab58021f86038d185e15b4940999ea4c189c65848"
+        ]
+      }
+    ],
+    "send_click_issued": false,
+    "reached_preclick_proof": true,
+    "result_status": "not_sent",
+    "reason_code": "identity_cache_invalidated_before_click",
+    "send_reservation_attempted": false,
+    "click_acknowledged": false,
+    "own_draft_cleared": true
+  },
+  "initial_preclick_attempt": {
+    "status": "failed",
+    "reason": "group_profile_not_verified",
+    "notes": "A subsequent fresh AX group profile matched the numeric home group. The next diagnostic completed successfully. This transient failure remains part of the evidence and is not treated as a proven permanent fix."
+  },
+  "fresh_ax_projection": [
+    {
+      "capture_id": "obs_1d4b6dcadf824da69379e52d62071328",
+      "captured_at": "2026-09-14T04:29:41.068456+00:00",
+      "evidence_refs": [
+        "evidence://sha256/d6e6a736ecead03be498a8d5f7e853dd76753db2774d6aa657e89ac4068c7bf4",
+        "evidence://sha256/a976e5a5e008a7d054ee6df5816e4b33d889d0b20867ab60d8be1e27b6c2caf9"
+      ],
+      "ax_projected": true,
+      "capture_ms": 1704.0,
+      "inspect_ms": 15.0,
+      "draft_chars": 0,
+      "message_count": 3,
+      "counters": {
+        "body_capture": 1,
+        "accessibility_projection": 1
+      }
+    },
+    {
+      "capture_id": "obs_0be664fc6e7c4d6d9787aa1e72002f39",
+      "captured_at": "2026-09-14T04:29:41.981305+00:00",
+      "evidence_refs": [
+        "evidence://sha256/487371501fffc0c88c6207e2fa0a2c5f77218ac74a53b727c78e05c203d27d12",
+        "evidence://sha256/ff6b7d5b1446afaaa7ea17b5449c3d213466850615d82da3e5d6f4698768ab5b"
+      ],
+      "ax_projected": true,
+      "capture_ms": 985.0,
+      "inspect_ms": 15.0,
+      "draft_chars": 0,
+      "message_count": 3,
+      "counters": {
+        "body_capture": 1,
+        "accessibility_projection": 1
+      }
+    }
+  ],
+  "validation": {
+    "initial_all_qq": {
+      "passed": 2026,
+      "setup_errors": 25,
+      "duration_seconds": 298.59,
+      "cause": "The minimal provider Actor fixture did not implement the new cross-mixin status initializer."
+    },
+    "correction": "Move status initialization to QQWatcher, add explicit scheduler/control/time fixtures for the new bounded wait, retaining production gates.",
+    "affected_error_groups_rerun": {
+      "passed": 40,
+      "duration_seconds": 10.95
+    },
+    "final_relevant_regression": {
+      "passed": 428,
+      "failed": 0,
+      "errors": 0,
+      "duration_seconds": 30.51,
+      "warnings": 2,
+      "scope": "AX/navigation/draft proof/identity gaps/QQ error codes/provider and observer recovery/I/O loop/segment coordinator and ledger/roster/watcher/session/telemetry"
+    },
+    "counts_are_overlapping_not_additive": true
+  },
+  "deployment": {
+    "watcher": {
+      "pid": 44304,
+      "state": "watching",
+      "running": true,
+      "started_at": "2026-09-14T04:46:08.472853+00:00",
+      "heartbeat_at": "2026-09-14T04:47:13.986589+00:00",
+      "build_hash": "qq-unattended:2719f9fe7535c9212af77a0d63c707cefe1e4e3245f55976acb378441477d769",
+      "automatic_send": true,
+      "automatic_screen_capture": true,
+      "last_error_type": null,
+      "verified_segments_sent": 37,
+      "partial_deliveries": 1,
+      "last_delivery_at": "2026-09-14T04:17:41.455575+00:00",
+      "deliveries": 0,
+      "visiting_group_id": null,
+      "group_roster": [
+        {
+          "group_id": "1044946257",
+          "label": "PHANTOM-C",
+          "observe": true,
+          "send": true,
+          "last_observed_at": "2026-09-14T04:46:54.314623Z",
+          "message_count": 3,
+          "read_count": 19,
+          "last_error": null
+        },
+        {
+          "group_id": "1060979317",
+          "label": "超级豪人大宅门",
+          "observe": true,
+          "send": false,
+          "last_observed_at": "2026-09-14T04:46:34.255219Z",
+          "message_count": 3,
+          "read_count": 6,
+          "last_error": null
+        }
+      ],
+      "qq_body": {
+        "embodiment": {
+          "state": "available",
+          "provider_id": "qq-communication-driver",
+          "body_instance_id": "misty-qq-test-01",
+          "activated_capabilities": [
+            "communication.qq.send.v1",
+            "evidence.reference.v1",
+            "communication.qq.reconcile.v1",
+            "communication.qq.read.v1"
+          ],
+          "effective_capabilities": [
+            "communication.qq.send.v1",
+            "evidence.reference.v1",
+            "communication.qq.reconcile.v1",
+            "communication.qq.read.v1"
+          ],
+          "negotiated": {
+            "provider_id": "qq-communication-driver",
+            "provider_revision": "qq-communication-v1:3a62de2a9e1bc89267cd0a083915f2d3f38e3883256b2f7264feade159583b93",
+            "enabled": [
+              "communication.qq.send.v1",
+              "evidence.reference.v1",
+              "communication.qq.reconcile.v1",
+              "communication.qq.read.v1"
+            ],
+            "degraded": [],
+            "unavailable_optional": [],
+            "missing_required": [],
+            "incompatible_required": [],
+            "unknown_provided": []
+          },
+          "health": {
+            "provider_id": "qq-communication-driver",
+            "body_instance_id": "misty-qq-test-01",
+            "status": "healthy",
+            "capability_health": {
+              "communication.qq.read.v1": "healthy",
+              "communication.qq.send.v1": "healthy",
+              "communication.qq.reconcile.v1": "healthy",
+              "evidence.reference.v1": "healthy"
+            },
+            "observed_at": "2026-09-14T04:47:13.059700Z",
+            "detail": {
+              "reason_code": "driver_ready"
+            }
+          },
+          "reason": null
+        },
+        "driver": {
+          "observed_at": "2026-09-14T04:47:13.046918Z",
+          "active_scope": {
+            "body_instance_id": "misty-qq-test-01",
+            "environment_revision": 2,
+            "window_id": "0x1e0000c",
+            "group_id": "1044946257",
+            "self_member_id": "2015188508"
+          },
+          "context_signature": "3073228957ebd7f28813823d151234a791a425eab1912272f7f5e6a7d1bc0674",
+          "connected": true,
+          "observer_ready": true,
+          "send_ready": true,
+          "paused": false,
+          "has_uncertain_delivery": false,
+          "reason_code": null
+        }
+      }
+    },
+    "source_hash_matches": true,
+    "observer": {
+      "running": true,
+      "last_error_type": null,
+      "polls": 57,
+      "changes": 0,
+      "gap_started_at": null,
+      "gap_seconds": 0.0,
+      "total_gap_seconds": 32.718,
+      "max_gap_seconds": 14.562,
+      "completed_gap_count": 7
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "cognitive_healthy": true,
+      "homeostasis_healthy": true,
+      "llm_healthy": true
+    },
+    "qq_offers": [
+      {
+        "capability_id": "communication.qq.read.v1",
+        "scope": {
+          "body_instance_id": "misty-qq-test-01",
+          "environment_revision": 2,
+          "window_id": "0x1e0000c",
+          "group_id": "1044946257",
+          "self_member_id": "2015188508"
+        },
+        "available": true,
+        "ready": true
+      },
+      {
+        "capability_id": "communication.qq.send.v1",
+        "scope": {
+          "body_instance_id": "misty-qq-test-01",
+          "environment_revision": 2,
+          "window_id": "0x1e0000c",
+          "group_id": "1044946257",
+          "self_member_id": "2015188508"
+        },
+        "available": true,
+        "ready": true
+      },
+      {
+        "capability_id": "communication.qq.read.v1",
+        "scope": {
+          "body_instance_id": "misty-qq-test-01",
+          "environment_revision": 2,
+          "window_id": "0x1e0000c",
+          "group_id": "1060979317",
+          "self_member_id": "2015188508"
+        },
+        "available": true,
+        "ready": true
+      }
+    ],
+    "session": {
+      "status": "healthy",
+      "automatic_send": true,
+      "automatic_screen_capture": true,
+      "allowed_group_ids": [
+        "1044946257",
+        "1060979317"
+      ]
+    },
+    "session_projects_segment_counts": {
+      "verified_segments_sent": 37,
+      "partial_deliveries": 1,
+      "last_delivery_at": "2026-09-14T04:17:41.455575+00:00"
+    },
+    "send_states": {
+      "not_sent": 7,
+      "partial": 1,
+      "sent": 19
+    },
+    "segment_states": {
+      "cancelled": 7,
+      "sent": 37
+    }
+  }
+}

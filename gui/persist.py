@@ -43,6 +43,7 @@ class GuiPersistedSettings(BaseModel):
     aux_base_url: str | None = None
     aux_model: str | None = None
     aux_api_key: str | None = None
+    validator_enabled: bool = True
     user_name: str = DEFAULT_USER_NAME
     character_name: str = ""
     active_preset_id: str = DEFAULT_PRESET_ID
@@ -108,6 +109,7 @@ def snapshot_gui_settings(
         aux_base_url=settings.aux_llm_base_url,
         aux_model=settings.aux_llm_model,
         aux_api_key=settings.aux_llm_api_key,
+        validator_enabled=settings.validator_enabled,
         user_name=normalize_speaker_name(user_name, default=DEFAULT_USER_NAME),
         character_name=normalize_speaker_name(character_name),
         active_preset_id=active,

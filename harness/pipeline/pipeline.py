@@ -651,6 +651,14 @@ class InferencePipeline:
             extra={"revision": 0, "segment": segment_index},
         )
         usage = usage.add(candidate.usage)
+        if not self.settings.validator_enabled:
+            validation = ValidationResult(verdict="pass", skipped=True)
+            self._emit(
+                "validate", validation,
+                {"skipped": True, "reason": "disabled_by_configuration", "path": path,
+                 "latency_ms": 0.0, "verdict": "pass", "violations": [], "segment": segment_index},
+            )
+            return candidate, validation, 0, usage
         sampled_validation = self.validator.should_run(path)
         emotion_text = next((segment.text for segment in context.segments if segment.kind == "emotion_guidance"), None)
         has_homeostatic_context = any(

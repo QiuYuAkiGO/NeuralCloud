@@ -1,0 +1,48 @@
+{
+  "schema_version": "qq-group-roster-deployment-v1",
+  "started_at": "2026-09-14T03:52:42.6266880Z",
+  "status": "loaded",
+  "changes": [
+    {
+      "service": "cognitive",
+      "old_pid": 33964,
+      "old_child_pid": 30044,
+      "stopped_at": "2026-09-14T03:52:44.1194022Z",
+      "new_pid": 41528,
+      "started_at": "2026-09-14T03:52:44.1596987Z",
+      "healthy_at": "2026-09-14T03:52:49.8597627Z"
+    },
+    {
+      "service": "runtime",
+      "old_pid": 36092,
+      "old_child_pid": 39948,
+      "stopped_at": "2026-09-14T03:52:50.0373864Z",
+      "new_pid": 7996,
+      "started_at": "2026-09-14T03:52:50.0568817Z"
+    }
+  ],
+  "errors": [
+    "RuntimeException"
+  ],
+  "goals_before": {
+    "episode_id": "episode:1dc4b62018fd4be4986217f61df4df86",
+    "no_progress": 8,
+    "result_count": 8,
+    "status": "waiting"
+  },
+  "completed_at": "2026-09-14T03:56:32.360525+00:00",
+  "health_wait_exceeded_initial_55_seconds": true,
+  "goals_after": {
+    "id": "episode:1dc4b62018fd4be4986217f61df4df86",
+    "status": "waiting",
+    "no_progress": 8,
+    "blocked_reason": "no_progress",
+    "result_count": 8
+  },
+  "health_after": {
+    "lifecycle": "RUNNING",
+    "cognitive_healthy": true,
+    "homeostasis_healthy": true,
+    "llm_healthy": true
+  }
+}

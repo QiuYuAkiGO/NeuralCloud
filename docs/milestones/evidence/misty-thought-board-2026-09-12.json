@@ -1,0 +1,125 @@
+{
+  "schema_version": "misty-linux-thought-board-verification-v1",
+  "verified_at": "2026-09-12T02:51:37.492661+00:00",
+  "status": "deployed_and_live_write_verified",
+  "url": "http://127.0.0.1:8790/board",
+  "shared_owner": {
+    "owner_id": "misty",
+    "cognition": "shared_runtime",
+    "authority": {
+      "instance_mode": "shared",
+      "development": false
+    },
+    "new_independent_minds": 0
+  },
+  "linux": {
+    "distro": "Ubuntu-24.04",
+    "unit": "neuralcloud-board.service",
+    "scope": {
+      "body_instance_id": "misty-linux-board-01",
+      "board_id": "misty-thoughts",
+      "owner_id": "misty"
+    },
+    "state_dir": "/root/.local/share/neuralcloud/board",
+    "body_state": "available",
+    "capabilities": [
+      "expression.board.append.v1",
+      "expression.board.reconcile.v1",
+      "evidence.reference.v1",
+      "expression.board.read.v1"
+    ],
+    "unauthenticated_health_http": 401
+  },
+  "operation": {
+    "paused": false,
+    "autonomous_enabled": true,
+    "opportunity_seconds": 1800,
+    "quiet_seconds": 60,
+    "autonomous_live_samples": 0,
+    "live_user_requested_committed_samples": 1
+  },
+  "live_sample": {
+    "entry_id": "board-entry:576cc49ca8d83f2c9935e894739cbac48f075aa3",
+    "event_id": "board-event:5f9f2b3f9f61687a90013b3b647cd1f07b028f5a",
+    "requested_at": "2026-09-12T02:44:35.537268+00:00",
+    "confirmed_at": "2026-09-12T02:44:40.574999+00:00",
+    "status": "committed",
+    "receipt": {
+      "scope": {
+        "body_instance_id": "misty-linux-board-01",
+        "board_id": "misty-thoughts",
+        "owner_id": "misty"
+      },
+      "entry_id": "board-entry:576cc49ca8d83f2c9935e894739cbac48f075aa3",
+      "decision_id": "board-decision:ec57298055869de5a039adb7002bc30bc07dcd929c91191788a87ccb2e6c0cfa",
+      "text_sha256": "4bdd3b47dde5447fa59a9851bf6753e4675db7234f2a9bb0cb251cc28ff25706",
+      "created_at": "2026-09-12T02:44:40.437489Z",
+      "evidence_ref": "board-evidence://sha256/70595ae29a9567b58e01dfc05155053cd0df6f5be7777fc8533737c5825fbced",
+      "sequence": 1
+    },
+    "timing": {
+      "model_ms": 4235.0,
+      "total_ms": 4344.0,
+      "model_calls": 1
+    },
+    "end_to_end_wall_ms": 5037.731,
+    "dispatch_monotonic_ms": 5031.0
+  },
+  "memory": {
+    "record_id": "shared-memory:24276610e80d976ca39009453c7b15d5768263401b18e31d0ed0e7ad6d33754e",
+    "channel": "private_board",
+    "authority": "verified_delivery",
+    "visibility": [
+      "local:main"
+    ],
+    "verified_original_linux_readback": true
+  },
+  "restart": {
+    "stop_start_verified": true,
+    "entry_count_before": 1,
+    "entry_count_after": 1,
+    "receipt_and_body_hash_unchanged": true,
+    "token_retained": true,
+    "time_wait_false_port_collision_fixed": true,
+    "transient_clock_freshness_gate_recovered_without_runtime_restart": true
+  },
+  "ui": {
+    "rendered_live_note": true,
+    "pause_prevented_new_requests": true,
+    "resume_verified": true,
+    "html_escaped_as_text": true
+  },
+  "retained_failed_trials": [
+    {
+      "event_id": "board-event:0da6688a219773b7a890f1ceae093b9e1a272c3f",
+      "status": "error",
+      "error_type": "DomainCommandError"
+    },
+    {
+      "event_id": "board-event:98b1d2539c1d0cd226a541307a1167ab29e23e83",
+      "status": "error",
+      "error_type": "AttributeError"
+    }
+  ],
+  "tests": {
+    "board_windows_passed": 97,
+    "board_windows_skipped_linux_only": 1,
+    "linux_time_wait_real_probe": "passed",
+    "affected_existing_regression_passed": 233,
+    "lint": "passed"
+  },
+  "qq": {
+    "running": true,
+    "state": "watching",
+    "pid": 34096,
+    "cognitive_owner": "shared_runtime",
+    "automatic_send": true,
+    "error_type": null,
+    "runtime_build_matches_disk": true
+  },
+  "limits": {
+    "formal_qq_eight_hour_acceptance": false,
+    "single_board_sample_not_a_p95_measurement": true,
+    "maintenance_performed": true
+  }
+}

@@ -1,0 +1,200 @@
+{
+  "schema_version": "qq-direct-implementation-v1",
+  "recorded_at": "2026-09-14T07:10:05.662554+00:00",
+  "transport": "napcat-onebot11",
+  "bridge_version": "v4.18.28",
+  "image_digest": "sha256:2cc70b45244ae3fabc657ffc3aaa4de8fb893518171e519659ab83d80e6d36b5",
+  "direct_status": {
+    "pid": 26464,
+    "run_id": "qq-direct-run:6021b3da0675457dace8169a7d6bdfe1",
+    "source_hash": "qq-direct:068dfe81957ca6b35d4eb3654774715ba81c84d7bafd40718433144c76bdb7b1",
+    "state": "watching",
+    "running": true,
+    "connected": true,
+    "automatic_send": true,
+    "images_enabled": true,
+    "self_member_id": "2015188508",
+    "paused": false,
+    "desktop_owner_active": false,
+    "group_roster": [
+      {
+        "group_id": "1044946257",
+        "label": "PHANTOM-C",
+        "observe": true,
+        "send": true
+      },
+      {
+        "group_id": "1060979317",
+        "label": "超级豪人大宅门",
+        "observe": true,
+        "send": false
+      }
+    ],
+    "counts": {
+      "events": {
+        "expired": 1,
+        "observed": 82,
+        "sent": 1,
+        "wait": 1
+      },
+      "sends": {
+        "sent": 2
+      }
+    },
+    "last_error_type": null,
+    "last_received_at": "2026-09-14T07:09:54.788886+00:00",
+    "last_delivery_at": null,
+    "heartbeat_at": "2026-09-14T07:10:04.309172+00:00"
+  },
+  "session_status": {
+    "transport": "onebot",
+    "automatic_protocol_read": true,
+    "automatic_send": true,
+    "autonomous_decision_enabled": true,
+    "persistent_memory": true,
+    "self_member_id": "2015188508",
+    "allowed_group_ids": [
+      "1044946257",
+      "1060979317"
+    ]
+  },
+  "real_read_and_images": {
+    "schema_version": "qq-direct-live-read-v1",
+    "started_at": "2026-09-14T06:38:23.096671+00:00",
+    "sent_messages": 0,
+    "groups": [
+      {
+        "group_id": "1044946257",
+        "joined": true,
+        "observe": true,
+        "send": true,
+        "history_count": 19,
+        "image_segments": 5,
+        "image": {
+          "status": "described",
+          "error": null,
+          "sha256": "61e3f7eaaab06830289c550e432094ffbbe83007fd8c02b54aa67bc28f054d65",
+          "size_bytes": 24651,
+          "width": 463,
+          "height": 444,
+          "description_chars": 179,
+          "ocr_chars": 8,
+          "frame_count": 1,
+          "animation_sampled": false
+        }
+      },
+      {
+        "group_id": "1060979317",
+        "joined": true,
+        "observe": true,
+        "send": false,
+        "history_count": 20,
+        "image_segments": 8,
+        "image": {
+          "status": "described",
+          "error": null,
+          "sha256": "2bf9d5a39fbf3e45a78586e43e81d4ae8441d261a344661f95a80bb7924f6ff6",
+          "size_bytes": 1514979,
+          "width": 720,
+          "height": 373,
+          "description_chars": 321,
+          "ocr_chars": 0,
+          "frame_count": 100,
+          "animation_sampled": true
+        }
+      }
+    ],
+    "account_matches": true,
+    "online": true,
+    "completed_at": "2026-09-14T06:38:36.689137+00:00"
+  },
+  "regression": {
+    "combined_related_tests": {
+      "passed": 594,
+      "seconds": 67.89
+    },
+    "launcher_after_ordinal_fix": {
+      "passed": 9
+    },
+    "ruff": "passed",
+    "groups_overlap": true
+  },
+  "shared_identity": {
+    "runtime_and_cognitive_reloaded": true,
+    "original_goal_ledger_retained": true,
+    "original_persona_and_memory_retained": true,
+    "creator_fact_retained": true
+  },
+  "actual_outbound_validation": {
+    "state": "verified_complete_protocol_reply",
+    "diagnostic_messages_sent": 0,
+    "trigger_member_id": "2285027817",
+    "trigger_message_id": "373478082",
+    "group_id": "1044946257",
+    "decision_id": "qq-decision:b09d94fa273c4e469270e2bf9cf4292f",
+    "source_record_id": "qq-visual:f2bb0f0f8d6c499fa7f309163cc2d7f0",
+    "received_at": "2026-09-14T06:51:55.856855+00:00",
+    "trigger_images": [
+      {
+        "image_index": 1,
+        "status": "described",
+        "error": null,
+        "evidence_ref": "qq-direct-image:sha256:15d8524c955a245ad8d5d55a39cd2d17ba845285900077de973002ec6fe8c8df"
+      }
+    ],
+    "receipt_id": "qq-delivery:e85b65d8f14747e9bdeff104e6a82cd7",
+    "verification": "qq_protocol_verified",
+    "self_member_id": "2015188508",
+    "delivered_at": "2026-09-14T06:52:54.667024+00:00",
+    "segments": [
+      {
+        "message_id": "2087169621",
+        "receipt_id": "qq-segment-delivery:97341ae13ce34e31a013d91f4e767fe3",
+        "segment_index": 0,
+        "characters": 39,
+        "delivered_at": "2026-09-14T06:52:53.950396+00:00"
+      },
+      {
+        "message_id": "1435504990",
+        "receipt_id": "qq-segment-delivery:ef5763fd6d6f4fd29e74d66dcc85d5fc",
+        "segment_index": 1,
+        "characters": 41,
+        "delivered_at": "2026-09-14T06:52:54.667024+00:00"
+      }
+    ],
+    "source_matches": true,
+    "elapsed_seconds": 58.810169
+  },
+  "read_capability_verification": {
+    "provider": "qq-onebot",
+    "capability": "communication.qq.read.v1",
+    "available_groups": [
+      "1044946257",
+      "1060979317"
+    ],
+    "gui_send_offer_present": false,
+    "current_live_observation": false,
+    "direct_read_function_used_without_dispatch": true,
+    "samples": [
+      {
+        "group_id": "1044946257",
+        "messages": 17,
+        "described_images": 4
+      },
+      {
+        "group_id": "1060979317",
+        "messages": 9,
+        "described_images": 5
+      }
+    ]
+  },
+  "ingress_index_fix": {
+    "loaded": true,
+    "related_tests_passed": 78,
+    "diagnostic_evidence": "qq-direct-ingress-index-2026-09-14.json",
+    "runtime_lifecycle": "RUNNING",
+    "health_request_ms": 22.047,
+    "catalog_request_ms": 138.413,
+    "measurement_scope": "read_only_routes_after_reload_not_reply_latency"
+  }
+}

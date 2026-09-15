@@ -1,0 +1,130 @@
+{
+  "schema_version": "goal-regulation-implementation-v1",
+  "recorded_at": "2026-09-12T09:45:57.004634+00:00",
+  "scope": "production_psychological_goal_runtime_v1",
+  "implementation": "implemented_and_deployed",
+  "release_eligible": false,
+  "eight_hour_acceptance": "ended_incomplete_not_passed",
+  "regulation_effectiveness": "unverified",
+  "tests": {
+    "feature_suite": {
+      "passed": 171,
+      "failed": 0,
+      "junit": ".test-tmp/regulation-feature-tests-final.xml"
+    },
+    "additional_pre_episode_no_progress_regressions": {
+      "passed": 2,
+      "failed": 0
+    },
+    "related_regression_suite": {
+      "passed": 186,
+      "failed": 0
+    },
+    "full_repository_suite": "not_completed; earlier run interrupted after 566 passing tests",
+    "mistyai_full_repository_suite": "not_run_in_this_implementation"
+  },
+  "paired_engine_evaluation": {
+    "report": ".test-tmp/regulation-evaluation-final-20260912/report.json",
+    "scope": "scripted_model_and_receipts_real_engine_matched_inputs",
+    "enabled_minus_disabled_deviation_integral": 0.0,
+    "recovery_time_seconds": null,
+    "duplicate_effects": 0,
+    "real_model_effectiveness": "unverified"
+  },
+  "live": {
+    "manifest": "presets/runtime/shared-misty-regulation-v1.json",
+    "health": {
+      "lifecycle": "RUNNING",
+      "cognitive_healthy": true,
+      "homeostasis_healthy": true,
+      "llm_healthy": true
+    },
+    "goal_evaluations_last_hour": 4,
+    "episodes": [
+      {
+        "status": "waiting",
+        "steps": 3,
+        "results": [
+          {
+            "status": "wait",
+            "evidence_count": 0
+          }
+        ]
+      }
+    ],
+    "catalog": [
+      {
+        "capability_id": "web.search.v1",
+        "ready": true,
+        "available": true
+      },
+      {
+        "capability_id": "web.read.v1",
+        "ready": false,
+        "available": true
+      }
+    ],
+    "limitations": [
+      "Initial goal-model calls timed out under 12-second model budget; preserved in ledger. Goal budget is now 25 seconds inside original 60-second opportunity.",
+      "WSL Board passes authenticated health when distribution is active; Windows loopback intermittently fails later. Background WSL keepalive was rejected by automatic approval policy; no bypass attempted.",
+      "QQ, desktop and voice execution for this goal are unverified.",
+      "Prepared 3-step activity chose wait; plan existence does not prove a body action or regulation efficacy."
+    ],
+    "monitor": {
+      "pid": 28096,
+      "started_at": "2026-09-12T09:44:13.6303898Z",
+      "expected_end_at": "2026-09-12T17:44:13.6303898Z",
+      "output_dir": "C:\\Projects\\NeuralCloud\\data\\goal-regulation-acceptance\\20260912T094413Z",
+      "duration_seconds": 28800,
+      "status": "ended_incomplete",
+      "regulation_effectiveness": "unverified",
+      "release_eligible": false,
+      "followup_automation": "misty-8",
+      "process_found_stopped_at": "2026-09-14T01:32:03.906389+00:00",
+      "last_sample_at": "2026-09-14T00:39:48.893320+00:00",
+      "last_report_at": "2026-09-14T00:39:49.245747+00:00",
+      "final_evidence": "docs/milestones/evidence/goal-regulation-final-2026-09-14.json",
+      "eight_hour_observation_complete": false,
+      "followup_automation_status": "PAUSED"
+    },
+    "followup_automation": "misty-8"
+  },
+  "source_sha256": {
+    "harness/regulation/config.py": "c1996cf8c8194fe714727c34435e00f5b907b2c24c6ff16bd5b2535f4de9ad08",
+    "harness/regulation/store.py": "3ee96eabcfd3faf6497c1cb9b12e38cd9390f27ba7c96a42c3948f2c6b2da461",
+    "harness/runtime/goals.py": "f728ee08a892d1d163d6499c7b55f8235951b03dcdc40ae3c231129cae90304d",
+    "harness/contracts/goals.py": "a571d5466e3a5e0175da948ed1b5614a49511dff34fda37da8e648ad6593e379",
+    "harness/cognitive/goals.py": "87759199749295a9f15c8da02b3e2d41fb9a485b47035475fa1f3e7ca8f6d4fd",
+    "harness/homeostasis/appraisal.py": "27dd58ad68372d280dd824feee2e0dfd515c4ba3d6866ea65f81a368949984f5",
+    "harness/homeostasis/engine.py": "4c46a671771b8052aeddd4f097b81241241a6d6d63ac477fad3af650e69d84a2",
+    "harness/homeostasis/ledger.py": "2de05a81d7ab441552a67d8e8a0705a2368985a43ab7a07ef85e88c5c661849b",
+    "harness/runtime/supervisor.py": "79c7f7c24656e51fd705b9d7bf46e741c6192e5e2cb51a0d0870cda1a5ebfc4a",
+    "harness/runtime/capabilities.py": "afae5b394b19d9df6162a84025ea925008ce61143eda6ca7c83eeb8b121f2b06",
+    "presets/runtime/shared-misty-regulation-v1.json": "3ba43e05c9b019d503ef2c32fc638ddc352d03ebd7f224cc043bc1dc8ff0665a",
+    "eval/regulation/monitor.py": "1036fc9db7fe4a00d0af97cc2c08b268d93c5c7938cb3e24def61aa563ffb43b"
+  },
+  "latest_acceptance_checkpoint": {
+    "checked_at": "2026-09-14T01:32:03.906389+00:00",
+    "evidence": "docs/milestones/evidence/goal-regulation-final-2026-09-14.json",
+    "status": "ended_incomplete_not_passed",
+    "release_eligible": false
+  },
+  "latest_repair": {
+    "checked_at": "2026-09-12T15:25:37.625387+00:00",
+    "evidence": "docs/milestones/evidence/goal-decision-repair-2026-09-12.json",
+    "deployed": true,
+    "release_eligible": false
+  },
+  "final_acceptance": {
+    "checked_at": "2026-09-14T01:32:03.906389+00:00",
+    "evidence": "docs/milestones/evidence/goal-regulation-final-2026-09-14.json",
+    "status": "ended_incomplete_not_passed",
+    "valid_samples": 784,
+    "error_samples": 1,
+    "maximum_gap_seconds": 116548.25,
+    "new_evidenced_runtime_activity_count": 0,
+    "continuous_eight_hour_acceptance_passed": false,
+    "longest_error_free_contiguous_segment_seconds": 20247.344,
+    "followup_automation_status": "PAUSED"
+  }
+}

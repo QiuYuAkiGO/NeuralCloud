@@ -1,0 +1,89 @@
+{
+  "schema": "qq-validator-off-evidence-v1",
+  "checked_at": "2026-09-15T12:11:08.487771+00:00",
+  "release": "20260915-validator-off-v1",
+  "package": {
+    "release_id": "20260915-validator-off-v1",
+    "files": 322,
+    "archive": "C:\\Projects\\NeuralCloud\\.tmp\\validator-off-20260915\\20260915-validator-off-v1.tar.gz",
+    "sha256": "5f6eed04767fa0b4d8c2507ffa76669e4d830876e03a42cb0be2cb867514141c",
+    "changed_files": [
+      "gui/persist.py",
+      "gui/server.py",
+      "gui/service.py",
+      "harness/cognitive/service.py",
+      "harness/config.py",
+      "harness/pipeline/pipeline.py",
+      "harness/qq/draft.py",
+      "harness/validator/validator.py"
+    ]
+  },
+  "release_verification": {
+    "release_id": "20260915-validator-off-v1",
+    "verified_files": 322,
+    "configuration_valid": true,
+    "business_services_started": false
+  },
+  "validator_enabled": false,
+  "persisted_validator_enabled": false,
+  "configuration": "/etc/neuralcloud/gui-settings.json",
+  "services": {
+    "cognitive": "active",
+    "homeostasis": "active",
+    "runtime": "active",
+    "gui": "active",
+    "board": "active",
+    "qq-direct": "active"
+  },
+  "runtime_lifecycle": "RUNNING",
+  "queue_size": 0,
+  "degraded_reasons": [],
+  "qq_connected": true,
+  "qq_automatic_send": true,
+  "application_context": 8192,
+  "loaded_context": 8192,
+  "model_digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+  "deploy_configuration_sha256": "2d33337999871fd9eb4b70de8bd90825f07adf7504aabb21fbebcf3d6cc29d11",
+  "public_health": {
+    "url": "https://panel.u2235830.nyat.app:60254",
+    "page_http_status": 200,
+    "available": true,
+    "runtime_lifecycle": "RUNNING"
+  },
+  "historical_input_controlled_probe": {
+    "original_call_id": "call_8ef78381",
+    "validator_enabled": false,
+    "validation_skipped": true,
+    "revisions": 0,
+    "generation_calls": 1,
+    "emotion_in_generation_system": true,
+    "owner_call_log_records_skip": true,
+    "qq_messages_sent": 0,
+    "completion_source": "captured_historical_response_stub"
+  },
+  "local_tests": {
+    "main_related_suite_passed": 124,
+    "config_and_qq_draft_suite_passed": 19,
+    "legacy_gui_suite_initial_passed": 45,
+    "legacy_stale_assertion_fixed_and_audit_test_passed": 2,
+    "counts_overlap": true
+  },
+  "backup": {
+    "path": "/var/backups/neuralcloud/validator-off-20260915",
+    "verified": true,
+    "files": 1649,
+    "sqlite_databases": 15,
+    "snapshot_restored": false
+  },
+  "emotion_order_verified": {
+    "historical_call_id": "call_8ef78381",
+    "timezone": "Asia/Shanghai",
+    "guidance_completed_at": "2026-09-15T19:43:02.710+08:00",
+    "compile_completed_at": "2026-09-15T19:43:17.297+08:00",
+    "body_generation_started_at": "2026-09-15T19:43:17.298+08:00",
+    "injected_role": "system"
+  },
+  "scope": "ordinary_and_qq_response_post_validation_rules_model_and_revisions",
+  "recovery": "Persist validator_enabled=true and restart, or use existing config operation in an allowed control mode.",
+  "qq_test_messages_sent": 0
+}

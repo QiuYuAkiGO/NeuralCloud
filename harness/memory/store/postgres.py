@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from copy import deepcopy
 from datetime import datetime
 from typing import Any, cast
 
@@ -51,13 +52,19 @@ def _visibility_filter(column, audience: str):
 
 
 def _provenance(row) -> dict:
-    return {"scope": row.scope, "source_refs": list(row.source_refs or []),
-            "processing_version": row.processing_version}
+    result = {"scope": deepcopy(row.scope), "source_refs": list(row.source_refs or []),
+              "revision_metadata": deepcopy(row.revision_metadata or {})}
+    if hasattr(row, "processing_version"):
+        result["processing_version"] = row.processing_version
+    return result
 
 
 def _stored_provenance(memory) -> dict:
-    return {"scope": memory.scope.model_dump(mode="json") if memory.scope is not None else None,
-            "source_refs": list(memory.source_refs), "processing_version": memory.processing_version}
+    result = {"scope": memory.scope.model_dump(mode="json") if memory.scope is not None else None,
+              "source_refs": list(memory.source_refs), "revision_metadata": deepcopy(memory.revision_metadata)}
+    if hasattr(memory, "processing_version"):
+        result["processing_version"] = memory.processing_version
+    return result
 
 
 def _update_provenance(row, memory) -> None:
@@ -149,6 +156,13 @@ def _candidate_from_row(row: MemoryCandidateRow) -> CandidateMemory:
         consolidated_fact_id=row.consolidated_fact_id,
         **_provenance(row),
     )
+
+
+def _relationship_from_row(row: RelationshipStateRow) -> RelationshipState:
+    return RelationshipState(relation_id=row.relation_id, target=row.target,
+        closeness=row.closeness, trust=row.trust, attachment=row.attachment,
+        recent_tension=row.recent_tension, shared_history_summary=row.shared_history_summary,
+        last_major_event=row.last_major_event, updated_at=row.updated_at, **_provenance(row))
 
 
 class PostgresPersonaStore:
@@ -273,6 +287,12 @@ class PostgresEpisodicStore:
         rows = self.session.execute(select(EpisodicEventRow)).scalars().all()
         return [_episodic_from_row(row) for row in rows]
 
+    def delete(self, event_id: str) -> None:
+        row = self.session.get(EpisodicEventRow, event_id)
+        if row is not None:
+            self.session.delete(row)
+            self.session.flush()
+
     def count(self) -> int:
         return int(self.session.execute(text("SELECT COUNT(*) FROM episodic_events")).scalar_one())
 
@@ -385,7 +405,11 @@ class PostgresSemanticStore:
         limit: int,
         trusted_audience: str = "local:main",
     ) -> list[SemanticFact]:
-        stmt = select(SemanticFactRow).where(_visibility_filter(SemanticFactRow.scope, trusted_audience))
+        status = SemanticFactRow.revision_metadata["status"].astext
+        stmt = select(SemanticFactRow).where(
+            _visibility_filter(SemanticFactRow.scope, trusted_audience),
+            or_(status.is_(None), status.not_in(("superseded", "disputed"))),
+        )
         if subject:
             stmt = stmt.where(SemanticFactRow.subject == subject)
         if query_embedding:
@@ -416,9 +440,11 @@ class PostgresRelationshipStore:
                     shared_history_summary=state.shared_history_summary,
                     last_major_event=state.last_major_event,
                     updated_at=state.updated_at,
+                    **_stored_provenance(state),
                 )
             )
         else:
+            row.relation_id = state.relation_id
             row.closeness = state.closeness
             row.trust = state.trust
             row.attachment = state.attachment
@@ -426,6 +452,7 @@ class PostgresRelationshipStore:
             row.shared_history_summary = state.shared_history_summary
             row.last_major_event = state.last_major_event
             row.updated_at = state.updated_at
+            _update_provenance(row, state)
         self.session.flush()
 
     def get(self, target: str) -> RelationshipState | None:
@@ -434,34 +461,19 @@ class PostgresRelationshipStore:
         ).scalar_one_or_none()
         if row is None:
             return None
-        return RelationshipState(
-            relation_id=row.relation_id,
-            target=row.target,
-            closeness=row.closeness,
-            trust=row.trust,
-            attachment=row.attachment,
-            recent_tension=row.recent_tension,
-            shared_history_summary=row.shared_history_summary,
-            last_major_event=row.last_major_event,
-            updated_at=row.updated_at,
-        )
+        return _relationship_from_row(row)
 
     def list_all(self) -> list[RelationshipState]:
         rows = self.session.execute(select(RelationshipStateRow)).scalars().all()
-        return [
-            RelationshipState(
-                relation_id=row.relation_id,
-                target=row.target,
-                closeness=row.closeness,
-                trust=row.trust,
-                attachment=row.attachment,
-                recent_tension=row.recent_tension,
-                shared_history_summary=row.shared_history_summary,
-                last_major_event=row.last_major_event,
-                updated_at=row.updated_at,
-            )
-            for row in rows
-        ]
+        return [_relationship_from_row(row) for row in rows]
+
+    def delete(self, target: str) -> None:
+        row = self.session.execute(
+            select(RelationshipStateRow).where(RelationshipStateRow.target == target)
+        ).scalar_one_or_none()
+        if row is not None:
+            self.session.delete(row)
+            self.session.flush()
 
 
 class PostgresPsychStore:
@@ -587,6 +599,16 @@ class PostgresCandidateStore:
     def list_all(self) -> list[CandidateMemory]:
         rows = self.session.execute(select(MemoryCandidateRow)).scalars().all()
         return [_candidate_from_row(row) for row in rows]
+
+    def delete(self, candidate_id: str) -> None:
+        row = self.session.get(MemoryCandidateRow, candidate_id)
+        if row is not None:
+            links = self.session.execute(select(EvidenceLinkRow).where(
+                EvidenceLinkRow.candidate_id == candidate_id)).scalars().all()
+            for link in links:
+                self.session.delete(link)
+            self.session.delete(row)
+            self.session.flush()
 
     def find_similar(
         self,

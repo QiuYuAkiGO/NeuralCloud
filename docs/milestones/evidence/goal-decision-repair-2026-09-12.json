@@ -1,0 +1,72 @@
+{
+  "schema_version": "goal-decision-repair-v1",
+  "checked_at": "2026-09-12T15:25:37.625387+00:00",
+  "causes": [
+    {
+      "code": "goal_output_truncated",
+      "verified": true,
+      "occurrences": 2,
+      "completion_tokens": 4096,
+      "reasoning_tokens": 4096,
+      "content_characters": 0,
+      "fix": "Per-call low reasoning on supported official DeepSeek v4 endpoints; same 25 second / 60 second deadlines and 4096 token limit."
+    },
+    {
+      "code": "capability_offer_unavailable",
+      "verified": true,
+      "channel": "qq",
+      "offer_remaining_seconds_approx": 14.65,
+      "model_call_seconds_approx": 24.97,
+      "fix": "Proposal-time catalog validation; refreshed supported, ready, available, non-expired and matching binding required before execution."
+    },
+    {
+      "code": "ValueError",
+      "verified": true,
+      "actual_reason": "necessary goal steps are unfinished",
+      "unfinished_steps": 3,
+      "only_outcomes": "wait",
+      "fix": "Keep Runtime rejection; cognitive completion preconditions and explicit prompt rules."
+    },
+    {
+      "code": "goal_invalid_schema",
+      "verified": true,
+      "field_cause": "unknown: original output was not retained",
+      "fix": "Sanitized field/type diagnostics for future failures; no claim of a proven repair to that specific response."
+    }
+  ],
+  "validation": {
+    "cognitive_and_capability_tests": 127,
+    "runtime_tests": 63,
+    "llm_contract_tests": 70,
+    "ruff": "passed",
+    "real_model_diagnostic_calls": 2,
+    "real_model_valid_proposals": 2,
+    "real_diagnostic_body_dispatches": 0,
+    "real_regulation_effectiveness": "unverified"
+  },
+  "files": {
+    "harness/cognitive/goals.py": "f546ba3ac0be02867a3d82e90b9f5846674525ba1acf98dc89bb92838754a242",
+    "harness/cognitive/capabilities.py": "2d94aa0a9e67d013f7c2e43a0bd8d1412d86ebda07ef162adfdef3c6f69c3efa",
+    "harness/cognitive/service.py": "f134dc84586ee30786a70fbbdd69bea54b80370a5c4e4f9345b3860b01ca5fee",
+    "harness/llm/client.py": "80c68b506695720b14983828e54941429897c042e36cd04f4a033d4dc1399b94",
+    "harness/runtime/goals.py": "049761f67eed200aa24bb9416b8f4ac6187b5b76558842981bc2e6959cdab5e8",
+    "harness/runtime/capabilities.py": "7e152803342be0d165707dfaaac56c19bcedc2f79d8a04f01a442c7dd6672b76"
+  },
+  "deployment_evidence": "docs/milestones/evidence/goal-repair-deployment-2026-09-12.json",
+  "model_evidence": "docs/milestones/evidence/goal-repair-model-probe-2026-09-12.json",
+  "acceptance_at_check": {
+    "elapsed_seconds": 20465.015000000014,
+    "sample_count": 681,
+    "error_samples": 1,
+    "maximum_gap_seconds": 64.45299999997951,
+    "eight_hour_observation_complete": false,
+    "new_evidenced_runtime_activity_count": 0
+  },
+  "limits": [
+    "Historical failed attempts remain unchanged. No goal budget or no-progress reset.",
+    "The current eight-hour monitor continues, with one maintenance failed sample and a gap exceeding 45 seconds; it cannot be certified as uninterrupted successful acceptance.",
+    "No newly delivered QQ reply or independently verified psychological improvement has been established.",
+    "Cognitive fixed error codes remain available in the domain command ledger, but DomainCommandError currently exposes only a string; the episode projection uses goal_runtime_error for these remote errors."
+  ],
+  "release_eligible": false
+}

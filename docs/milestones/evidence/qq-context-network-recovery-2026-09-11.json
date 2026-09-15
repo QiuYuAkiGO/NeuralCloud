@@ -1,0 +1,286 @@
+{
+  "schema_version": "qq-context-network-recovery-v1",
+  "recorded_at": "2026-09-11T13:22:38.257303+00:00",
+  "status": "FIX_DEPLOYED_SCOPED_MODEL_REPLAY_PASSED",
+  "prompt_version": "qq-group-turn-taking-v8",
+  "source_hash": "qq-unattended:fdd2009a3661241af188566bcf78725cd3b84477c931ee02de8d923cc05d13f2",
+  "diagnosis": {
+    "primary_failure": "Repeated full receipt proofs exceeded the local 48000-character model context budget before any model call.",
+    "before_fix_failure_label": "model_invalid",
+    "reconstructed_failures_definitely_over_limit": 5,
+    "reconstructed_characters_without_self_aliases_range": [
+      48902,
+      51665
+    ],
+    "additional_similar_failure_not_exactly_proven": 1,
+    "separate_http_failure_observed": true,
+    "historical_http_status_unavailable": true,
+    "docker_containers_healthy": 3,
+    "qq_new_messages_visible_and_no_offline_banner_at_check": true
+  },
+  "fix": {
+    "model_context_receipt_projection_only": true,
+    "full_durable_receipts_and_evidence_preserved": true,
+    "full_evidence_still_bound_to_decision_fingerprint": true,
+    "unverified_segment_suffix_never_presented_as_sent": true,
+    "context_limit_unchanged": 48000,
+    "explicit_context_budget_exceeded_diagnostic": true,
+    "context_character_telemetry": [
+      "base",
+      "final",
+      "persona"
+    ],
+    "transient_model_retry_limit": 1,
+    "default_backoff_seconds": 0.25,
+    "maximum_accepted_server_backoff_seconds": 2,
+    "retry_http_statuses": [
+      408,
+      429,
+      500,
+      502,
+      503,
+      504
+    ],
+    "retry_transport_types": [
+      "NetworkError",
+      "TimeoutException",
+      "RemoteProtocolError"
+    ],
+    "original_deadline_preserved": true,
+    "all_calls_and_backoff_timed": true,
+    "earlier_exhausted_helper_failure_preserved": true,
+    "gui_send_retry_added": false,
+    "expired_message_replay_added": false
+  },
+  "validation": {
+    "full_qq_and_shared_continuation_regression": {
+      "passed": 1501,
+      "failed": 0,
+      "seconds": 151.28
+    },
+    "new_context_budget_tests": 10,
+    "new_network_recovery_tests": 16,
+    "ruff": "passed",
+    "diff_check": "passed",
+    "live_model_network_probe": {
+      "recorded_at": "2026-09-11T13:09:01.303177+00:00",
+      "results": [
+        {
+          "role": "main",
+          "ok": true,
+          "expected_ack": false,
+          "http_status": 200,
+          "usage": {
+            "prompt_tokens": 39,
+            "completion_tokens": 31,
+            "total_tokens": 70,
+            "calls": 0,
+            "revision_calls": 0,
+            "revision_tokens": 0,
+            "source": "api"
+          },
+          "elapsed_ms": 1294.98
+        },
+        {
+          "role": "aux",
+          "same_route_as": "main"
+        }
+      ],
+      "note": "Valid nonempty Chinese acknowledgement over HTTP 200; not an exact ASCII OK match."
+    },
+    "isolated_real_context_replay": {
+      "schema_version": "qq-context-network-replay-v1",
+      "status": "completed",
+      "replay_kind": "current_scoped_context",
+      "historical_exact_replay": false,
+      "production_database_mode": "ro",
+      "gui_used": false,
+      "send_attempted": false,
+      "formal_acceptance": false,
+      "source_decision_id": "qq-decision:a6aa9274bf28444bbfe9bf5abf4a3f55",
+      "limits": {
+        "max_members": 20,
+        "recent_limit_per_member": 5,
+        "history_limit_per_member": 5,
+        "deadline_seconds": 60
+      },
+      "limits_basis": "watcher_defaults_not_persisted_in_original_decision",
+      "original_request_recoverable": false,
+      "request_mode": "explicit_engineering_recheck_on_copy_only",
+      "self_aliases_restored": false,
+      "self_aliases_reason": "historical_logged_in_self_alias_evidence_not_persisted",
+      "original": {
+        "outcome": "model_invalid",
+        "error_type": "model_invalid",
+        "timings_ms": {
+          "gate": 0.0,
+          "persona": 0.0,
+          "total": 15.0
+        },
+        "model_call_counts": {
+          "gate": 0,
+          "persona": 0
+        },
+        "source_count": 15,
+        "query_characters": 37
+      },
+      "context": {
+        "characters": 32287,
+        "participant_count": 4,
+        "observation_count": 15,
+        "observation_text_characters": 268,
+        "profile_count": 9,
+        "source_set_matches_original": false,
+        "query_restored_from_decision": true,
+        "complete_receipt_count": 9,
+        "complete_receipts_original_characters": 17057,
+        "complete_receipts_projected_characters": 4913
+      },
+      "request_characters": 55,
+      "decision_id": "qq-decision:fd8f93be74904079be435a700dca2b73",
+      "action": "speak",
+      "outcome": "ready",
+      "error_type": null,
+      "model_call_counts": {
+        "gate": 1,
+        "persona": 3
+      },
+      "model_called": true,
+      "timings_ms": {
+        "gate": 5879.526,
+        "persona": 14421.156,
+        "total": 21039.685
+      },
+      "elapsed_ms": 21058.293,
+      "reply_characters": 116,
+      "reply_segment_count": 2,
+      "context_measurements": {
+        "context_base_characters": 32631,
+        "context_final_characters": 39444,
+        "context_persona_characters": 39779
+      }
+    },
+    "estimated_final_context_with_previous_full_receipts_characters": 51588,
+    "estimate_basis": "Same current replay payload, replacing only the projected aggregate receipts with their original full forms."
+  },
+  "prior_version_real_segmented_evidence": {
+    "schema_version": "qq-readonly-current-run-audit-v1",
+    "audited_at": "2026-09-11T13:18:08.662772+00:00",
+    "readonly_audit": true,
+    "formal_eight_hour_acceptance_started": false,
+    "gui_inspection_performed": false,
+    "model_called": false,
+    "expected_worker_identity_matches": true,
+    "run_identity_stable": true,
+    "ledger_start_relative_to_worker_status_seconds": -0.003939,
+    "logical_reply_count": 4,
+    "two_segment_reply_count": 4,
+    "total_bubble_receipts": 8,
+    "profile_snapshot_count": 9,
+    "context_observation_count": 22,
+    "context_member_count": 4,
+    "trace_problem_count": 0,
+    "evidence": {
+      "direct_ref_count": 146,
+      "checked_object_count": 146,
+      "bytes_read": 15376371,
+      "missing_count": 0,
+      "hash_mismatch_count": 0,
+      "all_referenced_bytes_match": true
+    },
+    "turns": [
+      {
+        "ordinal": 1,
+        "logical_reply_count": 1,
+        "segment_count": 2,
+        "attempt_count": 2,
+        "first_seen_to_final_receipt_seconds": 30.516,
+        "all_segment_acks_present": true,
+        "receipt_lookup_hash_and_semantics_valid": true,
+        "source_profile_bindings_valid": true,
+        "context_observation_count": 13,
+        "direct_evidence_ref_count": 94,
+        "failure_codes": []
+      },
+      {
+        "ordinal": 2,
+        "logical_reply_count": 1,
+        "segment_count": 2,
+        "attempt_count": 2,
+        "first_seen_to_final_receipt_seconds": 26.828,
+        "all_segment_acks_present": true,
+        "receipt_lookup_hash_and_semantics_valid": true,
+        "source_profile_bindings_valid": true,
+        "context_observation_count": 10,
+        "direct_evidence_ref_count": 63,
+        "failure_codes": []
+      },
+      {
+        "ordinal": 3,
+        "logical_reply_count": 1,
+        "segment_count": 2,
+        "attempt_count": 2,
+        "first_seen_to_final_receipt_seconds": 50.687,
+        "all_segment_acks_present": true,
+        "receipt_lookup_hash_and_semantics_valid": true,
+        "source_profile_bindings_valid": true,
+        "context_observation_count": 9,
+        "direct_evidence_ref_count": 62,
+        "failure_codes": []
+      },
+      {
+        "ordinal": 4,
+        "logical_reply_count": 1,
+        "segment_count": 2,
+        "attempt_count": 2,
+        "first_seen_to_final_receipt_seconds": 19.938,
+        "all_segment_acks_present": true,
+        "receipt_lookup_hash_and_semantics_valid": true,
+        "source_profile_bindings_valid": true,
+        "context_observation_count": 12,
+        "direct_evidence_ref_count": 82,
+        "failure_codes": []
+      }
+    ],
+    "passed": true,
+    "failure_codes": []
+  },
+  "runtime": {
+    "pid": 19976,
+    "started_at": "2026-09-11T13:19:03.274758+00:00",
+    "heartbeat_at": "2026-09-11T13:22:33.855899+00:00",
+    "state": "watching",
+    "running": true,
+    "build_hash": "qq-unattended:fdd2009a3661241af188566bcf78725cd3b84477c931ee02de8d923cc05d13f2",
+    "automatic_screen_capture": true,
+    "automatic_send": true,
+    "last_error_type": null,
+    "decisions": 0,
+    "deliveries": 0
+  },
+  "runtime_source_matches": true,
+  "session_service": {
+    "pid": 31484,
+    "started_at": "2026-09-11T13:20:04.873520+00:00",
+    "restarted_on_new_source": true
+  },
+  "observer": {
+    "running": true,
+    "polls": 207,
+    "last_error_type": null,
+    "gap_seconds": 0.0,
+    "completed_gap_count": 3,
+    "max_gap_seconds": 1.469
+  },
+  "acceptance": {
+    "formal_eight_hours_started": false,
+    "passed": false,
+    "reason": "Historical slow sends, rate-limit waits, model failures and observation gaps remain recorded. Repair replay excludes GUI latency; no new v8 real delivery was used to certify this repair."
+  },
+  "latest_context_selection_followup": {
+    "report": "qq-context-selection-2026-09-12.json",
+    "prompt_version": "qq-group-turn-taking-v10",
+    "historical_report_retained": true,
+    "reason": "Later profile and observation proof growth exceeded the unchanged local budget; v10 projects validated text and selects whole historical records before both model stages."
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "verified_at": "2026-09-15T10:31:58.2336164+08:00",
+  "scope": "Windows one-click NeuralCloud four-service startup",
+  "configuration": "launch.json",
+  "default_profile": "shared",
+  "result": "passed",
+  "shared": {
+    "cold_start_exit_code": 0,
+    "started_at": "2026-09-15T02:18:50.1140028Z",
+    "mode": "live",
+    "model": "deepseek-v4-flash",
+    "lifecycle": "RUNNING",
+    "cognitive_healthy": true,
+    "homeostasis_healthy": true,
+    "gui_url": "http://127.0.0.1:8790",
+    "homepage_http_status": 200,
+    "ops_http_status": 200,
+    "registered_services": [
+      {
+        "name": "cognitive",
+        "pid": 22692,
+        "port": 8771
+      },
+      {
+        "name": "homeostasis",
+        "pid": 22536,
+        "port": 8772
+      },
+      {
+        "name": "runtime",
+        "pid": 17440,
+        "port": 8770
+      },
+      {
+        "name": "gui",
+        "pid": 17748,
+        "port": 8790
+      }
+    ],
+    "repeated_start_cmd_exit_code": 0,
+    "zero_argument_start_cmd_exit_code": 0,
+    "zero_argument_working_directory": "C:/Windows/Temp",
+    "registry_unchanged_on_repeated_start": true,
+    "default_timeout_seconds": 600,
+    "history_binding_preserved": true,
+    "left_running": true
+  },
+  "local": {
+    "cold_start_cmd_exit_code": 0,
+    "cold_start_seconds": 21.31,
+    "mode": "demo",
+    "lifecycle_at_start": "RUNNING",
+    "repeated_start_cmd_exit_code": 0,
+    "registry_unchanged_on_repeated_start": true,
+    "stop_cmd_exit_code": 0,
+    "pid_registry_remaining": false,
+    "remaining_listener_count": 0
+  },
+  "regression_runs": [
+    {
+      "scope": "Nine launcher-related test files",
+      "passed": 301,
+      "seconds": 297.58,
+      "log": ".tmp/launcher-final-20260915-101605-95cf17bf.log"
+    },
+    {
+      "scope": "tests/test_oneclick_launcher.py after final entrypoint fixes",
+      "passed": 32,
+      "seconds": 30.08
+    },
+    {
+      "scope": "tests/test_start_recovery.py after timeout and environment coverage",
+      "passed": 74,
+      "seconds": 91.43
+    }
+  ],
+  "regression_note": "The test runs overlap and must not be added together.",
+  "limits": [
+    "QQDirect and NapCat processes or login are not started by the default launcher.",
+    "QQ message delivery, model response quality and the optional full MistyAI deployment were not acceptance-tested in this run.",
+    "Existing shared private configuration and a usable Python environment were available on this machine."
+  ]
+}

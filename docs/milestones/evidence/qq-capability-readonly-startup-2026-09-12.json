@@ -1,0 +1,119 @@
+{
+  "schema_version": "qq-capability-readonly-startup-v1",
+  "recorded_at": "2026-09-12T05:44:36Z",
+  "status": "needs_login",
+  "services_running": true,
+  "group_read_acceptance": "not_completed",
+  "reason": "QQ opened on its cached-account login screen; login was not clicked and no group chat is visible",
+  "previous_failure_record": "docs/milestones/evidence/qq-capability-readonly-2026-09-12.json",
+  "startup": {
+    "docker_recovery_log": "C:/Users/22850/AppData/Local/NeuralCloud/DockerRecovery/logs/20260912T053557733Z-bc578a4edf714951995cf0fca589cfa7.json",
+    "project": "mistyai-qq-online-test",
+    "operation": "compose start desktop agent loopback-gateway; existing containers retained",
+    "containers_recreated": false,
+    "container_health": {
+      "mistyai-qq-online-test-desktop-1": "healthy",
+      "mistyai-qq-online-test-agent-1": "healthy",
+      "mistyai-qq-online-test-loopback-gateway-1": "healthy"
+    },
+    "images": {
+      "desktop": "mistyai-desktop:qq-online-test-20260911-authfix",
+      "agent": "mistyai-desktop:qq-unattended-20260911-v7",
+      "loopback-gateway": "mistyai-desktop:qq-online-test-20260911-authfix"
+    },
+    "default_worker": "stopped through its original supervisor before starting replacement",
+    "replacement_supervisor": "/run/misty/qq-unattended-20260911/worker-supervisor.conf",
+    "body_entrypoint": "C:/Projects/MistyAI/deploy/qq/Start-QQBody.ps1",
+    "body_launch_hidden": true,
+    "body_started_at": "2026-09-12T05:38:59Z",
+    "body_launcher_pid": 35708,
+    "body_python_launcher_pid": 27444,
+    "body_listener_pid": 45600,
+    "body_process_parent_chain": [35708, 27444, 45600],
+    "body_survived_starting_tool_exit": true,
+    "body_background_rechecked_at": "2026-09-12T05:44:36Z",
+    "qq_application_start": "existing /usr/local/bin/misty-qq as misty-body, one primary process",
+    "new_autostart_configuration": false
+  },
+  "processes": {
+    "pid_namespace": "QQ desktop container unless noted otherwise",
+    "default_body_worker": "STOPPED",
+    "replacement_supervisord_pid": 429,
+    "body_worker_pids": [430],
+    "body_worker_count": 1,
+    "body_worker_management": "RUNNING under existing replacement supervisord with autorestart=true",
+    "qq_primary_pids": [490],
+    "qq_primary_count": 1,
+    "agent_pid": 132,
+    "vnc_pid": 85,
+    "vnc_view_only": true,
+    "windows_watcher_process_count": 0
+  },
+  "ports": {"body": 8788, "agent": 8766, "novnc": 6081},
+  "novnc": {
+    "url": "http://127.0.0.1:6081/vnc.html",
+    "http_status": 200,
+    "view_only": true,
+    "interactive_login_available_through_this_view": false
+  },
+  "body_health": {
+    "checked_at": "2026-09-12T05:40:12.311374Z",
+    "body_instance_id": "misty-qq-test-01",
+    "status": "healthy",
+    "environment": "healthy",
+    "observation": "healthy",
+    "worker": "healthy",
+    "active_action_id": null,
+    "manual_takeover_active": false
+  },
+  "observation": {
+    "status": "completed_with_sha256_verified_evidence",
+    "observation_id": "obs_b870e8abec5b4d9e8bac3f4217646260",
+    "body_instance_id": "misty-qq-test-01",
+    "environment_revision": 2,
+    "captured_at": "2026-09-12T05:40:51.576386Z",
+    "evidence_ref": "evidence://sha256/b18dc9e079595ac0b2032fa0c7702e1053f6efc237bfd35dcfc71fcf49f2a9f7",
+    "sha256": "b18dc9e079595ac0b2032fa0c7702e1053f6efc237bfd35dcfc71fcf49f2a9f7",
+    "private_image_path": "C:/Users/22850/AppData/Local/NeuralCloud/QQDesktop/readonly-startup-20260912/capture.png",
+    "visible_app_id": "org.mistyai.QQ",
+    "current_window_id": "0x1e00004",
+    "current_window_rect": {"x": 480, "y": 143, "width": 320, "height": 460},
+    "visual_result": "cached-account login page; no login interaction performed"
+  },
+  "configured_scope_read": {
+    "configured_window_id": "0x1e00024",
+    "status": "failed",
+    "error_type": "ObserverReadError",
+    "reason_code": "http_error",
+    "configured_window_present": false
+  },
+  "current_window_read": {
+    "scope_source": "fresh native observation only; production configuration unchanged",
+    "window_id": "0x1e00004",
+    "transport_and_binding": "completed",
+    "causal_freshness": true,
+    "started_at": "2026-09-12T05:42:48.359707Z",
+    "finished_at": "2026-09-12T05:42:48.496397Z",
+    "duration_ms": 136.785,
+    "freshness_timing_basis": "agent_monotonic",
+    "clock_step_detected": false,
+    "chat_visible": false,
+    "chat_parser_error_type": "AccessibilityUnavailable"
+  },
+  "calls": {
+    "observation_capture_posts": 1,
+    "accessibility_read_posts": 3,
+    "body_action_posts": 0,
+    "agent_action_posts": 0,
+    "send_requests": 0,
+    "login_clicks": 0
+  },
+  "watcher_started": false,
+  "production_configuration_changed": false,
+  "before": {"send_reservations": 23, "delivery_attempts": 41},
+  "after": {"send_reservations": 23, "delivery_attempts": 41},
+  "send_ledger_unchanged": true,
+  "privacy": "Screenshot remains in the private QQ directory; no account name, chat content or credentials were copied into this report",
+  "left_running": ["QQ desktop", "QQAgent", "QQ loopback gateway", "QQ Body", "one QQ primary application", "one body worker"],
+  "next_requirement": "Account holder login, followed by fresh group/self/window binding and read-only group verification before capability readiness"
+}

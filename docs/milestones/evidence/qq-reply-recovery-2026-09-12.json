@@ -1,0 +1,487 @@
+{
+  "schema_version": "qq-reply-recovery-v1",
+  "recorded_at": "2026-09-12T10:56:27.758811+00:00",
+  "engineering_recovery": true,
+  "operator_assisted": true,
+  "formal_acceptance": false,
+  "diagnosis": {
+    "infrastructure": {
+      "finding": "At the incident check Docker and the QQ container stack were down while the saved watcher status still reported running.",
+      "source": "Root operator live process, Docker and endpoint inspection during this recovery.",
+      "shutdown_cause": "undetermined",
+      "saved_running_flag_is_liveness_proof": false
+    },
+    "latest_failed_text_reply": {
+      "first_seen_at": "2026-09-12T07:29:55.637844+00:00",
+      "trace_id": "qq-trace:d641215ec1084ef99160027f38338cf9",
+      "event_id": "qq-watch-event:08cd51c3eec2477a9daaa61845cebee3",
+      "decision_id": "qq-decision:929c795388544db9ba6616db52075646",
+      "reservation_id": "qq-watch-send:563e09e7f72f4080adb57df42cf2fa5e",
+      "model_decision_completed_offset_seconds": 46.187,
+      "first_delivery_offset_seconds": 46.234,
+      "first_precheck_reason": "incoming_group_verification_expired",
+      "first_precheck_cause_assessment": "reconstructed_consistent_with_regression",
+      "first_precheck_cause": "Code inspection and regression reproduction support a stale incoming group object replaced during preparation. The historical error combines object identity, numeric scope and age checks and did not record which predicate failed; it does not prove that a 46-second-old turn exceeded the 60-second verification age.",
+      "second_precheck_reason": "verified_frame_unavailable",
+      "body_capture_failure_cause": "undetermined",
+      "final_status": "not_sent",
+      "final_reason": "precheck_failed",
+      "updated_at": "2026-09-12T07:30:50.511144Z",
+      "turn_elapsed_seconds": 57.75,
+      "click_started_at": null,
+      "click_acknowledged_at": null,
+      "original_failed_records_retained": true,
+      "old_message_replayed": false
+    }
+  },
+  "change": {
+    "scope": "Both incoming-reply delivery entry points pass group_verification=null so DesktopBackend obtains current group verification inside the provider-authorized execution branch for every delivery, including the first attempt.",
+    "files": [
+      "harness/qq/watcher.py",
+      "harness/qq/segment_delivery.py",
+      "tests/test_qq_delivery_group_refresh.py",
+      "tests/test_qq_capability_bridge.py"
+    ],
+    "original_trigger_context_retained": true,
+    "original_deadline_retained": true,
+    "identity_checks_retained": true,
+    "postclick_retry_added": false,
+    "body_capture_failure_permanently_fixed": false
+  },
+  "validation": {
+    "affected_tests_passed": 267,
+    "affected_tests_seconds": 29.96,
+    "ruff": "passed",
+    "test_command": ".\\.venv\\Scripts\\python.exe -m pytest tests/test_qq_delivery_group_refresh.py tests/test_qq_segment_watcher.py tests/test_qq_watcher_unattended.py tests/test_qq_watcher.py tests/test_qq_desktop.py tests/test_qq_cached_draft_proof.py tests/test_qq_desktop_identity_cache.py tests/test_qq_capability_bridge.py tests/test_qq_embodied_driver.py tests/test_qq_homeostatic_watcher.py tests/test_qq_recovery_contract_gaps.py -q --disable-warnings --maxfail=3",
+    "ruff_command": ".\\.venv\\Scripts\\python.exe -m ruff check harness/qq/watcher.py harness/qq/segment_delivery.py tests/test_qq_delivery_group_refresh.py tests/test_qq_capability_bridge.py",
+    "command_working_directory": "C:\\Projects\\NeuralCloud",
+    "test_and_ruff_exit_codes": 0,
+    "new_regression_cases": 4,
+    "pre_fix_failure_reproduced": true,
+    "regression_scope": [
+      "Attribution replaces the group verification before a first single delivery at 46 seconds.",
+      "Each of three reply segments obtains current verification and sends once.",
+      "Single and segmented refresh crossing the original deadline cannot click.",
+      "Capability bridge performs refresh only inside its authorized execution."
+    ],
+    "result_source": "qq_reply_code agent executed the commands and reported exit 0.",
+    "command_details_pending": false,
+    "new_real_reply_verified": false
+  },
+  "restoration": {
+    "root_verified_at": "2026-09-12T10:35:09+00:00",
+    "docker_containers_healthy": 3,
+    "replacement_body_worker_count": 1,
+    "replacement_body_worker_pid": 290,
+    "replacement_body_worker_state": "RUNNING",
+    "body_and_session_restored": true,
+    "qq_automatic_login_observed": true,
+    "configured_group_preserved": true,
+    "configured_window_preserved": true,
+    "loaded_source_matches": true,
+    "forced_send": false,
+    "old_message_replay": false
+  },
+  "final_root_health_check": {
+    "checked_at": "2026-09-12T10:36:28+00:00",
+    "body_health_http_status": 200,
+    "agent_health_http_status": 200,
+    "session_status_http_status": 200,
+    "all_health_results": "healthy",
+    "manual_takeover": false,
+    "watcher_state": "watching",
+    "automatic_send": true,
+    "parent_send_states": {
+      "sent": 19,
+      "not_sent": 5
+    },
+    "new_events_since_restart": 0,
+    "new_sends_since_restart": 0
+  },
+  "identity_preparation_history": {
+    "failed_initialization_attempts": 26,
+    "first_failed_attempt_at": "2026-09-12T10:24:16.036186+00:00",
+    "repeated_reason": "self_roster_profile_not_verified",
+    "sample_failed_attempt_at": "2026-09-12T10:24:42.858947+00:00",
+    "sample_failed_trace_id": "qq-trace:7bead99b46e04059bc64bdb82eafcfee",
+    "sample_whole_frame_transition_retries": 2,
+    "sample_accessibility_findings": {
+      "content_state": "complete",
+      "visible_roster_rows": 12,
+      "unique_self_candidate_present": true,
+      "candidate_focused_and_enabled": true,
+      "profile_overlay_after_click": false,
+      "empty_roster_or_loading_proven": false
+    },
+    "intermediate_success": {
+      "first_seen_at": "2026-09-12T10:27:18.206176+00:00",
+      "recorded_at": "2026-09-12T10:27:27.240377+00:00",
+      "elapsed_seconds": 9.032,
+      "profile_captured_at": "2026-09-12T10:27:22.511697+00:00",
+      "numeric_self_id_matches": true,
+      "self_indicator": "own_space_link",
+      "uncertainties": [],
+      "self_verification": "ok"
+    },
+    "final_replacement_process_success": {
+      "trace_id": "qq-trace:2e7cf5c9cbd043ef98c57747947ea079",
+      "first_seen_at": "2026-09-12T10:32:30.199369+00:00",
+      "recorded_at": "2026-09-12T10:32:38.574552+00:00",
+      "elapsed_seconds": 8.375,
+      "group_verification": "ok",
+      "self_verification": "ok",
+      "observation_completed": "ok",
+      "counters": {
+        "preparation_attempts": 1,
+        "body_capture": 6,
+        "accessibility_projection": 5,
+        "fresh_frame_reuse": 5,
+        "group_card_blank_dismiss": 1,
+        "group_identity_full_verification": 1,
+        "accessibility_pair_retry": 1,
+        "self_identity_full_verification": 1,
+        "group_identity_cache_hit": 1
+      }
+    },
+    "roster_ui_failure_permanently_fixed": false
+  },
+  "runtime_snapshot": {
+    "collected_at": "2026-09-12T10:35:51.394015+00:00",
+    "pid": 34412,
+    "run_id": "qq-watch-run:06ae4b2fd24948d0b8241ecb7eb9d02d",
+    "started_at": "2026-09-12T10:32:26.935720+00:00",
+    "build_hash": "qq-unattended:e7b95893cc9020f518fad99ee1410b08ae6ca87d594e3b30ba84c24357ce4e36",
+    "heartbeat_at": "2026-09-12T10:35:47.671991+00:00",
+    "state": "watching",
+    "running": true,
+    "automatic_screen_capture": true,
+    "automatic_send": true,
+    "last_error_type": null,
+    "captures": 1,
+    "decisions": 0,
+    "deliveries": 0,
+    "cognitive_owner": "shared_runtime",
+    "capability_owner": "shared",
+    "body_state": "available",
+    "body_health": "healthy",
+    "driver_connected": true,
+    "observer_ready": true,
+    "send_ready": true,
+    "paused": false,
+    "has_uncertain_delivery": false,
+    "observer": {
+      "running": true,
+      "polls": 197,
+      "changes": 0,
+      "last_polled_at": "2026-09-12T10:35:47.365593+00:00",
+      "last_error_type": null,
+      "gap_seconds": 0.0,
+      "max_gap_seconds": 6.25,
+      "completed_gap_count": 1
+    },
+    "current_run_event_states": {},
+    "nonterminal_parent_sends": 0,
+    "nonterminal_send_segments": 0,
+    "last_parent_send_status": "not_sent",
+    "last_parent_send_updated_at": "2026-09-12T07:30:50.511144Z"
+  },
+  "evidence_sources": [
+    "Private QQDesktop watcher.status.json and watcher-trace.observation.jsonl",
+    "Private QQDesktop qq-watch-ledger.sqlite3 and watcher-trace.jsonl, opened read-only",
+    "Stored Body observation and bound accessibility evidence fetched by authenticated read-only GET",
+    "Root operator live Docker, worker, source and service inspection"
+  ],
+  "fresh_text_validation": {
+    "result": "failed_before_click",
+    "event_id": "qq-watch-event:b590b436d6054b1c9d69a5eb34f3475a",
+    "decision_id": "qq-decision:4a982cecd53d4bd899f1f16342093445",
+    "reservation_id": "qq-watch-send:e2ff6e37722643eb9a2644b4c8090ca1",
+    "trace_id": "qq-trace:72be93f362a3496dbc544d46ec72dad3",
+    "observation_trace_id": "qq-trace:a66499de98d74d66a5edd880eced6414",
+    "first_seen_at": "2026-09-12T10:38:37.113703+00:00",
+    "recorded_at": "2026-09-12T10:39:14.281937+00:00",
+    "message_kind": "text",
+    "direction": "incoming",
+    "decision_action": "speak",
+    "intended_segments": 2,
+    "status": "not_sent",
+    "reason": "precheck_failed",
+    "all_three_attempt_reasons": "verified_frame_unavailable",
+    "body_capture_failure_cause": "nested_asyncio_runner_conflict_reproduced_against_real_body",
+    "created_at": "2026-09-12T10:39:09.308366Z",
+    "updated_at": "2026-09-12T10:39:14.278554Z",
+    "click_started_at": null,
+    "click_acknowledged_at": null,
+    "delivered_segments": 0,
+    "observation_elapsed_seconds": 2.687,
+    "attribution_seconds": 6.234,
+    "shared_cognitive_rpc_seconds": 21.437,
+    "gate_model_seconds": 2.235,
+    "persona_seconds": 15.515,
+    "model_calls": 4,
+    "first_delivery_offset_seconds": 32.218,
+    "failed_body_capture_offsets_seconds": [
+      32.328,
+      34.5,
+      37.156
+    ],
+    "failed_body_capture_durations_ms": [
+      0,
+      0,
+      0
+    ],
+    "failed_body_capture_trace_error_type": "model_error",
+    "elapsed_seconds": 37.172,
+    "historical_ready_snapshot_superseded_for_delivery_claims": true,
+    "status_after_failure": {
+      "heartbeat_at": "2026-09-12T10:39:48.408747+00:00",
+      "state": "watching",
+      "last_error_type": "precheck_failed",
+      "decisions": 1,
+      "deliveries": 0,
+      "observer_changes": 1,
+      "observer_last_error_type": null,
+      "observer_gap_seconds": 0
+    }
+  },
+  "body_capture_root_cause": {
+    "status": "reproduced",
+    "reproduction_source": "Root operator read-only reproduction against the real Body service after normally pausing the watcher.",
+    "ordinary_capture": {
+      "status": "success",
+      "observation_id": "obs_92212674886d4174bdcc53f84e5549b1"
+    },
+    "capture_inside_running_asyncio_loop": {
+      "status": "failure",
+      "wrapper_error": "verified_frame_unavailable",
+      "exception_context_type": "RuntimeError",
+      "exception_context_message": "Runner.run() cannot be called from a running event loop",
+      "unawaited_coroutine_warning": "collect was never awaited"
+    },
+    "call_chain": [
+      "embodied._qq_action runs provider.send through its event loop.",
+      "The provider invokes the synchronous GUI actor while that loop is running.",
+      "DesktopBackend.capture calls its Body asyncio.Runner.run from the actor thread.",
+      "Python rejects the nested Runner immediately; the capture wrapper maps the exception to verified_frame_unavailable."
+    ],
+    "production_corroboration": {
+      "new_reply_failed_capture_count": 3,
+      "new_reply_failed_capture_durations_ms": [
+        0,
+        0,
+        0
+      ],
+      "current_and_previous_watcher_stderr_contain_unawaited_collect_warning": true,
+      "historical_1530_failure_same_cause_directly_proven": false
+    },
+    "gui_actions_during_reproduction": 0,
+    "message_sends_during_reproduction": 0,
+    "repair_status": "implemented_regression_and_real_body_read_probe_passed_awaiting_new_reply",
+    "repair_design": "Keep the GUI actor on its existing thread and isolate Body asynchronous I/O on a dedicated thread.",
+    "repaired_real_body_read_verified": true,
+    "repaired_new_real_reply_verified": false
+  },
+  "body_io_repair_validation": {
+    "production_file": "harness/qq/desktop.py",
+    "implementation": {
+      "body_io_workers_per_backend": 1,
+      "body_client_and_runner_created_used_and_closed_on_same_thread_and_loop": true,
+      "gui_actor_and_lock_thread_unchanged": true,
+      "frame_projection_thread_unchanged": true,
+      "queue_and_initialization_consume_original_deadline": true,
+      "timeout_cancels_coroutine": true,
+      "close_is_idempotent_and_shuts_down_client_runner_and_worker": true
+    },
+    "new_test_file": "tests/test_qq_body_capture_loop.py",
+    "new_regression_cases": 3,
+    "original_code_failure_reproduced": true,
+    "regression_scope": [
+      "Ordinary capture, repeated capture inside an already-running event loop and close use the same Body client and loop.",
+      "Timeout cancels the coroutine and leaves no Body I/O worker after close.",
+      "QQEmbodiedMixin._qq_action and provider.send synchronously invoke DesktopBackend.capture against a synthetic Body without GUI effects."
+    ],
+    "affected_tests_passed": 307,
+    "affected_tests_seconds": 44.32,
+    "test_command": ".\\.venv\\Scripts\\python.exe -m pytest tests/test_qq_body_capture_loop.py tests/test_qq_delivery_group_refresh.py tests/test_qq_segment_watcher.py tests/test_qq_watcher_unattended.py tests/test_qq_watcher.py tests/test_qq_desktop.py tests/test_qq_cached_draft_proof.py tests/test_qq_desktop_identity_cache.py tests/test_qq_capability_bridge.py tests/test_qq_embodied_driver.py tests/test_qq_homeostatic_watcher.py tests/test_qq_recovery_contract_gaps.py tests/test_qq_fresh_frame_reuse.py tests/test_qq_group_card_dismiss.py -q --disable-warnings --maxfail=3",
+    "ruff_command": ".\\.venv\\Scripts\\python.exe -m ruff check harness/qq/desktop.py harness/qq/watcher.py harness/qq/segment_delivery.py tests/test_qq_body_capture_loop.py tests/test_qq_delivery_group_refresh.py tests/test_qq_desktop.py tests/test_qq_fresh_frame_reuse.py tests/test_qq_group_card_dismiss.py tests/test_qq_capability_bridge.py",
+    "ruff": "passed",
+    "test_and_ruff_exit_codes": 0,
+    "command_working_directory": "C:\\Projects\\NeuralCloud",
+    "result_source": "qq_reply_code agent executed the commands and reported exit 0.",
+    "overlaps_first_267_test_selection": true,
+    "test_counts_must_not_be_added": true
+  },
+  "repaired_body_read_probe": {
+    "checked_at": "2026-09-12T10:45:26.839568+00:00",
+    "private_artifact": "reply-recovery-20260912/body-capture-probe.json",
+    "source": "Root operator live probe, followed by read-only inspection of the saved result.",
+    "body_captures_only": true,
+    "gui_action_calls": 0,
+    "send_calls": 0,
+    "results": [
+      {
+        "case": "ordinary_before",
+        "status": "ok",
+        "observation_id": "obs_beafe0e2d474441db563c94501cb1fe5",
+        "a11y_paired": true,
+        "elapsed_seconds": 1.531
+      },
+      {
+        "case": "inside_running_event_loop",
+        "status": "ok",
+        "observation_id": "obs_4ab61a2aa34641a8b5a033677426374f",
+        "a11y_paired": true,
+        "elapsed_seconds": 0.703
+      },
+      {
+        "case": "ordinary_after",
+        "status": "ok",
+        "observation_id": "obs_8b95e6ad514d478392f936c3bc5e4ce5",
+        "a11y_paired": true,
+        "elapsed_seconds": 0.875
+      }
+    ],
+    "actual_reply_delivery_proven": false
+  },
+  "shared_homeostasis_read_probe": {
+    "source": "Root operator live read-only probe of QQHomeostaticDriver against the shared production Runtime using an isolated local state directory.",
+    "production_feedback_database_reused": false,
+    "refresh_inside_running_event_loop": "success",
+    "snapshot_revision": 4595,
+    "close_inside_running_event_loop": "success",
+    "repeated_close_outside_event_loop": "success",
+    "homeostasis_domain_mutations": 0,
+    "gui_action_calls": 0,
+    "send_calls": 0,
+    "repair_regression": "passed",
+    "combined_deployment": "loaded_by_final_watcher_pid_30084",
+    "actual_reply_delivery_proven": false
+  },
+  "shared_homeostasis_io_repair_validation": {
+    "production_file": "harness/qq/homeostatic.py",
+    "test_file": "tests/test_qq_homeostatic_io_loop.py",
+    "implementation": {
+      "shared_homeostasis_io_workers_per_client": 1,
+      "owned_async_client_created_used_and_closed_on_same_worker_and_runner": true,
+      "snapshot_validation_and_sqlite_remain_on_original_thread": true,
+      "gui_thread_unchanged": true,
+      "development_engine_and_run_async_unchanged": true,
+      "queue_time_consumes_existing_three_second_or_shorter_tick_budget": true,
+      "expired_queued_request_is_not_sent": true,
+      "initialization_failure_and_idempotent_close_reclaim_worker": true
+    },
+    "main_tests_passed": 128,
+    "main_tests_seconds": 22.82,
+    "main_existing_deprecation_warnings": 2,
+    "main_test_command": ".\\.venv\\Scripts\\python.exe -m pytest -q tests/test_qq_homeostatic_io_loop.py tests/test_shared_qq_homeostasis.py tests/test_qq_homeostatic_driver.py tests/test_qq_capability_bridge.py tests/test_qq_homeostatic_watcher.py tests/test_qq_embodied_driver.py",
+    "additional_tests_passed": 64,
+    "additional_tests_seconds": 16.28,
+    "additional_test_command": ".\\.venv\\Scripts\\python.exe -m pytest -q tests/test_qq_homeostatic_feedback.py tests/test_qq_homeostatic_drive.py tests/test_qq_homeostatic_session_status.py tests/test_goal_qq_feedback.py",
+    "unique_tests_in_these_two_commands": 192,
+    "ruff_command": ".\\.venv\\Scripts\\python.exe -m ruff check harness/qq/homeostatic.py tests/test_qq_homeostatic_io_loop.py",
+    "ruff": "passed",
+    "test_and_ruff_exit_codes": 0,
+    "command_working_directory": "C:\\Projects\\NeuralCloud",
+    "result_source": "qq_io_review agent executed the commands and reported success.",
+    "overlaps_body_io_test_selection": true,
+    "counts_must_not_be_added_to_307_or_267": true,
+    "gui_action_calls": 0,
+    "send_calls": 0
+  },
+  "final_runtime_snapshot": {
+    "collected_at": "2026-09-12T10:56:27.758811+00:00",
+    "pid": 30084,
+    "run_id": "qq-watch-run:0ec9350432fd4fa68fabe3f3966de527",
+    "started_at": "2026-09-12T10:54:24.789948+00:00",
+    "heartbeat_at": "2026-09-12T10:56:25.615014+00:00",
+    "build_hash": "qq-unattended:f7d61220bf689efe9ec32a1ba576e57418aa7c6e9f7670388ba3c9fd7f52a75b",
+    "loaded_source_matches_root_checked_at": "2026-09-12T10:55:15+00:00",
+    "loaded_source_matches": true,
+    "state": "watching",
+    "running": true,
+    "automatic_screen_capture": true,
+    "automatic_send": true,
+    "last_error_type": null,
+    "homeostasis_feedback_error": null,
+    "captures": 1,
+    "decisions": 0,
+    "deliveries": 0,
+    "driver_connected": true,
+    "observer_ready": true,
+    "send_ready": true,
+    "paused": false,
+    "has_uncertain_delivery": false,
+    "observer": {
+      "polls": 116,
+      "changes": 0,
+      "last_polled_at": "2026-09-12T10:56:25.185281+00:00",
+      "last_error_type": null,
+      "gap_seconds": 0,
+      "max_gap_seconds": 7.375,
+      "completed_gap_count": 3
+    },
+    "homeostasis": {
+      "owner": "shared_runtime",
+      "revision": 4639,
+      "last_error_type": null,
+      "feedback_pending": 0,
+      "feedback_applied": 19
+    },
+    "identity_preparation": {
+      "trace_id": "qq-trace:6af6e2d7142c40df939688859f65d103",
+      "first_seen_at": "2026-09-12T10:54:29.299818+00:00",
+      "recorded_at": "2026-09-12T10:54:43.037220+00:00",
+      "elapsed_seconds": 13.735,
+      "group_identity_full_verification": 1,
+      "self_identity_full_verification": 1
+    },
+    "current_run_event_states": {},
+    "all_parent_send_states": {
+      "sent": 19,
+      "not_sent": 6
+    },
+    "nonterminal_send_segments": 0,
+    "failed_fresh_text_event_retained": true,
+    "new_real_reply_verified_after_complete_io_repair": false,
+    "next_validation": "Wait for a new user text message, then verify the complete decision, unique click and durable receipt chain; do not replay the failed earlier reply.",
+    "root_final_http_check": {
+      "body_port_8788_health": "200_healthy",
+      "agent_port_8766_health": "200_healthy",
+      "session_port_8789_status": "200_healthy"
+    },
+    "original_eight_hour_monitor_pid": 28096,
+    "original_eight_hour_monitor_process_still_present": true,
+    "monitor_presence_does_not_prove_continuous_acceptance": true
+  },
+  "limitations": [
+    "Service readiness and successful identity preparation do not prove a new QQ reply was delivered.",
+    "A fresh text message reached attribution and a speak decision, but all three precheck captures failed before any send click. The subsequent I/O repairs passed regression and real read-only probes, but no new reply delivery has yet verified the repaired production path.",
+    "No historical reply was requeued for this check and the failed new reply is not automatically replayed.",
+    "Docker shutdown cause remains undetermined; the saved status file can outlive the processes it describes.",
+    "The 26 initialization failures remain part of the record; subsequent success does not establish a permanent fix for QQ roster interactions.",
+    "This operator-assisted recovery and the retained observation gap do not qualify as continuous eight-hour acceptance.",
+    "No credentials, message bodies, draft text, display names or numeric QQ identifiers are included in this report."
+  ],
+  "post_repair_incoming_observation": {
+    "checked_at": "2026-09-12T14:46:09.257501+00:00",
+    "incoming_first_seen_at": "2026-09-12T14:28:49.534+00:00",
+    "origin": "message",
+    "goal_activity": false,
+    "model_choice": "wait",
+    "model_call_count": 1,
+    "trace_outcome": "natural_wait",
+    "trace_elapsed_seconds": 22.734,
+    "final_event_status": "superseded",
+    "final_event_reason": "newer_context",
+    "subsequent_observation": "Recovered after failed reads; original candidate expired at its unchanged deadline, then a new baseline was established.",
+    "new_send_reservations": 0,
+    "new_clicks": 0,
+    "new_receipts": 0,
+    "unresolved_sends": 0,
+    "runtime_state": "watching",
+    "send_ready": true,
+    "maximum_observer_gap_seconds": 19.86,
+    "new_real_reply_verified": false,
+    "complete_natural_wait_acceptance": false
+  }
+}

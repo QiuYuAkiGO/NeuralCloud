@@ -143,7 +143,8 @@ def load_config(path: str | Path) -> DeploymentConfig:
     if not isinstance(bindings, dict):
         raise DeployError("bindings must be an object")
     clean = {}
-    budgets = {"NC_QQ_INPUT_TOKEN_BUDGET": 8192, "NC_QQ_MEMORY_RECALL_MAX_CHARACTERS": 1}
+    budgets = {"NC_QQ_INPUT_TOKEN_BUDGET": 8192, "NC_QQ_MEMORY_RECALL_MAX_CHARACTERS": 1,
+               "NC_AUX_LLM_NUM_CTX": 1024}
     for key, value in bindings.items():
         if key in budgets:
             if isinstance(value, bool) or not str(value).isdigit() or int(value) < budgets[key]:

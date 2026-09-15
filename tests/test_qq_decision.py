@@ -102,7 +102,7 @@ def test_multimember_speak_uses_user_side_history_and_is_replayable(setup):
     assert result.automatic_send is False and result.new_decision is True
     assert set(result.source_record_ids) == {item.record_id for item in records}
     assert result.model == "synthetic-model" and result.persona_version
-    assert result.prompt_version == "qq-group-turn-taking-v15"
+    assert result.prompt_version == "qq-group-turn-taking-v16"
     assert result.usage.calls >= 2
     assert builds[0].call_log_enabled is False and builds[0].record_interaction is False
     all_messages = client.gate_messages + client.chat_calls

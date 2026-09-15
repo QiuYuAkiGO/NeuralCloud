@@ -1,0 +1,18 @@
+{
+  "enabled": false,
+  "base_url": "https://api.moonshot.cn/v1",
+  "model": "kimi-k3",
+  "api_key_file": null,
+  "queue_path": null,
+  "reasoning_effort": "high",
+  "schedule_time": "03:00",
+  "timezone": "Asia/Shanghai",
+  "backfill_days": 7,
+  "request_timeout_seconds": 180,
+  "job_timeout_seconds": 900,
+  "max_attempts": 3,
+  "max_completion_tokens": 32768,
+  "chunk_input_tokens": 16000,
+  "max_input_tokens": 96000,
+  "daily_token_budget": null
+}

@@ -1,0 +1,242 @@
+{
+  "schema": "qq-opinion-length-evidence-v1",
+  "checked_at": "2026-09-15T12:36:28.515439+00:00",
+  "release": "20260915-opinion-length-v1",
+  "package": {
+    "release_id": "20260915-opinion-length-v1",
+    "files": 322,
+    "archive": "C:\\Projects\\NeuralCloud\\.tmp\\qq-opinion-length-20260915\\20260915-opinion-length-v1.tar.gz",
+    "sha256": "51cf2e57e4c311498f2c076712675b3edcc04b6e8ab26c0a1d2fd6213e149af6",
+    "changed_files": [
+      "harness/qq/decision.py",
+      "harness/qq/draft.py"
+    ]
+  },
+  "release_verification": {
+    "release_id": "20260915-opinion-length-v1",
+    "verified_files": 322,
+    "configuration_valid": true,
+    "business_services_started": false
+  },
+  "prompt_versions": [
+    "qq-group-turn-taking-v16",
+    "qq-private-turn-taking-v5"
+  ],
+  "ordinary_target": {
+    "characters": [
+      20,
+      60
+    ],
+    "sentences": [
+      1,
+      2
+    ],
+    "simple_acknowledgements_may_be_shorter": true
+  },
+  "opinion_target": {
+    "characters": [
+      60,
+      120
+    ],
+    "paragraphs": [
+      1,
+      2
+    ],
+    "detail_level": "expanded",
+    "intent": "stance",
+    "condition": "opinion_evaluation_or_stance_needing_reasons",
+    "mandatory_expansion": false
+  },
+  "lengths_are_soft_generation_guidance": true,
+  "explicit_extended_requests_keep_existing_flexibility": true,
+  "production_additional_model_calls": 0,
+  "test_results": {
+    "initial_related_suite_passed": 195,
+    "initial_stale_assertions": 2,
+    "stale_assertions_updated_and_rerun_passed": 2,
+    "related_audit_checks_passed": 3
+  },
+  "live_model_synthetic_probes": [
+    {
+      "case": "ordinary_ack",
+      "scope": "group",
+      "input": "Misty，能看见我这条消息吗？",
+      "plan": {
+        "intent": "answer",
+        "first_point": "嗯，能看见，我在的。",
+        "new_questions": [],
+        "detail_level": "brief",
+        "necessary_boundary": null
+      },
+      "reply_style": "conversational",
+      "reply": "嗯，能看见，我在的。",
+      "segments": 1,
+      "characters": 10,
+      "expected_detail": "brief",
+      "detail_matches": true,
+      "soft_target_matches": true,
+      "diagnostics": {
+        "characters": 10,
+        "sentences": 1,
+        "segments": 1,
+        "brief_length_exceeded": false,
+        "brief_sentence_count_exceeded": false,
+        "brief_segment_count_exceeded": false,
+        "hesitant_opening": true,
+        "memory_disclaimer": false,
+        "relational_cycle_proxy": false
+      },
+      "model": "deepseek-v4-flash",
+      "seconds": 2.46,
+      "gate_prompt_tokens": 2448,
+      "body_prompt_tokens": 2643
+    },
+    {
+      "case": "opinion_group",
+      "scope": "group",
+      "input": "Misty，你怎么看为了追求真实感，让游戏角色失误一次就永远退场这种设计？",
+      "plan": {
+        "intent": "stance",
+        "first_point": "永久退场确实会让每个选择变沉，但一次失误就把角色彻底抹掉，我更像在看惩罚玩家，而不是真实。",
+        "new_questions": [],
+        "detail_level": "expanded",
+        "necessary_boundary": "这只是我自己的偏好，不是在评判这种设计的好坏。"
+      },
+      "reply_style": "conversational",
+      "reply": "我觉得这种设计太狠了。永久退场确实让每次选择变沉，可一次失误就把角色彻底抹掉，更像是在惩罚玩家，而不是真实；真实的人也会犯错，也值得有机会改。\n\n不过这只是我的偏好，不是说这种机制就一定不好，只是我会舍不得。",
+      "segments": 2,
+      "characters": 104,
+      "expected_detail": "expanded",
+      "detail_matches": true,
+      "soft_target_matches": true,
+      "diagnostics": {
+        "characters": 104,
+        "sentences": 3,
+        "segments": 2,
+        "brief_length_exceeded": false,
+        "brief_sentence_count_exceeded": false,
+        "brief_segment_count_exceeded": false,
+        "hesitant_opening": false,
+        "memory_disclaimer": false,
+        "relational_cycle_proxy": false
+      },
+      "model": "deepseek-v4-flash",
+      "seconds": 7.12,
+      "gate_prompt_tokens": 2472,
+      "body_prompt_tokens": 2716
+    },
+    {
+      "case": "opinion_private",
+      "scope": "private",
+      "input": "Misty，你怎么看朋友之间为了不伤感情而总是不说真实意见？",
+      "plan": {
+        "intent": "stance",
+        "first_point": "我觉得可以换温柔的说法，但不该一直把真实意见全藏起来。",
+        "new_questions": [
+          "朋友之间为了不伤感情而总是不说真实意见，你怎么看？"
+        ],
+        "detail_level": "expanded",
+        "necessary_boundary": null
+      },
+      "reply_style": "conversational",
+      "reply": "我觉得，真话可以换种温柔的说法，但不该一直藏起来。一直不说，表面没伤感情，心里却容易慢慢隔开；等哪天憋不住再说，反而更伤人。当然也要看时机和分寸，不是把想法全倒出来就算坦诚。",
+      "segments": 1,
+      "characters": 87,
+      "expected_detail": "expanded",
+      "detail_matches": true,
+      "soft_target_matches": true,
+      "diagnostics": {
+        "characters": 87,
+        "sentences": 3,
+        "segments": 1,
+        "brief_length_exceeded": false,
+        "brief_sentence_count_exceeded": false,
+        "brief_segment_count_exceeded": false,
+        "hesitant_opening": false,
+        "memory_disclaimer": false,
+        "relational_cycle_proxy": false
+      },
+      "model": "deepseek-v4-flash",
+      "seconds": 5.31,
+      "gate_prompt_tokens": 2216,
+      "body_prompt_tokens": 2834
+    },
+    {
+      "case": "simple_stance",
+      "scope": "group",
+      "input": "Misty，你支持把默认回复缩短吗？先只说支持或不支持。",
+      "plan": {
+        "intent": "answer",
+        "first_point": "支持，短一点更像平常聊天，也不会把话说完。",
+        "new_questions": [],
+        "detail_level": "brief",
+        "necessary_boundary": null
+      },
+      "reply_style": "conversational",
+      "reply": "支持，短一点更像平常聊天，也留得住呼吸感。",
+      "segments": 1,
+      "characters": 21,
+      "expected_detail": "brief",
+      "detail_matches": true,
+      "soft_target_matches": true,
+      "diagnostics": {
+        "characters": 21,
+        "sentences": 1,
+        "segments": 1,
+        "brief_length_exceeded": false,
+        "brief_sentence_count_exceeded": false,
+        "brief_segment_count_exceeded": false,
+        "hesitant_opening": false,
+        "memory_disclaimer": false,
+        "relational_cycle_proxy": false
+      },
+      "model": "deepseek-v4-flash",
+      "seconds": 3.31,
+      "gate_prompt_tokens": 2462,
+      "body_prompt_tokens": 2667
+    },
+    {
+      "summary": {
+        "cases_passed": 4,
+        "prompt_version": "qq-group-turn-taking-v16",
+        "private_prompt_version": "qq-private-turn-taking-v5",
+        "qq_messages_sent": 0,
+        "scope": "small_synthetic_prompt_probe"
+      }
+    }
+  ],
+  "live_model_probe_scope": "Small synthetic gate and body prompts using the configured main model and current persona; no full historical replay or QQ sends.",
+  "services": {
+    "cognitive": "active",
+    "homeostasis": "active",
+    "runtime": "active",
+    "gui": "active",
+    "board": "active",
+    "qq-direct": "active"
+  },
+  "runtime_lifecycle": "RUNNING",
+  "queue_size": 0,
+  "runtime_degraded_reasons": [],
+  "qq_connected": true,
+  "qq_automatic_send": true,
+  "validator_enabled": false,
+  "persisted_validator_enabled": false,
+  "web_preparation_enabled": false,
+  "web_config_revision": 2,
+  "application_context": 8192,
+  "loaded_context": 8192,
+  "configuration_sha256": "2d33337999871fd9eb4b70de8bd90825f07adf7504aabb21fbebcf3d6cc29d11",
+  "public_health": {
+    "url": "https://panel.u2235830.nyat.app:60254",
+    "page_http_status": 200,
+    "available": true,
+    "runtime_lifecycle": "RUNNING"
+  },
+  "backup": {
+    "files": 1712,
+    "ok": true,
+    "snapshot": "/var/backups/neuralcloud/opinion-length-20260915"
+  },
+  "snapshot_restored": false,
+  "qq_test_messages_sent": 0
+}

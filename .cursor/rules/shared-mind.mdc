@@ -1,0 +1,13 @@
+---
+description: One shared cognition, long-term memory, and homeostasis in normal operation
+alwaysApply: true
+---
+
+- Normal chat channels use the same CognitiveServiceHost, long-term memory, Homeostasis service, and Runtime scheduler.
+- The GUI is a Runtime facade; QQ is a channel/body driver, not an independent mind or second scheduler.
+- Independent instances and debug mutation require explicit `development_debug` authority through `harness.runtime.ownership`; model backend `demo`, `live`, or `ollama` does not grant this authority.
+- Owners acquire `SharedDomainLease` before opening or mutating shared state. Different state paths do not permit a second normal owner. Independent development state requires explicit isolation.
+- Do not silently fall back to an in-process brain when shared services are unavailable; report unavailable and preserve state.
+- Keep backend authorization authoritative. Client UI visibility is not a security or ownership boundary.
+- Default GUI port is 8790. Port 8766 belongs to the QQ Agent; never stop its owner to free a GUI port.
+- Tests explicitly opt into isolated development mode when they construct standalone services. Never infer a test bypass from pytest, mock clients, or backend names.

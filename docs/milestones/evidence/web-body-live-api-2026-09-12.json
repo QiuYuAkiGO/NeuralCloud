@@ -1,0 +1,22 @@
+{
+  "date": "2026-09-12",
+  "provider": "tavily",
+  "endpoint": "https://api.tavily.com",
+  "status": "api_verified",
+  "configuration_revision": 1,
+  "credential_storage": "Runtime private versioned key file; credential omitted from this record",
+  "checks": [
+    {"capability": "web.search.v1", "status": "completed", "source_count": 1},
+    {"capability": "web.read.v1", "status": "completed", "source_count": 1}
+  ],
+  "requests_used": 2,
+  "autonomous_requests_used": 0,
+  "test_path": "WebController.test with real TavilyWebProvider and persistent production request budget",
+  "service_state": "shared services stopped; new configuration applies at next startup",
+  "saved_authorization": {"enabled": true, "conversation_enabled": true, "autonomous_enabled": true},
+  "limitations": [
+    "Real provider API verified; real main-model conversation and autonomous online acceptance remain pending",
+    "Shared services were not started, no QQ messages were sent",
+    "Stale launcher registration remains; normal stop.ps1 cleanup precedes the next start.ps1"
+  ]
+}

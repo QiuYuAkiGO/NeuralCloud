@@ -1,0 +1,92 @@
+{
+  "schema_version": "goal-regulation-acceptance-checkpoint-v1",
+  "checked_at": "2026-09-12T11:35:16.101835+00:00",
+  "run_started_at": "2026-09-12T09:44:13.6303898Z",
+  "expected_end_at": "2026-09-12T17:44:13.6303898Z",
+  "monitor_pid": 28096,
+  "monitor_process_identity_verified": true,
+  "monitor_process_command": "tools/verify_regulation.py --mode monitor --duration-seconds 28800 --interval-seconds 30",
+  "runtime_health": {
+    "lifecycle": "RUNNING",
+    "cognitive_healthy": true,
+    "homeostasis_healthy": true,
+    "llm_healthy": true,
+    "body_healthy": true,
+    "degraded_reasons": []
+  },
+  "report": {
+    "status": "incomplete",
+    "elapsed_seconds": 6642.0779999999795,
+    "sample_count": 222,
+    "valid_samples": 222,
+    "error_samples": 0,
+    "maximum_gap_seconds": 30.25,
+    "interrupted": false,
+    "eight_hour_observation_complete": false,
+    "new_activity_count": 5,
+    "new_evidenced_runtime_activity_count": 0,
+    "regulation_effectiveness": "unverified",
+    "causal_effect_verified": false,
+    "release_eligible": false,
+    "source_counts": {
+      "fact_references": 0,
+      "self_report_references": 0,
+      "evaluations_with_drift": 110
+    }
+  },
+  "goal": {
+    "status": "waiting",
+    "blocked_reason": "no_progress",
+    "no_progress": 6,
+    "stable_since": null,
+    "results_by_status": {
+      "wait": 2,
+      "error": 4
+    },
+    "model_budget": {
+      "calls_last_hour": 2,
+      "maximum_calls_per_hour": 12,
+      "next_available_at": "2026-09-12T11:35:16.069203+00:00"
+    },
+    "recorded_recovery_time_seconds": null
+  },
+  "decision_failures": [
+    {
+      "completed_at": "2026-09-12T09:54:26.657358+00:00",
+      "runtime_error_type": "ValueError",
+      "cognitive_status": "applied",
+      "precise_runtime_reason": "undetermined"
+    },
+    {
+      "completed_at": "2026-09-12T10:33:56.970857+00:00",
+      "runtime_error_type": "DomainCommandError",
+      "cognitive_error": "capability_offer_unavailable"
+    },
+    {
+      "completed_at": "2026-09-12T10:40:16.149995+00:00",
+      "runtime_error_type": "DomainCommandError",
+      "cognitive_error": "goal_output_truncated"
+    },
+    {
+      "completed_at": "2026-09-12T10:55:01.252034+00:00",
+      "runtime_error_type": "DomainCommandError",
+      "cognitive_error": "goal_invalid_schema"
+    }
+  ],
+  "qq": {
+    "pid": 30084,
+    "state": "watching",
+    "new_decisions_this_run": 0,
+    "new_deliveries_this_run": 0,
+    "send_ready": true,
+    "has_uncertain_delivery": false,
+    "maximum_observer_gap_seconds": 11.125,
+    "second_test_message_verified": false
+  },
+  "limitations": [
+    "Continuous Runtime polling is not proof of continuous availability of every body channel.",
+    "No independently evidenced goal activity or psychological improvement has been established.",
+    "No budgets, goal state, domain values, channel authorizations or pending effects were changed.",
+    "The running monitor was not restarted or reset; failures and gaps remain in the original evidence."
+  ]
+}

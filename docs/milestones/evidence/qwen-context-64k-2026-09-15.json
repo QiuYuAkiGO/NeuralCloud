@@ -1,0 +1,264 @@
+{
+  "schema_version": "qwen-context-change-v1",
+  "checked_at": "2026-09-15T10:59:54.593102+00:00",
+  "result": "64k_trial_rolled_back_to_8192_by_user_request",
+  "model": "qwen3:4b-instruct-2507-q4_K_M",
+  "context_before": 8192,
+  "trial_context": 65536,
+  "current_context": 8192,
+  "configuration": {
+    "application": {
+      "path": "/etc/neuralcloud/deploy.json",
+      "binding": "NC_AUX_LLM_NUM_CTX",
+      "value": "65536"
+    },
+    "ollama": {
+      "path": "/etc/systemd/system/neuralcloud-aux-ollama.service.d/64k-context.conf",
+      "OLLAMA_CONTEXT_LENGTH": "65536",
+      "MemoryMax_before": "10G",
+      "MemoryMax_after": "24G"
+    },
+    "model_replaced": false,
+    "qq_reply_deadline_changed": false,
+    "validator_capacity_routing_changed": false
+  },
+  "release": {
+    "release_id": "20260915-qwen64k-v1",
+    "baseline_release": "20260915-qq-reply-repair-v1",
+    "files": 316,
+    "sha256": "b78a682edb06a52fd63704eec1aa624d010a8e377b17980bb7e258fc78717719",
+    "changed_files": [
+      "harness/deploy/config.py"
+    ],
+    "changed_hashes": {
+      "harness/deploy/config.py": "772a0883f4a46507252bc69685799ad33d4788b8a0fb7c66ff408e8560e19e12"
+    }
+  },
+  "backup": {
+    "state_snapshot": "/var/backups/neuralcloud/qwen64k-20260915",
+    "configuration_backup": "/var/backups/neuralcloud/qwen64k-config-20260915",
+    "writers_stopped": true,
+    "verification": {
+      "bytes": 1298328117,
+      "files": 1571,
+      "journals": {
+        "state/runtime/journal": {
+          "last_hash": "82526b958fbd5b0c3f2f11d2f825c4d52bd587e84d32efbddc6258f46108b128",
+          "records": 100269
+        }
+      },
+      "manifest_sha256": "f12850e99168a931eece49e66b7537075b77121c1f63f3fb7b39e071589b5794",
+      "ok": true,
+      "sqlite_databases": 15
+    }
+  },
+  "tests": {
+    "linux_deploy_passed": 45,
+    "linux_deploy_skipped": 1,
+    "new_regressions": 13,
+    "scope": "Context binding parsing, rejection and propagation through the actual service runner",
+    "ruff": "passed",
+    "diff_check": "passed"
+  },
+  "capacity_probe": {
+    "started_at": "2026-09-15T10:45:58.906125+00:00",
+    "model": "qwen3:4b-instruct-2507-q4_K_M",
+    "requested_context": 65536,
+    "synthetic_only": true,
+    "qq_sends": 0,
+    "cases": [
+      {
+        "case": "short",
+        "seconds": 3.864,
+        "http_status": 200,
+        "prompt_tokens": 42,
+        "completion_tokens": 6,
+        "prompt_eval_seconds": 0.233157,
+        "load_seconds": 3.438232922,
+        "done": true,
+        "done_reason": "stop",
+        "json_valid": true
+      },
+      {
+        "case": "long",
+        "seconds": 240.085,
+        "error_type": "TimeoutError"
+      }
+    ],
+    "loaded_models": {
+      "models": [
+        {
+          "name": "qwen3:4b-instruct-2507-q4_K_M",
+          "model": "qwen3:4b-instruct-2507-q4_K_M",
+          "size": 12738048819,
+          "digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen3",
+            "families": [
+              "qwen3"
+            ],
+            "parameter_size": "4.0B",
+            "quantization_level": "Q4_K_M"
+          },
+          "expires_at": "2318-12-26T18:33:19.62494996+08:00",
+          "size_vram": 12738048819,
+          "context_length": 65536
+        }
+      ]
+    }
+  },
+  "capacity_probe_process_exit_code": 1,
+  "rollback_completed_at": "2026-09-15T10:57:51.328433+00:00",
+  "rollback_restored_business_snapshot": false,
+  "before": {
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "queue": {
+        "size": 0,
+        "capacity": 1024,
+        "high_watermark": 819,
+        "by_priority": {},
+        "coalesced": 0,
+        "dropped": 0,
+        "rejected": 0
+      },
+      "pending_events": 0
+    },
+    "loaded_models": {
+      "models": [
+        {
+          "name": "qwen3:4b-instruct-2507-q4_K_M",
+          "model": "qwen3:4b-instruct-2507-q4_K_M",
+          "size": 3873366343,
+          "digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen3",
+            "families": [
+              "qwen3"
+            ],
+            "parameter_size": "4.0B",
+            "quantization_level": "Q4_K_M"
+          },
+          "expires_at": "2318-12-26T18:27:18.520158416+08:00",
+          "size_vram": 3873366343,
+          "context_length": 8192
+        }
+      ]
+    }
+  },
+  "after": {
+    "checked_at": "2026-09-15T10:59:54.593102+00:00",
+    "release": "20260915-qq-reply-repair-v1",
+    "application_context": 8192,
+    "loaded_models": {
+      "models": [
+        {
+          "name": "qwen3:4b-instruct-2507-q4_K_M",
+          "model": "qwen3:4b-instruct-2507-q4_K_M",
+          "size": 3873366343,
+          "digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen3",
+            "families": [
+              "qwen3"
+            ],
+            "parameter_size": "4.0B",
+            "quantization_level": "Q4_K_M"
+          },
+          "expires_at": "2318-12-26T18:46:59.443989769+08:00",
+          "size_vram": 3873366343,
+          "context_length": 8192
+        }
+      ]
+    },
+    "aux_service": "MemoryMax=10737418240\nActiveState=active\n",
+    "services": {
+      "cognitive": "active",
+      "homeostasis": "active",
+      "runtime": "active",
+      "gui": "active",
+      "board": "active",
+      "qq_direct": "active"
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "queue": {
+        "size": 0,
+        "capacity": 1024,
+        "high_watermark": 819,
+        "by_priority": {},
+        "coalesced": 0,
+        "dropped": 0,
+        "rejected": 0
+      },
+      "pending_events": 0,
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-09-15T10:59:51.884614Z",
+        "last_journal_append_at": "2026-09-15T10:59:52.132896Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      }
+    },
+    "qq": {
+      "running": true,
+      "connected": true,
+      "automatic_send": true,
+      "state": "watching",
+      "last_error_type": null,
+      "counts": {
+        "events": {
+          "expired": 133,
+          "failed": 385,
+          "observed": 276,
+          "rate_limited": 1,
+          "sent": 36,
+          "wait": 196
+        },
+        "sends": {
+          "sent": 77
+        }
+      }
+    }
+  },
+  "verification_scope": "Synthetic direct auxiliary-model requests; no artificial QQ messages or business-state writes by the probe",
+  "limitations": [
+    "The synthetic approximately 48000-token cold input timed out after 240 seconds; long-input latency acceptance failed",
+    "The validator retains its conservative UTF-8 byte bound and can route long inputs to the existing main model"
+  ],
+  "rollback": "Stop business services using the new release CLI; restore deploy.json from the private configuration backup; remove only this task-owned 64k-context.conf drop-in; reload and restart auxiliary Ollama; activate the prior release. Do not restore the old business snapshot over newer data.",
+  "private_raw_evidence_directory": ".tmp/qwen64k-20260915",
+  "final_health": {
+    "checked_at": "2026-09-15T11:04:04.907485+00:00",
+    "runtime_lifecycle": "RUNNING",
+    "pending_events": 0,
+    "queue_size": 0,
+    "last_heartbeat_at": "2026-09-15T11:03:59.941401Z",
+    "degraded_reasons": [],
+    "loaded_context": 8192
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": "qq-expression-configuration-audit-v1",
+  "captured_at": "2026-09-14T13:02:04.683746+00:00",
+  "release_eligible": false,
+  "evidence_kind": "read_only_disk_configuration_not_process_attestation",
+  "active_model_configuration": {
+    "requested_model": "deepseek-v4-flash",
+    "endpoint": "https://api.deepseek.com",
+    "credential_available": true,
+    "actual_response_model": null,
+    "provider_defaults_effective_unverified": true
+  },
+  "manifest": {
+    "sha256": "29a0760532a07f816a59c225278ebaecaa03a91626088e2a3e19e7aa32e90c02",
+    "experiment_id": "neuralcloud-shared-misty-regulation-v1",
+    "revision": 1,
+    "homeostatic_profile": "qq-social-drive-v1@1",
+    "homeostatic_expression": {
+      "mode": "responses",
+      "marked_cooldown_seconds": 1800
+    },
+    "model_version": "deepseek-v4-flash",
+    "command_timeout_seconds": 60
+  },
+  "persona": {
+    "working_copy_sha256": "af8b688dfa4ad65dcced46c2d34ea1482cd278180da1330820aff982a5a05126",
+    "builtin_substitution_used_for_audit": false
+  },
+  "homeostasis": {
+    "profile_sha256": "1c4d3bad3b9151674abaacc2f0d953f5374b852ad5717c132d41a876437967c2",
+    "snapshot_sha256": "891946f34dbe2a571e94992ebad7a8eb5b994ef03099cc1e4021e4e85d629901",
+    "profile_id": "qq-social-drive-v1",
+    "profile_revision": 1,
+    "snapshot_revision": 14660,
+    "summary_sha256": "45b3283ab29534a87bffc20d293195c9d7473e6c5561605acb92c11876f91530",
+    "summary_revision": 14660,
+    "salience": "marked",
+    "same_revision": true
+  },
+  "routes": {
+    "qq_group": true,
+    "qq_private": true,
+    "shared_services": true
+  },
+  "actual_reply_requests": {
+    "status": "payload_unverified",
+    "captured": 0,
+    "user_marked_flat_examples": 0,
+    "reason": "No historical final HTTP payload or user-labeled complaint packet was imported; no original QQ text was exported."
+  },
+  "conclusion_boundary": "This audit identifies current disk configuration only. Synthetic HTTP wiring tests and future observer captures carry separate evidence identities."
+}

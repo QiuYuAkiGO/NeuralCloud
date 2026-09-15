@@ -1,0 +1,15 @@
+{
+  "schema_version": "cursor-review-summary.v1",
+  "status": "stopped",
+  "live": true,
+  "requests": 1,
+  "attempted": 1,
+  "completed_unverified": 0,
+  "verified_reviews": 0,
+  "errors": [
+    "cursor_cli_request_failed"
+  ],
+  "export_path": "C:\\Projects\\NeuralCloud\\eval\\reports\\emotional_expression_diagnostics\\cursor-fable-smoke-20260914T131754Z\\cursor-review-requests.jsonl",
+  "skipped_unauthorized": 0,
+  "output_path": "C:\\Projects\\NeuralCloud\\eval\\reports\\emotional_expression_diagnostics\\cursor-fable-smoke-20260914T131754Z\\aux-ratings.jsonl"
+}

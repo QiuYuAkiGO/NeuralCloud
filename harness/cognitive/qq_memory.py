@@ -216,6 +216,8 @@ def select_recall(memory, *, group_id, member_id=None, query=None,
         rows.append((score, event.event_id, entry))
     if include_owner_local:
         for fact in memory.stores.semantic.list_all():
+            if fact.revision_metadata.get("status") in {"superseded", "disputed"}:
+                continue
             if not _owner_local_recall_scope(fact.scope) or str(fact.processing_version or "").startswith("qq-memory"):
                 continue
             supports = sorted((visible_events[ref] for ref in set(fact.supporting_events) if ref in visible_events),

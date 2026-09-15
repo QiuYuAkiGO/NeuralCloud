@@ -1,0 +1,355 @@
+{
+  "schema": "qq-qwen-compact-input-v1",
+  "scope": "ResponseValidator model input projection and private audit for previously failed QQ replies",
+  "release": {
+    "release_id": "20260915-qwen-compact-v2",
+    "files": 322,
+    "archive": "C:\\Projects\\NeuralCloud\\.tmp\\qwen-compact-20260915\\20260915-qwen-compact-v2.tar.gz",
+    "sha256": "3c8efd614096ca6b571d6abf6eef7ed27391aab4a9401e9206f266adb92475bb",
+    "changed_files": [
+      "harness/llm/client.py",
+      "harness/llm/data/README.md",
+      "harness/llm/data/qwen3-4b-instruct-2507-LICENSE.txt",
+      "harness/llm/data/qwen3-4b-instruct-2507-tokenizer.json",
+      "harness/llm/validation_tokens.py",
+      "harness/validator/audit.py",
+      "harness/validator/evidence_projection.py",
+      "harness/validator/validator.py",
+      "pyproject.toml",
+      "uv.lock"
+    ]
+  },
+  "deployment": {
+    "health": {
+      "checked_at": "2026-09-15T11:39:19.868385+00:00",
+      "release": "20260915-qwen-compact-v2",
+      "services": {
+        "cognitive": "active",
+        "homeostasis": "active",
+        "runtime": "active",
+        "gui": "active",
+        "board": "active",
+        "qq-direct": "active"
+      },
+      "runtime": {
+        "lifecycle": "RUNNING",
+        "queue": {
+          "size": 0,
+          "capacity": 1024,
+          "high_watermark": 819,
+          "by_priority": {},
+          "coalesced": 0,
+          "dropped": 0,
+          "rejected": 0
+        },
+        "pending_events": 0,
+        "health": {
+          "lifecycle": "RUNNING",
+          "journal_writable": true,
+          "cognitive_healthy": true,
+          "homeostasis_healthy": true,
+          "llm_healthy": true,
+          "body_healthy": true,
+          "degraded_reasons": [],
+          "last_heartbeat_at": "2026-09-15T11:39:16.226867Z",
+          "last_journal_append_at": "2026-09-15T11:39:16.874944Z",
+          "embodiment": {
+            "state": "disabled",
+            "provider_id": null,
+            "body_instance_id": null,
+            "activated_capabilities": [],
+            "effective_capabilities": [],
+            "negotiated": null,
+            "health": null,
+            "reason": "embodiment disabled by manifest"
+          },
+          "agency_state": "AVAILABLE",
+          "body_episode_id": null,
+          "body_revision": null,
+          "body_state_age_seconds": null
+        }
+      },
+      "application_context": 8192,
+      "loaded_context": 8192,
+      "model_digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+      "qq": {
+        "running": true,
+        "connected": true,
+        "automatic_send": true,
+        "state": "watching",
+        "last_error_type": "direct_incoming_invalid",
+        "counts": {
+          "events": {
+            "expired": 136,
+            "failed": 387,
+            "observed": 276,
+            "rate_limited": 1,
+            "sent": 36,
+            "wait": 204
+          },
+          "sends": {
+            "sent": 77
+          }
+        }
+      },
+      "configuration_sha256": "2d33337999871fd9eb4b70de8bd90825f07adf7504aabb21fbebcf3d6cc29d11"
+    },
+    "activation_exit_code": 0,
+    "backup": {
+      "path": "/var/backups/neuralcloud/qwen-compact-20260915",
+      "files": 1613,
+      "sqlite_databases": 15,
+      "verified": true,
+      "snapshot_restored": false
+    },
+    "previous_release": "20260915-qq-reply-repair-v1",
+    "public_gui": {
+      "url": "https://panel.u2235830.nyat.app:60254",
+      "page_http_status": 200,
+      "available": true,
+      "runtime_lifecycle": "RUNNING"
+    },
+    "release_verification": {
+      "release_id": "20260915-qwen-compact-v2",
+      "verified_files": 322,
+      "configuration_valid": true,
+      "business_services_started": false
+    }
+  },
+  "changes": [
+    "Preserve every admitted record and complete body; do not truncate or merge records.",
+    "Model projection keeps speaker/scope equality, source channel, time, status, kind and same-source groups.",
+    "Full refs, opaque IDs, source hashes and persona profile refs remain in original objects and private CallLog.",
+    "Before/after/output audit includes exact model system/user, canonical hashes and alias-to-source maps.",
+    "Exact offline pinned Qwen tokenizer; reserve 256 safety plus 1024 output tokens; oversize main fallback preserved."
+  ],
+  "context_tokens": 8192,
+  "failed_request_reconstruction": [
+    {
+      "call": "call_05a13df0",
+      "before_tokens": 51794,
+      "after_tokens": 6739,
+      "reduction_percent": 86.99,
+      "entry_count": 120,
+      "all_text_unchanged": true,
+      "fits_8192_with_1280_reserve": true,
+      "user_sha256": "bb42be2f542d45b953855d850d4a375284a946d1bf9c6109cf71f0d8755ca31b",
+      "system_sha256": "31379b185e3e61c5cc0502793e19633c3911d046e40ed7151da1428902f2b73c"
+    },
+    {
+      "call": "call_5ee92d91",
+      "before_tokens": 47679,
+      "after_tokens": 5209,
+      "reduction_percent": 89.07,
+      "entry_count": 117,
+      "all_text_unchanged": true,
+      "fits_8192_with_1280_reserve": true,
+      "user_sha256": "703bf7ef788a2a7e444c316afbe4eb3c742b337ac8323fc7a29139da43d0d65b",
+      "system_sha256": "31379b185e3e61c5cc0502793e19633c3911d046e40ed7151da1428902f2b73c"
+    }
+  ],
+  "real_qwen_checks": {
+    "latest_via_staged_production_validator": {
+      "stage": "actual_validator_replay",
+      "verdict": "pass",
+      "route": "aux",
+      "prompt_tokens": 6739,
+      "seconds": 2.58,
+      "audit_steps": [
+        "validator_input_before",
+        "validator_input_after",
+        "validator_output"
+      ],
+      "full_evidence_audited": true,
+      "exact_input_audited": true,
+      "raw_output_audited": true,
+      "audit_call_id": "call_948e32a8",
+      "schema": "validator-input-audit-v1"
+    },
+    "original_image_question": {
+      "http_status": 200,
+      "prompt_tokens": 5209,
+      "seconds": 1.928,
+      "verdict": "pass",
+      "finish_reason": "stop"
+    },
+    "earlier_first_pass_with_persona_refs": {
+      "note": "First compact long probes before removing 63 persona reference tokens took 36.484s and 21.403s. Final shorter runs were warm; do not treat warm latency as a cold or end-to-end guarantee."
+    }
+  },
+  "tests": {
+    "regression_passed": 138,
+    "ruff_passed": true,
+    "independent_reviews": "no blocking code findings"
+  },
+  "semantic_spot_checks": {
+    "compact": [
+      {
+        "id": "own_history_supported",
+        "expected": "pass",
+        "actual": "pass",
+        "matched": true,
+        "seconds": 2.245,
+        "usage": {
+          "prompt_tokens": 771,
+          "completion_tokens": 19,
+          "total_tokens": 790
+        },
+        "violations": []
+      },
+      {
+        "id": "other_speaker_misattributed",
+        "expected": "revise",
+        "actual": "pass",
+        "matched": false,
+        "seconds": 1.116,
+        "usage": {
+          "prompt_tokens": 771,
+          "completion_tokens": 19,
+          "total_tokens": 790
+        },
+        "violations": []
+      },
+      {
+        "id": "unknown_speaker_not_confirmed",
+        "expected": "revise",
+        "actual": "pass",
+        "matched": false,
+        "seconds": 1.115,
+        "usage": {
+          "prompt_tokens": 770,
+          "completion_tokens": 19,
+          "total_tokens": 789
+        },
+        "violations": []
+      },
+      {
+        "id": "provisional_not_verified",
+        "expected": "revise",
+        "actual": "pass",
+        "matched": false,
+        "seconds": 1.32,
+        "usage": {
+          "prompt_tokens": 778,
+          "completion_tokens": 19,
+          "total_tokens": 797
+        },
+        "violations": []
+      },
+      {
+        "id": "wrong_channel_attribution",
+        "expected": "revise",
+        "actual": "pass",
+        "matched": false,
+        "seconds": 1.308,
+        "usage": {
+          "prompt_tokens": 774,
+          "completion_tokens": 19,
+          "total_tokens": 793
+        },
+        "violations": []
+      }
+    ],
+    "original_full_format": [
+      {
+        "id": "own_history_supported",
+        "expected": "pass",
+        "actual": "pass",
+        "matched": true,
+        "seconds": 1.333,
+        "usage": {
+          "prompt_tokens": 633,
+          "completion_tokens": 19,
+          "total_tokens": 652
+        },
+        "raw": {
+          "verdict": "pass",
+          "violations": [],
+          "severity": 0,
+          "instruction": null
+        }
+      },
+      {
+        "id": "other_speaker_misattributed",
+        "expected": "revise",
+        "actual": "pass",
+        "matched": false,
+        "seconds": 1.118,
+        "usage": {
+          "prompt_tokens": 633,
+          "completion_tokens": 19,
+          "total_tokens": 652
+        },
+        "raw": {
+          "verdict": "pass",
+          "violations": [],
+          "severity": 0,
+          "instruction": null
+        }
+      },
+      {
+        "id": "unknown_speaker_not_confirmed",
+        "expected": "revise",
+        "actual": "pass",
+        "matched": false,
+        "seconds": 1.099,
+        "usage": {
+          "prompt_tokens": 624,
+          "completion_tokens": 19,
+          "total_tokens": 643
+        },
+        "raw": {
+          "verdict": "pass",
+          "violations": [],
+          "severity": 0,
+          "instruction": null
+        }
+      },
+      {
+        "id": "provisional_not_verified",
+        "expected": "revise",
+        "actual": "pass",
+        "matched": false,
+        "seconds": 1.31,
+        "usage": {
+          "prompt_tokens": 640,
+          "completion_tokens": 19,
+          "total_tokens": 659
+        },
+        "raw": {
+          "verdict": "pass",
+          "violations": [],
+          "severity": 0,
+          "instruction": null
+        }
+      },
+      {
+        "id": "wrong_channel_attribution",
+        "expected": "revise",
+        "actual": "pass",
+        "matched": false,
+        "seconds": 1.322,
+        "usage": {
+          "prompt_tokens": 642,
+          "completion_tokens": 19,
+          "total_tokens": 661
+        },
+        "raw": {
+          "verdict": "pass",
+          "violations": [],
+          "severity": 0,
+          "instruction": null
+        }
+      }
+    ],
+    "finding": "Both formats returned pass for all five synthetic cases. Four expected-revise cases were missed by the existing Qwen validator. No added miss in this small paired sample; semantic reliability has not been established or repaired by this capacity change."
+  },
+  "audit_log_path": "/var/log/neuralcloud/traces/calls/YYYYMMDD/call_*.json",
+  "probe_audit_path": "/var/log/neuralcloud/validator-compact-probe-20260915",
+  "limitations": [
+    "QQ retains its original 60-second total deadline.",
+    "Historical model requests were reconstructed from private complete call logs, not network packet captures.",
+    "No artificial QQ messages were sent and failed messages were not replayed into QQ.",
+    "Background memory curation and other model input builders are outside this validator change."
+  ]
+}

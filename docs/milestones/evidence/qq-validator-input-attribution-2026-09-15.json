@@ -1,0 +1,372 @@
+{
+  "schema_version": "qq-validator-input-attribution-v1",
+  "scope": "The failed auxiliary validation requests from original QQ calls; reconstructed from their own pipeline snapshots, with no model generation",
+  "tokenizer": {
+    "repository": "https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507",
+    "files": {
+      "tokenizer.json": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+      "tokenizer_config.json": "a62ff0a2472a0fa1b8eaabcb57c59b58afa42a22831dc141400b6e0cf2b65ce3"
+    }
+  },
+  "method_notes": [
+    "Encode the full rendered prompt once; assign each token to one non-overlapping source region by largest character overlap",
+    "JSON quotes, escapes and punctuation count as actually serialized; repeated IDs and text retain every occurrence",
+    "Both reconstructed totals equal the independently logged server counts; total equality supports reconstruction but is not a stored network-request byte comparison"
+  ],
+  "calls": [
+    {
+      "call_id": "call_05a13df0",
+      "correlation_id": "qq-trace:5899b4a919f74084bd74bc8d628c2e86",
+      "provider_prompt_tokens": 51794,
+      "reconstructed_prompt_tokens": 51794,
+      "matches_provider_tokens": true,
+      "token_delta": 0,
+      "prompt_sha256": "39c335bf9ee22327dd6b82e4d07cc18067b4f1c8bcf9c8c97b1e3a31552d2b10",
+      "method": "Qwen3-4B-Instruct-2507 official tokenizer/chat template; one full-prompt encoding; each token attributed once by maximum character overlap",
+      "summary_groups": [
+        {
+          "source": "证据引用（含图片引用标识）",
+          "tokens": 28934,
+          "percent": 55.86
+        },
+        {
+          "source": "证据属性及内部 JSON 结构",
+          "tokens": 14476,
+          "percent": 27.95
+        },
+        {
+          "source": "证据来源 ID",
+          "tokens": 3972,
+          "percent": 7.67
+        },
+        {
+          "source": "历史及记忆正文",
+          "tokens": 3240,
+          "percent": 6.26
+        },
+        {
+          "source": "人物、规则、情绪、候选回复及其余结构",
+          "tokens": 1172,
+          "percent": 2.26
+        }
+      ],
+      "source_metadata_tokens": 47382,
+      "source_metadata_percent": 91.48,
+      "detailed_groups": [
+        {
+          "group": "evidence_reference_ids",
+          "tokens": 26754,
+          "percent": 51.6546,
+          "characters": 36387
+        },
+        {
+          "group": "evidence_metadata",
+          "tokens": 14476,
+          "percent": 27.9492,
+          "characters": 33390
+        },
+        {
+          "group": "evidence_source_ids",
+          "tokens": 3972,
+          "percent": 7.6688,
+          "characters": 5366
+        },
+        {
+          "group": "image_evidence_reference_ids",
+          "tokens": 2180,
+          "percent": 4.209,
+          "characters": 2937
+        },
+        {
+          "group": "derived_memory_text",
+          "tokens": 1246,
+          "percent": 2.4057,
+          "characters": 1734
+        },
+        {
+          "group": "historical_assistant_replies",
+          "tokens": 1243,
+          "percent": 2.3999,
+          "characters": 1958
+        },
+        {
+          "group": "historical_group_message_text",
+          "tokens": 719,
+          "percent": 1.3882,
+          "characters": 1190
+        },
+        {
+          "group": "persona_identity",
+          "tokens": 490,
+          "percent": 0.9461,
+          "characters": 993
+        },
+        {
+          "group": "validator_rules",
+          "tokens": 460,
+          "percent": 0.8881,
+          "characters": 2169
+        },
+        {
+          "group": "emotion_guidance",
+          "tokens": 135,
+          "percent": 0.2606,
+          "characters": 219
+        },
+        {
+          "group": "candidate_reply",
+          "tokens": 38,
+          "percent": 0.0734,
+          "characters": 52
+        },
+        {
+          "group": "json_structure_and_control",
+          "tokens": 36,
+          "percent": 0.0695,
+          "characters": 142
+        },
+        {
+          "group": "shared_local_memory_text",
+          "tokens": 32,
+          "percent": 0.0618,
+          "characters": 41
+        },
+        {
+          "group": "chat_template",
+          "tokens": 13,
+          "percent": 0.0251,
+          "characters": 80
+        }
+      ],
+      "evidence_counts": {
+        "entry_count": 120,
+        "reference_occurrences": 528,
+        "unique_reference_count": 344,
+        "repeated_reference_occurrences": 184,
+        "source_id_occurrences": 120,
+        "unique_source_id_count": 112,
+        "current_message_separate_field": false,
+        "image_pixel_payloads": 0
+      },
+      "metadata_detail": {
+        "entry_count": 120,
+        "entries_by_source": {
+          "history/qq_group/user_claim": {
+            "entries": 83,
+            "text_characters": 1012,
+            "reference_occurrences": 365
+          },
+          "history/qq_group/verified_delivery": {
+            "entries": 20,
+            "text_characters": 1870,
+            "reference_occurrences": 132
+          },
+          "history/local_chat/user_claim": {
+            "entries": 1,
+            "text_characters": 39,
+            "reference_occurrences": 1
+          },
+          "derived_memory/qq_group/provisional": {
+            "entries": 10,
+            "text_characters": 895,
+            "reference_occurrences": 12
+          },
+          "derived_memory/qq_group/retained_fact": {
+            "entries": 6,
+            "text_characters": 799,
+            "reference_occurrences": 18
+          }
+        },
+        "source_id_occurrences": 120,
+        "unique_source_id_count": 112,
+        "repeated_source_id_occurrences": 8,
+        "reference_occurrences": 528,
+        "unique_reference_count": 344,
+        "repeated_reference_occurrences": 184,
+        "reference_prefix_counts": {
+          "qq-protocol": 254,
+          "qq-protocol-message": 210,
+          "qq-direct-image": 33,
+          "operator-confirmation": 1,
+          "qqepisode": 12,
+          "shared-memory": 18
+        },
+        "duplicate_reference_occurrences_within_same_entry": 166,
+        "unique_text_count": 82,
+        "repeated_text_occurrences": 38,
+        "candidate_characters": 50,
+        "current_message_separate_field": false,
+        "image_pixel_payloads": 0
+      }
+    },
+    {
+      "call_id": "call_5ee92d91",
+      "correlation_id": "qq-trace:168b3cec70774930964d084859995ff0",
+      "provider_prompt_tokens": 47679,
+      "reconstructed_prompt_tokens": 47679,
+      "matches_provider_tokens": true,
+      "token_delta": 0,
+      "prompt_sha256": "20427041ae75822242986c8dea8ad3373f00001325cefcd06175d80d8e083e5b",
+      "method": "Qwen3-4B-Instruct-2507 official tokenizer/chat template; one full-prompt encoding; each token attributed once by maximum character overlap",
+      "summary_groups": [
+        {
+          "source": "证据引用（含图片引用标识）",
+          "tokens": 26356,
+          "percent": 55.28
+        },
+        {
+          "source": "证据属性及内部 JSON 结构",
+          "tokens": 14333,
+          "percent": 30.06
+        },
+        {
+          "source": "证据来源 ID",
+          "tokens": 3887,
+          "percent": 8.15
+        },
+        {
+          "source": "历史及记忆正文",
+          "tokens": 1928,
+          "percent": 4.04
+        },
+        {
+          "source": "人物、规则、情绪、候选回复及其余结构",
+          "tokens": 1175,
+          "percent": 2.46
+        }
+      ],
+      "source_metadata_tokens": 44576,
+      "source_metadata_percent": 93.49,
+      "detailed_groups": [
+        {
+          "group": "evidence_reference_ids",
+          "tokens": 24632,
+          "percent": 51.6622,
+          "characters": 33776
+        },
+        {
+          "group": "evidence_metadata",
+          "tokens": 14333,
+          "percent": 30.0615,
+          "characters": 32611
+        },
+        {
+          "group": "evidence_source_ids",
+          "tokens": 3887,
+          "percent": 8.1524,
+          "characters": 5186
+        },
+        {
+          "group": "historical_group_message_text",
+          "tokens": 1839,
+          "percent": 3.857,
+          "characters": 2437
+        },
+        {
+          "group": "image_evidence_reference_ids",
+          "tokens": 1724,
+          "percent": 3.6158,
+          "characters": 2314
+        },
+        {
+          "group": "persona_identity",
+          "tokens": 490,
+          "percent": 1.0277,
+          "characters": 993
+        },
+        {
+          "group": "validator_rules",
+          "tokens": 460,
+          "percent": 0.9648,
+          "characters": 2169
+        },
+        {
+          "group": "emotion_guidance",
+          "tokens": 136,
+          "percent": 0.2852,
+          "characters": 203
+        },
+        {
+          "group": "historical_assistant_replies",
+          "tokens": 57,
+          "percent": 0.1195,
+          "characters": 85
+        },
+        {
+          "group": "candidate_reply",
+          "tokens": 40,
+          "percent": 0.0839,
+          "characters": 55
+        },
+        {
+          "group": "json_structure_and_control",
+          "tokens": 36,
+          "percent": 0.0755,
+          "characters": 142
+        },
+        {
+          "group": "shared_local_memory_text",
+          "tokens": 32,
+          "percent": 0.0671,
+          "characters": 41
+        },
+        {
+          "group": "chat_template",
+          "tokens": 13,
+          "percent": 0.0273,
+          "characters": 80
+        }
+      ],
+      "evidence_counts": {
+        "entry_count": 117,
+        "reference_occurrences": 493,
+        "unique_reference_count": 262,
+        "repeated_reference_occurrences": 231,
+        "source_id_occurrences": 117,
+        "unique_source_id_count": 117,
+        "current_message_separate_field": false,
+        "image_pixel_payloads": 0
+      },
+      "metadata_detail": {
+        "entry_count": 117,
+        "entries_by_source": {
+          "history/qq_group/user_claim": {
+            "entries": 115,
+            "text_characters": 2202,
+            "reference_occurrences": 486
+          },
+          "history/qq_group/verified_delivery": {
+            "entries": 1,
+            "text_characters": 81,
+            "reference_occurrences": 6
+          },
+          "history/local_chat/user_claim": {
+            "entries": 1,
+            "text_characters": 39,
+            "reference_occurrences": 1
+          }
+        },
+        "source_id_occurrences": 117,
+        "unique_source_id_count": 117,
+        "repeated_source_id_occurrences": 0,
+        "reference_occurrences": 493,
+        "unique_reference_count": 262,
+        "repeated_reference_occurrences": 231,
+        "reference_prefix_counts": {
+          "qq-protocol": 234,
+          "qq-protocol-message": 232,
+          "qq-direct-image": 26,
+          "operator-confirmation": 1
+        },
+        "duplicate_reference_occurrences_within_same_entry": 230,
+        "unique_text_count": 87,
+        "repeated_text_occurrences": 30,
+        "candidate_characters": 53,
+        "current_message_separate_field": false,
+        "image_pixel_payloads": 0
+      }
+    }
+  ],
+  "rollback_evidence": "qwen-context-64k-2026-09-15.json",
+  "private_reproduction_script": ".tmp\\qwen64k-20260915\\analyze_failed_validator_tokens.py"
+}

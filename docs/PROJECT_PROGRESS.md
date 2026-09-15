@@ -6,6 +6,26 @@
 
 当前认知 Harness 主体、Runtime、内稳态、具身接入和开发界面已有实现；Grounded Agency GA-01～GA-08 已有工程代码，但真实模型的自我维持、长期自主与社会泛化仍待实验验证。角色文本导入、专用启动情境链路、关系 belief/care 层和训练数据导出仍有明确缺口。
 
+**2026-09-15 Qwen 情绪链路增量（实现与对照验证）**：新增独立持久化 `ObserveEmotion`、按会话核验的近期窗口、跨会话无原因情绪余额、七维内稳态动态立方占比，以及两段辅助模型评估/演绎提示。新模式覆盖本地、QQ 群聊/私聊、自主表达、留言板和直接语音脚本；主模型使用唯一情绪提示，旧心理字典、关系情感数值及重复内感语气通道被移除。提供 off/shadow/on 和回滚预设，保留 critical 与 opaque 隔离。已增加固定/动态权重的五轮生成对照，离线模型结果只验证工程接线；独立人工盲评与 QQ 在线 P95 门槛仍待验收。详见 [情绪链路说明](EMOTION_DIRECTOR.md)、[评测与证据契约](harness/17-qwen-emotion-director-evaluation.md)。
+
+同日收尾：远端独立 Qwen3 4B 已部署并设为开机启动，正式角色配置保持原版本。最终专项152项、Ruff通过；完成四场景40条真实受控生成，发现归因、恢复表达和预算问题后保留失败证据并强化降级校验。工程候选尚未获得发布资格；见 [实施证据](milestones/evidence/qwen-emotion-implementation-2026-09-15.json)。
+
+**2026-09-15 Linux 部署增量（已迁移上线）**：通用 systemd 部署 CLI、不可覆盖 release、停写快照/离线校验/恢复、Windows 路径清单、独立 NapCat 及认证入口已落地。正式版本 `20260915-linux-2` 运行四核心、Board 与 QQDirect；原 Windows/WSL 写入者已停止。15 个业务数据库与 94,846 条源 journal 校验通过，源/目标表计数一致。真实模型、网页对话、公网认证/WebSocket、QQ 登录/名单/历史及指定私聊单条发送回读均通过；Mock 回滚恢复和新端一致性备份恢复通过。组合回归 149 passed、12 skipped。整机重启、长期运行和异机备份尚未验收，定时备份未启用。见 [实例交接](LINUX_INSTANCE_20260915.md)、[执行证据](milestones/evidence/linux-migration-2026-09-15.json) 和 [通用部署手册](LINUX_DEPLOYMENT.md)。
+
+**2026-09-14 QQ 协议接入增量**：新增 [NapCat / OneBot 与图片理解](QQ_DIRECT.md)，保留同一 Runtime、Cognitive、人格、创造者事实和共享记忆；按名单接收两个群，PHANTOM-C 可回复、超级豪人大宅门只观察。原图存证、OCR、动图抽帧、协议身份与回执已接通；两个群及静态图、100 帧动图的原图读取和模型描述通过。服务已实际切换，用户带图 @ 的两段自动回复与完整协议回执通过，首次耗时 58.810 秒；594 项组合回归通过，后续 Windows 启动排序修复另有 9 项回归通过（测试范围有重叠）。详见 [部署证据](milestones/evidence/qq-direct-deployment-2026-09-14.json) 和 [接入验证](milestones/evidence/qq-direct-implementation-2026-09-14.json)。模拟与真实收发分开记录，长期稳定性仍待验。
+
+**同日连续消息延迟修复**：保留后续 1 次自然等待和 1 次过期结果，定位 QQ ingress 每条新消息重扫完整日志造成的 13–14 秒额外入队延迟，改为既有启动/增量扫描建立的序号索引。78 项相关回归通过；仅重载 Runtime，保留热身后的 Cognitive。详见 [原因与验证边界](milestones/evidence/qq-direct-ingress-index-2026-09-14.json)。
+
+**同日群回复授权更新**：用户已授权 PHANTOM-C（1044946257）及超级豪人大宅门（1060979317）均可回复。当前协议名单的两项 `observe`、`send` 均已开启，并重载 QQ 协议进程；群回复继续由 Misty 自主决定。
+
+**同日秋语私聊增量（已启用并通过文字收发验收）**：已部署 QQ `2285027817`（秋语 / 秋语随风）的好友白名单通道，独立会话键为 `private:2015188508:2285027817`。私信沿用同一人格、认知与记忆 owner，自主判断回复，保留原图、OCR 和 GIF 抽帧；回执通过绑定对端的好友历史核验，未知发送不重发。群回复权限保持，私聊记忆不进入群上下文或内部目标评审，通用身体目录仍只有两个群。真实私信触发两段回复并取得完整回执，耗时 22.645 秒；已修复实时事件 `target_id` 会话对方语义误判，见 [私聊通道说明](QQ_DIRECT.md#秋语私聊通道)。
+
+**2026-09-12 持续目标增量**：已接通生产目标存储、共享 `PrepareGoalDecision`、现有能力执行器、证据复查、受限 `ApplyAppraisal` 与 `/goals` 控制页。用户目标优先，常驻心理目标可暂停恢复；未知副作用先对账，准备失败亦受三次无进展限制。心理自评不能操作电力、精度与目标区间，重复证据不重复加分。已完成专项与相关回归测试、真实引擎的成对模拟评估；默认中性自评样例没有产生额外恢复收益。生产配置已上线，8 小时真实记录进行中，尚不能宣布持续运行或调节效果验收通过。详见 [使用与验收说明](GOAL_REGULATION.md) 及 [实现证据](milestones/evidence/goal-regulation-implementation-2026-09-12.json)。
+
+**2026-09-12 联网身体增量**：新增可独立协商的 `web.search.v1` 与 `web.read.v1`、Tavily 适配器、持久请求额度及作用域证据、共享对话和自主目录接入，以及重启生效的 GUI 配置入口。关闭时保持旧行为；模拟 HTTP 已验证搜索、正文读取与单次回复提交。用户 Key 已保存，真实 Tavily 搜索与正文提取各一次请求通过；共享服务已按请求重启，联网配置版本 1 生效，对话与自主授权开启。真实主模型对话与自主在线验收待完成，见 [联网搜索身体](WEB_BODY.md)。
+
+**2026-09-12 语音增量**：MistyAI D008 已注册为 NeuralCloud 的独立 `expression.voice.*.v1` 身体功能，提供档案、生成、任务与资产接口。工程接入和跨仓库协议已验证，在线 VoiceProfile 绑定、真实 GPU 合成与听评仍待完成；详见 [语音身体功能](VOICE_BODY.md)。不改变其他模块的历史验收结论。
+
 **当前优先里程碑：[BR-1 基本功能可用](milestones/BASIC_RUNTIME_V1.md)**。用户确认真实在线/无干扰稳定 **8 小时**，通过 MistyAI **桌面终端**执行命令，并能对话、保持前后人设。已执行基础修复并建立[测试案例](milestones/BASIC_RUNTIME_V1_TEST_CASES.md)，真实 Linux 与 8 小时验收仍未完成；详细结果见[执行记录](milestones/BASIC_RUNTIME_V1_EXECUTION.md)。
 
 **2026-09-10 新增当前任务：[QQ-DESKTOP-1](milestones/QQ_DESKTOP_V1.md)**。至 2026-09-11，Docker 启动防护已安装并通过两轮独立实机复验，见 [Docker 恢复说明](DOCKER_RECOVERY.md)。QQ 已登录并核验目标群，基础两人持久记忆、旧历史检索及专用服务重启后召回通过。用户已授权指定群自动截图和实际发送，[QQ 专用 watcher](QQ_WATCHER.md) 已实际完成第二次 @ 测试的采集、作者归属和 `speak`。自动交付多次被预点击核验误判阻断后，操作方以已授权 GUI 动作辅助发送同一份未改写、未重新生成的 38 字原回复，实际核验新气泡与空输入框；本轮新增 1 条，累计 2 条。后台已恢复，同进程继续采集且重复启动返回已有实例；这不等于无人辅助交付通过，自动发信稳定性及长期自主运行仍为 PARTIAL，标准 Runtime 与全量 Cognitive 社会关系未验收。当前 QQ 工程套件 **389 passed**、共享 LLM **28 passed**、Ruff 通过，见 [自动盯群与辅助交付实测](milestones/evidence/qq-autowatch-2026-09-11.json)；[多人记忆与专用决策实测](milestones/evidence/qq-multiperson-autonomy-2026-09-11.json)和[首轮登录与发送证据](milestones/evidence/qq-desktop-login-memory-2026-09-11.json)保留，BR-1 原有出口不变。
@@ -35,7 +55,7 @@
 | NC-04 | Memory Writer 与生命周期 | 已实现 | 候选→证据→置信度→固化；Curator；uniqueness TTL、命中升格、到期审查、遗忘标记。 | 继续验证真实辅助模型的固化质量；forgotten 记忆复活尚未实现。 | [writer](../harness/memory/writer/)、[tier](../harness/memory/tier.py)、[Writer 测试](../tests/test_writer.py)、[生命周期测试](../tests/test_tier.py) | 2026-09-08 |
 | NC-05 | 在线推理与分流 | 已实现 | 九阶段编排、Gateway/Parser、并行状态与检索、Fast/Deep Gate、Social Interpreter、Session、连说与局部重生成。 | Fast Path `state_cache` 仍为预留；补目标模型下的端到端延迟与质量验收。 | [pipeline](../harness/pipeline/)、[Gate](../harness/router/gate.py)、[Interpreter](../harness/subagents/interpreter.py)、[推理测试](../tests/test_pipeline.py) | 2026-09-08 |
 | NC-06 | 上下文编译与响应校验 | 已实现；真实长对话待验收 | Context Compiler 预算与 provenance；最新完整会话优先保留，避免旧历史截走最近约定；人格检查与限次修正。 | 默认小雾 persona 未被截断；20 轮一致性与专用情境增强仍待验。 | [Compiler](../harness/compiler/compiler.py)、[Validator](../harness/validator/validator.py)、[人设/会话回归](../tests/test_basic_persona_continuity.py) | 2026-09-09 |
-| NC-07 | 主辅 LLM 与 Embedding | 已实现 | OpenAI 兼容客户端、主辅调用路由、Mock、embedding 客户端与降级处理。 | token 流式生成仍显式未实现；TTS 未实现；真实端点质量与延迟需单独验收。 | [llm](../harness/llm/)、[路由测试](../tests/test_aux_llm.py)、[调用测试](../tests/test_llm_and_trace.py) | 2026-09-08 |
+| NC-07 | 主辅 LLM 与 Embedding | 已实现 | OpenAI 兼容客户端、主辅调用路由、Mock、embedding 客户端与降级处理。 | token 流式生成仍显式未实现；独立语音资产接入见 [VOICE_BODY](VOICE_BODY.md)，自动播放未实现；真实端点质量与延迟需单独验收。 | [llm](../harness/llm/)、[路由测试](../tests/test_aux_llm.py)、[调用测试](../tests/test_llm_and_trace.py) | 2026-09-12 |
 | NC-08 | 记忆存储与数据库 | 已实现；集成待验收 | in-memory/PostgreSQL Store、pgvector、Alembic、Persona 数据库锁与持久化契约。 | 在实际 PostgreSQL 环境复验；驱动/数据库不可用时集成测试会 skip。PG 人格 debug 绕锁不支持，是既定边界。 | [store](../harness/memory/store/)、[数据库配置](../infra/db/)、[PG 集成测试](../tests/test_postgres_integration.py) | 2026-09-08 |
 
 ## 3. Runtime、内稳态与具身模块
@@ -45,7 +65,7 @@
 | NC-09 | Runtime Supervisor | 已实现；8 小时待验收 | 事件队列/心跳/watchdog、认证、交付提交与恢复；journal 有界正文、流式恢复及命令序号索引；显式终端多步桥和新消息中断。 | 元数据和部分其他账本仍随历史增长；按 BR-1 验收真实进程/状态稳定性。 | [runtime](../harness/runtime/)、[journal 回归](../tests/test_runtime_journal_bounded.py)、[终端集成](../tests/test_basic_terminal_runtime.py)、[BR-1](milestones/BASIC_RUNTIME_V1.md) | 2026-09-09 |
 | NC-10 | Cognitive 服务与空闲主动表达 | 已实现（基础） | Prepare/Commit 与持久化；辅助模型 SILENT/SPEAK 判定、失败回退、用户消息抢占、主动表达审计。 | 主动说话不等于完整自主行动；生产工作重评缺口见 NC-20，模型自主研究路线见 GA-03/07。 | [cognitive](../harness/cognitive/)、[adapters](../harness/runtime/adapters.py)、[自主门控测试](../tests/test_autonomous_gate.py) | 2026-09-08 |
 | NC-11 | 内稳态引擎与稳定化 | 已实现（确定性机制）；8 小时现场待验收 | 七维、实际位移耦合、感知门控与持续边界 watchdog；按维度时间修复高频无变化/仅能量事件吞掉恢复时间；SQLite 有界账本。 | 8 小时加速动力学与真实耗尽保护回归通过；真实无干扰 8 小时、CPU/RSS/磁盘增长仍待验。 | [homeostasis](../harness/homeostasis/)、[稳定化方案](HOMEOSTASIS_STABILITY_PLAN.md)、[加速稳定性](../tests/test_basic_homeostasis_stability.py) | 2026-09-09 |
-| NC-12 | 内稳态表达与显著性调度 | 已实现；表达效果待验收 | 同 revision 内感摘要、显著性/迟滞；off/shadow/responses/full 模式；marked 主动评估、冷却与泄漏检查。 | 按[情绪表达调研计划](harness/16-emotional-expression-diagnostic-research-plan.md)先审计实际路径与参数可见性，再对照语义、强度投影、风格、校验与生成模式；计划已编写，真实诊断未运行。保留表达/决策验收边界。 | [表达契约](HOMEOSTATIC_EXPRESSION.md)、[表达评测](../eval/homeostatic_expression/README.md)、[内感测试](../tests/test_homeostatic_interoception.py) | 2026-09-08 |
+| NC-12 | 内稳态与 Qwen 情绪表达 | 已实现；表达效果待验收 | 保留显著性/迟滞与 critical 调度；新增持久化情绪观察、分会话窗口、共享余波、动态占比、两段辅助模型及统一主模型提示；覆盖 QQ/本地/自主/留言板/语音。 | 新链路 off/shadow/on 独立发布；已有离线三变体及五轮固定/动态生成对照，真实盲评与 QQ P95≤30秒尚未达到发布验收口径。 | [情绪链路](EMOTION_DIRECTOR.md)、[评测契约](harness/17-qwen-emotion-director-evaluation.md)、[状态测试](../tests/test_emotion_service.py)、[Runtime 测试](../tests/test_emotion_runtime.py) | 2026-09-15 |
 | NC-13 | Embodiment Port 与动作执行 | 已实现；真实 Linux 待验收 | ports/协商/typed action/verify/reconcile；新增聊天终端规划、A11y Text 哈希读取、当前任务 BEGIN/EXIT 输出核验、批准前后目标复查。 | 外仓改动已测未部署；Docker 引擎已恢复，启动防护已安装并通过两轮独立实机复验，Linux 动作联调仍待验收。首次终端范围为单条 ASCII 命令，沿用现有批准权限。 | [embodiment](../harness/embodiment/)、[终端规划](../harness/cognitive/basic_terminal.py)、[终端案例](milestones/BASIC_RUNTIME_V1_TEST_CASES.md)、[Docker 恢复](DOCKER_RECOVERY.md) | 2026-09-11 |
 | NC-14 | 身体状态接入与事实投影 | 部分实现（grounded v1 已实现）；传感待验收 | MistyAI body-state 契约、DTO/adapter、身份与新鲜度检查；observe 仅记录，grounded v1 首批 energy 映射与 terminal 保护已接入。 | 核对真实 physiology 与异常行为；MistyAI active 模式未实现，旧 embodiment 的 body_memory/salience_bias/drive_preemption 仍禁用；GA 独立能力另计。 | [body](../harness/body/)、[body-state 设计](harness/11-mistyai-body-state-integration-code-design.md)、[body-state 测试](../tests/test_body_state_runtime.py)、[grounded 测试](../tests/test_grounded_embodiment.py) | 2026-09-08 |
 
@@ -60,7 +80,7 @@
 | NC-15 | 对话 GUI 与调试 | 已实现 | 三栏对话/推理时间线/状态展示；阶段与回复分段推送；调试、模型设置与配置持久化；Runtime facade。 | 按完整四进程拓扑复验交互；当前推送粒度不包含 token 流式。 | [gui](../gui/)、[GUI 测试](../tests/test_gui.py)、[调试测试](../tests/test_debug_panel.py) | 2026-09-08 |
 | NC-16 | 角色预设与存档 | 已实现（JSON 预设） | 小雾默认模板、Vaelith 可选模板；预设工作副本、切换、恢复、聊天/调试写回。 | TXT/Markdown 抽取、预览审核与独立实例装配属于 NC-21，不能视为已有导入功能。 | [presets](../gui/presets.py)、[内置模板](../presets/builtin/)、[预设测试](../tests/test_presets.py) | 2026-09-08 |
 | NC-17 | Trace、审计与运维面板 | 已实现；巴别塔现场待验收 | JSONL trace、调用日志；`/ops` 下钻、SQLite 监控与断线续传；新增巴别塔逐轮交付/提交、模型请求和实际输入内稳态版本关联。 | 执行固定 100 轮真实对话并核验原始 journal 与调用证据；监控失效隔离继续验证，展示窗口不代表长跑通过。 | [trace](../infra/trace/)、[monitor](../harness/runtime/monitor.py)、[运维前端](../gui/static/ops.js)、[监控测试](../tests/test_monitoring.py)、[巴别塔协议与运行说明](../eval/basic_runtime/README_BABEL.md) | 2026-09-10 |
-| NC-18 | 启停、部署与本地开发 | 已实现（Windows 主路径）；Docker 启动防护已安装验收 | dev 环境诊断和四进程联动；start.ps1 新增 StateRoot，隔离存档/角色/日志并生成本地采样令牌文件。 | Docker Desktop 4.89.0 / Engine 29.7.2 已恢复；已安装入口独立两轮启动及本机、WSL、临时容器验证通过，原数据清单一致。直开原程序仍有复发风险，防护不表示上游故障已消失；外仓部署仍待验收。类 Unix 脚本仍为兼容单 GUI 路径。 | [入门手册](GETTING_STARTED.md)、[启动器](../start.ps1)、[隔离启动回归](../tests/test_start_script.py)、[环境记录](milestones/BASIC_RUNTIME_V1_EXECUTION.md)、[Docker 恢复](DOCKER_RECOVERY.md) | 2026-09-11 |
+| NC-18 | 启停、部署与本地开发 | 已实现；Windows 一键四服务实机验收通过 | start.cmd / stop.cmd 读取 launch.json，默认 shared 沿用现有历史、模型和 QQ 配置；真实四服务就绪且 Runtime 为 RUNNING。local 的 cmd 冷启动 21.31 秒；shared/local 重复启动 PID 不变，local 停止通过。 | 本次未验收实机 QQ 登录/收发及完整 MistyAI 部署。Docker 启动防护的历史验收与直开原程序风险保留；类 Unix 脚本仍为兼容单 GUI 路径。 | [一键启动](ONE_CLICK_START.md)、[统一入口](../launch.ps1)、[启动配置](../launch.json)、[入口回归](../tests/test_oneclick_launcher.py)、[隔离启动回归](../tests/test_start_script.py)、[Docker 恢复](DOCKER_RECOVERY.md) | 2026-09-15 |
 | NC-19 | CI 与基础评测 | 已实现；效果基线待补 | pytest/Ruff CI、Windows 启动器与 MistyAI 跨进程门禁；记忆/推理场景、检索 benchmark、角色扮演 raw/harness 对照框架。 | 本次未读取远端 CI 结果。跨仓库 checkout 失败会跳过对应门禁；RP HarnessRunner 使用 MockEmbedding，CharacterRM 缺依赖/权重时跳过评分，不能据 smoke 推出真实效果。 | [CI](../.github/workflows/ci.yml)、[scenarios](../eval/scenarios/)、[RP 评测](../eval/rp/)、[检索报告](../eval/reports/retrieval_baseline.md) | 2026-09-08 |
 | NC-20 | 工作价值 / 恢复决策评测与闭环 | 部分实现；业务验收未通过 | 已有 engine/runtime/live probes 与 2026-09-05 报告；状态机制、保护与模型选择可分别取证。 | 生产重评仍固定继续；成功 rest 缺专用资源恢复；限时继续缺步数/恢复期限约束。修复后需生产路径复验，eval action bridge 与 GA 研究路不能替代。 | [评测说明](../eval/homeostatic_decision/README.md)、[历史失败报告](../eval/reports/homeostatic_decision/final/report.md)、[当前 adapter](../harness/runtime/adapters.py)、[当前 engine](../harness/homeostasis/engine.py) | 2026-09-08 |
 
@@ -147,12 +167,78 @@
 
 ## 10. 变更记录
 
+### 2026-09-15 · Qwen 64K 试验与窗口回调
+
+- 在保留 `Qwen3-4B-Instruct-2507` 的前提下，曾将应用与辅助 Ollama 的上下文从 8,192 调为 65,536；正式配置入口补齐 `NC_AUX_LLM_NUM_CTX`，相关部署测试 45 passed、1 skipped（含 13 项新增）。模型实际加载 64K，短输入 JSON 验证成功；约 48,000-token 的合成冷输入在 240 秒后超时，长输入响应耗时验收未通过。
+- 按用户要求已回调：应用与实际加载窗口均恢复 8,192，辅助服务内存上限恢复 10G，线上版本恢复 `20260915-qq-reply-repair-v1`。六服务 active、Runtime `RUNNING`、队列 0，QQ 已连接；保留新的业务数据及先前回复故障修复。见 [试验与回调证据](milestones/evidence/qwen-context-64k-2026-09-15.json)。
+- 使用失败调用原始 pipeline 快照重建校验请求并按官方 Qwen 分词器复算，两次总数精确匹配服务端 51,794 / 47,679。最近请求的 91.48% 是引用、来源 ID、证据属性与 JSON 结构，历史及记忆正文仅 6.26%；528 次引用中有 184 次重复（166 次在同一条目内）。这是实际序列化输入开销，不是字符比例或合成测试推算，见 [输入 token 来源占比](milestones/evidence/qq-validator-input-attribution-2026-09-15.json)。
+
+### 2026-09-15 · QQ 校验容量与单轮到期修复
+
+- 原始 Linux 模型请求与 Ollama 日志确认：正文已由 DeepSeek 生成，完整校验证据超过 Qwen 8,192-token 窗口，造成 `validate` HTTP 400。大校验输入改走原主模型，短输入继续辅助模型，保留全部已准入证据及 QQ 截止时间。
+- 单轮 QQ 到期从整体故障处理中隔离；过期准备记录终态，恢复时不重放。真实迟到失败、早期超时、非 QQ 故障以及 Cognitive 命令锁语义保持原有约束。
+- 新增 41 项回归通过，Runtime 相关最终测试 146 项通过；校验路由、记忆证据与 QQ 场景相关测试通过，独立代码复核通过。实现和操作语义见 [QQ 协议说明](QQ_DIRECT.md#2026-09-15-校验容量与单轮到期修复)。
+- Linux 已切换 `20260915-qq-reply-repair-v1`，316 个发布文件哈希校验通过；停写备份包含 1,568 个文件、15 个 SQLite 数据库。六服务 active、Runtime `RUNNING`、队列 0；135 个恢复发现的过期 QQ 轮次已记录 `ignored / qq_turn_expired`，原过期准备未重放，发送总数仍为 77。
+- 真实模型校验验证：Qwen 短输入 1,062 tokens 成功；DeepSeek 大输入 39,377 tokens 成功，耗时约 2.4 秒。上线后自然新消息正常接收并由模型选择 `wait`；未发送测试群消息，本版本完整群回复交付仍待自然消息验证。见 [修复部署证据](milestones/evidence/qq-reply-repair-2026-09-15.json)。
+
+### 2026-09-15 · Linux 通用部署与状态迁移工具（实机验收待补）
+
+- 关联 NC-18；基于 `codex/grounded-agency@6c7a473` 与现有未提交业务修改，新增 `harness/deploy/`、`deploy/linux.example.json`、`tools/deploy/` 及部署回归。打包实际工作区的允许源码并记录文件哈希，Git HEAD 不代替本次工作区发布包标识。
+- 实现 `package/install/activate/start/stop/status/preflight/verify/backup/restore/rollback`；代码 release 与私有配置/状态分离，systemd 使用非 root 账户、环回绑定、依赖健康等待和受控停止。代码回滚保留现态，快照恢复仅写入全新目录。
+- shared 清单覆盖仓库 Cognitive/preset、私有 Runtime/Homeostasis/共享记忆、QQ 配置与数据库、证据及令牌引用；WSL Board 作为明确 extra 源加入。SQLite backup 包含已提交 WAL，离线验证不修复 journal。仅结构化改配置路径；Direct/desktop 旧运行 status 不复制，新端须生成确认停用的 desktop 状态。
+- 已运行快照专项：**29 passed，1 skipped**，覆盖停写确认、完整/非空 WAL、SQLite 只读连接产生空 sidecar 的误报修复、源变化诊断、配置路径、watcher 真实 trace 及 observation/gaps 存证、只读哈希链校验与拒绝覆盖恢复。此前四组部署组合回归 **84 passed，8 skipped**；跳过项为当前 Windows 的符号链接权限、Linux 专属安装/权限场景和本机未安装 Caddy。Ruff、文档本地链接和补丁空白检查通过；这些结果不替代目标 Linux 实机验收。
+- 增加可选一致备份作业与每日 timer 模板：记录原运行范围、停写/导出/校验/恢复，失败不自动恢复流量，支持第二存储目录及限定保留策略。模板不由 install 自动启用，是否已启用及实机作业结果另行记录。
+- 远端 bootstrap 安装成功已进入演示启动验证；正式数据切换、Linux 上 QQ 扫码与授权收发、公众域名认证/WebSocket、备份恢复演练和长期运行尚待执行方记录。**本条不标记 Linux 业务部署验收通过**。
+- 使用说明见 [Linux 迁移与部署手册](LINUX_DEPLOYMENT.md)，测试见 [状态快照](../tests/test_deploy_snapshot.py)、[Linux 部署](../tests/test_linux_deploy.py)、[入口认证](../tests/test_deploy_ingress.py)。后续需补充最终 release ID、snapshot 摘要、切换时刻、验证结果和未解决项；凭据及私有原文不写入该文档。
+
+### 2026-09-15 · 一键启动入口与共享实例实机验收
+
+- 关联 NC-18；基于 `codex/grounded-agency@6c7a473e0387eadce878eeba8d74bba44a60b054` 及本次未提交的启动器、测试和文档修改。
+- 新增 `start.cmd` / `stop.cmd` 与 `launch.ps1`，启动参数集中在 `launch.json`。默认 `shared` 沿用现有历史、模型设置与 QQ 配置；另提供独立 `local` 演示配置。修复配置校验、残留 PID 识别、重复启动与状态隔离，并保留恢复暂停状态。
+- Windows 实机默认共享配置已启动 Cognitive、Homeostasis、Runtime、GUI 四服务，Runtime 为 `RUNNING`。`local` 通过 cmd 入口冷启动耗时 **21.31 秒**；`shared` / `local` 重复启动均保留原 PID，`local` 停止已验证。
+- 启动器相关回归 **301 passed**，补充测试 **32 passed**；两组存在重叠，不累计为独立测试总数。核心四服务就绪不代表 QQ 在线；实机 QQ 登录/收发与完整 MistyAI 部署不在本次验收范围。
+- 现行用法与默认参数见 [一键启动说明](ONE_CLICK_START.md)，代码及回归见 [统一入口](../launch.ps1)、[配置文件](../launch.json)、[一键入口测试](../tests/test_oneclick_launcher.py)。[改造前验证报告](milestones/startup-verification-2026-09-15.md)保留原始失败证据并注明历史范围。
+
 ### 2026-09-14 · 情绪表达与参数语义调研计划
 
 - 基于 `codex/grounded-agency@c3c7e523a1f287f4130ce0f094293e793f470e54` 编写[调研计划](harness/16-emotional-expression-diagnostic-research-plan.md)，针对用户反馈的云端 DeepSeek V4.1 Flash 表达不足，区分输入接线、参数定义、强度投影、人格约束、校验与生成配置等假设。
 - 将 QQ 专用表达是否接入内稳态列为优先审计项；源码调用点未显式传入摘要，不代表已核验用户当前线上路径。将参数语义补充与新增信息分开对照，避免混淆。
 - 明确真实请求证据、分阶段采样、盲评、统计口径、费用上限配置、原有发布门禁复用与后训练决策；opaque 核心研究条件继续隔离。
 - 本次仅新增计划并更新 README/NC-12 文档入口；没有修改运行代码或部署，没有执行付费模型调用、后训练、QQ 发送或产品测试。文档相对链接与表格结构已检查；既有模块验收日期及研究结论不变。
+
+### 2026-09-14 · 秋语 QQ 私聊通道实现
+
+- 新增 `private_contacts` 与 `allowed_private_peer_ids` 双层授权，当前目标为秋语 / 秋语随风（2285027817）；仅好友私聊进入独立会话分区，不接受群临时会话。PHANTOM-C 与超级豪人大宅门原有回复权限保持。
+- 复用同一 Runtime、Cognitive、人格、记忆 owner 和视觉/OCR/动图链路；收到私信后自主决定回复。实际发送使用对端 QQ 号，按对端绑定的好友历史核对回执，未知发送不自动重试。
+- 私聊 audience 与群记忆隔离；真实本地 `chat` 可检索授权私聊，内部能力选择和目标评审排除私聊正文。专用操作者确认事实仅补充给秋语；全局身体目录不暴露私聊读取，避免正文进入通用目标结果。
+- 补充 [私聊 actor](../tests/test_qq_private_actor.py)、[契约](../tests/test_qq_private_contracts.py)、[共享记忆](../tests/test_qq_private_shared_memory.py)和[能力隔离](../tests/test_qq_private_capabilities.py)测试；收发与 Runtime/Web 套件 **395 passed**、独立共享记忆套件 **115 passed**。首次维护重载前后原活动任务和 23 条结果保留；后续 WS 字段修复重载前后原活动任务和 24 条结果保留。字段修复回归 **111 passed**（与前述套件重叠），真实私聊消息 `1738656136` 完成两段回复，消息 ID 为 `1083295069`、`2110992886`，完整回执 `qq-delivery:6f700910d74247bea0d26f1898ff64e8`；此次为文字样本，尚无真实私聊图片样本。
+
+### 2026-09-14 · QQ 跨群返回后的发送恢复
+
+- 关联 NC-26；12:17（04:17 UTC）历史轮次首段有真实分段回执，第二段在剩余约 1.72 秒时于桌面输入和点击之前取消。聚合 `deliveries=0` 不代表未发出任何消息；新增持久账本累计的 `verified_segments_sent`、`partial_deliveries`，保留 QQ 固定通信错误码，避免把能力检查失败统一记成模型错误或普通预检失败。
+- 该轮次 vision 调用为 0；归属核验 8.890 秒、共享认知 RPC 37.016 秒、首段 GUI 6.141 秒。三次 persona 请求是正常解析、正文生成和响应验证，均 HTTP 200、无重试，验证 pass、修订 0；未把它们误记为网络重试或续写。首段已发、第二段未发的原始状态与过期余稿继续保留，详见 [失败与耗时诊断](milestones/evidence/qq-crossgroup-send-failure-2026-09-14.json)。
+- 发送在原始 60 秒期限内等待传感器恢复，期间仍检查新消息、暂停和作用域；旧缺口闭合并重新核验数字身份后，不再重复使新证明失效，新缺口仍会失效。独立修复当前 QQ 标题完整父节点 Text 可读而成员数子节点 Text 缺失的 AX 读取退化；该问题不是上述零 vision 历史轮次的已证实原因。
+- 实机已完成主群 → 观察群 `1060979317` → 主群的数字群号核验、本人核验及发送前证明检查，随后主动中止，未点击发送且自有草稿已清空。保留首次群资料卡首帧未核验失败及下一次 AX 通过，不能据单次通过宣称绝对稳定或新的实际发送成功。
+- 最终相关回归 **428 passed / 30.51s**，Ruff 通过；全 QQ 初轮出现的 25 项最小适配器初始化错误已修复并复测通过，各分组不累计。2026-09-14 12:47（北京时间）新 watcher PID 44304 源码哈希匹配，自动读完观察群并返回主群，读取/发送就绪、当前 gap=0、无未知交付。状态正确恢复为累计已发送分段 37、部分发送 1，最近回执 12:17:41。见 [修复验收证据](milestones/evidence/qq-crossgroup-send-repair-2026-09-14.json) 与 [QQ watcher](QQ_WATCHER.md)。旧超期段不重放；修复后完整回复实际交付及连续运行仍需自然消息验收。
+
+### 2026-09-14 · QQ 群观察名单
+
+- 新增 `group_roster` 与独立逐群读取能力；保留单个 watcher、GUI 执行线程和主群发送账本。新增群只开放观察，群名用于导航提示，数字群号通过真实资料卡核验。
+- 空闲时按间隔轮询名单，读取结果分别保存；跨群访问全程阻挡主群传感器，结束后返回主群。共享认知接收带来源和时刻的有界群观察资料，不将显示昵称提升为已核验的作者身份。
+- 工程验证与实机部署结果见 [群名单接入证据](milestones/evidence/qq-group-roster-2026-09-14.json)。
+
+### 2026-09-14 · QQ 最后一次输入框复核移除
+
+- 按用户要求移除最终截图的重复草稿 AX、输入框锚点及像素检查；输入完成后的正文/上下文验证、发送目标校验和发送回执保留。
+- 相关七文件共 **181 passed**，Ruff 通过。QQ watcher 已重启，运行版本摘要与源码一致，恢复 `watching`、观察和发送就绪；本次未执行真实消息发送测试。
+- 只读核对为一个常驻心理目标及其一个活跃子任务；子任务累计 3 次 wait、5 次 error，`no_progress=8`。计数和调度规则未改动。详见 [变更与上线证据](milestones/evidence/qq-final-input-check-removal-2026-09-14.json)。
+
+### 2026-09-12 · 注册 MistyAI 语音身体功能
+
+- 新增版本化语音契约、VoiceAssetPort 和独立 HTTP Provider，复用 `/voice/v1`，固定角色档案版本、保留异步幂等任务与取消语义、校验资产摘要。
+- Runtime 提供认证语音入口、能力状态与可选共享认知选择；任务关联持久化，未知提交不重新生成，播放/发送/内稳态奖励不由生成成功推断。
+- `NC_VOICE_CONFIG` 支持正常启动持久绑定并仅传给 Runtime；同机语音端口建议 8794，避免与 Runtime 的 8770 冲突。
+- 新增适配器、Runtime、配置和启动测试，并使用相邻 MistyAI 的真实 ASGI API 与临时数据库验证跨仓库协议。测试使用合成器替身，不代表真实 GPU 或听感验收。小雾 A2 最终试听资产尚无 D008 VoiceProfile，本次没有伪造或替换角色档案。
 
 ### 2026-09-11 · QQ 自动盯群实测（辅助发送已核验，自动交付仍为 PARTIAL）
 

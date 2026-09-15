@@ -50,8 +50,8 @@ from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace, cla
 from infra.trace.request_spans import trace_scope
 
 
-PROMPT_VERSION = "qq-group-turn-taking-v15"
-PRIVATE_PROMPT_VERSION = "qq-private-turn-taking-v4"
+PROMPT_VERSION = "qq-group-turn-taking-v16"
+PRIVATE_PROMPT_VERSION = "qq-private-turn-taking-v5"
 MAX_GROUP_CONTEXT_CHARACTERS = DEFAULT_QQ_INPUT_TOKEN_BUDGET * 2
 _CONTEXT_BUDGET_REASON = "context_budget_exceeded：模型上下文超过字符预算，本次未生成可发送正文；这不是网络故障或模型 JSON 解析失败。"
 _STATIC_PERSONA_INSTRUCTION = "请根据用户资料块，准备一份符合当前角色的自然群聊发言正文。"
@@ -71,7 +71,11 @@ _REPLY_PLANNING_RULES = (
     "普通聊天detail_level为brief，以约40字组织，全部正文目标20至60字、1至2句，"
     "标点和末尾必要边界都计入总篇幅；简单确认可以更短。"
     "brief首句要点只放一项主答案及一个必要理由，完整一句即可结束，不再补额外邀聊或反问。"
-    "明确要求展开或确实复杂的解释才为expanded。详细程度与reply_style正式程度独立。"
+    "需要发表看法、评价或解释立场，且有必要补充理由时，intent用stance，detail_level可为expanded："
+    "全部正文可适度放宽到约60至120字、1至2个自然段，先说观点，再补一至两个必要理由；"
+    "不要求用户先说‘展开’，也不为达到字数或段数重复表态。简单选择或一句态度已经足够时仍用brief。"
+    "明确要求更充分展开或确实复杂的解释也可为expanded，按实际需要提供细节。"
+    "详细程度与reply_style正式程度独立，发表看法不自动改为formal。"
     "先确定用户本轮意图，再决定首句：直接问题先答案、选择题先选择、观点题先立场，"
     "关系回应先抓新增事实。可以反对或拒绝，不因明确表态而附和或编造。"
     "取消默认先退半步再列反例的结构；边界只在影响理解时需要，通常留在末尾，必要前提留在同一句。"
@@ -992,6 +996,11 @@ class _QQScopedLLM:
 
     def complete_json(self, **kwargs):
         return self._call("complete_json", **kwargs)
+
+    def complete_validation_json(self, **kwargs):
+        method = ("complete_validation_json" if callable(getattr(self.client, "complete_validation_json", None))
+                  else "complete_json")
+        return self._call(method, **kwargs)
 
     def complete_aux_text_result(self, messages, **kwargs):
         return self._call("complete_aux_text_result", messages, **kwargs)

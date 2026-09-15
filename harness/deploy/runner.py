@@ -73,6 +73,8 @@ def service_environment(cfg: DeploymentConfig, service: str, *, release: Path | 
     for name in ("NC_BOARD_CONFIG", "NC_VOICE_CONFIG", "NC_WEB_CONFIG", "NC_MISTYAI_TOKEN_FILE"):
         if service != "runtime":
             values.pop(name, None)
+    if service != "cognitive":
+        values.pop("NC_DAILY_REVISION_CONFIG", None)
     if service == "qq_direct" and not values.get("NC_QQ_DIRECT_CONFIG"):
         raise DeployError("qq_direct requires NC_QQ_DIRECT_CONFIG")
     return values

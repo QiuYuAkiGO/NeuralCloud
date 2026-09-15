@@ -1,0 +1,140 @@
+{
+  "recorded_at": "2026-09-15T07:04:39.510403+00:00",
+  "status": "installed_and_synthetic_json_verified",
+  "ssh_target": {
+    "host": "frp-fan.com",
+    "port": 54849,
+    "username": "qiuyu",
+    "credential_persisted": false
+  },
+  "service": {
+    "name": "neuralcloud-aux-ollama.service",
+    "active": true,
+    "enabled": true,
+    "binary": "/usr/local/bin/ollama",
+    "version": "0.31.1",
+    "bind": "127.0.0.1:11435",
+    "state_directory": "/var/lib/neuralcloud-aux-ollama",
+    "data_directory_bytes": 2500026568,
+    "environment": {
+      "OLLAMA_CONTEXT_LENGTH": "8192",
+      "OLLAMA_KEEP_ALIVE": "-1",
+      "OLLAMA_NUM_PARALLEL": "1",
+      "OLLAMA_MAX_LOADED_MODELS": "1",
+      "OLLAMA_VULKAN": "1",
+      "OLLAMA_IGPU_ENABLE": "1"
+    },
+    "memory_max": "10G",
+    "nice": 5
+  },
+  "model": {
+    "name": "qwen3:4b-instruct-2507-q4_K_M",
+    "manifest_sha256": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+    "model_blob_sha256": "85e4a5b7b8ef0e48af0e8658f5aaab9c2324c76c1641493f4d1e25fce54b18b9",
+    "full_blob_sha256_verified": true,
+    "blob_bytes": 2497280480,
+    "tag_size_bytes": 2497293803,
+    "source_urls": [
+      "https://ollama.com/library/qwen3:4b-instruct-2507-q4_K_M",
+      "https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507"
+    ]
+  },
+  "hardware": {
+    "cpu": "AMD Ryzen 7 7840HS",
+    "gpu": "AMD Radeon 780M (RADV PHOENIX)",
+    "backend": "Vulkan",
+    "offloaded_layers": 37,
+    "total_layers": 37,
+    "system_memory_mib": 61065,
+    "available_memory_mib_after_probe": 41954,
+    "available_disk_bytes_after_install": 318247436288
+  },
+  "download_recovery": {
+    "reason": "Linux registry/blob connection TLS and direct URL timeouts",
+    "preserved_completed_percent": 81.25,
+    "local_official_range_download_bytes": 468240090,
+    "download_seconds_max": 97.203,
+    "transfer": "authenticated SSH, merge while auxiliary service stopped",
+    "substituted_model": false
+  },
+  "verification": {
+    "model": "qwen3:4b-instruct-2507-q4_K_M",
+    "endpoint": "http://127.0.0.1:11435/v1",
+    "warmup_seconds": 2.883,
+    "json_seconds": 1.008,
+    "json_result": {
+      "label": "anger",
+      "intensity": 0.9
+    },
+    "usage": {
+      "prompt_tokens": 70,
+      "completion_tokens": 16,
+      "total_tokens": 86
+    },
+    "guidance_seconds": 1.604,
+    "guidance_result": {
+      "text": "在愤怒的洪流中，我依然清晰地记得自己的名字和身份，哪怕心跳如鼓，我也不会让情绪吞噬事实的轮廓。"
+    },
+    "within_appraisal_8_seconds": true,
+    "within_guidance_4_seconds": true,
+    "loaded_models": {
+      "models": [
+        {
+          "name": "qwen3:4b-instruct-2507-q4_K_M",
+          "model": "qwen3:4b-instruct-2507-q4_K_M",
+          "size": 3873366343,
+          "digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen3",
+            "families": [
+              "qwen3"
+            ],
+            "parameter_size": "4.0B",
+            "quantization_level": "Q4_K_M"
+          },
+          "expires_at": "2318-12-26T14:49:38.209373857+08:00",
+          "size_vram": 3873366343,
+          "context_length": 8192
+        }
+      ]
+    },
+    "gpu": {
+      "error": "FileNotFoundError"
+    }
+  },
+  "existing_services_unchanged": [
+    {
+      "name": "ollama.service",
+      "pid": 65606,
+      "started_at": "2026-09-12T06:35:54+08:00",
+      "active": true
+    },
+    {
+      "name": "neuralcloud-cognitive.service",
+      "pid": 231395,
+      "started_at": "2026-09-15T13:52:18+08:00",
+      "active": true
+    },
+    {
+      "name": "neuralcloud-runtime.service",
+      "pid": 231523,
+      "started_at": "2026-09-15T13:52:24+08:00",
+      "active": true
+    }
+  ],
+  "tunnel": {
+    "endpoint": "http://127.0.0.1:11435/v1",
+    "temporary": true,
+    "depends_on_session": 60426,
+    "reproduction": "python tools/deploy/aux_ssh_tunnel.py",
+    "bind_loopback_only": true
+  },
+  "production_emotion_mode_changed": false,
+  "limits": [
+    "Single synthetic JSON probe is not the full EmotionService latency or quality acceptance test.",
+    "Integrated GPU memory shares system RAM; do not add it to physical RAM totals.",
+    "The loopback tunnel must be recreated after its terminal/session closes."
+  ]
+}

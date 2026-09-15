@@ -1,0 +1,61 @@
+{
+  "schema": "qq-web-preparation-off-v1",
+  "checked_at": "2026-09-15T12:18:48.862554+00:00",
+  "release": "20260915-validator-off-v1",
+  "product_source_changed": false,
+  "changed_field": "authorization.conversation_enabled",
+  "previous_value": true,
+  "current_value": false,
+  "previous_revision": 1,
+  "active_revision": 2,
+  "saved_revision": 2,
+  "restart_required": false,
+  "scope": [
+    "chat_dialogue_web_preparation",
+    "qq_dialogue_web_preparation"
+  ],
+  "autonomous_web_enabled": true,
+  "runtime_lifecycle": "RUNNING",
+  "runtime_queue_size": 0,
+  "degraded_reasons": [],
+  "services": {
+    "cognitive": "active",
+    "homeostasis": "active",
+    "runtime": "active",
+    "gui": "active",
+    "board": "active",
+    "qq-direct": "active"
+  },
+  "qq_connected": true,
+  "qq_automatic_send": true,
+  "validator_enabled": false,
+  "qwen_context": 8192,
+  "unrestarted_service_pids_preserved": {
+    "cognitive": true,
+    "homeostasis": true,
+    "board": true
+  },
+  "restart": {
+    "exit_code": 0,
+    "elapsed_seconds": 141.17,
+    "stdout": "",
+    "stderr": ""
+  },
+  "deployed_code_probe": {
+    "channels": [
+      "qq",
+      "chat"
+    ],
+    "returns_before_reading_event": true,
+    "model_calls": 0,
+    "web_calls": 0
+  },
+  "public_health": {
+    "url": "https://panel.u2235830.nyat.app:60254",
+    "page_http_status": 200,
+    "available": true,
+    "runtime_lifecycle": "RUNNING"
+  },
+  "previous_immutable_web_revision_retained": true,
+  "qq_test_messages_sent": 0
+}

@@ -1,0 +1,138 @@
+{
+  "schema_version": "qq-input-budget-fourfold-v1",
+  "verified_at": "2026-09-14T12:51:28.527907+00:00",
+  "scope": [
+    "qq_group",
+    "qq_private"
+  ],
+  "before": {
+    "input_estimated_tokens": 24000,
+    "input_characters": 48000,
+    "recall_characters": 4000,
+    "recall_items": 8
+  },
+  "after": {
+    "estimated_tokens": 96000,
+    "characters": 192000,
+    "recall_characters": 16000,
+    "recall_items": 8
+  },
+  "unchanged": {
+    "reply_deadline_seconds": 60,
+    "model_call_steps": true,
+    "output_caps": true,
+    "max_reply_segments": 3,
+    "max_recalled_memories": 8,
+    "max_recalled_episode_ids": 40,
+    "authorization": true,
+    "source_history": true
+  },
+  "latency_validation": {
+    "fixed_clock_group_and_private_equal": true,
+    "small_input_not_padded": true,
+    "warm_static_parser_cache_survives_budget_change": true,
+    "background_cleaning_not_awaited": true,
+    "model_provider_latency_guaranteed_unchanged": false,
+    "model_provider_benchmark_performed": false,
+    "isolated_selection": {
+      "4000": {
+        "iterations": 20,
+        "median_ms": 29.655,
+        "p95_ms": 32.331,
+        "items": 5,
+        "characters": 3931
+      },
+      "16000": {
+        "iterations": 20,
+        "median_ms": 21.229,
+        "p95_ms": 25.53,
+        "items": 8,
+        "characters": 7244
+      }
+    },
+    "benchmark_method": "same frozen in-memory snapshot, warmed once, alternating order, no model calls or live mutation"
+  },
+  "live": {
+    "runtime_lifecycle": "RUNNING",
+    "direct_running": true,
+    "direct_connected": true,
+    "direct_paused": false,
+    "feature_switches": {
+      "enabled": true,
+      "recall_enabled": true,
+      "private_enabled": true,
+      "private_recall_enabled": true,
+      "owner_private_full_recall_enabled": true
+    },
+    "recall_probes": [
+      {
+        "scope": "private",
+        "items": 8,
+        "characters": 7244,
+        "evidence_ids": 7,
+        "request_ms": 41.194,
+        "kinds": [
+          "person",
+          "person",
+          "episode",
+          "episode",
+          "episode",
+          "episode",
+          "episode",
+          "episode"
+        ]
+      },
+      {
+        "scope": "group",
+        "items": 8,
+        "characters": 4874,
+        "evidence_ids": 11,
+        "request_ms": 25.776,
+        "kinds": [
+          "person",
+          "episode",
+          "person",
+          "episode",
+          "person",
+          "person",
+          "person",
+          "person"
+        ]
+      }
+    ],
+    "error": null,
+    "queue": {
+      "pending": 0,
+      "preparing": 0,
+      "retry": 0,
+      "applied": 245,
+      "skipped": 0,
+      "total_jobs": 245,
+      "assigned_sources": 759,
+      "oldest_pending_seconds": 0.0
+    },
+    "configuration_backed_up": true,
+    "messages_sent_for_test": 0
+  },
+  "tests": {
+    "passed": 632,
+    "failures": 0,
+    "duration_seconds": 201.686,
+    "junit_path": "data\\qq-input-budget-fourfold-regression.xml",
+    "junit_sha256": "132cd7d0ec6e94a3028a3e9cb1dfda296e3944bb0a31bada52e23b426fe048dd",
+    "ruff_passed": true,
+    "whole_repository_suite_claimed": false
+  },
+  "provider_context_check": {
+    "configured_model": "deepseek-v4-flash",
+    "documented_context_tokens": 1000000,
+    "source_title": "DeepSeek API Models & Pricing",
+    "source_url": "https://api-docs.deepseek.com/quick_start/pricing/",
+    "legacy_model_alias_accepted": true
+  },
+  "rollback": {
+    "NC_QQ_INPUT_TOKEN_BUDGET": "24000",
+    "NC_QQ_MEMORY_RECALL_MAX_CHARACTERS": "4000",
+    "restart": "Cognitive service using the existing reload workflow"
+  }
+}

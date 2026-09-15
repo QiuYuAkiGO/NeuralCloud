@@ -1,0 +1,79 @@
+{
+  "schema_version": "docker-recovery-startup-v1",
+  "checked_at": "2026-09-12T05:42:06.7029254Z",
+  "prior_history": "docs/milestones/evidence/homeostatic-capabilities-live-2026-09-12.json#desktop_environment",
+  "initial_state": {
+    "engine_available": false,
+    "desktop_processes_present": true,
+    "wsl_distros_running": false,
+    "logged_failure": "sailor-ingest.sock runtime socket rename failed: The file cannot be accessed by the system"
+  },
+  "recovery": {
+    "graceful_quit": {
+      "source_verified": "Installed Docker frontend app.asar build/entry-error-dialog.main.js",
+      "transport": "Windows named pipe errorReporter",
+      "error_read_http_status": 200,
+      "action": "Quit",
+      "action_http_status": 200,
+      "desktop_and_backend_exited": true,
+      "force_killed_docker_backend": false
+    },
+    "startup_command": "tools/docker/Start-DockerDesktop.ps1 -RefreshRuntimeOnColdStart -WslDistro Ubuntu-24.04 -Json -TimeoutSeconds 60",
+    "journal": "C:/Users/22850/AppData/Local/NeuralCloud/DockerRecovery/logs/20260912T053557733Z-bc578a4edf714951995cf0fca589cfa7.json",
+    "runtime_backup_directories": [
+      "C:/Users/22850/AppData/Local/Docker/run.misty-backup-20260912T053557694Z-410737a9009d4e26a19bab98583e3f76",
+      "C:/Users/22850/AppData/Local/docker-secrets-engine.misty-backup-20260912T053557703Z-fbf5c5d59ada4a3e85730f9841c46c1c"
+    ],
+    "images_or_volumes_deleted": false,
+    "factory_reset": false,
+    "helper_result": "healthy",
+    "wsl_integration": "ready"
+  },
+  "verification": {
+    "server_version": "29.7.2",
+    "engine_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine",
+    "services_rechecked_at": "2026-09-12T05:56:32.6293563Z",
+    "all_containers_still_healthy": true,
+    "listening_ports": [6080, 6081, 8765, 8766, 8787, 8788],
+    "healthy_existing_containers": [
+      "mistyai-m0-desktop-1",
+      "mistyai-m0-agent-1",
+      "mistyai-m0-loopback-gateway-1",
+      "mistyai-qq-online-test-desktop-1",
+      "mistyai-qq-online-test-agent-1",
+      "mistyai-qq-online-test-loopback-gateway-1"
+    ]
+  },
+  "channel_evidence": {
+    "desktop": "docs/milestones/evidence/desktop-capability-startup-2026-09-12.json",
+    "qq_readonly": "docs/milestones/evidence/qq-capability-readonly-startup-2026-09-12.json"
+  },
+  "desktop_startup_result": {
+    "services_running": true,
+    "effective_opportunities": 5,
+    "trigger": "isolated HomeostasisEngine accelerated natural heartbeat drift",
+    "choices": ["wait", "wait", "observe", "observe", "observe"],
+    "verified_body_observation_calls": 3,
+    "nonempty_desktop_operations": 0,
+    "nonempty_operation_acceptance": "pending_verification",
+    "trial_shutdown_timeouts": 2,
+    "acceptance_processes_remaining": 0,
+    "all_seven_temporary_cognitive_lease_locks_free": true,
+    "production_sources_unchanged": true
+  },
+  "qq_startup_result": {
+    "services_running": true,
+    "application_status": "needs_login",
+    "native_screenshot_sha256_verified": true,
+    "group_read_verified": false,
+    "body_action_posts": 0,
+    "agent_action_posts": 0,
+    "send_requests": 0,
+    "send_reservations_before_and_after": 23,
+    "delivery_attempts_before_and_after": 41,
+    "unique_body_worker": true
+  },
+  "qq_send_authorized": false,
+  "qq_watcher_started": false,
+  "historical_failure_records_rewritten": false
+}

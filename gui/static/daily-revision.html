@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Misty · 每日修订</title><link rel="stylesheet" href="/static/goals.css"><link rel="stylesheet" href="/static/daily-revision.css"></head>
+<body>
+  <header class="topbar"><a class="brand" href="/"><span class="mark">NC</span><span>NeuralCloud <small>Misty · 每日修订</small></span></a><nav aria-label="主导航"><a href="/">对话</a><a href="/goals">目标与调节</a><a href="/ops">运维</a></nav></header>
+  <main>
+    <section class="intro"><div><p class="eyebrow">DAILY MEMORY REVIEW</p><h1>把经历整理成可以修正的认识。</h1><p class="muted">查看今天保留下来的结论、对应证据，以及认识发生的变化。</p></div><button id="refresh" class="quiet" type="button">刷新</button></section>
+    <div class="status-strip"><span id="connection" role="status">正在读取状态…</span><span id="usage" class="muted"></span></div><p id="notice" class="notice" role="status" aria-live="polite"></p>
+    <div class="workspace"><div class="primary-column">
+      <section class="panel"><div class="section-head"><h2>修订记录</h2><span id="run-count" class="muted"></span></div><div id="history" class="card-list"><p class="empty">正在读取修订记录。</p></div></section>
+      <section class="panel"><div class="section-head"><h2>结论与依据</h2><span id="selected" class="muted"></span></div><div id="detail"><p class="empty">选择一条修订，查看变化和来源。</p></div></section>
+    </div><aside>
+      <section class="panel"><h2>整理一天的记录</h2><label for="day">记录日期</label><input id="day" type="date" required><div class="actions"><button id="dry-run" type="button">预览修订</button><button id="run" type="button" class="quiet">立即修订</button></div><p class="form-hint">预览会调用模型并展示拟议变化。立即修订在后台处理，完成后自动生效。</p></section>
+      <section class="panel"><h2>每日模型与时间</h2><form id="config-form">
+        <label class="toggle"><input id="enabled" type="checkbox"> 每天自动修订</label>
+        <label for="base-url">模型服务地址</label><input id="base-url" type="url" required autocomplete="off">
+        <label for="model">模型名称</label><input id="model" required autocomplete="off">
+        <label for="key-file">服务端密钥文件</label><input id="key-file" placeholder="留空保留已配置密钥" autocomplete="off"><p id="key-state" class="form-hint"></p>
+        <label for="schedule">每日执行时间</label><input id="schedule" type="time" required>
+        <label for="timezone">时区</label><input id="timezone" required>
+        <label for="backfill">自动补查天数</label><input id="backfill" type="number" min="1" max="90" required>
+        <label for="reasoning">思考强度</label><select id="reasoning"><option value="low">低</option><option value="high">高</option><option value="max">最高</option></select>
+        <button type="submit">保存配置</button><p class="form-hint">密钥文件由服务端读取。这里仅展示是否可用。</p>
+      </form></section>
+    </aside></div>
+  </main><script src="/static/daily-revision.js"></script>
+</body></html>

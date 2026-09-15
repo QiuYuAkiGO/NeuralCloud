@@ -1,0 +1,89 @@
+{
+  "schema_version": "qq-login-attempt-v1",
+  "recorded_at": "2026-09-12T06:07:49.173900+00:00",
+  "status": "logged_in",
+  "user_authorized_actions": [
+    "enable_auto_login",
+    "attempt_login"
+  ],
+  "previous_state_evidence": "docs/milestones/evidence/qq-capability-readonly-startup-2026-09-12.json",
+  "body_instance_id": "misty-qq-test-01",
+  "environment_revision": 2,
+  "executor": "existing authenticated QQAgent",
+  "auto_login_checked": true,
+  "checkbox_observation_id": "obs_2f353ee3018e4f51b8cbd3ee9ee964f7",
+  "checkbox_frame_sha256": "897e5745229c2e9623325b42adb9fd13b8ac383be95351ce459b00363ca8a102",
+  "login_observation_id": "obs_0ec79f3576444647b324c09a8319c802",
+  "login_frame_sha256": "4c276c8df59a42d3c49c1d472b526b538cef8e27c3487df421fbd74a08361711",
+  "observed_result": "QQ main interface and conversation list visible; no conversation selected",
+  "new_window_id": "0x1e00011",
+  "independent_click_receipts": [
+    {
+      "purpose": "checkbox",
+      "action_id": "qq-login-auto-4d2aab870b62301adf8a",
+      "step_id": "qq-login-auto-4d2aab870b62301adf8a:checkbox",
+      "readback": {
+        "step_id": "qq-login-auto-4d2aab870b62301adf8a:checkbox",
+        "state": "completed",
+        "request_hash": "be522bf0f8b792df70fa8a1b90382600e10a4eeeb3837e253484343c67b98807",
+        "started_at": "2026-09-12T06:04:27.935831Z",
+        "finished_at": "2026-09-12T06:04:27.976029Z",
+        "result": {
+          "action_id": "qq-login-auto-4d2aab870b62301adf8a",
+          "step_id": "qq-login-auto-4d2aab870b62301adf8a:checkbox",
+          "success": true
+        },
+        "schema_version": "agent-step-journal-v1",
+        "body_instance_id": "misty-qq-test-01",
+        "environment_revision": 2
+      }
+    },
+    {
+      "purpose": "login",
+      "action_id": "qq-login-submit-e9cda6816cb6207a9aae",
+      "step_id": "qq-login-submit-e9cda6816cb6207a9aae:login",
+      "readback": {
+        "step_id": "qq-login-submit-e9cda6816cb6207a9aae:login",
+        "state": "completed",
+        "request_hash": "2642f358e8f0d15d5ef29faddde0fb6b8db0861fdb41e2576b8f949eef387633",
+        "started_at": "2026-09-12T06:05:28.851982Z",
+        "finished_at": "2026-09-12T06:05:28.877227Z",
+        "result": {
+          "action_id": "qq-login-submit-e9cda6816cb6207a9aae",
+          "step_id": "qq-login-submit-e9cda6816cb6207a9aae:login",
+          "success": true
+        },
+        "schema_version": "agent-step-journal-v1",
+        "body_instance_id": "misty-qq-test-01",
+        "environment_revision": 2
+      }
+    }
+  ],
+  "agent_click_calls": 2,
+  "checkbox_click_calls": 1,
+  "login_click_calls": 1,
+  "send_calls": 0,
+  "watcher_started": false,
+  "watcher_process_count": 0,
+  "before": {
+    "send_reservations": 23,
+    "delivery_attempts": 41
+  },
+  "after": {
+    "send_reservations": 23,
+    "delivery_attempts": 41
+  },
+  "production_scope_config_changed": false,
+  "group_read_acceptance": "pending_fresh_group_binding",
+  "private_evidence_directory": "C:\\Users\\22850\\AppData\\Local\\NeuralCloud\\QQDesktop\\login-attempt-20260912T060253202926Z",
+  "observation_error_history": [
+    {
+      "stage": "first_after_login_capture",
+      "error_type": "ReadTimeout",
+      "click_already_acknowledged": true,
+      "action_replayed": false,
+      "resolution": "Fresh authenticated read-only capture with local HTTP client succeeded"
+    }
+  ],
+  "privacy": "Screenshots remain in private QQ directory; account name and conversation content omitted"
+}

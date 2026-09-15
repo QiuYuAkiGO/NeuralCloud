@@ -1,0 +1,332 @@
+{
+  "schema": "qq-latest-after-compact-diagnosis-v1",
+  "checked_at": "2026-09-15T11:45:34.830583+00:00",
+  "message": {
+    "id": "2105983651",
+    "text": "Misty，可以看得见吗",
+    "received_at": "2026-09-15T11:42:44.389433+00:00"
+  },
+  "correlation_id": "qq-trace:0a5cefd3c7ec4844bbcfbcd1f6d59b27",
+  "release": "/opt/neuralcloud/releases/20260915-qwen-compact-v2",
+  "root_cause": "60 second total deadline exhausted while awaiting Qwen validation",
+  "validator_prompt_tokens_from_provider_log": 6621,
+  "model_context_tokens": 8192,
+  "model_requests": [
+    {
+      "schema_version": "model-request-span-v1",
+      "correlation_id": "qq-trace:0a5cefd3c7ec4844bbcfbcd1f6d59b27",
+      "event_id": "qq-turn:cfac8f8f9f744e35a484919cdc4a1e52744b84e07e91f3af82061182402dbb30",
+      "command_id": "cmd_ae0aaf15",
+      "phase": "emotion_guidance",
+      "span_id": "model_request_b996186264704fc1b558db229d97d595",
+      "model_role": "aux",
+      "model_attempt": 1,
+      "model_budget_seconds": 4.0,
+      "parent_span_id": "cmd_ae0aaf15",
+      "role": "aux",
+      "model": "qwen3:4b-instruct-2507-q4_K_M",
+      "endpoint": "http://127.0.0.1:11435/v1",
+      "started_at": "2026-09-15T11:42:58.940459+00:00",
+      "attempt": 1,
+      "retries": 0,
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 658,
+        "completion_tokens": 71,
+        "total_tokens": 729,
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "usage_source": "api",
+      "finish_reason": "stop",
+      "response_id": "chatcmpl-52",
+      "content_type": "text",
+      "content_characters": 129,
+      "reasoning_tokens": null,
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "record_type": "model_request_finished",
+      "completed_at": "2026-09-15T11:43:02.710488+00:00",
+      "latency_ms": 3770.035,
+      "status": "success",
+      "error": null
+    },
+    {
+      "schema_version": "model-request-span-v1",
+      "correlation_id": "qq-trace:0a5cefd3c7ec4844bbcfbcd1f6d59b27",
+      "event_id": "qq-turn:cfac8f8f9f744e35a484919cdc4a1e52744b84e07e91f3af82061182402dbb30",
+      "command_id": "cmd_ae0aaf15",
+      "phase": "qq_gate",
+      "span_id": "model_request_2dd414bf77724e09800df43da19ceea7",
+      "stage": "qq_gate",
+      "model_role": "main",
+      "parent_span_id": "cmd_ae0aaf15",
+      "role": "main",
+      "model": "deepseek-v4-flash",
+      "endpoint": "https://api.deepseek.com",
+      "started_at": "2026-09-15T11:43:02.992053+00:00",
+      "attempt": 1,
+      "retries": 0,
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 72100,
+        "completion_tokens": 1573,
+        "total_tokens": 73673,
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "usage_source": "api",
+      "finish_reason": "stop",
+      "response_id": "fce603d9-2b36-4d01-87b7-58b99e705a95",
+      "content_type": "text",
+      "content_characters": 433,
+      "reasoning_tokens": 1412,
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "record_type": "model_request_finished",
+      "completed_at": "2026-09-15T11:43:12.530415+00:00",
+      "latency_ms": 9538.37,
+      "status": "success",
+      "error": null
+    },
+    {
+      "schema_version": "model-request-span-v1",
+      "correlation_id": "qq-trace:0a5cefd3c7ec4844bbcfbcd1f6d59b27",
+      "event_id": "qq-turn:cfac8f8f9f744e35a484919cdc4a1e52744b84e07e91f3af82061182402dbb30",
+      "command_id": "cmd_ae0aaf15",
+      "phase": "qq_persona",
+      "span_id": "model_request_ff985f77134747a38ba0679f702cf7a0",
+      "parent_span_id": "stage_a905806ddd664e41b71200fbe62f2323",
+      "stage": "parse",
+      "model_role": "aux",
+      "role": "aux",
+      "model": "qwen3:4b-instruct-2507-q4_K_M",
+      "endpoint": "http://127.0.0.1:11435/v1",
+      "started_at": "2026-09-15T11:43:12.628885+00:00",
+      "attempt": 1,
+      "retries": 0,
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 245,
+        "completion_tokens": 123,
+        "total_tokens": 368,
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "usage_source": "api",
+      "finish_reason": "stop",
+      "response_id": "chatcmpl-285",
+      "content_type": "text",
+      "content_characters": 472,
+      "reasoning_tokens": null,
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "record_type": "model_request_finished",
+      "completed_at": "2026-09-15T11:43:17.187823+00:00",
+      "latency_ms": 4558.952,
+      "status": "success",
+      "error": null
+    },
+    {
+      "schema_version": "model-request-span-v1",
+      "correlation_id": "qq-trace:0a5cefd3c7ec4844bbcfbcd1f6d59b27",
+      "event_id": "qq-turn:cfac8f8f9f744e35a484919cdc4a1e52744b84e07e91f3af82061182402dbb30",
+      "command_id": "cmd_ae0aaf15",
+      "phase": "qq_persona",
+      "span_id": "model_request_52d358b41655485c88050da52fdc2f7a",
+      "parent_span_id": "stage_5a6c2e0b33f642bc827401012b3eec3e",
+      "stage": "generate",
+      "model_role": "main",
+      "role": "main",
+      "model": "deepseek-v4-flash",
+      "endpoint": "https://api.deepseek.com",
+      "started_at": "2026-09-15T11:43:17.299024+00:00",
+      "attempt": 1,
+      "retries": 0,
+      "http_status": 200,
+      "usage": {
+        "prompt_tokens": 72176,
+        "completion_tokens": 244,
+        "total_tokens": 72420,
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "usage_source": "api",
+      "finish_reason": "stop",
+      "response_id": "83ae96cf-7155-4450-9f17-6aa4049bd599",
+      "content_type": "text",
+      "content_characters": 44,
+      "reasoning_tokens": 216,
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "record_type": "model_request_finished",
+      "completed_at": "2026-09-15T11:43:19.842560+00:00",
+      "latency_ms": 2543.556,
+      "status": "success",
+      "error": null
+    },
+    {
+      "schema_version": "model-request-span-v1",
+      "correlation_id": "qq-trace:0a5cefd3c7ec4844bbcfbcd1f6d59b27",
+      "event_id": "qq-turn:cfac8f8f9f744e35a484919cdc4a1e52744b84e07e91f3af82061182402dbb30",
+      "command_id": "cmd_ae0aaf15",
+      "phase": "qq_persona",
+      "span_id": "model_request_a7cacfc1476b4a1da11eb71db4097a47",
+      "parent_span_id": "stage_187097531cf945ac9085d2c1f25d146c",
+      "stage": "validate",
+      "model_role": "aux",
+      "role": "aux",
+      "model": "qwen3:4b-instruct-2507-q4_K_M",
+      "endpoint": "http://127.0.0.1:11435/v1",
+      "started_at": "2026-09-15T11:43:20.118111+00:00",
+      "attempt": 1,
+      "retries": 0,
+      "http_status": null,
+      "usage": null,
+      "usage_source": "unavailable",
+      "record_type": "model_request_finished",
+      "completed_at": "2026-09-15T11:43:44.414946+00:00",
+      "latency_ms": 24296.841,
+      "status": "error",
+      "error": {
+        "type": "ReadTimeout",
+        "message": "model request failed"
+      }
+    }
+  ],
+  "decision": {
+    "decision_id": "qq-decision:1bfb2acd2b4c4e069f8a3719a316ccb5",
+    "created_at": "2026-09-15T11:43:02.971308Z",
+    "completed_at": "2026-09-15T11:43:44.424960Z",
+    "action": "wait",
+    "reason": "本轮截止时间已过，结果不进入发送意图。",
+    "outcome": "expired",
+    "error_type": "deadline_expired",
+    "automatic_send": false,
+    "reply": null,
+    "reply_plan": {
+      "intent": "answer",
+      "first_point": "看得见，你发的字我都能看到。",
+      "new_questions": [
+        "可以看得见吗"
+      ],
+      "detail_level": "brief",
+      "necessary_boundary": "不过我只看得见群里的文字和图片，看不见你那边。"
+    },
+    "timings_ms": {
+      "gate": 9538.828,
+      "persona": 31892.625,
+      "total": 41605.899
+    },
+    "model_call_counts": {
+      "gate": 1,
+      "persona": 3
+    },
+    "addressing": "direct"
+  },
+  "audit_gap": {
+    "call_id": "call_8ef78381",
+    "missing_steps": [
+      "validator_input_before",
+      "validator_input_after",
+      "validator_output"
+    ],
+    "cause": "QQ cloned Settings.call_log_enabled=false suppresses new audit, while parent pipeline uses shared owner memory.call_log with logging enabled"
+  },
+  "runtime": {
+    "lifecycle": "RUNNING",
+    "queue": {
+      "size": 0,
+      "capacity": 1024,
+      "high_watermark": 819,
+      "by_priority": {},
+      "coalesced": 0,
+      "dropped": 0,
+      "rejected": 0
+    },
+    "pending_events": 0,
+    "health": {
+      "lifecycle": "RUNNING",
+      "journal_writable": true,
+      "cognitive_healthy": true,
+      "homeostasis_healthy": true,
+      "llm_healthy": true,
+      "body_healthy": true,
+      "degraded_reasons": [],
+      "last_heartbeat_at": "2026-09-15T11:45:34.426793Z",
+      "last_journal_append_at": "2026-09-15T11:45:34.827695Z",
+      "embodiment": {
+        "state": "disabled",
+        "provider_id": null,
+        "body_instance_id": null,
+        "activated_capabilities": [],
+        "effective_capabilities": [],
+        "negotiated": null,
+        "health": null,
+        "reason": "embodiment disabled by manifest"
+      },
+      "agency_state": "AVAILABLE",
+      "body_episode_id": null,
+      "body_revision": null,
+      "body_state_age_seconds": null
+    }
+  },
+  "qq": {
+    "running": true,
+    "connected": true,
+    "automatic_send": true,
+    "state": "watching",
+    "last_error_type": "direct_turn_expired",
+    "counts": {
+      "events": {
+        "expired": 137,
+        "failed": 387,
+        "observed": 276,
+        "rate_limited": 1,
+        "sent": 36,
+        "wait": 204
+      },
+      "sends": {
+        "sent": 77
+      }
+    }
+  },
+  "mutations": {
+    "production_changes": false,
+    "messages_sent": false,
+    "model_replays": false
+  },
+  "newer_message_during_diagnosis": {
+    "message_id": "1430820017",
+    "received_at": "2026-09-15T11:49:03.500828+00:00",
+    "state": "wait",
+    "decision_id": "qq-decision:abc574ede70f4562aff6b1e67061c24f",
+    "member_id": "724553572",
+    "text": "这游戏有意思",
+    "decision": {
+      "action": "wait",
+      "reason": "樱狐只是发图后随口说这游戏有意思，没点我也没提问，图还没解析出来，接不上具体内容；同时在聊的调试话题也不是对我发的新问题，先安静听着。",
+      "outcome": "natural_wait",
+      "error_type": null,
+      "automatic_send": false,
+      "reply": null,
+      "addressing": "ambient",
+      "completed_at": "2026-09-15T11:49:48.158130Z",
+      "timings_ms": {
+        "gate": 4949.133,
+        "persona": 0.0,
+        "total": 5119.332
+      },
+      "trace_id": "qq-trace:1157f8753469465ebd7dd80a4e7d647a"
+    }
+  },
+  "target_send_records": 0
+}

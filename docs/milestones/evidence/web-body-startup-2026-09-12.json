@@ -1,0 +1,25 @@
+{
+  "date": "2026-09-12",
+  "operation": "User-requested shared service restart via stop.ps1 and start.ps1",
+  "status": "activated",
+  "runtime_lifecycle": "RUNNING",
+  "runtime_manifest_revision": 3,
+  "web_active_revision": 1,
+  "web_saved_revision": 1,
+  "restart_required": false,
+  "active_api_key_configured": true,
+  "conversation_enabled": true,
+  "autonomous_enabled": true,
+  "autonomous_global_enabled": true,
+  "effective_capabilities": ["web.search.v1", "web.read.v1"],
+  "cognitive_healthy": true,
+  "homeostasis_healthy": true,
+  "gui_web_page_http_status": 200,
+  "gui_web_status_http_status": 200,
+  "verification_requests_to_tavily": 0,
+  "notes": [
+    "Startup health is initially unverified/degraded and callable; no paid health probe is issued",
+    "Real Tavily search and extraction passed in the preceding API acceptance record",
+    "No test conversation or QQ message was submitted during this verification"
+  ]
+}

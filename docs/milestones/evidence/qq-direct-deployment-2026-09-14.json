@@ -1,0 +1,60 @@
+﻿{
+    "schema_version":  "qq-direct-deployment-v1",
+    "started_at":  "2026-09-14T06:44:09.9232103Z",
+    "status":  "loaded",
+    "changes":  [
+                    {
+                        "service":  "cognitive",
+                        "old_pid":  41092,
+                        "old_child_pid":  27356,
+                        "stopped_at":  "2026-09-14T06:44:14.1110071Z",
+                        "new_pid":  22768,
+                        "started_at":  "2026-09-14T06:44:14.3286579Z",
+                        "healthy_at":  "2026-09-14T06:44:21.0711138Z"
+                    },
+                    {
+                        "service":  "runtime",
+                        "old_pid":  7996,
+                        "old_child_pid":  25936,
+                        "stopped_at":  "2026-09-14T06:44:21.2746242Z",
+                        "new_pid":  12724,
+                        "started_at":  "2026-09-14T06:44:21.4932422Z",
+                        "healthy_at":  "2026-09-14T06:48:02.9279968Z"
+                    },
+                    {
+                        "service":  "qq-session",
+                        "old_pid":  40068,
+                        "old_child_pid":  34152,
+                        "stopped_at":  "2026-09-14T06:48:03.1132809Z",
+                        "new_pid":  18472,
+                        "started_at":  "2026-09-14T06:48:03.3709737Z",
+                        "listener_pid":  43400,
+                        "healthy_at":  "2026-09-14T06:48:05.3400317Z"
+                    }
+                ],
+    "errors":  [
+
+               ],
+    "health_wait_seconds":  240,
+    "goals_before":  {
+                         "status":  "waiting",
+                         "episode_id":  "episode:1dc4b62018fd4be4986217f61df4df86",
+                         "no_progress":  11,
+                         "result_count":  11
+                     },
+    "qq_session":  {
+                       "allowed_group_ids":  [
+                                                 "1044946257",
+                                                 "1060979317"
+                                             ],
+                       "persistent_memory":  true,
+                       "self_member_id":  "2015188508"
+                   },
+    "completed_at":  "2026-09-14T06:48:05.3538824Z",
+    "goals_after":  {
+                        "status":  "waiting",
+                        "episode_id":  "episode:1dc4b62018fd4be4986217f61df4df86",
+                        "no_progress":  11,
+                        "result_count":  11
+                    }
+}

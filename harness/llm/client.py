@@ -413,6 +413,48 @@ class RoutingLLMClient:
                 options["response_format"] = response_format
             return self._aux.complete_json(system=system, user=user, max_tokens=max_tokens, **options)
 
+    def complete_validation_json(
+        self, *, system: str, user: str, timeout_seconds: float | None = None,
+    ) -> dict[str, Any]:
+        """Keep complete critic evidence within the auxiliary context window.
+
+        Count the verified Qwen template locally when its tokenizer is available;
+        otherwise use UTF-8 bytes as a conservative input bound. Keep template
+        and output reserves in either case. This policy is specific to validation.
+        """
+        output_tokens = 1024
+        template_tokens = 256
+        aux_settings = getattr(self._aux, "settings", None)
+        aux_context = getattr(aux_settings, "aux_llm_num_ctx", None)
+        options = {} if timeout_seconds is None else {"timeout_seconds": timeout_seconds}
+        if not self.aux_distinct or not isinstance(aux_context, int) or aux_context <= 0:
+            return self.complete_json(system=system, user=user, **options)
+        from harness.llm.validation_tokens import count_validation_prompt_tokens
+
+        counting_started = time.monotonic()
+        exact_tokens = count_validation_prompt_tokens(
+            model=getattr(aux_settings, "llm_model", None), system=system, user=user,
+        )
+        input_bound = (exact_tokens if exact_tokens is not None else
+                       len(system.encode("utf-8")) + len(user.encode("utf-8"))) + template_tokens
+        if timeout_seconds is not None and math.isfinite(timeout_seconds) and timeout_seconds > 0:
+            remaining = timeout_seconds - (time.monotonic() - counting_started)
+            if remaining <= 0:
+                raise TimeoutError("validator input counting exceeded model deadline")
+            options["timeout_seconds"] = remaining
+        if input_bound + output_tokens > aux_context:
+            main_settings = getattr(self._main, "settings", None)
+            reasoning = deepseek_low_reasoning_options(main_settings) if isinstance(main_settings, Settings) else {}
+            logger.info("validator uses main model: input token upper bound %d + output reserve %d exceeds aux context %d",
+                        input_bound, output_tokens, aux_context)
+            with trace_scope(model_role="main"):
+                response = self._main.complete_chat_result(
+                    [{"role": "system", "content": system}, {"role": "user", "content": user}],
+                    temperature=0.1, stream=False, max_tokens=4096, **reasoning, **options,
+                )
+            return parse_json_object(response.text)
+        return self.complete_json(system=system, user=user, max_tokens=output_tokens, **options)
+
     def complete_chat(
         self,
         messages: list[dict[str, str]],

@@ -954,5 +954,24 @@
     "enabled": true,
     "new_live_segmented_delivery_verified": false,
     "formal_acceptance_started": false
+  },
+  "latest_runtime_recovery": {
+    "report": "qq-context-network-recovery-2026-09-11.json",
+    "prompt_version": "qq-group-turn-taking-v8",
+    "source_hash": "qq-unattended:fdd2009a3661241af188566bcf78725cd3b84477c931ee02de8d923cc05d13f2",
+    "runtime": {
+      "pid": 19976,
+      "started_at": "2026-09-11T13:19:03.274758+00:00",
+      "heartbeat_at": "2026-09-11T13:22:33.855899+00:00",
+      "state": "watching",
+      "running": true,
+      "build_hash": "qq-unattended:fdd2009a3661241af188566bcf78725cd3b84477c931ee02de8d923cc05d13f2",
+      "automatic_screen_capture": true,
+      "automatic_send": true,
+      "last_error_type": null,
+      "decisions": 0,
+      "deliveries": 0
+    },
+    "formal_acceptance_passed": false
   }
 }

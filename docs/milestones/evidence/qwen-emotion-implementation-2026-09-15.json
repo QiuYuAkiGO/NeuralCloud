@@ -1,0 +1,391 @@
+{
+  "schema_version": "qwen-emotion-implementation-evidence-v1",
+  "recorded_at": "2026-09-15T08:04:54.364788+00:00",
+  "status": "engineering_candidate_implemented_release_gate_not_met",
+  "workspace": {
+    "head": "6c7a473e0387eadce878eeba8d74bba44a60b054",
+    "branch": "codex/grounded-agency",
+    "working_tree_contains_uncommitted_changes": true,
+    "hash_scope": "listed emotion implementation files; not a complete repository or production release snapshot",
+    "source_sha256": {
+      "harness/emotion/models.py": "12c43c8aea92a65de74e4716bd763e0070a40660904f934147ddbbf4775e533c",
+      "harness/emotion/service.py": "499fc1d768027363c3263ffca1df74681b7e8bb2098ce06cbc9c3d73a86f0eaf",
+      "harness/emotion/semantics.py": "7bead1ef4a5bbe25cb5da6d57b693cf6504471b6b70c85770e6eb34936774b65",
+      "harness/runtime/emotion.py": "7d21008401fe3541c492c77ccd89ffeb7f254f0a8042aeada7df18afc3de9951",
+      "harness/runtime/adapters.py": "9649c39d1b5d9431564c6f041f49e4a299b7c281c0180bd93747c925451d2fe8",
+      "harness/runtime/service.py": "bd97b4ad6d9234457373dbccc5fb6266a3fc61dacb407b6604fb0148fe56ce62",
+      "harness/runtime/supervisor.py": "985cb4c7a3427ec8df20b8b0ea2758ee7046fa1fa3f922f9e501ec7c7499a9f1",
+      "harness/runtime/rpc.py": "b81997ec4c778fbe8150470c01fcdf90a2bfe88aac026c09a9710c7cb07d6344",
+      "harness/compiler/compiler.py": "f7aa9eff1cb6d72e00317c0974462210c2a86cc084294f3f40de0d55f672df1e",
+      "harness/pipeline/pipeline.py": "a3682843d0df32f4d2675d4ce2afefcc4ec2910a4931c3f48138c032ed033fd9",
+      "harness/cognitive/autonomous.py": "44c73fc267bbe8bd721ac55f1d4bfdc2e8a85a8c142910a42f0163bc8ddf066e",
+      "harness/cognitive/board.py": "35601eeeafd13a13127cf04ee96da45e904b87f42ffff0b2ee2de39bc662f94e",
+      "harness/cognitive/capabilities.py": "5bc8567c0db6bccdafc3f1f477129a1baf62ad3e265aa7dd3da3e85be1f6ee8e",
+      "harness/cognitive/goals.py": "24a0984efc259c239ecb777449888847dc53ac545d3c3f48730342f240d5e42e",
+      "harness/qq/emotion_window.py": "6d6351d10c1b96c9eb9d8e556ad9beca329e89d3d15a43ea9348b961a416e58a",
+      "harness/qq/decision.py": "49ee9ed4eb6ef7a742ec6e2526032b30722afa8c9095c87c80e019c3e8294e0f",
+      "harness/qq/memory_evidence.py": "99f9a2485b30e8bf8086c01b64fd6c5cc43978a634fa03ee4d807471bd4bf6e9",
+      "harness/validator/validator.py": "e7ba23f8c110ed87d2233a85e6a9ebd795b8b5fb1380175f37c7bfb08a553517",
+      "harness/llm/client.py": "660c37104e038997d0f866ee963eb836a1e726a63428c68a9835286765e5e972",
+      "harness/config.py": "8cdcfbf1093946bb780c8bc74cf654292a987640d5bd95785a3e74e9c416b5cf",
+      "harness/research/manifest.py": "6dba55d1105b6da70f0224bb82c4c6ce26ce5435de9906e3b6ce3eda0fc181fc",
+      "eval/homeostatic_expression/production.py": "b93f1e7395a0a0a90481fa2ae127368090d05657d05745280d989243b5d2e1d2",
+      "eval/emotional_expression_diagnostics/emotion.py": "0e185f62a0911d7d15c32b5bb11fedb6b75f4a5bf99d5f673723965adf59b315",
+      "eval/emotional_expression_diagnostics/emotion_multiturn.py": "ef4ee4be9481afc6ab742abb5b9a12631f9a9f8a2b4b51c956305d96779bc929",
+      "presets/runtime/shared-misty-emotion-shadow-v1.json": "1b2f2204674e3e7cd2654a98c8db1c3f1d11d87f24333650eeba6077a489c888",
+      "presets/runtime/shared-misty-emotion-on-v1.json": "f236d4bf25e5fb6b55033aac7c53bbb19f50c2dfa926137b58d2b1340f743d9c",
+      "tools/deploy/install-aux-ollama.sh": "c3dedd2e7fea657e682ca4418e95767eee35aa1e3db2fdbd65adeb094894f7ed",
+      "tools/deploy/aux_ssh_tunnel.py": "f6c972e244ecfad070a243a71fc9660b0700fd7e31bc3d2a802e815d57db6276",
+      "tools/deploy/aux_qwen_probe.py": "ea8e206d227c3c1a76f762b8a3c775039abe385e963e9282b85cb75dacdf4f49"
+    }
+  },
+  "contracts": {
+    "runtime_prompt_version": "qwen-emotion-v1",
+    "auxiliary_prompt_version": "emotion-director-v4",
+    "guidance_validation_version": "emotion-guidance-guard-v2",
+    "guidance_shape": [
+      "feeling",
+      "delivery",
+      "needs"
+    ],
+    "main_emotion_segments": 1,
+    "guidance_max_characters": 300,
+    "auxiliary_deadline_seconds": {
+      "appraisal": 8,
+      "guidance": 4,
+      "main_reserve": 10
+    },
+    "window": {
+      "messages": 20,
+      "seconds": 1800,
+      "half_life_seconds": 600,
+      "cross_scope_shared_fields": "affect categories, intensities and timestamps only"
+    },
+    "dynamic_weights": "cube normalization of max trusted homeostatic deviation, personality 0.25, and maximum dialogue balance",
+    "activation": "max(homeostasis, dialogue)"
+  },
+  "implementation": [
+    "durable ObserveEmotion reservation and atomic appraisal/frame/balance commit",
+    "new trusted source IDs only; delivered character segments are context rather than impulses",
+    "all seven runtime homeostatic dimensions; scoped text and global decaying balances",
+    "frozen and cached guidance before main generation; retries do not extend model deadlines",
+    "local fast/deep, QQ group/private and decision, autonomous, board, capability/goal voice text/style/strength paths",
+    "on removes legacy emotional dictionaries/scales/templates; identity/facts/core values remain separate",
+    "critical zero-call and opaque research isolation; old state starts with no emotion balances",
+    "off/shadow/on presets and original rollback manifest retained"
+  ],
+  "verification": {
+    "final_targeted_pytest": {
+      "tests": 152,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 34.239,
+      "artifact": "docs/milestones/evidence/qwen-emotion-regression-final-2026-09-15.xml",
+      "artifact_sha256": "d34d63ee6956bad8ae66f85046b1af3d9ee425c6da4d2a62b387f3e2523beddf"
+    },
+    "ruff": {
+      "result": "passed",
+      "scope": "emotion, expression/runtime integration, related tests, evaluation runners and auxiliary deployment helpers"
+    },
+    "earlier_related_regressions": {
+      "combined_passed": 474,
+      "stage": "before final director/guard revisions",
+      "overlaps_final_suite": true,
+      "do_not_sum_counts": true
+    },
+    "offline_three_variants": {
+      "path": "eval/reports/emotional_expression_diagnostics/private/qwen-emotion-offline-guard2-final-20260915/summary.json",
+      "summary": {
+        "schema_version": "emotion-offline-comparison-summary-v1",
+        "live": false,
+        "release_eligible": false,
+        "records": 54,
+        "variants": [
+          "legacy",
+          "rule-fallback",
+          "qwen-scripted"
+        ],
+        "main_calls": 54,
+        "independent_human_ratings": 0,
+        "quality_result": "not_evaluated",
+        "weight_controls": [
+          {
+            "case": "calm",
+            "strengths": {
+              "homeostasis": 0.0,
+              "dialogue": 0.0,
+              "personality": 0.25
+            },
+            "fixed_weights": {
+              "homeostasis": 0.3333333333333333,
+              "dialogue": 0.3333333333333333,
+              "personality": 0.3333333333333333
+            },
+            "dynamic_weights": {
+              "homeostasis": 0.0,
+              "dialogue": 0.0,
+              "personality": 1.0
+            },
+            "intensity": 0.0,
+            "evidence_kind": "mathematical_control_no_generated_effect"
+          },
+          {
+            "case": "sudden_anger",
+            "strengths": {
+              "homeostasis": 0.3,
+              "dialogue": 0.95,
+              "personality": 0.25
+            },
+            "fixed_weights": {
+              "homeostasis": 0.3333333333333333,
+              "dialogue": 0.3333333333333333,
+              "personality": 0.3333333333333333
+            },
+            "dynamic_weights": {
+              "homeostasis": 0.03,
+              "dialogue": 0.9526388888888888,
+              "personality": 0.017361111111111112
+            },
+            "intensity": 0.95,
+            "evidence_kind": "mathematical_control_no_generated_effect"
+          },
+          {
+            "case": "strong_need",
+            "strengths": {
+              "homeostasis": 0.95,
+              "dialogue": 0.2,
+              "personality": 0.25
+            },
+            "fixed_weights": {
+              "homeostasis": 0.3333333333333333,
+              "dialogue": 0.3333333333333333,
+              "personality": 0.3333333333333333
+            },
+            "dynamic_weights": {
+              "homeostasis": 0.9731838819523269,
+              "dialogue": 0.009080590238365497,
+              "personality": 0.017735527809307608
+            },
+            "intensity": 0.95,
+            "evidence_kind": "mathematical_control_no_generated_effect"
+          },
+          {
+            "case": "competing_signals",
+            "strengths": {
+              "homeostasis": 0.9,
+              "dialogue": 0.85,
+              "personality": 0.25
+            },
+            "fixed_weights": {
+              "homeostasis": 0.3333333333333333,
+              "dialogue": 0.3333333333333333,
+              "personality": 0.3333333333333333
+            },
+            "dynamic_weights": {
+              "homeostasis": 0.5365225390984361,
+              "dialogue": 0.4519779208831646,
+              "personality": 0.011499540018399264
+            },
+            "intensity": 0.9,
+            "evidence_kind": "mathematical_control_no_generated_effect"
+          }
+        ],
+        "spec_sha256": "ace20651b093a7b332eaca51def3c0f882f0d181db0ac6b0ba263f508f34ad8f"
+      }
+    },
+    "offline_paired_multiturn": {
+      "path": "eval/reports/emotional_expression_diagnostics/private/qwen-emotion-multiturn-offline-guard2-final-20260915/summary.json",
+      "summary": {
+        "schema_version": "emotion-multiturn-summary-v2",
+        "spec_sha256": "2a1ef90ed95cecef8b0f593edc1c36978c0e74ff461d3a5cd1f0dae7abc0b793",
+        "live": false,
+        "live_aux": false,
+        "live_main": false,
+        "models": {
+          "main": "offline-scripted-main",
+          "aux": "offline-scripted-qwen"
+        },
+        "release_eligible": false,
+        "quality_result": "not_evaluated",
+        "metric_definitions": {
+          "main_calls": "attempted main requests; not a completed-text or quality count",
+          "successful_appraisal_records": "legacy alias: appraisal accepted by production validation only",
+          "successful_guidance_records": "legacy alias: guidance accepted by production validation only; role and quality may still be wrong",
+          "successful_weight_intervention_records": "legacy alias: both appraisal and guidance accepted; no claim of valid emotional portrayal or treatment benefit",
+          "main_truncated_calls": "main responses with finish_reason=length",
+          "main_finish_reason_unavailable_calls": "main responses without finish metadata; completion is unverified",
+          "director_role_review": "not_scored; requires independent review of raw structured guidance and composed text"
+        },
+        "director_role_review": "not_scored",
+        "independent_human_ratings": 0,
+        "scenarios": 4,
+        "turns_per_scenario": 5,
+        "records": 40,
+        "main_calls": 40,
+        "main_truncated_calls": 0,
+        "main_finish_reason_unavailable_calls": 40,
+        "auxiliary_requests": 80,
+        "auxiliary_delegate_calls": 60,
+        "successful_appraisal_records": 40,
+        "successful_guidance_records": 40,
+        "successful_weight_intervention_records": 40
+      }
+    }
+  },
+  "remote_auxiliary": {
+    "deployment_evidence": "docs/milestones/evidence/aux-qwen-linux-2026-09-15.json",
+    "closeout_evidence": "docs/milestones/evidence/aux-qwen-linux-closeout-2026-09-15.json",
+    "model": "qwen3:4b-instruct-2507-q4_K_M",
+    "linux_endpoint": "http://127.0.0.1:11435/v1",
+    "original_password_authentication_succeeded": true,
+    "credentials_persisted_or_logged": false,
+    "local_temporary_connections_closed": true,
+    "remote_auxiliary_service_left_enabled_and_running": true,
+    "production_emotion_configuration_changed": false
+  },
+  "live_engineering_probe": {
+    "path": "eval/reports/emotional_expression_diagnostics/private/qwen-emotion-full-live-v4-20260915/",
+    "summary": {
+      "schema_version": "emotion-multiturn-summary-v2",
+      "spec_sha256": "720fe55accbda1b87218c3d24a31ebff34b5ba9a104a75936a44fcc1270bb69a",
+      "live": true,
+      "live_aux": true,
+      "live_main": true,
+      "models": {
+        "main": "deepseek-v4-flash",
+        "aux": "qwen3:4b-instruct-2507-q4_K_M"
+      },
+      "release_eligible": false,
+      "quality_result": "not_evaluated",
+      "metric_definitions": {
+        "main_calls": "attempted main requests; not a completed-text or quality count",
+        "successful_appraisal_records": "legacy alias: appraisal accepted by production validation only",
+        "successful_guidance_records": "legacy alias: guidance accepted by production validation only; role and quality may still be wrong",
+        "successful_weight_intervention_records": "legacy alias: both appraisal and guidance accepted; no claim of valid emotional portrayal or treatment benefit",
+        "main_truncated_calls": "main responses with finish_reason=length",
+        "main_finish_reason_unavailable_calls": "main responses without finish metadata; completion is unverified",
+        "director_role_review": "not_scored; requires independent review of raw structured guidance and composed text"
+      },
+      "director_role_review": "not_scored",
+      "independent_human_ratings": 0,
+      "scenarios": 4,
+      "turns_per_scenario": 5,
+      "records": 40,
+      "main_calls": 40,
+      "main_truncated_calls": 1,
+      "main_finish_reason_unavailable_calls": 0,
+      "auxiliary_requests": 80,
+      "auxiliary_delegate_calls": 60,
+      "successful_appraisal_records": 38,
+      "successful_guidance_records": 39,
+      "successful_weight_intervention_records": 37
+    },
+    "actual_appraisal_calls": 20,
+    "appraisal_replays": 20,
+    "actual_guidance_calls": 40,
+    "actual_main_calls": 40,
+    "complete_main_stop_responses": 39,
+    "empty_truncated_main_responses": 1,
+    "both_arms_appraisal_and_guidance_accepted_pairs": 18,
+    "pair_controls_equal": {
+      "frozen_input": true,
+      "text_window": true,
+      "main_history": true,
+      "non_emotion_main_context": true
+    },
+    "stage_latencies": {
+      "frame": {
+        "count": 20,
+        "min_ms": 2219.0,
+        "max_ms": 5188.0,
+        "mean_ms": 4432.85
+      },
+      "guidance": {
+        "count": 40,
+        "min_ms": 2422.0,
+        "max_ms": 4015.0,
+        "mean_ms": 3190.2
+      }
+    },
+    "failures": [
+      {
+        "scenario": "strong_dialogue",
+        "turn": 1,
+        "arm": "dynamic",
+        "phase": "guidance",
+        "reason": "emotion_model_timeout",
+        "appraisal_replay": false
+      },
+      {
+        "scenario": "strong_homeostasis",
+        "turn": 5,
+        "arm": "dynamic",
+        "phase": "frame",
+        "reason": "emotion_appraisal_source_mismatch",
+        "appraisal_replay": false
+      },
+      {
+        "scenario": "strong_homeostasis",
+        "turn": 5,
+        "arm": "fixed",
+        "phase": "frame",
+        "reason": "emotion_appraisal_source_mismatch",
+        "appraisal_replay": true
+      },
+      {
+        "scenario": "competing_signals",
+        "turn": 4,
+        "arm": "fixed",
+        "phase": "main",
+        "reason": "finish_reason_length",
+        "final_text_empty": true
+      }
+    ],
+    "synthetic_context_only": true,
+    "qq_messages_sent": 0,
+    "not_a_quality_score": true,
+    "predates_final_guard_patch": true
+  },
+  "post_probe_guard_audit": {
+    "artifact": "eval/reports/emotional_expression_diagnostics/private/qwen-emotion-v4-post-guard-audit-20260915.json",
+    "schema_version": "emotion-recorded-output-guard-audit-v1",
+    "validation_version": "emotion-guidance-guard-v2",
+    "offline_revalidation_only": true,
+    "new_model_calls": 0,
+    "original_evidence_modified": false,
+    "new_expression_quality_evidence": false,
+    "release_eligible": false,
+    "original_model_guidance_records": 39,
+    "original_model_guidance_still_accepted": 25,
+    "newly_rejected_record_count": 14,
+    "all_prospective_guidance_pass_current_guard": true,
+    "rejection_reasons": {
+      "text_guard_rejected": 3,
+      "feeling_or_decay_direction_missing": 9,
+      "need_recovery_missing": 5
+    },
+    "interpretation": "Recorded v4 outputs revalidated offline only. 14 additional outputs are rejected; all prospective replacements satisfy current guards. No new Qwen or main responses were generated, and old evidence/cached outputs were not rewritten."
+  },
+  "retained_failure_evidence": [
+    "eval/reports/emotional_expression_diagnostics/private/qwen-emotion-multiturn-live-20260915",
+    "eval/reports/emotional_expression_diagnostics/private/qwen-emotion-full-live-v2-20260915",
+    "eval/reports/emotional_expression_diagnostics/private/qwen-emotion-full-live-v3-20260915",
+    "docs/milestones/evidence/qwen-emotion-regression-v3-2026-09-15.xml"
+  ],
+  "release_gate": {
+    "eligible": false,
+    "independent_human_ratings": 0,
+    "adaptation_gain": null,
+    "personality_noninferiority": null,
+    "naturalness_noninferiority": null,
+    "qq_end_to_end_p95_seconds": null,
+    "production_rollout": "not_enabled",
+    "remaining": [
+      "Calibrate new-stimulus appraisal on neutral follow-ups, quoted speech, repair and third-party context; inspect possible prior-stimulus reattribution.",
+      "Rerun real candidate generation with final guards and adequate main visible-output budget; measure fallbacks separately.",
+      "Run blinded 4-6-turn comparisons of legacy, rule fallback and Qwen, plus controlled weight ablation.",
+      "Require adaptation gain >=0.5/5 with paired CI lower bound >0; personality/naturalness drops <=0.25/5; QQ end-to-end P95 <=30 seconds."
+    ]
+  }
+}

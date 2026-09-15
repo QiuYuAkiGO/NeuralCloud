@@ -83,6 +83,7 @@ class MemoryService:
     ) -> None:
         self.stores = stores
         self.qq_memory_state: dict[str, Any] = {}
+        self.daily_revision_state: dict[str, Any] = {}
         self.settings = settings or get_settings()
         self.llm = llm or MockLLM()
         self.embeddings = embeddings or MockEmbedding(dim=self.settings.embedding_dim)

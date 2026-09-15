@@ -58,7 +58,7 @@ def verify_configuration(cfg) -> dict:
     bindings = cfg.effective_bindings()
     if read_token(bindings["NC_CONTROL_TOKEN_FILE"]) == read_token(bindings["NC_SERVICE_TOKEN_FILE"]):
         raise DeployError("control and service token values must differ")
-    for key in ("NC_GUI_CONFIG", "NC_QQ_SESSION_CONFIG", "NC_QQ_DIRECT_CONFIG", "NC_BOARD_CONFIG", "NC_VOICE_CONFIG", "NC_WEB_CONFIG"):
+    for key in ("NC_GUI_CONFIG", "NC_QQ_SESSION_CONFIG", "NC_QQ_DIRECT_CONFIG", "NC_BOARD_CONFIG", "NC_VOICE_CONFIG", "NC_WEB_CONFIG", "NC_DAILY_REVISION_CONFIG"):
         if key in bindings:
             target = Path(bindings[key])
             if target.is_symlink() or not target.is_file():

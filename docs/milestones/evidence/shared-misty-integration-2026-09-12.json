@@ -1,0 +1,115 @@
+{
+  "schema_version": "shared-misty-integration-v1",
+  "verified_at": "2026-09-12T01:48:08.900444+00:00",
+  "status": "shared_owner_deployed",
+  "formal_acceptance": false,
+  "operator_assisted_maintenance": true,
+  "source_hash": "qq-unattended:d8f8d5b67647665fa53ee5da6f65c0b578474e0c3b7abacf00d9115dda6639cc",
+  "normal_policy": {
+    "shared_owner_id": "misty",
+    "control_mode": "study_runtime",
+    "independent_instances": "explicit_development_only",
+    "debug_writes": "explicit_development_only",
+    "production_debug_probes_http": [
+      403,
+      403
+    ],
+    "second_owner_blocked_domains": [
+      "cognition",
+      "runtime",
+      "homeostasis"
+    ],
+    "backend": "live",
+    "default_backend_selection": "retain_saved_model_mode_unless_explicitly_overridden"
+  },
+  "memory": {
+    "original_qq_imported_records": 144,
+    "original_kind_counts": {
+      "qq_profile": 21,
+      "qq_observation": 66,
+      "qq_delivery": 21,
+      "qq_segment_delivery": 36
+    },
+    "shared_records_now": 156,
+    "duplicate_migration_created": 0,
+    "original_qq_db_and_wal_unchanged_during_migration": true,
+    "persona_unchanged": true,
+    "local_private_to_qq_default_visible": false,
+    "source_boundaries_preserved": true
+  },
+  "homeostasis": {
+    "revision_before_switch": 1543,
+    "current_revision": 1758,
+    "profile": "qq-social-drive-v1",
+    "runtime_is_only_scheduler": true,
+    "original_domain_retained": true,
+    "old_development_runtime_journal_retained": true
+  },
+  "local_chat_checks": [
+    {
+      "event_id": "evt_cf4f9d81",
+      "outcome": "profile_metadata_ranked_before_dialogue_fixed",
+      "receive_to_complete_wall_ms": 31344.5,
+      "pipeline_monotonic_ms": 22453.953,
+      "character_and_revision_calls": 1,
+      "response_sha256": "4297e9be23de45c8658eba9209ff81f5b45e2e2d61116179b25968bce671f20f"
+    },
+    {
+      "event_id": "evt_4ea8079e",
+      "outcome": "compiler_truncated_source_text_fixed",
+      "receive_to_complete_wall_ms": 36382.747,
+      "pipeline_monotonic_ms": 24667.179,
+      "character_and_revision_calls": 1,
+      "response_sha256": "b6e89ddac4de6d0dd80fa12157508b35e50fb476181bc1d7be5a906d0a640b24"
+    },
+    {
+      "event_id": "evt_449d9f2c",
+      "outcome": "recalled_real_qq_content",
+      "receive_to_complete_wall_ms": 53204.451,
+      "pipeline_monotonic_ms": 42036.654,
+      "character_and_revision_calls": 2,
+      "response_sha256": "97dea11048ff6b664ef911bda68196f9cbc2228e866ced05516831e896eb6fab"
+    }
+  ],
+  "qq_after_final_restart": {
+    "watcher_pid": 40224,
+    "cognitive_owner": "shared_runtime",
+    "homeostasis_owner": "shared_runtime",
+    "automatic_capture": true,
+    "automatic_send": true,
+    "new_decisions": 0,
+    "new_deliveries": 0,
+    "body_state": "available",
+    "capabilities": [
+      "communication.qq.reconcile.v1",
+      "communication.qq.read.v1",
+      "communication.qq.send.v1",
+      "evidence.reference.v1"
+    ],
+    "observer_polls": 468,
+    "current_gap_seconds": 0.0,
+    "completed_gaps": 6,
+    "gap_total_seconds": 13.187,
+    "gap_max_seconds": 4.531,
+    "error": null
+  },
+  "verification": {
+    "merged_selection_unique_cases": 521,
+    "initial_passed": 520,
+    "initial_failed": 1,
+    "failure_kind": "legacy_error_message_regex",
+    "corrective_rerun": "5 passed; expected minimum revision text updated",
+    "additional_runtime_regression": "67 passed",
+    "lint": "passed",
+    "diff_check": "passed",
+    "default_mode_startup_tests": "29 passed; 24 affected legacy launcher tests passed"
+  },
+  "latency_acceptance": {
+    "qq_p95_30_seconds": "not_remeasured_after_merge",
+    "eight_hours": "not_started",
+    "local_success_wall_ms": 53204.451,
+    "local_pipeline_monotonic_ms": 42036.654,
+    "local_bottleneck": "character_generation_and_validation_revision",
+    "shared_queue_waits_remain_in_qq_original_deadline": true
+  }
+}

@@ -1,0 +1,164 @@
+{
+  "schema": "qq-direct-ingress-index-evidence-v1",
+  "recorded_at": "2026-09-14T07:06:36.850113+00:00",
+  "scope": "Sanitized diagnostic and test evidence; no QQ message body, credential, or generated response is included.",
+  "source_journal": {
+    "read_only": true,
+    "recovery_constructor_invoked": false,
+    "segments": [
+      {
+        "name": "runtime-000001.jsonl",
+        "bytes": 67106356
+      },
+      {
+        "name": "runtime-000002.jsonl",
+        "bytes": 67108242
+      },
+      {
+        "name": "runtime-000003.jsonl",
+        "bytes": 11553206
+      }
+    ],
+    "total_bytes": 145767804,
+    "observed_last_record_sequence": 68201,
+    "diagnostic_read_scope": "Only newest segment parsed for event metadata; other segments stat only."
+  },
+  "observed_incident": {
+    "outcomes_preserved": {
+      "second_message": "natural_wait",
+      "third_message": "expired_without_decision"
+    },
+    "second_message": {
+      "first_seen_at": "2026-09-14T06:53:45.360387+00:00",
+      "shared_rpc_start_derived_at": "2026-09-14T06:53:51.387408+00:00",
+      "shared_rpc_ms": 22500,
+      "remote_trace_ms": 6000,
+      "rpc_residual_ms": 16500,
+      "pre_accept_elapsed_ms": 13786.334,
+      "event_metadata": [
+        {
+          "sequence": 68168,
+          "record_type": "event_accepted",
+          "recorded_at": "2026-09-14T06:54:05.173742Z"
+        },
+        {
+          "sequence": 68172,
+          "record_type": "processing_started",
+          "recorded_at": "2026-09-14T06:54:05.686564Z"
+        },
+        {
+          "sequence": 68173,
+          "record_type": "domain_command_intent",
+          "recorded_at": "2026-09-14T06:54:05.704271Z",
+          "command_type": "PrepareWebStep"
+        },
+        {
+          "sequence": 68174,
+          "record_type": "domain_command_result",
+          "recorded_at": "2026-09-14T06:54:07.799725Z"
+        },
+        {
+          "sequence": 68175,
+          "record_type": "domain_command_intent",
+          "recorded_at": "2026-09-14T06:54:07.807528Z",
+          "command_type": "PrepareQQResponse"
+        },
+        {
+          "sequence": 68176,
+          "record_type": "domain_command_result",
+          "recorded_at": "2026-09-14T06:54:13.875336Z"
+        },
+        {
+          "sequence": 68177,
+          "record_type": "processing_completed",
+          "recorded_at": "2026-09-14T06:54:13.884988Z",
+          "status": "completed"
+        }
+      ]
+    },
+    "third_message": {
+      "first_seen_at": "2026-09-14T06:53:53.849866+00:00",
+      "previous_turn_end_approximately": "2026-09-14T06:54:13.89+00:00",
+      "pre_accept_elapsed_approx_ms": 13290,
+      "model_deadline_remaining_ms": 26587.355,
+      "event_metadata": [
+        {
+          "sequence": 68187,
+          "record_type": "event_accepted",
+          "recorded_at": "2026-09-14T06:54:27.180325Z"
+        },
+        {
+          "sequence": 68191,
+          "record_type": "processing_started",
+          "recorded_at": "2026-09-14T06:54:27.294212Z"
+        },
+        {
+          "sequence": 68192,
+          "record_type": "domain_command_intent",
+          "recorded_at": "2026-09-14T06:54:27.302614Z",
+          "command_type": "PrepareQQResponse"
+        },
+        {
+          "sequence": 68193,
+          "record_type": "processing_failed",
+          "recorded_at": "2026-09-14T06:54:53.889969Z"
+        },
+        {
+          "sequence": 68197,
+          "record_type": "event_requeued",
+          "recorded_at": "2026-09-14T06:54:54.172426Z"
+        },
+        {
+          "sequence": 68198,
+          "record_type": "processing_completed",
+          "recorded_at": "2026-09-14T06:54:54.174437Z",
+          "status": "deferred"
+        }
+      ]
+    },
+    "timing_qualification": "13-14 seconds is the observed pre-accept delay from existing trace and journal timestamps, not a separately rerun production microbenchmark. Full verified history scan was not repeated during Runtime recovery."
+  },
+  "root_cause": "QQTurnIngress._historical synchronously reverse-scanned and verified all journal records for every absent new QQ event identity, blocking the Runtime event loop before event_accepted.",
+  "fix": {
+    "files": [
+      "harness/runtime/supervisor.py",
+      "harness/runtime/qq_turns.py"
+    ],
+    "startup": "Two sequence-only maps are populated during the already-existing constructor _sync_command_index pass.",
+    "steady_state_missing": "O(new journal records) incremental catch-up, then dictionary miss; zero historical page reads when cursor is current.",
+    "existing_identity": "At most two bounded hash-verified sparse seeks for original accepted and completed records.",
+    "fallback": "Original injected supervisor compatibility fallback retained; production Runtime supplies qq_turn_history."
+  },
+  "isolated_new_lookup_benchmark": {
+    "description": "Calls exact production RuntimeSupervisor.qq_turn_history with settled metadata boundary taken from the read-only production journal. A guard rejects any journal page read. This is an isolated lookup benchmark, not a live restored Runtime request benchmark.",
+    "iterations_per_batch": 10000,
+    "batches": 5,
+    "batch_elapsed_ms": [
+      3.3975999103859067,
+      3.5279999719932675,
+      4.854500060901046,
+      3.8973999908193946,
+      3.334100008942187
+    ],
+    "median_per_lookup_us": 0.35279999719932675,
+    "journal_page_reads": 0
+  },
+  "validation": {
+    "pytest": {
+      "command": ".venv/Scripts/python.exe -m pytest tests/test_runtime_qq_turn_index.py tests/test_runtime_command_index.py tests/test_shared_qq_homeostasis.py tests/test_qq_direct_source.py tests/test_qq_capability_runtime.py -q",
+      "passed": 78,
+      "failed": 0,
+      "warnings": 2,
+      "elapsed_seconds": 14.26
+    },
+    "ruff": "passed",
+    "new_regressions": [
+      "100 missing identities with all historical page reads forbidden",
+      "restart recovery returns original evicted acceptance/completion using two exact seeks",
+      "incremental direct journal appends and latest completion",
+      "later same-identity acceptance does not inherit an old completion",
+      "index cannot substitute another event"
+    ]
+  },
+  "deployment": "Source fixed and handed to parent for Runtime-only reload; this probe performs no service mutation, journal write, message replay, or QQ send."
+}

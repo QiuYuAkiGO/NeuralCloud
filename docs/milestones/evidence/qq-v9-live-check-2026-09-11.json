@@ -1,0 +1,253 @@
+{
+  "schema_version": "qq-v9-live-check-v1",
+  "recorded_at": "2026-09-11T13:58:58.117281+00:00",
+  "status": "FIRST_V9_REAL_TWO_SEGMENT_REPLY_VERIFIED",
+  "engineering_checkpoint": true,
+  "prompt_version": "qq-group-turn-taking-v9",
+  "source_hash": "qq-unattended:e7485251335f29e626e7b5efd8c3cb6566e939902bb828b2261c663873ada618",
+  "audit": {
+    "schema_version": "qq-readonly-current-run-audit-v1",
+    "audited_at": "2026-09-11T13:57:08.403632+00:00",
+    "readonly_audit": true,
+    "formal_eight_hour_acceptance_started": false,
+    "gui_inspection_performed": false,
+    "model_called": false,
+    "expected_worker_identity_matches": true,
+    "run_identity_stable": true,
+    "ledger_start_relative_to_worker_status_seconds": -0.00441,
+    "logical_reply_count": 1,
+    "two_segment_reply_count": 1,
+    "total_bubble_receipts": 2,
+    "profile_snapshot_count": 11,
+    "context_observation_count": 15,
+    "context_member_count": 4,
+    "trace_problem_count": 0,
+    "evidence": {
+      "direct_ref_count": 111,
+      "checked_object_count": 111,
+      "bytes_read": 11905013,
+      "missing_count": 0,
+      "hash_mismatch_count": 0,
+      "all_referenced_bytes_match": true
+    },
+    "turns": [
+      {
+        "ordinal": 1,
+        "logical_reply_count": 1,
+        "segment_count": 2,
+        "attempt_count": 2,
+        "first_seen_to_final_receipt_seconds": 27.921,
+        "all_segment_acks_present": true,
+        "receipt_lookup_hash_and_semantics_valid": true,
+        "source_profile_bindings_valid": true,
+        "context_observation_count": 15,
+        "direct_evidence_ref_count": 111,
+        "source_age_counts": {
+          "observed_before_run": 14,
+          "observed_in_run": 1,
+          "stored_before_run": 14,
+          "stored_in_run": 1,
+          "profile_observed_before_run": 14,
+          "profile_observed_in_run": 1
+        },
+        "trigger_source_age": {
+          "observation_before_run": false,
+          "stored_before_run": false,
+          "profile_before_run": false
+        },
+        "timing_nodes_complete": true,
+        "timing_nodes": [
+          {
+            "name": "gate",
+            "end_offset_seconds": 11.453,
+            "duration_seconds": 3.5
+          },
+          {
+            "name": "persona",
+            "end_offset_seconds": 19.312,
+            "duration_seconds": 7.844
+          },
+          {
+            "name": "receipt_persisted",
+            "end_offset_seconds": 27.921,
+            "duration_seconds": 0.0
+          },
+          {
+            "name": "turn_completed",
+            "end_offset_seconds": 27.921,
+            "duration_seconds": 0.0
+          },
+          {
+            "name": "segment_0_send_click_started",
+            "end_offset_seconds": 22.906,
+            "duration_seconds": 0.0
+          },
+          {
+            "name": "segment_0_click_acknowledged",
+            "end_offset_seconds": 23.046,
+            "duration_seconds": 0.0
+          },
+          {
+            "name": "segment_0_receipt_persisted",
+            "end_offset_seconds": 23.921,
+            "duration_seconds": 0.0
+          },
+          {
+            "name": "segment_1_send_click_started",
+            "end_offset_seconds": 26.5,
+            "duration_seconds": 0.0
+          },
+          {
+            "name": "segment_1_click_acknowledged",
+            "end_offset_seconds": 26.937,
+            "duration_seconds": 0.0
+          },
+          {
+            "name": "segment_1_receipt_persisted",
+            "end_offset_seconds": 27.906,
+            "duration_seconds": 0.0
+          }
+        ],
+        "cold_path": 0,
+        "failure_codes": []
+      }
+    ],
+    "passed": true,
+    "failure_codes": []
+  },
+  "latency_seconds": {
+    "sample_count": 1,
+    "p50": 27.921,
+    "p95": 27.921,
+    "maximum": 27.921,
+    "cold_path": 0,
+    "sufficient_for_p95_acceptance": false
+  },
+  "reply_opening": {
+    "segment_count": 2,
+    "segment_characters": [
+      67,
+      49
+    ],
+    "targeted_thinking_preamble_seen_in_first_32_characters": false,
+    "inspection_basis": "exact frozen decision linked to verified delivery; no text published"
+  },
+  "context_character_counts": {
+    "base": 34741,
+    "final": 43721,
+    "persona": 44057
+  },
+  "read_only_audit_gui_actions": 0,
+  "manual_send_or_repair": false,
+  "runtime": {
+    "pid": 33824,
+    "started_at": "2026-09-11T13:36:58.223466+00:00",
+    "heartbeat_at": "2026-09-11T13:58:57.357876+00:00",
+    "state": "watching",
+    "running": true,
+    "automatic_send": true,
+    "decisions": 1,
+    "deliveries": 1,
+    "last_error_type": null,
+    "backlog": 2
+  },
+  "observer": {
+    "running": true,
+    "polls": 1304,
+    "last_error_type": null,
+    "completed_gap_count": 8,
+    "max_gap_seconds": 3.093,
+    "recent_gaps": [
+      {
+        "sequence": 1,
+        "started_at": "2026-09-11T13:37:02.751113+00:00",
+        "finished_at": "2026-09-11T13:37:05.854250+00:00",
+        "duration_seconds": 3.093,
+        "reason": "http_error"
+      },
+      {
+        "sequence": 2,
+        "started_at": "2026-09-11T13:37:06.780806+00:00",
+        "finished_at": "2026-09-11T13:37:08.702794+00:00",
+        "duration_seconds": 1.922,
+        "reason": "request_timeout"
+      },
+      {
+        "sequence": 3,
+        "started_at": "2026-09-11T13:40:57.058872+00:00",
+        "finished_at": "2026-09-11T13:40:58.841900+00:00",
+        "duration_seconds": 1.796,
+        "reason": "evidence_pending"
+      },
+      {
+        "sequence": 4,
+        "started_at": "2026-09-11T13:41:01.292795+00:00",
+        "finished_at": "2026-09-11T13:41:03.303726+00:00",
+        "duration_seconds": 2.016,
+        "reason": "request_timeout"
+      },
+      {
+        "sequence": 5,
+        "started_at": "2026-09-11T13:41:20.469157+00:00",
+        "finished_at": "2026-09-11T13:41:22.337747+00:00",
+        "duration_seconds": 1.86,
+        "reason": "accessibility_unavailable"
+      },
+      {
+        "sequence": 6,
+        "started_at": "2026-09-11T13:41:22.750118+00:00",
+        "finished_at": "2026-09-11T13:41:23.844419+00:00",
+        "duration_seconds": 1.093,
+        "reason": "request_timeout"
+      },
+      {
+        "sequence": 7,
+        "started_at": "2026-09-11T13:41:24.777900+00:00",
+        "finished_at": "2026-09-11T13:41:26.412635+00:00",
+        "duration_seconds": 1.641,
+        "reason": "request_timeout"
+      },
+      {
+        "sequence": 8,
+        "started_at": "2026-09-11T13:49:01.339794+00:00",
+        "finished_at": "2026-09-11T13:49:03.157208+00:00",
+        "duration_seconds": 1.828,
+        "reason": "http_error"
+      }
+    ]
+  },
+  "backlog_display_issue": {
+    "displayed": 2,
+    "actionable_pending_at_read": 0,
+    "explanation": "The two items are ignored outgoing_visual_item events. Status retained len(events) after the own-bubble observation; they are not pending replies.",
+    "runtime_not_restarted_for_display_only_issue": true
+  },
+  "formal_acceptance": {
+    "started": false,
+    "passed": false,
+    "formal_samples_counted_here": 0,
+    "reason": "One verified engineering sample is insufficient; historical observation gaps and failed/slow turns remain recorded. Additional stability validation is still required."
+  },
+  "v8_historical_supplement": {
+    "readonly_receipt_chain_audit_passed": true,
+    "run_id": "qq-watch-run:084e36c1a8ae45bf9a4382767a6336d4",
+    "selected_from_run_history_not_current_state": true,
+    "logical_replies": 3,
+    "segment_receipts": 8,
+    "latencies_seconds": [
+      29.718,
+      26.469,
+      35.75
+    ],
+    "segment_counts": [
+      2,
+      3,
+      3
+    ],
+    "over_30_second_count": 1,
+    "trace_parse_problems": 0,
+    "source_profile_bindings_checked": true,
+    "cas_object_bytes_rechecked_in_this_supplement": false,
+    "formal_acceptance_samples": 0
+  }
+}

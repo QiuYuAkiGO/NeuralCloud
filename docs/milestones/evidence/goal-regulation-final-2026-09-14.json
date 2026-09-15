@@ -1,0 +1,250 @@
+{
+  "schema_version": "goal-regulation-real-acceptance-final-v1",
+  "checked_at": "2026-09-14T01:32:03.906389+00:00",
+  "outcome": "ended_incomplete_not_passed",
+  "engineering_implementation": "implemented_and_deployed_with_recorded_component_tests",
+  "continuous_eight_hour_acceptance_passed": false,
+  "regulation_effectiveness": "unverified",
+  "release_eligible": false,
+  "run": {
+    "pid": 28096,
+    "started_at": "2026-09-12T09:44:13.6303898Z",
+    "expected_end_at": "2026-09-12T17:44:13.6303898Z",
+    "output_dir": "C:\\Projects\\NeuralCloud\\data\\goal-regulation-acceptance\\20260912T094413Z",
+    "duration_seconds": 28800,
+    "status": "ended_incomplete",
+    "regulation_effectiveness": "unverified",
+    "release_eligible": false,
+    "followup_automation": "misty-8",
+    "process_found_stopped_at": "2026-09-14T01:32:03.906389+00:00",
+    "last_sample_at": "2026-09-14T00:39:48.893320+00:00",
+    "last_report_at": "2026-09-14T00:39:49.245747+00:00",
+    "final_evidence": "docs/milestones/evidence/goal-regulation-final-2026-09-14.json",
+    "eight_hour_observation_complete": false,
+    "followup_automation_status": "PAUSED"
+  },
+  "monitor_process": {
+    "pid": 28096,
+    "matching_process_present": false,
+    "any_verify_regulation_process_present": false,
+    "restarted_by_this_followup": false,
+    "exit_code": "not_recorded",
+    "termination_interpretation": "Final sample after wake exceeds the original duration; process absence and final report are consistent with the monitor loop ending normally, but an OS process exit code was not retained."
+  },
+  "final_report": {
+    "schema_version": "regulation-readonly-monitor-v1",
+    "status": "incomplete",
+    "requested_seconds": 28800.0,
+    "required_seconds": 28800,
+    "elapsed_seconds": 140134.093,
+    "real_monotonic_clock": true,
+    "eight_hour_observation_complete": false,
+    "sample_count": 785,
+    "valid_samples": 784,
+    "error_samples": 1,
+    "maximum_gap_seconds": 116548.25,
+    "interrupted": false,
+    "runtime_enabled_all_samples": true,
+    "new_activity_count": 6,
+    "new_evidenced_runtime_activity_count": 0,
+    "activity_verification": "Runtime reports evidence references; this observer does not independently read body evidence.",
+    "regulation_effectiveness": "unverified",
+    "causal_effect_verified": false,
+    "release_eligible": false,
+    "metrics": {
+      "deviation_integral_dimension_seconds": {
+        "cognitive_load": 0.0,
+        "safety_predictability": 0.0,
+        "competence": 0.0,
+        "autonomy": 0.0,
+        "social_connection": 14599.585244288775,
+        "novelty": 11182.17499520654
+      },
+      "deviation_integral_total_seconds": 25781.760239495314,
+      "observed_interval_seconds": 23585.625,
+      "first_out_of_band_seconds": 0.03100000007543713,
+      "first_return_to_band_seconds": null,
+      "recovery_time_seconds": null,
+      "recovery_status": "right_censored",
+      "recovery_limit": "First sampled return; this metric alone does not establish sustained stability or causation."
+    },
+    "source_counts": {
+      "fact_references": 0,
+      "self_report_references": 0,
+      "evaluations_with_drift": 391
+    },
+    "source_contribution_values": {
+      "fact": {
+        "c537c1416ffce6cb2618": {
+          "social_connection": 0.0
+        }
+      },
+      "self_report": {
+        "c537c1416ffce6cb2618": {
+          "social_connection": 0.0
+        }
+      },
+      "drift": {
+        "c537c1416ffce6cb2618": {
+          "social_connection": -0.04435192769726318
+        }
+      },
+      "legacy_event": {
+        "c537c1416ffce6cb2618": {
+          "social_connection": 0.0
+        }
+      },
+      "coupling": {
+        "c537c1416ffce6cb2618": {
+          "social_connection": 0.0
+        }
+      }
+    },
+    "source_contribution_observed_deltas": {
+      "fact": {
+        "c537c1416ffce6cb2618": {
+          "social_connection": 0.0
+        }
+      },
+      "self_report": {
+        "c537c1416ffce6cb2618": {
+          "social_connection": 0.0
+        }
+      },
+      "drift": {
+        "c537c1416ffce6cb2618": {
+          "social_connection": -0.043628552410946014
+        }
+      },
+      "legacy_event": {
+        "c537c1416ffce6cb2618": {
+          "social_connection": 0.0
+        }
+      },
+      "coupling": {
+        "c537c1416ffce6cb2618": {
+          "social_connection": 0.0
+        }
+      }
+    },
+    "source_contribution_basis": "Latest Runtime cumulative traces per episode, with deltas from the latest available review in the first valid sample; overlapping episodes are not additive or independently causal.",
+    "invalid_duplicate_effect_count": null,
+    "limitations": [
+      "Observation only; no service start, state mutation, injected heartbeat or message sending.",
+      "No private statements, dialogue, appraisal text, raw references or tokens are retained.",
+      "Two snapshots cannot establish causal attribution or independently prove absence of duplicate side effects.",
+      "Contribution values use the latest Runtime trace per episode, not a sum of repeated reviews; missing baselines remain null.",
+      "A baseline review may precede monitoring; reported contribution deltas are not guaranteed to arise entirely inside the observation interval.",
+      "Runtime contribution traces do not independently verify behavioral benefit; invalid duplicate effects remain unavailable.",
+      "A short or simulated-clock run never satisfies the eight-hour observation requirement."
+    ]
+  },
+  "sample_audit": {
+    "rows": 785,
+    "valid_rows": 784,
+    "error_rows": 1,
+    "first_observed_at": "2026-09-12T09:44:15.013779+00:00",
+    "last_observed_at": "2026-09-14T00:39:48.893320+00:00",
+    "large_valid_sample_gaps_over_45_seconds": [
+      {
+        "from": "2026-09-12T15:21:42.370645+00:00",
+        "to": "2026-09-12T15:22:46.811665+00:00",
+        "seconds": 64.45299999997951
+      },
+      {
+        "from": "2026-09-12T16:17:20.649400+00:00",
+        "to": "2026-09-14T00:39:48.893320+00:00",
+        "seconds": 116548.25
+      }
+    ]
+  },
+  "system_power_evidence": {
+    "provider": "Microsoft-Windows-Power-Troubleshooter",
+    "event_id": 1,
+    "sleep_time_utc": "2026-09-12T16:17:11.4025336Z",
+    "wake_time_utc": "2026-09-14T00:39:27.9123422Z",
+    "conclusion": "The system sleep/wake interval matches the long sampling outage. Elapsed time across sleep is not observed activity or continuous acceptance."
+  },
+  "current_runtime": {
+    "lifecycle": "RUNNING",
+    "cognitive_healthy": true,
+    "homeostasis_healthy": true,
+    "llm_healthy": true,
+    "degraded_reasons": [],
+    "last_heartbeat_at": "2026-09-14T01:32:01.355012Z"
+  },
+  "current_goal": {
+    "status": "waiting",
+    "blocked_reason": "no_progress",
+    "no_progress": 7,
+    "stable_since": null
+  },
+  "total_episode_outcomes": {
+    "wait": 2,
+    "error": 5
+  },
+  "current_qq": {
+    "pid": 31024,
+    "heartbeat_at": "2026-09-14T01:32:01.126160+00:00",
+    "state": "watching",
+    "decisions": 0,
+    "deliveries": 0,
+    "last_error_type": null,
+    "gap_seconds": 0.0,
+    "maximum_gap_seconds": 117690.953,
+    "new_reply_delivery_verified": false
+  },
+  "unverified_goal_execution_channels": [
+    "board",
+    "qq",
+    "desktop",
+    "voice",
+    "web"
+  ],
+  "evidence_integrity": {
+    "report_sha256": "590a8ab2678294b8f147ca11cbd05471a3633c556079a8f460a2623da2b31270",
+    "samples_sha256": "fca20d58c391dbde4c05ad5100a90b0cf413fe4ebaf515e13fa920158c6dbc03",
+    "original_report_modified": false,
+    "original_samples_modified": false
+  },
+  "related_evidence": [
+    "docs/milestones/evidence/goal-decision-repair-2026-09-12.json",
+    "docs/milestones/evidence/goal-repair-deployment-2026-09-12.json",
+    "docs/milestones/evidence/qq-observer-dismiss-recovery-2026-09-12.json",
+    "docs/milestones/evidence/goal-regulation-checkpoint-2026-09-12T1603Z.json"
+  ],
+  "limitations": [
+    "Elapsed duration of 140134 seconds includes a 116548-second sampling outage and does not establish eight continuous hours.",
+    "One failed monitor sample and the earlier maintenance gap remain preserved.",
+    "Six new Runtime activity rows mean one wait and five failures, not six executed body actions.",
+    "Zero independently evidenced goal activities and zero fact/self-report contribution references were observed; no behavioral regulation benefit has been established.",
+    "QQ observation recovered at this check but the earlier HTTP 503 a11y_read_busy fault and all long outages remain in evidence.",
+    "This followup performed read-only service checks; it did not reset budgets, replay messages, restart services or change channel authorization."
+  ],
+  "followup_automation": {
+    "id": "misty-8",
+    "status": "PAUSED",
+    "verified_at": "2026-09-14T01:33:31.717756+00:00",
+    "name_prompt_schedule_and_target_preserved": true
+  },
+  "independent_audit": {
+    "report_recomputed_identically": true,
+    "monitor_acceptance_maximum_gap_seconds": 75,
+    "strict_review_maximum_gap_seconds": 45,
+    "covered_seconds_excluding_valid_gaps_over_45_seconds": 23521.172,
+    "metric_covered_seconds_at_monitor_75_second_threshold": 23585.625,
+    "longest_error_free_contiguous_segment_seconds": 20247.344,
+    "longest_segment_start": "2026-09-12T09:44:15.013779+00:00",
+    "longest_segment_end": "2026-09-12T15:21:42.370645+00:00",
+    "longest_segment_sample_count": 674,
+    "unique_effect_reviews": 392,
+    "effect_review_outcomes": {
+      "worsened": 392
+    },
+    "outcome_interpretation": "These are modeled psychological-state reviews, not independent behavioral-effect measurements.",
+    "field_notes": [
+      "The 75-second metric threshold includes the 64.453-second interval across the error sample. Acceptance still fails because error_samples is nonzero.",
+      "The stricter 45-second audit excludes that interval as well as the system sleep gap; neither calculation yields eight observed hours."
+    ]
+  }
+}

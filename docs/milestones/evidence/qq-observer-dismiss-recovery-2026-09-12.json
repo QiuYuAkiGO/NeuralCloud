@@ -1,0 +1,244 @@
+{
+  "schema_version": "qq-observer-dismiss-recovery-v1",
+  "recorded_at": "2026-09-12T15:25:59.404159+00:00",
+  "engineering_recovery": true,
+  "formal_acceptance": false,
+  "prior_reply_recovery_report": "qq-reply-recovery-2026-09-12.json",
+  "superseded_wait_diagnosis": {
+    "event_id": "qq-watch-event:c9b52efe45ae414a8106dc26166ec22a",
+    "trace_id": "qq-trace:e00e8dc64d474173ad4f5a65cc8d1266",
+    "first_seen_at": "2026-09-12T14:28:49.534456+00:00",
+    "decision_returned_at": "2026-09-12T14:29:12.276105+00:00",
+    "model_choice": "natural_wait",
+    "model_calls": 1,
+    "elapsed_seconds": 22.734,
+    "event_terminal_state": "superseded",
+    "event_terminal_reason": "newer_context",
+    "origin": "message",
+    "goal_regulation_action": false,
+    "stored_body_accessibility_observations": [
+      {
+        "captured_at": "2026-09-12T14:29:01.425397+00:00",
+        "finding": "The same two incoming text messages remain visible."
+      },
+      {
+        "captured_at": "2026-09-12T14:29:04.638374+00:00",
+        "finding": "A new incoming non-text bubble is visible; the original two text digests are unchanged."
+      },
+      {
+        "captured_at": "2026-09-12T14:29:12.475192+00:00",
+        "finding": "A further incoming text message appears after the original two texts and the new non-text bubble."
+      },
+      {
+        "captured_at": "2026-09-12T14:29:17.279645+00:00",
+        "finding": "Another incoming image-class bubble appears and older viewport content moves upward."
+      }
+    ],
+    "conclusion": "Superseding the old decision was supported by actual new external content, not merely by rebuilding an unchanged observation.",
+    "newer_context_guard_changed": false,
+    "completed_natural_wait_acceptance_sample": false,
+    "new_send_attempt_or_receipt": false,
+    "subsequent_preparation": "Some replacement observations failed or expired under the original 60-second deadline; the eventual no-overlap screen was recorded as a baseline."
+  },
+  "observer_recovery_failure": {
+    "old_watcher_pid": 30084,
+    "terminal_state": "observer_recovery_exhausted",
+    "terminal_reason": "observer_gap_recovery_exhausted",
+    "last_recovery_trace_id": "qq-trace:81f74bbf6564448aaeae05b787ceb178",
+    "last_recovery_started_at": "2026-09-12T15:03:10.451022+00:00",
+    "last_recovery_finished_at": "2026-09-12T15:03:19.422175+00:00",
+    "last_recovery_reason": "group_profile_not_verified",
+    "stored_observations": [
+      {
+        "captured_at": "2026-09-12T15:03:12.175881+00:00",
+        "finding": "A group profile is visible with the configured numeric group ID and no reported uncertainty."
+      },
+      {
+        "captured_at": "2026-09-12T15:03:14.168915+00:00",
+        "finding": "The profile has closed and the group chat is visible."
+      },
+      {
+        "captured_at": "2026-09-12T15:03:15.247183+00:00",
+        "finding": "The group chat remains visible."
+      },
+      {
+        "captured_at": "2026-09-12T15:03:16.584745+00:00",
+        "finding": "The next capture has no paired accessibility evidence."
+      },
+      {
+        "captured_at": "2026-09-12T15:03:17.924044+00:00",
+        "finding": "The additional capture also has no paired accessibility evidence."
+      }
+    ],
+    "code_and_trace_conclusion": "Recovery called verify_group on an already recognized card. That method dismissed the card and immediately opened a group card again for identity verification. Failure of this second verification left the observer occluded and exhausted the bounded recovery attempts.",
+    "transient_accessibility_and_transport_failures_permanently_fixed": false,
+    "private_pre_stop_snapshot": "reply-recovery-20260912/observer-gap-before-stop-20260912T151916Z.json",
+    "preserved_open_gap_started_at": "2026-09-12T15:02:58.750460+00:00",
+    "preserved_open_gap_monotonic_lower_bound_seconds": 976.485,
+    "gap_was_open_when_old_watcher_paused": true
+  },
+  "change": {
+    "production_file": "harness/qq/watcher.py",
+    "production_method": "QQWatcher._recover_observer_gap",
+    "test_files": [
+      "tests/test_qq_watcher_profile_recovery.py",
+      "tests/test_qq_watcher_observer_recovery.py"
+    ],
+    "recognized_group_card_requires_configured_numeric_id_and_matching_title": true,
+    "recognized_member_card_requires_configured_self_id_self_marker_and_previously_verified_target_group_context": true,
+    "unknown_dialog_wrong_group_and_wrong_member_are_rejected_before_dismissal": true,
+    "existing_fresh_frame_and_window_bound_dismissal_used": true,
+    "group_card_not_reopened_during_observation_recovery": true,
+    "identity_cache_self_aliases_and_identity_prepared_cleared_before_dismissal": true,
+    "returned_chat_frame_and_original_group_title_checked": true,
+    "normal_preparation_reverifies_group_and_self": true,
+    "recovery_grants_send_authority": false,
+    "two_attempt_limit_three_second_wait_and_original_deadlines_preserved": true,
+    "desktop_and_homeostatic_implementations_changed": false,
+    "old_messages_replayed": false
+  },
+  "validation": {
+    "two_original_code_regressions_reproduced": true,
+    "test_groups": [
+      {
+        "passed": 212,
+        "seconds": 19.44,
+        "command": ".\\.venv\\Scripts\\python.exe -m pytest tests/test_qq_watcher_profile_recovery.py tests/test_qq_watcher_observer_recovery.py tests/test_qq_watcher_cleanup.py tests/test_qq_watcher_unattended.py tests/test_qq_watcher.py tests/test_qq_desktop_identity_cache.py tests/test_qq_observer.py tests/test_qq_segment_watcher.py -q --disable-warnings --maxfail=3"
+      },
+      {
+        "passed": 229,
+        "seconds": 29.49,
+        "command": ".\\.venv\\Scripts\\python.exe -m pytest tests/test_qq_watcher_identity_preclick.py tests/test_qq_watcher_identity_gaps.py tests/test_qq_watcher_identity_cache.py tests/test_qq_recovery_contract_gaps.py tests/test_qq_capability_bridge.py tests/test_qq_embodied_driver.py tests/test_qq_desktop.py tests/test_qq_group_card_dismiss.py -q --disable-warnings --maxfail=3"
+      },
+      {
+        "passed": 13,
+        "seconds": 1.26,
+        "command": ".\\.venv\\Scripts\\python.exe -m pytest tests/test_qq_profile_transition.py -q --disable-warnings --maxfail=3"
+      }
+    ],
+    "test_groups_have_disjoint_file_selections": true,
+    "total_selected_tests_passed": 454,
+    "ruff_command": ".\\.venv\\Scripts\\python.exe -m ruff check harness/qq/watcher.py tests/test_qq_watcher_profile_recovery.py tests/test_qq_watcher_observer_recovery.py",
+    "ruff": "passed",
+    "limited_diff_check": "passed",
+    "independent_review": "qq_io_review found no required fix and independently ran the two observer-recovery test files: 37 passed in 4.72 seconds; those tests overlap the main selection."
+  },
+  "deployment": {
+    "state": "new_watcher_ready_after_shared_services_restored",
+    "pre_stop_parent_send_states": {
+      "sent": 19,
+      "not_sent": 6
+    },
+    "pre_stop_segment_states": {
+      "sent": 36,
+      "cancelled": 4
+    },
+    "pre_stop_pending_or_unknown_send_count": 0,
+    "stop_command": "tools/qq/Stop-QQWatcher.ps1 -ConfigPath <existing private watcher configuration> -TimeoutSeconds 20",
+    "stop_exit_code": 0,
+    "stop_reason": "watcher_acknowledged_pause",
+    "pause_acknowledged_at": "2026-09-12T15:19:17.048319+00:00",
+    "old_watcher_pid": 30084,
+    "old_running_after_pause": false,
+    "automatic_send_after_pause": false,
+    "automatic_screen_capture_after_pause": false,
+    "startup_requires_root_shared_services_restored_signal": true,
+    "root_shared_services_restored_signal_received_before_start": true,
+    "start_command": "tools/qq/Start-QQWatcher.ps1 -ConfigPath <existing private watcher configuration> -TimeoutSeconds 180",
+    "start_exit_code": 0,
+    "start_result": "started",
+    "launcher_pid": 38024,
+    "actual_watcher_pid": 31024,
+    "actual_watcher_started_at": "2026-09-12T15:23:57.807655+00:00",
+    "repaired_live_observation_recovery_verified": true,
+    "new_real_reply_delivery_verified": false,
+    "manual_chat_actions_or_test_sends": 0
+  },
+  "live_recovery": {
+    "successful_dismissal": {
+      "trace_id": "qq-trace:1aba8f73a4a14657869ede55fd828f35",
+      "first_seen_at": "2026-09-12T15:24:02.021710+00:00",
+      "recorded_at": "2026-09-12T15:24:08.057656+00:00",
+      "elapsed_seconds": 6.031,
+      "observer_profile_dismissed": 1,
+      "identity_cache_invalidations": 1,
+      "group_identity_full_verification_during_recovery": 0
+    },
+    "intermediate_failures_retained": [
+      {
+        "trace_id": "qq-trace:81f114c06f594f23b7f79270b5992f1d",
+        "first_seen_at": "2026-09-12T15:24:11.140966+00:00",
+        "recorded_at": "2026-09-12T15:24:22.848437+00:00",
+        "elapsed_seconds": 11.703,
+        "phase": "identity_preparation",
+        "outcome": "error"
+      },
+      {
+        "trace_id": "qq-trace:5d41d99e4ff44f0796983abd8084d4de",
+        "first_seen_at": "2026-09-12T15:24:23.881857+00:00",
+        "recorded_at": "2026-09-12T15:24:31.214713+00:00",
+        "elapsed_seconds": 7.344,
+        "phase": "gap_recovery",
+        "outcome": "error",
+        "observed_status_reason": "observer_recovery_group_changed"
+      }
+    ],
+    "subsequent_full_identity_preparation": {
+      "trace_id": "qq-trace:477ed6db26c74ca685c3efff22eff99f",
+      "first_seen_at": "2026-09-12T15:24:34.325258+00:00",
+      "recorded_at": "2026-09-12T15:24:51.373912+00:00",
+      "elapsed_seconds": 17.047,
+      "group_identity_full_verification": 1,
+      "self_identity_full_verification": 1,
+      "body_capture": 9,
+      "accessibility_projection": 9
+    }
+  },
+  "final_read_only_snapshot": {
+    "checked_at": "2026-09-12T15:25:59.404159+00:00",
+    "pid": 31024,
+    "run_id": "qq-watch-run:779a8b6c11474364b46c3ccaf8b207bb",
+    "build_hash": "qq-unattended:0efaffb4dc83442f8d022d1e51fe0a54d7999bd9c7e2d6ef5abe5ad83717632c",
+    "loaded_source_matches": true,
+    "heartbeat_at": "2026-09-12T15:25:58.512375+00:00",
+    "state": "watching",
+    "running": true,
+    "automatic_screen_capture": true,
+    "automatic_send": true,
+    "last_error_type": null,
+    "homeostasis_feedback_error": null,
+    "captures": 4,
+    "decisions": 0,
+    "deliveries": 0,
+    "driver_connected": true,
+    "observer_ready": true,
+    "send_ready": true,
+    "paused": false,
+    "has_uncertain_delivery": false,
+    "observer": {
+      "running": true,
+      "polls": 116,
+      "changes": 0,
+      "last_polled_at": "2026-09-12T15:25:58.147781+00:00",
+      "last_error_type": null,
+      "gap_seconds": 0,
+      "max_gap_seconds": 19.562,
+      "completed_gap_count": 8
+    },
+    "current_run_event_states": {},
+    "parent_send_states": {
+      "sent": 19,
+      "not_sent": 6
+    },
+    "body_health": "200_healthy",
+    "agent_health": "200_healthy",
+    "old_messages_replayed": false
+  },
+  "limitations": [
+    "The long observer outage, failed preparations and superseded incoming event remain part of the history.",
+    "The repaired dismissal and subsequent full identity preparation were observed live, but no new reply delivery has verified the final production path.",
+    "The eight startup gaps, two intermediate failures and the previous open gap are retained; restarting does not establish continuous acceptance.",
+    "Observation recovery cannot grant identity continuity or renew an expired reply.",
+    "No message content, numeric QQ identifiers or credentials are included."
+  ]
+}

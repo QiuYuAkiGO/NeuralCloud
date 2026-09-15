@@ -22,6 +22,7 @@ class ControlPermission(StrEnum):
     DIAGNOSTIC = "diagnostic"
     DEBUG_MUTATION = "debug_mutation"
     MANIFEST_CHANGE = "manifest_change"
+    MEMORY_MAINTENANCE = "memory_maintenance"
 
 
 class ControlAuthorizationError(PermissionError):
@@ -85,6 +86,11 @@ class ControlPlane:
     def authorize(self, permission: ControlPermission, *, operation: str) -> None:
         mode = self.supervisor.manifest.control_mode
         if permission == ControlPermission.DIAGNOSTIC:
+            return
+        if permission == ControlPermission.MEMORY_MAINTENANCE and operation in {
+            "daily_revision.configure", "daily_revision.run", "daily_revision.dry_run",
+            "daily_revision.retry", "daily_revision.rollback",
+        }:
             return
         allowed = mode == "development_debug" and permission in {
             ControlPermission.DEBUG_MUTATION,
@@ -360,10 +366,14 @@ def create_control_app(
     @app.post("/v1/cognitive/control", dependencies=[Depends(authenticate)])
     async def cognitive_control(payload: dict[str, Any]) -> dict[str, Any]:
         operation = str(payload.get("operation") or "")
-        diagnostic = operation in {"presets.list", "debug.state", "models", "snapshot"}
+        diagnostic = operation in {"presets.list", "debug.state", "models", "snapshot",
+            "daily_revision.status", "daily_revision.history", "daily_revision.diff"}
+        maintenance = operation in {"daily_revision.configure", "daily_revision.run", "daily_revision.dry_run",
+            "daily_revision.retry", "daily_revision.rollback"}
         try:
             control.authorize(
-                ControlPermission.DIAGNOSTIC if diagnostic else ControlPermission.DEBUG_MUTATION,
+                ControlPermission.DIAGNOSTIC if diagnostic else
+                ControlPermission.MEMORY_MAINTENANCE if maintenance else ControlPermission.DEBUG_MUTATION,
                 operation=operation,
             )
         except ControlAuthorizationError as exc:

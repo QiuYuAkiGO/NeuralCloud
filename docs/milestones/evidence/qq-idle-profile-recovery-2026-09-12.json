@@ -1,0 +1,157 @@
+{
+  "schema_version": "qq-idle-profile-recovery-v1",
+  "recorded_at": "2026-09-11T16:13:37.037279+00:00",
+  "engineering_recovery": true,
+  "formal_acceptance_started": false,
+  "diagnosis": {
+    "trigger": "Own-member identity preparation opened a card, then timed out after waiting 1500 ms for the shared observation lock.",
+    "persistent_blocker": "Recovery eligibility depended on a previous turn result or pending candidate. Preparation failure created neither; the previous superseded result caused recovery to be skipped.",
+    "network_outage_proven": false,
+    "lock_holder_at_failure": "not recorded",
+    "preparation_trace_id": "qq-trace:110fdd3056a84256bf83f5aaceeb2a7c",
+    "old_run_counts": {
+      "events": 13,
+      "event_states": {
+        "sent": 1,
+        "ignored": 5,
+        "decided_wait": 6,
+        "superseded": 1
+      },
+      "parent_reservations": 1,
+      "parent_states": {
+        "sent": 1
+      },
+      "attempts": 2,
+      "attempt_phases": {
+        "sent": 2
+      },
+      "segments": 2,
+      "segment_states": {
+        "sent": 2
+      },
+      "segment_receipts": 2,
+      "aggregate_receipts": 1
+    },
+    "timestamped_send_activity_since_gap": {
+      "new_parent_reservations": 0,
+      "new_send_attempts": 0,
+      "updated_send_attempts": 0,
+      "new_segment_reservations": 0,
+      "updated_segment_reservations": 0,
+      "parent_clicks_started": 0,
+      "segment_clicks_started": 0,
+      "segment_click_acks": 0,
+      "segment_bubble_receipts_by_delivered_at": 0,
+      "aggregate_receipts_by_delivered_at": 0,
+      "all_group_segment_receipts_by_delivered_at": 0,
+      "all_group_aggregate_receipts_by_delivered_at": 0
+    }
+  },
+  "outage": {
+    "started_at": "2026-09-11T15:44:12.310777+00:00",
+    "old_worker_last_heartbeat_at": "2026-09-11T16:08:14.678298+00:00",
+    "open_gap_monotonic_lower_bound_seconds": 1442.36,
+    "complete_closed_duration_seconds": null,
+    "note": "Observer ended during maintenance while gap remained open. Original status proves a lower bound; recovery across restart is not one monotonic duration.",
+    "private_audit_file": "observer-open-gap-audit-20260911T160554Z-5d3ce3c5.json",
+    "private_stopped_status_file": "observer-gap-stopped-20260912-0010.json"
+  },
+  "change": {
+    "previous_outcome_eligibility_removed": true,
+    "positive_profile_classification_required": true,
+    "target_group_verification_required": true,
+    "maximum_attempts": 2,
+    "retry_interval_seconds": 3,
+    "maximum_recovery_seconds_per_attempt": 15,
+    "existing_candidate_deadline_preserved": true,
+    "unknown_dialog_and_transport_error_not_mutated": true,
+    "manual_gui_actions": 0,
+    "watcher_restart_for_deployment": true,
+    "other_services_restarted": false,
+    "old_message_replay": false
+  },
+  "validation": {
+    "focused_tests_passed": 65,
+    "affected_contract_tests_passed": 460,
+    "affected_contract_tests_seconds": 96.41,
+    "existing_deprecation_warnings": 2,
+    "test_command": "python -m pytest tests -q -k 'qq_watcher or qq_observer or qq_desktop or qq_identity_cache' --ignore=tests/test_qq_live.py",
+    "ruff": "passed",
+    "diff_check": "passed",
+    "live_recovery_trace_id": "qq-trace:794517e275ae4d5994d902d9ff72e034",
+    "live_recovery_seconds": 6.063,
+    "live_recovery_counters": {
+      "preparation_attempts": 1,
+      "observer_gap_recovery_attempts": 1,
+      "body_capture": 4,
+      "accessibility_projection": 4,
+      "fresh_frame_reuse": 3,
+      "group_card_blank_dismiss": 1,
+      "group_identity_full_verification": 1
+    },
+    "subsequent_identity_trace_id": "qq-trace:25e25174e0be4a46934884e13f577246",
+    "subsequent_identity_seconds": 3.968,
+    "subsequent_identity_counters": {
+      "preparation_attempts": 1,
+      "body_capture": 3,
+      "accessibility_projection": 3,
+      "group_identity_cache_hit": 1,
+      "fresh_frame_reuse": 3,
+      "self_identity_full_verification": 1
+    },
+    "screenshot_inspection": "Own profile visible before deployment; absent after autonomous recovery. No manual dismissal."
+  },
+  "runtime": {
+    "pid": 7160,
+    "started_at": "2026-09-11T16:08:39.430590+00:00",
+    "build_hash": "qq-unattended:a7888e55156c4643e09140269c5e3c8aae7a938c6b6c6c8c8fbd4aeda1187e17",
+    "state": "observer_unavailable",
+    "running": true,
+    "automatic_send": false,
+    "last_error_type": "invalid_timing",
+    "heartbeat_at": "2026-09-11T16:13:35.391713+00:00",
+    "decisions": 0,
+    "deliveries": 0
+  },
+  "source_matches": true,
+  "run_id": "qq-watch-run:678da79670e24a32a3f55b6619a1ef41",
+  "current_run_event_states": {},
+  "observer": {
+    "running": true,
+    "last_polled_at": "2026-09-11T16:13:34.872696+00:00",
+    "last_error_type": null,
+    "gap_seconds": 0.0,
+    "max_gap_seconds": 5.063,
+    "completed_gap_count": 59
+  },
+  "screenshots": [
+    {
+      "label": "observer-gap-20260912-0001",
+      "captured_at": "2026-09-11T16:01:06.877757Z",
+      "evidence_ref": "evidence://sha256/33f5ae11051a727d6ea5a270a82624b708bf9abc805780b709025fe5bd9dd66f",
+      "sha256_verified": true
+    },
+    {
+      "label": "observer-recovered-20260912-0009",
+      "captured_at": "2026-09-11T16:09:48.439753Z",
+      "evidence_ref": "evidence://sha256/fb1159cc0addbc8b6a0eab6225f215cf62f7d42106e925950fdbe4f914e55058",
+      "sha256_verified": true
+    }
+  ],
+  "limitations": [
+    "Changed idle-after-preparation eligibility is covered by synthetic regression; real deployment recovered through the startup path.",
+    "Transient lock contention and historical invalid_timing/HTTP errors are not proven eliminated. Short invalid_timing gaps continue after deployment.",
+    "No reply was forced; no new delivery sample at this snapshot.",
+    "Engineering restart and preserved long outage do not qualify as continuous eight-hour acceptance."
+  ],
+  "subsequent_timing_fix": {
+    "report": "qq-observer-clock-recovery-2026-09-12.json",
+    "note": "Subsequent source and runtime supersede this engineering snapshot; original outage and snapshot remain preserved."
+  },
+  "latest_context_selection_followup": {
+    "report": "qq-context-selection-2026-09-12.json",
+    "prompt_version": "qq-group-turn-taking-v10",
+    "historical_report_retained": true,
+    "reason": "Later profile and observation proof growth exceeded the unchanged local budget; v10 projects validated text and selects whole historical records before both model stages."
+  }
+}

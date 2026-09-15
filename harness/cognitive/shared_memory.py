@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from contextlib import closing
 from datetime import datetime, timedelta, timezone
 import json
+import hashlib
 import os
 from pathlib import Path
 import re
@@ -13,7 +14,7 @@ from typing import Any
 
 from harness.core.inference import ContextSegment, MemoryEvidenceContext, MemoryEvidenceEntry
 from harness.core.models import WorldState
-from harness.memory.shared import SharedLocalEvent, SharedMemoryContext, SharedMemoryStore, SharedReadScope
+from harness.memory.shared import SharedActionOutcome, SharedLocalEvent, SharedMemoryContext, SharedMemoryStore, SharedReadScope
 from harness.compiler.compiler import ContextCompiler, estimate_tokens
 from harness.embodiment.qq_contracts import QQReadResult, QQScope
 from harness.qq.roster import configured_groups
@@ -42,7 +43,7 @@ class SharedMemoryCompiler(ContextCompiler):
     def compile(self, situation, **kwargs):
         extra = kwargs.get("additional_segments") or []
         shared = [segment for segment in extra if segment.kind == "user"
-                  and segment.why == "verified_shared_channel_memory" and segment.source_ids]
+                  and segment.why in {"verified_shared_channel_memory", "daily_revision_memory"} and segment.source_ids]
         if not shared:
             return super().compile(situation, **kwargs)
         required = sum(estimate_tokens(segment.text) for segment in extra)
@@ -143,13 +144,33 @@ class SharedQQBinding:
 class CognitiveSharedMemory:
     def __init__(self, host, path: Path, *, qq_settings=None):
         self.host = host
-        self.store = SharedMemoryStore(path, owner_id="misty")
+        self._base_path = Path(path)
+        self._stores: dict[str, SharedMemoryStore] = {}
         self.qq_settings = qq_settings
         self.last_import = None
         self._source_stamp = None
 
+    @property
+    def store(self):
+        preset_id = getattr(getattr(self.host, "chat", None), "active_preset_id", "misty")
+        if preset_id not in self._stores:
+            # Misty's original archive is an immutable migration baseline.
+            # A newly selected/copied preset starts its own experience archive.
+            suffix = hashlib.sha256(preset_id.encode()).hexdigest()[:24]
+            path = self._base_path if preset_id == "misty" else self._base_path.with_name(
+                self._base_path.stem + ".preset-" + suffix + self._base_path.suffix)
+            self._stores[preset_id] = SharedMemoryStore(path, owner_id="misty", preset_id=preset_id)
+        return self._stores[preset_id]
+
+    @store.setter
+    def store(self, value):
+        preset_id = getattr(getattr(self.host, "chat", None), "active_preset_id", "misty")
+        if value.preset_id != preset_id:
+            raise ValueError("shared_store_preset_mismatch")
+        self._stores[preset_id] = value
+
     def sync_qq(self):
-        if self.qq_settings is None:
+        if self.qq_settings is None or self.store.preset_id != "misty":
             return
         path = self.qq_settings.memory_db
         # SQLite WAL changes count too. This is a cache optimization, not the
@@ -170,8 +191,14 @@ class CognitiveSharedMemory:
 
     def sync_local(self):
         """Project real committed session turns; original presets remain intact."""
+        # Start the live-capture guarantee even on days with no action/message.
+        # The pre-upgrade archive remains explicitly of unknown completeness.
+        self.store.mark_archive_started("local_chat")
+        self.store.mark_archive_started("action_outcome")
         count = 0
         for session_id, turns in self.host.chat.pipeline.session_store.snapshot().items():
+            if session_id != self.host.chat.active_session_id:
+                continue
             for turn in turns:
                 if not turn.event_id or turn.timestamp is None or not turn.text.strip():
                     # Older source entries lacking time/identity remain in the
@@ -186,6 +213,36 @@ class CognitiveSharedMemory:
                     evidence_refs=(f"local-chat:{session_id}:{turn.event_id}:{role}",)))
                 count += int(value.created)
         return count
+
+    def archive_local(self, *, event_id: str, session_id: str, role: str, text: str,
+                      occurred_at: datetime, display_name: str | None = None):
+        """Called at commit before the bounded SessionStore can evict a turn."""
+        store = self.store
+        if not text.strip():
+            return None
+        if session_id != self.host.chat.active_session_id:
+            raise ValueError("local_archive_session_does_not_belong_to_active_preset")
+        store.mark_archive_started("local_chat")
+        return store.record_local(SharedLocalEvent(
+            event_id=f"{event_id}.{role}", session_id=session_id,
+            author_principal="character:misty" if role == "assistant" else "local:main",
+            role=role, text=text, occurred_at=occurred_at, display_name=display_name,
+            evidence_refs=(f"local-chat:{session_id}:{event_id}:{role}",)))
+
+    def archive_action(self, *, event_id: str, session_id: str, intent_id: str, evidence):
+        """Preserve the authenticated action receipt, never reconstruct it from prose."""
+        store = self.store
+        store.mark_archive_started("action_outcome")
+        return store.record_action(SharedActionOutcome(event_id=event_id, owner_id=store.owner_id,
+            session_id=session_id, intent_id=intent_id, evidence=evidence))
+
+    def sync_actions(self):
+        """Historical episodic summaries are not original verifier receipts.
+
+        Missing pre-rollout action receipts remain an explicit coverage gap in
+        the source manifest; this compatibility hook does not manufacture them.
+        """
+        return 0
 
     def local_context(self, event):
         self.sync_qq()
@@ -212,6 +269,13 @@ class CognitiveSharedMemory:
         # authorized group views. QQ replies never enter this path, so another
         # group's visible messages cannot become the home group's reply input.
         segments.extend(self._group_view_context())
+        if event.channel == "chat":
+            from harness.memory.revision.recall import select_daily_recall, daily_context_segment
+            derived = select_daily_recall(self.host.chat.memory, audience="local:main", query=event.raw_text,
+                                           owner_id=self.store.owner_id)
+            segment = daily_context_segment(derived)
+            if segment is not None:
+                segments.append(segment)
         # Only a real local chat request has this authenticated local speaker.
         # Internal goal/capability opportunities do not invent an interlocutor.
         if event.channel == "chat" and event.speaker != "character":
@@ -392,11 +456,25 @@ class CognitiveSharedMemory:
                 channels=("qq_private",) if private else ("qq_group",), kinds=("qq_observation",),
                 principals=(f"qq:member:{member_id}",) if member_id else None), limit=3)
             recall_query = " ".join(entry.text for entry in recent.records)[:1000]
+        from harness.memory.revision.recall import select_daily_recall, merge_derived_memory
+        legacy = (self.host.qq_memory.recall(group_id=group_id, member_id=member_id, query=recall_query)
+                  if hasattr(self.host, "qq_memory") else None)
+        # The binding already authenticated this conversation. Daily revisions
+        # remain usable independently of QQ's online assimilation/recall switch.
+        audience = conversation_audience(group_id)
+        daily_authorized = private or (self.qq_settings is not None
+            and group_id in self.qq_settings.allowed_group_ids)
+        derived = select_daily_recall(self.host.chat.memory, audience=audience, conversation_id=audience,
+            owner_id=self.store.owner_id, query=recall_query,
+            subjects=(f"qq:member:{member_id}",) if member_id else (),
+            max_items=min(4, settings.qq_memory_recall_max_items),
+            max_characters=settings.qq_memory_recall_max_characters) if daily_authorized else {}
+        combined = merge_derived_memory(legacy, derived, max_items=settings.qq_memory_recall_max_items,
+                                       max_characters=settings.qq_memory_recall_max_characters)
         return SharedQQBinding(settings, preset, self.host.chat.llm,
             ScopedQQMemoryView(self.host.chat.memory, group_id=group_id, member_id=member_id), payload,
             tuple(dict.fromkeys(source_ids)),
-            self.host.qq_memory.recall(group_id=group_id, member_id=member_id, query=recall_query)
-            if hasattr(self.host, "qq_memory") else None)
+            combined)
 
     def board_context(self, *, query=None):
         """The owner's private board borrows its authorized shared recall."""

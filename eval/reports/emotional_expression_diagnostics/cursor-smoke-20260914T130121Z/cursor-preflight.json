@@ -1,0 +1,32 @@
+{
+  "checked_at_utc": "2026-09-14T13:01:25.209799+00:00",
+  "authenticated": true,
+  "available_model_ids": [
+    "auto",
+    "composer-2.5",
+    "composer-2.5-fast",
+    "cursor-grok-4.5-high",
+    "cursor-grok-4.5-high-fast",
+    "cursor-grok-4.5-low",
+    "cursor-grok-4.5-low-fast",
+    "cursor-grok-4.5-medium",
+    "cursor-grok-4.5-medium-fast",
+    "cursor-grok-4.6-high",
+    "cursor-grok-4.6-high-fast",
+    "cursor-grok-4.6-low",
+    "cursor-grok-4.6-low-fast",
+    "cursor-grok-4.6-medium",
+    "cursor-grok-4.6-medium-fast",
+    "cursor-grok-4.6-xhigh",
+    "cursor-grok-4.6-xhigh-fast",
+    "glm-5.2-high",
+    "glm-5.2-max",
+    "kimi-k2.7-code",
+    "kimi-k3-high",
+    "kimi-k3-low",
+    "kimi-k3-max"
+  ],
+  "selections": {
+    "kimi-k3": "kimi-k3-high"
+  }
+}

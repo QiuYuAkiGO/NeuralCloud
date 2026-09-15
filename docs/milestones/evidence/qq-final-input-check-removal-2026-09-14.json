@@ -1,0 +1,67 @@
+{
+  "schema_version": "qq-final-input-check-removal-v1",
+  "checked_at": "2026-09-14T11:23:08+08:00",
+  "change": {
+    "user_requested": true,
+    "removed": ["fresh_draft_not_verified", "draft_pixels_changed_before_send"],
+    "staged_text_and_context_check_retained": true,
+    "final_send_target_check_retained": true,
+    "post_send_receipt_check_retained": true,
+    "goal_counter_or_scheduler_modified": false
+  },
+  "validation": {
+    "existing_related_tests": {"passed": 175, "seconds": 18.40},
+    "final_draft_regression_tests": {"passed": 6, "seconds": 2.13},
+    "test_files": [
+      "tests/test_qq_desktop.py",
+      "tests/test_qq_desktop_identity_cache.py",
+      "tests/test_qq_delivery_group_refresh.py",
+      "tests/test_qq_segment_desktop.py",
+      "tests/test_qq_segment_watcher.py",
+      "tests/test_qq_watcher_identity_preclick.py",
+      "tests/test_qq_cached_draft_proof.py"
+    ],
+    "ruff": "passed",
+    "actual_delivery_test_performed": false
+  },
+  "deployment": {
+    "stop_status": "paused",
+    "start_status": "started",
+    "old_worker_pid": 31024,
+    "new_launch_pid": 46504,
+    "new_worker_pid": 46816,
+    "started_at": "2026-09-14T11:22:03.005075+08:00",
+    "build_hash": "qq-unattended:44e5a138b44eb0230b6ae563a761d96823de36eeb83a0bd6fcb61433c7157f71",
+    "source_hash_matches": true,
+    "state": "watching",
+    "automatic_send": true,
+    "observer_ready": true,
+    "send_ready": true,
+    "has_uncertain_delivery": false,
+    "last_error_type": null
+  },
+  "goal_inspection": {
+    "uncompleted_goals": 1,
+    "uncompleted_episodes": 1,
+    "goal_id": "psychological-balance",
+    "goal_status": "active",
+    "goal_no_progress": 0,
+    "episode_id": "episode:1dc4b62018fd4be4986217f61df4df86",
+    "episode_status": "waiting",
+    "episode_no_progress": 8,
+    "episode_blocked_reason": "no_progress",
+    "configured_maximum_no_progress": 3,
+    "results": [
+      {"at_local": "2026-09-12 17:43:51", "status": "wait", "channel": null},
+      {"at_local": "2026-09-12 17:49:07", "status": "wait", "channel": null},
+      {"at_local": "2026-09-12 17:54:26", "status": "error", "exception_type": "ValueError", "channel": null},
+      {"at_local": "2026-09-12 18:33:56", "status": "error", "exception_type": "DomainCommandError", "channel": null},
+      {"at_local": "2026-09-12 18:40:16", "status": "error", "exception_type": "DomainCommandError", "channel": null},
+      {"at_local": "2026-09-12 18:55:01", "status": "error", "exception_type": "DomainCommandError", "channel": null},
+      {"at_local": "2026-09-12 22:30:30", "status": "error", "exception_type": "DomainCommandError", "channel": null},
+      {"at_local": "2026-09-14 11:06:23", "status": "wait", "channel": "qq"}
+    ],
+    "timezone": "Asia/Shanghai",
+    "reply_failure_at_1104_included_in_episode_results": false
+  }
+}

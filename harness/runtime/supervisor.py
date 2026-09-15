@@ -3262,10 +3262,41 @@ class RuntimeSupervisor:
         from harness.qq.shared import QQSharedPrepareRequest
 
         request = QQSharedPrepareRequest.model_validate(event.payload)
-        if utc_now() >= request.deadline_at:
-            return EventDispatchResult(event_id=event.event_id, receive_seq=event.receive_seq,
-                process_seq=process_seq, status="failed", decision_kind="qq_prepare",
-                detail={"error_type": "qq_turn_expired"})
+        remaining = (request.deadline_at - utc_now()).total_seconds()
+        if remaining > 0:
+            budget = asyncio.timeout(remaining)
+            try:
+                # Web preparation, emotion observation, cognition and the final
+                # snapshot share the body's immutable reply window. Cancelling
+                # this waiter leaves Cognitive's shielded command/lock intact.
+                async with budget:
+                    result = await self._prepare_qq_turn(event, process_seq, request)
+                if not budget.expired() and utc_now() < request.deadline_at:
+                    return result
+            except (TimeoutError, LateDomainResultError):
+                # A shorter RPC timeout or an early domain failure still uses
+                # ordinary Runtime recovery. Only this turn's expiry is local.
+                if not budget.expired() and utc_now() < request.deadline_at:
+                    raise
+        # Ignored is terminal in journal recovery: an expired preparation must
+        # never be queued again or become a fresh send after resume/restart.
+        return EventDispatchResult(event_id=event.event_id, receive_seq=event.receive_seq,
+            process_seq=process_seq, status="ignored", decision_kind="qq_prepare",
+            detail={"error_type": "qq_turn_expired"})
+
+    @staticmethod
+    def _qq_turn_expired(event: RuntimeEvent) -> bool:
+        if event.event_type != RuntimeEventType.QQ_TURN:
+            return False
+        from harness.qq.shared import QQSharedPrepareRequest
+
+        try:
+            request = QQSharedPrepareRequest.model_validate(event.payload)
+        except ValueError:
+            return False
+        return utc_now() >= request.deadline_at
+
+    async def _prepare_qq_turn(self, event: RuntimeEvent, process_seq: int, request) -> EventDispatchResult:
         method = getattr(self.cognitive, "prepare_qq_response", None)
         if method is None:
             raise DomainCommandError("shared cognitive QQ preparation is unavailable")
@@ -3347,12 +3378,16 @@ class RuntimeSupervisor:
         timeout = max(0.001, (envelope.deadline - utc_now()).total_seconds())
         try:
             result = await asyncio.wait_for(method(envelope), timeout=timeout)
-            self.watchdog.record_success(service)
-            self._degraded_reasons = [reason for reason in self._degraded_reasons if reason != service]
-        except Exception:
-            self.watchdog.record_failure(service)
-            if service not in self._degraded_reasons:
-                self._degraded_reasons.append(service)
+            if not self._qq_turn_expired(event):
+                self.watchdog.record_success(service)
+                self._degraded_reasons = [reason for reason in self._degraded_reasons if reason != service]
+        except Exception as exc:
+            # Losing a QQ reply window is not evidence that a dependency is
+            # unhealthy. Preserve earlier failures rather than clearing them.
+            if not (isinstance(exc, TimeoutError) and self._qq_turn_expired(event)):
+                self.watchdog.record_failure(service)
+                if service not in self._degraded_reasons:
+                    self._degraded_reasons.append(service)
             raise
         late = result.completed_at > envelope.deadline
         record_type = "domain_command_late_result" if late else "domain_command_result"
@@ -3363,6 +3398,21 @@ class RuntimeSupervisor:
             idempotency_key=envelope.idempotency_key,
             data={"service": service, "result": result.model_dump(mode="json")},
         )
+        if event.event_type == RuntimeEventType.QQ_TURN and result.status not in {"applied", "idempotent_replay"}:
+            # A late failed/conflicting result still reports a real domain
+            # failure. Only the owner's explicit deadline results can become
+            # turn expiry, including a result completed on time but received
+            # after the body's deadline.
+            deadline_failure = service == "cognitive" and (
+                (result.status == "rejected" and result.error == "command deadline expired")
+                or (envelope.command_type == "PrepareQQResponse" and result.status == "failed"
+                    and result.error == "qq_shared_prepare_failed:QQDeadlineExpired")
+            )
+            if deadline_failure and self._qq_turn_expired(event):
+                raise TimeoutError("qq_turn_expired")
+            raise DomainCommandError(
+                f"{service} {envelope.command_type} returned {result.status}: {result.error}"
+            )
         if late:
             raise LateDomainResultError(f"late {service} result for {envelope.command_type}")
         if result.status not in {"applied", "idempotent_replay"}:
@@ -4452,7 +4502,7 @@ class RuntimeSupervisor:
         for record in self.journal.iter_records():
             if record.record_type == "domain_command_intent" and record.command_id:
                 intents[record.command_id] = record
-            elif record.record_type in {"domain_command_result", "domain_command_late_result"} and record.command_id:
+            elif record.record_type in {"domain_command_result", "domain_command_late_result", "domain_command_expired"} and record.command_id:
                 results.add(record.command_id)
         for command_id, record in intents.items():
             if command_id in results:
@@ -4464,9 +4514,20 @@ class RuntimeSupervisor:
                 continue
             if services is not None and service not in services:
                 continue
-            envelope = self._renew_command_window(
-                DomainCommandEnvelope[dict[str, Any]].model_validate(envelope_data)
-            )
+            envelope = DomainCommandEnvelope[dict[str, Any]].model_validate(envelope_data)
+            if service == "cognitive" and envelope.command_type in {
+                "PrepareQQResponse", "ObserveEmotion", "PrepareWebStep",
+            }:
+                source, _ = self.qq_turn_history(envelope.event_id)
+                if source is not None and self._qq_turn_expired(source):
+                    # The original domain operation may still complete under
+                    # its own lock. This records only Runtime's expired intent;
+                    # it does not claim that operation was cancelled or failed.
+                    self._append_journal("domain_command_expired", event=source,
+                        command_id=envelope.command_id, idempotency_key=envelope.idempotency_key,
+                        data={"service": service, "error_type": "qq_turn_expired"})
+                    continue
+            envelope = self._renew_command_window(envelope)
             method = self._command_method(service, envelope.command_type)
             if method is None:
                 self._reconciliation_backlog += 1

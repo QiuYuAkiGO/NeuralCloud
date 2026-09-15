@@ -1,0 +1,89 @@
+﻿{
+    "schema_version":  "qq-direct-runtime-reload-v1",
+    "started_at":  "2026-09-14T07:05:05.1497345Z",
+    "phase":  "ReloadRuntime",
+    "status":  "runtime_reloaded_direct_paused",
+    "direct_stop_grace_seconds":  90,
+    "runtime_health_wait_seconds":  360,
+    "cognitive_restart":  false,
+    "qq_session_restart":  false,
+    "gui_restart":  false,
+    "homeostasis_restart":  false,
+    "desktop_qq_container_changed":  false,
+    "changes":  [
+                    {
+                        "old_pid":  12724,
+                        "old_child_pid":  46348,
+                        "new_pid":  43080,
+                        "service":  "runtime",
+                        "started_at":  "2026-09-14T07:05:08.8031184Z"
+                    }
+                ],
+    "errors":  [
+
+               ],
+    "goals_before":  {
+                         "status":  "waiting",
+                         "episode_id":  "episode:1dc4b62018fd4be4986217f61df4df86",
+                         "no_progress":  12,
+                         "result_count":  12
+                     },
+    "direct_counts_before":  {
+                                 "events":  {
+                                                "expired":  1,
+                                                "observed":  59,
+                                                "sent":  1,
+                                                "wait":  1
+                                            },
+                                 "sends":  {
+                                               "sent":  2
+                                           }
+                             },
+    "preserved_processes":  [
+                                {
+                                    "created_at":  "2026-09-14T06:44:14.3176530Z",
+                                    "pid":  22768
+                                },
+                                {
+                                    "created_at":  "2026-09-12T09:41:37.4121070Z",
+                                    "pid":  3384
+                                },
+                                {
+                                    "created_at":  "2026-09-12T09:42:02.5053500Z",
+                                    "pid":  12176
+                                },
+                                {
+                                    "created_at":  "2026-09-14T06:48:03.3709730Z",
+                                    "pid":  18472
+                                },
+                                {
+                                    "created_at":  "2026-09-14T06:48:03.4363920Z",
+                                    "pid":  43400
+                                }
+                            ],
+    "preserved_processes_unchanged":  true,
+    "goals_after":  {
+                        "status":  "waiting",
+                        "episode_id":  "episode:1dc4b62018fd4be4986217f61df4df86",
+                        "no_progress":  12,
+                        "result_count":  12
+                    },
+    "direct_start":  {
+                         "service":  "qq-direct",
+                         "state":  "started",
+                         "exit_code":  0,
+                         "reason":  "daemon_running_connection_and_send_ownership_reported_separately"
+                     },
+    "direct_counts_after":  {
+                                "events":  {
+                                               "expired":  1,
+                                               "observed":  59,
+                                               "sent":  1,
+                                               "wait":  1
+                                           },
+                                "sends":  {
+                                              "sent":  2
+                                          }
+                            },
+    "completed_at":  "2026-09-14T07:09:07.2741932Z"
+}

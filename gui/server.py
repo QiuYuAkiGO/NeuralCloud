@@ -12,7 +12,7 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StrictBool
 
 from gui.debug import (
     CandidatePatch,
@@ -54,13 +54,14 @@ class ChatRequest(BaseModel):
 
 
 class ConfigRequest(BaseModel):
-    mode: Mode
+    mode: Mode | None = None
     base_url: str | None = None
     model: str | None = None
     api_key: str | None = None
     aux_base_url: str | None = None
     aux_model: str | None = None
     aux_api_key: str | None = None
+    validator_enabled: StrictBool | None = None
     user_name: str | None = None
     character_name: str | None = None
 
@@ -172,6 +173,7 @@ def create_app(
                 aux_base_url=persisted.aux_base_url,
                 aux_model=persisted.aux_model,
                 aux_api_key=persisted.aux_api_key,
+                validator_enabled=persisted.validator_enabled,
                 library=library,
                 active_preset_id=active_id,
                 open_preset_ids=open_ids,
@@ -311,6 +313,7 @@ def create_app(
                     aux_base_url=body.aux_base_url,
                     aux_model=body.aux_model,
                     aux_api_key=body.aux_api_key,
+                    validator_enabled=body.validator_enabled,
                 )
             except Exception as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from exc

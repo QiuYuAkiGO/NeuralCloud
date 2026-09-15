@@ -1,0 +1,209 @@
+{
+  "schema_version": "qq-private-memory-release-v1",
+  "verified_at": "2026-09-14T12:31:47.800621+00:00",
+  "diagnosis": {
+    "latest_private_question_at": "2026-09-14T19:41:44+08:00",
+    "previous_recalled_memories": 0,
+    "previous_raw_context_observations": 6,
+    "previous_reply_duration_ms": 34730,
+    "cause": "private conversation was excluded from assimilation and derived-memory recall"
+  },
+  "authorization": {
+    "grant": "verified owner private chat may recall all currently authorized QQ and local Misty memories",
+    "ordinary_private_scope": "exact self and peer",
+    "group_scope": "same group only"
+  },
+  "frozen_backfill": {
+    "frozen_at": "2026-09-14T12:02:23.746339+00:00",
+    "raw_observations": 8,
+    "episodes": 5,
+    "impressions": 1,
+    "stable_judgments": 0,
+    "tiers": {
+      "forgotten": 2,
+      "mid": 1,
+      "short": 2
+    },
+    "impression_states": {
+      "provisional": 1
+    },
+    "committed_windows": 5
+  },
+  "review": {
+    "observations": 8,
+    "episodes": 5,
+    "impressions": 1,
+    "independent_supports": 2,
+    "same_round_continuations": 2,
+    "wording_corrections": 1,
+    "full_replay_passed": true,
+    "original_source_hashes_unchanged": true,
+    "reviewed_preset_sha256": "b4dd715e2cb68cb92c17822683f1bfdaf9dd92fc6f3f626f6b3654ba116bd3d1"
+  },
+  "import": {
+    "backup_created": true,
+    "replayed_without_save": true,
+    "non_private_content_and_ids_preserved": true,
+    "prior_adoptions_preserved": true,
+    "concurrent_normal_expiry_updates": 1,
+    "historical_messages_sent": 0
+  },
+  "recall": {
+    "previews": [
+      {
+        "name": "latest_question",
+        "items": 5,
+        "characters": 3931,
+        "latency_ms": 807.398,
+        "kinds": [
+          "person",
+          "person",
+          "episode",
+          "episode",
+          "semantic"
+        ],
+        "channels": [
+          "local_chat",
+          "qq_group"
+        ]
+      },
+      {
+        "name": "general_people",
+        "items": 4,
+        "characters": 3809,
+        "latency_ms": 882.409,
+        "kinds": [
+          "person",
+          "person",
+          "episode",
+          "relationship"
+        ],
+        "channels": [
+          "qq_group"
+        ]
+      },
+      {
+        "name": "group_isolation",
+        "items": 6,
+        "characters": 3974,
+        "latency_ms": 741.686,
+        "kinds": [
+          "person",
+          "episode",
+          "person",
+          "person",
+          "person",
+          "episode"
+        ],
+        "channels": [
+          "scoped"
+        ]
+      },
+      {
+        "name": "ungranted_peer",
+        "items": 0,
+        "characters": 2,
+        "latency_ms": 687.903,
+        "kinds": [],
+        "channels": []
+      }
+    ],
+    "preview_mutations": false,
+    "engine_latest_ms": 33.687,
+    "foreground_busy_debug_probe": {
+      "timeout_seconds": 10,
+      "reply_path_error": false,
+      "explanation": "A subsequent debug preview waited for an in-progress response lock; health remained responsive."
+    },
+    "isolated_latest_question_selection": {
+      "latency_ms": 49.207,
+      "items": 5,
+      "characters": 3931,
+      "kinds": [
+        "person",
+        "person",
+        "episode",
+        "episode",
+        "semantic"
+      ],
+      "source": "current preset snapshot; same selection function; model not called"
+    }
+  },
+  "live": {
+    "runtime_lifecycle": "RUNNING",
+    "direct_running": true,
+    "direct_connected": true,
+    "direct_paused": false,
+    "switches": {
+      "enabled": true,
+      "recall_enabled": true,
+      "private_enabled": true,
+      "private_recall_enabled": true,
+      "owner_private_full_recall_enabled": true
+    },
+    "channels": {
+      "qq_group": {
+        "episodes": 352,
+        "impressions": 86,
+        "tiers": {
+          "forgotten": 227,
+          "mid": 8,
+          "short": 117
+        }
+      },
+      "qq_private": {
+        "episodes": 5,
+        "impressions": 1,
+        "tiers": {
+          "forgotten": 4,
+          "mid": 1
+        }
+      }
+    },
+    "private_impression_states": {
+      "dormant": 1
+    },
+    "private_jobs": {
+      "applied": 5
+    },
+    "queue": {
+      "pending": 1,
+      "preparing": 0,
+      "retry": 0,
+      "applied": 243,
+      "skipped": 0,
+      "total_jobs": 244,
+      "assigned_sources": 758,
+      "oldest_pending_seconds": 1.896716
+    },
+    "memory_error": null,
+    "direct_error": null
+  },
+  "tests": {
+    "distinct_passed": 619,
+    "failures": 0,
+    "whole_repository_suite_claimed": false,
+    "runs": [
+      {
+        "path": "data/qq-private-memory-final-regression.xml",
+        "passed": 612,
+        "duration_seconds": 196.255,
+        "sha256": "d0219052e1b3dbd704fbb84415b9c635c34f7ebe40f39f7411c2a10b090f7714"
+      },
+      {
+        "path": "data/qq-private-memory-final-focus.xml",
+        "passed": 82,
+        "duration_seconds": 37.048,
+        "sha256": "b751c0c9b4ace7844154be9466e974fe9e221d72144ca099f9adf0a9221fc2d1"
+      },
+      {
+        "path": "data/qq-private-memory-people-final.xml",
+        "passed": 6,
+        "duration_seconds": 0.145,
+        "sha256": "c84c01d6b9fd3165c9ae2b58937e54316d6e3f296d7701c66dfea7e86edc15fe"
+      }
+    ],
+    "count_method": "latest passing module result supersedes earlier run of that module",
+    "ruff_passed": true
+  }
+}

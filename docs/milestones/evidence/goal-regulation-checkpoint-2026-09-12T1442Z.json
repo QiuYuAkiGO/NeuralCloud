@@ -1,0 +1,73 @@
+{
+  "schema_version": "goal-regulation-acceptance-checkpoint-v1",
+  "checked_at": "2026-09-12T14:45:11.459030+00:00",
+  "automation_id": "misty-8",
+  "run_started_at": "2026-09-12T09:44:13.6303898Z",
+  "expected_end_at": "2026-09-12T17:44:13.6303898Z",
+  "monitor_pid": 28096,
+  "process_identity_verified": true,
+  "runtime_health": "RUNNING",
+  "runtime_domains_healthy": true,
+  "report": {
+    "status": "incomplete",
+    "elapsed_seconds": 18047.609000000055,
+    "sample_count": 601,
+    "valid_samples": 601,
+    "error_samples": 0,
+    "maximum_gap_seconds": 30.328000000095926,
+    "eight_hour_observation_complete": false,
+    "new_activity_count": 6,
+    "new_evidenced_runtime_activity_count": 0,
+    "regulation_effectiveness": "unverified",
+    "release_eligible": false,
+    "source_counts": {
+      "fact_references": 0,
+      "self_report_references": 0,
+      "evaluations_with_drift": 300
+    }
+  },
+  "goal_status": "waiting",
+  "blocked_reason": "no_progress",
+  "no_progress": 7,
+  "new_failure": {
+    "created_at": "2026-09-12T14:30:07.889123+00:00",
+    "completed_at": "2026-09-12T14:30:30.480848+00:00",
+    "runtime_error": "DomainCommandError",
+    "cognitive_error": "goal_output_truncated",
+    "body_dispatched": false
+  },
+  "total_episode_errors": 5,
+  "total_episode_waits": 2,
+  "new_qq_decision_count": 1,
+  "new_qq_delivery_count": 0,
+  "qq_outcome": "model_wait_superseded_no_send",
+  "meaningful_change_since_previous_check": true,
+  "service_or_domain_mutations": 0,
+  "limitations": [
+    "Five goal decision or acceptance failures do not count as five executed body actions.",
+    "No independently evidenced goal activity or behavioral improvement has been established.",
+    "The running observation has not reached eight hours and has not been restarted."
+  ],
+  "qq_followup": {
+    "checked_at": "2026-09-12T14:46:09.257501+00:00",
+    "incoming_first_seen_at": "2026-09-12T14:28:49.534+00:00",
+    "origin": "message",
+    "goal_activity": false,
+    "model_choice": "wait",
+    "model_call_count": 1,
+    "trace_outcome": "natural_wait",
+    "trace_elapsed_seconds": 22.734,
+    "final_event_status": "superseded",
+    "final_event_reason": "newer_context",
+    "subsequent_observation": "Recovered after failed reads; original candidate expired at its unchanged deadline, then a new baseline was established.",
+    "new_send_reservations": 0,
+    "new_clicks": 0,
+    "new_receipts": 0,
+    "unresolved_sends": 0,
+    "runtime_state": "watching",
+    "send_ready": true,
+    "maximum_observer_gap_seconds": 19.86,
+    "new_real_reply_verified": false,
+    "complete_natural_wait_acceptance": false
+  }
+}

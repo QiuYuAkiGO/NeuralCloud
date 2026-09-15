@@ -36,6 +36,7 @@ _PATH_KEYS = {
     "watcher_status_file", "direct_status_file", "homeostasis_profile_path", "homeostasis_state_dir",
     "body_token_file", "agent_token_file", "shared_control_token_file", "mistyai_token_file",
     "status_file", "control_file", "desktop_status_file", "trace_file", "initial_baseline_observation",
+    "api_key_file", "queue_path",
 }
 _BINDING_PATHS = {
     "NC_GUI_CONFIG", "NC_GUI_PRESETS", "NC_COGNITIVE_STATE_PATH", "NC_COGNITIVE_AUTONOMOUS_LOG_DIR",
@@ -44,6 +45,7 @@ _BINDING_PATHS = {
     "NC_BOARD_CONFIG", "NC_VOICE_CONFIG", "NC_WEB_CONFIG", "NC_CALL_LOG_DIR", "NC_RUNTIME_MANIFEST_PATH",
     "NC_COGNITIVE_MANIFEST_PATH", "NC_HOMEOSTASIS_PROFILE_PATH", "NC_EXPERIMENT_MANIFEST",
     "NC_PROFILE_REVISION_DIR", "NC_MANIFEST_REVISION_DIR",
+    "NC_DAILY_REVISION_CONFIG",
 }
 _TRANSIENT_NAMES = {
     ".neuralcloud.pids.json", ".neuralcloud.pids.json.launch.json", ".gui.pid",
@@ -547,6 +549,7 @@ def discover_shared_sources(
         ("NC_BOARD_CONFIG", "board-client", "board-client.json"),
         ("NC_VOICE_CONFIG", "voice-client", "voice.json"),
         ("NC_WEB_CONFIG", "web-client", "web/config.json"),
+        ("NC_DAILY_REVISION_CONFIG", "daily-revision", "daily-revision.json"),
     ):
         path = bindings.get(binding)
         if not path:
@@ -560,9 +563,9 @@ def discover_shared_sources(
                 parent = Path(path).parent
                 add("web-revisions", parent / "revisions", "config/web/revisions", copy_separately=True)
                 add("web-keys", parent / "keys", "config/web/keys", required=False, copy_separately=True)
-        for key in ("token_file", "body_token_file", "agent_token_file", "shared_control_token_file"):
+        for key in ("token_file", "body_token_file", "agent_token_file", "shared_control_token_file", "api_key_file"):
             add(role + "-" + key.replace("_", "-"), payload.get(key), f"config/secrets/{role}-{key}")
-        for key in ("memory_db", "state_db", "evidence_dir", "image_cache_dir"):
+        for key in ("memory_db", "state_db", "evidence_dir", "image_cache_dir", "queue_path"):
             value = payload.get(key)
             if value:
                 add(role + "-" + key.replace("_", "-"), value, f"state/{role}/{Path(value).name}")

@@ -1,0 +1,69 @@
+{
+  "schema_version": "goal-regulation-acceptance-checkpoint-v1",
+  "checked_at": "2026-09-12T16:04:42.838808+00:00",
+  "automation_id": "misty-8",
+  "run_started_at": "2026-09-12T09:44:13.6303898Z",
+  "expected_end_at": "2026-09-12T17:44:13.6303898Z",
+  "monitor_pid": 28096,
+  "process_identity_verified": true,
+  "runtime_health": {
+    "lifecycle": "RUNNING",
+    "cognitive_healthy": true,
+    "homeostasis_healthy": true,
+    "llm_healthy": true,
+    "degraded_reasons": [],
+    "last_heartbeat_at": "2026-09-12T16:04:39.962475Z"
+  },
+  "report": {
+    "status": "incomplete",
+    "elapsed_seconds": 22819.015000000014,
+    "sample_count": 759,
+    "valid_samples": 758,
+    "error_samples": 1,
+    "maximum_gap_seconds": 64.45299999997951,
+    "eight_hour_observation_complete": false,
+    "new_activity_count": 6,
+    "new_evidenced_runtime_activity_count": 0,
+    "regulation_effectiveness": "unverified",
+    "release_eligible": false,
+    "source_counts": {
+      "fact_references": 0,
+      "self_report_references": 0,
+      "evaluations_with_drift": 377
+    }
+  },
+  "goal_status": "waiting",
+  "blocked_reason": "no_progress",
+  "no_progress": 7,
+  "stable_since": null,
+  "total_episode_errors": 5,
+  "total_episode_waits": 2,
+  "qq_failure": {
+    "pid": 31024,
+    "heartbeat_at": "2026-09-12T16:04:36.366257+00:00",
+    "state": "observer_unavailable",
+    "last_error_type": "http_error",
+    "current_gap_started_at": "2026-09-12T15:58:48.520601+00:00",
+    "current_gap_seconds": 347.844,
+    "maximum_gap_seconds": 347.844,
+    "completed_gap_count": 124,
+    "decisions": 0,
+    "deliveries": 0,
+    "health_endpoints": "Body, Agent, and Session separately returned HTTP 200 healthy at approximately 16:00Z",
+    "root_cause": "Scoped accessibility reads were rejected by the busy/read-lock path; the lock holder and reason for sustained contention remain undetermined.",
+    "concurrent_host_cpu_load_percent": 96,
+    "cpu_load_is_causal_proof": false,
+    "http_status": 503,
+    "endpoint_error_code": "a11y_read_busy",
+    "diagnostic_checked_at": "2026-09-12T16:03:40.924976Z",
+    "diagnostic_response_count": 2
+  },
+  "meaningful_change_since_previous_check": true,
+  "service_or_domain_mutations": 0,
+  "limitations": [
+    "QQ health endpoints do not establish successful observation or send capability.",
+    "The original monitor and retained failure samples have not been reset; the observation has not reached eight hours.",
+    "No independently evidenced goal activity or behavioral improvement has been established.",
+    "Previous maintenance left one failed monitor sample and a 64.453-second gap."
+  ]
+}

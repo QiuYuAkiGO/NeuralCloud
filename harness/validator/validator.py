@@ -12,6 +12,8 @@ from harness.config import Settings, get_settings
 from harness.core.inference import CandidateResponse, MemoryEvidenceContext, StructuredInsight, ValidationResult
 from harness.core.models import PersonaCore
 from harness.llm.client import LLMClient, MockLLM
+from harness.validator.audit import validation_input_audit
+from harness.validator.evidence_projection import COMPACT_EVIDENCE_FORMAT, project_evidence
 
 _DIRECT_CARE = ("担心你", "关心你", "因为我还是担心", "我很在乎你", "我爱你")
 _APOLOGY = ("对不起", "抱歉", "我道歉")
@@ -269,6 +271,8 @@ class ResponseValidator:
         self.rng = rng or random.Random()
 
     def should_run(self, path: str) -> bool:
+        if not self.settings.validator_enabled:
+            return False
         if path == "deep":
             return True
         return self.rng.random() < self.settings.validator_sample_rate
@@ -286,6 +290,8 @@ class ResponseValidator:
         concrete_physical_evidence_available: bool = False,
         run_llm: bool = True,
     ) -> ValidationResult:
+        if not self.settings.validator_enabled:
+            return ValidationResult(verdict="pass", skipped=True)
         result = rule_check(
             candidate.text,
             persona=persona,
@@ -340,7 +346,8 @@ class ResponseValidator:
         memory_evidence: MemoryEvidenceContext | None = None,
     ) -> ValidationResult:
         assert self.llm is not None
-        identity = persona.identity.model_dump(mode="json") if persona else None
+        original_identity = persona.identity.model_dump(mode="json") if persona else None
+        identity = persona.identity.model_dump(mode="json", exclude={"profile": {"source_refs"}}) if persona else None
         system = _LLM_SYSTEM
         if memory_evidence is not None:
             system += """
@@ -364,28 +371,34 @@ do not reject a pure clarification as fabricated_memory. Evaluate other clauses 
 Absence of a record is not evidence the event never happened. Correct the specific gap;
 do not instruct the character to announce that it does not remember.
 """
+            system += COMPACT_EVIDENCE_FORMAT
         if emotion_guidance:
             from harness.compiler.compiler import PERSONA_EXPRESSION_DEFAULTS
             system += "\n" + PERSONA_EXPRESSION_DEFAULTS + "评估表达是否符合当前情绪提示，不把通常的轻柔或克制当作不可突破的红线。"
-        raw = self.llm.complete_json(
-            system=system,
-            user=json.dumps(
-                {
-                    "text": candidate.text,
-                    **({"memory_evidence": memory_evidence.model_dump(mode="json", exclude={
-                        "entries": {"__all__": {"segment_sha256"}}})}
-                       if memory_evidence is not None else {}),
-                    "persona": identity,
-                    "homeostatic_context": homeostatic_context,
-                    **({"emotion_guidance": emotion_guidance} if emotion_guidance else {}),
-                    "concrete_physical_evidence_available": (
-                        concrete_physical_evidence_available
-                    ),
-                },
-                ensure_ascii=False,
-            ),
+        # Admission and deterministic checks use the original evidence. The
+        # critic gets all semantic content; provenance is recorded beside it.
+        projected, mapping = project_evidence(memory_evidence) if memory_evidence is not None else (None, None)
+        original = mapping.pop("original_evidence") if mapping is not None else None
+        user = json.dumps(
+            {
+                "text": candidate.text,
+                **({"memory_evidence": projected} if projected is not None else {}),
+                "persona": identity,
+                "homeostatic_context": homeostatic_context,
+                **({"emotion_guidance": emotion_guidance} if emotion_guidance else {}),
+                "concrete_physical_evidence_available": concrete_physical_evidence_available,
+            },
+            ensure_ascii=False, separators=(",", ":"),
         )
-        return ValidationResult.model_validate(raw)
+        complete = getattr(self.llm, "complete_validation_json", self.llm.complete_json)
+        with validation_input_audit(
+            self.settings, original_evidence=original, original_persona_identity=original_identity,
+            projection={"evidence": projected, **mapping} if mapping is not None else None,
+            system=system, user=user,
+        ) as audit:
+            raw = complete(system=system, user=user)
+            audit.set_result(raw)
+            return ValidationResult.model_validate(raw)
 
 
 def rule_check(

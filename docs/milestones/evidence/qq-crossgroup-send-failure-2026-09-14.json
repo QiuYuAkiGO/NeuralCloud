@@ -1,0 +1,199 @@
+{
+  "schema_version": "qq-crossgroup-send-diagnosis-v1",
+  "observed_date": "2026-09-14",
+  "scope": {
+    "body_instance_id": "misty-qq-test-01",
+    "environment_revision": 2,
+    "window_id": "0x1e0000c",
+    "group_id": "1044946257",
+    "self_member_id": "2015188508"
+  },
+  "identifiers": {
+    "run_id": "qq-watch-run:b52b0d572db04839b4fbbb2eb08687f1",
+    "event_id": "qq-watch-event:0004352b31d74294860a33c3e3fa9b27",
+    "decision_id": "qq-decision:3d4701900c3e46ae91e2174acb505d14",
+    "reservation_id": "qq-watch-send:e3e34b7be6a8418689508a6e5d9d215a",
+    "trace_id": "qq-trace:b449504deb6c48a1ab53551a15d91a6e"
+  },
+  "outcome": {
+    "decision_action": "speak",
+    "decision_outcome": "ready",
+    "planned_segments": 2,
+    "verified_segment_receipts": 1,
+    "aggregate_receipts": 0,
+    "event_state": "partial",
+    "parent_status": "partial",
+    "stored_reason": "partial_precheck_failed",
+    "reported_turn_outcome": "failed",
+    "interpretation": "The first segment was sent and independently verified. The second segment was cancelled before entering desktop delivery. A zero aggregate delivery count does not mean that no message was sent."
+  },
+  "local_timestamps": {
+    "first_seen_at": "2026-09-14T04:16:43.243934Z",
+    "decision_created_at": "2026-09-14T04:17:04.996387Z",
+    "decision_completed_at": "2026-09-14T04:17:35.258771Z",
+    "reserved_at": "2026-09-14T04:17:35.323812Z",
+    "first_click_started_at": "2026-09-14T04:17:40.223709Z",
+    "first_click_acknowledged_at": "2026-09-14T04:17:40.306380Z",
+    "first_receipt_delivered_at": "2026-09-14T04:17:41.455575Z",
+    "cancelled_at": "2026-09-14T04:17:41.521683Z",
+    "original_deadline_at": "2026-09-14T04:17:43.243934Z",
+    "seconds_remaining_at_cancellation": 1.722251
+  },
+  "monotonic_timeline_ms": [
+    {"stage": "initial_observation_completed", "at": 5968},
+    {"stage": "member_attribution", "start": 6047, "end": 14937, "duration": 8890},
+    {"stage": "memory_storage", "start": 14937, "end": 14953, "duration": 16},
+    {"stage": "shared_cognitive_rpc", "start": 15062, "end": 52078, "duration": 37016},
+    {"stage": "shared_memory_inside_rpc", "start": 21750, "end": 21781, "duration": 31},
+    {"stage": "gate_model_inside_rpc", "start": 21812, "end": 24687, "duration": 2875},
+    {"stage": "persona_model_1_inside_rpc", "start": 24703, "end": 35828, "duration": 11125},
+    {"stage": "persona_model_2_inside_rpc", "start": 35828, "end": 40781, "duration": 4953},
+    {"stage": "persona_model_3_inside_rpc", "start": 40781, "end": 52062, "duration": 11281},
+    {"stage": "segment_0_delivery", "start": 52109, "end": 58250, "duration": 6141},
+    {"stage": "segment_0_click_started", "at": 56984},
+    {"stage": "segment_0_click_acknowledged", "at": 57078},
+    {"stage": "segment_0_receipt_persisted", "at": 58234},
+    {"stage": "segment_1_delivery", "start": 58281, "end": 58281, "duration": 0, "outcome": "error", "error_type": "model_error"},
+    {"stage": "turn_completed", "at": 58297, "outcome": "error"}
+  ],
+  "timing_totals": {
+    "model_calls": 4,
+    "model_call_ms": 30234,
+    "shared_cognitive_rpc_residual_ms": 6688,
+    "vision_calls": 0,
+    "member_full_verifications": 1,
+    "body_captures": 11,
+    "body_capture_ms": 10439,
+    "accessibility_projections": 11,
+    "accessibility_projection_ms": 107,
+    "observation_gate_waits": 17,
+    "observation_gate_wait_ms": 3344,
+    "note": "Capture, observer-wait and model timings are nested within the timeline stages and must not be added to those stage totals. RPC residual is the trace's attribution value, not a proven network-only duration."
+  },
+  "persona_call_breakdown": {
+    "call_id": "call_ab480eed",
+    "kind": "prepare_response",
+    "ok": true,
+    "path": "fast",
+    "revisions": 0,
+    "character_generation_calls": 1,
+    "stopped_by": "disabled",
+    "error": null,
+    "classification": "Normal instruction parsing, one character generation, and sampled response validation. These three persona calls were not retries, continuation, or network failures.",
+    "stages": [
+      {
+        "stage": "parse",
+        "latency_ms": 11127.8,
+        "model_request_id": "model_request_b373c34fca7f420184dc899d3b8d2fc9",
+        "model_role": "aux",
+        "status": "success",
+        "http_status": 200,
+        "attempt": 1,
+        "retries": 0,
+        "finish_reason": "stop",
+        "error": null
+      },
+      {
+        "stage": "generate",
+        "latency_ms": 4946.962,
+        "model_request_id": "model_request_57636d82dac445c5b00199e5eefcc75d",
+        "model_role": "main",
+        "status": "success",
+        "http_status": 200,
+        "attempt": 1,
+        "retries": 0,
+        "finish_reason": "stop",
+        "revision": 0,
+        "continuation": "end",
+        "error": null
+      },
+      {
+        "stage": "validate",
+        "latency_ms": 11288.387,
+        "model_request_id": "model_request_e7c76b19784e40bd81946010bdfc57a0",
+        "model_role": "aux",
+        "status": "success",
+        "http_status": 200,
+        "attempt": 1,
+        "retries": 0,
+        "finish_reason": "stop",
+        "revision": 0,
+        "verdict": "pass",
+        "violations": [],
+        "severity": 0,
+        "skipped": false,
+        "error": null
+      }
+    ],
+    "note": "The response-model validation here is separate from the removed final QQ input-box validation. Stage latencies differ slightly from QQ monotonic model-call spans because they include local pipeline processing."
+  },
+  "segments": [
+    {
+      "index": 0,
+      "child_id": "qq-watch-segment:fabf59916a4ba5c263e5a085e9af23fbbabdc97b8f60802f50fd7664ff17d001",
+      "status": "sent",
+      "attempt_count": 1,
+      "receipt_id": "qq-segment-delivery:2110f8587d2241f5afe958e9e5f05c01",
+      "verification": "qq_ui_verified",
+      "post_frame_evidence_ref": "evidence://sha256/542cba2f678a1fca82ed6ed0b47f7f0c6647179f1033aef84cea6a05f938c0fa",
+      "post_ax_evidence_ref": "evidence://sha256/56a9f70a047bca47eb7c7b5f998adbf4936afa5afc7dfcc4d4d0ffa0864aac0b",
+      "post_frame_readonly_reprojection": {
+        "scene": "group_chat",
+        "draft_empty": true,
+        "visible_message_count": 2,
+        "outgoing_text_count": 1,
+        "header_parent_text_present": true,
+        "header_static_children_text_present": [true, true]
+      }
+    },
+    {
+      "index": 1,
+      "child_id": "qq-watch-segment:6db12765750d4af6ad7f4ff42c9f1b734f7975a15e8c4cfdac569e3a7991981e",
+      "status": "cancelled",
+      "attempt_count": 1,
+      "proof": null,
+      "click_started_at": null,
+      "click_acknowledged_at": null,
+      "receipt_id": null,
+      "new_capture_stages": 0,
+      "desktop_input_reached": false,
+      "desktop_input_inference": "The delivery stage failed in zero recorded milliseconds before any desktop capture stage; its next-actor precheck was the only entered path. No second-segment click or delivery proof exists."
+    }
+  ],
+  "overlapping_observer_gap": {
+    "sequence": 16,
+    "started_at": "2026-09-14T04:17:39.128707Z",
+    "finished_at": "2026-09-14T04:17:43.499719Z",
+    "duration_seconds": 4.375,
+    "reason": "request_timeout"
+  },
+  "causal_assessment": {
+    "confirmed": [
+      "The first segment completed after returning to the home group.",
+      "The second segment entered an attempt after advancing the confirmed first-segment context, so this failure was not the earlier segment-continuity rejection path.",
+      "The independent observer was in a request_timeout gap when the second segment started.",
+      "The second segment failed before its desktop executor ran while approximately 1.72 seconds remained on the original turn deadline.",
+      "The code stored only the generic precheck_failed reason and classified the thrown exception as model_error, losing the original communication error code.",
+      "The first-segment archived AX has readable Text on both title children; the separately observed missing member-count Text issue is not demonstrated in this send trace."
+    ],
+    "inferred": [
+      "The provider send guard likely rejected the second segment because the observer gap made driver readiness unavailable. capability_unavailable is consistent with the executed path but was not preserved as the original error code.",
+      "The 37.016-second shared cognition call left only about 7.9 seconds for both GUI segments, making even a bounded observer-recovery wait likely to consume the remaining second-segment budget."
+    ],
+    "not_claimed": [
+      "No complete two-segment delivery is claimed.",
+      "No replay of the cancelled second segment is authorized by this diagnostic record.",
+      "No live GUI operation or QQ send was performed during this read-only diagnosis."
+    ]
+  },
+  "source_files": [
+    "watcher-trace.jsonl",
+    "watcher-trace.gaps.jsonl",
+    "qq-watch-ledger.sqlite3",
+    "qq-visual-memory.sqlite3",
+    "evidence/objects/sha256/56/a9f70a047bca47eb7c7b5f998adbf4936afa5afc7dfcc4d4d0ffa0864aac0b",
+    "workspace:traces/model_requests.jsonl",
+    "workspace:traces/calls/20260914/call_ab480eed.json"
+  ],
+  "privacy": "This record contains identifiers, timings, state and content-free evidence references only. It contains no message text, draft text, screenshots or credentials."
+}

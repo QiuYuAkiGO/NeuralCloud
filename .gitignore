@@ -46,3 +46,4 @@ eval/reports/emotional_expression_diagnostics/private/
 # Private conversation corpus and model-judge request/response evidence.
 /data/evaluations/misty-humanization-*/
 /data/evaluations/qq-brief-*/
+kimi-official-api-key.txt

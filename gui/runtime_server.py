@@ -209,6 +209,10 @@ def create_app(*, runtime_url: str | None = None, control_token: str | None = No
     async def goals_page() -> FileResponse:
         return FileResponse(STATIC_DIR / "goals.html")
 
+    @app.get("/daily-revision")
+    async def daily_revision_page() -> FileResponse:
+        return FileResponse(STATIC_DIR / "daily-revision.html")
+
     @app.get("/web")
     async def web_page() -> FileResponse:
         return FileResponse(STATIC_DIR / "web.html")
@@ -219,6 +223,20 @@ def create_app(*, runtime_url: str | None = None, control_token: str | None = No
             raise HTTPException(status_code=403, detail="same_origin_required")
         if request.headers.get("sec-fetch-site") == "cross-site":
             raise HTTPException(status_code=403, detail="same_origin_required")
+
+    @app.get("/api/daily-revision/{operation}")
+    async def daily_revision_read(operation: str, request: Request, run_id: str | None = None):
+        if operation not in {"status", "history", "diff"}:
+            raise HTTPException(status_code=404, detail="unknown daily revision operation")
+        payload = {"run_id": run_id} if operation == "diff" else {}
+        return await gateway(request).cognitive("daily_revision." + operation, payload)
+
+    @app.post("/api/daily-revision/{operation}")
+    async def daily_revision_write(operation: str, request: Request):
+        require_web_origin(request)
+        if operation not in {"configure", "run", "dry_run", "retry", "rollback"}:
+            raise HTTPException(status_code=404, detail="unknown daily revision operation")
+        return await gateway(request).cognitive("daily_revision." + operation, await _json_body(request))
 
     @app.get("/api/web/config")
     async def web_config_read(request: Request):

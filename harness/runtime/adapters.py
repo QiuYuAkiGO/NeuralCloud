@@ -229,6 +229,8 @@ class PipelineCognitiveAdapter:
         action_planner: ActionDecisionPlanner | None = None,
         persist_memory: Callable[[], None] | None = None,
         context_provider: Callable[[InteractionEvent], list[ContextSegment]] | None = None,
+        archive_local: Callable[..., Any] | None = None,
+        archive_action: Callable[..., Any] | None = None,
     ) -> None:
         self.pipeline = pipeline
         self.character_id = character_id
@@ -243,6 +245,8 @@ class PipelineCognitiveAdapter:
         self.action_planner = action_planner or ActionDecisionPlanner()
         self._persist_memory = persist_memory
         self._context_provider = context_provider
+        self._archive_local = archive_local
+        self._archive_action = archive_action
         self._lock = asyncio.Lock()
         self._revision = 0
         self._cursor = 0
@@ -1100,8 +1104,11 @@ class PipelineCognitiveAdapter:
             if not isinstance(decision, GoalProposal) or evidence.goal_id != decision.goal_id:
                 raise ValueError("capability_commit_requires_bound_action_evidence")
             event_id = f"{entry.prepared.prepare_id}:action_outcome"
+            intent_id = decision.embodied_action.intent.intent_id if decision.embodied_action else "unknown"
+            if self._archive_action is not None:
+                self._archive_action(event_id=event_id, session_id=entry.prepared.session_id,
+                                     intent_id=intent_id, evidence=evidence)
             if self.pipeline.memory.stores.episodic.get(event_id) is None:
-                intent_id = decision.embodied_action.intent.intent_id if decision.embodied_action else "unknown"
                 # Store a fixed observation of the verifier outcome rather than
                 # copying arbitrary provider/model summary prose into fact text.
                 fact = f"身体能力 {intent_id} 的独立核验结果：{'通过' if evidence.success else '未通过'}。"
@@ -1116,6 +1123,9 @@ class PipelineCognitiveAdapter:
         event = entry.event
         session = self.pipeline.session_store
         if entry.autonomous_assessment_id is None:
+            if self._archive_local is not None and event.channel == "chat":
+                self._archive_local(event_id=event.event_id, session_id=event.session_id, role="user",
+                                    text=event.raw_text, occurred_at=event.timestamp, display_name=event.speaker)
             if not session.contains_event(event.session_id, event.event_id):
                 session.append(
                     event.session_id,
@@ -1153,6 +1163,10 @@ class PipelineCognitiveAdapter:
                 ])
             for index, segment in enumerate(evidence.delivered_segments, start=1):
                 segment_event_id = f"{entry.final.response_id}:s{index}"
+                if self._archive_local is not None and event.channel == "chat":
+                    self._archive_local(event_id=segment_event_id, session_id=event.session_id, role="assistant",
+                                        text=segment, occurred_at=evidence.delivered_at,
+                                        display_name=self.pipeline._speaker_label("character"))
                 if not session.contains_event(event.session_id, segment_event_id):
                     session.append(
                         event.session_id,

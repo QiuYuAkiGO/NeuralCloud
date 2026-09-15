@@ -76,6 +76,9 @@ class InMemoryEpisodicStore:
     def count(self) -> int:
         return len(self._rows)
 
+    def delete(self, event_id: str) -> None:
+        self._rows.pop(event_id, None)
+
     def search_pool(
         self,
         *,
@@ -146,7 +149,8 @@ class InMemorySemanticStore:
         pool = [
             fact
             for fact in self._rows.values()
-            if visible_to(fact.scope, trusted_audience) and (subject is None or fact.subject == subject)
+            if fact.revision_metadata.get("status") not in {"superseded", "disputed"}
+            and visible_to(fact.scope, trusted_audience) and (subject is None or fact.subject == subject)
         ]
         if query_embedding:
             pool.sort(key=lambda fact: cosine(query_embedding, fact.embedding or []), reverse=True)
@@ -167,6 +171,9 @@ class InMemoryRelationshipStore:
 
     def list_all(self) -> list[RelationshipState]:
         return list(self._rows.values())
+
+    def delete(self, target: str) -> None:
+        self._rows.pop(target, None)
 
 
 class InMemoryPsychStore:
@@ -211,6 +218,9 @@ class InMemoryCandidateStore:
 
     def list_all(self) -> list[CandidateMemory]:
         return list(self._rows.values())
+
+    def delete(self, candidate_id: str) -> None:
+        self._rows.pop(candidate_id, None)
 
     def find_similar(
         self,

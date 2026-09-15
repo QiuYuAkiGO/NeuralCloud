@@ -1,0 +1,289 @@
+{
+  "schema_version": "qq-reply-repair-evidence-v1",
+  "checked_at": "2026-09-15T10:32:05.123044+00:00",
+  "result": "deployed_and_recovered",
+  "root_causes": [
+    {
+      "stage": "validate",
+      "provider": "auxiliary_qwen",
+      "http_status": 400,
+      "request_tokens": [
+        47679,
+        51794
+      ],
+      "context_window_tokens": 8192,
+      "effect": "Generated reply failed validation and was not delivered"
+    },
+    {
+      "stage": "qq_prepare",
+      "error": "TimeoutError at original QQ deadline",
+      "effect": "Runtime entered PAUSED and later messages stayed pending"
+    }
+  ],
+  "repairs": [
+    "Route validation input exceeding conservative auxiliary capacity to the existing main model with complete evidence",
+    "Make original QQ turn expiry terminal without pausing the whole Runtime",
+    "Do not replay expired QQ preparation commands during recovery; retain genuine failure and cancellation semantics"
+  ],
+  "release": {
+    "release_id": "20260915-qq-reply-repair-v1",
+    "baseline_release": "20260915-qq-brief-v4-emotion-v1",
+    "files": 316,
+    "sha256": "2fe3d3b1f6a1a9ad3119cc4f07ccfe82b641adcf305a131e32572c4904c79e13",
+    "changed_files": [
+      "harness/llm/client.py",
+      "harness/qq/decision.py",
+      "harness/runtime/supervisor.py",
+      "harness/validator/validator.py"
+    ],
+    "changed_hashes": {
+      "harness/runtime/supervisor.py": "abedcf8a3a63b0ca8d80bfc7e5330b85365024a50ce8e2016d39590ae3dd3094",
+      "harness/llm/client.py": "a7d14637f77d0d0234adaf984465197acaeb68398096199079eaa3a571306272",
+      "harness/validator/validator.py": "37cc0044b9f648bbec947e45ab1b24f353fabc7ea73dbb224bffa0d3cc231f9d",
+      "harness/qq/decision.py": "43d6313315353d7e780e93d66678df0b4b839d49b648e64b48720b7fff5377d1"
+    }
+  },
+  "release_verification": {
+    "release_id": "20260915-qq-reply-repair-v1",
+    "verified_files": 316
+  },
+  "backup": {
+    "path": "/var/backups/neuralcloud/qq-reply-repair-20260915",
+    "writers_stopped": true,
+    "verified": true,
+    "files": 1568,
+    "sqlite_databases": 15,
+    "manifest_sha256": "07132e8f4c7ac52d6a63e325be6c42cfb0eefc13f542bf97130e22e35816aecd"
+  },
+  "tests": {
+    "new_regressions": 41,
+    "new_runtime_deadline_tests": 33,
+    "new_validator_routing_tests": 8,
+    "runtime_final_groups": [
+      {
+        "passed": 112,
+        "seconds": 11.72,
+        "files": [
+          "test_runtime_qq_deadline.py",
+          "test_runtime_supervisor.py",
+          "test_emotion_runtime.py",
+          "test_web_runtime.py",
+          "test_runtime_journal_bounded.py"
+        ]
+      },
+      {
+        "passed": 34,
+        "seconds": 16.76,
+        "files": [
+          "test_runtime_qq_turn_index.py",
+          "test_runtime_command_index.py",
+          "test_cognitive_command_lifecycle.py",
+          "test_shared_cognitive.py"
+        ]
+      }
+    ],
+    "independent_review": "passed",
+    "ruff": "passed",
+    "diff_check": "passed",
+    "note": "New tests overlap the broader regression groups; counts are not added together"
+  },
+  "live_validator_smoke": {
+    "checked_at": "2026-09-15T10:22:11.164636+00:00",
+    "synthetic_only": true,
+    "qq_sends": 0,
+    "production_state_writes": 0,
+    "cases": [
+      {
+        "case": "short",
+        "evidence_entries": 1,
+        "evidence_characters": 27,
+        "seconds": 2.934,
+        "verdict": "pass",
+        "skipped": false,
+        "model_role": "aux",
+        "model": "qwen3:4b-instruct-2507-q4_K_M",
+        "prompt_tokens": 1062,
+        "http_status": 200
+      },
+      {
+        "case": "large",
+        "evidence_entries": 160,
+        "evidence_characters": 41490,
+        "seconds": 2.425,
+        "verdict": "pass",
+        "skipped": false,
+        "model_role": "main",
+        "model": "deepseek-v4-flash",
+        "prompt_tokens": 39377,
+        "http_status": 200
+      }
+    ]
+  },
+  "recovery": {
+    "services": {
+      "cognitive": "active",
+      "homeostasis": "active",
+      "runtime": "active",
+      "gui": "active",
+      "board": "active",
+      "qq_direct": "active"
+    },
+    "runtime_instance_id": "rt_777d829f",
+    "lifecycle": "RUNNING",
+    "pending_events": 0,
+    "queue_size": 0,
+    "degraded_reasons": [],
+    "heartbeat_samples": [
+      "2026-09-15T10:28:26.125284Z",
+      "2026-09-15T10:31:18.926993Z"
+    ],
+    "public_gui_http_status": 200,
+    "expired_recovered_qq_turns": 135,
+    "expired_preparation_commands": 1,
+    "investigated_turns": [
+      {
+        "correlation_id": "qq-trace:0b3d63fb2a8549aaa9ba5d2b52cd7fa7",
+        "record_seq": 98796,
+        "completed_at": "2026-09-15T10:26:46.213132Z",
+        "status": "ignored",
+        "error_type": "qq_turn_expired"
+      },
+      {
+        "correlation_id": "qq-trace:c833b0639d484afbbec9a61bc59e2e74",
+        "record_seq": 98802,
+        "completed_at": "2026-09-15T10:26:46.217446Z",
+        "status": "ignored",
+        "error_type": "qq_turn_expired"
+      }
+    ],
+    "qq_connected": true,
+    "automatic_send": true,
+    "send_rows_before": 77,
+    "send_rows_after": 77,
+    "old_messages_resent": false,
+    "new_natural_messages": [
+      {
+        "correlation_id": "qq-trace:e0cba8f50e30404b9078f92bda4ba090",
+        "completed_at": "2026-09-15T10:30:53.903543Z",
+        "status": "completed",
+        "action": "wait",
+        "decision_source": "model",
+        "error_type": null
+      }
+    ]
+  },
+  "limitations": [
+    "No artificial QQ message was sent; the first post-deployment natural message completed with a model-selected wait decision",
+    "A post-deployment full QQ reply and delivery receipt has not yet been observed",
+    "Periodic history ingestion reports six old image-message duplicates whose temporary image URLs changed; this separate existing issue did not block the new live message"
+  ],
+  "private_raw_evidence_directory": ".tmp/qq-latest-diagnosis-20260915",
+  "separate_history_issue": {
+    "audited_at": "2026-09-15T10:34:33.390431+00:00",
+    "read_only": true,
+    "counts": {
+      "current_group_history:examined": 39,
+      "current_group_history:duplicate_same": 33,
+      "current_group_history:duplicate_conflict": 6,
+      "current_private_history:examined": 9,
+      "current_private_history:duplicate_same": 9
+    },
+    "normalization_errors": {},
+    "conflicts": [
+      {
+        "source": "current_group_history",
+        "event_id": "qq-watch-event:31d5f5bdf25dec399340361c6440b17b",
+        "message_time": "2026-09-15T01:16:31+00:00",
+        "old_run": true,
+        "conflict_fields": [
+          "images"
+        ],
+        "image_difference_fields": [
+          "images[0].url"
+        ]
+      },
+      {
+        "source": "current_group_history",
+        "event_id": "qq-watch-event:656e416aec8775a7ef619f8b507b7473",
+        "message_time": "2026-09-15T01:19:47+00:00",
+        "old_run": true,
+        "conflict_fields": [
+          "images"
+        ],
+        "image_difference_fields": [
+          "images[0].url"
+        ]
+      },
+      {
+        "source": "current_group_history",
+        "event_id": "qq-watch-event:a7f89d243d9d7c4f3a98f27460c2460a",
+        "message_time": "2026-09-15T03:50:23+00:00",
+        "old_run": true,
+        "conflict_fields": [
+          "images"
+        ],
+        "image_difference_fields": [
+          "images[0].url"
+        ]
+      },
+      {
+        "source": "current_group_history",
+        "event_id": "qq-watch-event:a2c7a9b22e77e763a4b7f176a5e7776e",
+        "message_time": "2026-09-15T04:12:46+00:00",
+        "old_run": true,
+        "conflict_fields": [
+          "images"
+        ],
+        "image_difference_fields": [
+          "images[0].url"
+        ]
+      },
+      {
+        "source": "current_group_history",
+        "event_id": "qq-watch-event:b293edc9c743aeed345f35712e068e10",
+        "message_time": "2026-09-15T05:59:40+00:00",
+        "old_run": true,
+        "conflict_fields": [
+          "images"
+        ],
+        "image_difference_fields": [
+          "images[0].url"
+        ]
+      },
+      {
+        "source": "current_group_history",
+        "event_id": "qq-watch-event:724390e094877c82abfa4f64691d16df",
+        "message_time": "2026-09-15T08:33:15+00:00",
+        "old_run": true,
+        "conflict_fields": [
+          "images"
+        ],
+        "image_difference_fields": [
+          "images[0].url"
+        ]
+      }
+    ],
+    "product_code_changed": false,
+    "impact": "Historical duplicate image URLs differ; live message ingress and model decision succeeded"
+  },
+  "final_health": {
+    "checked_at": "2026-09-15T10:35:17.317164+00:00",
+    "lifecycle": "RUNNING",
+    "queue_size": 0,
+    "pending_events": 0,
+    "heartbeat_at": "2026-09-15T10:35:13.967839Z",
+    "degraded_reasons": [],
+    "qq_connected": true,
+    "automatic_send": true,
+    "last_received_at": "2026-09-15T10:30:34.495037+00:00",
+    "last_decision_action": "wait",
+    "last_error_type": "direct_incoming_invalid",
+    "invalid_event_count": 12,
+    "sends": [
+      [
+        "sent",
+        77
+      ]
+    ]
+  }
+}

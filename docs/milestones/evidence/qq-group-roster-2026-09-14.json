@@ -1,0 +1,225 @@
+{
+  "schema_version": "qq-group-roster-acceptance-v1",
+  "date": "2026-09-14",
+  "status": "deployed_and_live_verified",
+  "home_group_id": "1044946257",
+  "observed_group_ids": [
+    "1044946257",
+    "1060979317"
+  ],
+  "foreign_group_send_enabled": false,
+  "observation_interval_seconds": 300,
+  "architecture": {
+    "watcher_count": 1,
+    "gui_actor_count": 1,
+    "foreign_reads": "serial visits with numerical group verification and home account continuity",
+    "retained_reads": "private separate roster sqlite database",
+    "cognitive_context": "bounded historical visible-message snapshots; display names are not numeric author identities"
+  },
+  "verification": {
+    "broad_suite": {
+      "selected": 2014,
+      "initial_passed": 1989,
+      "initial_fixture_errors": 25,
+      "elapsed_seconds": 285.74
+    },
+    "fixture_repair_suite": {
+      "passed": 231,
+      "elapsed_seconds": 29.68,
+      "all_initial_25_errors_resolved": true
+    },
+    "roster_runtime_integration": {
+      "passed": 16,
+      "elapsed_seconds": 4.41
+    },
+    "shared_cognitive_views": {
+      "passed": 28
+    },
+    "ruff": "passed",
+    "navigation_and_desktop_suite": {
+      "passed": 187,
+      "navigation_cases": 28,
+      "elapsed_seconds": 19.56
+    },
+    "combined_interpretation": "Initial 2014-test suite had 1989 passes and 25 errors in one outdated synthetic Actor fixture. All 25 were rerun successfully within the 231-test repair selection. The final 187-test navigation/desktop selection also passed. Selections overlap and must not be added."
+  },
+  "deployment_evidence": "qq-group-roster-deployment-2026-09-14.json",
+  "live": {
+    "watcher": {
+      "state": "watching",
+      "pid": 5276,
+      "running": true,
+      "started_at": "2026-09-14T04:04:38.529652+00:00",
+      "heartbeat_at": "2026-09-14T04:06:24.086129+00:00",
+      "build_hash": "qq-unattended:dfc09b1fd6f16e51439b1588581b434f98c9f5b770de68a80225e877c8b4f05b",
+      "last_error_type": null,
+      "group_roster": [
+        {
+          "group_id": "1044946257",
+          "label": "PHANTOM-C",
+          "observe": true,
+          "send": true,
+          "last_observed_at": "2026-09-14T04:05:28.559776Z",
+          "message_count": 2,
+          "read_count": 2,
+          "last_error": null
+        },
+        {
+          "group_id": "1060979317",
+          "label": "超级豪人大宅门",
+          "observe": true,
+          "send": false,
+          "last_observed_at": "2026-09-14T04:05:07.153748Z",
+          "message_count": 2,
+          "read_count": 1,
+          "last_error": null
+        }
+      ],
+      "visiting_group_id": null,
+      "automatic_send": true,
+      "automatic_screen_capture": true
+    },
+    "reads": [
+      {
+        "group_id": "1044946257",
+        "scope": {
+          "body_instance_id": "misty-qq-test-01",
+          "environment_revision": 2,
+          "window_id": "0x1e0000c",
+          "group_id": "1044946257",
+          "self_member_id": "2015188508"
+        },
+        "observed_at": "2026-09-14T04:05:28.559776Z",
+        "capture_id": "obs_f1caa678cf8746bca32204068f3df90d",
+        "message_count": 2,
+        "evidence_refs": [
+          "evidence://sha256/dac39c37c7c6aa937b52c17a2cfcb7df3a1e4f27d62a2ee9566f7f188819d4ea",
+          "evidence://sha256/9c903eb1f7851d83a1be0a7f898156265b7115d08803bbd6e3c8a138805bd883"
+        ],
+        "read_count": 2,
+        "last_error": null
+      },
+      {
+        "group_id": "1060979317",
+        "scope": {
+          "body_instance_id": "misty-qq-test-01",
+          "environment_revision": 2,
+          "window_id": "0x1e0000c",
+          "group_id": "1060979317",
+          "self_member_id": "2015188508"
+        },
+        "observed_at": "2026-09-14T04:05:07.153748Z",
+        "capture_id": "obs_a40c41fd14f44b2a96cbca8abd0da015",
+        "message_count": 2,
+        "evidence_refs": [
+          "evidence://sha256/569a867d44ea695299cceb50f9f1a54a88a6f7ecc20c263fb85acc5e69684d61",
+          "evidence://sha256/f54b47bf3ebff44ac6e8e48f534a20dfa1e9695e9d052dd5890e1d27099af106",
+          "evidence://sha256/37ec90a6de95836472fae4dcedc38c233637a3ae9d625691e1e3ead3392f6340",
+          "evidence://sha256/268d20dce01a4c144d1a29b385d9b7a29e4654e27d39563566f1b5b0befa007d",
+          "evidence://sha256/dfb27cdc329bfa7f8eef0dc75a67fdea661f1d3a332a9f53e0ec85759fecdff5",
+          "evidence://sha256/408231bc4517cec2d914bbc121f9ac5109ef841911ccc4612b2d15552d40d610",
+          "evidence://sha256/265897be1afe17b42fac2fe17b46c16cb260884849544498809fbd3f788a8106",
+          "evidence://sha256/e90b9d0d6d7049a28088501e83a244448fe22b86b42562cc1a007d1d56cb4bfe"
+        ],
+        "read_count": 1,
+        "last_error": null
+      }
+    ],
+    "cognitive_snapshots": [
+      {
+        "group_id": "1044946257",
+        "message_count": 2,
+        "omitted_message_count": 0,
+        "observed_at": "2026-09-14T04:05:28.559776+00:00"
+      },
+      {
+        "group_id": "1060979317",
+        "message_count": 2,
+        "omitted_message_count": 0,
+        "observed_at": "2026-09-14T04:05:07.153748+00:00"
+      }
+    ],
+    "qq_offers": [
+      {
+        "channel": "qq",
+        "capability_id": "communication.qq.read.v1",
+        "scope": {
+          "body_instance_id": "misty-qq-test-01",
+          "environment_revision": 2,
+          "window_id": "0x1e0000c",
+          "group_id": "1044946257",
+          "self_member_id": "2015188508"
+        },
+        "ready": true,
+        "available": true
+      },
+      {
+        "channel": "qq",
+        "capability_id": "communication.qq.send.v1",
+        "scope": {
+          "body_instance_id": "misty-qq-test-01",
+          "environment_revision": 2,
+          "window_id": "0x1e0000c",
+          "group_id": "1044946257",
+          "self_member_id": "2015188508"
+        },
+        "ready": true,
+        "available": true
+      },
+      {
+        "channel": "qq",
+        "capability_id": "communication.qq.read.v1",
+        "scope": {
+          "body_instance_id": "misty-qq-test-01",
+          "environment_revision": 2,
+          "window_id": "0x1e0000c",
+          "group_id": "1060979317",
+          "self_member_id": "2015188508"
+        },
+        "ready": true,
+        "available": true
+      }
+    ],
+    "runtime_health": {
+      "lifecycle": "RUNNING",
+      "cognitive_healthy": true,
+      "homeostasis_healthy": true,
+      "llm_healthy": true,
+      "last_heartbeat_at": "2026-09-14T04:06:22.249030Z"
+    },
+    "active_episode": {
+      "id": "episode:1dc4b62018fd4be4986217f61df4df86",
+      "status": "waiting",
+      "no_progress": 8,
+      "blocked_reason": "no_progress",
+      "result_count": 8
+    }
+  },
+  "limitations": [
+    "Only currently visible messages are read; full history and continuous multi-group coverage are not claimed.",
+    "Foreign groups remain read-only."
+  ],
+  "verified_at": "2026-09-14T04:07:20.913756+00:00",
+  "navigation_numeric_proof": {
+    "new_group": {
+      "group_id": "1060979317",
+      "display_name": "超级豪人大宅门🚪",
+      "evidence_refs": [
+        "evidence://sha256/7ab7a09cde7b6080ad2325775b0bb34866297fed78f86f7bc01ec099c754273d",
+        "evidence://sha256/fea4a0ccd15fe66e9ac67012aeeb0e08d96f789c033d554cdadccd41e422a0b9",
+        "evidence://sha256/1ee2b0bdd7a0ffadb2bf132ab1c2658dd6908a6546d8c7ebd0fe0902af55ac75",
+        "evidence://sha256/efbd150721fe6e95c96e4af55421e1c726cb5f6a196997b309b59536a778cb18"
+      ]
+    },
+    "home": {
+      "group_id": "1044946257",
+      "display_name": "⫰⫠PHANTOM-C",
+      "evidence_refs": [
+        "evidence://sha256/f5fadb1d6439df83e72c783abc41934bce917409c19991b710e8678a30693a3f",
+        "evidence://sha256/258bbe065f7a0530a0eb88dce479d599fc21da0e36d6fc85cc5c1ecadace7faa",
+        "evidence://sha256/7ffa7949b151b7583f435e48ae75fc25151693c27e267179e47665990edb9932",
+        "evidence://sha256/48df33b42d60b8f19a9ce5c6ef6d2f159819aaa4ed728acec191c98bac85717f"
+      ]
+    }
+  }
+}

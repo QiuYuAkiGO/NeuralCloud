@@ -1,0 +1,77 @@
+{
+  "schema_version": "homeostatic-capabilities-implementation-verification-v1",
+  "verified_at": "2026-09-12T04:30:35.331829+00:00",
+  "regressions": [
+    {
+      "label": "main_regression",
+      "artifact": ".test-tmp/capabilities-final-regression.xml",
+      "tests": 590,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 203.769
+    },
+    {
+      "label": "after_final_deadline_fix",
+      "artifact": ".test-tmp/capabilities-final-board-regression.xml",
+      "tests": 129,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 96.814
+    }
+  ],
+  "unique_test_cases": 594,
+  "lint": "Ruff passed for implementation files and new tests",
+  "defaults": {
+    "enabled": false,
+    "autonomous_chat_enabled": false,
+    "owners": {
+      "board": "legacy",
+      "qq": "legacy",
+      "desktop": "off"
+    },
+    "qq_send_enabled": false,
+    "quiet_seconds": 60,
+    "opportunity_seconds": 1800,
+    "deadline_seconds": 60,
+    "board_model_max_tokens": 2048
+  },
+  "live_board": "verified_model_append_receipt_independent_readback_isolated_memory",
+  "live_desktop": "pending_Docker_Desktop_startup_failure_no_effective_opportunity",
+  "live_qq": "pending_Agent_unavailable_zero_capture_zero_action",
+  "production_memory_and_homeostasis": "unchanged; live acceptance used private copies and elapsed-time replay in a fresh engine",
+  "evidence": [
+    "docs/milestones/evidence/homeostatic-capabilities-live-2026-09-12.json",
+    "docs/milestones/evidence/qq-capability-readonly-2026-09-12.json"
+  ],
+  "final_deadline_fix": "Transport timeout state is retained even if cancellation is swallowed; memory worker checks deadline before opening a transaction. Entire affected Board/shared capability subset rerun afterward.",
+  "source_sha256": {
+    "harness/llm/client.py": "938622988f4cc22193e52403a5143d0eef30053f9c8a622b5212e7589ed97c3b",
+    "harness/llm/character.py": "ffa987420a5a8f7ea76d69cd1fce1bf960efa754f870690fbd472e1bdd7a5056",
+    "harness/board/config.py": "bc7934dfe0638476474b5bf13f1a5ad656c6f9d45bfa2ad56d15807fb1d4f248",
+    "harness/cognitive/board.py": "e29cf51a73e743e9eb2a4a2ec11812a5cc0e4527780bc114b34cec8c0b8e44fa",
+    "harness/cognitive/capabilities.py": "6cbae871f9e9bf1a6dcb2300292e955582a28df44fdac62951abb63db36e2a01",
+    "harness/cognitive/service.py": "dbd5d64d8987d85fa06f16b8fc00e74a2dbb5d9b0db99a043de85f93673531df",
+    "harness/contracts/capability_calls.py": "edfdd49cf9cd256a4b754b1f8321d1aa3bac9c5ef842653a6cecd864e72064ef",
+    "harness/runtime/action.py": "6df1a75cb4bf1aac12e04352be726bbe1279ad839d5d4eda1e3178c15ed4667d",
+    "harness/runtime/adapters.py": "bf3439aa350add4804a9f84f0c1d6a8167428019515f9dddad3da6d7c865a47f",
+    "harness/runtime/board.py": "48562b921c59f32d05cb510c4440468127ec480015c4cab620346250713aadb1",
+    "harness/runtime/capabilities.py": "cc7ea1d90d5b903e58fa68e41ea2d81998d34d9c08ee6899de236598ca3654e5",
+    "harness/runtime/qq_capabilities.py": "16be1d2eb292eb743f579b15eeb4912154c34464c0f5157c3a168bc58e11a380",
+    "harness/runtime/control.py": "1c207a0b2677fdde0dc0cbef17145277d9d1a74899bc1dc4c51f862a5d4c0f62",
+    "harness/runtime/models.py": "ac620fd5459303b445cc2d480e3df0408d9963e1ffc99d70e76a5222fc121fc4",
+    "harness/runtime/rpc.py": "015e219a426fa30f6aa10162101317d1e4839a825c8362b1e457c3551cdc54f2",
+    "harness/runtime/supervisor.py": "5ae79f7d8ac209a59f33bd0e28bcc1f9fa4c1e9c24e315b139743ed966efc9e9",
+    "harness/qq/capability_bridge.py": "6bdc80698c00b8cbb1fde234297aad86716404d65d7621531940c9943a5e6945",
+    "harness/qq/embodied.py": "413b6e806b16cb5fc5c4ed268523d7e7c3e97bfa12059c5bad4cf7bc927920bd",
+    "harness/qq/shared.py": "d5f432dbd62b4d561149246ebfaed9774d534f1565ee4c6a69a4de8e09bdb7f9",
+    "harness/qq/idle.py": "f1cc3ad8052e7ad8699dd2f0c8e5d0dcd4782a8fd3d3fd947e926a15d7ac8a86",
+    "harness/qq/watch_ledger.py": "764cc98b6fc941f7f67b6000bc69638b6905d01ee2df2e57a354cc70f74048c6",
+    "harness/qq/watcher.py": "9def5cce42f0f74da8a8853188b7e764d99caadbbaa4eb63453b627f280e1d5b",
+    "harness/research/manifest.py": "239fa9d0b91238406ab3ca641ad82f5be9e3bf08dfc2bc979262990e24efa54e",
+    "harness/embodiment/providers/board.py": "1562aeabade0d4d4eca6be28ba59961c2cc4dee9083114daf61de0c6d208973b",
+    "infra/trace/request_spans.py": "679acf31dfbfa668618200c4519135acd43582f6d21a2cc097c8c5b7d465cefb",
+    "tools/verify_capabilities.py": "cd4d8a05e5de191c1dc64d68136bd9559532f9181a2035d345619085ae93b7d1"
+  }
+}

@@ -233,4 +233,7 @@ def test_validator_receives_full_misty_identity_and_allows_gentle_expression() -
     validator = ResponseValidator(llm=judge)
     result = validator.check(CandidateResponse(text="我有点担心你。想说的话，我会认真听。"), persona=persona)
     assert result.verdict == "pass"
-    assert judge.payload["persona"] == persona.identity.model_dump(mode="json")
+    assert judge.payload["persona"] == persona.identity.model_dump(
+        mode="json", exclude={"profile": {"source_refs"}},
+    )
+    assert "source_refs" not in judge.payload["persona"]["profile"]

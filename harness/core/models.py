@@ -132,6 +132,7 @@ class DualMemoryRecord(BaseModel):
 
 
 class EpisodicEvent(BaseModel):
+    revision_metadata: dict[str, Any] = Field(default_factory=dict)
     event_id: str = Field(default_factory=lambda: new_id("event"))
     time: datetime
     participants: list[str]
@@ -182,6 +183,7 @@ class EpisodicEvent(BaseModel):
 
 
 class SemanticFact(BaseModel):
+    revision_metadata: dict[str, Any] = Field(default_factory=dict)
     fact_id: str = Field(default_factory=lambda: new_id("fact"))
     subject: str
     predicate: str
@@ -203,6 +205,9 @@ class SemanticFact(BaseModel):
 
 
 class RelationshipState(BaseModel):
+    scope: MemoryScope | None = None
+    source_refs: list[str] = Field(default_factory=list)
+    revision_metadata: dict[str, Any] = Field(default_factory=dict)
     relation_id: str = Field(default_factory=lambda: new_id("relation"))
     target: str
     closeness: float = Field(default=0.5, ge=0.0, le=1.0)
@@ -264,6 +269,7 @@ class WorldState(BaseModel):
 
 
 class CandidateMemory(BaseModel):
+    revision_metadata: dict[str, Any] = Field(default_factory=dict)
     candidate_id: str = Field(default_factory=lambda: new_id("candidate"))
     claim: str
     source: str

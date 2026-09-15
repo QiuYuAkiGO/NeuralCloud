@@ -19,6 +19,7 @@ from tests.test_qq_decision import (
 )
 from tests.test_qq_decision_context_budget import _gate_payload, _persona_payload
 from tests.test_qq_decision_segments import aggregate, plan, segment
+from tests.test_validator_projection import SEMANTIC_FIELDS, _restore
 
 
 def test_compact_plan_is_optional_compatible_and_persists_without_extra_call(setup):
@@ -64,8 +65,8 @@ def test_missing_detail_plan_asks_the_concrete_gap_without_inventory_or_unrelate
         assert "first_point直接写成询问日期、原话或必要线索的具体疑问句" in rules
         assert "问句本身已经表达信息缺口，necessary_boundary默认null" in rules
         assert "不附带无关已知事实盘点，也不假装知道" in rules
-    assert decision.PROMPT_VERSION == "qq-group-turn-taking-v15"
-    assert decision.PRIVATE_PROMPT_VERSION == "qq-private-turn-taking-v4"
+    assert decision.PROMPT_VERSION == "qq-group-turn-taking-v16"
+    assert decision.PRIVATE_PROMPT_VERSION == "qq-private-turn-taking-v5"
 
 
 def test_both_generation_stages_use_concrete_gap_and_single_praise_feedback_contract():
@@ -249,14 +250,16 @@ def test_full_pipeline_uses_final_qq_history_for_compiler_and_validator(setup, m
     assert len(client.chat_calls) == 1
 
 
-def test_first_import_history_reaches_compiler_and_existing_critic_without_prior_decision(setup, monkeypatch):
+def test_first_import_history_reaches_compiler_and_existing_critic_without_prior_decision(setup, monkeypatch, tmp_path):
     store, client, _, kwargs, old = setup
     _, burst = add_member(store, "20003", text="这是刚刚追加的条件。", capture="burst", moment=NOW + timedelta(minutes=9))
     _, trigger = add_member(store, "20002", text="你怎么看之前聊的内容？", capture="first-import-trigger",
                             moment=NOW + timedelta(minutes=10))
     settings, preset = decision._load_configuration(kwargs["config_path"], kwargs["preset_path"])
+    trace_dir = tmp_path / "validator-traces"
     monkeypatch.setattr(decision, "_load_configuration", lambda *args: (
-        settings.model_copy(update={"validator_sample_rate": 1, "max_revisions": 0}), preset))
+        settings.model_copy(update={"validator_sample_rate": 1, "max_revisions": 0,
+                                    "call_log_enabled": True, "trace_dir": trace_dir}), preset))
     contexts, critic_payloads = [], []
     original_compile, original_json = decision._DraftCompiler.compile, client.complete_json
 
@@ -283,12 +286,28 @@ def test_first_import_history_reaches_compiler_and_existing_critic_without_prior
     expected = {item.record_id for item in old}
     assert {entry.source_id for entry in contexts[-1].memory_evidence.entries} == expected
     assert not any(segment.why == "memory_empty_guard" for segment in contexts[-1].segments)
-    assert {entry["source_id"] for entry in critic_payloads[-1]["memory_evidence"]["entries"]} == expected
     assert contexts[-1].memory_evidence.current_speaker_id == "qq:member:20002"
-    assert critic_payloads[-1]["memory_evidence"]["current_speaker_id"] == "qq:member:20002"
-    speakers = {entry["source_id"]: entry["speaker_id"] for entry in critic_payloads[-1]["memory_evidence"]["entries"]}
+    steps = [step for path in trace_dir.glob("calls/*/*.json")
+             for step in json.loads(path.read_text(encoding="utf-8"))["steps"]]
+    before, = [step["data"] for step in steps if step["kind"] == "validator_input_before"]
+    after, = [step["data"] for step in steps if step["kind"] == "validator_input_after"]
+    original = contexts[-1].memory_evidence.model_dump(mode="json")
+    assert before["original_evidence"] == original
+    assert {entry["source_id"] for entry in original["entries"]} == expected
+    assert all(entry["source_refs"] for entry in original["entries"])
+    projected = critic_payloads[-1]["memory_evidence"]
+    mapping = after["projection"]
+    assert mapping["evidence"] == projected
+    assert mapping["projected_rows"] == [{"original_indices": [index]} for index in range(len(old))]
+    assert _restore(projected, mapping) == [
+        {key: entry[key] for key in SEMANTIC_FIELDS} for entry in original["entries"]]
+    assert mapping["speaker_alias_to_original"][projected["current_speaker_id"]] == "qq:member:20002"
+    speakers = {entry["source_id"]: entry["speaker_id"] for entry in original["entries"]}
     assert speakers == {item.record_id: f"qq:member:{item.member_id}" for item in old}
-    assert all(entry["observed_at"] for entry in critic_payloads[-1]["memory_evidence"]["entries"])
+    assert all(entry["observed_at"] for entry in original["entries"])
+    assert projected["same_source_rows"] == []
+    assert "entries" not in projected
+    assert all(source_id not in json.dumps(projected) for source_id in expected)
     assert len(client.gate_messages) == len(client.chat_calls) == len(critic_payloads) == 1
 
 

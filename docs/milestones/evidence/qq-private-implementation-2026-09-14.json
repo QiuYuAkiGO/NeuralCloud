@@ -1,0 +1,118 @@
+{
+  "schema_version": "qq-private-implementation-v1",
+  "recorded_at": "2026-09-14T08:04:47.297520+00:00",
+  "scope": "private:2015188508:2285027817",
+  "private_peer_id": "2285027817",
+  "transport": "napcat-onebot11",
+  "version": "v4.18.28",
+  "read_only_bridge_probe": {
+    "self_matches": true,
+    "peer_is_friend": true,
+    "history_status": "available",
+    "history_message_count": 5,
+    "history_image_count": 0
+  },
+  "status": {
+    "pid": 38188,
+    "run_id": "qq-direct-run:035f2741222a4bbf93f37fe8ed9c0a06",
+    "running": true,
+    "connected": true,
+    "automatic_send": true,
+    "images_enabled": true,
+    "private_contacts": [
+      {
+        "peer_id": "2285027817",
+        "label": "秋语随风（秋语）",
+        "observe": true,
+        "send": true
+      }
+    ],
+    "group_roster": [
+      {
+        "group_id": "1044946257",
+        "label": "PHANTOM-C",
+        "observe": true,
+        "send": true
+      },
+      {
+        "group_id": "1060979317",
+        "label": "超级豪人大宅门",
+        "observe": true,
+        "send": true
+      }
+    ],
+    "paused": false,
+    "desktop_owner_active": false,
+    "heartbeat_at": "2026-09-14T08:04:45.670058+00:00",
+    "last_error_type": null
+  },
+  "source_hash_matches": true,
+  "session_authorized_private_peers": [
+    "2285027817"
+  ],
+  "tests": {
+    "transport_contract_runtime_web_suite": {
+      "passed": 395,
+      "seconds": 30.66
+    },
+    "shared_memory_privacy_suite": {
+      "passed": 115,
+      "seconds": 4.25
+    },
+    "after_ws_target_semantics_fix": {
+      "passed": 111,
+      "seconds": 9.88,
+      "overlaps_prior_suites": true
+    },
+    "suite_files_disjoint_except_fix_rerun": true,
+    "ruff": "passed"
+  },
+  "privacy": {
+    "same_cognitive_owner": true,
+    "same_persona": true,
+    "separate_conversation_scope": true,
+    "private_excluded_from_groups_generic_goals_and_board": true,
+    "creator_fact_available_to_creator_private_chat": true,
+    "private_capability_not_in_global_catalog": true
+  },
+  "images": {
+    "same_original_bytes_ocr_vision_animation_pipeline": true,
+    "private_synthetic_end_to_end": "passed"
+  },
+  "actual_private_reply": {
+    "status": "verified_complete_protocol_reply",
+    "diagnostic_messages_sent": 0,
+    "event_id": "qq-watch-event:fba1df205d37e017bf406d4e3325280b",
+    "decision_id": "qq-decision:dbdcf94af1674133aa07f66a97c50c0c",
+    "trigger_message_id": "1738656136",
+    "receipt_id": "qq-delivery:6f700910d74247bea0d26f1898ff64e8",
+    "verification": "qq_protocol_verified",
+    "protocol_message_ids": [
+      "1083295069",
+      "2110992886"
+    ],
+    "source_matches": true,
+    "elapsed_seconds": 22.645029,
+    "trigger_image_statuses": []
+  },
+  "ws_counterpart_fix": {
+    "target_id_means": "conversation_peer_not_recipient",
+    "incoming_private_requires_target_id_equal_peer_if_present": true,
+    "history_api_omits_target_id": true,
+    "prior_failed_messages_not_replayed": true,
+    "upstream": "https://github.com/NapNeko/NapCatQQ/blob/v4.18.28/packages/napcat-onebot/index.ts"
+  },
+  "runtime_lifecycle": "RUNNING",
+  "session": {
+    "allowed_private_peer_ids": [
+      "2285027817"
+    ],
+    "transport": "onebot",
+    "automatic_protocol_read": true,
+    "automatic_send": true
+  },
+  "private_event_counts": {
+    "observed": 2,
+    "sent": 1
+  }
+}

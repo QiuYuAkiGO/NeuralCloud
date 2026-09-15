@@ -32,6 +32,8 @@
 
 这些键属于模板的 `bindings` 对象。没有使用某项能力时省略对应绑定。Linux 私有 JSON 和 token 使用 `0600`，状态/配置目录使用 `0700`，归运行账户所有；Windows staging 应使用仅当前账户和 SYSTEM 可读的 NTFS ACL，POSIX chmod 不能替代该设置。`service_user` 默认 `neuralcloud`，不得使用 root。跨服务内部令牌与 Runtime 控制令牌必须不同。
 
+辅助模型的上下文窗口可通过 `bindings.NC_AUX_LLM_NUM_CTX` 配置，例如字符串 `"65536"`；接受不小于 1,024 的整数或整数字符串。应用启动器会清除外部 `NC_*` 环境变量，因此必须使用正式绑定，不能只在 systemd 中添加同名环境变量。Ollama 的 `OLLAMA_CONTEXT_LENGTH` 和内存限制需配套设置；重启后分别核对 Cognitive 的 `inference_config.aux_llm_num_ctx` 与 Ollama `/api/ps` 的 `context_length`，避免仅配置文件变更而实际窗口未生效。窗口扩大不改变模型或自动取消主模型的容量路由。
+
 ## 2. 先准备代码和独立演示环境
 
 ### 2.1 固定代码并打包
@@ -222,6 +224,16 @@ python -m harness.deploy.ingress --config /etc/neuralcloud/deploy.json \
 `--hash-file` 保存预先生成的 bcrypt 密码摘要，不能填明文密码。维护配置返回 `503`；验收完成后去掉 `--maintenance` 重新生成并由 Caddy 的实际管理方式加载。已设定 origin 时代理校验 Host、要求 Basic Auth，转发时去掉外部 Authorization，并固定转发协议为 HTTPS。
 
 该渲染器不会安装 Caddy、申请域名/证书、配置 FRP 控制端或重载系统服务。FRP provider 的具体配置按账号实际提供的 TLS/自定义域名能力处理；上线前必须从外部网络验证 HTTPS、未认证拒绝、WebSocket 正常、错误 Origin 被拒绝，以及后端控制端口不可直接访问。没有确定域名时保留维护入口，或先通过 SSH 隧道访问 GUI。
+
+已有可信 Caddy 二进制时，可用安装器准备专用用户、私有 Caddyfile 和 `neuralcloud-proxy.service`。安装器会先校验配置，再以实际服务用户复验，默认不启动：
+
+```bash
+sudo bash /opt/neuralcloud/current/tools/deploy/install-ingress.sh \
+  --hash-file /etc/neuralcloud/ingress-password.hash --maintenance
+sudo systemctl enable --now neuralcloud-proxy.service
+```
+
+业务验收完成后，去掉 `--maintenance` 再运行安装器，并显式 `systemctl restart neuralcloud-proxy.service`。代理仅监听回环地址；站点地址使用 `http://:8879` 配合 `bind 127.0.0.1`，避免把公网 Host 错配为回环 Host。响应头禁止外部网页嵌入管理界面。
 
 ### 独立 FRP systemd 示例
 

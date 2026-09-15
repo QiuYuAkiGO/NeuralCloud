@@ -1,0 +1,210 @@
+{
+  "schema_version": "qq-homeostatic-body-deployment-v1",
+  "recorded_at": "2026-09-11T18:43:31.638160+00:00",
+  "status": "implemented_enabled_awaiting_natural_send_sample",
+  "scope": "existing privately configured QQ group and self account only",
+  "runtime": {
+    "prompt_version": "qq-group-turn-taking-v11",
+    "source_hash": "qq-unattended:47b0d43da318d18603e26251f08ee92c29966e139e7aecd492cdad8ea7f66a95",
+    "source_matches_running_worker": true,
+    "watcher_pid": 26548,
+    "watcher_started_at": "2026-09-11T18:40:55.049139+00:00",
+    "session_pid": 27156,
+    "session_started_at": "2026-09-11T18:25:00.297463+00:00",
+    "state": "watching",
+    "automatic_screen_capture": true,
+    "automatic_send": true,
+    "last_error_type": null,
+    "session_status": "healthy",
+    "standard_four_service_runtime_started": false
+  },
+  "body_protocol": {
+    "manager": "existing EmbodimentManager and CapabilityNegotiator",
+    "driver": "existing single QQ GUI actor; same-thread callbacks",
+    "state": "available",
+    "required_satisfied": true,
+    "effective_capabilities": [
+      "communication.qq.read.v1",
+      "communication.qq.send.v1",
+      "communication.qq.reconcile.v1",
+      "evidence.reference.v1"
+    ],
+    "frozen_scope": [
+      "body_instance_id",
+      "environment_revision",
+      "window_id",
+      "group_id",
+      "self_member_id"
+    ],
+    "send_contract": "original event, frozen decision and segment plan; durable click proof and independently reloaded receipt",
+    "unknown_send": "bounded read-only reconciliation; no second click"
+  },
+  "homeostasis": {
+    "enabled": true,
+    "profile_ref": "qq-social-drive-v1@1",
+    "state_transport": "DomainCommandEnvelope into persistent HomeostasisEngine",
+    "tick_seconds": 5,
+    "quiet_seconds": 120,
+    "opportunity_minimum_interval_seconds": 1800,
+    "intent_deadline_seconds": 60,
+    "eligibility": "marked low social_connection or novelty need; resources sufficient; quiet and healthy scoped body; no pending work or feedback",
+    "current_revision": 213,
+    "current_salience": "nominal",
+    "feedback_pending": 0,
+    "feedback_applied": 0,
+    "feedback_retired": 0,
+    "feedback_error": null,
+    "restart_evidence": "persisted revisions 10, 28, 45, 172, 179, 190 and 213 across maintenance; the domain did not reset",
+    "decisions": "same configured model and full persona; existing speak/wait then persona generation",
+    "new_message": "cancels unsent idle candidate without carrying its age into an unrelated incoming event",
+    "feedback": "stable verified observations and actual receipts only; send attempts earn no social reward; interaction credit requires scoped supported response quoting one unique recent own receipt",
+    "cooldown_check": "read-only ledger precheck before GUI acquisition; atomic registration still enforces persisted interval",
+    "default_profile_changed": false,
+    "external_rest_controller_connected": false,
+    "identity_recovery": "after a long observation gap, unchanged-chat fast return requires a prepared identity; normal group/self verification restores the body even when no idle need is eligible"
+  },
+  "validation": {
+    "broad_regression": {
+      "passed": 1828,
+      "failed": 0,
+      "seconds": 227.39,
+      "warnings": "two pre-existing Starlette deprecations"
+    },
+    "final_integration_selection": {
+      "passed": 183,
+      "failed": 0,
+      "seconds": 9.98,
+      "overlaps_broad_regression": true
+    },
+    "final_session_projection_selection": {
+      "passed": 16,
+      "failed": 0,
+      "seconds": 0.85,
+      "overlaps_other_selections": true
+    },
+    "ruff": "passed",
+    "git_diff_check": "passed; repository line-ending notices only",
+    "offline_need_dynamics": {
+      "simulated_hours": 8,
+      "ticks": 480,
+      "tick_seconds": 60,
+      "noticeable_first_minute": 137,
+      "marked_first_minute": 162,
+      "final_social_connection": 0.22,
+      "final_novelty": 0.16,
+      "watchdog": false,
+      "default_profile_remains_nominal": true,
+      "production_state_modified": false,
+      "formal_soak": false
+    },
+    "live_model_on_private_database_copy": {
+      "prompt_version": "qq-group-turn-taking-v11",
+      "simulated_need_minutes": 180,
+      "action": "wait",
+      "outcome": "natural_wait",
+      "error_type": null,
+      "total_ms": 3016,
+      "gate_ms": 2156,
+      "persona_ms": 0,
+      "model_calls": {
+        "gate": 1,
+        "persona": 0
+      },
+      "context_observations": 19,
+      "new_observations": 0,
+      "gui_used": false,
+      "send_attempted": false,
+      "is_end_to_end_latency": false
+    },
+    "controller_tests": "real negotiated provider, temporary ledgers and two-stage model fixtures; synthetic GUI covers single/multiple bubbles, wait, scope failures, new-message cancellation, TTL, cooldown, receipt interruption, and no duplicate counting",
+    "acceptance_consumer_selection": {
+      "passed": 191,
+      "failed": 0,
+      "seconds": 40.5,
+      "overlaps_other_selections": true
+    },
+    "final_identity_recovery_selection": {
+      "passed": 100,
+      "failed": 0,
+      "seconds": 11.92,
+      "overlaps_other_selections": true
+    }
+  },
+  "preservation": {
+    "original_record_json_rows_unchanged": 344,
+    "successful_row_fingerprints_unchanged": 150,
+    "old_rows_readable_with_v11_contracts": 344,
+    "missing_rows": 0,
+    "rewritten_rows": 0,
+    "current_run_baselines": 1,
+    "current_run_events": 0,
+    "current_run_decisions": 0,
+    "current_run_delivery_attempts": 0,
+    "old_event_replays": 0,
+    "old_source_replays": 0
+  },
+  "live_observation": {
+    "polls": 151,
+    "current_error": null,
+    "current_gap_seconds": 0,
+    "closed_gaps_in_final_run": 1,
+    "maximum_closed_gap_seconds": 7.141,
+    "polls_added_between_final_snapshots": 119,
+    "additional_gaps_between_final_snapshots": 0,
+    "previous_maintenance_run_closed_gaps": 4,
+    "previous_maintenance_run_maximum_gap_seconds": 1.579,
+    "historical_failures_and_gaps_retained": true
+  },
+  "acceptance": {
+    "formal_eight_hour_window_started": false,
+    "new_version_natural_idle_send_samples": 0,
+    "new_version_incoming_reply_samples": 0,
+    "message_end_to_end_p50_ms": null,
+    "message_end_to_end_p95_ms": null,
+    "idle_intent_to_receipt_p50_ms": null,
+    "idle_intent_to_receipt_p95_ms": null,
+    "latency_groups_kept_separate": true,
+    "no_model_speech_forced": true,
+    "no_manual_qq_send_or_ledger_repair": true,
+    "maintenance_not_counted_as_unattended_soak": true,
+    "remaining": "observe natural homeostatic speak and actual receipts; then retain separate timing and original sample requirements",
+    "consumer_compatibility": "typed idle source is independently validated and reported under idle.counts and idle.latency_seconds; it does not enter message sample targets or message P95; global failures still apply"
+  },
+  "private_evidence_refs": [
+    "preflight/homeostasis-before-preservation-20260911T181832Z-1212c966.json",
+    "preflight/homeostasis-postdeploy-history-20260911T182600Z-2190fcaa.json",
+    "preflight/qq-homeostatic-model-0f81feaaed69/report.json",
+    "preflight/homeostatic-live-02961cb4b658.json",
+    "preflight/homeostatic-live-7d5bc202183a.json",
+    "preflight/homeostatic-live-69e323350234.json",
+    "preflight/homeostatic-live-e266b2366143.json",
+    "preflight/homeostatic-live-8923de2cdfb8.json",
+    "preflight/homeostatic-live-ac42d044140d.json",
+    "preflight/homeostatic-live-213be686577d.json",
+    "preflight/homeostasis-postdeploy-history-20260911T184206Z-7478eb97.json",
+    "preflight/homeostatic-live-20bdf1114329.json"
+  ],
+  "maintenance_runs": [
+    {
+      "watcher_pid": 16464,
+      "state": "initial_v11_ready",
+      "closed_gaps": 4,
+      "maximum_gap_seconds": 1.579
+    },
+    {
+      "watcher_pid": 21160,
+      "state": "ready_before_final_consumer_compatibility_update",
+      "closed_gaps": 3,
+      "maximum_gap_seconds": 1.328
+    },
+    {
+      "watcher_pid": 34592,
+      "state": "startup_failed_and_launcher_requested_pause",
+      "maximum_gap_seconds": 10.61,
+      "reason": "long gap invalidated identity; unchanged nominal chat skipped re-verification",
+      "fix": "prepared identity required for unchanged-chat fast return",
+      "actual_sends": 0,
+      "private_evidence_ref": "preflight/homeostatic-live-ac42d044140d.json"
+    }
+  ]
+}

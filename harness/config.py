@@ -125,6 +125,9 @@ class Settings(BaseSettings):
     complexity_threshold: float = 0.5
     context_token_budget: int = 3000
     compiler_top_memories: int = 5
+    # Reversible master switch for response post-validation (rules and model).
+    # Request/DTO/schema validation is independent of this inference setting.
+    validator_enabled: bool = True
     validator_sample_rate: float = 0.2
     max_revisions: int = 2
     session_window: int = 10

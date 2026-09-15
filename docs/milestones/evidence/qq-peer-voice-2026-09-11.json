@@ -1,0 +1,408 @@
+{
+  "schema_version": "qq-peer-voice-implementation-v1",
+  "recorded_at": "2026-09-11T12:38:03.659897+00:00",
+  "status": "ENABLED_STYLE_VERIFIED_ON_SYNTHETIC_CONTEXT",
+  "prompt_version": "qq-group-turn-taking-v7",
+  "source_hash": "qq-unattended:a814085a5f2f582f2c9060bd2b97e0810a93a727782871d6669661f51395f222",
+  "behavior": {
+    "prefer": [
+      "specific_opinion",
+      "judgment",
+      "preference",
+      "topic_grounded_feeling"
+    ],
+    "avoid": [
+      "generic_invitation_to_keep_talking",
+      "unsolicited_service_offer",
+      "reflexive_reassurance"
+    ],
+    "allow_targeted_clarification_and_curiosity": true,
+    "generic_invitation_alone_does_not_justify_speak": true,
+    "persona_hobbies_and_examples_are_not_live_observations": true,
+    "formal_style_and_existing_persona_preserved": true,
+    "existing_one_to_three_segments_preserved": true,
+    "extra_style_model_calls": 0,
+    "post_generation_text_deletion": false
+  },
+  "validation": {
+    "regression_tests": {
+      "passed": 179,
+      "failed": 0,
+      "scope": [
+        "qq_decision",
+        "qq_decision_segments",
+        "qq_draft",
+        "continuation",
+        "qq_session"
+      ]
+    },
+    "ruff": "passed",
+    "actual_model_synthetic_probes": [
+      {
+        "probe_id": "peer-voice-20260911T123209",
+        "synthetic_context_only": true,
+        "gui_actions": 0,
+        "real_sends": 0,
+        "cases": [
+          {
+            "name": "opinion",
+            "action": "speak",
+            "outcome": "ready",
+            "reply_style": "conversational",
+            "elapsed_ms": 17286.732,
+            "timings_ms": {
+              "gate": 3187.0,
+              "persona": 13328.0,
+              "total": 17265.0
+            },
+            "model_call_counts": {
+              "gate": 1,
+              "persona": 2
+            },
+            "segment_count": 1,
+            "reply_sha256": "3b81c6838e847cc95b19ec04c3ad71a4423016e1e4c9273dfddc974b516f6076"
+          },
+          {
+            "name": "feeling",
+            "action": "speak",
+            "outcome": "ready",
+            "reply_style": "conversational",
+            "elapsed_ms": 6311.747,
+            "timings_ms": {
+              "gate": 2406.0,
+              "persona": 3172.0,
+              "total": 6281.0
+            },
+            "model_call_counts": {
+              "gate": 1,
+              "persona": 1
+            },
+            "segment_count": 3,
+            "reply_sha256": "1d86d5472c9c756a91c54fc065b2c08ca82791860777d5cd5e907414115351e3"
+          },
+          {
+            "name": "correction",
+            "action": "speak",
+            "outcome": "ready",
+            "reply_style": "conversational",
+            "elapsed_ms": 8108.313,
+            "timings_ms": {
+              "gate": 4484.0,
+              "persona": 2750.0,
+              "total": 8078.0
+            },
+            "model_call_counts": {
+              "gate": 1,
+              "persona": 1
+            },
+            "segment_count": 2,
+            "reply_sha256": "ddce1d2156547f6623f0260b59565515386ce309488e601ccf104855c588938c"
+          },
+          {
+            "name": "clarification",
+            "action": "speak",
+            "outcome": "ready",
+            "reply_style": "conversational",
+            "elapsed_ms": 7184.583,
+            "timings_ms": {
+              "gate": 5203.0,
+              "persona": 1172.0,
+              "total": 7172.0
+            },
+            "model_call_counts": {
+              "gate": 1,
+              "persona": 1
+            },
+            "segment_count": 1,
+            "reply_sha256": "c9d0637905557fdcb1fbb89886040e2acadae7eed4e740cb528849cae89e7a31"
+          },
+          {
+            "name": "formal",
+            "action": "speak",
+            "outcome": "ready",
+            "reply_style": "formal",
+            "elapsed_ms": 7534.51,
+            "timings_ms": {
+              "gate": 2172.0,
+              "persona": 4594.0,
+              "total": 7516.0
+            },
+            "model_call_counts": {
+              "gate": 1,
+              "persona": 1
+            },
+            "segment_count": 1,
+            "reply_sha256": "8e23ec4c87c1a1ae5d0f357913c6aa237e83a8aef39fd3241a0116635f132a4b"
+          },
+          {
+            "name": "unrelated",
+            "action": "wait",
+            "outcome": "natural_wait",
+            "reply_style": "conversational",
+            "elapsed_ms": 2407.107,
+            "timings_ms": {
+              "gate": 1594.0,
+              "persona": 0.0,
+              "total": 2390.0
+            },
+            "model_call_counts": {
+              "gate": 1,
+              "persona": 0
+            },
+            "segment_count": 0,
+            "reply_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ]
+      },
+      {
+        "probe_id": "peer-voice-20260911T123331",
+        "synthetic_context_only": true,
+        "gui_actions": 0,
+        "real_sends": 0,
+        "cases": [
+          {
+            "name": "opinion",
+            "action": "speak",
+            "outcome": "ready",
+            "reply_style": "conversational",
+            "elapsed_ms": 7560.907,
+            "timings_ms": {
+              "gate": 1906.0,
+              "persona": 4875.0,
+              "total": 7531.0
+            },
+            "model_call_counts": {
+              "gate": 1,
+              "persona": 2
+            },
+            "segment_count": 2,
+            "reply_sha256": "95e77e5762f5ed0fb4396a4e04b7ae5ea3f3a499627b58ce0604e028c6365a04"
+          },
+          {
+            "name": "feeling",
+            "action": "speak",
+            "outcome": "ready",
+            "reply_style": "conversational",
+            "elapsed_ms": 10175.984,
+            "timings_ms": {
+              "gate": 2813.0,
+              "persona": 6453.0,
+              "total": 10156.0
+            },
+            "model_call_counts": {
+              "gate": 1,
+              "persona": 1
+            },
+            "segment_count": 2,
+            "reply_sha256": "157f2a65824eb2ada0dd957b6283382d1b8cc32e8b3914737a3ea8bb05e960be"
+          },
+          {
+            "name": "correction",
+            "action": "speak",
+            "outcome": "ready",
+            "reply_style": "conversational",
+            "elapsed_ms": 8721.958,
+            "timings_ms": {
+              "gate": 3984.0,
+              "persona": 3532.0,
+              "total": 8688.0
+            },
+            "model_call_counts": {
+              "gate": 1,
+              "persona": 1
+            },
+            "segment_count": 1,
+            "reply_sha256": "480e7e30ab89ac2bc6b0664755678c4009cac92ae3d6ce287c75f4a03a4ba3d3"
+          },
+          {
+            "name": "clarification",
+            "action": "speak",
+            "outcome": "ready",
+            "reply_style": "conversational",
+            "elapsed_ms": 6715.455,
+            "timings_ms": {
+              "gate": 4109.0,
+              "persona": 1172.0,
+              "total": 6703.0
+            },
+            "model_call_counts": {
+              "gate": 1,
+              "persona": 1
+            },
+            "segment_count": 1,
+            "reply_sha256": "49d39ea419ff9121e9c105104be6a9d81af3dfce72fe099c02a270c45f868d41"
+          },
+          {
+            "name": "formal",
+            "action": "speak",
+            "outcome": "ready",
+            "reply_style": "formal",
+            "elapsed_ms": 6916.898,
+            "timings_ms": {
+              "gate": 2500.0,
+              "persona": 3390.0,
+              "total": 6906.0
+            },
+            "model_call_counts": {
+              "gate": 1,
+              "persona": 1
+            },
+            "segment_count": 2,
+            "reply_sha256": "07479c1941a1691660e8f8f28d1623d0bfe095e32f227f16c56687f478e583a0"
+          },
+          {
+            "name": "unrelated",
+            "action": "wait",
+            "outcome": "natural_wait",
+            "reply_style": "conversational",
+            "elapsed_ms": 2544.562,
+            "timings_ms": {
+              "gate": 1500.0,
+              "persona": 0.0,
+              "total": 2515.0
+            },
+            "model_call_counts": {
+              "gate": 1,
+              "persona": 0
+            },
+            "segment_count": 0,
+            "reply_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ]
+      }
+    ],
+    "initial_review": "Generic assistant invitations absent, but feeling case invented present music and window light; not accepted.",
+    "correction": "QQ prompt explicitly separates persona hobbies, examples and setting from current observed activity; no global persona changes.",
+    "final_review": {
+      "cases_reviewed": 6,
+      "generic_invitation_seen": false,
+      "invented_current_activity_seen": false,
+      "specific_opinion_present": true,
+      "topic_grounded_feeling_present": true,
+      "necessary_clarification_preserved": true,
+      "formal_choice_preserved": true,
+      "unrelated_message_natural_wait": true,
+      "limit": "Qualitative style samples, not exhaustive guarantees or factual-accuracy certification. Timings exclude GUI and transport delivery."
+    }
+  },
+  "runtime": {
+    "pid": 17956,
+    "started_at": "2026-09-11T12:34:52.879387+00:00",
+    "heartbeat_at": "2026-09-11T12:38:00.270040+00:00",
+    "state": "watching",
+    "running": true,
+    "build_hash": "qq-unattended:a814085a5f2f582f2c9060bd2b97e0810a93a727782871d6669661f51395f222",
+    "automatic_screen_capture": true,
+    "automatic_send": true,
+    "last_error_type": null
+  },
+  "runtime_source_matches": true,
+  "session_service": {
+    "restarted": true,
+    "pid": 34312,
+    "started_at": "2026-09-11T12:36:40.861250+00:00"
+  },
+  "observer": {
+    "running": true,
+    "polls": 182,
+    "last_error_type": null,
+    "completed_gap_count": 5,
+    "max_gap_seconds": 14.031,
+    "recent_gaps": [
+      {
+        "sequence": 1,
+        "started_at": "2026-09-11T12:34:56.353408+00:00",
+        "finished_at": "2026-09-11T12:34:57.453566+00:00",
+        "duration_seconds": 1.094,
+        "reason": "request_timeout"
+      },
+      {
+        "sequence": 2,
+        "started_at": "2026-09-11T12:34:58.384336+00:00",
+        "finished_at": "2026-09-11T12:35:02.380307+00:00",
+        "duration_seconds": 4.0,
+        "reason": "request_timeout"
+      },
+      {
+        "sequence": 3,
+        "started_at": "2026-09-11T12:35:37.630584+00:00",
+        "finished_at": "2026-09-11T12:35:51.656144+00:00",
+        "duration_seconds": 14.031,
+        "reason": "invalid_timing"
+      },
+      {
+        "sequence": 4,
+        "started_at": "2026-09-11T12:36:17.911838+00:00",
+        "finished_at": "2026-09-11T12:36:18.944097+00:00",
+        "duration_seconds": 1.031,
+        "reason": "invalid_timing"
+      },
+      {
+        "sequence": 5,
+        "started_at": "2026-09-11T12:36:19.949930+00:00",
+        "finished_at": "2026-09-11T12:36:21.933050+00:00",
+        "duration_seconds": 1.985,
+        "reason": "invalid_timing"
+      }
+    ]
+  },
+  "limitations": [
+    "No new real QQ delivery used to certify this voice adjustment.",
+    "Observer temporarily disabled sending after an invalid_timing gap and recovered automatically; the 14.031 second gap remains recorded.",
+    "Existing end-to-end latency and continuous eight-hour acceptance remain incomplete."
+  ],
+  "direct_opening_followup": {
+    "recorded_at": "2026-09-11T13:38:51.310088+00:00",
+    "prompt_version": "qq-group-turn-taking-v9",
+    "source_hash": "qq-unattended:e7485251335f29e626e7b5efd8c3cb6566e939902bb828b2261c663873ada618",
+    "rule": "First bubble enters the topic directly, without thinking preambles or a separate placeholder segment; preserve substantive uncertainty.",
+    "regression_tests_passed": 166,
+    "synthetic_model_cases": [
+      {
+        "name": "stance",
+        "action": "speak",
+        "outcome": "ready",
+        "reply_style": "conversational",
+        "elapsed_ms": 15087.859,
+        "timings_ms": {
+          "gate": 2625.0,
+          "persona": 11719.0,
+          "total": 15063.0
+        },
+        "model_call_counts": {
+          "gate": 1,
+          "persona": 3
+        }
+      },
+      {
+        "name": "uncertainty",
+        "action": "speak",
+        "outcome": "ready",
+        "reply_style": "conversational",
+        "elapsed_ms": 7639.639,
+        "timings_ms": {
+          "gate": 2797.0,
+          "persona": 4093.0,
+          "total": 7625.0
+        },
+        "model_call_counts": {
+          "gate": 1,
+          "persona": 1
+        }
+      }
+    ],
+    "sampled_first_segments_have_substantive_content": true,
+    "sampled_thinking_preambles_seen": false,
+    "gui_actions": 0,
+    "group_sends_in_probe": 0,
+    "runtime": {
+      "pid": 33824,
+      "started_at": "2026-09-11T13:36:58.223466+00:00",
+      "state": "watching",
+      "running": true,
+      "automatic_send": true,
+      "last_error_type": null
+    },
+    "session_pid": 19704
+  }
+}

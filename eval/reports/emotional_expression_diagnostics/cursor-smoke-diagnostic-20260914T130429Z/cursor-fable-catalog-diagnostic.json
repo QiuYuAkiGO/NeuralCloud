@@ -1,0 +1,4103 @@
+[
+  {
+    "check": "usable",
+    "endpoint": "agent.v1.AgentService/GetUsableModels",
+    "http_status": 200,
+    "checked_at_utc": "2026-09-14T13:07:57.125997+00:00",
+    "model_count": 223,
+    "fable_models": [
+      {
+        "modelId": "claude-fable-5-thinking-high",
+        "displayModelId": "claude-fable-5-thinking-high",
+        "displayName": "Claude Fable 5 1M Thinking (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-thinking-xhigh",
+        "displayModelId": "claude-fable-5-thinking-xhigh",
+        "displayName": "Claude Fable 5 1M Extra High Thinking (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-1-low",
+        "displayModelId": "claude-fable-5-1-low",
+        "displayName": "Claude Fable 5.1 1M Low (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-1-medium",
+        "displayModelId": "claude-fable-5-1-medium",
+        "displayName": "Claude Fable 5.1 1M Medium (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-1-high",
+        "displayModelId": "claude-fable-5-1-high",
+        "displayName": "Claude Fable 5.1 1M (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-1-xhigh",
+        "displayModelId": "claude-fable-5-1-xhigh",
+        "displayName": "Claude Fable 5.1 1M Extra High (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-1-max",
+        "displayModelId": "claude-fable-5-1-max",
+        "displayName": "Claude Fable 5.1 1M Max (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-1-thinking-low",
+        "displayModelId": "claude-fable-5-1-thinking-low",
+        "displayName": "Claude Fable 5.1 1M Low Thinking (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-1-thinking-medium",
+        "displayModelId": "claude-fable-5-1-thinking-medium",
+        "displayName": "Claude Fable 5.1 1M Medium Thinking (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-1-thinking-high",
+        "displayModelId": "claude-fable-5-1-thinking-high",
+        "displayName": "Claude Fable 5.1 1M Thinking (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-1-thinking-xhigh",
+        "displayModelId": "claude-fable-5-1-thinking-xhigh",
+        "displayName": "Claude Fable 5.1 1M Extra High Thinking (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-1-thinking-max",
+        "displayModelId": "claude-fable-5-1-thinking-max",
+        "displayName": "Claude Fable 5.1 1M Max Thinking (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-low",
+        "displayModelId": "claude-fable-5-low",
+        "displayName": "Claude Fable 5 1M Low (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-medium",
+        "displayModelId": "claude-fable-5-medium",
+        "displayName": "Claude Fable 5 1M Medium (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-high",
+        "displayModelId": "claude-fable-5-high",
+        "displayName": "Claude Fable 5 1M (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-xhigh",
+        "displayModelId": "claude-fable-5-xhigh",
+        "displayName": "Claude Fable 5 1M Extra High (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-max",
+        "displayModelId": "claude-fable-5-max",
+        "displayName": "Claude Fable 5 1M Max (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-thinking-low",
+        "displayModelId": "claude-fable-5-thinking-low",
+        "displayName": "Claude Fable 5 1M Low Thinking (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-thinking-medium",
+        "displayModelId": "claude-fable-5-thinking-medium",
+        "displayName": "Claude Fable 5 1M Medium Thinking (NO ZDR)"
+      },
+      {
+        "modelId": "claude-fable-5-thinking-max",
+        "displayModelId": "claude-fable-5-thinking-max",
+        "displayName": "Claude Fable 5 1M Max Thinking (NO ZDR)"
+      }
+    ],
+    "model_ids": [
+      "default",
+      "gpt-5.3-codex-low",
+      "gpt-5.3-codex-low-fast",
+      "gpt-5.3-codex",
+      "gpt-5.3-codex-fast",
+      "gpt-5.3-codex-high",
+      "gpt-5.3-codex-high-fast",
+      "gpt-5.3-codex-xhigh",
+      "gpt-5.3-codex-xhigh-fast",
+      "gpt-5.2",
+      "cursor-grok-4.6-high-fast",
+      "composer-2.5",
+      "claude-opus-5-thinking-high",
+      "claude-opus-5-thinking-high-fast",
+      "gpt-5.6-sol-high",
+      "gpt-5.6-sol-high-fast",
+      "gpt-5.6-sol-xhigh",
+      "gpt-5.6-sol-xhigh-fast",
+      "claude-fable-5-thinking-high",
+      "claude-fable-5-thinking-xhigh",
+      "cursor-grok-4.5-high",
+      "cursor-grok-4.5-high-fast",
+      "gemini-3.7-flash-high",
+      "claude-sonnet-5-thinking-high",
+      "claude-sonnet-5-thinking-xhigh",
+      "gpt-5.6-luna-high",
+      "cursor-grok-4.6-low",
+      "cursor-grok-4.6-low-fast",
+      "cursor-grok-4.6-medium",
+      "cursor-grok-4.6-medium-fast",
+      "cursor-grok-4.6-high",
+      "cursor-grok-4.6-xhigh",
+      "cursor-grok-4.6-xhigh-fast",
+      "composer-2.5-fast",
+      "claude-opus-5-low",
+      "claude-opus-5-low-fast",
+      "claude-opus-5-medium",
+      "claude-opus-5-medium-fast",
+      "claude-opus-5-high",
+      "claude-opus-5-high-fast",
+      "claude-opus-5-thinking-low",
+      "claude-opus-5-thinking-low-fast",
+      "claude-opus-5-thinking-medium",
+      "claude-opus-5-thinking-medium-fast",
+      "claude-opus-5-thinking-xhigh",
+      "claude-opus-5-thinking-xhigh-fast",
+      "claude-opus-5-thinking-max",
+      "claude-opus-5-thinking-max-fast",
+      "claude-opus-4-8-low",
+      "claude-opus-4-8-low-fast",
+      "claude-opus-4-8-medium",
+      "claude-opus-4-8-medium-fast",
+      "claude-opus-4-8-high",
+      "claude-opus-4-8-high-fast",
+      "claude-opus-4-8-xhigh",
+      "claude-opus-4-8-xhigh-fast",
+      "claude-opus-4-8-max",
+      "claude-opus-4-8-max-fast",
+      "claude-opus-4-8-thinking-low",
+      "claude-opus-4-8-thinking-low-fast",
+      "claude-opus-4-8-thinking-medium",
+      "claude-opus-4-8-thinking-medium-fast",
+      "claude-opus-4-8-thinking-high",
+      "claude-opus-4-8-thinking-high-fast",
+      "claude-opus-4-8-thinking-xhigh",
+      "claude-opus-4-8-thinking-xhigh-fast",
+      "claude-opus-4-8-thinking-max",
+      "claude-opus-4-8-thinking-max-fast",
+      "gpt-5.6-sol-none",
+      "gpt-5.6-sol-none-fast",
+      "gpt-5.6-sol-low",
+      "gpt-5.6-sol-low-fast",
+      "gpt-5.6-sol-medium",
+      "gpt-5.6-sol-medium-fast",
+      "gpt-5.6-sol-max",
+      "gpt-5.6-sol-max-fast",
+      "gpt-5.5-none",
+      "gpt-5.5-none-fast",
+      "gpt-5.5-low",
+      "gpt-5.5-low-fast",
+      "gpt-5.5-medium",
+      "gpt-5.5-medium-fast",
+      "gpt-5.5-high",
+      "gpt-5.5-high-fast",
+      "gpt-5.5-extra-high",
+      "gpt-5.5-extra-high-fast",
+      "claude-fable-5-1-low",
+      "claude-fable-5-1-medium",
+      "claude-fable-5-1-high",
+      "claude-fable-5-1-xhigh",
+      "claude-fable-5-1-max",
+      "claude-fable-5-1-thinking-low",
+      "claude-fable-5-1-thinking-medium",
+      "claude-fable-5-1-thinking-high",
+      "claude-fable-5-1-thinking-xhigh",
+      "claude-fable-5-1-thinking-max",
+      "claude-fable-5-low",
+      "claude-fable-5-medium",
+      "claude-fable-5-high",
+      "claude-fable-5-xhigh",
+      "claude-fable-5-max",
+      "claude-fable-5-thinking-low",
+      "claude-fable-5-thinking-medium",
+      "claude-fable-5-thinking-max",
+      "cursor-grok-4.5-low",
+      "cursor-grok-4.5-low-fast",
+      "cursor-grok-4.5-medium",
+      "cursor-grok-4.5-medium-fast",
+      "gemini-3.8-flash-low",
+      "gemini-3.8-flash-medium",
+      "gemini-3.8-flash-high",
+      "gemini-3.7-flash-low",
+      "gemini-3.7-flash-medium",
+      "muse-spark-1.3-minimal",
+      "muse-spark-1.3-low",
+      "muse-spark-1.3-medium",
+      "muse-spark-1.3-high",
+      "muse-spark-1.3-xhigh",
+      "muse-spark-1.3-max",
+      "gpt-5.6-terra-none",
+      "gpt-5.6-terra-none-fast",
+      "gpt-5.6-terra-low",
+      "gpt-5.6-terra-low-fast",
+      "gpt-5.6-terra-medium",
+      "gpt-5.6-terra-medium-fast",
+      "gpt-5.6-terra-high",
+      "gpt-5.6-terra-high-fast",
+      "gpt-5.6-terra-xhigh",
+      "gpt-5.6-terra-xhigh-fast",
+      "gpt-5.6-terra-max",
+      "gpt-5.6-terra-max-fast",
+      "claude-sonnet-5-low",
+      "claude-sonnet-5-medium",
+      "claude-sonnet-5-high",
+      "claude-sonnet-5-xhigh",
+      "claude-sonnet-5-max",
+      "claude-sonnet-5-thinking-low",
+      "claude-sonnet-5-thinking-medium",
+      "claude-sonnet-5-thinking-max",
+      "claude-4.6-sonnet-medium",
+      "claude-4.6-sonnet-medium-thinking",
+      "claude-opus-4-7-low",
+      "claude-opus-4-7-low-fast",
+      "claude-opus-4-7-medium",
+      "claude-opus-4-7-medium-fast",
+      "claude-opus-4-7-high",
+      "claude-opus-4-7-high-fast",
+      "claude-opus-4-7-xhigh",
+      "claude-opus-4-7-xhigh-fast",
+      "claude-opus-4-7-max",
+      "claude-opus-4-7-max-fast",
+      "claude-opus-4-7-thinking-low",
+      "claude-opus-4-7-thinking-low-fast",
+      "claude-opus-4-7-thinking-medium",
+      "claude-opus-4-7-thinking-medium-fast",
+      "claude-opus-4-7-thinking-high",
+      "claude-opus-4-7-thinking-high-fast",
+      "claude-opus-4-7-thinking-xhigh",
+      "claude-opus-4-7-thinking-xhigh-fast",
+      "claude-opus-4-7-thinking-max",
+      "claude-opus-4-7-thinking-max-fast",
+      "gpt-5.4-low",
+      "gpt-5.4-medium",
+      "gpt-5.4-medium-fast",
+      "gpt-5.4-high",
+      "gpt-5.4-high-fast",
+      "gpt-5.4-xhigh",
+      "gpt-5.4-xhigh-fast",
+      "claude-4.6-opus-high",
+      "claude-4.6-opus-max",
+      "claude-4.6-opus-high-thinking",
+      "claude-4.6-opus-max-thinking",
+      "claude-4.5-opus-high",
+      "claude-4.5-opus-high-thinking",
+      "gpt-5.2-low",
+      "gpt-5.2-low-fast",
+      "gpt-5.2-fast",
+      "gpt-5.2-high",
+      "gpt-5.2-high-fast",
+      "gpt-5.2-xhigh",
+      "gpt-5.2-xhigh-fast",
+      "gpt-5.6-luna-none",
+      "gpt-5.6-luna-none-fast",
+      "gpt-5.6-luna-low",
+      "gpt-5.6-luna-low-fast",
+      "gpt-5.6-luna-medium",
+      "gpt-5.6-luna-medium-fast",
+      "gpt-5.6-luna-high-fast",
+      "gpt-5.6-luna-xhigh",
+      "gpt-5.6-luna-xhigh-fast",
+      "gpt-5.6-luna-max",
+      "gpt-5.6-luna-max-fast",
+      "gemini-3.6-flash-minimal",
+      "gemini-3.6-flash-low",
+      "gemini-3.6-flash-medium",
+      "gemini-3.6-flash-high",
+      "gemini-3.1-pro",
+      "gpt-5.4-mini-none",
+      "gpt-5.4-mini-low",
+      "gpt-5.4-mini-medium",
+      "gpt-5.4-mini-high",
+      "gpt-5.4-mini-xhigh",
+      "gpt-5.4-nano-none",
+      "gpt-5.4-nano-low",
+      "gpt-5.4-nano-medium",
+      "gpt-5.4-nano-high",
+      "gpt-5.4-nano-xhigh",
+      "claude-4.5-sonnet",
+      "claude-4.5-sonnet-thinking",
+      "gpt-5.1-low",
+      "gpt-5.1",
+      "gpt-5.1-high",
+      "gemini-3-flash",
+      "gemini-3.5-flash",
+      "claude-4-sonnet",
+      "claude-4-sonnet-thinking",
+      "gpt-5-mini",
+      "kimi-k3-low",
+      "kimi-k3-high",
+      "kimi-k3-max",
+      "kimi-k2.7-code",
+      "glm-5.2-high",
+      "glm-5.2-max"
+    ],
+    "display_configuration": {}
+  },
+  {
+    "check": "available",
+    "endpoint": "aiserver.v1.AiService/AvailableModels",
+    "http_status": 200,
+    "checked_at_utc": "2026-09-14T13:07:57.819331+00:00",
+    "model_count": 38,
+    "fable_models": [
+      {
+        "name": "claude-fable-5-1",
+        "clientDisplayName": "Claude Fable 5.1",
+        "serverModelName": "claude-fable-5-1",
+        "legacySlugs": [
+          "claude-fable-5-1-low",
+          "claude-fable-5-1-medium",
+          "claude-fable-5-1-high",
+          "claude-fable-5-1-xhigh",
+          "claude-fable-5-1-max",
+          "claude-fable-5-1-thinking-low",
+          "claude-fable-5-1-thinking-medium",
+          "claude-fable-5-1-thinking-high",
+          "claude-fable-5-1-thinking-xhigh",
+          "claude-fable-5-1-thinking-max"
+        ],
+        "variants": [
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=300k,effort=low]",
+            "legacySlug": "claude-fable-5-1-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=300k,effort=medium]",
+            "legacySlug": "claude-fable-5-1-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=300k,effort=high]",
+            "legacySlug": "claude-fable-5-1-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=300k,effort=xhigh]",
+            "legacySlug": "claude-fable-5-1-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=300k,effort=max]",
+            "legacySlug": "claude-fable-5-1-max"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=1m,effort=low]",
+            "legacySlug": "claude-fable-5-1-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=1m,effort=medium]",
+            "legacySlug": "claude-fable-5-1-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=1m,effort=high]",
+            "legacySlug": "claude-fable-5-1-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=1m,effort=xhigh]",
+            "legacySlug": "claude-fable-5-1-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=1m,effort=max]",
+            "legacySlug": "claude-fable-5-1-max"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=300k,effort=low]",
+            "legacySlug": "claude-fable-5-1-thinking-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=300k,effort=medium]",
+            "legacySlug": "claude-fable-5-1-thinking-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isDefaultNonMaxConfig": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=300k,effort=high]",
+            "legacySlug": "claude-fable-5-1-thinking-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=300k,effort=xhigh]",
+            "legacySlug": "claude-fable-5-1-thinking-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=300k,effort=max]",
+            "legacySlug": "claude-fable-5-1-thinking-max"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=1m,effort=low]",
+            "legacySlug": "claude-fable-5-1-thinking-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=1m,effort=medium]",
+            "legacySlug": "claude-fable-5-1-thinking-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "isDefaultMaxConfig": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=1m,effort=high]",
+            "legacySlug": "claude-fable-5-1-thinking-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=1m,effort=xhigh]",
+            "legacySlug": "claude-fable-5-1-thinking-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=1m,effort=max]",
+            "legacySlug": "claude-fable-5-1-thinking-max"
+          }
+        ],
+        "parameterDefinitions": [
+          {
+            "id": "thinking",
+            "name": "Thinking",
+            "markdownTooltip": "Does the model use thinking to generate its response?",
+            "parameterType": {
+              "booleanParameter": {
+                "values": [
+                  {
+                    "value": "false"
+                  },
+                  {
+                    "value": "true"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "context",
+            "name": "Context",
+            "markdownTooltip": "Context size the model has available.",
+            "parameterType": {
+              "enumParameter": {
+                "values": [
+                  {
+                    "value": "300k",
+                    "displayName": "300K"
+                  },
+                  {
+                    "value": "1m",
+                    "displayName": "1M",
+                    "increasesModelCost": true
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "effort",
+            "name": "Effort",
+            "markdownTooltip": "Effort the model uses to generate its response.",
+            "parameterType": {
+              "enumParameter": {
+                "values": [
+                  {
+                    "value": "low",
+                    "displayName": "Low"
+                  },
+                  {
+                    "value": "medium",
+                    "displayName": "Medium"
+                  },
+                  {
+                    "value": "high",
+                    "displayName": "High"
+                  },
+                  {
+                    "value": "xhigh",
+                    "displayName": "Extra High"
+                  },
+                  {
+                    "value": "max",
+                    "displayName": "Max"
+                  }
+                ]
+              }
+            },
+            "isCycleableByHotkey": true
+          }
+        ]
+      },
+      {
+        "name": "claude-fable-5",
+        "clientDisplayName": "Claude Fable 5",
+        "serverModelName": "claude-fable-5",
+        "legacySlugs": [
+          "claude-fable-5-low",
+          "claude-fable-5-medium",
+          "claude-fable-5-high",
+          "claude-fable-5-xhigh",
+          "claude-fable-5-max",
+          "claude-fable-5-thinking-low",
+          "claude-fable-5-thinking-medium",
+          "claude-fable-5-thinking-high",
+          "claude-fable-5-thinking-xhigh",
+          "claude-fable-5-thinking-max"
+        ],
+        "variants": [
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=300k,effort=low]",
+            "legacySlug": "claude-fable-5-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=300k,effort=medium]",
+            "legacySlug": "claude-fable-5-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=300k,effort=high]",
+            "legacySlug": "claude-fable-5-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=300k,effort=xhigh]",
+            "legacySlug": "claude-fable-5-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=300k,effort=max]",
+            "legacySlug": "claude-fable-5-max"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=1m,effort=low]",
+            "legacySlug": "claude-fable-5-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=1m,effort=medium]",
+            "legacySlug": "claude-fable-5-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=1m,effort=high]",
+            "legacySlug": "claude-fable-5-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=1m,effort=xhigh]",
+            "legacySlug": "claude-fable-5-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=1m,effort=max]",
+            "legacySlug": "claude-fable-5-max"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=300k,effort=low]",
+            "legacySlug": "claude-fable-5-thinking-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=300k,effort=medium]",
+            "legacySlug": "claude-fable-5-thinking-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isDefaultNonMaxConfig": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=300k,effort=high]",
+            "legacySlug": "claude-fable-5-thinking-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=300k,effort=xhigh]",
+            "legacySlug": "claude-fable-5-thinking-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=300k,effort=max]",
+            "legacySlug": "claude-fable-5-thinking-max"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=1m,effort=low]",
+            "legacySlug": "claude-fable-5-thinking-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=1m,effort=medium]",
+            "legacySlug": "claude-fable-5-thinking-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "isDefaultMaxConfig": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=1m,effort=high]",
+            "legacySlug": "claude-fable-5-thinking-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=1m,effort=xhigh]",
+            "legacySlug": "claude-fable-5-thinking-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=1m,effort=max]",
+            "legacySlug": "claude-fable-5-thinking-max"
+          }
+        ],
+        "parameterDefinitions": [
+          {
+            "id": "thinking",
+            "name": "Thinking",
+            "markdownTooltip": "Does the model use thinking to generate its response?",
+            "parameterType": {
+              "booleanParameter": {
+                "values": [
+                  {
+                    "value": "false"
+                  },
+                  {
+                    "value": "true"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "context",
+            "name": "Context",
+            "markdownTooltip": "Context size the model has available.",
+            "parameterType": {
+              "enumParameter": {
+                "values": [
+                  {
+                    "value": "300k",
+                    "displayName": "300K"
+                  },
+                  {
+                    "value": "1m",
+                    "displayName": "1M",
+                    "increasesModelCost": true
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "effort",
+            "name": "Effort",
+            "markdownTooltip": "Effort the model uses to generate its response.",
+            "parameterType": {
+              "enumParameter": {
+                "values": [
+                  {
+                    "value": "low",
+                    "displayName": "Low"
+                  },
+                  {
+                    "value": "medium",
+                    "displayName": "Medium"
+                  },
+                  {
+                    "value": "high",
+                    "displayName": "High"
+                  },
+                  {
+                    "value": "xhigh",
+                    "displayName": "Extra High"
+                  },
+                  {
+                    "value": "max",
+                    "displayName": "Max"
+                  }
+                ]
+              }
+            },
+            "isCycleableByHotkey": true
+          }
+        ]
+      }
+    ],
+    "model_ids": [
+      "default",
+      "grok-4.6",
+      "composer-2.5",
+      "claude-opus-5",
+      "claude-opus-4-8",
+      "gpt-5.6-sol",
+      "gpt-5.5",
+      "claude-fable-5-1",
+      "claude-fable-5",
+      "grok-4.5",
+      "gemini-3.8-flash",
+      "gemini-3.7-flash",
+      "muse-spark-1.3",
+      "gpt-5.6-terra",
+      "claude-sonnet-5",
+      "claude-sonnet-4-6",
+      "gpt-5.3-codex",
+      "claude-opus-4-7",
+      "gpt-5.4",
+      "claude-opus-4-6",
+      "claude-opus-4-5",
+      "gpt-5.2",
+      "gpt-5.6-luna",
+      "gemini-3.6-flash",
+      "gemini-3.1-pro",
+      "gpt-5.4-mini",
+      "gpt-5.4-nano",
+      "claude-haiku-4-5",
+      "claude-sonnet-4-5",
+      "gpt-5.1",
+      "gemini-3-flash",
+      "gemini-3.5-flash",
+      "claude-sonnet-4",
+      "gpt-5-mini",
+      "gemini-2.5-flash",
+      "kimi-k3",
+      "kimi-k2.7-code",
+      "glm-5.2"
+    ],
+    "display_configuration": {
+      "routedModelViewConfig": {
+        "routedModelViewToNamedViewToggle": {
+          "titleMarkdown": "Auto",
+          "subtitle": "Balanced quality and speed, recommended for most tasks",
+          "setToLastNamedModel": true
+        },
+        "hideSearchBar": false
+      },
+      "namedModelsViewConfig": {
+        "namedViewToRoutedModelViewToggle": {
+          "markdown": "Auto"
+        }
+      }
+    }
+  },
+  {
+    "check": "fable_explicit_catalog",
+    "endpoint": "aiserver.v1.AiService/AvailableModels",
+    "http_status": 200,
+    "checked_at_utc": "2026-09-14T13:07:58.514572+00:00",
+    "model_count": 38,
+    "fable_models": [
+      {
+        "name": "claude-fable-5-1",
+        "clientDisplayName": "Claude Fable 5.1",
+        "serverModelName": "claude-fable-5-1",
+        "legacySlugs": [
+          "claude-fable-5-1-low",
+          "claude-fable-5-1-medium",
+          "claude-fable-5-1-high",
+          "claude-fable-5-1-xhigh",
+          "claude-fable-5-1-max",
+          "claude-fable-5-1-thinking-low",
+          "claude-fable-5-1-thinking-medium",
+          "claude-fable-5-1-thinking-high",
+          "claude-fable-5-1-thinking-xhigh",
+          "claude-fable-5-1-thinking-max"
+        ],
+        "variants": [
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=300k,effort=low]",
+            "legacySlug": "claude-fable-5-1-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=300k,effort=medium]",
+            "legacySlug": "claude-fable-5-1-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=300k,effort=high]",
+            "legacySlug": "claude-fable-5-1-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=300k,effort=xhigh]",
+            "legacySlug": "claude-fable-5-1-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=300k,effort=max]",
+            "legacySlug": "claude-fable-5-1-max"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=1m,effort=low]",
+            "legacySlug": "claude-fable-5-1-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=1m,effort=medium]",
+            "legacySlug": "claude-fable-5-1-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=1m,effort=high]",
+            "legacySlug": "claude-fable-5-1-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=1m,effort=xhigh]",
+            "legacySlug": "claude-fable-5-1-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=1m,effort=max]",
+            "legacySlug": "claude-fable-5-1-max"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=300k,effort=low]",
+            "legacySlug": "claude-fable-5-1-thinking-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=300k,effort=medium]",
+            "legacySlug": "claude-fable-5-1-thinking-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isDefaultNonMaxConfig": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=300k,effort=high]",
+            "legacySlug": "claude-fable-5-1-thinking-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=300k,effort=xhigh]",
+            "legacySlug": "claude-fable-5-1-thinking-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=300k,effort=max]",
+            "legacySlug": "claude-fable-5-1-thinking-max"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=1m,effort=low]",
+            "legacySlug": "claude-fable-5-1-thinking-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=1m,effort=medium]",
+            "legacySlug": "claude-fable-5-1-thinking-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "isDefaultMaxConfig": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=1m,effort=high]",
+            "legacySlug": "claude-fable-5-1-thinking-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=1m,effort=xhigh]",
+            "legacySlug": "claude-fable-5-1-thinking-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "claude-fable-5-1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5-1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=1m,effort=max]",
+            "legacySlug": "claude-fable-5-1-thinking-max"
+          }
+        ],
+        "parameterDefinitions": [
+          {
+            "id": "thinking",
+            "name": "Thinking",
+            "markdownTooltip": "Does the model use thinking to generate its response?",
+            "parameterType": {
+              "booleanParameter": {
+                "values": [
+                  {
+                    "value": "false"
+                  },
+                  {
+                    "value": "true"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "context",
+            "name": "Context",
+            "markdownTooltip": "Context size the model has available.",
+            "parameterType": {
+              "enumParameter": {
+                "values": [
+                  {
+                    "value": "300k",
+                    "displayName": "300K"
+                  },
+                  {
+                    "value": "1m",
+                    "displayName": "1M",
+                    "increasesModelCost": true
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "effort",
+            "name": "Effort",
+            "markdownTooltip": "Effort the model uses to generate its response.",
+            "parameterType": {
+              "enumParameter": {
+                "values": [
+                  {
+                    "value": "low",
+                    "displayName": "Low"
+                  },
+                  {
+                    "value": "medium",
+                    "displayName": "Medium"
+                  },
+                  {
+                    "value": "high",
+                    "displayName": "High"
+                  },
+                  {
+                    "value": "xhigh",
+                    "displayName": "Extra High"
+                  },
+                  {
+                    "value": "max",
+                    "displayName": "Max"
+                  }
+                ]
+              }
+            },
+            "isCycleableByHotkey": true
+          }
+        ]
+      },
+      {
+        "name": "claude-fable-5",
+        "clientDisplayName": "Claude Fable 5",
+        "serverModelName": "claude-fable-5",
+        "legacySlugs": [
+          "claude-fable-5-low",
+          "claude-fable-5-medium",
+          "claude-fable-5-high",
+          "claude-fable-5-xhigh",
+          "claude-fable-5-max",
+          "claude-fable-5-thinking-low",
+          "claude-fable-5-thinking-medium",
+          "claude-fable-5-thinking-high",
+          "claude-fable-5-thinking-xhigh",
+          "claude-fable-5-thinking-max"
+        ],
+        "variants": [
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=300k,effort=low]",
+            "legacySlug": "claude-fable-5-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=300k,effort=medium]",
+            "legacySlug": "claude-fable-5-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=300k,effort=high]",
+            "legacySlug": "claude-fable-5-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=300k,effort=xhigh]",
+            "legacySlug": "claude-fable-5-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=300k,effort=max]",
+            "legacySlug": "claude-fable-5-max"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=1m,effort=low]",
+            "legacySlug": "claude-fable-5-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=1m,effort=medium]",
+            "legacySlug": "claude-fable-5-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=1m,effort=high]",
+            "legacySlug": "claude-fable-5-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=1m,effort=xhigh]",
+            "legacySlug": "claude-fable-5-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=false,context=1m,effort=max]",
+            "legacySlug": "claude-fable-5-max"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=300k,effort=low]",
+            "legacySlug": "claude-fable-5-thinking-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=300k,effort=medium]",
+            "legacySlug": "claude-fable-5-thinking-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isDefaultNonMaxConfig": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=300k,effort=high]",
+            "legacySlug": "claude-fable-5-thinking-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=300k,effort=xhigh]",
+            "legacySlug": "claude-fable-5-thinking-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=300k,effort=max]",
+            "legacySlug": "claude-fable-5-thinking-max"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=1m,effort=low]",
+            "legacySlug": "claude-fable-5-thinking-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=1m,effort=medium]",
+            "legacySlug": "claude-fable-5-thinking-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "isDefaultMaxConfig": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=1m,effort=high]",
+            "legacySlug": "claude-fable-5-thinking-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=1m,effort=xhigh]",
+            "legacySlug": "claude-fable-5-thinking-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "claude-fable-5",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5**<br />Earlier Anthropic Fable model, for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "claude-fable-5",
+            "variantStringRepresentation": "claude-fable-5[thinking=true,context=1m,effort=max]",
+            "legacySlug": "claude-fable-5-thinking-max"
+          }
+        ],
+        "parameterDefinitions": [
+          {
+            "id": "thinking",
+            "name": "Thinking",
+            "markdownTooltip": "Does the model use thinking to generate its response?",
+            "parameterType": {
+              "booleanParameter": {
+                "values": [
+                  {
+                    "value": "false"
+                  },
+                  {
+                    "value": "true"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "context",
+            "name": "Context",
+            "markdownTooltip": "Context size the model has available.",
+            "parameterType": {
+              "enumParameter": {
+                "values": [
+                  {
+                    "value": "300k",
+                    "displayName": "300K"
+                  },
+                  {
+                    "value": "1m",
+                    "displayName": "1M",
+                    "increasesModelCost": true
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "effort",
+            "name": "Effort",
+            "markdownTooltip": "Effort the model uses to generate its response.",
+            "parameterType": {
+              "enumParameter": {
+                "values": [
+                  {
+                    "value": "low",
+                    "displayName": "Low"
+                  },
+                  {
+                    "value": "medium",
+                    "displayName": "Medium"
+                  },
+                  {
+                    "value": "high",
+                    "displayName": "High"
+                  },
+                  {
+                    "value": "xhigh",
+                    "displayName": "Extra High"
+                  },
+                  {
+                    "value": "max",
+                    "displayName": "Max"
+                  }
+                ]
+              }
+            },
+            "isCycleableByHotkey": true
+          }
+        ]
+      }
+    ],
+    "model_ids": [
+      "default",
+      "grok-4.6",
+      "composer-2.5",
+      "claude-opus-5",
+      "claude-opus-4-8",
+      "gpt-5.6-sol",
+      "gpt-5.5",
+      "claude-fable-5-1",
+      "claude-fable-5",
+      "grok-4.5",
+      "gemini-3.8-flash",
+      "gemini-3.7-flash",
+      "muse-spark-1.3",
+      "gpt-5.6-terra",
+      "claude-sonnet-5",
+      "claude-sonnet-4-6",
+      "gpt-5.3-codex",
+      "claude-opus-4-7",
+      "gpt-5.4",
+      "claude-opus-4-6",
+      "claude-opus-4-5",
+      "gpt-5.2",
+      "gpt-5.6-luna",
+      "gemini-3.6-flash",
+      "gemini-3.1-pro",
+      "gpt-5.4-mini",
+      "gpt-5.4-nano",
+      "claude-haiku-4-5",
+      "claude-sonnet-4-5",
+      "gpt-5.1",
+      "gemini-3-flash",
+      "gemini-3.5-flash",
+      "claude-sonnet-4",
+      "gpt-5-mini",
+      "gemini-2.5-flash",
+      "kimi-k3",
+      "kimi-k2.7-code",
+      "glm-5.2"
+    ],
+    "display_configuration": {
+      "routedModelViewConfig": {
+        "routedModelViewToNamedViewToggle": {
+          "titleMarkdown": "Auto",
+          "subtitle": "Balanced quality and speed, recommended for most tasks",
+          "setToLastNamedModel": true
+        },
+        "hideSearchBar": false
+      },
+      "namedModelsViewConfig": {
+        "namedViewToRoutedModelViewToggle": {
+          "markdown": "Auto"
+        }
+      }
+    }
+  },
+  {
+    "check": "cli_headers_usable",
+    "endpoint": "agent.v1.AgentService/GetUsableModels",
+    "checked_at_utc": "2026-09-14T13:11:44.000133+00:00",
+    "request_context": {
+      "x-ghost-mode": "true",
+      "x-cursor-client-version": "cli-2026.09.10-fd3934a",
+      "x-cursor-client-type": "cli"
+    },
+    "http_status": 200,
+    "model_count": 223,
+    "model_ids": [
+      "default",
+      "gpt-5.3-codex-low",
+      "gpt-5.3-codex-low-fast",
+      "gpt-5.3-codex",
+      "gpt-5.3-codex-fast",
+      "gpt-5.3-codex-high",
+      "gpt-5.3-codex-high-fast",
+      "gpt-5.3-codex-xhigh",
+      "gpt-5.3-codex-xhigh-fast",
+      "gpt-5.2",
+      "cursor-grok-4.6-high-fast",
+      "composer-2.5",
+      "claude-opus-5-thinking-high",
+      "claude-opus-5-thinking-high-fast",
+      "gpt-5.6-sol-high",
+      "gpt-5.6-sol-high-fast",
+      "gpt-5.6-sol-xhigh",
+      "gpt-5.6-sol-xhigh-fast",
+      "claude-fable-5-thinking-high",
+      "claude-fable-5-thinking-xhigh",
+      "cursor-grok-4.5-high",
+      "cursor-grok-4.5-high-fast",
+      "gemini-3.7-flash-high",
+      "claude-sonnet-5-thinking-high",
+      "claude-sonnet-5-thinking-xhigh",
+      "gpt-5.6-luna-high",
+      "cursor-grok-4.6-low",
+      "cursor-grok-4.6-low-fast",
+      "cursor-grok-4.6-medium",
+      "cursor-grok-4.6-medium-fast",
+      "cursor-grok-4.6-high",
+      "cursor-grok-4.6-xhigh",
+      "cursor-grok-4.6-xhigh-fast",
+      "composer-2.5-fast",
+      "claude-opus-5-low",
+      "claude-opus-5-low-fast",
+      "claude-opus-5-medium",
+      "claude-opus-5-medium-fast",
+      "claude-opus-5-high",
+      "claude-opus-5-high-fast",
+      "claude-opus-5-thinking-low",
+      "claude-opus-5-thinking-low-fast",
+      "claude-opus-5-thinking-medium",
+      "claude-opus-5-thinking-medium-fast",
+      "claude-opus-5-thinking-xhigh",
+      "claude-opus-5-thinking-xhigh-fast",
+      "claude-opus-5-thinking-max",
+      "claude-opus-5-thinking-max-fast",
+      "claude-opus-4-8-low",
+      "claude-opus-4-8-low-fast",
+      "claude-opus-4-8-medium",
+      "claude-opus-4-8-medium-fast",
+      "claude-opus-4-8-high",
+      "claude-opus-4-8-high-fast",
+      "claude-opus-4-8-xhigh",
+      "claude-opus-4-8-xhigh-fast",
+      "claude-opus-4-8-max",
+      "claude-opus-4-8-max-fast",
+      "claude-opus-4-8-thinking-low",
+      "claude-opus-4-8-thinking-low-fast",
+      "claude-opus-4-8-thinking-medium",
+      "claude-opus-4-8-thinking-medium-fast",
+      "claude-opus-4-8-thinking-high",
+      "claude-opus-4-8-thinking-high-fast",
+      "claude-opus-4-8-thinking-xhigh",
+      "claude-opus-4-8-thinking-xhigh-fast",
+      "claude-opus-4-8-thinking-max",
+      "claude-opus-4-8-thinking-max-fast",
+      "gpt-5.6-sol-none",
+      "gpt-5.6-sol-none-fast",
+      "gpt-5.6-sol-low",
+      "gpt-5.6-sol-low-fast",
+      "gpt-5.6-sol-medium",
+      "gpt-5.6-sol-medium-fast",
+      "gpt-5.6-sol-max",
+      "gpt-5.6-sol-max-fast",
+      "gpt-5.5-none",
+      "gpt-5.5-none-fast",
+      "gpt-5.5-low",
+      "gpt-5.5-low-fast",
+      "gpt-5.5-medium",
+      "gpt-5.5-medium-fast",
+      "gpt-5.5-high",
+      "gpt-5.5-high-fast",
+      "gpt-5.5-extra-high",
+      "gpt-5.5-extra-high-fast",
+      "claude-fable-5-1-low",
+      "claude-fable-5-1-medium",
+      "claude-fable-5-1-high",
+      "claude-fable-5-1-xhigh",
+      "claude-fable-5-1-max",
+      "claude-fable-5-1-thinking-low",
+      "claude-fable-5-1-thinking-medium",
+      "claude-fable-5-1-thinking-high",
+      "claude-fable-5-1-thinking-xhigh",
+      "claude-fable-5-1-thinking-max",
+      "claude-fable-5-low",
+      "claude-fable-5-medium",
+      "claude-fable-5-high",
+      "claude-fable-5-xhigh",
+      "claude-fable-5-max",
+      "claude-fable-5-thinking-low",
+      "claude-fable-5-thinking-medium",
+      "claude-fable-5-thinking-max",
+      "cursor-grok-4.5-low",
+      "cursor-grok-4.5-low-fast",
+      "cursor-grok-4.5-medium",
+      "cursor-grok-4.5-medium-fast",
+      "gemini-3.8-flash-low",
+      "gemini-3.8-flash-medium",
+      "gemini-3.8-flash-high",
+      "gemini-3.7-flash-low",
+      "gemini-3.7-flash-medium",
+      "muse-spark-1.3-minimal",
+      "muse-spark-1.3-low",
+      "muse-spark-1.3-medium",
+      "muse-spark-1.3-high",
+      "muse-spark-1.3-xhigh",
+      "muse-spark-1.3-max",
+      "gpt-5.6-terra-none",
+      "gpt-5.6-terra-none-fast",
+      "gpt-5.6-terra-low",
+      "gpt-5.6-terra-low-fast",
+      "gpt-5.6-terra-medium",
+      "gpt-5.6-terra-medium-fast",
+      "gpt-5.6-terra-high",
+      "gpt-5.6-terra-high-fast",
+      "gpt-5.6-terra-xhigh",
+      "gpt-5.6-terra-xhigh-fast",
+      "gpt-5.6-terra-max",
+      "gpt-5.6-terra-max-fast",
+      "claude-sonnet-5-low",
+      "claude-sonnet-5-medium",
+      "claude-sonnet-5-high",
+      "claude-sonnet-5-xhigh",
+      "claude-sonnet-5-max",
+      "claude-sonnet-5-thinking-low",
+      "claude-sonnet-5-thinking-medium",
+      "claude-sonnet-5-thinking-max",
+      "claude-4.6-sonnet-medium",
+      "claude-4.6-sonnet-medium-thinking",
+      "claude-opus-4-7-low",
+      "claude-opus-4-7-low-fast",
+      "claude-opus-4-7-medium",
+      "claude-opus-4-7-medium-fast",
+      "claude-opus-4-7-high",
+      "claude-opus-4-7-high-fast",
+      "claude-opus-4-7-xhigh",
+      "claude-opus-4-7-xhigh-fast",
+      "claude-opus-4-7-max",
+      "claude-opus-4-7-max-fast",
+      "claude-opus-4-7-thinking-low",
+      "claude-opus-4-7-thinking-low-fast",
+      "claude-opus-4-7-thinking-medium",
+      "claude-opus-4-7-thinking-medium-fast",
+      "claude-opus-4-7-thinking-high",
+      "claude-opus-4-7-thinking-high-fast",
+      "claude-opus-4-7-thinking-xhigh",
+      "claude-opus-4-7-thinking-xhigh-fast",
+      "claude-opus-4-7-thinking-max",
+      "claude-opus-4-7-thinking-max-fast",
+      "gpt-5.4-low",
+      "gpt-5.4-medium",
+      "gpt-5.4-medium-fast",
+      "gpt-5.4-high",
+      "gpt-5.4-high-fast",
+      "gpt-5.4-xhigh",
+      "gpt-5.4-xhigh-fast",
+      "claude-4.6-opus-high",
+      "claude-4.6-opus-max",
+      "claude-4.6-opus-high-thinking",
+      "claude-4.6-opus-max-thinking",
+      "claude-4.5-opus-high",
+      "claude-4.5-opus-high-thinking",
+      "gpt-5.2-low",
+      "gpt-5.2-low-fast",
+      "gpt-5.2-fast",
+      "gpt-5.2-high",
+      "gpt-5.2-high-fast",
+      "gpt-5.2-xhigh",
+      "gpt-5.2-xhigh-fast",
+      "gpt-5.6-luna-none",
+      "gpt-5.6-luna-none-fast",
+      "gpt-5.6-luna-low",
+      "gpt-5.6-luna-low-fast",
+      "gpt-5.6-luna-medium",
+      "gpt-5.6-luna-medium-fast",
+      "gpt-5.6-luna-high-fast",
+      "gpt-5.6-luna-xhigh",
+      "gpt-5.6-luna-xhigh-fast",
+      "gpt-5.6-luna-max",
+      "gpt-5.6-luna-max-fast",
+      "gemini-3.6-flash-minimal",
+      "gemini-3.6-flash-low",
+      "gemini-3.6-flash-medium",
+      "gemini-3.6-flash-high",
+      "gemini-3.1-pro",
+      "gpt-5.4-mini-none",
+      "gpt-5.4-mini-low",
+      "gpt-5.4-mini-medium",
+      "gpt-5.4-mini-high",
+      "gpt-5.4-mini-xhigh",
+      "gpt-5.4-nano-none",
+      "gpt-5.4-nano-low",
+      "gpt-5.4-nano-medium",
+      "gpt-5.4-nano-high",
+      "gpt-5.4-nano-xhigh",
+      "claude-4.5-sonnet",
+      "claude-4.5-sonnet-thinking",
+      "gpt-5.1-low",
+      "gpt-5.1",
+      "gpt-5.1-high",
+      "gemini-3-flash",
+      "gemini-3.5-flash",
+      "claude-4-sonnet",
+      "claude-4-sonnet-thinking",
+      "gpt-5-mini",
+      "kimi-k3-low",
+      "kimi-k3-high",
+      "kimi-k3-max",
+      "kimi-k2.7-code",
+      "glm-5.2-high",
+      "glm-5.2-max"
+    ],
+    "fable_models": [
+      {
+        "modelId": "claude-fable-5-1-low",
+        "displayModelId": "claude-fable-5-1-low",
+        "displayName": "Claude Fable 5.1 1M Low (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M Low",
+        "maxMode": false
+      },
+      {
+        "modelId": "claude-fable-5-1-medium",
+        "displayModelId": "claude-fable-5-1-medium",
+        "displayName": "Claude Fable 5.1 1M Medium (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M Medium",
+        "maxMode": false
+      },
+      {
+        "modelId": "claude-fable-5-1-high",
+        "displayModelId": "claude-fable-5-1-high",
+        "displayName": "Claude Fable 5.1 1M (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M",
+        "maxMode": false
+      },
+      {
+        "modelId": "claude-fable-5-1-xhigh",
+        "displayModelId": "claude-fable-5-1-xhigh",
+        "displayName": "Claude Fable 5.1 1M Extra High (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M Extra High",
+        "maxMode": false
+      },
+      {
+        "modelId": "claude-fable-5-1-max",
+        "displayModelId": "claude-fable-5-1-max",
+        "displayName": "Claude Fable 5.1 1M Max (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M Max",
+        "maxMode": false
+      },
+      {
+        "modelId": "claude-fable-5-1-thinking-low",
+        "displayModelId": "claude-fable-5-1-thinking-low",
+        "displayName": "Claude Fable 5.1 1M Low Thinking (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M Low Thinking",
+        "maxMode": false
+      },
+      {
+        "modelId": "claude-fable-5-1-thinking-medium",
+        "displayModelId": "claude-fable-5-1-thinking-medium",
+        "displayName": "Claude Fable 5.1 1M Medium Thinking (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M Medium Thinking",
+        "maxMode": false
+      },
+      {
+        "modelId": "claude-fable-5-1-thinking-high",
+        "displayModelId": "claude-fable-5-1-thinking-high",
+        "displayName": "Claude Fable 5.1 1M Thinking (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M Thinking",
+        "maxMode": false
+      },
+      {
+        "modelId": "claude-fable-5-1-thinking-xhigh",
+        "displayModelId": "claude-fable-5-1-thinking-xhigh",
+        "displayName": "Claude Fable 5.1 1M Extra High Thinking (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M Extra High Thinking",
+        "maxMode": false
+      },
+      {
+        "modelId": "claude-fable-5-1-thinking-max",
+        "displayModelId": "claude-fable-5-1-thinking-max",
+        "displayName": "Claude Fable 5.1 1M Max Thinking (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M Max Thinking",
+        "maxMode": false
+      }
+    ],
+    "display_configuration": {},
+    "response_top_level_keys": [
+      "models"
+    ]
+  },
+  {
+    "check": "cli_headers_available",
+    "endpoint": "aiserver.v1.AiService/AvailableModels",
+    "checked_at_utc": "2026-09-14T13:11:46.024406+00:00",
+    "request_context": {
+      "x-ghost-mode": "true",
+      "x-cursor-client-version": "cli-2026.09.10-fd3934a",
+      "x-cursor-client-type": "cli"
+    },
+    "http_status": 200,
+    "model_count": 38,
+    "model_ids": [
+      "default",
+      "grok-4.6",
+      "composer-2.5",
+      "claude-opus-5",
+      "claude-opus-4-8",
+      "gpt-5.6-sol",
+      "gpt-5.5",
+      "claude-fable-5-1",
+      "claude-fable-5",
+      "grok-4.5",
+      "gemini-3.8-flash",
+      "gemini-3.7-flash",
+      "muse-spark-1.3",
+      "gpt-5.6-terra",
+      "claude-sonnet-5",
+      "claude-sonnet-4-6",
+      "gpt-5.3-codex",
+      "claude-opus-4-7",
+      "gpt-5.4",
+      "claude-opus-4-6",
+      "claude-opus-4-5",
+      "gpt-5.2",
+      "gpt-5.6-luna",
+      "gemini-3.6-flash",
+      "gemini-3.1-pro",
+      "gpt-5.4-mini",
+      "gpt-5.4-nano",
+      "claude-haiku-4-5",
+      "claude-sonnet-4-5",
+      "gpt-5.1",
+      "gemini-3-flash",
+      "gemini-3.5-flash",
+      "claude-sonnet-4",
+      "gpt-5-mini",
+      "gemini-2.5-flash",
+      "kimi-k3",
+      "kimi-k2.7-code",
+      "glm-5.2"
+    ],
+    "fable_models": [
+      {
+        "name": "claude-fable-5-1",
+        "defaultOn": true,
+        "supportsAgent": true,
+        "degradationStatus": "DEGRADATION_STATUS_UNSPECIFIED",
+        "tooltipData": {
+          "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: high effort*"
+        },
+        "supportsThinking": true,
+        "supportsImages": true,
+        "supportsMaxMode": true,
+        "contextTokenLimit": 300000,
+        "contextTokenLimitForMaxMode": 1000000,
+        "clientDisplayName": "Claude Fable 5.1",
+        "serverModelName": "claude-fable-5-1",
+        "supportsNonMaxMode": true,
+        "tooltipDataForMaxMode": {
+          "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: high effort*"
+        },
+        "isRecommendedForBackgroundComposer": false,
+        "supportsPlanMode": true,
+        "inputboxShortModelName": "Claude Fable 5.1",
+        "supportsSandboxing": true,
+        "supportsCmdK": false,
+        "parameterDefinitions": [
+          {
+            "id": "thinking",
+            "name": "Thinking",
+            "markdownTooltip": "Does the model use thinking to generate its response?",
+            "parameterType": {
+              "booleanParameter": {
+                "values": [
+                  {
+                    "value": "false"
+                  },
+                  {
+                    "value": "true"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "context",
+            "name": "Context",
+            "markdownTooltip": "Context size the model has available.",
+            "parameterType": {
+              "enumParameter": {
+                "values": [
+                  {
+                    "value": "300k",
+                    "displayName": "300K"
+                  },
+                  {
+                    "value": "1m",
+                    "displayName": "1M",
+                    "increasesModelCost": true
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "id": "effort",
+            "name": "Effort",
+            "markdownTooltip": "Effort the model uses to generate its response.",
+            "parameterType": {
+              "enumParameter": {
+                "values": [
+                  {
+                    "value": "low",
+                    "displayName": "Low"
+                  },
+                  {
+                    "value": "medium",
+                    "displayName": "Medium"
+                  },
+                  {
+                    "value": "high",
+                    "displayName": "High"
+                  },
+                  {
+                    "value": "xhigh",
+                    "displayName": "Extra High"
+                  },
+                  {
+                    "value": "max",
+                    "displayName": "Max"
+                  }
+                ]
+              }
+            },
+            "isCycleableByHotkey": true
+          }
+        ],
+        "variants": [
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=300k,effort=low]",
+            "legacySlug": "claude-fable-5-1-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=300k,effort=medium]",
+            "legacySlug": "claude-fable-5-1-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=300k,effort=high]",
+            "legacySlug": "claude-fable-5-1-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=300k,effort=xhigh]",
+            "legacySlug": "claude-fable-5-1-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=300k,effort=max]",
+            "legacySlug": "claude-fable-5-1-max"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=1m,effort=low]",
+            "legacySlug": "claude-fable-5-1-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=1m,effort=medium]",
+            "legacySlug": "claude-fable-5-1-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=1m,effort=high]",
+            "legacySlug": "claude-fable-5-1-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=1m,effort=xhigh]",
+            "legacySlug": "claude-fable-5-1-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "false"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=false,context=1m,effort=max]",
+            "legacySlug": "claude-fable-5-1-max"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=300k,effort=low]",
+            "legacySlug": "claude-fable-5-1-thinking-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=300k,effort=medium]",
+            "legacySlug": "claude-fable-5-1-thinking-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "isDefaultNonMaxConfig": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=300k,effort=high]",
+            "legacySlug": "claude-fable-5-1-thinking-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=300k,effort=xhigh]",
+            "legacySlug": "claude-fable-5-1-thinking-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "300k"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />300k context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=300k,effort=max]",
+            "legacySlug": "claude-fable-5-1-thinking-max"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "low"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: low effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=1m,effort=low]",
+            "legacySlug": "claude-fable-5-1-thinking-low"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "medium"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: medium effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=1m,effort=medium]",
+            "legacySlug": "claude-fable-5-1-thinking-medium"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "high"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "isMaxMode": true,
+            "isDefaultMaxConfig": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: high effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=1m,effort=high]",
+            "legacySlug": "claude-fable-5-1-thinking-high"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "xhigh"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: extra high effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=1m,effort=xhigh]",
+            "legacySlug": "claude-fable-5-1-thinking-xhigh"
+          },
+          {
+            "parameterValues": [
+              {
+                "id": "thinking",
+                "value": "true"
+              },
+              {
+                "id": "context",
+                "value": "1m"
+              },
+              {
+                "id": "effort",
+                "value": "max"
+              }
+            ],
+            "displayName": "Claude Fable 5.1",
+            "isMaxMode": true,
+            "tooltipData": {
+              "markdownContent": "**Claude Fable 5.1**<br />Anthropic's most powerful model, great for difficult tasks.<br /><br />1M context window<br /><br /><span style=\"color:var(--vscode-editorWarning-foreground);\">This model has special data retention policies. [Learn more](https://cursor.com/docs/models/claude-fable-5-1)</span><br /><br />*Version: max effort*"
+            },
+            "displayNameOutsidePicker": "Claude Fable 5.1",
+            "variantStringRepresentation": "claude-fable-5-1[thinking=true,context=1m,effort=max]",
+            "legacySlug": "claude-fable-5-1-thinking-max"
+          }
+        ],
+        "legacySlugs": [
+          "claude-fable-5-1-low",
+          "claude-fable-5-1-medium",
+          "claude-fable-5-1-high",
+          "claude-fable-5-1-xhigh",
+          "claude-fable-5-1-max",
+          "claude-fable-5-1-thinking-low",
+          "claude-fable-5-1-thinking-medium",
+          "claude-fable-5-1-thinking-high",
+          "claude-fable-5-1-thinking-xhigh",
+          "claude-fable-5-1-thinking-max"
+        ],
+        "idAliases": [
+          "fable-5-1"
+        ],
+        "namedModelSectionIndex": 1,
+        "vendorName": "anthropic",
+        "vendor": {
+          "id": "MODEL_VENDOR_ID_ANTHROPIC",
+          "displayName": "Anthropic"
+        },
+        "requiresDataRetention": true
+      }
+    ],
+    "display_configuration": {
+      "routedModelViewConfig": {
+        "routedModelViewToNamedViewToggle": {
+          "titleMarkdown": "Auto",
+          "subtitle": "Balanced quality and speed, recommended for most tasks",
+          "setToLastNamedModel": true
+        },
+        "hideSearchBar": false
+      },
+      "namedModelsViewConfig": {
+        "namedViewToRoutedModelViewToggle": {
+          "markdown": "Auto"
+        }
+      }
+    },
+    "response_top_level_keys": [
+      "models",
+      "composerModelConfig",
+      "cmdKModelConfig",
+      "backgroundComposerModelConfig",
+      "planExecutionModelConfig",
+      "specModelConfig",
+      "deepSearchModelConfig",
+      "quickAgentModelConfig",
+      "useModelParameters",
+      "disableUnusedModelsAfterNHours",
+      "upgradeUnchangedModelsAfterNHours",
+      "displayConfiguration",
+      "subagentModelConfigs"
+    ]
+  },
+  {
+    "check": "actual_cli_aiservice_usable",
+    "endpoint": "aiserver.v1.AiService/GetUsableModels",
+    "checked_at_utc": "2026-09-14T13:12:48.876785+00:00",
+    "request_context": {
+      "x-ghost-mode": "true",
+      "x-cursor-client-version": "cli-2026.09.10-fd3934a",
+      "x-cursor-client-type": "cli"
+    },
+    "http_status": 200,
+    "model_count": 223,
+    "model_ids": [
+      "default",
+      "gpt-5.3-codex-low",
+      "gpt-5.3-codex-low-fast",
+      "gpt-5.3-codex",
+      "gpt-5.3-codex-fast",
+      "gpt-5.3-codex-high",
+      "gpt-5.3-codex-high-fast",
+      "gpt-5.3-codex-xhigh",
+      "gpt-5.3-codex-xhigh-fast",
+      "gpt-5.2",
+      "cursor-grok-4.6-high-fast",
+      "composer-2.5",
+      "claude-opus-5-thinking-high",
+      "claude-opus-5-thinking-high-fast",
+      "gpt-5.6-sol-high",
+      "gpt-5.6-sol-high-fast",
+      "gpt-5.6-sol-xhigh",
+      "gpt-5.6-sol-xhigh-fast",
+      "claude-fable-5-thinking-high",
+      "claude-fable-5-thinking-xhigh",
+      "cursor-grok-4.5-high",
+      "cursor-grok-4.5-high-fast",
+      "gemini-3.7-flash-high",
+      "claude-sonnet-5-thinking-high",
+      "claude-sonnet-5-thinking-xhigh",
+      "gpt-5.6-luna-high",
+      "cursor-grok-4.6-low",
+      "cursor-grok-4.6-low-fast",
+      "cursor-grok-4.6-medium",
+      "cursor-grok-4.6-medium-fast",
+      "cursor-grok-4.6-high",
+      "cursor-grok-4.6-xhigh",
+      "cursor-grok-4.6-xhigh-fast",
+      "composer-2.5-fast",
+      "claude-opus-5-low",
+      "claude-opus-5-low-fast",
+      "claude-opus-5-medium",
+      "claude-opus-5-medium-fast",
+      "claude-opus-5-high",
+      "claude-opus-5-high-fast",
+      "claude-opus-5-thinking-low",
+      "claude-opus-5-thinking-low-fast",
+      "claude-opus-5-thinking-medium",
+      "claude-opus-5-thinking-medium-fast",
+      "claude-opus-5-thinking-xhigh",
+      "claude-opus-5-thinking-xhigh-fast",
+      "claude-opus-5-thinking-max",
+      "claude-opus-5-thinking-max-fast",
+      "claude-opus-4-8-low",
+      "claude-opus-4-8-low-fast",
+      "claude-opus-4-8-medium",
+      "claude-opus-4-8-medium-fast",
+      "claude-opus-4-8-high",
+      "claude-opus-4-8-high-fast",
+      "claude-opus-4-8-xhigh",
+      "claude-opus-4-8-xhigh-fast",
+      "claude-opus-4-8-max",
+      "claude-opus-4-8-max-fast",
+      "claude-opus-4-8-thinking-low",
+      "claude-opus-4-8-thinking-low-fast",
+      "claude-opus-4-8-thinking-medium",
+      "claude-opus-4-8-thinking-medium-fast",
+      "claude-opus-4-8-thinking-high",
+      "claude-opus-4-8-thinking-high-fast",
+      "claude-opus-4-8-thinking-xhigh",
+      "claude-opus-4-8-thinking-xhigh-fast",
+      "claude-opus-4-8-thinking-max",
+      "claude-opus-4-8-thinking-max-fast",
+      "gpt-5.6-sol-none",
+      "gpt-5.6-sol-none-fast",
+      "gpt-5.6-sol-low",
+      "gpt-5.6-sol-low-fast",
+      "gpt-5.6-sol-medium",
+      "gpt-5.6-sol-medium-fast",
+      "gpt-5.6-sol-max",
+      "gpt-5.6-sol-max-fast",
+      "gpt-5.5-none",
+      "gpt-5.5-none-fast",
+      "gpt-5.5-low",
+      "gpt-5.5-low-fast",
+      "gpt-5.5-medium",
+      "gpt-5.5-medium-fast",
+      "gpt-5.5-high",
+      "gpt-5.5-high-fast",
+      "gpt-5.5-extra-high",
+      "gpt-5.5-extra-high-fast",
+      "claude-fable-5-1-low",
+      "claude-fable-5-1-medium",
+      "claude-fable-5-1-high",
+      "claude-fable-5-1-xhigh",
+      "claude-fable-5-1-max",
+      "claude-fable-5-1-thinking-low",
+      "claude-fable-5-1-thinking-medium",
+      "claude-fable-5-1-thinking-high",
+      "claude-fable-5-1-thinking-xhigh",
+      "claude-fable-5-1-thinking-max",
+      "claude-fable-5-low",
+      "claude-fable-5-medium",
+      "claude-fable-5-high",
+      "claude-fable-5-xhigh",
+      "claude-fable-5-max",
+      "claude-fable-5-thinking-low",
+      "claude-fable-5-thinking-medium",
+      "claude-fable-5-thinking-max",
+      "cursor-grok-4.5-low",
+      "cursor-grok-4.5-low-fast",
+      "cursor-grok-4.5-medium",
+      "cursor-grok-4.5-medium-fast",
+      "gemini-3.8-flash-low",
+      "gemini-3.8-flash-medium",
+      "gemini-3.8-flash-high",
+      "gemini-3.7-flash-low",
+      "gemini-3.7-flash-medium",
+      "muse-spark-1.3-minimal",
+      "muse-spark-1.3-low",
+      "muse-spark-1.3-medium",
+      "muse-spark-1.3-high",
+      "muse-spark-1.3-xhigh",
+      "muse-spark-1.3-max",
+      "gpt-5.6-terra-none",
+      "gpt-5.6-terra-none-fast",
+      "gpt-5.6-terra-low",
+      "gpt-5.6-terra-low-fast",
+      "gpt-5.6-terra-medium",
+      "gpt-5.6-terra-medium-fast",
+      "gpt-5.6-terra-high",
+      "gpt-5.6-terra-high-fast",
+      "gpt-5.6-terra-xhigh",
+      "gpt-5.6-terra-xhigh-fast",
+      "gpt-5.6-terra-max",
+      "gpt-5.6-terra-max-fast",
+      "claude-sonnet-5-low",
+      "claude-sonnet-5-medium",
+      "claude-sonnet-5-high",
+      "claude-sonnet-5-xhigh",
+      "claude-sonnet-5-max",
+      "claude-sonnet-5-thinking-low",
+      "claude-sonnet-5-thinking-medium",
+      "claude-sonnet-5-thinking-max",
+      "claude-4.6-sonnet-medium",
+      "claude-4.6-sonnet-medium-thinking",
+      "claude-opus-4-7-low",
+      "claude-opus-4-7-low-fast",
+      "claude-opus-4-7-medium",
+      "claude-opus-4-7-medium-fast",
+      "claude-opus-4-7-high",
+      "claude-opus-4-7-high-fast",
+      "claude-opus-4-7-xhigh",
+      "claude-opus-4-7-xhigh-fast",
+      "claude-opus-4-7-max",
+      "claude-opus-4-7-max-fast",
+      "claude-opus-4-7-thinking-low",
+      "claude-opus-4-7-thinking-low-fast",
+      "claude-opus-4-7-thinking-medium",
+      "claude-opus-4-7-thinking-medium-fast",
+      "claude-opus-4-7-thinking-high",
+      "claude-opus-4-7-thinking-high-fast",
+      "claude-opus-4-7-thinking-xhigh",
+      "claude-opus-4-7-thinking-xhigh-fast",
+      "claude-opus-4-7-thinking-max",
+      "claude-opus-4-7-thinking-max-fast",
+      "gpt-5.4-low",
+      "gpt-5.4-medium",
+      "gpt-5.4-medium-fast",
+      "gpt-5.4-high",
+      "gpt-5.4-high-fast",
+      "gpt-5.4-xhigh",
+      "gpt-5.4-xhigh-fast",
+      "claude-4.6-opus-high",
+      "claude-4.6-opus-max",
+      "claude-4.6-opus-high-thinking",
+      "claude-4.6-opus-max-thinking",
+      "claude-4.5-opus-high",
+      "claude-4.5-opus-high-thinking",
+      "gpt-5.2-low",
+      "gpt-5.2-low-fast",
+      "gpt-5.2-fast",
+      "gpt-5.2-high",
+      "gpt-5.2-high-fast",
+      "gpt-5.2-xhigh",
+      "gpt-5.2-xhigh-fast",
+      "gpt-5.6-luna-none",
+      "gpt-5.6-luna-none-fast",
+      "gpt-5.6-luna-low",
+      "gpt-5.6-luna-low-fast",
+      "gpt-5.6-luna-medium",
+      "gpt-5.6-luna-medium-fast",
+      "gpt-5.6-luna-high-fast",
+      "gpt-5.6-luna-xhigh",
+      "gpt-5.6-luna-xhigh-fast",
+      "gpt-5.6-luna-max",
+      "gpt-5.6-luna-max-fast",
+      "gemini-3.6-flash-minimal",
+      "gemini-3.6-flash-low",
+      "gemini-3.6-flash-medium",
+      "gemini-3.6-flash-high",
+      "gemini-3.1-pro",
+      "gpt-5.4-mini-none",
+      "gpt-5.4-mini-low",
+      "gpt-5.4-mini-medium",
+      "gpt-5.4-mini-high",
+      "gpt-5.4-mini-xhigh",
+      "gpt-5.4-nano-none",
+      "gpt-5.4-nano-low",
+      "gpt-5.4-nano-medium",
+      "gpt-5.4-nano-high",
+      "gpt-5.4-nano-xhigh",
+      "claude-4.5-sonnet",
+      "claude-4.5-sonnet-thinking",
+      "gpt-5.1-low",
+      "gpt-5.1",
+      "gpt-5.1-high",
+      "gemini-3-flash",
+      "gemini-3.5-flash",
+      "claude-4-sonnet",
+      "claude-4-sonnet-thinking",
+      "gpt-5-mini",
+      "kimi-k3-low",
+      "kimi-k3-high",
+      "kimi-k3-max",
+      "kimi-k2.7-code",
+      "glm-5.2-high",
+      "glm-5.2-max"
+    ],
+    "fable_models": [
+      {
+        "modelId": "claude-fable-5-1-low",
+        "displayModelId": "claude-fable-5-1-low",
+        "displayName": "Claude Fable 5.1 1M Low (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M Low",
+        "maxMode": false
+      },
+      {
+        "modelId": "claude-fable-5-1-medium",
+        "displayModelId": "claude-fable-5-1-medium",
+        "displayName": "Claude Fable 5.1 1M Medium (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M Medium",
+        "maxMode": false
+      },
+      {
+        "modelId": "claude-fable-5-1-high",
+        "displayModelId": "claude-fable-5-1-high",
+        "displayName": "Claude Fable 5.1 1M (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M",
+        "maxMode": false
+      },
+      {
+        "modelId": "claude-fable-5-1-xhigh",
+        "displayModelId": "claude-fable-5-1-xhigh",
+        "displayName": "Claude Fable 5.1 1M Extra High (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M Extra High",
+        "maxMode": false
+      },
+      {
+        "modelId": "claude-fable-5-1-max",
+        "displayModelId": "claude-fable-5-1-max",
+        "displayName": "Claude Fable 5.1 1M Max (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M Max",
+        "maxMode": false
+      },
+      {
+        "modelId": "claude-fable-5-1-thinking-low",
+        "displayModelId": "claude-fable-5-1-thinking-low",
+        "displayName": "Claude Fable 5.1 1M Low Thinking (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M Low Thinking",
+        "maxMode": false
+      },
+      {
+        "modelId": "claude-fable-5-1-thinking-medium",
+        "displayModelId": "claude-fable-5-1-thinking-medium",
+        "displayName": "Claude Fable 5.1 1M Medium Thinking (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M Medium Thinking",
+        "maxMode": false
+      },
+      {
+        "modelId": "claude-fable-5-1-thinking-high",
+        "displayModelId": "claude-fable-5-1-thinking-high",
+        "displayName": "Claude Fable 5.1 1M Thinking (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M Thinking",
+        "maxMode": false
+      },
+      {
+        "modelId": "claude-fable-5-1-thinking-xhigh",
+        "displayModelId": "claude-fable-5-1-thinking-xhigh",
+        "displayName": "Claude Fable 5.1 1M Extra High Thinking (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M Extra High Thinking",
+        "maxMode": false
+      },
+      {
+        "modelId": "claude-fable-5-1-thinking-max",
+        "displayModelId": "claude-fable-5-1-thinking-max",
+        "displayName": "Claude Fable 5.1 1M Max Thinking (NO ZDR)",
+        "displayNameShort": "Claude Fable 5.1 1M Max Thinking",
+        "maxMode": false
+      }
+    ],
+    "display_configuration": {},
+    "response_top_level_keys": [
+      "models"
+    ]
+  },
+  {
+    "check": "actual_cli_privacy_read",
+    "endpoint": "aiserver.v1.DashboardService/GetUserPrivacyMode",
+    "checked_at_utc": "2026-09-14T13:12:50.777258+00:00",
+    "request_context": {
+      "x-ghost-mode": "true",
+      "x-cursor-client-version": "cli-2026.09.10-fd3934a",
+      "x-cursor-client-type": "cli"
+    },
+    "http_status": 200,
+    "privacy_mode": "PRIVACY_MODE_NO_TRAINING"
+  },
+  {
+    "check": "native_https_usable",
+    "endpoint": "aiserver.v1.AiService/GetUsableModels",
+    "checked_at_utc": "2026-09-14T13:13:54.266Z",
+    "request_context": {
+      "x-ghost-mode": "true",
+      "x-cursor-client-version": "cli-2026.09.10-fd3934a",
+      "x-cursor-client-type": "cli"
+    },
+    "http_status": 200,
+    "model_count": 23,
+    "model_ids": [
+      "default",
+      "cursor-grok-4.6-high-fast",
+      "composer-2.5",
+      "cursor-grok-4.5-high",
+      "cursor-grok-4.5-high-fast",
+      "cursor-grok-4.6-low",
+      "cursor-grok-4.6-low-fast",
+      "cursor-grok-4.6-medium",
+      "cursor-grok-4.6-medium-fast",
+      "cursor-grok-4.6-high",
+      "cursor-grok-4.6-xhigh",
+      "cursor-grok-4.6-xhigh-fast",
+      "composer-2.5-fast",
+      "cursor-grok-4.5-low",
+      "cursor-grok-4.5-low-fast",
+      "cursor-grok-4.5-medium",
+      "cursor-grok-4.5-medium-fast",
+      "kimi-k3-low",
+      "kimi-k3-high",
+      "kimi-k3-max",
+      "kimi-k2.7-code",
+      "glm-5.2-high",
+      "glm-5.2-max"
+    ],
+    "fable_models": [],
+    "display_configuration": {}
+  },
+  {
+    "check": "native_https_available",
+    "endpoint": "aiserver.v1.AiService/AvailableModels",
+    "checked_at_utc": "2026-09-14T13:13:55.448Z",
+    "request_context": {
+      "x-ghost-mode": "true",
+      "x-cursor-client-version": "cli-2026.09.10-fd3934a",
+      "x-cursor-client-type": "cli"
+    },
+    "http_status": 200,
+    "model_count": 7,
+    "model_ids": [
+      "default",
+      "grok-4.6",
+      "composer-2.5",
+      "grok-4.5",
+      "kimi-k3",
+      "kimi-k2.7-code",
+      "glm-5.2"
+    ],
+    "fable_models": [],
+    "display_configuration": {
+      "routedModelViewConfig": {
+        "routedModelViewToNamedViewToggle": {
+          "titleMarkdown": "Auto",
+          "subtitle": "Balanced quality and speed, recommended for most tasks",
+          "setToLastNamedModel": true
+        },
+        "hideSearchBar": false
+      },
+      "namedModelsViewConfig": {
+        "namedViewToRoutedModelViewToggle": {
+          "markdown": "Auto"
+        }
+      }
+    }
+  }
+]

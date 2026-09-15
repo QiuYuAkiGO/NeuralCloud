@@ -1,0 +1,88 @@
+{
+  "recorded_at": "2026-09-15T07:51:51.167213+00:00",
+  "status": "complete_local_sessions_closed_remote_auxiliary_running",
+  "read_only_check": true,
+  "services": {
+    "neuralcloud-aux-ollama.service": {
+      "MainPID": "254546",
+      "ExecMainStartTimestamp": "Tue 2026-09-15 15:01:35 CST",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "ollama.service": {
+      "MainPID": "65606",
+      "ExecMainStartTimestamp": "Sat 2026-09-12 06:35:54 CST",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "neuralcloud-cognitive.service": {
+      "MainPID": "231395",
+      "ExecMainStartTimestamp": "Tue 2026-09-15 13:52:18 CST",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "neuralcloud-runtime.service": {
+      "MainPID": "231523",
+      "ExecMainStartTimestamp": "Tue 2026-09-15 13:52:24 CST",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    }
+  },
+  "auxiliary": {
+    "endpoint_on_linux": "http://127.0.0.1:11435/v1",
+    "version": "0.31.1",
+    "listeners": [
+      "127.0.0.1:11435"
+    ],
+    "loopback_only": true,
+    "models": [
+      {
+        "name": "qwen3:4b-instruct-2507-q4_K_M",
+        "digest": "0edcdef34593eac1aa2be9c7d06c432dcf81945adca5eca2f27662c18f168ba0",
+        "size": 2497293803
+      }
+    ]
+  },
+  "production": {
+    "manifest_path": "/etc/neuralcloud/manifest.json",
+    "manifest_sha256": "e8dcdb3ed22b4af6cfe3b551a4777cf93adcdb8052ca2d64537528fe1cbba3a1",
+    "manifest_emotion_mode": null,
+    "manifest_emotion_mode_present": false,
+    "prompt_version": "homeostatic-interoception-v1",
+    "process_emotion_mode_overrides": {
+      "neuralcloud-cognitive.service": null,
+      "neuralcloud-runtime.service": null
+    },
+    "emotion_on_enabled": false,
+    "configuration_changed_by_this_task": false
+  },
+  "local_sessions": {
+    "management_ssh": 21081,
+    "loopback_tunnel": 60426,
+    "closed": true,
+    "closure_pending_parent_signal": false,
+    "closure_authorized_by_parent": true,
+    "management_ssh_exit_code": 0,
+    "tunnel_stopped_by_interrupt": true,
+    "tunnel_exit_code": 1,
+    "local_loopback_listener_absent": true
+  },
+  "generation_calls_during_closeout": 0,
+  "remote_service_to_keep_running": "neuralcloud-aux-ollama.service",
+  "original_production_process_ids_unchanged": true,
+  "closed_at": "2026-09-15T07:54:47.698446+00:00",
+  "remote_post_tunnel_close_check": {
+    "checked_at": "2026-09-15T07:54:24Z",
+    "service": "neuralcloud-aux-ollama.service",
+    "active_state": "active",
+    "sub_state": "running",
+    "unit_file_state": "enabled",
+    "pid": 254546,
+    "listener": "127.0.0.1:11435"
+  },
+  "production_services_stopped": false
+}

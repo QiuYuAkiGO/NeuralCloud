@@ -1,0 +1,30 @@
+{
+  "schema_version": "misty-creator-memory-deployment-v1",
+  "started_at": "2026-09-14T04:14:05.7885144Z",
+  "status": "loaded",
+  "changes": [
+    {
+      "service": "cognitive",
+      "old_pid": 41528,
+      "old_child_pid": 27464,
+      "stopped_at": "2026-09-14T04:14:07.1066442Z",
+      "new_pid": 41092,
+      "started_at": "2026-09-14T04:14:07.1474560Z",
+      "healthy_at": "2026-09-14T04:14:12.8160514Z"
+    }
+  ],
+  "errors": [],
+  "goals_before": {
+    "status": "waiting",
+    "episode_id": "episode:1dc4b62018fd4be4986217f61df4df86",
+    "result_count": 9,
+    "no_progress": 9
+  },
+  "completed_at": "2026-09-14T04:14:13.1780543Z",
+  "goals_after": {
+    "status": "waiting",
+    "episode_id": "episode:1dc4b62018fd4be4986217f61df4df86",
+    "result_count": 9,
+    "no_progress": 9
+  }
+}

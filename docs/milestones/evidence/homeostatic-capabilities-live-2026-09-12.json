@@ -1,0 +1,360 @@
+{
+  "schema_version": "homeostatic-capabilities-live-acceptance-v1",
+  "date": "2026-09-12",
+  "scope": "Real model and real private Board / isolated MistyAI desktop with fresh isolated runtime and naturally drifting homeostasis; QQ sending disabled.",
+  "model_and_persona_unchanged": true,
+  "thinking_override": false,
+  "board_trials": [
+    {
+      "mode": "board",
+      "isolation": "C:\\Users\\22850\\AppData\\Local\\Temp\\neuralcloud-capability-acceptance-rp8gh5vx",
+      "opportunities": 1,
+      "started_at": "2026-09-12T04:08:57.185702+00:00",
+      "thinking_override": false,
+      "qq_send_before": 23,
+      "simulation_boundaries": [
+        "historical heartbeat source times replayed",
+        "initial quiet timer elapsed",
+        "private copies of personality and shared memory",
+        "fresh isolated runtime and homeostasis"
+      ],
+      "model": "deepseek-v4-flash",
+      "persona_sha256": "e6e0b4fe03a4831caa6bcabaac64c2396e147e8aab26a7752669e2e2fc671145",
+      "natural_drift": {
+        "heartbeat_count": 92,
+        "elapsed_seconds": 8280,
+        "initial_social": 0.62,
+        "final_social": 0.3851616130614537,
+        "summary": {
+          "schema_version": "homeostatic-interoception-v1",
+          "profile_ref": "qq-social-drive-v1@1",
+          "snapshot_revision": 92,
+          "salience": "noticeable",
+          "dominant_needs": [
+            {
+              "dimension": "social_connection",
+              "direction": "low",
+              "normalized_deviation": 0.255196,
+              "trend": "worsening",
+              "confidence": 0.8,
+              "semantic_need": "需要低压力的连接与被理解"
+            }
+          ],
+          "emotion_hint": {
+            "label": "lonely",
+            "intensity": 0.390535803051101
+          },
+          "policy_refs": [
+            "connect"
+          ],
+          "episode_signature": "homeostasis:b0a9165e75b1a1676cf5"
+        }
+      },
+      "opportunity": {
+        "opportunity_id": "capability:72d08054ca3b42ba9575de4c0d874149",
+        "status": "error",
+        "event_id": "capability-event:af234c10e0604cfe93b488d691d05210",
+        "action_id": null,
+        "entry_id": "board-entry:7e38ffd84964183055b7d73562247d969f16bb89",
+        "error_type": null
+      },
+      "selected": {
+        "kind": "act",
+        "offer_id": "board:expression.board.append.v1",
+        "channel": "board",
+        "capability_id": "expression.board.append.v1",
+        "provider_id": "misty-linux-thought-board",
+        "body_instance_id": "misty-linux-board-01"
+      },
+      "selection_timing": {
+        "model_calls": 1,
+        "model_ms": 5922.0,
+        "total_ms": 6016.0,
+        "usage": {
+          "prompt_tokens": 12722,
+          "completion_tokens": 926,
+          "total_tokens": 13648,
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      },
+      "observation_evidence_refs": [],
+      "board_turn": {
+        "status": "error",
+        "receipt": null,
+        "timing": {
+          "model_ms": 4844.0,
+          "total_ms": 4875.0,
+          "model_calls": 1,
+          "model_attempts": [
+            {
+              "attempt": 1,
+              "budget_seconds": 12.0,
+              "finish_reason": "stop",
+              "response_id": "ddf9e3eb-bfe2-4991-85e7-32b55dd21f5a",
+              "content_type": "text",
+              "content_characters": 197,
+              "reasoning_tokens": 560,
+              "has_tool_calls": false,
+              "has_refusal": false,
+              "usage": {
+                "prompt_tokens": 5045,
+                "completion_tokens": 668,
+                "total_tokens": 5713,
+                "calls": 0,
+                "revision_calls": 0,
+                "revision_tokens": 0,
+                "source": "api"
+              },
+              "latency_ms": 4844.0,
+              "status": "accepted"
+            }
+          ]
+        },
+        "error_type": "BoardError"
+      },
+      "isolated_memory_delta": 0,
+      "effect_verified": false,
+      "body_observation_verified": false,
+      "acceptance": "error",
+      "qq_send_after": 23,
+      "qq_zero_new_sends": true,
+      "production_sources_unchanged": true,
+      "completed_at": "2026-09-12T04:09:15.816921+00:00",
+      "trial": 1,
+      "source_report": "C:\\Users\\22850\\AppData\\Local\\Temp\\neuralcloud-capability-acceptance-rp8gh5vx\\acceptance.json",
+      "diagnosis": {
+        "confirmed": "Model selected Board append and returned accepted JSON; provider BoardError followed, no receipt or memory commit.",
+        "unavailable": "The first run predated persistent error_code metadata. Exact provider error code was not retained; do not classify it as model parsing failure or proven truncation.",
+        "original_entry_replayed": false
+      }
+    },
+    {
+      "mode": "board",
+      "isolation": "C:\\Users\\22850\\AppData\\Local\\Temp\\neuralcloud-capability-acceptance-rzkcc35_",
+      "opportunities": 1,
+      "started_at": "2026-09-12T04:11:35.357977+00:00",
+      "thinking_override": false,
+      "qq_send_before": 23,
+      "simulation_boundaries": [
+        "historical heartbeat source times replayed",
+        "initial quiet timer elapsed",
+        "private copies of personality and shared memory",
+        "fresh isolated runtime and homeostasis"
+      ],
+      "model": "deepseek-v4-flash",
+      "persona_sha256": "e6e0b4fe03a4831caa6bcabaac64c2396e147e8aab26a7752669e2e2fc671145",
+      "natural_drift": {
+        "heartbeat_count": 92,
+        "elapsed_seconds": 8280,
+        "initial_social": 0.62,
+        "final_social": 0.3851616130614537,
+        "summary": {
+          "schema_version": "homeostatic-interoception-v1",
+          "profile_ref": "qq-social-drive-v1@1",
+          "snapshot_revision": 92,
+          "salience": "noticeable",
+          "dominant_needs": [
+            {
+              "dimension": "social_connection",
+              "direction": "low",
+              "normalized_deviation": 0.255196,
+              "trend": "worsening",
+              "confidence": 0.8,
+              "semantic_need": "需要低压力的连接与被理解"
+            }
+          ],
+          "emotion_hint": {
+            "label": "lonely",
+            "intensity": 0.390535803051101
+          },
+          "policy_refs": [
+            "connect"
+          ],
+          "episode_signature": "homeostasis:b0a9165e75b1a1676cf5"
+        }
+      },
+      "opportunity": {
+        "opportunity_id": "capability:1af1839171ab4a48b7d4e6bcbbbe2700",
+        "status": "committed",
+        "event_id": "capability-event:7a0e514aa8624e2fa9dff3a8adc1f518",
+        "action_id": null,
+        "entry_id": "board-entry:15cd27666330e8a4f8c112879fc3445dbab7169c",
+        "error_type": null
+      },
+      "selected": {
+        "kind": "act",
+        "offer_id": "board:expression.board.append.v1",
+        "channel": "board",
+        "capability_id": "expression.board.append.v1",
+        "provider_id": "misty-linux-thought-board",
+        "body_instance_id": "misty-linux-board-01"
+      },
+      "selection_timing": {
+        "model_calls": 1,
+        "model_ms": 4296.0,
+        "total_ms": 4359.0,
+        "usage": {
+          "prompt_tokens": 12724,
+          "completion_tokens": 534,
+          "total_tokens": 13258,
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      },
+      "observation_evidence_refs": [],
+      "board_turn": {
+        "status": "committed",
+        "receipt": {
+          "scope": {
+            "body_instance_id": "misty-linux-board-01",
+            "board_id": "misty-thoughts",
+            "owner_id": "misty"
+          },
+          "entry_id": "board-entry:15cd27666330e8a4f8c112879fc3445dbab7169c",
+          "decision_id": "board-decision:c4f46397fe04b9930f36a7975a2e3ed5a09c0884e384d2810e1d1f1ebfe63be8",
+          "text_sha256": "45277868a0839961d8aa3ffd4e3fe5c094785a8ad55193f7270b81f908b20c63",
+          "created_at": "2026-09-12T04:11:50.767366Z",
+          "evidence_ref": "board-evidence://sha256/25d36114fdc6584befff13872e5faf5b58bd19f282c301fc4966aaf56bb8d5ae",
+          "sequence": 2
+        },
+        "timing": {
+          "model_ms": 3704.0,
+          "total_ms": 3766.0,
+          "model_calls": 1,
+          "model_attempts": [
+            {
+              "attempt": 1,
+              "budget_seconds": 12.0,
+              "finish_reason": "stop",
+              "response_id": "d4c7fd0f-fd9e-4eff-a36e-e4fef24693d9",
+              "content_type": "text",
+              "content_characters": 162,
+              "reasoning_tokens": 399,
+              "has_tool_calls": false,
+              "has_refusal": false,
+              "usage": {
+                "prompt_tokens": 5045,
+                "completion_tokens": 487,
+                "total_tokens": 5532,
+                "calls": 0,
+                "revision_calls": 0,
+                "revision_tokens": 0,
+                "source": "api"
+              },
+              "latency_ms": 3704.0,
+              "status": "accepted"
+            }
+          ]
+        },
+        "error_type": null,
+        "error_code": null
+      },
+      "independent_board_readback": {
+        "scope": {
+          "body_instance_id": "misty-linux-board-01",
+          "board_id": "misty-thoughts",
+          "owner_id": "misty"
+        },
+        "entry_id": "board-entry:15cd27666330e8a4f8c112879fc3445dbab7169c",
+        "decision_id": "board-decision:c4f46397fe04b9930f36a7975a2e3ed5a09c0884e384d2810e1d1f1ebfe63be8",
+        "text_sha256": "45277868a0839961d8aa3ffd4e3fe5c094785a8ad55193f7270b81f908b20c63",
+        "created_at": "2026-09-12T04:11:50.767366Z",
+        "evidence_ref": "board-evidence://sha256/25d36114fdc6584befff13872e5faf5b58bd19f282c301fc4966aaf56bb8d5ae",
+        "sequence": 2
+      },
+      "isolated_memory_delta": 1,
+      "effect_verified": true,
+      "body_observation_verified": false,
+      "acceptance": "effect_verified",
+      "qq_send_after": 23,
+      "qq_zero_new_sends": true,
+      "production_sources_unchanged": true,
+      "completed_at": "2026-09-12T04:11:50.232227+00:00",
+      "trial": 2,
+      "source_report": "C:\\Users\\22850\\AppData\\Local\\Temp\\neuralcloud-capability-acceptance-rzkcc35_\\acceptance.json",
+      "independent_sqlite_readback": {
+        "database": "/root/.local/share/neuralcloud/board/board.sqlite3",
+        "mode": "read_only",
+        "total_entries": 2,
+        "receipt_matches_http": true,
+        "sequence": 2,
+        "entry_id": "board-entry:15cd27666330e8a4f8c112879fc3445dbab7169c",
+        "text_sha256": "45277868a0839961d8aa3ffd4e3fe5c094785a8ad55193f7270b81f908b20c63",
+        "evidence_ref": "board-evidence://sha256/25d36114fdc6584befff13872e5faf5b58bd19f282c301fc4966aaf56bb8d5ae"
+      }
+    }
+  ],
+  "desktop_trials": [],
+  "qq_send_baseline": 23,
+  "qq_send_latest": 23,
+  "limitations": [
+    "Elapsed heartbeat source times and initial quiet timer are replayed in an isolated test runtime, not observed across hours of wall-clock operation.",
+    "Valid wait remains a valid wait and is never converted into a body write.",
+    "Production homeostasis is not modified; shared memory is copied privately for isolation."
+  ],
+  "desktop_environment": {
+    "status": "environment_blocked",
+    "effective_opportunities": 0,
+    "model_calls": 0,
+    "body_service_started": false,
+    "operator_service_started": false,
+    "docker_start_command": "tools/docker/Start-DockerDesktop.ps1 -WslDistro Ubuntu-24.04 -Json -TimeoutSeconds 60",
+    "docker_start_exit_code": 20,
+    "confirmed_error_at": "2026-09-12T04:13:50.114977800Z",
+    "confirmed_error": "Docker backend crashed while renaming sailor-ingest.sock to sailor-ingest.sock.stale: The file cannot be accessed by the system.",
+    "source_log": "C:\\Users\\22850\\AppData\\Local\\Docker\\log\\host\\com.docker.backend.exe.log",
+    "graceful_stop_command": "docker desktop stop --timeout 20",
+    "graceful_stop_result": "Failed to stop Docker Desktop; error UI and backend processes remain alive.",
+    "socket_or_runtime_directories_modified": false,
+    "forced_stop": false,
+    "factory_reset": false,
+    "qq_send_latest": 23,
+    "next_safe_step": "Resolve Docker Desktop startup, then start only the existing MistyAI environment and services; run the isolated acceptance without any QQ watcher.",
+    "cleanup": {
+      "normal_ui_close": "No owned Docker Desktop process exposed a main window handle for CloseMainWindow.",
+      "docker_backend_or_ui_forced_stop": false,
+      "remaining_docker_processes": [
+        {
+          "pid": 11976,
+          "name": "Docker Desktop.exe"
+        },
+        {
+          "pid": 44848,
+          "name": "com.docker.backend.exe"
+        },
+        {
+          "pid": 30844,
+          "name": "com.docker.backend.exe"
+        },
+        {
+          "pid": 22456,
+          "name": "Docker Desktop.exe"
+        },
+        {
+          "pid": 40400,
+          "name": "Docker Desktop.exe"
+        },
+        {
+          "pid": 12704,
+          "name": "Docker Desktop.exe"
+        }
+      ],
+      "timed_out_diagnostic_cli_only_stopped": [
+        10772,
+        42528
+      ],
+      "temporary_wsl_keepalive": "600-second helper exited normally"
+    }
+  },
+  "verification": {
+    "tests_command": ".venv\\Scripts\\python.exe -m pytest tests/test_board_cognitive.py tests/test_llm_response_contract.py tests/test_homeostatic_body_integration.py -q --basetemp=.test-tmp/board-owner-live-final-20260912",
+    "tests_passed": 55,
+    "duration_seconds": 14.83,
+    "lint": "Assigned production/test files and tools/verify_capabilities.py pass Ruff."
+  }
+}

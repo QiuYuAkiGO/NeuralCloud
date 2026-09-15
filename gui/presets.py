@@ -83,6 +83,7 @@ class CharacterPreset(BaseModel):
     candidates: list[CandidateMemory] = Field(default_factory=list)
     transcript: list[SessionTurn] = Field(default_factory=list)
     qq_memory_state: dict[str, Any] = Field(default_factory=dict)
+    daily_revision_state: dict[str, Any] = Field(default_factory=dict)
     updated_at: datetime
 
     def is_protected(self) -> bool:
@@ -120,7 +121,7 @@ def snapshot_memory(
     if persona is None:
         raise ValueError("cannot snapshot a memory service without a persona")
     stores = memory.stores
-    return CharacterPreset(
+    preset = CharacterPreset(
         preset_id=preset_id,
         builtin_id=builtin_id,
         name=name or persona.identity.name,
@@ -135,14 +136,21 @@ def snapshot_memory(
         candidates=list(stores.candidates.list_all()),
         transcript=list(transcript),
         qq_memory_state=deepcopy(memory.qq_memory_state),
+        daily_revision_state=deepcopy(memory.daily_revision_state),
         updated_at=updated_at or _now(),
     )
+    if preset.daily_revision_state:
+        from harness.memory.revision.ledger import integrate_external_snapshot
+        preset = integrate_external_snapshot(preset)
+        memory.daily_revision_state = deepcopy(preset.daily_revision_state)
+    return preset
 
 
 def hydrate_memory(memory: MemoryService, preset: CharacterPreset) -> None:
     """Load a preset into an empty MemoryService. Does not call record_event."""
     memory.bootstrap_persona(preset.persona)
     memory.qq_memory_state = deepcopy(preset.qq_memory_state)
+    memory.daily_revision_state = deepcopy(preset.daily_revision_state)
     for row in preset.relationships:
         memory.stores.relationship.upsert(row)
     if preset.psych is not None:

@@ -41,6 +41,7 @@ class EpisodicEventRow(Base):
     __tablename__ = "episodic_events"
 
     event_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    revision_metadata: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict, server_default=sql_text("'{}'::jsonb"))
     scope: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True), nullable=True)
     source_refs: Mapped[list] = mapped_column(JSONB, nullable=False, default=list, server_default=sql_text("'[]'::jsonb"))
     processing_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
@@ -85,6 +86,7 @@ class SemanticFactRow(Base):
     __tablename__ = "semantic_facts"
 
     fact_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    revision_metadata: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict, server_default=sql_text("'{}'::jsonb"))
     scope: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True), nullable=True)
     source_refs: Mapped[list] = mapped_column(JSONB, nullable=False, default=list, server_default=sql_text("'[]'::jsonb"))
     processing_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
@@ -104,6 +106,9 @@ class RelationshipStateRow(Base):
     __tablename__ = "relationship_states"
 
     relation_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    scope: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True), nullable=True)
+    source_refs: Mapped[list] = mapped_column(JSONB, nullable=False, default=list, server_default=sql_text("'[]'::jsonb"))
+    revision_metadata: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict, server_default=sql_text("'{}'::jsonb"))
     target: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
     closeness: Mapped[float] = mapped_column(Float, nullable=False)
     trust: Mapped[float] = mapped_column(Float, nullable=False)
@@ -136,6 +141,7 @@ class MemoryCandidateRow(Base):
     __tablename__ = "memory_candidates"
 
     candidate_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    revision_metadata: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict, server_default=sql_text("'{}'::jsonb"))
     scope: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True), nullable=True)
     source_refs: Mapped[list] = mapped_column(JSONB, nullable=False, default=list, server_default=sql_text("'[]'::jsonb"))
     processing_version: Mapped[str | None] = mapped_column(String(128), nullable=True)

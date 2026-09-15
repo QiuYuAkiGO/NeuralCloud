@@ -128,12 +128,15 @@ def test_existing_pipeline_critic_receives_exact_evidence_and_status(service, st
     actual = character.contexts[0].memory_evidence
     assert actual.entries == evidence.entries
     _, payload = critic.calls[0]
-    admitted = payload["memory_evidence"]["entries"]
-    assert admitted[0]["text"] == evidence.entries[0].text
-    assert admitted[0]["status"] == status
-    assert admitted[0]["source_channel"] == "qq_group"
-    assert admitted[0]["source_conversation_id"] == "10001"
-    assert "segment_sha256" not in admitted[0]
+    projected = payload["memory_evidence"]
+    admitted = dict(zip(projected["columns"], projected["rows"][0]))
+    metadata = dict(zip(projected["metadata_columns"], projected["metadata"][admitted["metadata_id"]]))
+    assert admitted["text"] == evidence.entries[0].text
+    assert metadata["status"] == status
+    scope = projected["scopes"][metadata["scope_id"]]
+    assert scope["source_channel"] == "qq_group"
+    assert scope["source_conversation_id"] is not None
+    assert "segment_sha256" not in json.dumps(projected)
 
 
 def test_one_real_memory_does_not_disable_semantic_check_of_unrelated_claim(service):
@@ -247,13 +250,17 @@ def test_author_identity_and_current_interlocutor_reach_existing_critic(service,
             assert "Another group member's statement cannot be reassigned" in system
             assert "unknown fields provide no author identity evidence" in system
             assert "only the source observation/delivery time" in system
-            assert request["memory_evidence"]["current_speaker_id"] == current
-            actual = request["memory_evidence"]["entries"][0]
-            assert actual["speaker_id"] == author
-            assert actual["observed_at"] == NOW.isoformat()
+            projected = request["memory_evidence"]
+            current_alias = projected["current_speaker_id"]
+            assert (current_alias is None) == (current is None)
+            actual = dict(zip(projected["columns"], projected["rows"][0]))
+            assert (actual["speaker_id"] is None) == (author is None)
+            metadata = dict(zip(projected["metadata_columns"], projected["metadata"][actual["metadata_id"]]))
+            observed = metadata["observed_date"] + "T" + actual["observed_time"]
+            assert observed == evidence.model_dump(mode="json")["entries"][0]["observed_at"]
             # Scripted critic checks the interface has enough information to
             # distinguish two otherwise identical first-person source claims.
-            supported = actual["speaker_id"] is not None and actual["speaker_id"] == current
+            supported = actual["speaker_id"] is not None and actual["speaker_id"] == current_alias
             return {"verdict": "pass" if supported else "revise",
                     "violations": [] if supported else ["fabricated_memory"],
                     "severity": 0 if supported else .8,

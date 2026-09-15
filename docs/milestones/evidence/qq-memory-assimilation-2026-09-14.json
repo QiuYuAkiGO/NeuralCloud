@@ -1,0 +1,100 @@
+{
+  "accepted": true,
+  "artifact_sha256": "63a25f94299383d4e137e32939582520ef72d487809699da78c3125fe4ab7fc4",
+  "evidence_sha256": {
+    "acceptance-review": "20016282e70948cb6f3fc4716cf0ff3c24b5a2df4c6a0d9ae170e99acd2d7dd6",
+    "final-review": "715dfabe4322f59ab748a0f639cacee4f6143be1c2da8439db0a6b2cc4160578",
+    "live-import-idempotence": "bc5b3d250d1fe86f99e457c12c6b37a68349c0e0d4a5a6ba19628bf704de56d1",
+    "live-import-result": "54a4736ba3e05d50c7001654a61053e91dc3db8b4da9b309a033451d0f935f36",
+    "release-health": "688f3fe3f4360048853d30a082a8f4846b015ba2f4093719d752736c2bae6aca",
+    "report": "54f2d803c15ba5951f3c56c19dd96c6a8697a984ed20f64721f743bbfe64b3e4"
+  },
+  "historical_backfill": {
+    "committed_windows": 158,
+    "completed": true,
+    "disputed_judgments": 0,
+    "episodes": 236,
+    "excluded_future_observations": 0,
+    "frozen_observations": 490,
+    "impression_states": {
+      "disputed": 0,
+      "dormant": 16,
+      "provisional": 21,
+      "stable": 1
+    },
+    "impressions": 38,
+    "raw_observations": 490,
+    "source_kinds": {
+      "qq_delivery": 49,
+      "qq_observation": 490,
+      "qq_profile": 433,
+      "qq_segment_delivery": 97
+    },
+    "source_records": 1069,
+    "stable_judgments": 1,
+    "tiers": {
+      "forgotten": 156,
+      "long": 0,
+      "mid": 8,
+      "short": 72
+    }
+  },
+  "live_import": {
+    "idempotent_replay_passed": true,
+    "imported": true,
+    "replay_state_unchanged": true,
+    "reviewed_rebase": true
+  },
+  "release_health": {
+    "checks": {
+      "cognitive_healthy": true,
+      "gui_healthy": true,
+      "ingestion_enabled": true,
+      "qq_direct_running": true,
+      "recall_enabled": true,
+      "runtime_healthy": true
+    },
+    "counts": {
+      "applied": 160,
+      "committed_windows": 160,
+      "episodes": 240,
+      "impressions": 40,
+      "pending": 51,
+      "preparing": 0,
+      "processed_observations": 495,
+      "retry": 0,
+      "stable_judgments": 1
+    },
+    "latencies_ms": {
+      "health": 138.345,
+      "last_processing": 35706.158,
+      "recall": 11.862
+    }
+  },
+  "review": {
+    "cases": 20,
+    "failed": 0,
+    "final_summary_corrections": 1,
+    "full_derivation_replay_passed": true,
+    "passed": 19,
+    "passed_after_correction": 1,
+    "qq_messages_sent": 0,
+    "recall_max_latency_ms": 11.311,
+    "recall_probes": 3,
+    "recall_side_effects": false,
+    "stable_judgments_checked": 1
+  },
+  "schema_version": "qq-memory-release-report-v1",
+  "tests": {
+    "duration_ms": 144883.0,
+    "errors": 0,
+    "failures": 0,
+    "junit_sha256": "bea7b6bfadbd7c5d5ca71d820ec472953b473e9ab34c2e90db35ef4351eaf749",
+    "passed": 457,
+    "scope": "related_regression_only",
+    "skipped": 0,
+    "total_distinct_related_cases_passed": 457,
+    "total_source": "single_final_junit",
+    "whole_repository_suite_claimed": false
+  }
+}

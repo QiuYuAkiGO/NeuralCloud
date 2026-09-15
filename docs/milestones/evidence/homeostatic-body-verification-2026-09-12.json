@@ -1,0 +1,334 @@
+{
+  "schema_version": "homeostatic-body-verification-v1",
+  "verified_at": "2026-09-12T03:23:58.104111+00:00",
+  "scope": "Verification of current working tree and read-only persisted production evidence; no production state mutation or external message sending.",
+  "production_ports_listening": {
+    "8770": false,
+    "8771": false,
+    "8772": false,
+    "8790": false,
+    "8793": false
+  },
+  "production_homeostasis_last_persisted": {
+    "revision": 2779,
+    "updated_at": "2026-09-12T03:16:16.051365Z",
+    "summary": {
+      "schema_version": "homeostatic-interoception-v1",
+      "profile_ref": "qq-social-drive-v1@1",
+      "snapshot_revision": 2779,
+      "salience": "noticeable",
+      "dominant_needs": [
+        {
+          "dimension": "social_connection",
+          "direction": "low",
+          "normalized_deviation": 0.211434,
+          "trend": "worsening",
+          "confidence": 0.95,
+          "semantic_need": "需要低压力的连接与被理解"
+        }
+      ],
+      "emotion_hint": {
+        "label": "lonely",
+        "intensity": 0.4316510559523112
+      },
+      "policy_refs": [
+        "connect"
+      ],
+      "episode_signature": "homeostasis:b0a9165e75b1a1676cf5"
+    }
+  },
+  "production_board": {
+    "turns": [
+      {
+        "entry_id": "board-entry:c47c9a844a5a14c9a2450789aa1a8c13a33d9d3d",
+        "event_id": "board-event:98b1d2539c1d0cd226a541307a1167ab29e23e83",
+        "trigger": "user_request",
+        "requested_at": "2026-09-12T02:33:51.420403+00:00",
+        "status": "error",
+        "error_type": "AttributeError",
+        "dispatch_monotonic_ms": 47.0,
+        "has_decision": false,
+        "has_receipt": false
+      },
+      {
+        "entry_id": "board-entry:cf2abea055e1735620aac22eb24074e2a68d0822",
+        "event_id": "board-event:0da6688a219773b7a890f1ceae093b9e1a272c3f",
+        "trigger": "user_request",
+        "requested_at": "2026-09-12T02:39:05.483394+00:00",
+        "status": "error",
+        "error_type": "DomainCommandError",
+        "dispatch_monotonic_ms": 4031.0,
+        "has_decision": false,
+        "has_receipt": false
+      },
+      {
+        "entry_id": "board-entry:576cc49ca8d83f2c9935e894739cbac48f075aa3",
+        "event_id": "board-event:5f9f2b3f9f61687a90013b3b647cd1f07b028f5a",
+        "trigger": "user_request",
+        "requested_at": "2026-09-12T02:44:35.537268+00:00",
+        "status": "committed",
+        "error_type": null,
+        "dispatch_monotonic_ms": 5031.0,
+        "has_decision": true,
+        "has_receipt": true,
+        "receipt": {
+          "scope": {
+            "body_instance_id": "misty-linux-board-01",
+            "board_id": "misty-thoughts",
+            "owner_id": "misty"
+          },
+          "entry_id": "board-entry:576cc49ca8d83f2c9935e894739cbac48f075aa3",
+          "decision_id": "board-decision:ec57298055869de5a039adb7002bc30bc07dcd929c91191788a87ccb2e6c0cfa",
+          "text_sha256": "4bdd3b47dde5447fa59a9851bf6753e4675db7234f2a9bb0cb251cc28ff25706",
+          "created_at": "2026-09-12T02:44:40.437489Z",
+          "evidence_ref": "board-evidence://sha256/70595ae29a9567b58e01dfc05155053cd0df6f5be7777fc8533737c5825fbced",
+          "sequence": 1
+        }
+      },
+      {
+        "entry_id": "board-entry:699ad43710260269f7f567c28ccb54c2815b30be",
+        "event_id": "board-event:79bfb6a8fae255560cdb9c805fcdce190deac123",
+        "trigger": "homeostasis",
+        "requested_at": "2026-09-12T03:14:35.974271+00:00",
+        "status": "error",
+        "error_type": "DomainCommandError",
+        "dispatch_monotonic_ms": 4484.0,
+        "has_decision": false,
+        "has_receipt": false
+      }
+    ],
+    "autonomous_attempts": 1,
+    "autonomous_committed": 0,
+    "user_requested_committed": 1,
+    "autonomous_trace": [
+      {
+        "record_type": "event_accepted",
+        "record_seq": 7491,
+        "recorded_at": "2026-09-12T03:14:35.978772Z",
+        "event_id": "board-event:79bfb6a8fae255560cdb9c805fcdce190deac123",
+        "receive_seq": 2779,
+        "command_id": null,
+        "source_file": "C:\\Users\\22850\\AppData\\Local\\NeuralCloud\\QQDesktop\\shared-runtime\\journal\\runtime-000001.jsonl",
+        "line": 7491,
+        "event_source": "board_opportunity"
+      },
+      {
+        "record_type": "processing_started",
+        "record_seq": 7493,
+        "recorded_at": "2026-09-12T03:14:35.987402Z",
+        "event_id": "board-event:79bfb6a8fae255560cdb9c805fcdce190deac123",
+        "receive_seq": 2779,
+        "command_id": null,
+        "source_file": "C:\\Users\\22850\\AppData\\Local\\NeuralCloud\\QQDesktop\\shared-runtime\\journal\\runtime-000001.jsonl",
+        "line": 7493
+      },
+      {
+        "record_type": "domain_command_intent",
+        "record_seq": 7494,
+        "recorded_at": "2026-09-12T03:14:36.108291Z",
+        "event_id": "board-event:79bfb6a8fae255560cdb9c805fcdce190deac123",
+        "receive_seq": 2779,
+        "command_id": "cmd_b76b0c48",
+        "source_file": "C:\\Users\\22850\\AppData\\Local\\NeuralCloud\\QQDesktop\\shared-runtime\\journal\\runtime-000001.jsonl",
+        "line": 7494,
+        "command_type": "PrepareBoardEntry",
+        "trigger": "homeostasis",
+        "homeostatic_summary": {
+          "dominant_needs": [
+            {
+              "confidence": 0.95,
+              "dimension": "social_connection",
+              "direction": "low",
+              "normalized_deviation": 0.206147,
+              "semantic_need": "需要低压力的连接与被理解",
+              "trend": "worsening"
+            }
+          ],
+          "emotion_hint": {
+            "intensity": 0.4329350703351224,
+            "label": "lonely"
+          },
+          "episode_signature": "homeostasis:b0a9165e75b1a1676cf5",
+          "policy_refs": [
+            "connect"
+          ],
+          "profile_ref": "qq-social-drive-v1@1",
+          "salience": "noticeable",
+          "schema_version": "homeostatic-interoception-v1",
+          "snapshot_revision": 2759
+        },
+        "read_entry_count": 1,
+        "model_timeout_seconds": 12
+      },
+      {
+        "record_type": "domain_command_result",
+        "record_seq": 7495,
+        "recorded_at": "2026-09-12T03:14:40.464254Z",
+        "event_id": "board-event:79bfb6a8fae255560cdb9c805fcdce190deac123",
+        "receive_seq": 2779,
+        "command_id": "cmd_b76b0c48",
+        "source_file": "C:\\Users\\22850\\AppData\\Local\\NeuralCloud\\QQDesktop\\shared-runtime\\journal\\runtime-000001.jsonl",
+        "line": 7495,
+        "result": {
+          "command_type": "PrepareBoardEntry",
+          "status": "failed",
+          "error": "board_shared_prepare_failed:model_json:ValueError",
+          "completed_at": "2026-09-12T03:14:40.449427Z"
+        }
+      },
+      {
+        "record_type": "processing_completed",
+        "record_seq": 7496,
+        "recorded_at": "2026-09-12T03:14:40.472940Z",
+        "event_id": "board-event:79bfb6a8fae255560cdb9c805fcdce190deac123",
+        "receive_seq": 2779,
+        "command_id": null,
+        "source_file": "C:\\Users\\22850\\AppData\\Local\\NeuralCloud\\QQDesktop\\shared-runtime\\journal\\runtime-000001.jsonl",
+        "line": 7496,
+        "dispatch_result": {
+          "completed_at": "2026-09-12T03:14:40.470183Z",
+          "decision_kind": "board_reflection",
+          "detail": {
+            "entry_id": "board-entry:699ad43710260269f7f567c28ccb54c2815b30be",
+            "error_type": "DomainCommandError",
+            "status": "error"
+          },
+          "event_id": "board-event:79bfb6a8fae255560cdb9c805fcdce190deac123",
+          "process_seq": 1239,
+          "receive_seq": 2779,
+          "status": "failed"
+        }
+      }
+    ]
+  },
+  "production_qq": {
+    "idle_opportunity_count": 0,
+    "source_db": "C:\\Users\\22850\\AppData\\Local\\NeuralCloud\\QQDesktop\\qq-watch-ledger.sqlite3"
+  },
+  "conclusion": {
+    "production_autonomous_trigger_observed": true,
+    "production_autonomous_board_read_observed": true,
+    "board_read_evidence": "PrepareBoardEntry payload includes one body-read entry; dispatch invokes provider.read before that command.",
+    "production_autonomous_board_append_verified": false,
+    "production_failure": "board_shared_prepare_failed:model_json:ValueError",
+    "failure_boundary": "Model response JSON parsing before decision persistence, provider.append, receipt and memory commit.",
+    "raw_model_response_available_in_selected_journal": false,
+    "production_qq_autonomous_send_verified": false,
+    "generic_homeostatic_policy_executes_body_action": false,
+    "capability_scope": "Dedicated board and QQ controllers are wired; default semantic policies do not carry structured action_request and cannot automatically select arbitrary body capabilities.",
+    "isolated_natural_drift_to_body_write_verified": true
+  },
+  "verification_tests": {
+    "existing_selection": {
+      "passed": 192,
+      "failed": 0,
+      "seconds": 9.33,
+      "files": [
+        "tests/test_board_runtime.py",
+        "tests/test_board_body.py",
+        "tests/test_board_cognitive.py",
+        "tests/test_qq_homeostatic_watcher.py",
+        "tests/test_qq_embodied_driver.py",
+        "tests/test_qq_body_capability.py",
+        "tests/test_shared_qq_homeostasis.py"
+      ]
+    },
+    "additional_real_engine_tests": {
+      "status": "passed",
+      "file": "tests/test_homeostatic_body_integration.py",
+      "cases": [
+        "write",
+        "wait",
+        "malformed"
+      ],
+      "real_components": [
+        "HomeostasisEngine with qq-social-drive-v1",
+        "RuntimeSupervisor heartbeat and queue",
+        "CognitiveHost",
+        "BoardProvider capability negotiation",
+        "Board HTTP ASGI service",
+        "SQLite body store",
+        "independent read-only SQLite connection",
+        "shared memory commit"
+      ],
+      "simulation_boundaries": [
+        "Scripted model responses",
+        "Historical heartbeat source times fast-forwarded",
+        "Controller quiet/opportunity timers made eligible",
+        "HTTP ASGI in process rather than deployed Linux service"
+      ],
+      "passed": 3,
+      "failed": 0,
+      "outcomes": {
+        "write": {
+          "append_calls": 1,
+          "persisted_body_entries": 1,
+          "shared_memory_entries": 1,
+          "status": "committed"
+        },
+        "wait": {
+          "append_calls": 0,
+          "persisted_body_entries": 0,
+          "shared_memory_entries": 0,
+          "status": "wait"
+        },
+        "malformed": {
+          "append_calls": 0,
+          "persisted_body_entries": 0,
+          "shared_memory_entries": 0,
+          "status": "error",
+          "journal_error": "board_shared_prepare_failed:model_json:ValueError"
+        }
+      }
+    },
+    "final_combined_selection": {
+      "passed": 195,
+      "failed": 0,
+      "warnings": 2,
+      "seconds": 16.23,
+      "warning_kind": "FastAPI/Starlette deprecation",
+      "command": ".\\.venv\\Scripts\\python.exe -m pytest tests/test_homeostatic_body_integration.py tests/test_board_runtime.py tests/test_board_body.py tests/test_board_cognitive.py tests/test_qq_homeostatic_watcher.py tests/test_qq_embodied_driver.py tests/test_qq_body_capability.py tests/test_shared_qq_homeostasis.py -q --basetemp=.test-tmp/homeostasis-body-validation-complete-20260912",
+      "overlaps_existing_selection": true
+    }
+  },
+  "source_sha256": {
+    "harness/runtime/board.py": "242b014a7dd0344f02780cf136d5266ede2fe480b246d2b9805d368a7e6b3326",
+    "harness/runtime/supervisor.py": "dac75519050221654ed308a228e6abfefe72eed17598ef4940217928e6b53326",
+    "harness/cognitive/board.py": "a3d742bf3383e1cebb6e09071c1f8b465a3f70b52cd4f9a6234883b7ad2a7d0f",
+    "harness/embodiment/providers/board.py": "161c8cc1c211a18c6ae1aa7d30bdaee9d7a871e4091b580e5a15c6e412aa19af",
+    "harness/qq/homeostatic.py": "4ec2df66181bf83267cb5ae7f113aa4d4c8562eb49a5092eb553dbbae12e68e8",
+    "harness/qq/embodied.py": "1d2a399a082f659a9b149f96a198df4740cafd815f5bbb2b21ff239681a39bee",
+    "harness/cognitive/action_planner.py": "7ce1f798456adddae3bf38bb6a854524e9b6a6794f8767b04162760e1dc1f696",
+    "harness/homeostasis/models.py": "4843be93c6e53f8a12dce0563afd7609b0df9a39072dad8662c398cc7d2053e4",
+    "tests/test_homeostatic_body_integration.py": "3f213b61870f7a48426dc75ffb95dbd994df13921b04eadc7943f2c853aae968"
+  },
+  "limitations": [
+    "Historical live trace is not a new live run. Shared Runtime is currently offline.",
+    "A successful manually invited note does not establish autonomous writing.",
+    "Mock-model integration tests can prove execution wiring but cannot establish real-model reliability.",
+    "No production service was restarted and no QQ message was sent."
+  ],
+  "generic_action_planner_probe": {
+    "snapshot_revision": 2779,
+    "policies": [
+      {
+        "policy_id": "connect",
+        "rank": 1,
+        "has_action_request": false
+      },
+      {
+        "policy_id": "renegotiate",
+        "rank": 2,
+        "has_action_request": false
+      },
+      {
+        "policy_id": "simplify",
+        "rank": 3,
+        "has_action_request": false
+      }
+    ],
+    "planner_result": null,
+    "observation": "Current persisted homeostatic policies alone do not produce a structured body action."
+  },
+  "completed_at": "2026-09-12T03:27:23.016007+00:00"
+}

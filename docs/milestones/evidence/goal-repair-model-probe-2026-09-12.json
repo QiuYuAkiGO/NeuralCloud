@@ -1,0 +1,97 @@
+{
+  "schema_version": "readonly-goal-repair-probe-v1",
+  "runtime_mutations": 0,
+  "body_dispatches": 0,
+  "diagnostic_model_calls": 2,
+  "context_basis": "Current shared persona/dialogue/memory UI projection and latest recorded goal context; not an exact replay of an earlier prompt.",
+  "results": [
+    {
+      "policy": "original_default",
+      "started_at": "2026-09-12T15:17:13.109457+00:00",
+      "body_dispatches": 0,
+      "valid_proposal": true,
+      "operation": "continue",
+      "choice": "act",
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 19234.0,
+        "total_ms": 19234.0,
+        "usage": {
+          "prompt_tokens": 26141,
+          "completion_tokens": 3740,
+          "total_tokens": 29881,
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      },
+      "completed_at": "2026-09-12T15:17:32.350165+00:00",
+      "response_metadata": [
+        {
+          "finish_reason": "stop",
+          "response_id": "34037df8-2568-4e96-b882-52fa15716ea1",
+          "content_type": "text",
+          "content_characters": 139,
+          "reasoning_tokens": 3703,
+          "has_tool_calls": false,
+          "has_refusal": false,
+          "usage": {
+            "prompt_tokens": 26141,
+            "completion_tokens": 3740,
+            "total_tokens": 29881,
+            "calls": 0,
+            "revision_calls": 0,
+            "revision_tokens": 0,
+            "source": "api"
+          }
+        }
+      ]
+    },
+    {
+      "policy": "goal_low_effort",
+      "started_at": "2026-09-12T15:17:32.806919+00:00",
+      "body_dispatches": 0,
+      "valid_proposal": true,
+      "operation": "continue",
+      "choice": "act",
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 9406.0,
+        "total_ms": 9422.0,
+        "usage": {
+          "prompt_tokens": 26141,
+          "completion_tokens": 1687,
+          "total_tokens": 27828,
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      },
+      "completed_at": "2026-09-12T15:17:42.253313+00:00",
+      "response_metadata": [
+        {
+          "finish_reason": "stop",
+          "response_id": "a1be1b6d-de8e-4793-943f-097d0e0da649",
+          "content_type": "text",
+          "content_characters": 198,
+          "reasoning_tokens": 1617,
+          "has_tool_calls": false,
+          "has_refusal": false,
+          "usage": {
+            "prompt_tokens": 26141,
+            "completion_tokens": 1687,
+            "total_tokens": 27828,
+            "calls": 0,
+            "revision_calls": 0,
+            "revision_tokens": 0,
+            "source": "api"
+          }
+        }
+      ]
+    }
+  ],
+  "regulation_effectiveness": "unverified",
+  "release_eligible": false
+}

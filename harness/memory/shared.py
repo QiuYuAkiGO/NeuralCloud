@@ -20,6 +20,7 @@ import unicodedata
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
+from harness.contracts.decisions import ActionOutcomeEvidence
 from harness.qq.memory import QQGroupContext, QQImageAnalysis, QQPersonContext, QQVerifiedProfile, QQVisualObservation
 from harness.qq.conversation import conversation_audience, conversation_scope, private_scope_id
 
@@ -28,8 +29,8 @@ NonBlank = Annotated[str, StringConstraints(strict=True, min_length=1, max_lengt
 Identifier = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=256, pattern=r"^[A-Za-z0-9][A-Za-z0-9_.:-]*$")]
 Principal = Annotated[str, StringConstraints(strict=True, pattern=r"^(?:local:[A-Za-z0-9][A-Za-z0-9_.-]*|character:[A-Za-z0-9][A-Za-z0-9_.-]*|qq:member:[1-9][0-9]{0,19})$", max_length=256)]
 Audience = Annotated[str, StringConstraints(strict=True, pattern=r"^(?:local:[A-Za-z0-9][A-Za-z0-9_.-]*|qq:group:[1-9][0-9]{0,19}|qq:private:[1-9][0-9]{0,19}:[1-9][0-9]{0,19})$", max_length=256)]
-Channel = Literal["local_chat", "qq_group", "qq_private", "private_board"]
-Kind = Literal["local_incoming", "local_outgoing", "qq_profile", "qq_observation", "qq_delivery", "qq_segment_delivery", "board_entry"]
+Channel = Literal["local_chat", "qq_group", "qq_private", "private_board", "body"]
+Kind = Literal["local_incoming", "local_outgoing", "qq_profile", "qq_observation", "qq_delivery", "qq_segment_delivery", "board_entry", "action_outcome"]
 Evidence = Annotated[tuple[NonBlank, ...], Field(min_length=1, max_length=128)]
 Visibility = Annotated[tuple[Audience, ...], Field(min_length=1, max_length=64)]
 
@@ -81,6 +82,45 @@ class SharedReadScope(_Frozen):
     kinds: tuple[Kind, ...] | None = None
 
 
+class SharedActionOutcome(_Frozen):
+    """A committed capability outcome bound by the authenticated Runtime adapter."""
+
+    event_id: Identifier
+    owner_id: Identifier = "misty"
+    session_id: Identifier
+    intent_id: Identifier
+    evidence: ActionOutcomeEvidence
+
+    @model_validator(mode="after")
+    def verified_outcome(self):
+        if (self.event_id != self.evidence.prepare_id + ":action_outcome"
+                or not self.evidence.evidence_refs
+                or any(not ref.strip() for ref in self.evidence.evidence_refs)):
+            raise ValueError("action source requires the committed prepare identity and verifier evidence")
+        return self
+
+
+class SharedWindow(_Frozen):
+    owner_id: Identifier
+    preset_id: Identifier
+    start: AwareDatetime
+    end: AwareDatetime
+    watermark: int = Field(ge=0)
+    coverage_gaps: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def valid_window(self):
+        if self.start >= self.end:
+            raise ValueError("source window must be a nonempty half-open interval")
+        return self
+
+
+class SharedSourcePage(_Frozen):
+    records: tuple["SharedMemoryRecord", ...]
+    next_cursor: int = Field(ge=0)
+    exhausted: bool
+
+
 class SharedSource(_Frozen):
     kind: Kind
     original_record_id: Identifier
@@ -113,7 +153,7 @@ class SharedMemoryRecord(_Frozen):
     author_principal: Principal
     display_name: str | None = None
     kind: Kind
-    authority: Literal["speaker_utterance", "verified_profile_observation", "verified_delivery"]
+    authority: Literal["speaker_utterance", "verified_profile_observation", "verified_delivery", "verified_action_outcome"]
     text: str
     occurred_at: AwareDatetime
     stored_at: AwareDatetime
@@ -133,10 +173,12 @@ class SharedMemoryRecord(_Frozen):
         if self.record_id != _record_id(self.owner_id, self.kind, self.source.original_record_id):
             raise ValueError("record identifier does not bind its source")
         original = json.loads(self.source.original_json)
-        source_id_key = "event_id" if self.kind.startswith("local_") else "record_id" if self.kind in {"qq_profile", "qq_observation"} else "receipt_id"
+        source_id_key = "event_id" if self.kind.startswith("local_") or self.kind == "action_outcome" else "record_id" if self.kind in {"qq_profile", "qq_observation"} else "receipt_id"
         original_id = original.get("receipt", {}).get("entry_id") if self.kind == "board_entry" else original.get(source_id_key)
         if original_id != self.source.original_record_id:
             raise ValueError("original source identifier disagrees with source reference")
+        if self.kind == "action_outcome" and original.get("owner_id") != self.owner_id:
+            raise ValueError("action original belongs to a different owner")
         expected = _project_original(self.kind, original)
         actual = self.model_dump(mode="json", include=set(expected))
         actual["occurred_at"] = self.occurred_at.isoformat()
@@ -234,8 +276,8 @@ def _record_id(owner_id: str, kind: str, source_id: str) -> str:
 def _validate_visibility(channel, session, visibility):
     if channel == "qq_group" and any(value.startswith("qq:") and value != session for value in visibility):
         raise ValueError("QQ originals cannot be exposed to another QQ group")
-    if channel == "private_board" and set(visibility) != {"local:main"}:
-        raise ValueError("private board originals are visible only to local:main")
+    if channel in {"private_board", "body"} and set(visibility) != {"local:main"}:
+        raise ValueError("private board and body originals are visible only to local:main")
     if channel == "qq_private" and (not session.startswith("qq:private:")
             or any(value not in {"local:main", session} for value in visibility)):
         raise ValueError("QQ private originals are visible only to their private peer and local:main")
@@ -249,6 +291,16 @@ def _qq_projection_scope(group_id: str) -> dict:
 
 def _project_original(kind: Kind, value: dict) -> dict:
     """Derive every model-visible statement/identity from a typed original."""
+    if kind == "action_outcome":
+        event = SharedActionOutcome.model_validate(value)
+        result = "通过" if event.evidence.success else "未通过"
+        return dict(channel="body", session_id=event.session_id,
+                    author_principal="character:" + event.owner_id, display_name=None, kind=kind,
+                    authority="verified_action_outcome",
+                    text=f"身体能力 {event.intent_id} 的独立核验结果：{result}。",
+                    occurred_at=event.evidence.observed_at.isoformat(),
+                    evidence_refs=list(dict.fromkeys(event.evidence.evidence_refs)),
+                    profile_record_id=None, claims=[])
     if kind == "board_entry":
         from harness.embodiment.board_contracts import BoardEntry
         entry = BoardEntry.model_validate(value)
@@ -291,11 +343,12 @@ def _project_original(kind: Kind, value: dict) -> dict:
 
 
 class SharedMemoryStore:
-    def __init__(self, path: Path | str, *, owner_id: str = "misty"):
+    def __init__(self, path: Path | str, *, owner_id: str = "misty", preset_id: str = "misty"):
         if str(path) == ":memory:":
             raise ValueError("shared memory requires a persistent database path")
         self.path = Path(path)
         self.owner_id = SharedReadScope(owner_id=owner_id, audience="local:main").owner_id
+        self.preset_id = SharedReadScope(owner_id=preset_id, audience="local:main").owner_id
 
     def _connect(self, *, write: bool) -> sqlite3.Connection:
         if write:
@@ -310,10 +363,41 @@ class SharedMemoryStore:
                 source_id TEXT NOT NULL, source_sha256 TEXT NOT NULL, channel TEXT NOT NULL,
                 session_id TEXT NOT NULL, author_principal TEXT NOT NULL, record_json TEXT NOT NULL,
                 UNIQUE(owner_id, source_kind, source_id))""")
+            connection.execute("CREATE TABLE IF NOT EXISTS shared_memory_identity (singleton INTEGER PRIMARY KEY CHECK(singleton=1), preset_id TEXT NOT NULL)")
+            # An unlabelled pre-upgrade database belongs to the historical Misty
+            # preset. It must never be relabelled as another character's history.
+            existing = connection.execute("SELECT COUNT(*) FROM shared_memory_entries").fetchone()[0]
+            connection.execute("INSERT OR IGNORE INTO shared_memory_identity VALUES (1, ?)",
+                               ("misty" if existing else self.preset_id,))
+            self._check_preset(connection)
+            has_index = connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='shared_memory_source_index'").fetchone()
+            connection.execute("""CREATE TABLE IF NOT EXISTS shared_memory_source_index (
+                sequence INTEGER PRIMARY KEY AUTOINCREMENT, record_id TEXT NOT NULL UNIQUE,
+                owner_id TEXT NOT NULL, preset_id TEXT NOT NULL, occurred_at TEXT NOT NULL)""")
+            connection.execute("CREATE INDEX IF NOT EXISTS shared_memory_source_window ON shared_memory_source_index(owner_id,preset_id,occurred_at,sequence)")
+            connection.execute("""CREATE TABLE IF NOT EXISTS shared_memory_archive_coverage (
+                owner_id TEXT NOT NULL, preset_id TEXT NOT NULL, kind TEXT NOT NULL,
+                started_at TEXT NOT NULL, PRIMARY KEY(owner_id,preset_id,kind))""")
+            if not has_index:
+                for row in connection.execute("SELECT * FROM shared_memory_entries ORDER BY rowid"):
+                    self._index_source(connection, self._decode(row))
             connection.commit()
         else:
             connection.execute("PRAGMA query_only=ON")
+            self._check_preset(connection)
         return connection
+
+    def _check_preset(self, connection):
+        exists = connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='shared_memory_identity'").fetchone()
+        identity = connection.execute("SELECT preset_id FROM shared_memory_identity WHERE singleton=1").fetchone() if exists else None
+        if (identity[0] if identity else "misty") != self.preset_id:
+            connection.close()
+            raise SharedMemoryStorageError("shared database belongs to a different preset")
+
+    def _index_source(self, connection, record):
+        connection.execute("INSERT OR IGNORE INTO shared_memory_source_index(record_id,owner_id,preset_id,occurred_at) VALUES (?,?,?,?)",
+                           (record.record_id, record.owner_id, self.preset_id,
+                            record.occurred_at.astimezone(timezone.utc).isoformat()))
 
     def _prepare(self, kind: Kind, source_id: str, original: BaseModel, visibility: tuple[str, ...], *, original_row_json: str | None = None) -> SharedMemoryRecord:
         # Database migration retains the original field set, including the
@@ -343,6 +427,8 @@ class SharedMemoryStore:
         with closing(self._connect(write=True)) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
             for record in records:
+                if record.owner_id != self.owner_id:
+                    raise SharedMemoryConflict("source belongs to a different owner or preset")
                 row = connection.execute("SELECT * FROM shared_memory_entries WHERE record_id=?", (record.record_id,)).fetchone()
                 if row is not None:
                     previous = self._decode(row)
@@ -353,6 +439,7 @@ class SharedMemoryStore:
                     connection.execute("INSERT INTO shared_memory_entries VALUES (?,?,?,?,?,?,?,?,?)",
                                        (record.record_id, record.owner_id, record.kind, record.source.original_record_id,
                                         record.source.original_sha256, record.channel, record.session_id, record.author_principal, record.model_dump_json()))
+                    self._index_source(connection, record)
                     results.append(SharedWriteResult(created=True, record=record))
         return tuple(results)
 
@@ -360,6 +447,57 @@ class SharedMemoryStore:
         event = SharedLocalEvent.model_validate_json(event.model_dump_json())
         kind = "local_incoming" if event.role == "user" else "local_outgoing"
         return self._write([self._prepare(kind, event.event_id, event, event.visibility)])[0]
+
+    def record_action(self, event: SharedActionOutcome) -> SharedWriteResult:
+        event = SharedActionOutcome.model_validate_json(event.model_dump_json())
+        return self._write([self._prepare("action_outcome", event.event_id, event, ("local:main",))])[0]
+
+    def mark_archive_started(self, kind: Literal["local_chat", "action_outcome"], *, at: datetime | None = None) -> None:
+        moment = at or _now()
+        if moment.utcoffset() is None:
+            raise ValueError("archive boundary requires an aware time")
+        with closing(self._connect(write=True)) as connection, connection:
+            connection.execute("INSERT OR IGNORE INTO shared_memory_archive_coverage VALUES (?,?,?,?)",
+                               (self.owner_id, self.preset_id, kind, moment.astimezone(timezone.utc).isoformat()))
+
+    def freeze_window(self, start: datetime, end: datetime, *, watermark: int | None = None) -> SharedWindow:
+        """Freeze an immutable insertion prefix; later arrivals require a new revision."""
+        window = SharedWindow(owner_id=self.owner_id, preset_id=self.preset_id, start=start, end=end, watermark=0)
+        with closing(self._connect(write=True)) as connection, connection:
+            connection.execute("BEGIN")
+            maximum = connection.execute("SELECT COALESCE(MAX(sequence),0) FROM shared_memory_source_index WHERE owner_id=? AND preset_id=?",
+                                         (self.owner_id, self.preset_id)).fetchone()[0]
+            if watermark is not None and (type(watermark) is not int or not 0 <= watermark <= maximum):
+                raise ValueError("source watermark is outside this owner and preset snapshot")
+            coverage = dict(connection.execute("SELECT kind,started_at FROM shared_memory_archive_coverage WHERE owner_id=? AND preset_id=?",
+                                               (self.owner_id, self.preset_id)))
+        gaps = tuple(kind + "_history_before_continuous_archive" for kind in ("local_chat", "action_outcome")
+                     if kind not in coverage or start < datetime.fromisoformat(coverage[kind]))
+        return window.model_copy(update={"watermark": maximum if watermark is None else watermark, "coverage_gaps": gaps})
+
+    def read_window(self, window: SharedWindow, *, cursor: int = 0, limit: int = 200) -> SharedSourcePage:
+        window = SharedWindow.model_validate(window.model_dump())
+        if (window.owner_id, window.preset_id) != (self.owner_id, self.preset_id):
+            raise ValueError("source window belongs to another owner or preset")
+        if type(cursor) is not int or not 0 <= cursor <= window.watermark or type(limit) is not int or not 1 <= limit <= 1000:
+            raise ValueError("invalid source pagination cursor or limit")
+        with closing(self._connect(write=False)) as connection:
+            rows = connection.execute("""SELECT e.*,i.sequence AS source_sequence,i.occurred_at AS indexed_time FROM shared_memory_source_index i
+                JOIN shared_memory_entries e ON e.record_id=i.record_id
+                WHERE i.owner_id=? AND i.preset_id=? AND i.sequence>? AND i.sequence<=?
+                  AND i.occurred_at>=? AND i.occurred_at<? ORDER BY i.sequence LIMIT ?""",
+                (self.owner_id, self.preset_id, cursor, window.watermark,
+                 window.start.astimezone(timezone.utc).isoformat(), window.end.astimezone(timezone.utc).isoformat(), limit + 1)).fetchall()
+        selected = rows[:limit]
+        records = []
+        for row in selected:
+            record = self._decode(row)
+            if (record.owner_id != self.owner_id
+                    or record.occurred_at.astimezone(timezone.utc).isoformat() != row["indexed_time"]):
+                raise SharedMemoryStorageError("source time index disagrees with its original")
+            records.append(record)
+        exhausted = len(rows) <= limit
+        return SharedSourcePage(records=tuple(records), next_cursor=window.watermark if exhausted else selected[-1]["source_sequence"], exhausted=exhausted)
 
     def import_board_entry(self, entry) -> SharedWriteResult:
         """Project a body-read verified receipt; callers must verify its source first."""

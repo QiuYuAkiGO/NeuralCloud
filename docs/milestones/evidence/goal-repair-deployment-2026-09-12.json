@@ -1,0 +1,51 @@
+{
+  "schema_version": "goal-repair-deployment-v1",
+  "started_at": "2026-09-12T15:21:38.7654570Z",
+  "status": "loaded_verified_after_slow_recovery",
+  "monitor_pid": 28096,
+  "monitor_restarted": false,
+  "changes": [
+    {
+      "service": "cognitive",
+      "old_pid": 39000,
+      "old_child_pid": 25156,
+      "stopped_at": "2026-09-12T15:21:40.2687858Z",
+      "new_pid": 33964,
+      "started_at": "2026-09-12T15:21:40.3620425Z",
+      "healthy_at": "2026-09-12T15:21:46.5513679Z"
+    },
+    {
+      "service": "runtime",
+      "old_pid": 34232,
+      "old_child_pid": 840,
+      "stopped_at": "2026-09-12T15:21:46.7525381Z",
+      "new_pid": 36092,
+      "started_at": "2026-09-12T15:21:46.8222425Z"
+    }
+  ],
+  "errors": [
+    "RuntimeException"
+  ],
+  "goals_before": {
+    "status": "waiting",
+    "episode_id": "episode:1dc4b62018fd4be4986217f61df4df86",
+    "no_progress": 7,
+    "result_count": 7
+  },
+  "startup_wait_limit_seconds": 55,
+  "startup_wait_limit_exceeded": true,
+  "verified_at": "2026-09-12T15:23:37.389409+00:00",
+  "runtime_lifecycle": "RUNNING",
+  "goals_after": {
+    "episode_id": "episode:1dc4b62018fd4be4986217f61df4df86",
+    "status": "waiting",
+    "no_progress": 7,
+    "result_count": 7
+  },
+  "domain_health": null,
+  "monitor_identity_preserved": true,
+  "limitations": [
+    "Runtime journal recovery exceeded the deployment script 55 second wait. The same replacement process later passed health checks; it was not restarted again.",
+    "Runtime was explicitly paused for maintenance and resumed after health verification. Observation gaps and failed samples must remain in acceptance evidence."
+  ]
+}

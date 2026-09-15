@@ -1,0 +1,1268 @@
+{
+  "schema_version": "desktop-capability-startup-v1",
+  "started_at": "2026-09-12T05:40:13.585034+00:00",
+  "prior_history": "docs/milestones/evidence/homeostatic-capabilities-live-2026-09-12.json#desktop_environment",
+  "project": "mistyai-m0",
+  "compose_path": "/opt/mistyai/deploy/compose.yaml",
+  "containers_reused": true,
+  "image_rebuilt": false,
+  "deployed": false,
+  "units_identity_verified": true,
+  "body_service": "active",
+  "operator_service": "active",
+  "body_instance_id": "misty-body-01",
+  "declared_skills": [
+    "app.open.v1",
+    "control.defer.v1",
+    "control.observe.v1",
+    "control.wait.v1",
+    "file.create_text.v1",
+    "file.delete.v1",
+    "file.move.v1",
+    "process.start.v1",
+    "process.stop.v1",
+    "shell.run.v1",
+    "ui.activate.v1",
+    "ui.drag.v1",
+    "ui.key_chord.v1",
+    "ui.move_pointer.v1",
+    "ui.scroll.v1",
+    "ui.type_text.v1",
+    "window.focus.v1"
+  ],
+  "health": {
+    "schema_version": "body-contract-v1",
+    "body_instance_id": "misty-body-01",
+    "status": "healthy",
+    "database": {
+      "status": "healthy",
+      "detail": null
+    },
+    "environment": {
+      "status": "healthy",
+      "detail": null
+    },
+    "observation": {
+      "status": "healthy",
+      "detail": null
+    },
+    "agent_backends": {
+      "screen": "healthy",
+      "window": "healthy",
+      "input": "healthy",
+      "xfce": "healthy",
+      "a11y": "healthy",
+      "process": "healthy",
+      "journal": "healthy",
+      "worker": "healthy"
+    },
+    "action": {
+      "status": "healthy",
+      "detail": null
+    },
+    "evidence_store": {
+      "status": "healthy",
+      "detail": null
+    },
+    "body_state": null,
+    "physiology": {
+      "status": "unavailable",
+      "detail": null
+    },
+    "agency_state": "AVAILABLE",
+    "active_action_id": null,
+    "manual_takeover_active": false,
+    "checked_at": "2026-09-12T05:40:13.008831Z"
+  },
+  "ports": {
+    "6080": true,
+    "8765": true,
+    "8787": true,
+    "8789": false
+  },
+  "desktop_trials": [
+    {
+      "mode": "desktop",
+      "isolation": "C:\\Users\\22850\\AppData\\Local\\Temp\\neuralcloud-capability-acceptance-bw9xdqs7",
+      "opportunities": 1,
+      "started_at": "2026-09-12T05:47:28.428263+00:00",
+      "thinking_override": false,
+      "qq_send_before": 23,
+      "simulation_boundaries": [
+        "elapsed heartbeat source times replayed from latest observed state, independent of wall clock",
+        "initial quiet timer elapsed",
+        "private copies of personality and shared memory",
+        "fresh isolated runtime and homeostasis"
+      ],
+      "model": "deepseek-v4-flash",
+      "persona_sha256": "e6e0b4fe03a4831caa6bcabaac64c2396e147e8aab26a7752669e2e2fc671145",
+      "desktop_declared_skills": [
+        "app.open.v1",
+        "control.defer.v1",
+        "control.observe.v1",
+        "control.wait.v1",
+        "file.create_text.v1",
+        "file.delete.v1",
+        "file.move.v1",
+        "process.start.v1",
+        "process.stop.v1",
+        "shell.run.v1",
+        "ui.activate.v1",
+        "ui.drag.v1",
+        "ui.key_chord.v1",
+        "ui.move_pointer.v1",
+        "ui.scroll.v1",
+        "ui.type_text.v1",
+        "window.focus.v1"
+      ],
+      "natural_drift": {
+        "source_time_origin": "2026-09-12T05:47:34.356890+00:00",
+        "heartbeat_count": 85,
+        "elapsed_seconds": 7650,
+        "initial_social": 0.62,
+        "final_social": 0.3862059243548468,
+        "summary": {
+          "schema_version": "homeostatic-interoception-v1",
+          "profile_ref": "qq-social-drive-v1@1",
+          "snapshot_revision": 86,
+          "salience": "noticeable",
+          "dominant_needs": [
+            {
+              "dimension": "social_connection",
+              "direction": "low",
+              "normalized_deviation": 0.252876,
+              "trend": "worsening",
+              "confidence": 0.8,
+              "semantic_need": "需要低压力的连接与被理解"
+            }
+          ],
+          "emotion_hint": {
+            "label": "lonely",
+            "intensity": 0.39922240055651764
+          },
+          "policy_refs": [
+            "connect"
+          ],
+          "episode_signature": "homeostasis:b0a9165e75b1a1676cf5"
+        }
+      },
+      "opportunity": {
+        "opportunity_id": "capability:18eb31f93b464cb09ff7ead35ed402d3",
+        "status": "wait",
+        "event_id": "capability-event:49544481f70c48f6ab6b08a44b95e04e",
+        "action_id": null,
+        "entry_id": null,
+        "error_type": null
+      },
+      "selected": {
+        "kind": "wait",
+        "offer_id": null,
+        "channel": null,
+        "capability_id": null,
+        "provider_id": null,
+        "body_instance_id": null
+      },
+      "selection_timing": {
+        "model_calls": 1,
+        "model_ms": 4016.0,
+        "total_ms": 4110.0,
+        "usage": {
+          "prompt_tokens": 18773,
+          "completion_tokens": 533,
+          "total_tokens": 19306,
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      },
+      "observation_evidence_refs": [],
+      "isolated_memory_delta": 0,
+      "effect_verified": false,
+      "body_observation_verified": false,
+      "acceptance": "valid_wait_effect_pending",
+      "qq_send_after": 23,
+      "qq_zero_new_sends": true,
+      "production_sources_unchanged": true,
+      "completed_at": "2026-09-12T05:48:00.800071+00:00",
+      "effective_trial": 1,
+      "source_report": "C:\\Users\\22850\\AppData\\Local\\Temp\\neuralcloud-capability-acceptance-bw9xdqs7\\acceptance.json",
+      "clock_isolation_evidence": {
+        "last_heartbeat_source_time": "2026-09-12T07:55:04.356890Z",
+        "model_command_issued_at": "2026-09-12T05:47:56.428565Z",
+        "model_command_deadline": "2026-09-12T05:48:56.416436Z"
+      },
+      "offered_capabilities": [
+        {
+          "offer_id": "desktop:app.open.v1",
+          "capability_id": "app.open.v1",
+          "channel": "desktop",
+          "body_instance_id": "misty-body-01",
+          "available": true,
+          "ready": true
+        },
+        {
+          "offer_id": "desktop:control.observe.v1",
+          "capability_id": "control.observe.v1",
+          "channel": "desktop",
+          "body_instance_id": "misty-body-01",
+          "available": true,
+          "ready": true
+        }
+      ],
+      "model_requests_including_background": [
+        {
+          "span_id": "model_request_deac269bff994d638bd1d9b0402e5b15",
+          "phase": "capability_selection",
+          "role": "main",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 4023.816
+        }
+      ]
+    },
+    {
+      "mode": "desktop",
+      "isolation": "C:\\Users\\22850\\AppData\\Local\\Temp\\neuralcloud-capability-acceptance-sw1vut62",
+      "opportunities": 1,
+      "started_at": "2026-09-12T05:49:42.208137+00:00",
+      "thinking_override": false,
+      "qq_send_before": 23,
+      "simulation_boundaries": [
+        "elapsed heartbeat source times replayed from latest observed state, independent of wall clock",
+        "initial quiet timer elapsed",
+        "private copies of personality and shared memory",
+        "fresh isolated runtime and homeostasis"
+      ],
+      "model": "deepseek-v4-flash",
+      "persona_sha256": "e6e0b4fe03a4831caa6bcabaac64c2396e147e8aab26a7752669e2e2fc671145",
+      "desktop_declared_skills": [
+        "app.open.v1",
+        "control.defer.v1",
+        "control.observe.v1",
+        "control.wait.v1",
+        "file.create_text.v1",
+        "file.delete.v1",
+        "file.move.v1",
+        "process.start.v1",
+        "process.stop.v1",
+        "shell.run.v1",
+        "ui.activate.v1",
+        "ui.drag.v1",
+        "ui.key_chord.v1",
+        "ui.move_pointer.v1",
+        "ui.scroll.v1",
+        "ui.type_text.v1",
+        "window.focus.v1"
+      ],
+      "natural_drift": {
+        "source_time_origin": "2026-09-12T05:49:47.415599+00:00",
+        "heartbeat_count": 85,
+        "elapsed_seconds": 7650,
+        "initial_social": 0.62,
+        "final_social": 0.3862059243548468,
+        "summary": {
+          "schema_version": "homeostatic-interoception-v1",
+          "profile_ref": "qq-social-drive-v1@1",
+          "snapshot_revision": 86,
+          "salience": "noticeable",
+          "dominant_needs": [
+            {
+              "dimension": "social_connection",
+              "direction": "low",
+              "normalized_deviation": 0.252876,
+              "trend": "worsening",
+              "confidence": 0.8,
+              "semantic_need": "需要低压力的连接与被理解"
+            }
+          ],
+          "emotion_hint": {
+            "label": "lonely",
+            "intensity": 0.39922240055651764
+          },
+          "policy_refs": [
+            "connect"
+          ],
+          "episode_signature": "homeostasis:b0a9165e75b1a1676cf5"
+        }
+      },
+      "opportunity": {
+        "opportunity_id": "capability:6942c2f57c334f3092429d68daec989e",
+        "status": "wait",
+        "event_id": "capability-event:6cf0022a8d44402f8230cf4d9fa0ebd3",
+        "action_id": null,
+        "entry_id": null,
+        "error_type": null
+      },
+      "selected": {
+        "kind": "wait",
+        "offer_id": null,
+        "channel": null,
+        "capability_id": null,
+        "provider_id": null,
+        "body_instance_id": null
+      },
+      "selection_timing": {
+        "model_calls": 1,
+        "model_ms": 4313.0,
+        "total_ms": 4375.0,
+        "usage": {
+          "prompt_tokens": 18796,
+          "completion_tokens": 461,
+          "total_tokens": 19257,
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      },
+      "observation_evidence_refs": [],
+      "isolated_memory_delta": 0,
+      "effect_verified": false,
+      "body_observation_verified": false,
+      "acceptance": "valid_wait_effect_pending",
+      "qq_send_after": 23,
+      "qq_zero_new_sends": true,
+      "production_sources_unchanged": true,
+      "completed_at": "2026-09-12T05:50:14.468478+00:00",
+      "effective_trial": 2,
+      "source_report": "C:\\Users\\22850\\AppData\\Local\\Temp\\neuralcloud-capability-acceptance-sw1vut62\\acceptance.json",
+      "clock_isolation_evidence": {
+        "last_heartbeat_source_time": "2026-09-12T07:57:17.415599Z",
+        "model_command_issued_at": "2026-09-12T05:50:09.772235Z",
+        "model_command_deadline": "2026-09-12T05:51:09.756356Z"
+      },
+      "offered_capabilities": [
+        {
+          "offer_id": "desktop:app.open.v1",
+          "capability_id": "app.open.v1",
+          "channel": "desktop",
+          "body_instance_id": "misty-body-01",
+          "available": true,
+          "ready": true
+        },
+        {
+          "offer_id": "desktop:control.observe.v1",
+          "capability_id": "control.observe.v1",
+          "channel": "desktop",
+          "body_instance_id": "misty-body-01",
+          "available": true,
+          "ready": true
+        }
+      ],
+      "model_requests_including_background": [
+        {
+          "span_id": "model_request_51c34898f0514038b46f3ca1a7f56d86",
+          "phase": "capability_selection",
+          "role": "main",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 4316.389
+        }
+      ]
+    },
+    {
+      "mode": "desktop",
+      "isolation": "C:\\Users\\22850\\AppData\\Local\\Temp\\neuralcloud-capability-acceptance-weldsf7k",
+      "opportunities": 1,
+      "started_at": "2026-09-12T05:50:16.150574+00:00",
+      "thinking_override": false,
+      "qq_send_before": 23,
+      "simulation_boundaries": [
+        "elapsed heartbeat source times replayed from latest observed state, independent of wall clock",
+        "initial quiet timer elapsed",
+        "private copies of personality and shared memory",
+        "fresh isolated runtime and homeostasis"
+      ],
+      "model": "deepseek-v4-flash",
+      "persona_sha256": "e6e0b4fe03a4831caa6bcabaac64c2396e147e8aab26a7752669e2e2fc671145",
+      "desktop_declared_skills": [
+        "app.open.v1",
+        "control.defer.v1",
+        "control.observe.v1",
+        "control.wait.v1",
+        "file.create_text.v1",
+        "file.delete.v1",
+        "file.move.v1",
+        "process.start.v1",
+        "process.stop.v1",
+        "shell.run.v1",
+        "ui.activate.v1",
+        "ui.drag.v1",
+        "ui.key_chord.v1",
+        "ui.move_pointer.v1",
+        "ui.scroll.v1",
+        "ui.type_text.v1",
+        "window.focus.v1"
+      ],
+      "natural_drift": {
+        "source_time_origin": "2026-09-12T05:50:21.474720+00:00",
+        "heartbeat_count": 85,
+        "elapsed_seconds": 7650,
+        "initial_social": 0.62,
+        "final_social": 0.3862059243548468,
+        "summary": {
+          "schema_version": "homeostatic-interoception-v1",
+          "profile_ref": "qq-social-drive-v1@1",
+          "snapshot_revision": 86,
+          "salience": "noticeable",
+          "dominant_needs": [
+            {
+              "dimension": "social_connection",
+              "direction": "low",
+              "normalized_deviation": 0.252876,
+              "trend": "worsening",
+              "confidence": 0.8,
+              "semantic_need": "需要低压力的连接与被理解"
+            }
+          ],
+          "emotion_hint": {
+            "label": "lonely",
+            "intensity": 0.39922240055651764
+          },
+          "policy_refs": [
+            "connect"
+          ],
+          "episode_signature": "homeostasis:b0a9165e75b1a1676cf5"
+        }
+      },
+      "opportunity": {
+        "opportunity_id": "capability:3407de361f584073b66fea36fc4249e5",
+        "status": "completed",
+        "event_id": "capability-event:37a2f936adee4b55a9cb64716086a29d",
+        "action_id": "act_376d3ab0",
+        "entry_id": null,
+        "error_type": null
+      },
+      "selected": {
+        "kind": "observe",
+        "offer_id": "desktop:control.observe.v1",
+        "channel": "desktop",
+        "capability_id": "control.observe.v1",
+        "provider_id": "mistyai",
+        "body_instance_id": "misty-body-01"
+      },
+      "selection_timing": {
+        "model_calls": 1,
+        "model_ms": 7016.0,
+        "total_ms": 7125.0,
+        "usage": {
+          "prompt_tokens": 18825,
+          "completion_tokens": 1023,
+          "total_tokens": 19848,
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      },
+      "observation_evidence_refs": [],
+      "outcome_evidence_refs": [
+        {
+          "provider_id": "mistyai",
+          "ref": "evidence://sha256/a674d5842892d6fa0532616ff16896b647e6aa066f7508eb0c863dac089dac0e",
+          "digest": "a674d5842892d6fa0532616ff16896b647e6aa066f7508eb0c863dac089dac0e",
+          "media_type": null,
+          "created_at": "2026-09-12T05:50:52.480798Z"
+        }
+      ],
+      "independent_desktop_readback": {
+        "action_id": "act_376d3ab0",
+        "state": "execution_succeeded",
+        "success": true,
+        "unknown": false,
+        "evidence_refs": [
+          "evidence://sha256/a674d5842892d6fa0532616ff16896b647e6aa066f7508eb0c863dac089dac0e"
+        ],
+        "evidence_sha256_verified": true
+      },
+      "independent_desktop_observation": {
+        "observation_id": "obs_8e9713c7b6ef4d72a9f011016be63473",
+        "captured_at": "2026-09-12T05:50:54.050343+00:00",
+        "after_action_result": true,
+        "body_instance_id": "misty-body-01",
+        "target_app_id": null,
+        "target_app_present": false,
+        "target_app_running": false,
+        "target_windows": [],
+        "frame_evidence_ref": "evidence://sha256/a674d5842892d6fa0532616ff16896b647e6aa066f7508eb0c863dac089dac0e",
+        "frame_sha256": "a674d5842892d6fa0532616ff16896b647e6aa066f7508eb0c863dac089dac0e",
+        "evidence_sha256_verified": true
+      },
+      "isolated_memory_delta": 0,
+      "effect_verified": false,
+      "body_observation_verified": true,
+      "acceptance": "failed",
+      "cleanup_error_types": [
+        "RuntimeStateError"
+      ],
+      "qq_send_after": 23,
+      "qq_zero_new_sends": true,
+      "production_sources_unchanged": true,
+      "completed_at": "2026-09-12T05:50:59.544880+00:00",
+      "effective_trial": 3,
+      "source_report": "C:\\Users\\22850\\AppData\\Local\\Temp\\neuralcloud-capability-acceptance-weldsf7k\\acceptance.json",
+      "clock_isolation_evidence": {
+        "last_heartbeat_source_time": "2026-09-12T07:57:51.474720Z",
+        "model_command_issued_at": "2026-09-12T05:50:42.995715Z",
+        "model_command_deadline": "2026-09-12T05:51:42.980413Z"
+      },
+      "offered_capabilities": [
+        {
+          "offer_id": "desktop:app.open.v1",
+          "capability_id": "app.open.v1",
+          "channel": "desktop",
+          "body_instance_id": "misty-body-01",
+          "available": true,
+          "ready": true
+        },
+        {
+          "offer_id": "desktop:control.observe.v1",
+          "capability_id": "control.observe.v1",
+          "channel": "desktop",
+          "body_instance_id": "misty-body-01",
+          "available": true,
+          "ready": true
+        }
+      ],
+      "model_requests_including_background": [
+        {
+          "span_id": "model_request_f516850e6e8c4073a1e235a82baf1c88",
+          "phase": "capability_selection",
+          "role": "main",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 7013.785
+        },
+        {
+          "span_id": "model_request_2bfafe988a464ae689852d456808a001",
+          "phase": "commit",
+          "role": "aux",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 2197.176
+        },
+        {
+          "span_id": "model_request_128ee8a0a3d14edd9e88346ea90814ec",
+          "phase": "commit",
+          "role": "aux",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 2677.466
+        },
+        {
+          "span_id": "model_request_e80a8d5a76d1489080784931b9193280",
+          "phase": "commit",
+          "role": "aux",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 3118.21
+        },
+        {
+          "span_id": "model_request_a95d3a2e3fce4a96ba9786b08b42b7a8",
+          "phase": "commit",
+          "role": "aux",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 2483.286
+        },
+        {
+          "span_id": "model_request_ce1cb59a59df4fb8a3fbad31712540b0",
+          "phase": "commit",
+          "role": "aux",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 1544.261
+        },
+        {
+          "span_id": "model_request_43efd841cbfa4a8992ced48678628e52",
+          "phase": "commit",
+          "role": "aux",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 6297.851
+        }
+      ],
+      "cleanup_diagnosis": {
+        "reason": "graceful stop failed: cognitive maintenance did not drain during shutdown",
+        "shutdown_drain_seconds": 5,
+        "body_observation_success_preserved": true,
+        "overall_acceptance": "failed",
+        "no_reclassification_as_full_pass": true
+      }
+    },
+    {
+      "mode": "desktop",
+      "isolation": "C:\\Users\\22850\\AppData\\Local\\Temp\\neuralcloud-capability-acceptance-l1ldhemo",
+      "opportunities": 1,
+      "started_at": "2026-09-12T05:53:13.560925+00:00",
+      "thinking_override": false,
+      "qq_send_before": 23,
+      "simulation_boundaries": [
+        "elapsed heartbeat source times replayed from latest observed state, independent of wall clock",
+        "initial quiet timer elapsed",
+        "private copies of personality and shared memory",
+        "fresh isolated runtime and homeostasis"
+      ],
+      "model": "deepseek-v4-flash",
+      "persona_sha256": "e6e0b4fe03a4831caa6bcabaac64c2396e147e8aab26a7752669e2e2fc671145",
+      "desktop_declared_skills": [
+        "app.open.v1",
+        "control.defer.v1",
+        "control.observe.v1",
+        "control.wait.v1",
+        "file.create_text.v1",
+        "file.delete.v1",
+        "file.move.v1",
+        "process.start.v1",
+        "process.stop.v1",
+        "shell.run.v1",
+        "ui.activate.v1",
+        "ui.drag.v1",
+        "ui.key_chord.v1",
+        "ui.move_pointer.v1",
+        "ui.scroll.v1",
+        "ui.type_text.v1",
+        "window.focus.v1"
+      ],
+      "isolated_shutdown_drain_seconds": 25,
+      "natural_drift": {
+        "source_time_origin": "2026-09-12T05:53:18.030048+00:00",
+        "heartbeat_count": 85,
+        "elapsed_seconds": 7650,
+        "initial_social": 0.62,
+        "final_social": 0.3862059243548468,
+        "summary": {
+          "schema_version": "homeostatic-interoception-v1",
+          "profile_ref": "qq-social-drive-v1@1",
+          "snapshot_revision": 86,
+          "salience": "noticeable",
+          "dominant_needs": [
+            {
+              "dimension": "social_connection",
+              "direction": "low",
+              "normalized_deviation": 0.252876,
+              "trend": "worsening",
+              "confidence": 0.8,
+              "semantic_need": "需要低压力的连接与被理解"
+            }
+          ],
+          "emotion_hint": {
+            "label": "lonely",
+            "intensity": 0.39922240055651764
+          },
+          "policy_refs": [
+            "connect"
+          ],
+          "episode_signature": "homeostasis:b0a9165e75b1a1676cf5"
+        }
+      },
+      "opportunity": {
+        "opportunity_id": "capability:0ac843c8ecda4feaa230da00e3f12939",
+        "status": "completed",
+        "event_id": "capability-event:9bf92489a309472b823e8e724fa1d707",
+        "action_id": "act_42a0df9d",
+        "entry_id": null,
+        "error_type": null
+      },
+      "selected": {
+        "kind": "observe",
+        "offer_id": "desktop:control.observe.v1",
+        "channel": "desktop",
+        "capability_id": "control.observe.v1",
+        "provider_id": "mistyai",
+        "body_instance_id": "misty-body-01"
+      },
+      "selection_timing": {
+        "model_calls": 1,
+        "model_ms": 7406.0,
+        "total_ms": 7453.0,
+        "usage": {
+          "prompt_tokens": 18822,
+          "completion_tokens": 1089,
+          "total_tokens": 19911,
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      },
+      "observation_evidence_refs": [],
+      "outcome_evidence_refs": [
+        {
+          "provider_id": "mistyai",
+          "ref": "evidence://sha256/22ab515026f85bdbf44db45bfe8d8f6ebb15209b16c1141ab734106a6f125c78",
+          "digest": "22ab515026f85bdbf44db45bfe8d8f6ebb15209b16c1141ab734106a6f125c78",
+          "media_type": null,
+          "created_at": "2026-09-12T05:53:46.491102Z"
+        }
+      ],
+      "independent_desktop_readback": {
+        "action_id": "act_42a0df9d",
+        "state": "execution_succeeded",
+        "success": true,
+        "unknown": false,
+        "evidence_refs": [
+          "evidence://sha256/22ab515026f85bdbf44db45bfe8d8f6ebb15209b16c1141ab734106a6f125c78"
+        ],
+        "evidence_sha256_verified": true
+      },
+      "independent_desktop_observation": {
+        "observation_id": "obs_28f50d1c1ce14fa6a7b95da4538cb268",
+        "captured_at": "2026-09-12T05:53:49.104072+00:00",
+        "after_action_result": true,
+        "body_instance_id": "misty-body-01",
+        "target_app_id": null,
+        "target_app_present": false,
+        "target_app_running": false,
+        "target_windows": [],
+        "frame_evidence_ref": "evidence://sha256/22ab515026f85bdbf44db45bfe8d8f6ebb15209b16c1141ab734106a6f125c78",
+        "frame_sha256": "22ab515026f85bdbf44db45bfe8d8f6ebb15209b16c1141ab734106a6f125c78",
+        "evidence_sha256_verified": true
+      },
+      "isolated_memory_delta": 0,
+      "effect_verified": false,
+      "body_observation_verified": true,
+      "acceptance": "body_observation_verified",
+      "qq_send_after": 23,
+      "qq_zero_new_sends": true,
+      "production_sources_unchanged": true,
+      "completed_at": "2026-09-12T05:54:10.065565+00:00",
+      "effective_trial": 4,
+      "source_report": "C:\\Users\\22850\\AppData\\Local\\Temp\\neuralcloud-capability-acceptance-l1ldhemo\\acceptance.json",
+      "clock_isolation_evidence": {
+        "last_heartbeat_source_time": "2026-09-12T08:00:48.030048Z",
+        "model_command_issued_at": "2026-09-12T05:53:37.010249Z",
+        "model_command_deadline": "2026-09-12T05:54:36.996363Z"
+      },
+      "offered_capabilities": [
+        {
+          "offer_id": "desktop:app.open.v1",
+          "capability_id": "app.open.v1",
+          "channel": "desktop",
+          "body_instance_id": "misty-body-01",
+          "available": true,
+          "ready": true
+        },
+        {
+          "offer_id": "desktop:control.observe.v1",
+          "capability_id": "control.observe.v1",
+          "channel": "desktop",
+          "body_instance_id": "misty-body-01",
+          "available": true,
+          "ready": true
+        }
+      ],
+      "model_requests_including_background": [
+        {
+          "span_id": "model_request_2db12832fffe485aa0e77b1f09d09625",
+          "phase": "capability_selection",
+          "role": "main",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 7406.943
+        },
+        {
+          "span_id": "model_request_96d8aeacc991405c857da4ed67161083",
+          "phase": "commit",
+          "role": "aux",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 1162.068
+        },
+        {
+          "span_id": "model_request_8fc392c985df49f791576b2f53210900",
+          "phase": "commit",
+          "role": "aux",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 3007.316
+        },
+        {
+          "span_id": "model_request_3151fa553f9841be8c8d1bd447e2fa27",
+          "phase": "commit",
+          "role": "aux",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 4801.722
+        },
+        {
+          "span_id": "model_request_07804f05fa1a454393048800fab123be",
+          "phase": "commit",
+          "role": "aux",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 7190.503
+        },
+        {
+          "span_id": "model_request_ec41ce928b9344f5becdc8375ca40939",
+          "phase": "commit",
+          "role": "aux",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 2631.679
+        },
+        {
+          "span_id": "model_request_3915d09a911e4ccca8189982c7187de2",
+          "phase": "commit",
+          "role": "aux",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 4465.521
+        }
+      ]
+    },
+    {
+      "mode": "desktop",
+      "isolation": "C:\\Users\\22850\\AppData\\Local\\Temp\\neuralcloud-capability-acceptance-1ett13d8",
+      "opportunities": 1,
+      "started_at": "2026-09-12T05:54:12.062989+00:00",
+      "thinking_override": false,
+      "qq_send_before": 23,
+      "simulation_boundaries": [
+        "elapsed heartbeat source times replayed from latest observed state, independent of wall clock",
+        "initial quiet timer elapsed",
+        "private copies of personality and shared memory",
+        "fresh isolated runtime and homeostasis"
+      ],
+      "model": "deepseek-v4-flash",
+      "persona_sha256": "e6e0b4fe03a4831caa6bcabaac64c2396e147e8aab26a7752669e2e2fc671145",
+      "desktop_declared_skills": [
+        "app.open.v1",
+        "control.defer.v1",
+        "control.observe.v1",
+        "control.wait.v1",
+        "file.create_text.v1",
+        "file.delete.v1",
+        "file.move.v1",
+        "process.start.v1",
+        "process.stop.v1",
+        "shell.run.v1",
+        "ui.activate.v1",
+        "ui.drag.v1",
+        "ui.key_chord.v1",
+        "ui.move_pointer.v1",
+        "ui.scroll.v1",
+        "ui.type_text.v1",
+        "window.focus.v1"
+      ],
+      "isolated_shutdown_drain_seconds": 25,
+      "natural_drift": {
+        "source_time_origin": "2026-09-12T05:54:17.055775+00:00",
+        "heartbeat_count": 85,
+        "elapsed_seconds": 7650,
+        "initial_social": 0.62,
+        "final_social": 0.3862059243548468,
+        "summary": {
+          "schema_version": "homeostatic-interoception-v1",
+          "profile_ref": "qq-social-drive-v1@1",
+          "snapshot_revision": 86,
+          "salience": "noticeable",
+          "dominant_needs": [
+            {
+              "dimension": "social_connection",
+              "direction": "low",
+              "normalized_deviation": 0.252876,
+              "trend": "worsening",
+              "confidence": 0.8,
+              "semantic_need": "需要低压力的连接与被理解"
+            }
+          ],
+          "emotion_hint": {
+            "label": "lonely",
+            "intensity": 0.39922240055651764
+          },
+          "policy_refs": [
+            "connect"
+          ],
+          "episode_signature": "homeostasis:b0a9165e75b1a1676cf5"
+        }
+      },
+      "opportunity": {
+        "opportunity_id": "capability:bacefe9eea694152aa370ee9cea4cb83",
+        "status": "completed",
+        "event_id": "capability-event:5cf39b4c39714483aa2a5c8588c0df57",
+        "action_id": "act_856d85dc",
+        "entry_id": null,
+        "error_type": null
+      },
+      "selected": {
+        "kind": "observe",
+        "offer_id": "desktop:control.observe.v1",
+        "channel": "desktop",
+        "capability_id": "control.observe.v1",
+        "provider_id": "mistyai",
+        "body_instance_id": "misty-body-01"
+      },
+      "selection_timing": {
+        "model_calls": 1,
+        "model_ms": 3797.0,
+        "total_ms": 3891.0,
+        "usage": {
+          "prompt_tokens": 18765,
+          "completion_tokens": 638,
+          "total_tokens": 19403,
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      },
+      "observation_evidence_refs": [],
+      "outcome_evidence_refs": [
+        {
+          "provider_id": "mistyai",
+          "ref": "evidence://sha256/b229e19b4deb3ebcc5168af8144837ac4be0a5abe10579253ed6504bbbc9739e",
+          "digest": "b229e19b4deb3ebcc5168af8144837ac4be0a5abe10579253ed6504bbbc9739e",
+          "media_type": null,
+          "created_at": "2026-09-12T05:54:45.715758Z"
+        }
+      ],
+      "independent_desktop_readback": {
+        "action_id": "act_856d85dc",
+        "state": "execution_succeeded",
+        "success": true,
+        "unknown": false,
+        "evidence_refs": [
+          "evidence://sha256/b229e19b4deb3ebcc5168af8144837ac4be0a5abe10579253ed6504bbbc9739e"
+        ],
+        "evidence_sha256_verified": true
+      },
+      "independent_desktop_observation": {
+        "observation_id": "obs_b239fdbafec140338add6bea4e405c33",
+        "captured_at": "2026-09-12T05:54:46.997402+00:00",
+        "after_action_result": true,
+        "body_instance_id": "misty-body-01",
+        "target_app_id": null,
+        "target_app_present": false,
+        "target_app_running": false,
+        "target_windows": [],
+        "frame_evidence_ref": "evidence://sha256/b229e19b4deb3ebcc5168af8144837ac4be0a5abe10579253ed6504bbbc9739e",
+        "frame_sha256": "b229e19b4deb3ebcc5168af8144837ac4be0a5abe10579253ed6504bbbc9739e",
+        "evidence_sha256_verified": true
+      },
+      "isolated_memory_delta": 0,
+      "effect_verified": false,
+      "body_observation_verified": true,
+      "acceptance": "failed",
+      "cleanup_error_types": [
+        "RuntimeStateError"
+      ],
+      "qq_send_after": 23,
+      "qq_zero_new_sends": true,
+      "production_sources_unchanged": true,
+      "completed_at": "2026-09-12T05:55:12.858627+00:00",
+      "effective_trial": 5,
+      "source_report": "C:\\Users\\22850\\AppData\\Local\\Temp\\neuralcloud-capability-acceptance-1ett13d8\\acceptance.json",
+      "clock_isolation_evidence": {
+        "last_heartbeat_source_time": "2026-09-12T08:01:47.055775Z",
+        "model_command_issued_at": "2026-09-12T05:54:39.336458Z",
+        "model_command_deadline": "2026-09-12T05:55:39.324149Z"
+      },
+      "offered_capabilities": [
+        {
+          "offer_id": "desktop:app.open.v1",
+          "capability_id": "app.open.v1",
+          "channel": "desktop",
+          "body_instance_id": "misty-body-01",
+          "available": true,
+          "ready": true
+        },
+        {
+          "offer_id": "desktop:control.observe.v1",
+          "capability_id": "control.observe.v1",
+          "channel": "desktop",
+          "body_instance_id": "misty-body-01",
+          "available": true,
+          "ready": true
+        }
+      ],
+      "model_requests_including_background": [
+        {
+          "span_id": "model_request_7308fa58ffa245bca384b8280e74722f",
+          "phase": "capability_selection",
+          "role": "main",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 3797.01
+        },
+        {
+          "span_id": "model_request_14460e8123dc48ecbf4313a8052bda65",
+          "phase": "commit",
+          "role": "aux",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 2233.242
+        },
+        {
+          "span_id": "model_request_0c13ebabb748445aaf3168633aa9cef7",
+          "phase": "commit",
+          "role": "aux",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 3252.518
+        },
+        {
+          "span_id": "model_request_33b197e64d2045e4a93d75e3ef449194",
+          "phase": "commit",
+          "role": "aux",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 2816.498
+        },
+        {
+          "span_id": "model_request_1feb0bc3995248bcae7256886e2f48f9",
+          "phase": "commit",
+          "role": "aux",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 10799.964
+        },
+        {
+          "span_id": "model_request_366165d0cc904d679635b1c0721f2483",
+          "phase": "commit",
+          "role": "aux",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 2320.957
+        },
+        {
+          "span_id": "model_request_5466a1d43bce4142ac0ac1d838c7f9d4",
+          "phase": "commit",
+          "role": "aux",
+          "model": "deepseek-v4-flash",
+          "status": "success",
+          "latency_ms": 9188.248
+        }
+      ],
+      "cleanup_diagnosis": {
+        "reason": "graceful stop failed: cognitive maintenance did not drain during shutdown",
+        "shutdown_drain_seconds": 25,
+        "body_observation_success_preserved": true,
+        "overall_acceptance": "failed",
+        "no_reclassification_as_full_pass": true
+      }
+    }
+  ],
+  "qq_send_enabled": false,
+  "containers_after": [
+    {
+      "ID": "ca66edd2eb91",
+      "Name": "mistyai-m0-agent-1",
+      "Image": "mistyai-desktop:m0",
+      "State": "running",
+      "Health": "healthy",
+      "Service": "agent"
+    },
+    {
+      "ID": "58229d655dff",
+      "Name": "mistyai-m0-desktop-1",
+      "Image": "mistyai-desktop:m0",
+      "State": "running",
+      "Health": "healthy",
+      "Service": "desktop"
+    },
+    {
+      "ID": "c46b90ca2598",
+      "Name": "mistyai-m0-loopback-gateway-1",
+      "Image": "mistyai-desktop:m0",
+      "State": "running",
+      "Health": "healthy",
+      "Service": "loopback-gateway"
+    }
+  ],
+  "startup_commands": [
+    "docker compose -f /opt/mistyai/deploy/compose.yaml start --wait --wait-timeout 90 desktop agent loopback-gateway",
+    "systemctl start mistyai-body.service mistyai-operator.service"
+  ],
+  "docker_recovery_evidence": "docs/milestones/evidence/docker-recovery-startup-2026-09-12.json",
+  "operator_transport": {
+    "unix_socket": "/run/mistyai/operator.sock",
+    "tcp_8789_expected": false
+  },
+  "verification_tool": {
+    "path": "tools/verify_capabilities.py",
+    "sha256": "8937479c671a05aaa2f2a1586bc36ac669efed77c674aa4ae8f1b795bdfca8e0",
+    "minimal_validation": {
+      "commands": [
+        ".venv\\Scripts\\python.exe -m ruff check tools/verify_capabilities.py",
+        ".venv\\Scripts\\python.exe -m py_compile tools/verify_capabilities.py"
+      ],
+      "result": "passed"
+    },
+    "time_axis": "Only isolated Homeostasis heartbeat source times advance from max(current wall clock, latest observed state). Model and action deadlines retain real wall-clock time.",
+    "independent_execution_verification": "Fresh client GET action verifies returned evidence SHA256, then performs a new read-only observation to verify a visible target application window after the action result.",
+    "isolated_shutdown_drain_seconds": 25
+  },
+  "calibration_runs": [
+    {
+      "mode": "desktop",
+      "isolation": "C:\\Users\\22850\\AppData\\Local\\Temp\\neuralcloud-capability-acceptance-eiev1d2v",
+      "opportunities": 0,
+      "started_at": "2026-09-12T05:40:45.226528+00:00",
+      "thinking_override": false,
+      "qq_send_before": 23,
+      "simulation_boundaries": [
+        "historical heartbeat source times replayed",
+        "initial quiet timer elapsed",
+        "private copies of personality and shared memory",
+        "fresh isolated runtime and homeostasis"
+      ],
+      "model": "deepseek-v4-flash",
+      "persona_sha256": "e6e0b4fe03a4831caa6bcabaac64c2396e147e8aab26a7752669e2e2fc671145",
+      "desktop_declared_skills": [
+        "app.open.v1",
+        "control.defer.v1",
+        "control.observe.v1",
+        "control.wait.v1",
+        "file.create_text.v1",
+        "file.delete.v1",
+        "file.move.v1",
+        "process.start.v1",
+        "process.stop.v1",
+        "shell.run.v1",
+        "ui.activate.v1",
+        "ui.drag.v1",
+        "ui.key_chord.v1",
+        "ui.move_pointer.v1",
+        "ui.scroll.v1",
+        "ui.type_text.v1",
+        "window.focus.v1"
+      ],
+      "error_type": "RuntimeError",
+      "acceptance": "failed",
+      "qq_send_after": 23,
+      "qq_zero_new_sends": true,
+      "production_sources_unchanged": true,
+      "completed_at": "2026-09-12T05:41:42.774225+00:00",
+      "model_calls": 0,
+      "diagnosis": "Initial live perception advanced state.updated_at to real current time, including asynchronous capture after the initial queue drain; historical heartbeat source times were stale and clamped. No effective opportunity was produced. The acceptance-only clock origin was corrected; no production factors or deadlines changed.",
+      "source_report": "C:\\Users\\22850\\AppData\\Local\\Temp\\neuralcloud-capability-acceptance-eiev1d2v\\acceptance.json"
+    },
+    {
+      "mode": "desktop",
+      "isolation": "C:\\Users\\22850\\AppData\\Local\\Temp\\neuralcloud-capability-acceptance-jecx10fp",
+      "opportunities": 0,
+      "started_at": "2026-09-12T05:44:49.990426+00:00",
+      "thinking_override": false,
+      "qq_send_before": 23,
+      "simulation_boundaries": [
+        "elapsed heartbeat source times replayed from latest observed state, independent of wall clock",
+        "initial quiet timer elapsed",
+        "private copies of personality and shared memory",
+        "fresh isolated runtime and homeostasis"
+      ],
+      "model": "deepseek-v4-flash",
+      "persona_sha256": "e6e0b4fe03a4831caa6bcabaac64c2396e147e8aab26a7752669e2e2fc671145",
+      "desktop_declared_skills": [
+        "app.open.v1",
+        "control.defer.v1",
+        "control.observe.v1",
+        "control.wait.v1",
+        "file.create_text.v1",
+        "file.delete.v1",
+        "file.move.v1",
+        "process.start.v1",
+        "process.stop.v1",
+        "shell.run.v1",
+        "ui.activate.v1",
+        "ui.drag.v1",
+        "ui.key_chord.v1",
+        "ui.move_pointer.v1",
+        "ui.scroll.v1",
+        "ui.type_text.v1",
+        "window.focus.v1"
+      ],
+      "error_type": "RuntimeError",
+      "error_code": "no_ready_capability_after_natural_drift",
+      "acceptance": "failed",
+      "qq_send_after": 23,
+      "qq_zero_new_sends": true,
+      "production_sources_unchanged": true,
+      "completed_at": "2026-09-12T05:45:48.528862+00:00",
+      "model_calls": 0,
+      "diagnosis": "Initial live perception advanced state.updated_at to real current time, including asynchronous capture after the initial queue drain; historical heartbeat source times were stale and clamped. No effective opportunity was produced. The acceptance-only clock origin was corrected; no production factors or deadlines changed.",
+      "source_report": "C:\\Users\\22850\\AppData\\Local\\Temp\\neuralcloud-capability-acceptance-jecx10fp\\acceptance.json"
+    }
+  ],
+  "acceptance_capability_allowlist": [
+    "app.open.v1",
+    "control.observe.v1"
+  ],
+  "cleanup_lease_checks": [
+    {
+      "isolation": "neuralcloud-capability-acceptance-eiev1d2v",
+      "exists": true,
+      "lock_free": true,
+      "former_owner_pid": 13364,
+      "metadata_unchanged": true
+    },
+    {
+      "isolation": "neuralcloud-capability-acceptance-jecx10fp",
+      "exists": true,
+      "lock_free": true,
+      "former_owner_pid": 15652,
+      "metadata_unchanged": true
+    },
+    {
+      "isolation": "neuralcloud-capability-acceptance-bw9xdqs7",
+      "exists": true,
+      "lock_free": true,
+      "former_owner_pid": 8704,
+      "metadata_unchanged": true
+    },
+    {
+      "isolation": "neuralcloud-capability-acceptance-sw1vut62",
+      "exists": true,
+      "lock_free": true,
+      "former_owner_pid": 43488,
+      "metadata_unchanged": true
+    },
+    {
+      "isolation": "neuralcloud-capability-acceptance-weldsf7k",
+      "exists": true,
+      "lock_free": true,
+      "former_owner_pid": 31488,
+      "metadata_unchanged": true
+    },
+    {
+      "isolation": "neuralcloud-capability-acceptance-l1ldhemo",
+      "exists": true,
+      "lock_free": true,
+      "former_owner_pid": 29412,
+      "metadata_unchanged": true
+    },
+    {
+      "isolation": "neuralcloud-capability-acceptance-1ett13d8",
+      "exists": true,
+      "lock_free": true,
+      "former_owner_pid": 29608,
+      "metadata_unchanged": true
+    }
+  ],
+  "result": {
+    "effective_opportunities": 5,
+    "wait_choices": 2,
+    "observe_choices": 3,
+    "native_control_observe_actions_independently_verified": 3,
+    "nonempty_desktop_actions_verified": 0,
+    "nonempty_desktop_execution_status": "not_live_verified",
+    "cleanup_failures": 2,
+    "all_isolated_cognition_lease_locks_free": true,
+    "qq_send_before": 23,
+    "qq_send_after": 23,
+    "production_sources_unchanged": true,
+    "same_model_persona_thinking": true,
+    "extra_opportunities_after_five": 0,
+    "no_live_acceptance_python_or_lease_owners": true
+  },
+  "completed_at": "2026-09-12T05:57:58.379444+00:00",
+  "cleanup_process_check": {
+    "live_acceptance_python_processes": [],
+    "former_owner_pids_still_alive": [],
+    "process_query": "Win32_Process python.exe/pythonw.exe with verify_capabilities.py, plus exact former lease owner PIDs",
+    "cognitive_locks_checked_without_metadata_modification": true,
+    "production_services_stopped": false,
+    "service_state_after": "mistyai-body.service active; mistyai-operator.service active"
+  }
+}

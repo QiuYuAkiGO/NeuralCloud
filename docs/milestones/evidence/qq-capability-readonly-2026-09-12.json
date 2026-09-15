@@ -1,0 +1,77 @@
+{
+  "schema_version": "qq-capability-readonly-acceptance-v1",
+  "recorded_at": "2026-09-12T04:14:53.774667+00:00",
+  "status": "not_live_verified",
+  "scope": "configured QQ body only; no service or watcher launch; health request only",
+  "watcher_config": "C:\\Users\\22850\\AppData\\Local\\NeuralCloud\\QQDesktop\\watcher.json",
+  "body_url": "http://127.0.0.1:8788",
+  "agent_url": "http://127.0.0.1:8766",
+  "before": {
+    "send_reservations": 23,
+    "delivery_attempts": 41,
+    "send_statuses": {
+      "not_sent": 4,
+      "sent": 19
+    }
+  },
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/v1/health",
+      "status": "unavailable",
+      "error_type": "MistyAIError",
+      "reason_code": "transport_error"
+    },
+    {
+      "method": "GET",
+      "path": "/agent/v1/health",
+      "status": "unavailable",
+      "error_type": "ReadTimeout"
+    }
+  ],
+  "captures": 0,
+  "action_posts": 0,
+  "watcher_started": false,
+  "services_started": false,
+  "reason": "QQ desktop/Agent unavailable because Docker Desktop failed to start; no live observation or receipt; online QQ capability acceptance remains pending",
+  "after": {
+    "send_reservations": 23,
+    "delivery_attempts": 41,
+    "send_statuses": {
+      "not_sent": 4,
+      "sent": 19
+    }
+  },
+  "send_ledger_unchanged": true,
+  "diagnosed_at": "2026-09-12T04:19:28.000243+00:00",
+  "listener_diagnostics": {
+    "windows_8766_8788": "no_listener",
+    "ubuntu_8766_8788": "no_listener",
+    "wsl_distribution": "Ubuntu-24.04",
+    "docker_binary": "/usr/bin/docker -> /mnt/wsl/docker-desktop/cli-tools/usr/bin/docker",
+    "docker_socket": "/var/run/docker.sock and /run/docker.sock absent",
+    "docker_desktop_distribution": "Stopped when checked"
+  },
+  "safe_standalone_entry": {
+    "path": "C:/Projects/MistyAI/deploy/qq/Start-QQBody.ps1",
+    "behavior": "QQ Body migrations and standalone uvicorn :8788; no watcher launch",
+    "started": false,
+    "reason": "unavailable downstream :8766 means standalone Body cannot produce live observation"
+  },
+  "qq_runtime_dependency": {
+    "worker_supervisor": "/run/misty/qq-unattended-20260911/worker-supervisor.conf",
+    "worker_socket": "/run/misty/qq-unattended-20260911/supervisor.sock",
+    "durability": "prior deployment is runtime hot wiring; container restart does not prove this socket is restored",
+    "required_after_infrastructure_recovery": [
+      "verify exactly one body worker owns the socket",
+      "verify current QQ login and configured window/body scope",
+      "perform fresh read capture and verify evidence without any action request"
+    ]
+  },
+  "related_infrastructure_result": {
+    "source": "docs/milestones/evidence/homeostatic-capabilities-live-2026-09-12.json#desktop_environment",
+    "docker_desktop_start": "failed: sailor-ingest.sock rename to .stale filesystem error",
+    "official_stop": "docker desktop stop --timeout 20 failed",
+    "force_kill_or_runtime_directory_reset": false
+  }
+}

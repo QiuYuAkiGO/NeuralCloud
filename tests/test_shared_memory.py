@@ -312,7 +312,10 @@ def test_no_models_control_callbacks_or_qq_source_database_are_invoked(store, mo
     assert store.query(scope()).matched_count == 4
     assert source.read_bytes() == before
     with sqlite3.connect(store.path) as connection:
-        assert [r[0] for r in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")] == ["shared_memory_entries"]
+        assert {r[0] for r in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")} == {
+            "shared_memory_entries", "shared_memory_identity", "shared_memory_source_index",
+            "shared_memory_archive_coverage", "sqlite_sequence",
+        }
 
 
 def test_read_only_query_does_not_create_database_or_schema(tmp_path):

@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 import tarfile
+from dataclasses import replace
 
 import pytest
 
@@ -14,6 +15,7 @@ from harness.deploy.config import DeployError, DeploymentConfig, load_config
 from harness.deploy.package import create_package, extract_package, verify_release
 from harness.deploy.runner import read_token, service_environment
 from harness.deploy import systemd
+from harness.deploy import runner
 
 
 def config_file(tmp_path, **overrides):
@@ -47,6 +49,38 @@ def test_config_requires_explicit_isolated_development(tmp_path):
 def test_config_rejects_unsafe_values(tmp_path, override):
     with pytest.raises(DeployError):
         load_config(config_file(tmp_path, **override))
+
+
+@pytest.mark.parametrize("value", [65536, "65536"])
+def test_aux_context_binding_survives_runner_environment_sanitization(tmp_path, monkeypatch, value):
+    from harness.config import Settings
+
+    cfg = load_config(config_file(tmp_path, bindings={"NC_AUX_LLM_NUM_CTX": value}))
+    assert cfg.bindings["NC_AUX_LLM_NUM_CTX"] == "65536"
+    monkeypatch.setattr(runner, "read_token", lambda path: "a" * 48 if "control" in str(path) else "b" * 48)
+    for service in cfg.services:
+        assert service_environment(cfg, service, release=tmp_path)["NC_AUX_LLM_NUM_CTX"] == "65536"
+    cfg = replace(cfg, paths={**cfg.paths, "current": str(tmp_path)})
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(runner.os, "environ", {**os.environ, "NC_AUX_LLM_NUM_CTX": "8192",
+                                              "NC_UNTRUSTED_SETTING": "ambient"})
+    monkeypatch.setattr(runner.sys, "path", list(runner.sys.path))
+    monkeypatch.setattr(runner.sys, "argv", list(runner.sys.argv))
+    observed = []
+
+    def capture(module, *, run_name):
+        observed.append((module, run_name, Settings(_env_file=None).aux_llm_num_ctx))
+        assert "NC_UNTRUSTED_SETTING" not in os.environ
+
+    monkeypatch.setattr(runner.runpy, "run_module", capture)
+    runner.run_service(cfg, "cognitive")
+    assert observed == [("harness.cognitive.service", "__main__", 65536)]
+
+
+@pytest.mark.parametrize("value", [True, False, None, "", "64k", "65536.0", 65536.0, 0, -1, 1023, "1023"])
+def test_aux_context_binding_rejects_invalid_or_too_small_values(tmp_path, value):
+    with pytest.raises(DeployError, match="invalid NC_AUX_LLM_NUM_CTX"):
+        load_config(config_file(tmp_path, bindings={"NC_AUX_LLM_NUM_CTX": value}))
 
 
 def test_units_have_shared_owner_and_bounded_shutdown(tmp_path):
