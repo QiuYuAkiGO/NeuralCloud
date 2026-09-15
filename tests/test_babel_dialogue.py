@@ -5,6 +5,7 @@ import asyncio
 import copy
 from datetime import UTC, datetime
 import json
+import os
 from pathlib import Path
 import subprocess
 
@@ -266,14 +267,14 @@ def test_shareable_strips_url_credentials_and_known_keys(tmp_path):
 
 
 def test_atomic_report_retries_transient_windows_file_lock(tmp_path, monkeypatch):
-    original = Path.replace
+    original = os.replace
     attempts = []
-    def replace(path, target):
+    def replace(source, destination):
         attempts.append(1)
         if len(attempts) < 3:
             raise PermissionError("fixture indexer lock")
-        return original(path, target)
-    monkeypatch.setattr(Path, "replace", replace)
+        return original(source, destination)
+    monkeypatch.setattr("harness.files.os.replace", replace)
     write_json(tmp_path / "report.json", {"status": "RUNNING"})
     assert len(attempts) == 3
     assert read_json(tmp_path / "report.json")["status"] == "RUNNING"

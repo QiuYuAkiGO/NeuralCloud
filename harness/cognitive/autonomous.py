@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from harness.compiler.compiler import emotion_enabled, render_emotion_guidance, render_homeostatic_interoception
+from harness.files import replace_path
 from harness.homeostasis.models import HomeostaticInteroceptiveSummary
 from harness.llm.client import ChatResult, resolve_aux_endpoint
 from harness.validator.validator import contains_homeostatic_mechanism_leak
@@ -254,12 +255,12 @@ def _write_assessment_record(path: Path, run: AssessmentRun) -> None:
         ]
     )
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.{os.urandom(3).hex()}.tmp")
     with temporary.open("w", encoding="utf-8", newline="\n") as handle:
         handle.write(content)
         handle.flush()
         os.fsync(handle.fileno())
-    os.replace(temporary, path)
+    replace_path(temporary, path)
 
 
 def _assessment_messages(

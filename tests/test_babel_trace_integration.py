@@ -11,6 +11,7 @@ import pytest
 
 from harness.contracts.decisions import DeliveryEvidence
 from harness.contracts.envelope import DomainCommandEnvelope
+from harness.core.error_notice import ERROR_FALLBACK_REPLY
 from harness.core.models import RetrievalQuery
 from harness.runtime.monitor import MonitorStore
 from infra.trace.request_spans import current_trace_context, trace_scope
@@ -93,7 +94,9 @@ def test_failed_prepare_preserves_partial_log_and_failed_monitor_status(tmp_path
 
     async def scenario():
         result = await adapter.prepare_response(_command("PrepareResponse", 1, {"text": "故事开始。"}))
-        assert result.status == "failed"
+        assert result.status == "applied", result.error
+        assert result.result is not None
+        assert result.result.decision.text == ERROR_FALLBACK_REPLY
         assert current_trace_context() == {}
         await adapter.close()
 

@@ -155,7 +155,7 @@ def test_monitor_api_auth_overview_and_study_debug_gate(tmp_path) -> None:
         headers = {"Authorization": "Bearer secret"}
         overview = client.get("/v1/monitor/overview", headers=headers)
         assert overview.status_code == 200
-        assert overview.json()["schema_version"] == "monitor-v2"
+        assert overview.json()["schema_version"] == "monitor-v3"
         assert overview.json()["manifest"]["control_mode"] == "study_runtime"
         rejected = client.post(
             "/v1/debug/events",

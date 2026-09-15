@@ -4,6 +4,7 @@ from copy import deepcopy
 from datetime import UTC, datetime, timedelta
 import json
 import os
+from pathlib import Path
 
 import httpx
 import pytest
@@ -315,7 +316,7 @@ def test_summary_is_replaced_atomically_and_previous_file_survives_failure(tmp_p
 
     def fail_replace(source, target):
         assert path.read_bytes() == original
-        assert json.loads(source.read_text())["verdict"] == "FAIL"
+        assert json.loads(Path(source).read_text(encoding="utf-8"))["verdict"] == "FAIL"
         raise OSError("disk problem")
     monkeypatch.setattr("eval.basic_runtime.soak.os.replace", fail_replace)
     with pytest.raises(OSError):

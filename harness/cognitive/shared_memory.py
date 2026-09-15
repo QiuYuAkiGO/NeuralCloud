@@ -490,9 +490,27 @@ class CognitiveSharedMemory:
             context = self.store.query(scope, limit=16)
         return context.model_payload(max_bytes=10000)
 
+    def diary_context(self, *, query=None):
+        """Private diary recall stays on local-visible originals, including prior diary."""
+        self.sync_qq()
+        self.sync_local()
+        scope = SharedReadScope(
+            audience="local:main",
+            channels=("local_chat", "qq_group", "qq_private", "private_board", "private_diary"),
+            kinds=("local_incoming", "local_outgoing", "qq_observation", "qq_delivery",
+                   "qq_segment_delivery", "board_entry", "diary_entry"),
+        )
+        context = self.store.query(scope, text=(query[:512] if query else None), limit=16)
+        if not context.records:
+            context = self.store.query(scope, limit=16)
+        return context.model_payload(max_bytes=10000)
+
     def commit_board_entry(self, entry):
         """Only Cognitive's independently verified body read enters this facade."""
         return self.store.import_board_entry(entry)
+
+    def commit_diary_entry(self, entry):
+        return self.store.import_diary_entry(entry)
 
     def ui(self):
         context = self.store.query(SharedReadScope(audience="local:main"), limit=50)

@@ -448,6 +448,16 @@ class CognitiveServiceHost:
                          command_id=command.command_id, phase="board_commit", span_id=command.command_id):
             return await self.adapter._run_command(lambda: self._board_command(command, commit=True))
 
+    async def prepare_diary_entry(self, command):
+        with trace_scope(correlation_id=command.correlation_id, event_id=command.event_id,
+                         command_id=command.command_id, phase="diary_prepare", span_id=command.command_id):
+            return await self.adapter._run_command(lambda: self._diary_command(command, commit=False))
+
+    async def commit_diary_entry(self, command):
+        with trace_scope(correlation_id=command.correlation_id, event_id=command.event_id,
+                         command_id=command.command_id, phase="diary_commit", span_id=command.command_id):
+            return await self.adapter._run_command(lambda: self._diary_command(command, commit=True))
+
     async def _board_command(self, command, *, commit):
         from harness.cognitive import board
 
@@ -479,6 +489,43 @@ class CognitiveServiceHost:
                     result=payload, completed_at=datetime.now(timezone.utc))
             except Exception as exc:
                 result = adapter._failure(command, "board_shared_" + ("commit" if commit else "prepare")
+                                          + "_failed:" + diagnostic.error_code(exc))
+                result = result.model_copy(update={"result": {"diagnostic": diagnostic.metadata()}})
+            adapter._remember(command, result)
+            await asyncio.to_thread(adapter._persist_state)
+            return result
+
+    async def _diary_command(self, command, *, commit):
+        from harness.cognitive import diary
+
+        adapter = self.adapter
+        diagnostic = diary.DiaryDiagnostics()
+        async with adapter._lock:
+            replay = adapter._lookup_replay(command)
+            if replay is not None:
+                await asyncio.to_thread(adapter._persist_state)
+                return replay
+            rejected = adapter._preflight(command)
+            if rejected is not None:
+                return rejected
+            try:
+                expected = "CommitDiaryEntry" if commit else "PrepareDiaryEntry"
+                if command.command_type != expected:
+                    raise ValueError("diary_command_type_mismatch")
+                payload = await (diary.commit(self, command, diagnostic=diagnostic) if commit
+                                 else diary.prepare(self, command, diagnostic=diagnostic))
+                if commit:
+                    adapter._revision += 1
+                    adapter._component_revisions["memory"] = adapter._revision
+                adapter._cursor = max(adapter._cursor, command.receive_seq)
+                adapter._event_id = command.event_id
+                result = DomainCommandResult[dict](command_id=command.command_id,
+                    command_type=command.command_type, status="applied",
+                    request_hash=command.effective_request_hash(), committed_revision=adapter._revision,
+                    acknowledged_event_id=command.event_id, acknowledged_receive_seq=command.receive_seq,
+                    result=payload, completed_at=datetime.now(timezone.utc))
+            except Exception as exc:
+                result = adapter._failure(command, "diary_shared_" + ("commit" if commit else "prepare")
                                           + "_failed:" + diagnostic.error_code(exc))
                 result = result.model_copy(update={"result": {"diagnostic": diagnostic.metadata()}})
             adapter._remember(command, result)

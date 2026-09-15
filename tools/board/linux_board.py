@@ -22,6 +22,8 @@ import tomllib
 import urllib.error
 import urllib.request
 
+from harness.files import replace_path
+
 MARKER = "neuralcloud-board-launcher-v1"
 UNIT = "neuralcloud-board.service"
 BODY_ID = "misty-linux-board-01"
@@ -54,7 +56,7 @@ def atomic_text(path: Path, content: str, mode: int = 0o600) -> None:
             stream.write(content)
             stream.flush()
             os.fsync(stream.fileno())
-        temporary.replace(path)
+        replace_path(temporary, path)
     finally:
         temporary.unlink(missing_ok=True)
 

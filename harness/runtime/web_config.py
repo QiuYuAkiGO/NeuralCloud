@@ -6,12 +6,15 @@ import ctypes
 import json
 import os
 import threading
+import time
 import uuid
 from pathlib import Path
 from typing import Literal, Mapping
 from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from harness.files import replace_path
 
 
 class WebConfigurationError(ValueError):
@@ -119,10 +122,19 @@ def _write_private(path: Path, content: str, *, replace: bool = False) -> None:
             stream.flush()
             os.fsync(stream.fileno())
         if replace:
-            os.replace(temporary, path)
+            replace_path(temporary, path)
         else:
             # Hard-link publication is atomic and refuses an existing revision.
-            os.link(temporary, path)
+            delay = 0.02
+            for attempt in range(8):
+                try:
+                    os.link(temporary, path)
+                    break
+                except PermissionError:
+                    if attempt == 7:
+                        raise
+                    time.sleep(delay)
+                    delay = min(0.25, delay * 1.7)
             temporary.unlink()
     finally:
         temporary.unlink(missing_ok=True)

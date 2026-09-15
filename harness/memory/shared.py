@@ -29,8 +29,8 @@ NonBlank = Annotated[str, StringConstraints(strict=True, min_length=1, max_lengt
 Identifier = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=256, pattern=r"^[A-Za-z0-9][A-Za-z0-9_.:-]*$")]
 Principal = Annotated[str, StringConstraints(strict=True, pattern=r"^(?:local:[A-Za-z0-9][A-Za-z0-9_.-]*|character:[A-Za-z0-9][A-Za-z0-9_.-]*|qq:member:[1-9][0-9]{0,19})$", max_length=256)]
 Audience = Annotated[str, StringConstraints(strict=True, pattern=r"^(?:local:[A-Za-z0-9][A-Za-z0-9_.-]*|qq:group:[1-9][0-9]{0,19}|qq:private:[1-9][0-9]{0,19}:[1-9][0-9]{0,19})$", max_length=256)]
-Channel = Literal["local_chat", "qq_group", "qq_private", "private_board", "body"]
-Kind = Literal["local_incoming", "local_outgoing", "qq_profile", "qq_observation", "qq_delivery", "qq_segment_delivery", "board_entry", "action_outcome"]
+Channel = Literal["local_chat", "qq_group", "qq_private", "private_board", "private_diary", "body"]
+Kind = Literal["local_incoming", "local_outgoing", "qq_profile", "qq_observation", "qq_delivery", "qq_segment_delivery", "board_entry", "diary_entry", "action_outcome"]
 Evidence = Annotated[tuple[NonBlank, ...], Field(min_length=1, max_length=128)]
 Visibility = Annotated[tuple[Audience, ...], Field(min_length=1, max_length=64)]
 
@@ -174,7 +174,7 @@ class SharedMemoryRecord(_Frozen):
             raise ValueError("record identifier does not bind its source")
         original = json.loads(self.source.original_json)
         source_id_key = "event_id" if self.kind.startswith("local_") or self.kind == "action_outcome" else "record_id" if self.kind in {"qq_profile", "qq_observation"} else "receipt_id"
-        original_id = original.get("receipt", {}).get("entry_id") if self.kind == "board_entry" else original.get(source_id_key)
+        original_id = original.get("receipt", {}).get("entry_id") if self.kind == "board_entry" else original.get("entry_id") if self.kind == "diary_entry" else original.get(source_id_key)
         if original_id != self.source.original_record_id:
             raise ValueError("original source identifier disagrees with source reference")
         if self.kind == "action_outcome" and original.get("owner_id") != self.owner_id:
@@ -276,8 +276,8 @@ def _record_id(owner_id: str, kind: str, source_id: str) -> str:
 def _validate_visibility(channel, session, visibility):
     if channel == "qq_group" and any(value.startswith("qq:") and value != session for value in visibility):
         raise ValueError("QQ originals cannot be exposed to another QQ group")
-    if channel in {"private_board", "body"} and set(visibility) != {"local:main"}:
-        raise ValueError("private board and body originals are visible only to local:main")
+    if channel in {"private_board", "private_diary", "body"} and set(visibility) != {"local:main"}:
+        raise ValueError("private board, diary and body originals are visible only to local:main")
     if channel == "qq_private" and (not session.startswith("qq:private:")
             or any(value not in {"local:main", session} for value in visibility)):
         raise ValueError("QQ private originals are visible only to their private peer and local:main")
@@ -311,6 +311,13 @@ def _project_original(kind: Kind, value: dict) -> dict:
                     author_principal="character:misty", display_name="Misty", kind=kind,
                     authority="verified_delivery", text=entry.text, occurred_at=receipt.created_at.isoformat(),
                     evidence_refs=[receipt.evidence_ref], profile_record_id=None, claims=[])
+    if kind == "diary_entry":
+        from harness.diary.models import DiaryOriginal
+        entry = DiaryOriginal.model_validate(value)
+        return dict(channel="private_diary", session_id="diary:self",
+                    author_principal="character:misty", display_name="Misty", kind=kind,
+                    authority="verified_delivery", text=entry.text, occurred_at=entry.written_at.isoformat(),
+                    evidence_refs=[entry.body_hash], profile_record_id=None, claims=[])
     if kind.startswith("local_"):
         event = SharedLocalEvent.model_validate(value)
         if kind != ("local_incoming" if event.role == "user" else "local_outgoing"):
@@ -504,6 +511,11 @@ class SharedMemoryStore:
         from harness.embodiment.board_contracts import BoardEntry
         entry = BoardEntry.model_validate_json(entry.model_dump_json())
         return self._write([self._prepare("board_entry", entry.receipt.entry_id, entry, ("local:main",))])[0]
+
+    def import_diary_entry(self, entry) -> SharedWriteResult:
+        from harness.diary.models import DiaryOriginal
+        entry = DiaryOriginal.model_validate_json(entry.model_dump_json())
+        return self._write([self._prepare("diary_entry", entry.entry_id, entry, ("local:main",))])[0]
 
     def import_qq_context(self, context: QQGroupContext | QQPersonContext, *, visibility: tuple[str, ...] | None = None) -> tuple[SharedWriteResult, ...]:
         """Import a detached verified snapshot atomically, preserving all originals."""

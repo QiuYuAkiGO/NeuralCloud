@@ -23,10 +23,11 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from harness.runtime.journal import RuntimeJournal, RuntimeJournalRecord
 from harness.runtime.models import RuntimeStatus
+from harness.runtime.resources import ResourceSample, ResourceSampler
 from infra.trace.serialize import dump_value
 
 
-MONITOR_SCHEMA_VERSION = "monitor-v2"
+MONITOR_SCHEMA_VERSION = "monitor-v3"
 DIAGNOSTIC_SCHEMA_VERSION = "monitor-diagnostic-v1"
 DEFAULT_RETENTION_DAYS = 7
 DEFAULT_SAMPLE_SECONDS = 10.0
@@ -297,6 +298,20 @@ class MonitorStore:
                     payload_json TEXT NOT NULL
                 );
                 CREATE INDEX IF NOT EXISTS idx_monitor_actions_time ON monitor_actions(updated_at DESC);
+                CREATE TABLE IF NOT EXISTS monitor_resources (
+                    seq INTEGER PRIMARY KEY AUTOINCREMENT,
+                    observed_at TEXT NOT NULL,
+                    role TEXT NOT NULL,
+                    pid INTEGER,
+                    cpu_percent REAL,
+                    rss_bytes INTEGER,
+                    num_threads INTEGER,
+                    host_cpu_percent REAL,
+                    host_mem_percent REAL,
+                    available INTEGER NOT NULL,
+                    detail TEXT
+                );
+                CREATE INDEX IF NOT EXISTS idx_monitor_resources_time ON monitor_resources(observed_at DESC);
                 """
             )
             existing = {row[1] for row in self._connection.execute("PRAGMA table_info(monitor_runs)")}
@@ -680,6 +695,83 @@ class MonitorStore:
             self.last_error = str(exc)
             return None
 
+    def append_resources(self, samples: list[ResourceSample]) -> int:
+        if not samples:
+            return 0
+        try:
+            with self._lock:
+                self._connection.executemany(
+                    """
+                    INSERT INTO monitor_resources(
+                        observed_at, role, pid, cpu_percent, rss_bytes, num_threads,
+                        host_cpu_percent, host_mem_percent, available, detail
+                    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    [
+                        (
+                            item.observed_at, item.role, item.pid, item.cpu_percent,
+                            item.rss_bytes, item.num_threads, item.host_cpu_percent,
+                            item.host_mem_percent, 1 if item.available else 0, item.detail,
+                        )
+                        for item in samples
+                    ],
+                )
+                self._connection.commit()
+                self.last_error = None
+            return len(samples)
+        except sqlite3.Error as exc:
+            self.last_error = str(exc)
+            return 0
+
+    def query_samples(self, since: str, until: str) -> list[dict[str, Any]]:
+        return self._query_range("monitor_samples", "observed_at", since, until, self._sample_from_row)
+
+    def query_runs(self, since: str, until: str) -> list[dict[str, Any]]:
+        return self._query_range("monitor_runs", "started_at", since, until, self._run_from_row)
+
+    def query_events(self, since: str, until: str) -> list[dict[str, Any]]:
+        return self._query_range("monitor_events", "observed_at", since, until, self._event_from_row)
+
+    def query_resources(self, since: str, until: str) -> list[dict[str, Any]]:
+        with self._lock:
+            rows = self._connection.execute(
+                "SELECT * FROM monitor_resources WHERE observed_at >= ? AND observed_at < ? ORDER BY seq ASC",
+                (_iso(since), _iso(until)),
+            ).fetchall()
+        return [
+            {
+                "seq": int(row["seq"]), "observed_at": row["observed_at"], "role": row["role"],
+                "pid": row["pid"], "cpu_percent": row["cpu_percent"], "rss_bytes": row["rss_bytes"],
+                "num_threads": row["num_threads"], "host_cpu_percent": row["host_cpu_percent"],
+                "host_mem_percent": row["host_mem_percent"], "available": bool(row["available"]),
+                "detail": row["detail"],
+            }
+            for row in rows
+        ]
+
+    def query_actions(self, since: str, until: str) -> list[dict[str, Any]]:
+        with self._lock:
+            rows = self._connection.execute(
+                "SELECT * FROM monitor_actions WHERE updated_at >= ? AND updated_at < ? ORDER BY updated_at ASC",
+                (_iso(since), _iso(until)),
+            ).fetchall()
+        return [
+            {
+                "action_id": row["action_id"], "updated_at": row["updated_at"],
+                "state": row["state"], "correlation_id": row["correlation_id"],
+                "action": json.loads(row["payload_json"]),
+            }
+            for row in rows
+        ]
+
+    def _query_range(self, table: str, column: str, since: str, until: str, factory) -> list[dict[str, Any]]:
+        with self._lock:
+            rows = self._connection.execute(
+                f"SELECT * FROM {table} WHERE {column} >= ? AND {column} < ? ORDER BY seq ASC",
+                (_iso(since), _iso(until)),
+            ).fetchall()
+        return [factory(row).model_dump(mode="json") for row in rows]
+
     def list_events(
         self,
         *,
@@ -882,6 +974,7 @@ class MonitorStore:
                 ("monitor_runs", "updated_at"),
                 ("monitor_samples", "observed_at"),
                 ("monitor_actions", "updated_at"),
+                ("monitor_resources", "observed_at"),
             ):
                 cursor = self._connection.execute(f"DELETE FROM {table} WHERE {column} < ?", (cutoff,))
                 removed += max(0, cursor.rowcount)
@@ -954,12 +1047,14 @@ class MonitorRecorder:
         trace_dir: Path | str,
         sample_seconds: float = DEFAULT_SAMPLE_SECONDS,
         queue_capacity: int = 2048,
+        resource_sampler: ResourceSampler | None = None,
     ) -> None:
         self.store = store
         self.journal = journal
         self.status_provider = status_provider
         self.trace_dir = Path(trace_dir)
         self.sample_seconds = max(1.0, float(sample_seconds))
+        self.resource_sampler = resource_sampler or ResourceSampler()
         self.queue: asyncio.Queue[tuple[str, dict[str, Any]]] = asyncio.Queue(maxsize=queue_capacity)
         self.subscribers: set[asyncio.Queue[dict[str, Any]]] = set()
         self._tasks: list[asyncio.Task[None]] = []
@@ -1037,6 +1132,8 @@ class MonitorRecorder:
         while True:
             try:
                 await asyncio.to_thread(self.store.append_sample, self.status_provider())
+                samples = await asyncio.to_thread(self.resource_sampler.sample)
+                await asyncio.to_thread(self.store.append_resources, samples)
             except Exception as exc:
                 self.store.last_error = str(exc)
             await asyncio.sleep(self.sample_seconds)

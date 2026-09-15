@@ -8,6 +8,21 @@ from harness.memory.service import MemoryService, build_inmemory_service
 from infra.trace.recorder import NullTracer
 from tests.factories import vaelith
 
+_CONTROL_ENV = (
+    "NC_CONTROL_MODE",
+    "NC_RUNTIME_MANIFEST_PATH",
+    "NC_COGNITIVE_MANIFEST_PATH",
+    "NC_EXPERIMENT_MANIFEST",
+    "NC_ISOLATED_DEVELOPMENT",
+)
+
+
+@pytest.fixture(autouse=True)
+def isolate_control_authority(monkeypatch):
+    """Each test starts without leaked launch authority or manifest paths."""
+    for name in _CONTROL_ENV:
+        monkeypatch.delenv(name, raising=False)
+
 
 @pytest.fixture
 def settings() -> Settings:

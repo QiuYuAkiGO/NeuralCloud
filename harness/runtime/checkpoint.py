@@ -11,6 +11,7 @@ from typing import Literal
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 from harness.contracts.envelope import VersionVector
+from harness.files import replace_path
 from harness.runtime.models import AgencyState, RUNTIME_CHECKPOINT_SCHEMA_VERSION, RuntimeLifecycle
 
 
@@ -57,7 +58,7 @@ class CheckpointStore:
             return None
 
     def write(self, checkpoint: RuntimeCheckpoint) -> None:
-        temporary = self.path.with_name(f".{self.path.name}.tmp")
+        temporary = self.path.with_name(f".{self.path.name}.{os.getpid()}.{os.urandom(3).hex()}.tmp")
         encoded = json.dumps(
             checkpoint.model_dump(mode="json"),
             ensure_ascii=False,
@@ -68,4 +69,4 @@ class CheckpointStore:
             handle.write(encoded)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, self.path)
+        replace_path(temporary, self.path)

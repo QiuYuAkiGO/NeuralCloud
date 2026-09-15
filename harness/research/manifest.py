@@ -132,8 +132,8 @@ class AutonomousCapabilitiesCondition(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     enabled: bool = False
-    owners: dict[Literal["board", "qq", "desktop", "voice", "web"], Literal["legacy", "shared", "off"]] = Field(
-        default_factory=lambda: {"board": "legacy", "qq": "legacy", "desktop": "off"})
+    owners: dict[Literal["board", "qq", "desktop", "voice", "web", "diary"], Literal["legacy", "shared", "off"]] = Field(
+        default_factory=lambda: {"board": "legacy", "qq": "legacy", "desktop": "off", "diary": "legacy"})
     allowed_capabilities: tuple[str, ...] = ()
     qq_send_enabled: bool = False
     quiet_seconds: int = Field(default=60, ge=30, le=3600)

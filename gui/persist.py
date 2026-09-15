@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, ValidationError
 from gui.debug import TuningPatch, apply_tuning
 from gui.presets import DEFAULT_PRESET_ID
 from harness.config import Settings
+from harness.files import replace_path
 
 Mode = Literal["demo", "live", "ollama"]
 DEFAULT_OLLAMA_BASE_URL = "http://127.0.0.1:11434/v1"
@@ -58,7 +59,7 @@ def atomic_write_json(path: Path, payload: dict[str, Any] | list[Any]) -> Path:
     tmp = path.with_name(f"{path.name}.{os.getpid()}.{os.urandom(3).hex()}.tmp")
     tmp.write_text(data, encoding="utf-8")
     try:
-        os.replace(tmp, path)
+        replace_path(tmp, path)
     except OSError:
         path.write_text(data, encoding="utf-8")
         tmp.unlink(missing_ok=True)

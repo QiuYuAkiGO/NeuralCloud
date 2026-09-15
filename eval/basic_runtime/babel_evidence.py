@@ -11,7 +11,6 @@ import json
 import math
 import shutil
 import sqlite3
-import time
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -21,6 +20,7 @@ from urllib.parse import urlsplit, urlunsplit
 from harness.homeostasis.models import HomeostaticSnapshot
 from harness.runtime.journal import RuntimeJournalRecord
 from harness.runtime.monitor import sanitize_payload
+from harness.files import replace_path
 
 
 def fingerprint(value: Any) -> str:
@@ -39,15 +39,7 @@ def write_json(path: Path, value: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + "." + uuid.uuid4().hex[:8] + ".tmp")
     temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2, default=str) + "\n", encoding="utf-8")
-    for attempt in range(7):
-        try:
-            temporary.replace(path)
-            break
-        except PermissionError:
-            if attempt == 6:
-                raise
-            # Windows indexers can briefly open a report while it is replaced.
-            time.sleep(.01 * (2 ** attempt))
+    replace_path(temporary, path)
 
 
 def append_jsonl(path: Path, value: Any) -> None:

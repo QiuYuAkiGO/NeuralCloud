@@ -33,6 +33,7 @@ from harness.qq.group_observation import QQGroupObservationMixin
 from harness.qq.roster import QQGroupRosterEntry, configured_groups
 from harness.qq.watch_ledger import address_sources_for_event
 from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace, classify_error
+from harness.files import replace_path
 from harness.runtime.ownership import require_development
 
 
@@ -141,14 +142,7 @@ class WatcherSettings(BaseModel):
 def atomic_json(path: Path, value: dict) -> None:
     temporary = path.with_name(path.name + f".{os.getpid()}.tmp")
     temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    for attempt in range(5):
-        try:
-            temporary.replace(path)
-            break
-        except PermissionError:
-            if attempt == 4:
-                raise
-            time.sleep(0.05)
+    replace_path(temporary, path)
 
 
 @contextmanager

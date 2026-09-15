@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+
+from harness.files import replace_path
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, model_validator
 
@@ -78,6 +81,6 @@ class DirectQQSettings(BaseModel):
 def atomic_status(path, payload):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary = path.with_name(path.name + f".{os.getpid()}.tmp")
     temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    temporary.replace(path)
+    replace_path(temporary, path)

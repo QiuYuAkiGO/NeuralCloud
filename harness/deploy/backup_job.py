@@ -14,6 +14,7 @@ from uuid import uuid4
 
 from . import snapshot, systemd
 from .config import CORE_SERVICES, DeployError, DeploymentConfig, ensure_linux, load_config
+from harness.files import replace_path
 
 SCHEDULED_NAME = re.compile(r"scheduled-(\d{8}T\d{12}Z)\Z")
 SERVICE_ORDER = ("cognitive", "homeostasis", "board", "runtime", "gui", "qq_direct")
@@ -227,7 +228,7 @@ def copy_offsite(source: Path, destination_root: Path) -> Path:
     stage = root / (".copying-" + uuid4().hex)
     shutil.copytree(source, stage)
     snapshot.verify_snapshot(stage)
-    os.replace(stage, destination)
+    replace_path(stage, destination)
     return destination
 
 
@@ -287,7 +288,7 @@ def run_backup(cfg: DeploymentConfig, *, offsite_dir: Path | None = None,
             temporary = root / (".scheduled-report-" + uuid4().hex)
             temporary.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
             temporary.chmod(0o600)
-            os.replace(temporary, record_path)
+            replace_path(temporary, record_path)
 
         save()
         try:
@@ -314,7 +315,7 @@ def run_backup(cfg: DeploymentConfig, *, offsite_dir: Path | None = None,
             record.update(status="failed", error_type=type(exc).__name__,
                           cleanup_failures=failures, finished_at=datetime.now(UTC).isoformat())
             save()
-            raise DeployError("scheduled backup failed; automatic resume blocked; inspect scheduled-last-run.json") from None
+            raise DeployError("scheduled backup failed; automatic resume blocked; inspect scheduled-last-run.json") from exc
 
 
 def main(argv=None) -> int:

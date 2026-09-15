@@ -1,0 +1,14 @@
+.report-main { padding: 20px 24px 48px; }
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin: 16px 0 24px;
+}
+.report-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
+.report-card h2 { margin: 0 0 8px; font-size: 1rem; }
+.report-card dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; }
+.report-card dt { color: var(--muted); }
+.report-card dd { margin: 0; }
+.report-card .muted { color: var(--muted); }
+.actions { display: flex; gap: 8px; margin-top: 12px; }

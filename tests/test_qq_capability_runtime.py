@@ -12,6 +12,7 @@ from harness.embodiment.capabilities import QQ_COMMUNICATION_READ
 from harness.homeostasis import HomeostasisEngine, load_profile
 from harness.llm.client import MockLLM
 from harness.qq.memory import QQVisualMemoryStore, QQVerifiedProfileInput, QQVisualObservationInput
+from harness.qq.session import QQSessionSettings
 from harness.qq.shared import QQSharedPrepareRequest
 from harness.qq.watch_ledger import WatchEvent
 from harness.research.manifest import AutonomousCapabilitiesCondition, load_experiment_manifest
@@ -85,6 +86,9 @@ def test_natural_read_dispatch_returns_before_qq_turn_reenters_same_queue(rig, t
         monkeypatch.delenv("NC_SHARED_MEMORY_DB", raising=False)
         monkeypatch.setattr("gui.service.probe_llm", lambda *a, **k: True)
         host, _ = _host(tmp_path / "owner", monkeypatch, ["unused"])
+        host.shared.qq_settings = QQSessionSettings.model_validate_json(
+            rig.watch.settings.session_config_path.read_text(encoding="utf-8")
+        )
         original = host.chat.llm
         profile = load_profile("presets/homeostasis/qq-social-drive-v1.json")
         started = utc_now() - timedelta(hours=8)
@@ -101,6 +105,8 @@ def test_natural_read_dispatch_returns_before_qq_turn_reenters_same_queue(rig, t
         model = MockLLM(chat_script=[json.dumps({"kind": "observe", "offer_id": offer["offer_id"]}),
             json.dumps({"action": "wait", "reason": "Continue observing this synthetic conversation."})])
         host.chat.llm = model
+        host.chat.pipeline.llm = model
+        host.chat.pipeline.character.llm = model
         read_errors = []
         read = rig.watch._read_shared_capability
         def checked_read(*args):

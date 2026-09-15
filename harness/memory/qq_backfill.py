@@ -25,6 +25,7 @@ from harness.memory.qq_assimilation import QQAssimilationQueue, QQMemoryProposer
 from harness.memory.shared import SharedMemoryStore
 from harness.memory.tier import maintain_qq_events, qq_event_strength
 from harness.qq.conversation import conversation_audience, private_scope_id
+from harness.files import replace_path
 
 
 def _now():
@@ -43,7 +44,7 @@ def _atomic_bytes(path, data):
             handle.write(data)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, path)
+        replace_path(temporary, path)
     finally:
         temporary.unlink(missing_ok=True)
 
@@ -57,7 +58,7 @@ def _backup_readonly(source, destination):
                 original.backup(frozen)
         with temporary.open("r+b") as handle:
             os.fsync(handle.fileno())
-        os.replace(temporary, destination)
+        replace_path(temporary, destination)
     finally:
         temporary.unlink(missing_ok=True)
 

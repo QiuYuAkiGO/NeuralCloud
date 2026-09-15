@@ -13,6 +13,8 @@ from typing import Any, Literal, cast
 
 from pydantic import ValidationError
 
+from harness.files import replace_path
+
 from harness.contracts.envelope import DomainCommandEnvelope, DomainCommandResult, VersionVector
 from harness.embodiment.contracts import (
     HomeostaticObservation as EmbodimentHomeostaticObservation,
@@ -63,6 +65,18 @@ def _aware(value: Any, default: datetime) -> datetime:
     else:
         result = default
     return result if result.tzinfo is not None else result.replace(tzinfo=UTC)
+
+
+def _trace_affect(summary: Any, affect: Any) -> dict[str, Any]:
+    payload: dict[str, Any] = {}
+    if summary is not None:
+        payload["salience"] = getattr(summary, "salience", None)
+        payload["dominant_needs"] = [item.dimension for item in getattr(summary, "dominant_needs", [])]
+    if affect is not None:
+        payload["affect_valence"] = affect.valence
+        payload["affect_arousal"] = affect.arousal
+        payload["affect_dominance"] = affect.dominance
+    return payload
 
 
 class HomeostasisEngine:
@@ -142,6 +156,22 @@ class HomeostasisEngine:
                     ),
                 },
             )
+
+    async def read_traces(
+        self, *, since: str | None = None, until: str | None = None, limit: int = 5000,
+    ) -> list[dict[str, Any]]:
+        cap = max(1, min(int(limit), 20000))
+        traces: list[dict[str, Any]] = []
+        for payload in self._command_ledger.iter_traces():
+            occurred = str(payload.get("occurred_at") or "")
+            if since and occurred < since:
+                continue
+            if until and occurred >= until:
+                continue
+            traces.append(payload)
+            if len(traces) >= cap:
+                break
+        return traces
 
     async def get_snapshot(self) -> DomainSnapshot:
         async with self._lock:
@@ -359,6 +389,7 @@ class HomeostasisEngine:
                 values_after=after,
                 evidence_refs=evidence,
                 **trace_metadata,
+                **_trace_affect(summary, affect),
             )
             result = DomainCommandResult[dict[str, Any]](
                 command_id=command.command_id,
@@ -577,6 +608,7 @@ class HomeostasisEngine:
                     {name: factor.value for name, factor in factors.items()}
                     if psychological is not None else {}
                 ),
+                **_trace_affect(summary, affect),
             )
             result_payload = {
                 "revision": revision,
@@ -1343,7 +1375,7 @@ class HomeostasisEngine:
                     )
                 handle.flush()
                 os.fsync(handle.fileno())
-            os.replace(temporary, self.trace_path)
+            replace_path(temporary, self.trace_path)
         except OSError as exc:
             self._projection_errors["trace"] = str(exc)
         else:
@@ -1366,7 +1398,7 @@ class HomeostasisEngine:
     def _atomic(path: Path, value: str) -> None:
         temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
         temporary.write_text(value, encoding="utf-8")
-        os.replace(temporary, path)
+        replace_path(temporary, path)
 
     def _append_trace(self, trace: HomeostaticTransitionTrace) -> None:
         self.state_dir.mkdir(parents=True, exist_ok=True)

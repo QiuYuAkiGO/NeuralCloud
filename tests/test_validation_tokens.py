@@ -14,11 +14,18 @@ from harness.llm import validation_tokens as module
 from harness.llm.client import ChatResult, RoutingLLMClient
 
 
+def _clear_tokenizer_cache():
+    loader = getattr(module, "_load_qwen_tokenizer", None)
+    clearer = getattr(loader, "cache_clear", None)
+    if callable(clearer):
+        clearer()
+
+
 @pytest.fixture(autouse=True)
 def isolated_tokenizer_cache():
-    module._load_qwen_tokenizer.cache_clear()
+    _clear_tokenizer_cache()
     yield
-    module._load_qwen_tokenizer.cache_clear()
+    _clear_tokenizer_cache()
 
 
 class _Client:

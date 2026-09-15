@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import json
 import os
-import time
 from contextlib import contextmanager
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Iterator
 
 from .models import BudgetSpec, PriceSpec
+from harness.files import replace_path
 
 
 class BudgetStopped(RuntimeError):
@@ -41,16 +41,10 @@ class BudgetLedger:
             yield data
             temporary = self.path.with_suffix(self.path.suffix + ".tmp")
             temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-            # Windows scanners/readers can briefly hold the destination without delete sharing.
-            # Retry the atomic replacement; never fall back to a torn in-place ledger write.
-            for attempt in range(7):
-                try:
-                    temporary.replace(self.path)
-                    break
-                except PermissionError as exc:
-                    if attempt == 6:
-                        raise BudgetStopped("budget_ledger_atomic_write_unavailable") from exc
-                    time.sleep(0.01 * (2 ** attempt))
+            try:
+                replace_path(temporary, self.path)
+            except PermissionError as exc:
+                raise BudgetStopped("budget_ledger_atomic_write_unavailable") from exc
         finally:
             lock.unlink()
 

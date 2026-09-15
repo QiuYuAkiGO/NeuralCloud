@@ -102,7 +102,13 @@ class HttpCognitiveClient(_HttpDomainClient):
     async def prepare_goal_decision(self, command: DomainCommandEnvelope[dict[str, Any]]) -> DomainCommandResult[dict[str, Any]]:
         return DomainCommandResult[dict[str, Any]].model_validate((await self.command(command)).model_dump(mode="json"))
 
+    async def prepare_diary_entry(self, command: DomainCommandEnvelope[dict[str, Any]]) -> DomainCommandResult[dict[str, Any]]:
+        return DomainCommandResult[dict[str, Any]].model_validate((await self.command(command)).model_dump(mode="json"))
+
     async def commit_board_entry(self, command: DomainCommandEnvelope[dict[str, Any]]) -> DomainCommandResult[dict[str, Any]]:
+        return DomainCommandResult[dict[str, Any]].model_validate((await self.command(command)).model_dump(mode="json"))
+
+    async def commit_diary_entry(self, command: DomainCommandEnvelope[dict[str, Any]]) -> DomainCommandResult[dict[str, Any]]:
         return DomainCommandResult[dict[str, Any]].model_validate((await self.command(command)).model_dump(mode="json"))
 
     async def assess_autonomous(
@@ -190,6 +196,17 @@ class HttpHomeostasisClient(_HttpDomainClient):
         policies = payload.get("policies") or []
         return [dict(policy) for policy in policies]
 
+    async def read_traces(
+        self, *, since: str | None = None, until: str | None = None, limit: int = 5000
+    ) -> list[dict[str, Any]]:
+        payload = await self._request(
+            "POST",
+            "/v1/traces:read",
+            json={"since": since, "until": until, "limit": limit},
+        )
+        traces = payload.get("traces") or []
+        return [dict(item) for item in traces if isinstance(item, dict)]
+
 
 def create_domain_service_app(service: Any, *, service_token: str, service_name: str):
     """Create the private FastAPI surface consumed by HTTP domain clients."""
@@ -225,6 +242,8 @@ def create_domain_service_app(service: Any, *, service_token: str, service_name:
             "PrepareWebStep": getattr(service, "prepare_web_step", None),
             "PrepareGoalDecision": getattr(service, "prepare_goal_decision", None),
             "CommitBoardEntry": getattr(service, "commit_board_entry", None),
+            "PrepareDiaryEntry": getattr(service, "prepare_diary_entry", None),
+            "CommitDiaryEntry": getattr(service, "commit_diary_entry", None),
             "CommitInteraction": getattr(service, "commit_interaction", None),
             "ApplyEvent": getattr(service, "apply_event", None),
             "ApplyHeartbeat": getattr(service, "apply_heartbeat", None),
@@ -265,5 +284,17 @@ def create_domain_service_app(service: Any, *, service_token: str, service_name:
         async def policies(payload: dict[str, Any]) -> dict[str, Any]:
             vector = VersionVector.model_validate(payload.get("version_vector") or {})
             return {"policies": await service.propose_policies(version_vector=vector)}
+
+        @app.post("/v1/traces:read", dependencies=[Depends(authenticate)])
+        async def read_traces(payload: dict[str, Any]) -> dict[str, Any]:
+            method = getattr(service, "read_traces", None)
+            if method is None:
+                raise HTTPException(status_code=501, detail="homeostasis traces unavailable")
+            traces = await method(
+                since=payload.get("since"),
+                until=payload.get("until"),
+                limit=int(payload.get("limit") or 5000),
+            )
+            return {"traces": traces}
 
     return app

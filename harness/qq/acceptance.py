@@ -25,6 +25,7 @@ from uuid import uuid4
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator
 
 from harness.qq.idle import QQIdleIntent
+from harness.files import replace_path
 
 
 DURATION_SECONDS = 8 * 60 * 60
@@ -103,7 +104,7 @@ def _write(path, value):
         json.dump(value, stream, ensure_ascii=True, indent=2)
         stream.flush()
         os.fsync(stream.fileno())
-    os.replace(temporary, path)
+    replace_path(temporary, path)
 
 
 def _connect(path):

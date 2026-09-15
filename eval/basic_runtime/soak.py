@@ -22,6 +22,8 @@ import uuid
 
 import httpx
 
+from harness.files import replace_path
+
 DIMENSIONS = ("energy_reserve", "cognitive_load", "safety_predictability", "competence", "autonomy", "social_connection", "novelty")
 SERVICES = ("runtime", "cognitive", "homeostasis", "gui")
 RELEASE_SECONDS = 8 * 60 * 60
@@ -306,16 +308,7 @@ def atomic_summary(path: Path, payload: dict) -> None:
             handle.write("\n")
             handle.flush()
             os.fsync(handle.fileno())
-        for attempt in range(5):
-            try:
-                os.replace(temporary, path)
-                break
-            except PermissionError:
-                # Windows readers/antivirus can briefly hold the destination.
-                # Keep the old complete report until an atomic replace succeeds.
-                if attempt == 4:
-                    raise
-                time.sleep(0.01 * 2 ** attempt)
+        replace_path(temporary, path)
     finally:
         temporary.unlink(missing_ok=True)
 

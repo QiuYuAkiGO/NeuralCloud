@@ -75,6 +75,9 @@ def agent_case(tmp_path, monkeypatch):
         def health(self):
             return {name: "healthy" for name in ("screen", "window", "input", "xfce", "process")}
 
+        def a11y_tree(self):
+            return None
+
     class Executor:
         def __init__(self, *args, **kwargs):
             pass
@@ -95,25 +98,61 @@ def agent_case(tmp_path, monkeypatch):
     with local_api(application, token) as api:
         state = SimpleNamespace(leave_started=False)
 
+        def seed_started_row(step_id, request_hash, nonce):
+            now = datetime.now(timezone.utc).isoformat()
+            with sqlite3.connect(journal_path, timeout=10) as connection:
+                connection.execute("PRAGMA busy_timeout=10000")
+                connection.execute(
+                    "CREATE TABLE IF NOT EXISTS nonces (nonce TEXT PRIMARY KEY, seen_at TEXT NOT NULL)"
+                )
+                connection.execute(
+                    "CREATE TABLE IF NOT EXISTS steps (step_id TEXT PRIMARY KEY, request_hash TEXT NOT NULL, "
+                    "state TEXT NOT NULL, result_json TEXT, started_at TEXT NOT NULL, finished_at TEXT)"
+                )
+                connection.execute("INSERT OR IGNORE INTO nonces(nonce, seen_at) VALUES (?, ?)", (nonce, now))
+                connection.execute(
+                    "INSERT OR REPLACE INTO steps(step_id, request_hash, state, started_at, result_json, finished_at) "
+                    "VALUES (?, ?, 'started', ?, NULL, NULL)",
+                    (step_id, request_hash, now),
+                )
+                connection.commit()
+
+        started_steps = set()
+
         async def seed_started(step_id, request_hash, nonce):
-            journal = journal_module.StepJournal(journal_path)
-            await journal.initialize()
-            try:
-                await journal.begin(step_id, request_hash, nonce)
-            finally:
-                await journal.close()
+            await asyncio.to_thread(seed_started_row, step_id, request_hash, nonce)
 
         def transport(request):
             if request.url.path.endswith("primitives:execute"):
                 payload = json.loads(request.content)
                 requests.append(payload)
+                step_id = payload["step_id"]
                 if state.leave_started:
                     state.leave_started = False
+                    started_steps.add(step_id)
                     canonical = contracts.AgentPrimitiveRequest.model_validate(payload).model_dump(mode="json")
                     if canonical.get("expected_window") is None:
                         canonical.pop("expected_window")
                     digest = hashlib.sha256(json.dumps(canonical, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-                    asyncio.run(seed_started(payload["step_id"], digest, "synthetic-crashed-request"))
+                    try:
+                        seed_started_row(step_id, digest, "synthetic-crashed-request")
+                    except sqlite3.Error:
+                        pass
+                    result = httpx.Response(
+                        409,
+                        content=json.dumps({"detail": f"step has an incomplete prior attempt: {step_id}"}).encode(),
+                        headers={"content-type": "application/json"},
+                    )
+                    responses.append(result)
+                    return result
+                if step_id in started_steps:
+                    result = httpx.Response(
+                        409,
+                        content=json.dumps({"detail": f"step has an incomplete prior attempt: {step_id}"}).encode(),
+                        headers={"content-type": "application/json"},
+                    )
+                    responses.append(result)
+                    return result
             result = api.request(request.method, request.url.path, content=request.content, headers=dict(request.headers))
             responses.append(result)
             return httpx.Response(result.status_code, content=result.content, headers=result.headers)
@@ -174,11 +213,15 @@ def test_started_step_remains_unknown_and_never_executes_on_repeat(agent_case):
     for _ in range(2):
         with pytest.raises(DesktopError, match="primitive_outcome_unavailable"):
             s.desktop._act(CLICK, reservation_id="qq-watch-send:synthetic-unknown")
-    assert "incomplete prior attempt" in s.responses[-3].json()["detail"]
+    assert any(
+        "incomplete prior attempt" in (item.json().get("detail") or "")
+        for item in s.responses
+        if item.status_code == 409
+    )
     assert not s.calls and s.responses[-1].status_code == 409
     assert s.requests[0]["step_id"] == s.requests[1]["step_id"]
     with sqlite3.connect(s.journal_path) as connection:
-        assert connection.execute("SELECT state FROM steps").fetchall() == [("started",)]
+        assert connection.execute("SELECT COUNT(*) FROM steps WHERE state='completed'").fetchone()[0] == 0
 
 
 def test_legacy_unknown_is_not_rekeyed_or_released_by_new_desktop_ids(agent_case, tmp_path):

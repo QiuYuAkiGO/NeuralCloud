@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
+import time
 
 
 def canonical(value):
@@ -18,9 +20,21 @@ def digest(value):
 def save(path, value):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary = path.with_name(path.name + f".{os.getpid()}.tmp")
     temporary.write_text(canonical(value) + "\n", encoding="utf-8")
-    temporary.replace(path)
+    delay = 0.02
+    last = None
+    source, destination = os.fspath(temporary), os.fspath(path)
+    for _ in range(20):
+        try:
+            os.replace(source, destination)
+            return
+        except PermissionError as exc:
+            last = exc
+            time.sleep(delay)
+            delay = min(0.4, delay * 1.7)
+    assert last is not None
+    raise last
 
 
 def read(path):

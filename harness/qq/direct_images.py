@@ -29,6 +29,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, Validation
 
 from harness.llm.client import OpenAICompatClient
 from harness.qq.telemetry import QQDeadline, QQDeadlineExpired
+from harness.files import replace_path
 
 MAX_IMAGE_BYTES = 16 * 1024 * 1024
 MAX_IMAGE_PIXELS = 40_000_000
@@ -340,7 +341,7 @@ def _store(data: bytes, cache_dir: Path, digest: str, extension: str) -> None:
         with tempfile.NamedTemporaryFile(dir=cache_dir, prefix=".image-", delete=False) as handle:
             temporary = handle.name
             handle.write(data)
-        os.replace(temporary, cache_dir / f"{digest}.{extension}")
+        replace_path(temporary, cache_dir / f"{digest}.{extension}")
     except OSError:
         raise _ImageFailure("storage_failed") from None
     finally:

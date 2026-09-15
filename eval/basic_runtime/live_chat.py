@@ -21,6 +21,7 @@ from urllib.parse import urlsplit, urlunsplit
 from gui.persist import load_gui_settings, save_gui_settings
 from gui.presets import load_builtin
 from harness.cognitive.service import CognitiveServiceHost
+from harness.files import replace_path
 from harness.contracts.decisions import DeliveryEvidence, ReplyDecision
 from harness.contracts.envelope import DomainCommandEnvelope
 from harness.research.manifest import load_experiment_manifest
@@ -70,9 +71,9 @@ class EvidenceWriter:
         for secret in sorted(set(filter(None, self.secrets)), key=len, reverse=True):
             # Replace JSON-escaped values as well as plain keys.
             encoded = encoded.replace(json.dumps(secret, ensure_ascii=False)[1:-1], "<redacted>")
-        temporary = self.path.with_suffix(".json.tmp")
+        temporary = self.path.with_name(f".{self.path.name}.{os.getpid()}.{os.urandom(3).hex()}.tmp")
         temporary.write_text(encoded + "\n", encoding="utf-8")
-        os.replace(temporary, self.path)
+        replace_path(temporary, self.path)
 
 
 def command(kind: str, index: int, payload: dict, *, timeout: float, revision: int, run_id: str):

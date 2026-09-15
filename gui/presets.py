@@ -15,6 +15,7 @@ from zoneinfo import ZoneInfo
 from pydantic import BaseModel, Field, ValidationError
 
 from harness.core.inference import SessionTurn
+from harness.files import replace_path
 from harness.core.models import (
     CandidateMemory,
     EpisodicEvent,
@@ -50,7 +51,7 @@ def atomic_write_json(path: Path, payload: dict[str, Any]) -> Path:
             handle.write(data)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(tmp, path)
+        replace_path(tmp, path)
     finally:
         tmp.unlink(missing_ok=True)
     return path

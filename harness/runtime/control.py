@@ -157,6 +157,12 @@ def create_control_app(
     board_router = APIRouter(dependencies=[Depends(authenticate)])
     add_board_routes(board_router, control.supervisor)
     app.include_router(board_router)
+    from harness.runtime.diary import add_diary_routes
+    from harness.runtime.daily_report import add_report_routes
+    diary_router = APIRouter(dependencies=[Depends(authenticate)])
+    add_diary_routes(diary_router, control.supervisor, authorize=control.authorize)
+    add_report_routes(diary_router, control.supervisor, authorize=control.authorize)
+    app.include_router(diary_router)
     from harness.runtime.voice import add_voice_routes
     voice_router = APIRouter(dependencies=[Depends(authenticate)])
     add_voice_routes(voice_router, control.supervisor)
@@ -433,6 +439,8 @@ def create_control_app(
             raise HTTPException(status_code=403, detail="dedicated QQ ingress required")
         if payload.get("event_type") == RuntimeEventType.BOARD_REFLECTION:
             raise HTTPException(status_code=403, detail="dedicated board ingress required")
+        if payload.get("event_type") == RuntimeEventType.DIARY_REFLECTION:
+            raise HTTPException(status_code=403, detail="dedicated diary ingress required")
         if payload.get("event_type") == RuntimeEventType.CAPABILITY_OPPORTUNITY:
             raise HTTPException(status_code=403, detail="dedicated internal ingress required")
         accepted = await control.supervisor.submit_event(

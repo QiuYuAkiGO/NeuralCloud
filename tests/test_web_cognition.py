@@ -147,7 +147,8 @@ def test_sources_reach_final_chat_as_intact_user_records_and_commit_once(tmp_pat
     async def scenario():
         owner, main = _host(tmp_path, monkeypatch, ["来源里提到了相关资料。"])
         context = sources()
-        command = _command("PrepareResponse", 1, {"text": "查资料", "session_id": "local-main",
+        session_id = owner.chat.active_session_id
+        command = _command("PrepareResponse", 1, {"text": "查资料", "session_id": session_id,
             "runtime_web_context": context, "runtime_web_deadline_at": (now() + timedelta(seconds=30)).isoformat()})
         try:
             result = await owner.prepare_response(command)
@@ -161,7 +162,7 @@ def test_sources_reach_final_chat_as_intact_user_records_and_commit_once(tmp_pat
             assert 0 < main.chat_call_options[-1]["timeout_seconds"] <= 30
             assert not any(owner.chat.pipeline.session_store.snapshot().values())
             await _commit(owner, 1, result.result)
-            turns = owner.chat.pipeline.session_store.recent("local-main")
+            turns = owner.chat.pipeline.session_store.recent(session_id)
             assert [item.role for item in turns] == ["user", "character"]
             assert [item.text for item in turns if item.role == "user"] == ["查资料"]
         finally:

@@ -159,6 +159,8 @@ def test_qq_binding_never_reads_group_views(views, monkeypatch):
     shared.host = SimpleNamespace(chat=SimpleNamespace(
         library=SimpleNamespace(load=lambda _: copyable), active_preset_id="test", settings=copyable,
         llm=object(), memory=SimpleNamespace(get_persona=lambda: object())))
+    copyable.qq_memory_recall_max_items = 8
+    copyable.qq_memory_recall_max_characters = 1200
     monkeypatch.setattr(shared, "sync_local", lambda: None)
     monkeypatch.setattr(shared, "_group_view_context", lambda: pytest.fail("QQ reply cannot read other group views"))
     binding = shared.qq_binding(group_id="10001")

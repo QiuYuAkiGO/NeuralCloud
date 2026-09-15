@@ -7,15 +7,16 @@ import os
 from pathlib import Path
 from typing import Any
 
+from harness.files import replace_path
 from harness.homeostasis.models import HomeostaticProfile
 from harness.research.manifest import ExperimentManifest
 
 
 def atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.{os.urandom(3).hex()}.tmp")
     temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    os.replace(temporary, path)
+    replace_path(temporary, path)
 
 
 def load_profile(path: Path | str) -> HomeostaticProfile:

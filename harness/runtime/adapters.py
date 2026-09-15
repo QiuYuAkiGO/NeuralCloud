@@ -36,6 +36,7 @@ from harness.contracts.envelope import (
     DomainCommandResult,
     VersionVector,
 )
+from harness.files import replace_path
 from harness.core.error_notice import ERROR_FALLBACK_REPLY, ERROR_FALLBACK_SEND_SECONDS
 from harness.core.inference import ContextSegment, FinalResponse, InteroceptiveState, SessionTurn
 from harness.core.models import EpisodicEvent, InteractionEvent
@@ -143,6 +144,10 @@ class HomeostasisServiceClient(Protocol):
     ) -> DomainCommandResult[dict[str, Any]]: ...
 
     async def propose_policies(self, *, version_vector: VersionVector) -> list[dict[str, Any]]: ...
+
+    async def read_traces(
+        self, *, since: str | None = None, until: str | None = None, limit: int = 5000
+    ) -> list[dict[str, Any]]: ...
 
     async def close(self) -> None: ...
 
@@ -1069,13 +1074,17 @@ class PipelineCognitiveAdapter:
         drain = getattr(self.pipeline.memory, "drain_maintenance", None)
         if not callable(drain):
             return True
+        # Thread/task scheduling can exceed a 10ms research-test budget even when
+        # there is no remaining maintenance work. Let drain_maintenance's own
+        # timeout govern; keep a small outer ceiling so a stuck drain cannot hang.
+        wait_for = timeout + 1.0
         try:
             if inspect.iscoroutinefunction(drain):
-                result = await asyncio.wait_for(drain(timeout=timeout), timeout=timeout)
+                result = await asyncio.wait_for(drain(timeout=timeout), timeout=wait_for)
             else:
                 result = await asyncio.wait_for(
                     asyncio.to_thread(drain, timeout=timeout),
-                    timeout=timeout,
+                    timeout=wait_for,
                 )
             return bool(result)
         except Exception:
@@ -1326,12 +1335,12 @@ class PipelineCognitiveAdapter:
                 for key, turns in self.pipeline.session_store.snapshot().items()
             },
         }
-        temporary = self.state_path.with_name(f".{self.state_path.name}.tmp")
+        temporary = self.state_path.with_name(f".{self.state_path.name}.{os.getpid()}.{os.urandom(3).hex()}.tmp")
         with temporary.open("w", encoding="utf-8", newline="\n") as handle:
             json.dump(payload, handle, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, self.state_path)
+        replace_path(temporary, self.state_path)
         self._publish_snapshot()
 
     def _load_state(self) -> None:
@@ -1425,6 +1434,12 @@ class PassiveHomeostasisAdapter:
     async def propose_policies(self, *, version_vector: VersionVector) -> list[dict[str, Any]]:
         return list(self._policies)
 
+    async def read_traces(
+        self, *, since: str | None = None, until: str | None = None, limit: int = 5000
+    ) -> list[dict[str, Any]]:
+        del since, until, limit
+        return []
+
     async def close(self) -> None:
         self._persist_state()
 
@@ -1503,12 +1518,12 @@ class PassiveHomeostasisAdapter:
                 for key, (request_hash, result) in self._ledger.items()
             },
         }
-        temporary = self.state_path.with_name(f".{self.state_path.name}.tmp")
+        temporary = self.state_path.with_name(f".{self.state_path.name}.{os.getpid()}.{os.urandom(3).hex()}.tmp")
         with temporary.open("w", encoding="utf-8", newline="\n") as handle:
             json.dump(payload, handle, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, self.state_path)
+        replace_path(temporary, self.state_path)
 
     def _load_state(self) -> None:
         if self.state_path is None or not self.state_path.exists():

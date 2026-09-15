@@ -71,6 +71,7 @@ class RuntimeEventType(StrEnum):
     QQ_FACT = "qq_fact"
     QQ_TURN = "qq_turn"
     BOARD_REFLECTION = "board_reflection"
+    DIARY_REFLECTION = "diary_reflection"
     CAPABILITY_OPPORTUNITY = "capability_opportunity"
     TERMINAL_CONTINUATION = "terminal_continuation"
     ENVIRONMENT_CHANGE = "environment_change"

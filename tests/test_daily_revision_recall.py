@@ -90,7 +90,8 @@ def test_local_and_qq_facades_use_daily_recall_while_online_qq_recall_is_off(tmp
             local = build_revision(current, run(), proposal(impressions=[impression()]), Settings(), now=NOW)
             host.chat.library.save(local)
             install_revision(host, local)
-            event = InteractionEvent(event_id="current", channel="chat", speaker="user", raw_text="摄影", session_id="session1")
+            event = InteractionEvent(event_id="current", channel="chat", speaker="user", raw_text="摄影",
+                                    session_id="session1", timestamp=NOW)
             local_segments = host.shared.local_context(event)
             assert any(segment.why == "daily_revision_memory" for segment in local_segments)
             records = [source("group-source", author_principal="qq:member:20001", kind="qq_observation",
@@ -102,6 +103,7 @@ def test_local_and_qq_facades_use_daily_recall_while_online_qq_recall_is_off(tmp
             install_revision(host, changed)
             host.shared.qq_settings = SimpleNamespace(memory_db=tmp_path / "not-created.sqlite3",
                 allowed_group_ids=["10001"], allowed_private_peer_ids=[], self_member_id="29999")
+            monkeypatch.setattr(host.shared, "sync_qq", lambda: None)
             assert not host.qq_memory.control.recall_enabled
             binding = host.shared.qq_binding(group_id="10001", member_id="20001", query="摄影")
             assert binding.derived_memory["entries"]

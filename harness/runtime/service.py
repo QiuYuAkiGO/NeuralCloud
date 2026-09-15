@@ -191,6 +191,9 @@ def _create_owned_app(manifest, state_dir):
                 CapabilityRequirement(capability=c, required=True) for c in BOARD_CAPABILITIES]),
             client=board_settings.client(), scope=board_settings.scope)
         supervisor.board = BoardController(supervisor, board_settings, state_dir, provider=board_provider)
+    from harness.diary.config import DiarySettings
+    from harness.runtime.diary import DiaryController
+    supervisor.diary = DiaryController(supervisor, DiarySettings.from_environment(), state_dir)
     from harness.runtime.voice_config import VoiceSettings
     voice_settings = VoiceSettings.from_environment()
     supervisor.voice = None
@@ -265,12 +268,32 @@ def _create_owned_app(manifest, state_dir):
     except Exception as exc:
         monitor_store = MonitorStore(":memory:", retention_days=retention_days)
         monitor_store.startup_error = f"persistent monitor store unavailable: {exc}"
+    from harness.runtime.resources import ResourceSampler
+    from harness.runtime.daily_report import DailyReportBuilder, DailyReportController, DailyReportSettings, DailyReportStore
     monitor = MonitorRecorder(
         monitor_store,
         journal=supervisor.journal,
         status_provider=supervisor.status,
         trace_dir=Path(os.environ.get("NC_TRACE_DIR", str(ROOT / "traces"))),
         sample_seconds=float(os.environ.get("NC_MONITOR_SAMPLE_SECONDS", "10")),
+        resource_sampler=ResourceSampler(state_dir=state_dir),
+    )
+    report_settings = DailyReportSettings.from_environment()
+    supervisor.daily_report = DailyReportController(
+        DailyReportBuilder(
+            monitor=monitor_store,
+            state_dir=state_dir,
+            settings=report_settings,
+            homeostasis=supervisor.homeostasis,
+            diary_store=supervisor.diary.store,
+            capabilities=supervisor.capabilities,
+            board=supervisor.board,
+            goals=getattr(supervisor, "goals", None),
+            cognitive=supervisor.cognitive,
+            runtime_status=supervisor.status,
+        ),
+        DailyReportStore(state_dir / "reports", retention_days=report_settings.retention_days),
+        report_settings,
     )
     control.event_stream.add_listener(monitor.enqueue)
     profile_store = ProfileRevisionStore(
@@ -302,6 +325,8 @@ def _create_owned_app(manifest, state_dir):
         await supervisor.stop(reason="runtime service shutdown")
         if supervisor.board is not None:
             await supervisor.board.close()
+        if getattr(supervisor, "diary", None) is not None:
+            supervisor.diary.close()
         if supervisor.voice is not None:
             await supervisor.voice.close()
         await supervisor.web.close()

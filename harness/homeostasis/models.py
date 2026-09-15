@@ -485,6 +485,11 @@ class HomeostaticTransitionTrace(BaseModel):
     body_revision: int | None = Field(default=None, ge=1)
     evidence_refs: list[str] = Field(default_factory=list)
     experiment_mode: str | None = None
+    salience: HomeostaticSalience | None = None
+    dominant_needs: list[DimensionName] = Field(default_factory=list)
+    affect_valence: float | None = Field(default=None, ge=-1.0, le=1.0)
+    affect_arousal: float | None = Field(default=None, ge=0.0, le=1.0)
+    affect_dominance: float | None = Field(default=None, ge=0.0, le=1.0)
 
 
 def initial_snapshot(profile: HomeostaticProfile, *, now: datetime) -> HomeostaticSnapshot:

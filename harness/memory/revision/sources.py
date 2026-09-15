@@ -110,7 +110,7 @@ def _normalized_source(record: SharedMemoryRecord, *, preset_id: str,
                         conversation_id=record.session_id, visibility=list(record.visibility))
     quoted = False
     independent = record.kind == "local_incoming"
-    self_generated = record.kind in {"local_outgoing", "qq_delivery", "qq_segment_delivery", "board_entry", "action_outcome"}
+    self_generated = record.kind in {"local_outgoing", "qq_delivery", "qq_segment_delivery", "board_entry", "diary_entry", "action_outcome"}
     relation_target = "user" if record.channel == "local_chat" else None
     evidence_key = ":".join((record.kind, record.owner_id, preset_id, record.source.original_record_id))
     if qq_source is not None:

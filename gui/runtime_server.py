@@ -213,6 +213,10 @@ def create_app(*, runtime_url: str | None = None, control_token: str | None = No
     async def daily_revision_page() -> FileResponse:
         return FileResponse(STATIC_DIR / "daily-revision.html")
 
+    @app.get("/report")
+    async def report_page() -> FileResponse:
+        return FileResponse(STATIC_DIR / "report.html")
+
     @app.get("/web")
     async def web_page() -> FileResponse:
         return FileResponse(STATIC_DIR / "web.html")
@@ -237,6 +241,30 @@ def create_app(*, runtime_url: str | None = None, control_token: str | None = No
         if operation not in {"configure", "run", "dry_run", "retry", "rollback"}:
             raise HTTPException(status_code=404, detail="unknown daily revision operation")
         return await gateway(request).cognitive("daily_revision." + operation, await _json_body(request))
+
+    @app.get("/api/report/daily")
+    async def report_daily(request: Request):
+        return await gateway(request).request("GET", "/v1/report/daily", params=dict(request.query_params))
+
+    @app.get("/api/report/days")
+    async def report_days(request: Request):
+        return await gateway(request).request("GET", "/v1/report/days")
+
+    @app.post("/api/report/finalize")
+    async def report_finalize(request: Request):
+        require_web_origin(request)
+        return await gateway(request).request("POST", "/v1/report/daily:finalize", json=await _json_body(request))
+
+    @app.get("/api/diary")
+    async def diary_read(request: Request):
+        return await gateway(request).request("GET", "/v1/diary")
+
+    @app.post("/api/diary/{operation}")
+    async def diary_operation(operation: str, request: Request):
+        if operation not in {"invite", "pause", "resume"}:
+            raise HTTPException(status_code=404, detail="unknown diary operation")
+        require_web_origin(request)
+        return await gateway(request).request("POST", f"/v1/diary/{operation}", json=await _json_body(request))
 
     @app.get("/api/web/config")
     async def web_config_read(request: Request):

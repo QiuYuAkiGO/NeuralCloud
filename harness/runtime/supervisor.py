@@ -1155,7 +1155,11 @@ class RuntimeSupervisor:
             self.goals.close()
             self._closed = True
         except Exception as exc:
-            await self._transition(RuntimeLifecycle.FAULTED, reason=f"graceful stop failed: {exc}")
+            try:
+                await self._transition(RuntimeLifecycle.FAULTED, reason=f"graceful stop failed: {exc}")
+            except Exception:
+                self.lifecycle = RuntimeLifecycle.FAULTED
+                self.lifecycle_reason = f"graceful stop failed: {exc}"
             raise
         finally:
             if not self._research_workers_pending():
@@ -1398,6 +1402,11 @@ class RuntimeSupervisor:
             if board is None:
                 raise DomainCommandError("board body unavailable")
             return await board.dispatch(event, process_seq)
+        if event.event_type == RuntimeEventType.DIARY_REFLECTION:
+            diary = getattr(self, "diary", None)
+            if diary is None:
+                raise DomainCommandError("diary unavailable")
+            return await diary.dispatch(event, process_seq)
         if event.event_type == RuntimeEventType.QQ_TURN:
             return await self._dispatch_qq_turn(event, process_seq)
         if event.event_type == RuntimeEventType.QQ_FACT:
@@ -1587,6 +1596,18 @@ class RuntimeSupervisor:
             board = getattr(self, "board", None)
             if board is not None:
                 await board.heartbeat()
+            diary = getattr(self, "diary", None)
+            if diary is not None:
+                await diary.heartbeat()
+            daily_report = getattr(self, "daily_report", None)
+            if daily_report is not None:
+                try:
+                    await daily_report.heartbeat()
+                except Exception as exc:
+                    self._append_journal(
+                        "daily_report_failed",
+                        data={"error_type": type(exc).__name__},
+                    )
             await self.capabilities.heartbeat()
             policies: list[dict[str, Any]] = []
             if (
@@ -4672,6 +4693,8 @@ class RuntimeSupervisor:
             return getattr(self.cognitive, "prepare_qq_response", None)
         if service == "cognitive" and command_type in {"PrepareBoardEntry", "CommitBoardEntry"}:
             return getattr(self.cognitive, "prepare_board_entry" if command_type == "PrepareBoardEntry" else "commit_board_entry", None)
+        if service == "cognitive" and command_type in {"PrepareDiaryEntry", "CommitDiaryEntry"}:
+            return getattr(self.cognitive, "prepare_diary_entry" if command_type == "PrepareDiaryEntry" else "commit_diary_entry", None)
         mapping: dict[tuple[str, str], Callable[..., Awaitable[Any]]] = {
             ("cognitive", "AssessAutonomous"): self.cognitive.assess_autonomous,
             ("cognitive", "PrepareResponse"): self.cognitive.prepare_response,

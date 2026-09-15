@@ -74,6 +74,10 @@ watcher 继续使用唯一 GUI actor、原共享认知和发送执行器。未�
 
 2026-09-12 验收中，第二个 Board 机会取得真实写入、HTTP 与 Linux SQLite 独立回读以及隔离记忆提交；第一个机会的模型 JSON 有效，但身体写入失败且原因未确证。生产内稳态与人格源文件未更改。桌面因 Docker Desktop 启动故障尚未取得有效机会，QQ Agent 也未运行，因此两者的在线验收保留为待验证；发送 reservation 保持 23，delivery attempt 保持 41。详细记录见 `docs/milestones/evidence/homeostatic-capabilities-live-2026-09-12.json` 与 `qq-capability-readonly-2026-09-12.json`。
 
+## 主动日记
+
+日记是只写给自己的私密回顾，复用留言板的两阶段准备/提交，但不经过 Linux Board 身体。默认 `autonomous_enabled=false`。正常 GUI 只显示当天是否写了；正文读取需要 `development_debug`。共享能力 intent `expression.diary.write.v1` 尚未接入 catalog。
+
 回滚时关闭 `enabled` 或把待停通道设为 `off`，停止新机会。已经开始的动作、未知结果和回执/记忆提交继续对账。不要清空调用数据库、历史失败、回执或记忆；恢复部署时使用原 state 目录。
 
 共享 QQ 选时由 Runtime 负责，watcher 不再重复套用 legacy 的安静期、机会冷却和固定需要映射。发送前仍刷新共享内稳态；同一需要 episode 内的正常心跳版本前进不使调用失效，而需要 episode 改变、旧归属代次、权限变化、新消息或截止时间到达仍会阻止发送。刷新观察后必须经原 desktop actor 重新签发群核验对象，不能复制核验对象充当发送授权。旧巡检任务也须同步用户后续授权，避免按已被替代的只读要求暂停发送。
