@@ -151,6 +151,7 @@ class InferencePipeline:
         interoception: InteroceptiveState | None = None,
         homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
         emotion_guidance: Any = None,
+        prefix_messages: list[dict[str, str]] | None = None,
     ) -> FinalResponse:
         """Generate a replayable response without mutating Session or Memory.
 
@@ -178,6 +179,7 @@ class InferencePipeline:
                     interoception=interoception,
                     homeostatic_interoception=homeostatic_interoception,
                     emotion_guidance=emotion_guidance,
+                    prefix_messages=prefix_messages,
                 )
             call.set_result(final)
             return final
@@ -375,6 +377,7 @@ class InferencePipeline:
         homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None,
         emotion_guidance: Any = None,
         memory_evidence: MemoryEvidenceContext | None = None,
+        prefix_messages: list[dict[str, str]] | None = None,
     ) -> FinalResponse:
         started = time.perf_counter()
         event = self._traced("ingest", lambda: self.gateway.ingest(source, **ingest_kwargs))
@@ -443,10 +446,13 @@ class InferencePipeline:
                 additional_segments=context_segments,
                 homeostatic_interoception=homeostatic_interoception,
                 emotion_guidance=emotion_guidance,
+                prefix_messages=prefix_messages,
                 **({"memory_evidence": memory_evidence} if memory_evidence is not None else {}),
             ),
             extra={"situation_id": situation.situation_id, "path": request.path},
         )
+        if prefix_messages:
+            context = context.model_copy(update={"prefix_messages": list(prefix_messages)})
 
         response_id = new_id("response")
         segments, stopped_by, revisions, validation, usage = self._speak(

@@ -65,8 +65,8 @@ def test_missing_detail_plan_asks_the_concrete_gap_without_inventory_or_unrelate
         assert "first_point直接写成询问日期、原话或必要线索的具体疑问句" in rules
         assert "问句本身已经表达信息缺口，necessary_boundary默认null" in rules
         assert "不附带无关已知事实盘点，也不假装知道" in rules
-    assert decision.PROMPT_VERSION == "qq-group-turn-taking-v16"
-    assert decision.PRIVATE_PROMPT_VERSION == "qq-private-turn-taking-v5"
+    assert decision.PROMPT_VERSION == "qq-group-turn-taking-v17"
+    assert decision.PRIVATE_PROMPT_VERSION == "qq-private-turn-taking-v6"
 
 
 def test_both_generation_stages_use_concrete_gap_and_single_praise_feedback_contract():
@@ -432,5 +432,5 @@ def test_invalid_top_level_gate_is_still_rejected_even_with_optional_plan(setup,
     _, client, _, kwargs, _ = setup
     client.choice = json.dumps({"action": "speak", "reason": "有新问题", "reply_plan": {"intent": "invalid"}, **invalid})
     result = decision.decide_qq_reply(**kwargs)
-    assert result.outcome == "model_invalid" and not result.reply
+    assert result.outcome == "error_fallback" and result.reply == decision.ERROR_FALLBACK_REPLY
     assert len(client.gate_messages) == 1 and not client.chat_calls

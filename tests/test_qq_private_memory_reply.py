@@ -53,7 +53,7 @@ def private_binding(setup, tmp_path, monkeypatch, *, peer=OWNER, full_owner=True
     complete = client.complete_chat_result
 
     def private_gate(messages, **options):
-        if messages[0]["content"].startswith(decision._PRIVATE_RULES):
+        if decision.is_qq_gate_messages(messages):
             client.gate_messages.append(messages)
             return ChatResult(text=json.dumps({"action": "speak", "reason": "对方询问近期感受。"}),
                               usage=TokenUsage(prompt_tokens=30, completion_tokens=10, source="api"))

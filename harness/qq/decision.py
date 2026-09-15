@@ -25,6 +25,7 @@ from harness.compiler.compiler import (
     emotion_enabled, estimate_tokens, render_emotion_guidance, render_homeostatic_interoception,
 )
 from harness.homeostasis.models import HomeostaticInteroceptiveSummary
+from harness.core.error_notice import ERROR_FALLBACK_REPLY
 from harness.core.ids import new_id
 from harness.core.inference import ContextSegment, MemoryEvidenceContext, ParsedInteraction, TokenUsage
 from harness.llm.client import build_llm_client, estimate_chat_usage
@@ -32,6 +33,10 @@ from harness.memory.service import build_inmemory_service
 from harness.pipeline.pipeline import InferencePipeline
 from harness.pipeline import parser as parser_module
 from harness.qq.context_budget import project_group_context, select_model_context
+from harness.qq.context_window import (
+    WINDOW_BLOCK_SIZE, combined_user_payload, decode_window_start, encode_window_start,
+    is_qq_gate_messages as _is_qq_gate_messages, select_append_window, split_closed_open, split_model_payload,
+)
 from harness.qq.draft import (
     QQDraftError, _GROUP_DRAFT_RULES, _DraftCompiler, _evidence_refs, _load_configuration, emotion_draft_rules,
 )
@@ -50,10 +55,46 @@ from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace, cla
 from infra.trace.request_spans import trace_scope
 
 
-PROMPT_VERSION = "qq-group-turn-taking-v16"
-PRIVATE_PROMPT_VERSION = "qq-private-turn-taking-v5"
+PROMPT_VERSION = "qq-group-turn-taking-v17"
+PRIVATE_PROMPT_VERSION = "qq-private-turn-taking-v6"
 MAX_GROUP_CONTEXT_CHARACTERS = DEFAULT_QQ_INPUT_TOKEN_BUDGET * 2
 _CONTEXT_BUDGET_REASON = "context_budget_exceeded：模型上下文超过字符预算，本次未生成可发送正文；这不是网络故障或模型 JSON 解析失败。"
+_SENDABLE_SPEAK_OUTCOMES = frozenset({"ready", "error_fallback"})
+
+
+def sendable_speak_outcome(outcome: str | None) -> bool:
+    return outcome in _SENDABLE_SPEAK_OUTCOMES
+
+
+def apply_error_fallback(result: "QQReplyDecision", *, error_type: str, decision_source: str,
+                         reason: str, source_ids: list[str] | None = None) -> "QQReplyDecision":
+    """Turn a failed/timed-out message turn into a canned public notice."""
+    if result.initiated_by != "message" or result.replayed:
+        return result.model_copy(update={"action": "wait", "reply": None, "reply_segments": [],
+            "reason": reason, "decision_source": decision_source,
+            "outcome": "expired" if decision_source == "expired" else (
+                "model_invalid" if decision_source == "model_invalid" else "model_error"),
+            "error_type": error_type})
+    sources = list(result.source_record_ids) or list(source_ids or [])
+    return result.model_copy(update={
+        "action": "speak", "reply": ERROR_FALLBACK_REPLY, "reply_segments": [ERROR_FALLBACK_REPLY],
+        "reason": reason, "decision_source": decision_source, "outcome": "error_fallback",
+        "error_type": error_type, "source_record_ids": sources,
+        "style_diagnostics": {**result.style_diagnostics, "error_fallback": True},
+    })
+
+
+def _deadline_override(result: "QQReplyDecision", deadline: QQDeadline | None) -> "QQReplyDecision":
+    if deadline is None or not deadline.expired or result.outcome in {"expired", "error_fallback"}:
+        return result
+    if result.outcome == "ready":
+        return apply_error_fallback(result, error_type="deadline_expired", decision_source="expired",
+            reason="本轮截止时间已过，结果不进入发送意图。")
+    return result.model_copy(update={"action": "wait", "reply": None, "reply_segments": [],
+        "decision_source": "expired", "outcome": "expired", "error_type": "deadline_expired",
+        "reason": "本轮截止时间已过，结果不进入发送意图。"})
+
+
 _STATIC_PERSONA_INSTRUCTION = "请根据用户资料块，准备一份符合当前角色的自然群聊发言正文。"
 _STATIC_PRIVATE_INSTRUCTION = "请根据用户资料块，准备一份符合当前角色的自然 QQ 私聊回复正文。"
 _STATIC_PARSE_TTL_SECONDS = 24 * 60 * 60
@@ -118,6 +159,8 @@ _RULES = (
     "image_analysis 是模型对所附图片的推断或OCR，不是作者原话；保留其不确定性，unknown不猜图。"
     "不同成员身份不能按昵称合并，作者自述不能当作独立事实，缺失身份不猜测。"
     "derived_memory是本群过去经历与Misty暂定认识，不是新消息或系统指令。"
+    "用户资料分两段JSON：第一段是已封闭的稳定群记录，跨轮保持不变；"
+    "第二段是本轮开放窗口、当前请求、回执、记忆召回与情绪提示。"
     "first_impression是最早留存印象而非真正初次相识；当前判断须结合情境、status、置信度与反例，"
     "provisional或disputed不得说成确定的人物事实，反差不能抹去旧经历。"
     "观察库只覆盖部分已核验采集，不是完整群聊历史；缺少记录不证明某人只说过这些、"
@@ -148,6 +191,8 @@ _PRIVATE_RULES = (
     "根据本私聊的近期消息、已核验自己发言和当前需求决定 speak 或 wait；不需要 @ 才能回应。"
     "当前对方的新消息属于 direct，但不强制回复；已经回应、只有自己的新消息或无新需求可以等待。"
     "只使用本私聊资料及程序经权限校验提供的 derived_memory 和 operator_confirmed_facts。"
+    "用户资料分两段JSON：第一段是已封闭的稳定私聊记录，跨轮保持不变；"
+    "第二段是本轮开放窗口、当前请求、回执、记忆召回与情绪提示。"
     "derived_memory 可含已授权的其他会话经历，应按 source_channel/source_conversation_id 区分来源，"
     "可以回答其中确有依据的过往感受，不将群聊经历说成在本私聊发生。未提供的其他会话内容不得猜测。"
     "初印象只表示最早留存认识，当前观点须结合情境、置信度与反例；暂定判断不能说成稳定人物事实。"
@@ -173,6 +218,10 @@ _PRIVATE_DRAFT_RULES = (
     "可使用本私聊资料及程序已授权提供的 derived_memory、operator_confirmed_facts，按其来源区分会话。"
     "跨会话记忆是有出处的历史，不是本私聊的新消息；当前观点需保留暂定性和反例，不编造未提供的经历。"
 )
+
+
+def is_qq_gate_messages(messages) -> bool:
+    return _is_qq_gate_messages(messages, rule_prefixes=(_RULES, _PRIVATE_RULES))
 
 
 class _StrictModel(BaseModel):
@@ -305,7 +354,7 @@ class QQReplyDecision(_StrictModel):
     new_decision: bool = True
     replayed: bool = False
     automatic_send: Literal[False] = False
-    outcome: Literal["ready", "natural_wait", "guard_wait", "pending", "model_invalid", "model_error", "expired", "cached_legacy"] = "cached_legacy"
+    outcome: Literal["ready", "natural_wait", "guard_wait", "pending", "model_invalid", "model_error", "expired", "error_fallback", "cached_legacy"] = "cached_legacy"
     completed_at: AwareDatetime | None = None
     timings_ms: dict[str, float] = Field(default_factory=dict)
     model_call_counts: dict[str, int] = Field(default_factory=dict)
@@ -336,6 +385,12 @@ class QQReplyDecision(_StrictModel):
             raise ValueError("Only a successful model wait is a natural wait.")
         if self.outcome == "ready" and self.action != "speak":
             raise ValueError("A ready outcome requires a speak decision.")
+        if self.outcome == "error_fallback":
+            if (self.action != "speak" or self.initiated_by != "message"
+                    or self.reply != ERROR_FALLBACK_REPLY
+                    or self.reply_segments != [ERROR_FALLBACK_REPLY]
+                    or self.decision_source not in {"model_error", "model_invalid", "expired"}):
+                raise ValueError("Error fallback must speak the canned notice after a failed model turn.")
         if self.outcome in {"model_error", "model_invalid", "expired", "pending", "guard_wait"} and self.action != "wait":
             raise ValueError("Non-ready outcomes must not carry an active reply intention.")
         if self.addressing == "direct" and (not self.addressing_source_record_ids or not self.addressing_evidence_refs):
@@ -457,6 +512,22 @@ def _hash(value: Any) -> str:
     return hashlib.sha256(_canonical(value).encode("utf-8")).hexdigest()
 
 
+def _checked_model_payloads(base: dict, turn: dict, *, trace: QQTurnTrace,
+                            stage: Literal["base", "final", "persona"],
+                            reserve: int = 0, max_characters: int = MAX_GROUP_CONTEXT_CHARACTERS) -> tuple[str, str]:
+    encoded_base = _canonical(base)
+    encoded_turn = _canonical(turn)
+    total = len(encoded_base) + len(encoded_turn)
+    trace.add_counter(f"context_{stage}_characters", total)
+    trace.add_counter(f"context_{stage}_estimated_tokens", estimate_tokens(encoded_base) + estimate_tokens(encoded_turn))
+    if total + reserve > max_characters:
+        trace.add_counter("context_budget_exceeded")
+        trace.add_counter(f"context_budget_exceeded_{stage}")
+        trace.record("decision.context_budget", outcome="error", error_type="model_invalid")
+        raise _QQContextBudgetExceeded(_CONTEXT_BUDGET_REASON)
+    return encoded_base, encoded_turn
+
+
 class _QQContextBudgetExceeded(QQDraftError):
     """A local input-budget failure, distinct from transport and model output."""
 
@@ -537,6 +608,8 @@ def _connect(path: Path) -> sqlite3.Connection:
         receipt_id TEXT PRIMARY KEY, receipt_hash TEXT UNIQUE NOT NULL,
         group_id TEXT NOT NULL, decision_id TEXT NOT NULL, segment_index INTEGER NOT NULL,
         record_json TEXT NOT NULL, UNIQUE(decision_id,segment_index))""")
+    connection.execute("""CREATE TABLE IF NOT EXISTS qq_context_windows (
+        group_id TEXT PRIMARY KEY, start_key TEXT NOT NULL)""")
     return connection
 
 
@@ -913,9 +986,37 @@ class _StaticInstructionParser:
         return parsed
 
 
+def _apply_append_window(path: Path, group_id: str, context):
+    observations = [item for member in context.members for item in member.observations]
+    hint_ids = {record_id for retrieval in context.member_retrieval for record_id in retrieval.history_record_ids}
+    candidates = [item for item in observations if item.record_id not in hint_ids]
+    hints = [item for item in observations if item.record_id in hint_ids]
+    with closing(_connect(path)) as connection, connection:
+        row = connection.execute("SELECT start_key FROM qq_context_windows WHERE group_id=?", (group_id,)).fetchone()
+        window, _new_start = select_append_window(candidates, start_key=decode_window_start(row["start_key"] if row else None))
+        if window:
+            connection.execute(
+                "INSERT INTO qq_context_windows(group_id, start_key) VALUES(?, ?) "
+                "ON CONFLICT(group_id) DO UPDATE SET start_key=excluded.start_key",
+                (group_id, encode_window_start(window[0])),
+            )
+        connection.commit()
+    window_ids = {item.record_id for item in window}
+    closed, opened = split_closed_open(window)
+    members = []
+    for member in context.members:
+        kept = [item for item in member.observations if item.record_id in window_ids]
+        members.append(member.model_copy(update={"observations": kept}))
+    members = [member for member in members if member.observations]
+    participants = [member.member_id for member in members]
+    context = context.model_copy(update={"members": members, "participants": participants})
+    return context, closed, opened, hints
+
+
 def _prepare_group_speech(*, settings, preset, llm, payload: str, evidence_refs: list[str], group_id: str,
                           shared_memory=None, homeostatic_interoception=None, emotion_guidance=None,
-                          memory_evidence_entries=None, current_speaker_id: str | None = None):
+                          memory_evidence_entries=None, current_speaker_id: str | None = None,
+                          prefix_messages: list[dict[str, str]] | None = None):
     # The ordinary disabled-continuation path parses every segment in this one
     # model output. It never requests a second character generation.
     settings = settings.model_copy(update={"max_reply_segments": 3, "continuation_enabled": False})
@@ -929,16 +1030,20 @@ def _prepare_group_speech(*, settings, preset, llm, payload: str, evidence_refs:
         pipeline.parser = _StaticInstructionParser(pipeline.parser, settings=settings, preset=preset, llm=llm,
                                                    instruction=instruction)
         evidence_entries = memory_evidence_entries or []
+        visible = "\n".join(item.get("content") or "" for item in (prefix_messages or []) if item.get("role") == "user")
         user_segment = ContextSegment(kind="user", text=payload,
             source_ids=sorted(set([*evidence_refs, *(entry.source_id for entry in evidence_entries)])))
-        memory_evidence = MemoryEvidenceContext.bind(audience=conversation_audience(group_id),
-            entries=evidence_entries, segment=user_segment, current_speaker_id=current_speaker_id)
+        memory_evidence = MemoryEvidenceContext.bind(
+            audience=conversation_audience(group_id), entries=evidence_entries,
+            segment=user_segment.model_copy(update={"text": visible or payload}),
+            current_speaker_id=current_speaker_id)
         return pipeline.prepare(
             instruction,
             session_id=f"qq-private-draft:{group_id}" if private else f"qq-group-draft:{group_id}", speaker="operator",
             homeostatic_interoception=homeostatic_interoception,
             memory_evidence=memory_evidence,
-            **({"emotion_guidance": emotion_guidance} if emotion_guidance is not None else {}),
+            prefix_messages=prefix_messages,
+            **({} if emotion_guidance is None else {"emotion_guidance": emotion_guidance}),
             context_segments=[ContextSegment(kind="qq_draft_rules", text=emotion_draft_rules(
                                   _PRIVATE_DRAFT_RULES if private else _GROUP_DRAFT_RULES,
                                   enabled=emotion_enabled(settings))),
@@ -978,6 +1083,9 @@ class _QQScopedLLM:
                         self.trace.add_counter("late_results")
                         raise QQDeadlineExpired("A model result arrived after the QQ turn deadline.")
                     self.failed_error_type = previous_failure
+                    usage = getattr(response, "usage", None)
+                    if usage is not None:
+                        self.trace.add_cache_usage(self.stage_name, usage)
                     return response
             except Exception as exc:
                 self.failed_error_type = classify_error(exc)
@@ -1062,6 +1170,7 @@ def read_qq_context(
     *, memory_db: Path | str, group_id: str, trigger_member_id: str | None = None,
     query: str | None = None, member_ids: list[str] | None = None, max_members: int = 20,
     recent_limit_per_member: int = 5, history_limit_per_member: int = 5,
+    window_mode: str = "chronological_append",
 ):
     """Read the scoped turn sources without reserving or generating a decision."""
     path = Path(memory_db)
@@ -1086,7 +1195,7 @@ def read_qq_context(
                 derived_query_truncated = len(text) > len(candidate)
     context = store.group_context(group_id=group_id, member_ids=member_ids, query=effective_query,
         max_members=max_members, recent_limit_per_member=recent_limit_per_member,
-        history_limit_per_member=history_limit_per_member)
+        history_limit_per_member=history_limit_per_member, window_mode=window_mode)
     trigger_latest_id = None
     if trigger_context is not None and trigger_context.observations and trigger_member_id in context.participants:
         latest = trigger_context.observations[0]
@@ -1175,7 +1284,7 @@ def decide_qq_reply(
     context, effective_query, query_source, derived_query_truncated, trigger_latest_id = read_qq_context(
         memory_db=path, group_id=group_id, trigger_member_id=trigger_member_id, query=query, member_ids=member_ids,
         max_members=max_members, recent_limit_per_member=recent_limit_per_member,
-        history_limit_per_member=history_limit_per_member)
+        history_limit_per_member=history_limit_per_member, window_mode="chronological_append")
     settings, preset = ((shared_owner.settings, shared_owner.preset) if shared_owner is not None
                         else _load_configuration(config_path, preset_path))
     emotion_on = emotion_enabled(settings)
@@ -1184,6 +1293,7 @@ def decide_qq_reply(
                           else getattr(emotion_guidance, "scope", None))
         if guidance_scope != conversation_audience(group_id):
             raise QQDraftError("The emotion guidance must match the current QQ conversation.")
+    context, closed_items, open_items, retrieval_hints = _apply_append_window(path, group_id, context)
     observations = [item for member in context.members for item in member.observations]
     source_ids = sorted({item.record_id for item in observations})
     evidence_refs = sorted({ref for member in context.members for ref in _evidence_refs(member)})
@@ -1192,7 +1302,14 @@ def decide_qq_reply(
                     "query_source": query_source, "effective_query": effective_query,
                     "derived_query_truncated": derived_query_truncated,
                     "trigger_member_id": trigger_member_id, "verified_self_member_id": self_member_id,
-                    "verified_self_aliases": [item.model_dump(mode="json") for item in aliases]}
+                    "verified_self_aliases": [item.model_dump(mode="json") for item in aliases],
+                    "conversation_window": {
+                        "mode": "chronological_append", "block_size": WINDOW_BLOCK_SIZE,
+                        "closed_observation_ids": [item.record_id for item in closed_items],
+                        "open_observation_ids": [item.record_id for item in open_items],
+                    }}
+    if retrieval_hints:
+        base_payload["retrieval_hints"] = [item.model_dump(mode="json") for item in retrieval_hints]
     if private:
         base_payload["conversation"] = {
             **conversation, "visibility": "this_private_conversation_only",
@@ -1382,8 +1499,13 @@ def decide_qq_reply(
         llm = None
         usage = TokenUsage()
         try:
-            user_payload = _checked_model_payload(payload, trace=trace, stage="final", reserve=assessment_reserve,
-                                                  max_characters=input_character_budget)
+            if emotion_on:
+                payload["emotion_guidance_text"] = render_emotion_guidance(emotion_guidance, homeostasis=summary)
+            base_context, turn_context = split_model_payload(payload)
+            encoded_base, encoded_turn = _checked_model_payloads(
+                base_context, turn_context, trace=trace, stage="final",
+                reserve=assessment_reserve, max_characters=input_character_budget)
+            user_payload = encoded_base + encoded_turn
             # The same reasoning model serves the persona parser and gate.
             # A 512-token helper cap can exhaust reasoning before producing JSON,
             # causing a fallback call and rejecting an otherwise valid reply.
@@ -1399,10 +1521,9 @@ def decide_qq_reply(
             llm = _QQScopedLLM(raw_llm, deadline=deadline, trace=trace, timeout=settings.llm_timeout)
             result = result.model_copy(update={"source_record_ids": list(selection.observation_ids),
                                               "evidence_refs": evidence_refs, "delivery_refs": list(selection.delivery_ids)})
-            emotion_instruction = ("\n" + render_emotion_guidance(emotion_guidance, homeostasis=summary)
-                                   if emotion_on else "")
-            messages = [{"role": "system", "content": (_PRIVATE_RULES if private else _RULES) + web_rules + (_IDLE_RULES if idle_intent is not None else "") + "\n当前角色人设：\n" + preset.persona.model_dump_json() + emotion_instruction},
-                        {"role": "user", "content": user_payload}]
+            messages = [{"role": "system", "content": (_PRIVATE_RULES if private else _RULES) + web_rules + (_IDLE_RULES if idle_intent is not None else "") + "\n当前角色人设：\n" + preset.persona.model_dump_json()},
+                        {"role": "user", "content": encoded_base},
+                        {"role": "user", "content": encoded_turn}]
             # Some configured reasoning models consume completion tokens before
             # returning the JSON. Keep a local finite budget without changing the
             # global helper defaults or assuming 512 tokens is sufficient.
@@ -1426,7 +1547,7 @@ def decide_qq_reply(
             if choice._reply_plan_invalid:
                 trace.add_counter("reply_plan_invalid")
             if choice.action == "speak":
-                speech_payload = _checked_model_payload({**payload, "assessment": choice.model_dump()}, trace=trace,
+                speech_payload = _checked_model_payload({"assessment": choice.model_dump()}, trace=trace,
                                                        stage="persona", max_characters=input_character_budget)
                 llm.stage_name = "persona"
                 persona_started = trace.clock()
@@ -1442,10 +1563,11 @@ def decide_qq_reply(
                                 new_observation_ids=set(new_ids), trigger_record_id=trigger_latest_id),
                             receipts=receipts, partial_receipts=partial_receipts, shared_owner=shared_owner,
                         )
-                        if emotion_on and emotion_guidance is not None:
-                            speech_kwargs["emotion_guidance"] = emotion_guidance
+                        speech_kwargs["prefix_messages"] = [*messages, {"role": "assistant", "content": response.text}]
                         if summary is not None:
                             speech_kwargs["homeostatic_interoception"] = summary
+                        if emotion_on:
+                            speech_kwargs["emotion_guidance"] = emotion_guidance
                         final = _prepare_group_speech(settings=settings, preset=preset, llm=llm, payload=speech_payload, evidence_refs=evidence_refs, group_id=group_id, **speech_kwargs)
                         usage = usage.add(final.usage)
                         if deadline is not None:
@@ -1472,19 +1594,16 @@ def decide_qq_reply(
             reason = ("本轮截止时间已过，结果不进入发送意图。" if expired else
                       _CONTEXT_BUDGET_REASON if isinstance(exc, _QQContextBudgetExceeded) else
                       "模型判断或正文准备失败，本次不是自然等待决定。")
-            result = result.model_copy(update={"action": "wait", "reply": None, "reply_segments": [],
-                "reason": reason,
-                "decision_source": source, "outcome": source, "error_type": error_type})
+            result = apply_error_fallback(result, error_type=error_type, decision_source=source,
+                reason=reason, source_ids=list(selection.observation_ids) or list(new_ids))
         finally:
             if shared_owner is None and raw_llm is not None and callable(getattr(raw_llm, "close", None)):
                 raw_llm.close()
         result = result.model_copy(update={"usage": usage})
-    if deadline is not None and deadline.expired and result.outcome != "expired":
-        result = result.model_copy(update={"action": "wait", "reply": None, "reply_segments": [], "decision_source": "expired",
-            "outcome": "expired", "error_type": "deadline_expired", "reason": "本轮截止时间已过，结果不进入发送意图。"})
+    result = _deadline_override(result, deadline)
     timings["total"] = round(max(0.0, trace.clock() - started_mono) * 1000, 3)
     counters = trace.snapshot()["counters"]
-    if not counters.get("gate_model_calls", 0):
+    if not counters.get("gate_model_calls", 0) and result.outcome != "error_fallback":
         result = result.model_copy(update={"source_record_ids": [], "evidence_refs": [], "shared_memory_source_ids": []})
     result = result.model_copy(update={"completed_at": datetime.now(timezone.utc), "timings_ms": timings,
         "model_call_counts": {name: counters.get(f"{name}_model_calls", 0) for name in ("gate", "persona")}})
@@ -1496,13 +1615,13 @@ def decide_qq_reply(
     with closing(_connect(path)) as connection, connection:
         connection.execute("UPDATE qq_reply_decisions SET status='completed',record_json=? WHERE decision_id=? AND status='pending'", (result.model_dump_json(), result.decision_id))
     # The SQLite write itself may consume the final time slice. Never return an
-    # active intention merely because generation finished before the deadline.
-    if deadline is not None and deadline.expired and result.outcome != "expired":
-        result = result.model_copy(update={"action": "wait", "reply": None, "reply_segments": [], "decision_source": "expired",
-            "outcome": "expired", "error_type": "deadline_expired", "reason": "本轮截止时间已过，结果不进入发送意图。"})
+    # active model intention merely because generation finished before the deadline.
+    overridden = _deadline_override(result, deadline)
+    if overridden is not result:
+        result = QQReplyDecision.model_validate(overridden.model_dump())
         with closing(_connect(path)) as connection, connection:
             connection.execute("UPDATE qq_reply_decisions SET record_json=? WHERE decision_id=?", (result.model_dump_json(), result.decision_id))
-        trace.record("decision.persist_deadline", outcome="expired", error_type="deadline_expired")
+        trace.record("decision.persist_deadline", outcome=result.outcome, error_type=result.error_type)
     trace.add_counter(f"decision_outcome_{result.outcome}")
     return result
 

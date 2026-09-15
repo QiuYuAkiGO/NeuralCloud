@@ -83,7 +83,7 @@ async def exercise(tmp_path, monkeypatch, *, transport="onebot", private=False, 
     def respond(request):
         assert str(request.url) == "https://synthetic.invalid/v1/chat/completions"
         body = json.loads(request.content)
-        gate = body["messages"][0]["content"].startswith((decision._RULES, decision._PRIVATE_RULES))
+        gate = decision.is_qq_gate_messages(body["messages"])
         stage = "qq_gate" if gate else "character_expression"
         http_calls.append({"stage": stage, "payload": body, "trace_context": current_trace_context()})
         text = ('{"action":"speak","reason":"合成场景中可以表达具体偏好。"}' if gate else
@@ -163,7 +163,9 @@ def test_synthetic_path_reaches_final_http(tmp_path, monkeypatch, transport):
     assert [call["stage"] for call in captured["http_calls"]] == ["qq_gate", "character_expression"]
     final = captured["http_calls"][-1]["payload"]
     assert final["model"] == "synthetic-expression-model"
-    assert "合成场景" in final["messages"][1]["content"]
+    assert "合成场景" in json.dumps(final["messages"], ensure_ascii=False)
+    assert final["messages"][0]["role"] == "system"
+    assert [item["role"] for item in final["messages"][:4]] == ["system", "user", "user", "assistant"]
 
 
 @pytest.mark.parametrize("mode", ["responses", "full"])
@@ -179,9 +181,11 @@ def test_runtime_summary_reaches_final_expression_with_same_revision(tmp_path, m
     assert command["payload"]["homeostatic_interoception"] == summary().model_dump(mode="json")
     assert command["version_vector"]["homeostasis_state"] == 7
     gate, final = captured["http_calls"]
-    assert expected in final["payload"]["messages"][0]["content"]
-    gate_context = json.loads(gate["payload"]["messages"][1]["content"])
+    gate_context = decision.combined_user_payload(gate["payload"]["messages"])
+    persona_text = json.dumps(final["payload"]["messages"], ensure_ascii=False)
+    assert expected in persona_text
     assert gate_context["homeostatic_interoception"]["response"] == expected
+    assert final["payload"]["messages"][:3] == gate["payload"]["messages"]
     visible = json.dumps([gate["payload"]["messages"], final["payload"]["messages"]], ensure_ascii=False)
     for raw in ("spoofed@1", "normalized_deviation", "snapshot_revision", "synthetic-expression-episode"):
         assert raw not in visible

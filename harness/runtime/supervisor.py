@@ -34,6 +34,7 @@ from harness.contracts.envelope import (
     DomainCommandResult,
     VersionVector,
 )
+from harness.core.error_notice import ERROR_FALLBACK_SEND_SECONDS
 from harness.core.ids import new_id
 from harness.core.inference import InteroceptiveState as CognitiveInteroceptiveState
 from harness.embodiment.capabilities import (
@@ -235,6 +236,11 @@ class RuntimeIngress:
         if not queued:
             return None
         return event
+
+
+def _qq_error_fallback_payload(payload: Any) -> bool:
+    decision = payload.get("decision") if isinstance(payload, dict) else None
+    return isinstance(decision, dict) and decision.get("outcome") == "error_fallback"
 
 
 class RuntimeSupervisor:
@@ -3264,14 +3270,17 @@ class RuntimeSupervisor:
         request = QQSharedPrepareRequest.model_validate(event.payload)
         remaining = (request.deadline_at - utc_now()).total_seconds()
         if remaining > 0:
-            budget = asyncio.timeout(remaining)
+            grace = ERROR_FALLBACK_SEND_SECONDS if remaining >= 1 else 0
+            budget = asyncio.timeout(remaining + grace)
             try:
                 # Web preparation, emotion observation, cognition and the final
                 # snapshot share the body's immutable reply window. Cancelling
                 # this waiter leaves Cognitive's shielded command/lock intact.
                 async with budget:
                     result = await self._prepare_qq_turn(event, process_seq, request)
-                if not budget.expired() and utc_now() < request.deadline_at:
+                if utc_now() < request.deadline_at or (
+                    result.status == "completed" and _qq_error_fallback_payload(result.detail)
+                ):
                     return result
             except (TimeoutError, LateDomainResultError):
                 # A shorter RPC timeout or an early domain failure still uses
@@ -3376,6 +3385,8 @@ class RuntimeSupervisor:
             data={"service": service, "envelope": envelope.model_dump(mode="json")},
         )
         timeout = max(0.001, (envelope.deadline - utc_now()).total_seconds())
+        if event.event_type == RuntimeEventType.QQ_TURN and timeout >= 1:
+            timeout += ERROR_FALLBACK_SEND_SECONDS
         try:
             result = await asyncio.wait_for(method(envelope), timeout=timeout)
             if not self._qq_turn_expired(event):
@@ -3413,7 +3424,9 @@ class RuntimeSupervisor:
             raise DomainCommandError(
                 f"{service} {envelope.command_type} returned {result.status}: {result.error}"
             )
-        if late:
+        if late and not (
+            event.event_type == RuntimeEventType.QQ_TURN and _qq_error_fallback_payload(result.result)
+        ):
             raise LateDomainResultError(f"late {service} result for {envelope.command_type}")
         if result.status not in {"applied", "idempotent_replay"}:
             raise DomainCommandError(

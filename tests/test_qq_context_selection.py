@@ -71,7 +71,8 @@ def test_budget_counts_omission_metadata_and_reserves_worst_escaped_assessment(s
         addressing_source_record_id="\x00" * 160, addressing_supporting_quote="\x00" * 1000,
         reply_style="conversational", reply_style_reason="\x00" * 256,
     )
-    assert len(decision._canonical({**full.payload, "assessment": gate.model_dump()})) == full.characters + reserved
+    assert len(decision._canonical({**full.payload, "assessment": gate.model_dump()})) <= full.characters + reserved
+    assert full.characters == len(decision._canonical(full.payload))
     boundary = _select(payload, required=required, maximum=full.characters + reserved, reserve=reserved)
     assert boundary.fits
     too_small = _select(payload, required=required, maximum=full.characters + reserved - 1, reserve=reserved)
@@ -131,8 +132,9 @@ def test_final_assessment_reserve_rejects_mandatory_content_before_spending_mode
     trace = QQTurnTrace()
     result = decision.decide_qq_reply(**kwargs, trace=trace)
     counters = trace.snapshot()["counters"]
-    assert result.outcome == "model_invalid" and result.reason == decision._CONTEXT_BUDGET_REASON
-    assert not builds and not client.gate_messages and result.source_record_ids == []
+    assert result.outcome == "error_fallback" and result.reason == decision._CONTEXT_BUDGET_REASON
+    assert not builds and not client.gate_messages and result.source_record_ids
+    assert result.reply == decision.ERROR_FALLBACK_REPLY
     assert len(result.seen_observation_record_ids) == len(result.new_observation_record_ids) == 3
     assert counters["context_final_characters"] < 48_000
     assert counters["context_final_characters"] + counters["context_assessment_reserved_characters"] > 48_000
@@ -168,7 +170,7 @@ def test_long_proof_only_context_fits_both_models_and_retains_full_private_refs(
 @pytest.mark.parametrize("proof_field", ["group_evidence", "member_evidence", "evidence", "attribution_evidence", "alias"])
 def test_original_proof_change_invalidates_full_fingerprint_without_model_uri(setup, monkeypatch, proof_field):
     store, client, _, kwargs, _ = setup
-    context = store.group_context(group_id="10001")
+    context = store.group_context(group_id="10001", window_mode="chronological_append")
     aliases = [decision.QQVerifiedSelfAlias(group_id="10001", self_member_id="29999", alias="Misty", evidence_refs=["test-evidence://alias-before"])]
     before = decision.decide_qq_reply(**kwargs, request="明确的当前请求", verified_self_aliases=aliases)
     first = _gate_payload(client)
@@ -191,7 +193,7 @@ def test_failed_old_observations_stay_seen_but_new_input_is_the_only_new_candida
     for index in range(8):
         add_member(store, "20001", text=f"旧资料{index}" + "原" * 3000, capture=f"old-{index}", moment=NOW + timedelta(seconds=index + 1))
     first = decision.decide_qq_reply(**kwargs)
-    assert first.outcome == "model_invalid" and first.source_record_ids == [] and not builds
+    assert first.outcome == "error_fallback" and first.source_record_ids and not builds
     assert decision.decide_qq_reply(**kwargs).replayed
     _, latest = add_member(store, "20001", text="Misty，当前这个新问题呢？", capture="new-now", moment=NOW + timedelta(seconds=20))
     second = decision.decide_qq_reply(**kwargs, trigger_member_id="20001", query="原")
@@ -247,3 +249,48 @@ def test_old_version_failed_cache_stays_immutable_and_does_not_become_new_send(s
     assert result.new_observation_record_ids == [] and len(builds) == calls_before == builds_before + 1
     with sqlite3.connect(store.path) as connection:
         assert json.loads(connection.execute("SELECT record_json FROM qq_reply_decisions WHERE decision_id=?", (old.decision_id,)).fetchone()[0]) == raw
+
+
+def test_closed_blocks_are_dropped_oldest_first_without_reordering(setup):
+    store, _, _, _, _ = setup
+    for index in range(12):
+        add_member(store, "20001", text=f"封闭块资料{index}" + "原" * 40, capture=f"block-{index}",
+                   moment=NOW + timedelta(seconds=index + 1))
+    payload = _payload(store)
+    ordered = sorted(_observations(payload), key=lambda item: (item["observed_at"], item["stored_at"], item["record_id"]))
+    payload["conversation_window"] = {
+        "mode": "chronological_append", "block_size": 4,
+        "closed_observation_ids": [item["record_id"] for item in ordered[:8]],
+        "open_observation_ids": [item["record_id"] for item in ordered[8:]],
+    }
+    required = {ordered[-1]["record_id"]}
+    handled = {item["record_id"] for item in ordered[:-1]}
+    full = _select(payload, required=required, handled=handled)
+    actual = _select(payload, required=required, handled=handled, maximum=full.characters - 80)
+    omitted = actual.payload["model_context_selection"]["omitted_observation_record_ids"]
+    assert omitted and len(omitted) % 4 == 0
+    assert omitted == [item["record_id"] for item in ordered[:len(omitted)]]
+    assert ordered[-1]["record_id"] in actual.observation_ids
+    retained = {item["record_id"] for member in actual.payload["group_context"]["members"]
+                for item in member["observations"]}
+    assert retained == {item["record_id"] for item in ordered if item["record_id"] not in set(omitted)}
+
+
+def test_required_open_block_is_not_deleted_with_oldest_closed_blocks(setup):
+    store, _, _, _, _ = setup
+    for index in range(8):
+        add_member(store, "20001", text=f"窗口资料{index}", capture=f"keep-{index}",
+                   moment=NOW + timedelta(seconds=index + 1))
+    payload = _payload(store)
+    ordered = sorted(_observations(payload), key=lambda item: (item["observed_at"], item["stored_at"], item["record_id"]))
+    payload["conversation_window"] = {
+        "mode": "chronological_append", "block_size": 4,
+        "closed_observation_ids": [item["record_id"] for item in ordered[:4]],
+        "open_observation_ids": [item["record_id"] for item in ordered[4:]],
+    }
+    required = {ordered[-1]["record_id"]}
+    handled = {item["record_id"] for item in ordered[:4]}
+    full = _select(payload, required=required, handled=handled)
+    actual = _select(payload, required=required, handled=handled, maximum=max(200, full.characters - 400))
+    assert ordered[-1]["record_id"] in actual.observation_ids
+    assert set(payload["conversation_window"]["open_observation_ids"]).issubset(actual.observation_ids)

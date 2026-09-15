@@ -14,9 +14,10 @@ import sqlite3
 import time
 
 from harness.llm.client import OpenAICompatClient
+from harness.core.error_notice import ERROR_FALLBACK_SEND_SECONDS
 from harness.qq.decision import (QQVerifiedSelfAlias, _frozen_decision, effective_reply_segments,
     get_qq_delivery, get_qq_segment_deliveries,
-    record_qq_protocol_delivery, record_qq_protocol_segment_delivery)
+    record_qq_protocol_delivery, record_qq_protocol_segment_delivery, sendable_speak_outcome)
 from harness.qq.direct_config import DirectQQSettings, atomic_status
 from harness.qq.direct_images import load_and_describe_image
 from harness.qq.direct_store import DirectStore, message_parts, normalize_message, numeric, utcnow
@@ -283,7 +284,7 @@ class DirectQQActor:
             await self._send_decision(event, decision, deadline, epoch)
 
     async def _send_decision(self, event, decision, deadline, epoch):
-        if not decision.new_decision or decision.replayed or decision.outcome != "ready" or decision.action != "speak":
+        if not decision.new_decision or decision.replayed or not sendable_speak_outcome(decision.outcome) or decision.action != "speak":
             return
         texts = effective_reply_segments(decision)
         self.check_send(event, deadline, epoch)
@@ -297,7 +298,7 @@ class DirectQQActor:
             fields = ("decision_id", "input_hash", "group_id", "self_member_id", "action", "outcome",
                 "reply", "reply_segments", "source_record_ids", "new_observation_record_ids",
                 "initiated_by", "idle_intent_id", "addressing")
-            if (frozen.outcome != "ready" or frozen.initiated_by != "message"
+            if (not sendable_speak_outcome(frozen.outcome) or frozen.initiated_by != "message"
                     or any(getattr(frozen, name) != getattr(decision, name) for name in fields)
                     or self.store.get(event["event_id"])["source_record_id"] not in frozen.source_record_ids):
                 raise ValueError("frozen_plan_mismatch")
@@ -383,7 +384,7 @@ class DirectQQActor:
                         frozen = _frozen_decision(db, send["group_id"], send["decision_id"])
                     texts = effective_reply_segments(frozen)
                     index = send["segment_index"]
-                    if (frozen.self_member_id != self.settings.self_member_id or frozen.outcome != "ready"
+                    if (frozen.self_member_id != self.settings.self_member_id or not sendable_speak_outcome(frozen.outcome)
                             or type(index) is not int or not 0 <= index < len(texts)
                             or texts[index] != send["text"] or send["source_record_id"] not in frozen.source_record_ids):
                         raise OneBotError("direct_reconciliation_binding_invalid")
@@ -479,8 +480,9 @@ class DirectQQActor:
                               decision_id=decision.decision_id)
             if decision.action == "speak":
                 self.write_status(state="sending")
+                send_deadline = QQDeadline.after(ERROR_FALLBACK_SEND_SECONDS) if decision.outcome == "error_fallback" else deadline
                 with trace.stage("protocol.delivery"):
-                    await self.send_decision(event, decision, deadline, epoch)
+                    await self.send_decision(event, decision, send_deadline, epoch)
         except Exception as exc:
             current = self.store.get(event["event_id"])
             if current["state"] != "unknown":

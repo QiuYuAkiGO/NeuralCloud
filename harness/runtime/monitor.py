@@ -26,7 +26,7 @@ from harness.runtime.models import RuntimeStatus
 from infra.trace.serialize import dump_value
 
 
-MONITOR_SCHEMA_VERSION = "monitor-v1"
+MONITOR_SCHEMA_VERSION = "monitor-v2"
 DIAGNOSTIC_SCHEMA_VERSION = "monitor-diagnostic-v1"
 DEFAULT_RETENTION_DAYS = 7
 DEFAULT_SAMPLE_SECONDS = 10.0
@@ -63,6 +63,8 @@ class MonitorRun(BaseModel):
     prompt_tokens: int = 0
     completion_tokens: int = 0
     total_tokens: int = 0
+    cache_hit_tokens: int = 0
+    cache_miss_tokens: int = 0
     revisions: int = 0
     error: str | None = None
     stages: list[dict[str, Any]] = Field(default_factory=list)
@@ -266,6 +268,8 @@ class MonitorStore:
                     prompt_tokens INTEGER NOT NULL DEFAULT 0,
                     completion_tokens INTEGER NOT NULL DEFAULT 0,
                     total_tokens INTEGER NOT NULL DEFAULT 0,
+                    cache_hit_tokens INTEGER NOT NULL DEFAULT 0,
+                    cache_miss_tokens INTEGER NOT NULL DEFAULT 0,
                     revisions INTEGER NOT NULL DEFAULT 0,
                     error TEXT,
                     stages_json TEXT NOT NULL DEFAULT '[]'
@@ -295,6 +299,13 @@ class MonitorStore:
                 CREATE INDEX IF NOT EXISTS idx_monitor_actions_time ON monitor_actions(updated_at DESC);
                 """
             )
+            existing = {row[1] for row in self._connection.execute("PRAGMA table_info(monitor_runs)")}
+            for column, decl in (
+                ("cache_hit_tokens", "INTEGER NOT NULL DEFAULT 0"),
+                ("cache_miss_tokens", "INTEGER NOT NULL DEFAULT 0"),
+            ):
+                if column not in existing:
+                    self._connection.execute(f"ALTER TABLE monitor_runs ADD COLUMN {column} {decl}")
             self._connection.execute(
                 "INSERT OR REPLACE INTO monitor_meta(key, value) VALUES('schema_version', ?)",
                 (MONITOR_SCHEMA_VERSION,),
@@ -482,8 +493,8 @@ class MonitorStore:
                 INSERT INTO monitor_runs(
                     run_id, correlation_id, event_id, started_at, completed_at, updated_at,
                     status, path, latency_ms, prompt_tokens, completion_tokens,
-                    total_tokens, revisions, error, stages_json
-                ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    total_tokens, cache_hit_tokens, cache_miss_tokens, revisions, error, stages_json
+                ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(run_id) DO UPDATE SET
                     correlation_id=excluded.correlation_id,
                     event_id=COALESCE(excluded.event_id, monitor_runs.event_id),
@@ -496,6 +507,8 @@ class MonitorStore:
                     prompt_tokens=excluded.prompt_tokens,
                     completion_tokens=excluded.completion_tokens,
                     total_tokens=excluded.total_tokens,
+                    cache_hit_tokens=excluded.cache_hit_tokens,
+                    cache_miss_tokens=excluded.cache_miss_tokens,
                     revisions=excluded.revisions,
                     error=COALESCE(excluded.error, monitor_runs.error),
                     stages_json=excluded.stages_json
@@ -513,6 +526,8 @@ class MonitorStore:
                     int(usage.get("prompt_tokens", row["prompt_tokens"] if row else 0) or 0),
                     int(usage.get("completion_tokens", row["completion_tokens"] if row else 0) or 0),
                     int(usage.get("total_tokens", row["total_tokens"] if row else 0) or 0),
+                    int(usage.get("cache_hit_tokens", row["cache_hit_tokens"] if row else 0) or 0),
+                    int(usage.get("cache_miss_tokens", row["cache_miss_tokens"] if row else 0) or 0),
                     int(result.get("revisions", row["revisions"] if row else 0) or 0),
                     str(error) if error else None,
                     stages_json,
@@ -552,8 +567,8 @@ class MonitorStore:
             INSERT INTO monitor_runs(
                 run_id, correlation_id, event_id, started_at, completed_at, updated_at,
                 status, path, latency_ms, prompt_tokens, completion_tokens,
-                total_tokens, revisions, error, stages_json
-            ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                total_tokens, cache_hit_tokens, cache_miss_tokens, revisions, error, stages_json
+            ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(run_id) DO UPDATE SET
                 correlation_id=excluded.correlation_id,
                 event_id=COALESCE(excluded.event_id, monitor_runs.event_id),
@@ -565,6 +580,8 @@ class MonitorStore:
                 prompt_tokens=CASE WHEN excluded.prompt_tokens > 0 THEN excluded.prompt_tokens ELSE monitor_runs.prompt_tokens END,
                 completion_tokens=CASE WHEN excluded.completion_tokens > 0 THEN excluded.completion_tokens ELSE monitor_runs.completion_tokens END,
                 total_tokens=CASE WHEN excluded.total_tokens > 0 THEN excluded.total_tokens ELSE monitor_runs.total_tokens END,
+                cache_hit_tokens=CASE WHEN excluded.cache_hit_tokens > 0 THEN excluded.cache_hit_tokens ELSE monitor_runs.cache_hit_tokens END,
+                cache_miss_tokens=CASE WHEN excluded.cache_miss_tokens > 0 THEN excluded.cache_miss_tokens ELSE monitor_runs.cache_miss_tokens END,
                 revisions=CASE WHEN excluded.revisions > 0 THEN excluded.revisions ELSE monitor_runs.revisions END,
                 error=COALESCE(excluded.error, monitor_runs.error),
                 stages_json=excluded.stages_json
@@ -582,6 +599,8 @@ class MonitorStore:
                 int(usage.get("prompt_tokens") or 0),
                 int(usage.get("completion_tokens") or 0),
                 int(usage.get("total_tokens") or 0),
+                int(usage.get("cache_hit_tokens") or usage.get("prompt_cache_hit_tokens") or 0),
+                int(usage.get("cache_miss_tokens") or usage.get("prompt_cache_miss_tokens") or 0),
                 int(data.get("revisions") or 0),
                 str(error) if error else None,
                 json.dumps(stages, ensure_ascii=False, separators=(",", ":"), default=str),
@@ -899,6 +918,8 @@ class MonitorStore:
             prompt_tokens=int(row["prompt_tokens"]),
             completion_tokens=int(row["completion_tokens"]),
             total_tokens=int(row["total_tokens"]),
+            cache_hit_tokens=int(row["cache_hit_tokens"] or 0),
+            cache_miss_tokens=int(row["cache_miss_tokens"] or 0),
             revisions=int(row["revisions"]),
             error=row["error"],
             stages=json.loads(row["stages_json"]),

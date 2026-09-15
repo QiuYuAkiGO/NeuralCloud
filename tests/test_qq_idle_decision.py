@@ -30,7 +30,7 @@ def test_idle_uses_two_existing_stages_and_semantic_summary_without_claiming_inc
     assert set(result.source_record_ids) == {r.record_id for r in records}
     assert len(client.gate_messages) == 1 and result.model_call_counts["gate"] == 1
     assert result.model_call_counts["persona"] >= 1
-    semantic = json.loads(client.gate_messages[0][1]["content"])["homeostatic_interoception"]
+    semantic = decision.combined_user_payload(client.gate_messages[0])["homeostatic_interoception"]
     assert set(semantic) == {"assessment", "response"}
     for rendered in semantic.values():
         assert rendered and "normalized_deviation" not in rendered and "snapshot_revision" not in rendered

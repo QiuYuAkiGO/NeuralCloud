@@ -88,7 +88,7 @@ def main():
             super().__init__(chat_routes={"": "我会先选安静的，睡觉舒服些；预算紧就先试用。"})
 
         def complete_chat_result(self, messages, **kwargs):
-            if messages[0]["content"].startswith((decision._RULES, decision._PRIVATE_RULES)):
+            if decision.is_qq_gate_messages(messages):
                 return ChatResult(text=canonical({"action": "speak", "reason": "合成测试有新问题。"}),
                                   usage=TokenUsage(prompt_tokens=10, completion_tokens=10, source="estimate"))
             return super().complete_chat_result(messages, **kwargs)

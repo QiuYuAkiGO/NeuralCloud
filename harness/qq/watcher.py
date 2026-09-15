@@ -23,6 +23,7 @@ from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StringConstraints, model_validator
 
+from harness.core.error_notice import ERROR_FALLBACK_SEND_SECONDS
 from harness.qq.decision import decide_qq_reply, get_qq_delivery, record_qq_delivery
 from harness.qq.memory import QQID, QQVerifiedProfileInput, QQVisualMemoryStore, QQVisualObservationInput
 from harness.qq.session import QQSessionSettings
@@ -896,12 +897,15 @@ class QQWatcher(QQGroupObservationMixin, QQEmbodiedMixin, SegmentedDeliveryMixin
         turn.trace.bind_decision(decision.decision_id)
         self.set_status(last_decision_action=decision.action, decisions=self.status["decisions"]+1)
         outcome = getattr(decision, "outcome", "cached_legacy")
-        if outcome in {"model_error", "model_invalid", "expired", "pending"} or turn.deadline.expired:
+        if outcome == "error_fallback":
+            clock = turn.deadline.clock
+            turn.deadline = type(turn.deadline)(clock() + ERROR_FALLBACK_SEND_SECONDS)
+        elif outcome in {"model_error", "model_invalid", "expired", "pending"} or turn.deadline.expired:
             self.ledger.finish_event(turn.event.event_id, outcome="expired" if turn.deadline.expired or outcome == "expired" else "failed", reason=outcome)
             self._finish_trace(turn.trace, "failed")
             self._pending_turn = None
             return
-        if self._newer_visible_context():
+        if outcome != "error_fallback" and self._newer_visible_context():
             self._supersede_pending()
             return
         self.ledger.attach_decision(turn.event.event_id, decision_id=decision.decision_id, action=decision.action,
@@ -930,7 +934,8 @@ class QQWatcher(QQGroupObservationMixin, QQEmbodiedMixin, SegmentedDeliveryMixin
             return
         reservation = self.ledger.reserve_send(turn.event.event_id, decision_id=decision.decision_id,
             priority=priority, reply_sha256=hashlib.sha256(decision.reply.encode("utf-8")).hexdigest(),
-            self_member_id=self.settings.self_member_id, now=now())
+            self_member_id=self.settings.self_member_id, now=now(),
+            late_grace_seconds=ERROR_FALLBACK_SEND_SECONDS if outcome == "error_fallback" else 0)
         if reservation is None:
             self._finish_trace(turn.trace, "rate_limited")
             self._pending_turn = None

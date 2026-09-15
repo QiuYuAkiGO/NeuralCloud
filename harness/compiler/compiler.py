@@ -228,6 +228,7 @@ class ContextCompiler:
         required_additional_context: bool = False,
         has_additional_memory: bool = False,
         memory_evidence: MemoryEvidenceContext | None = None,
+        prefix_messages: list[dict[str, str]] | None = None,
     ) -> ModelContext:
         insights = insights or []
         session = session or []
@@ -493,7 +494,8 @@ class ContextCompiler:
                 entries.extend(MemoryEvidenceContext.bind(audience=memory_evidence.audience,
                                                          entries=[entry], segment=segment).entries)
             admitted_evidence = memory_evidence.model_copy(update={"entries": entries}).admitted(
-                segments, trigger_ref=situation.trigger.ref)
+                [*segments, *prefix_visible_segments(prefix_messages, memory_evidence)],
+                trigger_ref=situation.trigger.ref)
 
         used = total - remaining
         per_kind: dict[str, int] = {}
@@ -510,6 +512,7 @@ class ContextCompiler:
             provenance=provenance,
             trigger_text=situation.utterance,
             memory_evidence=admitted_evidence,
+            prefix_messages=list(prefix_messages or []),
         )
 
 
@@ -536,6 +539,21 @@ def _push(
         )
     )
     return remaining - tokens
+
+
+def prefix_visible_segments(prefix_messages, memory_evidence) -> list[ContextSegment]:
+    """Admit memory evidence against stable QQ prefix JSON without sending it twice."""
+    if not prefix_messages or memory_evidence is None:
+        return []
+    visible = "\n".join(item.get("content") or "" for item in prefix_messages if item.get("role") == "user")
+    if not visible:
+        return []
+    return [ContextSegment(
+        kind="prefix_user",
+        text=visible,
+        source_ids=[entry.source_id for entry in memory_evidence.entries],
+        why="qq_stable_prefix",
+    )]
 
 
 def _push_required(

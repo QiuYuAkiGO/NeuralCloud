@@ -11,6 +11,7 @@ import httpx
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
 from harness.homeostasis.models import HomeostaticInteroceptiveSummary
+from harness.core.error_notice import ERROR_FALLBACK_SEND_SECONDS
 from harness.qq.decision import QQReplyDecision, QQVerifiedSelfAlias
 from harness.qq.idle import QQIdleIntent
 from harness.qq.memory import QQID
@@ -101,7 +102,7 @@ class QQSharedCognitiveClient:
         started = trace.clock()
         try:
             response = self.client.post("/v1/qq/decisions", json=request.model_dump(mode="json"),
-                                        timeout=remaining, follow_redirects=False)
+                                        timeout=remaining + ERROR_FALLBACK_SEND_SECONDS, follow_redirects=False)
             response.raise_for_status()
             payload = response.json()
         except httpx.TimeoutException as exc:
@@ -120,7 +121,8 @@ class QQSharedCognitiveClient:
         _import_remote_trace(trace, payload.get("trace"), started=started, ended=ended)
         trace.record("shared_cognitive.rpc", started_mono=started)
         trace.bind_decision(result.decision_id)
-        deadline.check()
+        if result.outcome != "error_fallback":
+            deadline.check()
         return result
 
     def close(self):

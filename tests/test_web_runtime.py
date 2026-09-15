@@ -16,7 +16,7 @@ from harness.research.manifest import EmbodimentCondition, WebAccessCondition, l
 from harness.runtime.models import RuntimeLifecycle, utc_now
 from harness.runtime.web import READ, SEARCH, WebController
 from harness.runtime.web_config import WebSettings
-from harness.runtime.web_dialogue import prepare_web_context
+from harness.runtime.web_dialogue import _preparation_failure_code, prepare_web_context
 
 
 def rig(tmp_path, *, quota=100, handler=None):
@@ -193,6 +193,16 @@ def dialogue_driver(sup):
     sup._make_command = command
     sup._invoke_domain = invoke
     return decisions
+
+
+def test_web_preparation_failure_preserves_step_error_code():
+    assert _preparation_failure_code(WebError("web_choice_invalid")) == "web_choice_invalid"
+    assert _preparation_failure_code(RuntimeError(
+        "cognitive PrepareWebStep returned failed: web_step_context_too_large"
+    )) == "web_step_context_too_large"
+    assert _preparation_failure_code(RuntimeError(
+        "cognitive PrepareWebStep returned conflict: expected revision 1, current 2"
+    )) == "web_step_revision_conflict"
 
 
 def test_dialogue_search_read_finish_and_replay_does_not_repeat(tmp_path):

@@ -28,7 +28,7 @@ def prepare_private(setup, monkeypatch, *, choice="speak"):
     delegate = client.complete_chat_result
 
     def complete(messages, **options):
-        if messages[0]["content"].startswith(decision._PRIVATE_RULES):
+        if decision.is_qq_gate_messages(messages):
             client.gate_messages.append(messages)
             return ChatResult(text=json.dumps({"action": choice, "reason": "这是一对一私聊。"}),
                               usage=TokenUsage(prompt_tokens=30, completion_tokens=10, source="api"))
@@ -96,7 +96,7 @@ def test_private_images_and_text_reach_same_persona_without_group_recall(setup, 
     assert result.outcome == "ready", result.reason
     assert result.addressing == "direct" and result.addressing_source == "verified_private_message"
     assert result.addressing_source_record_ids == [observation.record_id]
-    assert result.prompt_version == "qq-private-turn-taking-v5"
+    assert result.prompt_version == "qq-private-turn-taking-v6"
     assert result.participants == [PEER]
     assert result.source_record_ids == [observation.record_id]
     client = setup[1]

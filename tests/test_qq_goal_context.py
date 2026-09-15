@@ -45,7 +45,7 @@ def test_goal_semantics_reach_group_stages_without_private_prose_or_other_group_
         result = decision.decide_qq_reply(**args, idle_intent=intent(), shared_owner=binding, goal_context=goal_context())
         assert result.action == "speak", result.error_type
         assert not builds
-        gate = json.loads(client.gate_messages[0][1]["content"])
+        gate = decision.combined_user_payload(client.gate_messages[0])
         assert gate["goal_continuation"] == goal_context().model_context()
         assert gate["goal_continuation"]["purpose_kind"] == "user_requested_channel_activity"
         visible = "\n".join(payloads(client))
@@ -124,7 +124,7 @@ def test_cognitive_host_accepts_only_internal_goal_projection_and_keeps_qq_sourc
             result = await owner.prepare_qq_response(_command("PrepareQQResponse", 1, payload))
             assert result.status == "applied", result.error
             assert sources
-            assert json.loads(client.gate_messages[0][1]["content"])["goal_continuation"] == goal_context().model_context()
+            assert decision.combined_user_payload(client.gate_messages[0])["goal_continuation"] == goal_context().model_context()
         finally:
             await owner.close()
     asyncio.run(scenario())

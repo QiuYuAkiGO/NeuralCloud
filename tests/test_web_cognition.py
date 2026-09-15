@@ -222,6 +222,55 @@ def test_qq_web_selection_reads_scoped_sources_without_decision_reservation(setu
     asyncio.run(scenario())
 
 
+def test_oversized_qq_history_is_compacted_instead_of_failing(setup, tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    from harness.runtime import qq_turns
+
+    store, _, _, _, _ = setup
+    bulky = "外站资料请求 " + ("历史记录" * 400)
+    for index in range(40):
+        qq_fixtures.add_member(
+            store, "20001", text=f"{bulky}-{index}",
+            capture=f"web-hist-{index}", moment=qq_fixtures.NOW + timedelta(minutes=index + 1),
+        )
+
+    async def scenario():
+        owner, _ = _host(tmp_path, monkeypatch, [])
+        original = owner.chat.llm
+        owner.chat.llm = fake = FakeLLM({"kind": "call", "offer_id": WEB_SEARCH, "arguments": {"query": "public topic"}})
+        owner.shared.qq_settings = SimpleNamespace(
+            memory_db=store.path, allowed_group_ids=["10001"], self_member_id="29999")
+        monkeypatch.setattr(qq_turns, "_source", lambda *args: None)
+        incoming = {
+            "group_id": "10001", "self_member_id": "29999", "trigger_member_id": "20001",
+            "query": "请联网查证这个主题",
+            "deadline_at": (now() + timedelta(seconds=30)).isoformat(),
+            "trace": {
+                "trace_id": "qq-trace:" + "b" * 32,
+                "event_id": "qq-watch-event:" + "b" * 32,
+                "first_seen_at": now().isoformat(),
+                "first_seen_mono": time.monotonic(),
+            },
+        }
+        try:
+            result = await owner.prepare_web_step(request(channel="qq", event_payload=incoming))
+            assert result.status == "applied", result.error
+            user = fake.calls[0][0][1]["content"]
+            assert len(user) <= web.WEB_STEP_PAYLOAD_LIMIT
+            shown = json.loads(user)
+            assert shown["context"]["query"] == "请联网查证这个主题"
+            observations = [item for member in shown["context"]["group_context"]["members"]
+                            for item in member.get("observations") or []]
+            assert observations
+            assert any(str(item.get("text") or "").endswith("-39") for item in observations)
+            assert not any(str(item.get("text") or "").endswith("-0") for item in observations)
+        finally:
+            owner.chat.llm = original
+            await owner.close()
+    asyncio.run(scenario())
+
+
 def test_qq_final_sources_are_user_data_and_change_fingerprint(setup):
     from harness.qq import decision
 

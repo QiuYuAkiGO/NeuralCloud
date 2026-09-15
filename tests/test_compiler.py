@@ -286,3 +286,19 @@ def test_homeostatic_context_fails_closed_instead_of_being_truncated() -> None:
             _situation(memories=0),
             homeostatic_interoception=summary,
         )
+
+
+def test_prefix_messages_append_user_without_collapsing_system() -> None:
+    compiler = ContextCompiler(Settings(context_token_budget=3000, compiler_top_memories=5))
+    context = compiler.compile(_situation(memories=0))
+    prefix = [
+        {"role": "system", "content": "stable-system"},
+        {"role": "user", "content": "stable-base"},
+        {"role": "user", "content": "turn"},
+        {"role": "assistant", "content": "gate-json"},
+    ]
+    rendered = context.model_copy(update={"prefix_messages": prefix}).render_messages()
+    assert rendered[:4] == prefix
+    assert rendered[-1]["role"] == "user"
+    assert "昨天" in rendered[-1]["content"]
+    assert rendered[0]["content"] == "stable-system"

@@ -9,6 +9,7 @@ import httpx
 import pytest
 
 from gui.presets import load_builtin
+from harness.core.error_notice import ERROR_FALLBACK_REPLY
 from harness.config import Settings
 from harness.contracts.envelope import DomainCommandEnvelope, VersionVector
 from harness.llm.client import MockLLM, RoutingLLMClient
@@ -111,9 +112,10 @@ def test_observed_stimulus_survives_failed_generation(tmp_path):
         def fail(*args, **kwargs):
             raise RuntimeError("synthetic generation failure")
         main.complete_chat_result = fail
-        with pytest.raises(Exception, match="failed|failure"):
-            await runtime._invoke_domain(service="cognitive", envelope=envelope,
-                method=adapter.prepare_response, event=incoming)
+        result = await runtime._invoke_domain(service="cognitive", envelope=envelope,
+            method=adapter.prepare_response, event=incoming)
+        assert result.status == "applied"
+        assert result.result.decision.text == ERROR_FALLBACK_REPLY
         restored, _, _ = owner(tmp_path)
         assert "anger" in json.dumps(restored.emotion_service.snapshot())
         assert restored.pipeline.session_store.recent("main") == []
@@ -215,7 +217,7 @@ def test_renewed_transport_cannot_extend_frozen_emotion_model_deadline(tmp_path)
             payload={"text": "当前输入", "session_id": "main", "emotion_context_ref": frame.context_id,
                      "emotion_revision": frame.revision})
         result = await adapter.prepare_response(command)
-        assert result.status == "failed"
-        assert "deadline" in result.error
+        assert result.status == "applied"
+        assert result.result.decision.text == ERROR_FALLBACK_REPLY
         assert not main.chat_calls and not aux.calls
     asyncio.run(run())

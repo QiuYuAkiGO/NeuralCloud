@@ -31,12 +31,11 @@ def _external_receipts(setup, *, count=9, body_length=80, large_proof=True):
 
 
 def _gate_payload(client):
-    return json.loads(client.gate_messages[-1][1]["content"])
+    return decision.combined_user_payload(client.gate_messages[-1])
 
 
 def _persona_payload(client):
-    content = next(item["content"] for item in client.chat_calls[-1] if item["role"] == "user")
-    return json.loads(content[content.index("{"):])
+    return decision.combined_user_payload(client.chat_calls[-1])
 
 
 def _stored_receipts(path):
@@ -67,8 +66,9 @@ def test_large_verified_proof_attachments_do_not_block_small_actual_dialogue(set
         assert projected["segment_count"] == 1 and "evidence_refs" not in projected
     assert result.delivery_refs == [item.receipt_id for item in receipts]
     counters = trace.snapshot()["counters"]
-    assert counters["context_final_characters"] == len(decision._canonical(gate))
-    assert counters["context_persona_characters"] == len(decision._canonical(persona))
+    encoded = [item["content"] for item in client.gate_messages[-1] if item["role"] == "user"]
+    assert counters["context_final_characters"] == sum(len(item) for item in encoded)
+    assert counters["context_persona_characters"] == len(decision._canonical({"assessment": persona["assessment"]}))
     assert 0 < counters["context_base_characters"] < counters["context_final_characters"]
     assert "context_budget_exceeded" not in counters
 
@@ -96,10 +96,12 @@ def test_required_observations_over_budget_persist_safe_failure_not_false_consid
         add_member(store, f"2000{index}", text="OBSERVATION_PRIVATE_MARKER" + "原" * 6000)
     trace = QQTurnTrace()
     result = decision.decide_qq_reply(**kwargs, trace=trace)
-    assert result.outcome == "model_invalid" and result.error_type == "model_invalid"
-    assert result.reason == decision._CONTEXT_BUDGET_REASON and result.source_record_ids == []
+    assert result.outcome == "error_fallback" and result.error_type == "model_invalid"
+    assert result.reason == decision._CONTEXT_BUDGET_REASON
+    assert result.reply == decision.ERROR_FALLBACK_REPLY and result.reply_segments == [decision.ERROR_FALLBACK_REPLY]
     assert result.seen_observation_record_ids == result.new_observation_record_ids
-    assert result.reply is None and not result.reply_segments and result.usage.calls == 0
+    assert result.source_record_ids
+    assert result.usage.calls == 0
     assert "OBSERVATION_PRIVATE_MARKER" not in result.reason + json.dumps(trace.snapshot())
     assert not builds and not client.gate_messages
     counters = trace.snapshot()["counters"]
@@ -115,10 +117,12 @@ def test_http_and_invalid_json_remain_distinct_from_context_budget(setup, failur
     client.choice = failure
     trace = QQTurnTrace()
     result = decision.decide_qq_reply(**kwargs, trace=trace)
-    assert result.outcome in {"model_error", "model_invalid"}
+    assert result.outcome == "error_fallback"
+    assert result.decision_source in {"model_error", "model_invalid"}
     assert "context_budget_exceeded" not in result.reason
     assert "context_budget_exceeded" not in trace.snapshot()["counters"]
     assert result.error_type == ("model_http" if isinstance(failure, Exception) else "model_invalid")
+    assert result.reply == decision.ERROR_FALLBACK_REPLY
 
 
 def test_compact_partial_prefix_never_exposes_unverified_suffix_to_either_model(setup):

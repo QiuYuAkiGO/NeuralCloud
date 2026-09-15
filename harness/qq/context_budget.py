@@ -151,14 +151,31 @@ def select_model_context(
                            matches.get(item["record_id"], {}).get("score", 0),
                            datetime.fromisoformat(item["observed_at"]), datetime.fromisoformat(item["stored_at"]), item["record_id"],
                        ))
-    for item in optional:
-        if fits():
-            break
-        for member in context["members"]:
-            if member["member_id"] == item["member_id"]:
-                member["observations"].remove(item)
-        metadata["omitted_observation_record_ids"].append(item["record_id"])
-        refresh()
+    window = selected.get("conversation_window") or {}
+    closed_ids = list(window.get("closed_observation_ids") or [])
+    block_size = window.get("block_size") if isinstance(window.get("block_size"), int) else 0
+    if closed_ids and block_size > 0:
+        while not fits() and len(closed_ids) >= block_size:
+            drop_list = closed_ids[:block_size]
+            drop = set(drop_list)
+            if drop & required_observation_ids:
+                break
+            closed_ids = closed_ids[block_size:]
+            for member in context["members"]:
+                member["observations"] = [item for item in member["observations"] if item["record_id"] not in drop]
+            metadata["omitted_observation_record_ids"].extend(drop_list)
+            window["closed_observation_ids"] = closed_ids
+            selected["conversation_window"] = window
+            refresh()
+    else:
+        for item in optional:
+            if fits():
+                break
+            for member in context["members"]:
+                if member["member_id"] == item["member_id"]:
+                    member["observations"].remove(item)
+            metadata["omitted_observation_record_ids"].append(item["record_id"])
+            refresh()
     return ModelContextSelection(
         payload=selected,
         observation_ids=tuple(sorted(item["record_id"] for member in context["members"] for item in member["observations"])),

@@ -881,7 +881,8 @@ class WatchLedger(SegmentLedgerMixin):
 
     def reserve_send(self, event_id: str, decision_id: str, *, now: datetime | None = None,
                      priority: Literal["direct", "ambient"] = "ambient", reply_sha256: str,
-                     self_member_id: str, cooldown_seconds: float | None = None) -> SendReservation | None:
+                     self_member_id: str, cooldown_seconds: float | None = None,
+                     late_grace_seconds: float = 0) -> SendReservation | None:
         """Atomically reserve a fresh current event; blocked events are discarded.
 
         A returned reservation is not delivery authorization or success. Persist
@@ -893,6 +894,8 @@ class WatchLedger(SegmentLedgerMixin):
         self_id = TypeAdapter(QQID).validate_python(self_member_id)
         if not isinstance(reply_sha256, str) or len(reply_sha256) != 64 or any(char not in "0123456789abcdef" for char in reply_sha256):
             raise WatchLedgerError("reply_sha256 must bind the original reply before reservation")
+        if type(late_grace_seconds) not in {int, float} or not 0 <= late_grace_seconds <= 30:
+            raise WatchLedgerError("late send grace is invalid")
         with self._transaction() as (connection, state):
             event = self._event(connection, event_id)
             if event.state != "ready" or event.decision_id != decision_id:
@@ -900,9 +903,10 @@ class WatchLedger(SegmentLedgerMixin):
             reason = None
             rejected_state = "ignored"
             deadline = event.idle_intent.deadline_at if event.origin == "homeostasis" else event.first_seen_at + timedelta(seconds=60)
+            send_deadline = deadline + timedelta(seconds=late_grace_seconds)
             if event.origin == "homeostasis" and (priority != "ambient" or self_id != event.idle_intent.self_member_id):
                 raise WatchLedgerError("idle send must retain its own account and ambient priority")
-            if moment >= deadline:
+            if moment >= send_deadline:
                 reason, rejected_state = "event_deadline_expired", "expired"
             elif moment < event.first_seen_at - timedelta(seconds=2):
                 raise WatchLedgerError("first_seen_at is in the future")
@@ -918,7 +922,7 @@ class WatchLedger(SegmentLedgerMixin):
             if reason:
                 self._save_event(connection, event.model_copy(update={"state": rejected_state, "reason": reason}))
                 return None
-            reservation = SendReservation(reservation_id=f"qq-watch-send:{uuid4().hex}", group_id=self.group_id, run_id=self.run_id, event_id=event_id, decision_id=decision_id, status="reserved", created_at=moment, updated_at=moment, cooldown_seconds=seconds, priority=priority, self_member_id=self_id, reply_sha256=reply_sha256, deadline_at=deadline)
+            reservation = SendReservation(reservation_id=f"qq-watch-send:{uuid4().hex}", group_id=self.group_id, run_id=self.run_id, event_id=event_id, decision_id=decision_id, status="reserved", created_at=moment, updated_at=moment, cooldown_seconds=seconds, priority=priority, self_member_id=self_id, reply_sha256=reply_sha256, deadline_at=send_deadline)
             connection.execute("INSERT INTO qq_watch_sends VALUES(?,?,?,?,?,?)", (reservation.reservation_id, decision_id, event_id, self.group_id, reservation.status, reservation.model_dump_json()))
             self._save_event(connection, event.model_copy(update={"state": "reserved", "reason": None}))
             return reservation

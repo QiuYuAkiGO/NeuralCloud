@@ -72,7 +72,8 @@ def test_gate_formal_choice_is_preserved_as_data_under_fixed_style_rules(setup):
     assert result.reply_style == "formal" and result.reply_style_reason == "STYLE_REASON_DATA"
     system = "\n".join(item["content"] for call in client.gate_messages + client.chat_calls for item in call if item["role"] == "system")
     user = "\n".join(item["content"] for call in client.gate_messages + client.chat_calls for item in call if item["role"] == "user")
-    assert "默认简短口语" in system and "不主动写长篇分析" in system
+    assert "默认简短口语" in system
+    assert "不主动写长篇分析" in user
     assert "STYLE_REASON_DATA" in user and "STYLE_REASON_DATA" not in system
     assert "FORMAL_REQUEST_DATA" in user and "FORMAL_REQUEST_DATA" not in system
 
@@ -91,7 +92,8 @@ def test_invalid_style_never_generates_text(setup, monkeypatch, style, reason):
     client.choice = json.dumps({"action": "speak", "reason": "test", "reply_style": style, "reply_style_reason": reason})
     monkeypatch.setattr(decision, "_prepare_group_speech", lambda **kw: pytest.fail("invalid gate produced text"))
     result = decision.decide_qq_reply(**kwargs)
-    assert result.outcome == "model_invalid" and result.reply_segments == [] and result.reply is None
+    assert result.outcome == "error_fallback" and result.reply_segments == [decision.ERROR_FALLBACK_REPLY]
+    assert result.reply == decision.ERROR_FALLBACK_REPLY and result.decision_source == "model_invalid"
 
 
 @pytest.mark.parametrize("segments,reply", [([], "text"), (["text\nline"], "text\nline"),
@@ -103,8 +105,8 @@ def test_invalid_new_plan_fails_closed_without_silent_text_rewriting(setup, monk
     monkeypatch.setattr(decision, "_prepare_group_speech", lambda **kw: SimpleNamespace(
         segments=segments, text=reply, usage=TokenUsage(), validation=None))
     result = decision.decide_qq_reply(**setup[3])
-    assert result.outcome == "model_invalid" and result.action == "wait"
-    assert result.reply is None and result.reply_segments == []
+    assert result.outcome == "error_fallback" and result.action == "speak"
+    assert result.reply == decision.ERROR_FALLBACK_REPLY and result.reply_segments == [decision.ERROR_FALLBACK_REPLY]
 
 
 def test_expired_cached_segment_plan_has_no_sendable_remainder(setup):
@@ -139,7 +141,8 @@ def test_paragraph_fallback_refuses_extra_or_empty_segments_and_single_line_brea
     monkeypatch.setattr(decision, "_prepare_group_speech", lambda **kw: SimpleNamespace(
         segments=[text], text=text, usage=TokenUsage(), validation=None))
     result = decision.decide_qq_reply(**setup[3])
-    assert result.outcome == "model_invalid" and result.reply is None and result.reply_segments == []
+    assert result.outcome == "error_fallback" and result.reply == decision.ERROR_FALLBACK_REPLY
+    assert result.reply_segments == [decision.ERROR_FALLBACK_REPLY]
 
 
 def test_mixed_protocol_and_natural_paragraphs_pass_through_the_real_pipeline_once(setup):
@@ -263,7 +266,7 @@ def test_partial_actual_send_is_in_context_without_unverified_remainder_or_dupli
     first = segment(setup, result)
     client.choice = '{"action":"wait","reason":"已发出的第一段不必重复。"}'
     partial = decision.decide_qq_reply(**kwargs, request="检查现在实际已经发送的内容。")
-    payload = json.loads(client.gate_messages[-1][1]["content"])
+    payload = decision.combined_user_payload(client.gate_messages[-1])
     assert payload["delivery_receipts"] == []
     assert [item["delivered_text"] for item in payload["segment_delivery_receipts"]] == [TEXTS[0]]
     assert not payload["prior_decisions"][0]["was_delivered"]
@@ -272,7 +275,7 @@ def test_partial_actual_send_is_in_context_without_unverified_remainder_or_dupli
     second = segment(setup, result, 1)
     full = aggregate(setup, result, [first, second])
     decision.decide_qq_reply(**kwargs, request="再次检查实际发送的内容。")
-    payload = json.loads(client.gate_messages[-1][1]["content"])
+    payload = decision.combined_user_payload(client.gate_messages[-1])
     assert payload["segment_delivery_receipts"] == []
     assert [item["receipt_id"] for item in payload["delivery_receipts"]] == [full.receipt_id]
 

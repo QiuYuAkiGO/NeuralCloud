@@ -241,12 +241,12 @@ class DirectStore:
             return db.execute("SELECT 1 FROM qq_direct_sends WHERE status IN ('attempted','unknown') LIMIT 1").fetchone() is not None
 
     def reserve(self, event, decision, index, text):
-        from harness.qq.decision import effective_reply_segments
+        from harness.qq.decision import effective_reply_segments, sendable_speak_outcome
 
         segments = effective_reply_segments(decision)
         if (type(index) is not int or not 0 <= index < len(segments) or text != segments[index]
                 or decision.group_id != event["group_id"] or decision.self_member_id != event["self_member_id"]
-                or not decision.new_decision or decision.replayed or decision.outcome != "ready"):
+                or not decision.new_decision or decision.replayed or not sendable_speak_outcome(decision.outcome)):
             raise ValueError("onebot_send_plan_invalid")
         with closing(self.connect()) as db, db:
             db.execute("BEGIN IMMEDIATE")

@@ -250,6 +250,22 @@ def test_late_ready_decision_is_expired_before_any_send_intent(scenario):
     assert traces(state)[0]["counters"]["turn_failed"] == 1
 
 
+def test_error_fallback_still_sends_after_turn_deadline(scenario):
+    from harness.core.error_notice import ERROR_FALLBACK_REPLY
+
+    state = scenario
+    state.append("虚构的故障提问")
+
+    def late_fallback(_):
+        state.clock.advance(61)
+        return state.answer("speak", outcome="error_fallback", reply=ERROR_FALLBACK_REPLY)
+
+    state.callback = late_fallback
+    state.watcher.cycle()
+    assert state.desktop.sent_texts == [ERROR_FALLBACK_REPLY]
+    assert events(state)[0]["state"] != "expired"
+
+
 @pytest.mark.parametrize("priority,seconds,final_action,cached", [
     ("direct", 10, "speak", False), ("ambient", 60, "speak", False),
     ("direct", 10, "wait", False), ("direct", 10, "speak", True),

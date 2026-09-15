@@ -25,6 +25,7 @@ from gui.presets import (
     snapshot_memory,
 )
 from harness.config import Settings
+from harness.core.error_notice import ERROR_FALLBACK_REPLY
 from harness.core.inference import SessionTurn
 from harness.llm.client import (
     LLMClient,
@@ -497,6 +498,27 @@ class HarnessChatService:
             if self.observer is not None:
                 self.observer.emit_state(self.snapshot_state(target), run_id=run_id)
         except Exception as exc:
+            moment = datetime.now(UTC)
+            self.transcript.append(
+                SessionTurn(
+                    role="user",
+                    text=text,
+                    speaker=self.user_name,
+                    event_id=run_id,
+                    timestamp=moment,
+                )
+            )
+            character = self.speakers_payload()["character_name"]
+            self.transcript.append(
+                SessionTurn(
+                    role="character",
+                    text=ERROR_FALLBACK_REPLY,
+                    speaker=character,
+                    event_id=f"{run_id}:error-fallback",
+                    timestamp=moment,
+                )
+            )
+            self.flush_active()
             if self.observer is not None:
                 self.observer.emit_error(str(exc), run_id=run_id)
-            raise
+                self.observer.emit_state(self.snapshot_state(target), run_id=run_id)

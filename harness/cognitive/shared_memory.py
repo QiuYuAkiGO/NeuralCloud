@@ -270,12 +270,14 @@ class CognitiveSharedMemory:
         # group's visible messages cannot become the home group's reply input.
         segments.extend(self._group_view_context())
         if event.channel == "chat":
-            from harness.memory.revision.recall import select_daily_recall, daily_context_segment
-            derived = select_daily_recall(self.host.chat.memory, audience="local:main", query=event.raw_text,
-                                           owner_id=self.store.owner_id)
-            segment = daily_context_segment(derived)
-            if segment is not None:
-                segments.append(segment)
+            memory = getattr(getattr(self.host, "chat", None), "memory", None)
+            if memory is not None:
+                from harness.memory.revision.recall import select_daily_recall, daily_context_segment
+                derived = select_daily_recall(memory, audience="local:main", query=event.raw_text,
+                                               owner_id=self.store.owner_id)
+                segment = daily_context_segment(derived)
+                if segment is not None:
+                    segments.append(segment)
         # Only a real local chat request has this authenticated local speaker.
         # Internal goal/capability opportunities do not invent an interlocutor.
         if event.channel == "chat" and event.speaker != "character":

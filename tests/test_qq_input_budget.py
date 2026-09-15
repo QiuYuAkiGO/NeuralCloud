@@ -48,7 +48,7 @@ def _observations(setup, monkeypatch, *, private, count, body_length):
     original = client.complete_chat_result
 
     def complete(messages, **options):
-        if messages[0]["content"].startswith(decision._PRIVATE_RULES):
+        if decision.is_qq_gate_messages(messages):
             client.gate_messages.append(messages)
             return ChatResult(text='{"action":"speak","reason":"私聊中有新的问题。"}',
                               usage=TokenUsage(prompt_tokens=30, completion_tokens=10, source="api"))
@@ -109,9 +109,10 @@ def test_required_input_above_new_limit_still_fails_before_model_calls(setup, mo
     args = _observations(setup, monkeypatch, private=private, count=9, body_length=26_000)
     trace = QQTurnTrace()
     result = decision.decide_qq_reply(**args, trace=trace, deadline=QQDeadline.after(60))
-    assert result.outcome == "model_invalid", result.reason
+    assert result.outcome == "error_fallback", result.reason
     assert result.reason == decision._CONTEXT_BUDGET_REASON
-    assert result.reply is None and result.usage.calls == 0 and result.source_record_ids == []
+    assert result.reply == decision.ERROR_FALLBACK_REPLY and result.usage.calls == 0
+    assert result.source_record_ids
     assert result.seen_observation_record_ids == result.new_observation_record_ids
     assert not setup[1].gate_messages and not setup[2]
     counters = trace.snapshot()["counters"]

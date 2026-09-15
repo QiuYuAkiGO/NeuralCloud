@@ -6,7 +6,7 @@ import asyncio
 import inspect
 import json
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Literal, Protocol, TypeVar
 
@@ -36,6 +36,7 @@ from harness.contracts.envelope import (
     DomainCommandResult,
     VersionVector,
 )
+from harness.core.error_notice import ERROR_FALLBACK_REPLY, ERROR_FALLBACK_SEND_SECONDS
 from harness.core.inference import ContextSegment, FinalResponse, InteroceptiveState, SessionTurn
 from harness.core.models import EpisodicEvent, InteractionEvent
 from harness.homeostasis.models import HomeostaticInteroceptiveSummary
@@ -634,10 +635,40 @@ class PipelineCognitiveAdapter:
                     prompt_version=self.pipeline.settings.prompt_version,
                 )
             except Exception as exc:
-                result = self._failure(command, str(exc))
-                self._remember(command, result)
-                await asyncio.to_thread(self._persist_state)
-                return DomainCommandResult[PreparedResponse].model_validate(result.model_dump(mode="json"))
+                if internal or mode in {"basic_terminal_task", "grounded_agency_decision"}:
+                    result = self._failure(command, str(exc))
+                    self._remember(command, result)
+                    await asyncio.to_thread(self._persist_state)
+                    return DomainCommandResult[PreparedResponse].model_validate(result.model_dump(mode="json"))
+                text = ERROR_FALLBACK_REPLY
+                now = _utc_now()
+                final = FinalResponse(
+                    text=text, segments=[text], path="fast",
+                    situation_id=f"error-fallback:{command.event_id}", event_id=command.event_id,
+                )
+                if observer is not None:
+                    try:
+                        observer.on_stage("final", final, {"latency_ms": 0.0, "error_fallback": True})
+                    except Exception:
+                        pass
+                decision = ReplyDecision(
+                    text=text, segments=[text], channel=str(payload.get("channel") or "chat"),
+                )
+                read_versions = command.version_vector or self._version_vector()
+                fallback_expiry = now + timedelta(seconds=ERROR_FALLBACK_SEND_SECONDS)
+                if command.deadline > fallback_expiry:
+                    fallback_expiry = command.deadline
+                prepared = PreparedResponse(
+                    event_id=command.event_id,
+                    correlation_id=command.correlation_id,
+                    session_id=event.session_id,
+                    decision=decision,
+                    read_versions=read_versions,
+                    prepared_at=now,
+                    expires_at=fallback_expiry,
+                    model_version=self.pipeline.settings.model_version,
+                    prompt_version=self.pipeline.settings.prompt_version,
+                )
 
             self._prepared[prepared.prepare_id] = _PreparedEntry(
                 event=event,

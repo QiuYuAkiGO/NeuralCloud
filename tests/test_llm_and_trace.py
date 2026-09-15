@@ -57,7 +57,8 @@ def test_mock_llm_complete_chat_revision_overrides_violation() -> None:
 def test_usage_from_api_payload_prefers_provider_counts() -> None:
     messages = [{"role": "user", "content": "hello"}]
     usage = usage_from_api_payload(
-        {"prompt_tokens": 12, "completion_tokens": 4, "total_tokens": 16},
+        {"prompt_tokens": 12, "completion_tokens": 4, "total_tokens": 16,
+         "prompt_cache_hit_tokens": 8, "prompt_cache_miss_tokens": 4},
         messages,
         "hi",
     )
@@ -65,6 +66,31 @@ def test_usage_from_api_payload_prefers_provider_counts() -> None:
     assert usage.prompt_tokens == 12
     assert usage.completion_tokens == 4
     assert usage.total_tokens == 16
+    assert usage.cache_hit_tokens == 8
+    assert usage.cache_miss_tokens == 4
+
+
+def test_usage_from_api_payload_reads_openai_cached_tokens() -> None:
+    usage = usage_from_api_payload(
+        {"prompt_tokens": 20, "completion_tokens": 2, "total_tokens": 22,
+         "prompt_tokens_details": {"cached_tokens": 16}},
+        [{"role": "user", "content": "hello"}],
+        "hi",
+    )
+    assert usage.cache_hit_tokens == 16
+    assert usage.cache_miss_tokens == 4
+
+
+def test_token_usage_add_and_for_call_keep_cache_counts() -> None:
+    from harness.core.inference import TokenUsage
+
+    first = TokenUsage(prompt_tokens=10, completion_tokens=2, cache_hit_tokens=8, cache_miss_tokens=2,
+                       source="api").for_call()
+    second = TokenUsage(prompt_tokens=20, completion_tokens=3, cache_hit_tokens=18, cache_miss_tokens=2,
+                        source="api").for_call()
+    total = first.add(second)
+    assert total.cache_hit_tokens == 26 and total.cache_miss_tokens == 4
+    assert total.calls == 2 and total.prompt_tokens == 30
 
 
 def test_usage_from_api_payload_falls_back_to_estimate() -> None:

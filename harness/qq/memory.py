@@ -19,6 +19,7 @@ from uuid import uuid4
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstraints, ValidationError, field_validator, model_validator
 
 from harness.qq.conversation import QQConversationID, conversation_scope
+from harness.qq.context_window import WINDOW_CANDIDATE_LIMIT
 
 
 QQID = Annotated[str, StringConstraints(strict=True, pattern=r"^[1-9][0-9]{0,19}$")]
@@ -251,7 +252,7 @@ class QQGroupRetrieval(_Model):
     query: str | None
     terms: list[str]
     terms_truncated: bool
-    history_selection: Literal["query_substring_rank", "earliest_outside_recent"]
+    history_selection: Literal["query_substring_rank", "earliest_outside_recent", "chronological_append"]
     recent_selection: Literal["observed_at_then_stored_at_desc"] = "observed_at_then_stored_at_desc"
     member_selection: Literal["verified_numeric_member_id_order", "explicit_member_id_order"]
     group_known_member_count: int
@@ -262,6 +263,7 @@ class QQGroupRetrieval(_Model):
     max_members: int
     recent_limit_per_member: int
     history_limit_per_member: int
+    window_mode: Literal["balanced_recent_history", "chronological_append"] = "balanced_recent_history"
 
 
 class QQGroupContext(_Model):
@@ -280,6 +282,7 @@ class _GroupContextQuery(_Model):
     max_members: int = Field(default=20, ge=1, le=100, strict=True)
     recent_limit_per_member: int = Field(default=5, ge=0, le=50, strict=True)
     history_limit_per_member: int = Field(default=5, ge=0, le=50, strict=True)
+    window_mode: Literal["balanced_recent_history", "chronological_append"] = "balanced_recent_history"
 
     @field_validator("member_ids")
     @classmethod
@@ -288,6 +291,8 @@ class _GroupContextQuery(_Model):
 
     @model_validator(mode="after")
     def nonempty_budget(self):
+        if self.window_mode == "chronological_append":
+            return self
         if self.recent_limit_per_member + self.history_limit_per_member == 0:
             raise ValueError("at least one observation budget must be positive")
         return self
@@ -536,6 +541,7 @@ class QQVisualMemoryStore:
         max_members: int = 20,
         recent_limit_per_member: int = 5,
         history_limit_per_member: int = 5,
+        window_mode: str = "balanced_recent_history",
     ) -> QQGroupContext:
         """Read balanced recent/history context from one consistent SQLite snapshot.
 
@@ -548,7 +554,10 @@ class QQVisualMemoryStore:
             group_id=group_id, member_ids=member_ids, query=query, max_members=max_members,
             recent_limit_per_member=recent_limit_per_member,
             history_limit_per_member=history_limit_per_member,
+            window_mode=window_mode,
         )
+        if request.window_mode == "chronological_append":
+            return self._chronological_group_context(request)
         terms, terms_truncated = _query_terms(request.query)
         with closing(self._connect()) as connection, connection:
             connection.execute("BEGIN")
@@ -593,8 +602,137 @@ class QQVisualMemoryStore:
                 omitted_member_count=candidate_count - len(selected), max_members=request.max_members,
                 recent_limit_per_member=request.recent_limit_per_member,
                 history_limit_per_member=request.history_limit_per_member,
+                window_mode="balanced_recent_history",
             ),
             member_retrieval=member_retrieval,
+        )
+
+    def _chronological_group_context(self, request: _GroupContextQuery) -> QQGroupContext:
+        terms, terms_truncated = ([], False) if request.query is None else _query_terms(request.query)
+        with closing(self._connect()) as connection, connection:
+            connection.execute("BEGIN")
+            group_count = connection.execute(
+                "SELECT COUNT(DISTINCT member_id) FROM qq_visual_profiles WHERE group_id = ?",
+                (request.group_id,),
+            ).fetchone()[0]
+            rows = connection.execute(
+                """SELECT record_json FROM qq_visual_observations WHERE group_id = ?
+                   ORDER BY observed_at DESC,
+                   CASE WHEN json_valid(record_json)
+                        THEN REPLACE(json_extract(record_json, '$.stored_at'), 'Z', '+00:00') ELSE '' END DESC,
+                   record_id DESC LIMIT ?""",
+                (request.group_id, WINDOW_CANDIDATE_LIMIT),
+            )
+            newest_first = [self._decode(QQVisualObservation, row["record_json"]) for row in rows]
+            observations = list(reversed(newest_first))
+            present_ids = {item.record_id for item in observations}
+            extra_matches: list[tuple[QQVisualObservation, QQHistoryMatch]] = []
+            if terms:
+                scanned = connection.execute(
+                    """SELECT record_json FROM qq_visual_observations WHERE group_id = ?
+                       ORDER BY observed_at DESC,
+                       CASE WHEN json_valid(record_json)
+                            THEN REPLACE(json_extract(record_json, '$.stored_at'), 'Z', '+00:00') ELSE '' END DESC,
+                       record_id DESC""",
+                    (request.group_id,),
+                )
+                for row in scanned:
+                    observation = self._decode(QQVisualObservation, row["record_json"])
+                    if observation.record_id in present_ids:
+                        continue
+                    match = _history_match(observation, terms)
+                    if not match.matched_terms:
+                        continue
+                    extra_matches.append((observation, match))
+                    extra_matches.sort(key=lambda item: (
+                        item[1].score, item[0].observed_at, item[0].stored_at, item[0].record_id
+                    ), reverse=True)
+                    del extra_matches[request.history_limit_per_member:]
+            hint_observations = [item[0] for item in extra_matches]
+            by_member: dict[str, list[QQVisualObservation]] = {}
+            for observation in [*observations, *hint_observations]:
+                by_member.setdefault(observation.member_id, []).append(observation)
+            selected = sorted(by_member, key=lambda member_id: (len(member_id), member_id))[:request.max_members]
+            if request.member_ids is not None:
+                requested = list(dict.fromkeys(request.member_ids))
+                selected = [member for member in requested if member in by_member][:request.max_members]
+            members: list[QQPersonContext] = []
+            member_retrieval: list[QQMemberRetrieval] = []
+            window_ids = {item.record_id for item in observations}
+            for member_id in selected:
+                person_obs = by_member[member_id]
+                matches = []
+                if terms:
+                    matches = [match for observation, match in (
+                        (item, _history_match(item, terms)) for item in person_obs
+                    ) if match.matched_terms]
+                person, retrieval = self._profiles_for_observations(
+                    connection, request, member_id, person_obs,
+                    window_ids=window_ids, matches=matches, total=len(person_obs),
+                )
+                members.append(person)
+                member_retrieval.append(retrieval)
+            missing = [] if request.member_ids is None else [member for member in request.member_ids if member not in by_member]
+            candidate_count = len(by_member)
+        return QQGroupContext(
+            group_id=request.group_id, participants=selected, members=members,
+            retrieval=QQGroupRetrieval(
+                query=request.query, terms=terms, terms_truncated=terms_truncated,
+                history_selection="chronological_append",
+                member_selection="verified_numeric_member_id_order" if request.member_ids is None else "explicit_member_id_order",
+                group_known_member_count=group_count, candidate_member_count=candidate_count,
+                missing_member_ids=missing, members_truncated=candidate_count > len(selected),
+                omitted_member_count=max(0, candidate_count - len(selected)), max_members=request.max_members,
+                recent_limit_per_member=request.recent_limit_per_member,
+                history_limit_per_member=request.history_limit_per_member,
+                window_mode="chronological_append",
+            ),
+            member_retrieval=member_retrieval,
+        )
+
+    def _profiles_for_observations(
+        self,
+        connection: sqlite3.Connection,
+        request: _GroupContextQuery,
+        member_id: str,
+        observations: list[QQVisualObservation],
+        *,
+        window_ids: set[str],
+        matches: list[QQHistoryMatch],
+        total: int,
+    ) -> tuple[QQPersonContext, QQMemberRetrieval]:
+        latest_profile_row = connection.execute(
+            """SELECT record_json FROM qq_visual_profiles WHERE group_id = ? AND member_id = ?
+               ORDER BY observed_at DESC,
+               CASE WHEN json_valid(record_json)
+                    THEN REPLACE(json_extract(record_json, '$.stored_at'), 'Z', '+00:00') ELSE '' END DESC,
+               record_id DESC LIMIT 1""",
+            (request.group_id, member_id),
+        ).fetchone()
+        if latest_profile_row is None:
+            raise QQVisualMemoryStorageError("selected member has no verified profile")
+        profiles = [self._decode(QQVerifiedProfile, latest_profile_row["record_json"])]
+        present = {profiles[0].record_id}
+        for record_id in sorted({item.profile_record_id for item in observations} - present):
+            row = connection.execute(
+                "SELECT record_json FROM qq_visual_profiles WHERE record_id = ? AND group_id = ? AND member_id = ?",
+                (record_id, request.group_id, member_id),
+            ).fetchone()
+            if row is None:
+                raise QQVisualMemoryStorageError("observation identity evidence is missing or outside its scope")
+            profiles.append(self._decode(QQVerifiedProfile, row["record_json"]))
+        recent_ids = [item.record_id for item in observations if item.record_id in window_ids]
+        history_ids = [item.record_id for item in observations if item.record_id not in window_ids]
+        return (
+            QQPersonContext(group_id=request.group_id, member_id=member_id, profiles=profiles, observations=observations),
+            QQMemberRetrieval(
+                member_id=member_id, total_observations=total,
+                recent_record_ids=recent_ids, history_record_ids=history_ids,
+                history_matches=matches, history_candidate_count=len(history_ids),
+                history_match_count=len(matches), history_candidates_scanned=len(history_ids),
+                recent_window_truncated=False, history_truncated=False,
+                observations_omitted_count=0,
+            ),
         )
 
     def _group_member_context(

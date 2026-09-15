@@ -47,10 +47,10 @@ def _routed(tmp_path, *, main_status=200, model="deepseek-v4-flash", context=819
             return httpx.Response(main_status, json={"error": "synthetic main failure"})
         content = json.dumps({"verdict": "pass", "violations": [], "severity": 0, "instruction": None})
         if qq_turn:
-            from harness.qq.decision import _RULES
+            from harness.qq.decision import is_qq_gate_messages
             from harness.validator.validator import _LLM_SYSTEM
             system = payload["messages"][0]["content"]
-            if system.startswith(_RULES):
+            if is_qq_gate_messages(payload["messages"]):
                 content = json.dumps({"action": "speak", "reason": "synthetic direct question"})
             elif role == "aux":
                 content = json.dumps({"path": "fast"})

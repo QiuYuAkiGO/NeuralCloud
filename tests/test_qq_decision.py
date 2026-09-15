@@ -42,7 +42,7 @@ class DecisionLLM(MockLLM):
         self.closed = False
 
     def complete_chat_result(self, messages, **kwargs):
-        if messages[0]["content"].startswith(decision._RULES):
+        if decision.is_qq_gate_messages(messages):
             self.gate_messages.append(messages)
             if isinstance(self.choice, Exception):
                 raise self.choice
@@ -102,7 +102,7 @@ def test_multimember_speak_uses_user_side_history_and_is_replayable(setup):
     assert result.automatic_send is False and result.new_decision is True
     assert set(result.source_record_ids) == {item.record_id for item in records}
     assert result.model == "synthetic-model" and result.persona_version
-    assert result.prompt_version == "qq-group-turn-taking-v16"
+    assert result.prompt_version == "qq-group-turn-taking-v17"
     assert result.usage.calls >= 2
     assert builds[0].call_log_enabled is False and builds[0].record_interaction is False
     all_messages = client.gate_messages + client.chat_calls
@@ -284,7 +284,8 @@ def test_invalid_or_failed_gate_never_generates_text(setup, monkeypatch, choice,
     client.choice = choice
     monkeypatch.setattr(decision, "_prepare_group_speech", lambda **kwargs: pytest.fail("invalid gate generated speech"))
     result = decision.decide_qq_reply(**kwargs)
-    assert result.action == "wait" and result.reply is None and result.decision_source == origin
+    assert result.action == "speak" and result.outcome == "error_fallback"
+    assert result.reply == decision.ERROR_FALLBACK_REPLY and result.decision_source == origin
     assert "PRIVATE_CHAT" not in result.model_dump_json()
     replay = decision.decide_qq_reply(**kwargs)
     assert replay.decision_id == result.decision_id and replay.replayed
@@ -297,7 +298,7 @@ def test_concurrent_identical_input_reserves_once_and_pending_replays_wait(setup
     original = client.complete_chat_result
 
     def slow(messages, **options):
-        if messages[0]["content"].startswith(decision._RULES):
+        if decision.is_qq_gate_messages(messages):
             entered.set()
             assert release.wait(5)
         return original(messages, **options)
@@ -366,7 +367,7 @@ def test_default_trigger_query_retrieves_middle_history_beyond_recent_and_earlie
     assert result.query_source == "trigger_observation" and result.effective_query == trigger.text
     assert result.derived_query_truncated is False
     assert middle.record_id in result.source_record_ids
-    payload = json.loads(client.gate_messages[0][1]["content"])
+    payload = decision.combined_user_payload(client.gate_messages[0])
     assert payload["query_source"] == "trigger_observation"
     assert payload["group_context"]["retrieval"]["query"] == trigger.text
     historical = {item["record_id"]: item for member in payload["group_context"]["members"] for item in member["observations"]}
@@ -384,7 +385,7 @@ def test_derived_query_is_bounded_without_truncating_original_observation(setup)
     _, trigger = add_member(store, "20001", capture="long-trigger", text=full_text, moment=NOW + timedelta(days=1))
     result = decision.decide_qq_reply(**kwargs, trigger_member_id="20001")
     assert result.effective_query == full_text[:512] and result.derived_query_truncated is True
-    payload = json.loads(client.gate_messages[0][1]["content"])
+    payload = decision.combined_user_payload(client.gate_messages[0])
     assert payload["derived_query_truncated"] is True
     actual = next(item for member in payload["group_context"]["members"] for item in member["observations"] if item["record_id"] == trigger.record_id)
     assert actual["text"] == full_text
@@ -396,7 +397,7 @@ def test_explicit_query_takes_precedence_over_trigger_text(setup):
     result = decision.decide_qq_reply(**kwargs, trigger_member_id="20001", query="显式历史主题")
     assert result.query_source == "explicit" and result.effective_query == "显式历史主题"
     assert result.derived_query_truncated is False
-    payload = json.loads(client.gate_messages[0][1]["content"])
+    payload = decision.combined_user_payload(client.gate_messages[0])
     assert payload["group_context"]["retrieval"]["query"] == "显式历史主题"
 
 
@@ -628,7 +629,8 @@ def test_late_gate_response_is_expired_including_late_wait(setup, monkeypatch, c
     monkeypatch.setattr(client, "complete_chat_result", late)
     monkeypatch.setattr(decision, "_prepare_group_speech", lambda **kw: pytest.fail("late gate reached persona"))
     result = decision.decide_qq_reply(**kwargs, deadline=QQDeadline.after(10, clock=clock), trace=trace)
-    assert result.outcome == "expired" and result.reply is None
+    assert result.outcome == "error_fallback" and result.reply == decision.ERROR_FALLBACK_REPLY
+    assert result.decision_source == "expired" and result.error_type == "deadline_expired"
     assert result.model_call_counts == {"gate": 1, "persona": 0}
     assert trace.snapshot()["counters"]["late_results"] == 1
 
@@ -664,17 +666,18 @@ def test_persona_late_text_cannot_become_send_intention(setup, monkeypatch):
 
     def late_persona(messages, **options):
         result = original(messages, **options)
-        if not messages[0]["content"].startswith(decision._RULES):
+        if not decision.is_qq_gate_messages(messages):
             clock.value += 11
         return result
 
     monkeypatch.setattr(client, "complete_chat_result", late_persona)
     result = decision.decide_qq_reply(**kwargs, deadline=QQDeadline.after(10, clock=clock),
                                       trace=QQTurnTrace(clock=clock))
-    assert result.outcome == "expired" and result.action == "wait" and result.reply is None
+    assert result.outcome == "error_fallback" and result.action == "speak"
+    assert result.reply == decision.ERROR_FALLBACK_REPLY
     assert result.model_call_counts["persona"] >= 1
     replay = decision.decide_qq_reply(**kwargs)
-    assert replay.outcome == "expired" and replay.reply is None
+    assert replay.outcome == "error_fallback" and replay.reply == decision.ERROR_FALLBACK_REPLY
 
 
 def test_caught_persona_helper_error_is_not_silently_a_ready_reply(setup, monkeypatch):
@@ -694,8 +697,10 @@ def test_caught_persona_helper_error_is_not_silently_a_ready_reply(setup, monkey
     monkeypatch.setattr(decision, "_prepare_group_speech", prepare)
     trace = QQTurnTrace()
     result = decision.decide_qq_reply(**kwargs, deadline=QQDeadline.after(30), trace=trace)
-    assert result.outcome == "model_error" and result.error_type == "model_timeout"
-    assert result.reply is None and trace.snapshot()["counters"]["failed_model_calls"] == 2
+    assert result.outcome == "error_fallback" and result.error_type == "model_timeout"
+    assert result.reply == decision.ERROR_FALLBACK_REPLY
+    assert result.reply != "fallback response"
+    assert trace.snapshot()["counters"]["failed_model_calls"] == 2
     assert trace.snapshot()["counters"]["model_retries"] == 1
     assert "PRIVATE_BODY" not in result.model_dump_json() + json.dumps(trace.snapshot())
 
@@ -709,8 +714,9 @@ def test_model_failures_are_never_natural_wait(setup, failure, expected):
     _, client, _, kwargs, _ = setup
     client.choice = failure
     result = decision.decide_qq_reply(**kwargs)
-    assert result.outcome in {"model_error", "model_invalid"} and result.outcome != "natural_wait"
-    assert result.error_type == expected and result.reply is None
+    assert result.outcome == "error_fallback" and result.outcome != "natural_wait"
+    assert result.error_type == expected and result.reply == decision.ERROR_FALLBACK_REPLY
+    assert result.decision_source in {"model_error", "model_invalid"}
     assert result.model_call_counts["gate"] == (2 if isinstance(failure, httpx.ReadTimeout) else 1)
 
 
@@ -723,7 +729,7 @@ def test_verified_self_mention_has_exact_scoped_evidence_and_keeps_alias_user_si
     assert "test-evidence://verified-self" in result.addressing_evidence_refs
     assert result.automatic_send is False
     system = client.gate_messages[0][0]["content"]
-    payload = json.loads(client.gate_messages[0][1]["content"])
+    payload = decision.combined_user_payload(client.gate_messages[0])
     assert "test-evidence://verified-self" not in system
     assert payload["verified_self_aliases"][0]["alias"] == "Misty"
 

@@ -226,13 +226,14 @@ class QQEmbodiedMixin:
                 or reservation.run_id != self.ledger.run_id or event.run_id != reservation.run_id
                 or event.group_id != reservation.group_id or event.decision_id != reservation.decision_id
                 or reservation.deadline_at is None
-                or not 0 < (reservation.deadline_at - event.first_seen_at).total_seconds() <= 60):
+                or not 0 < (reservation.deadline_at - event.first_seen_at).total_seconds() <= 70):
             raise ValueError("qq_plan_scope_mismatch")
         with closing(sqlite3.connect(self.session.memory_db.as_uri() + "?mode=ro", uri=True)) as db:
             db.row_factory = sqlite3.Row
             decision = _frozen_decision(db, request.scope.group_id, request.decision_id)
+        from harness.qq.decision import sendable_speak_outcome
         texts = effective_reply_segments(decision)
-        if (decision.outcome != "ready" or not decision.new_decision or decision.replayed
+        if (not sendable_speak_outcome(decision.outcome) or not decision.new_decision or decision.replayed
                 or decision.self_member_id != request.scope.self_member_id
                 or hashlib.sha256(decision.reply.encode()).hexdigest() != reservation.reply_sha256
                 or "\n\n".join(texts) != decision.reply or len(texts) != request.segment_count

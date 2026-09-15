@@ -50,7 +50,8 @@ def test_monitor_store_sanitizes_projects_runs_and_pages(tmp_path) -> None:
                 "path": "fast",
                 "latency_ms": 20,
                 "revisions": 1,
-                "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
+                "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15,
+                          "cache_hit_tokens": 6, "cache_miss_tokens": 4},
             },
         },
     )
@@ -59,6 +60,8 @@ def test_monitor_store_sanitizes_projects_runs_and_pages(tmp_path) -> None:
     assert run["status"] == "completed"
     assert run["path"] == "fast"
     assert run["total_tokens"] == 15
+    assert run["cache_hit_tokens"] == 6
+    assert run["cache_miss_tokens"] == 4
     assert [stage["stage"] for stage in run["stages"]] == ["parse", "final"]
 
     first = store.list_events(limit=2)
@@ -152,7 +155,7 @@ def test_monitor_api_auth_overview_and_study_debug_gate(tmp_path) -> None:
         headers = {"Authorization": "Bearer secret"}
         overview = client.get("/v1/monitor/overview", headers=headers)
         assert overview.status_code == 200
-        assert overview.json()["schema_version"] == "monitor-v1"
+        assert overview.json()["schema_version"] == "monitor-v2"
         assert overview.json()["manifest"]["control_mode"] == "study_runtime"
         rejected = client.post(
             "/v1/debug/events",

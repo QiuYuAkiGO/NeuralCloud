@@ -164,6 +164,16 @@ class QQTurnTrace:
                 raise ValueError("Too many distinct trace counters.")
             self._counters[name] = self._counters.get(name, 0) + amount
 
+    def add_cache_usage(self, stage: str, usage) -> None:
+        """Record provider prefix-cache counts; never prompt text."""
+        self._name(f"{stage}_cache_hit_tokens")
+        hit = getattr(usage, "cache_hit_tokens", 0) or 0
+        miss = getattr(usage, "cache_miss_tokens", 0) or 0
+        if type(hit) is not int or type(miss) is not int or hit < 0 or miss < 0:
+            return
+        self.add_counter(f"{stage}_cache_hit_tokens", hit)
+        self.add_counter(f"{stage}_cache_miss_tokens", miss)
+
     def merge_preparation(self, source: QQTurnTrace) -> bool:
         """Import one shared preparation, retaining its identity and clock origin.
 

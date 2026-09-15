@@ -178,3 +178,17 @@ def test_flush_does_not_create_missing_private_directory(tmp_path):
     with pytest.raises(ValueError):
         trace.flush(tmp_path / "missing" / "trace.jsonl")
     assert not (tmp_path / "missing").exists()
+
+
+def test_add_cache_usage_records_stage_counters_without_prompt_text():
+    from harness.core.inference import TokenUsage
+
+    trace = QQTurnTrace()
+    trace.add_cache_usage("gate", TokenUsage(prompt_tokens=100, cache_hit_tokens=80, cache_miss_tokens=20, source="api"))
+    trace.add_cache_usage("persona", TokenUsage(prompt_tokens=110, cache_hit_tokens=90, cache_miss_tokens=20, source="api"))
+    snapshot = trace.snapshot()
+    assert snapshot["counters"] == {
+        "gate_cache_hit_tokens": 80, "gate_cache_miss_tokens": 20,
+        "persona_cache_hit_tokens": 90, "persona_cache_miss_tokens": 20,
+    }
+    assert "cache_hit_tokens" in json.dumps(snapshot)

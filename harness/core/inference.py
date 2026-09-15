@@ -249,10 +249,16 @@ class ModelContext(BaseModel):
     provenance: list[ProvenanceEntry] = Field(default_factory=list)
     trigger_text: str = ""
     memory_evidence: MemoryEvidenceContext | None = None
+    prefix_messages: list[dict[str, str]] = Field(default_factory=list)
 
     def render_messages(self) -> list[dict[str, str]]:
-        system_parts = [seg.text for seg in self.segments if seg.kind != "user" and seg.text]
         user_parts = [seg.text for seg in self.segments if seg.kind == "user" and seg.text]
+        if self.prefix_messages:
+            extra = [seg.text for seg in self.segments
+                     if seg.kind not in {"user", "persona", "emotion_guidance", "homeostatic_interoception"} and seg.text]
+            content = "\n\n".join([*extra, *user_parts]) if extra or user_parts else self.trigger_text
+            return [*self.prefix_messages, {"role": "user", "content": content}]
+        system_parts = [seg.text for seg in self.segments if seg.kind != "user" and seg.text]
         user_content = "\n\n".join(user_parts) if user_parts else self.trigger_text
         return [
             {"role": "system", "content": "\n\n".join(system_parts)},
@@ -266,6 +272,8 @@ class TokenUsage(BaseModel):
     prompt_tokens: int = 0
     completion_tokens: int = 0
     total_tokens: int = 0
+    cache_hit_tokens: int = 0
+    cache_miss_tokens: int = 0
     calls: int = 0
     revision_calls: int = 0
     revision_tokens: int = 0
@@ -304,6 +312,8 @@ class TokenUsage(BaseModel):
             prompt_tokens=prompt,
             completion_tokens=completion,
             total_tokens=prompt + completion,
+            cache_hit_tokens=self.cache_hit_tokens + other.cache_hit_tokens,
+            cache_miss_tokens=self.cache_miss_tokens + other.cache_miss_tokens,
             calls=self.calls + other.calls,
             revision_calls=self.revision_calls + other.revision_calls,
             revision_tokens=self.revision_tokens + other.revision_tokens,

@@ -9,6 +9,22 @@ from harness.runtime.models import RuntimeLifecycle, utc_now
 from harness.runtime.web import READ, SEARCH, _hash
 
 
+def _preparation_failure_code(exc: BaseException) -> str:
+    if isinstance(exc, WebError):
+        return exc.code
+    text = str(exc)
+    if "expected revision" in text:
+        return "web_step_revision_conflict"
+    marker = "returned failed: "
+    if marker in text:
+        code = text.rsplit(marker, 1)[-1].strip()
+        if code.startswith("web_") and len(code) <= 80:
+            return code
+    if isinstance(exc, TimeoutError):
+        return "web_step_expired"
+    return "web_preparation_failed"
+
+
 async def prepare_web_context(supervisor, event, *, channel="chat", deadline=None):
     web = getattr(supervisor, "web", None)
     method = getattr(supervisor.cognitive, "prepare_web_step", None)
@@ -61,7 +77,7 @@ async def prepare_web_context(supervisor, event, *, channel="chat", deadline=Non
             step = row["step"]
             envelope = supervisor._make_command(event, command_type="PrepareWebStep",
                 idempotency_key=f"web-step:{identity}:{step}",
-                expected_revision=supervisor._cognitive_snapshot.revision,
+                expected_revision=None,
                 payload={"channel": channel, "event_payload": payload, "step": step,
                     "deadline_at": web_deadline.isoformat(), "offers": [o.model_dump(mode="json") for o in offers],
                     "runtime_web_context": web.context(scope, failures=row["failures"])})
@@ -84,7 +100,7 @@ async def prepare_web_context(supervisor, event, *, channel="chat", deadline=Non
             row["searches" if offer.capability_id == SEARCH else "reads"] += 1
             web.calls.put_round(identity, row)
     except Exception as exc:
-        row["failures"].append({"code": exc.code if isinstance(exc, WebError) else "web_preparation_failed"})
+        row["failures"].append({"code": _preparation_failure_code(exc)})
     row["status"] = "completed"
     row["context"] = web.context(scope, failures=row["failures"])
     web.calls.put_round(identity, row)

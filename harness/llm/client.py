@@ -127,16 +127,27 @@ def estimate_chat_usage(messages: list[dict[str, Any]], text: str) -> TokenUsage
     return TokenUsage(prompt_tokens=prompt, completion_tokens=completion, source="estimate")
 
 
+def _nonneg_int(value: Any) -> int:
+    return value if type(value) is int and value >= 0 else 0
+
+
 def usage_from_api_payload(raw: Any, messages: list[dict[str, Any]], text: str) -> TokenUsage:
     if isinstance(raw, dict):
-        prompt = int(raw.get("prompt_tokens") or 0)
-        completion = int(raw.get("completion_tokens") or 0)
-        total = int(raw.get("total_tokens") or 0)
-        if prompt or completion or total:
+        prompt = _nonneg_int(raw.get("prompt_tokens"))
+        completion = _nonneg_int(raw.get("completion_tokens"))
+        total = _nonneg_int(raw.get("total_tokens"))
+        details = raw.get("prompt_tokens_details") if isinstance(raw.get("prompt_tokens_details"), dict) else {}
+        hit = _nonneg_int(raw.get("prompt_cache_hit_tokens")) or _nonneg_int(details.get("cached_tokens"))
+        miss = _nonneg_int(raw.get("prompt_cache_miss_tokens"))
+        if miss == 0 and prompt and hit:
+            miss = max(0, prompt - hit)
+        if prompt or completion or total or hit or miss:
             return TokenUsage(
                 prompt_tokens=prompt,
                 completion_tokens=completion,
                 total_tokens=total,
+                cache_hit_tokens=hit,
+                cache_miss_tokens=miss,
                 source="api",
             )
     return estimate_chat_usage(messages, text)
