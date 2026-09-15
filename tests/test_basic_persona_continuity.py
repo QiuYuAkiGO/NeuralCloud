@@ -109,9 +109,13 @@ def _command(kind: str, number: int, payload: dict) -> DomainCommandEnvelope[dic
 
 
 def _host(tmp_path, monkeypatch, responses: list[str]) -> tuple[CognitiveServiceHost, MockLLM]:
+    # Real OS ownership semantics within this test's isolated lock directory.
+    monkeypatch.setattr("harness.runtime.ownership._lease_root", lambda: tmp_path / "test-domain-leases")
     monkeypatch.setenv("NC_MODE", "demo")
     monkeypatch.delenv("NC_COGNITIVE_MANIFEST_PATH", raising=False)
     monkeypatch.delenv("NC_RUNTIME_MANIFEST_PATH", raising=False)
+    monkeypatch.delenv("NC_QQ_SESSION_CONFIG", raising=False)
+    monkeypatch.setenv("NC_SHARED_MEMORY_DB", str(tmp_path / "shared-memory.sqlite3"))
     monkeypatch.setenv("NC_CALL_LOG_DIR", str(tmp_path / "calls"))
     host = CognitiveServiceHost(
         config_path=tmp_path / "gui.json",

@@ -130,6 +130,7 @@ class QQScopedAccessibilityClient:
         self._progress_error_ms: float | None = None
         self._intra_request_wall_step = False
         self._wall_duration_error_ms: float | None = None
+        self._remote_local_duration_delta_ms: float | None = None
         self._read_timing_basis = "legacy_wall_clock"
         self.clock, self.wall_clock = clock, wall_clock
         self._endpoint = agent_url.rstrip("/") + "/agent/v1/accessibility:read"
@@ -162,6 +163,7 @@ class QQScopedAccessibilityClient:
                           clock_step_count=self._clock_step_count, progress_error_ms=self._progress_error_ms,
                           intra_request_wall_step=self._intra_request_wall_step,
                           wall_duration_error_ms=self._wall_duration_error_ms,
+                          remote_local_duration_delta_ms=self._remote_local_duration_delta_ms,
                           freshness_timing_basis=self._read_timing_basis)
         try:
             remote_started, remote_finished = _aware(tree["started_at"]), _aware(tree["finished_at"])
@@ -237,8 +239,15 @@ class QQScopedAccessibilityClient:
             end_offset = envelope.get("read_finished_offset_ms")
             if (any(type(value) not in (int, float) or not math.isfinite(value)
                     for value in (start_offset, end_offset, elapsed))
-                    or start_offset != 0 or not 0 <= end_offset <= elapsed * 1000
-                    or not 0 <= elapsed <= min(self.timeout_seconds, 1.5)
+                    or start_offset != 0):
+                raise ObserverReadError("invalid_timing")
+            # Windows QPC and the Agent's Linux monotonic clock do not share a
+            # duration scale. Bound each independently; their difference is a
+            # diagnostic, never a clock calibration or extra deadline allowance.
+            budget_seconds = min(self.timeout_seconds, 1.5)
+            self._remote_local_duration_delta_ms = round(end_offset - elapsed * 1000, 6)
+            if (not 0 <= end_offset <= budget_seconds * 1000
+                    or not 0 <= elapsed <= budget_seconds
                     or duration > end_offset):
                 raise ObserverReadError("invalid_timing")
             self._read_timing_basis = "agent_monotonic"
@@ -284,6 +293,7 @@ class QQScopedAccessibilityClient:
         self._progress_error_ms = None
         self._intra_request_wall_step = False
         self._wall_duration_error_ms = None
+        self._remote_local_duration_delta_ms = None
         self._read_timing_basis = "legacy_wall_clock"
         request_nonce = secrets.token_hex(32) if self.causal_freshness else None
         payload = {**self._identity, "scope": scope}

@@ -170,6 +170,8 @@ def merge_tier(current: MemoryTier, proposed: MemoryTier) -> MemoryTier:
 
 def apply_verdict(event: EpisodicEvent, verdict: TierVerdict, *, now: datetime) -> EpisodicEvent:
     new_tier = merge_tier(event.tier, verdict.tier)
+    if _is_qq_event(event) and event.decay_demoted and _TIER_RANK[new_tier] > _TIER_RANK[event.tier]:
+        new_tier = event.tier
     updates: dict[str, Any] = {}
     if new_tier != event.tier:
         reason = verdict.reason or f"classifier:{new_tier}"
@@ -184,6 +186,34 @@ def apply_verdict(event: EpisodicEvent, verdict: TierVerdict, *, now: datetime) 
         updates["emotional_valence"] = verdict.emotional_valence
     if not updates:
         return event
+    return event.model_copy(update=updates)
+
+
+def apply_local_event_hit(event: EpisodicEvent, settings: Settings, *, now: datetime) -> EpisodicEvent:
+    """Pure local hit update, also usable inside a durable owner transaction.
+
+    QQ events have their own receipt-owned reinforcement policy. The caller is
+    responsible for selecting an actually used memory and deduplicating a hit.
+    """
+    if event.tier == "forgotten" or _is_qq_event(event):
+        return event
+    moment = _ensure_tz(now)
+    hit_count = event.hit_count + 1
+    new_tier: MemoryTier = event.tier
+    reasons = list(event.tier_reasons)
+    if event.tier == "short" and hit_count >= settings.tier_promotion_hits_mid:
+        new_tier = "mid"
+        reasons.append("hits:short_to_mid")
+    elif event.tier == "mid" and hit_count >= settings.tier_promotion_hits_long:
+        new_tier = "long"
+        reasons.append("hits:mid_to_long")
+    updates: dict[str, Any] = {"hit_count": hit_count, "last_hit_at": moment}
+    if new_tier != event.tier:
+        updates.update({"tier": new_tier, "tier_updated_at": moment,
+                        "tier_reasons": reasons, "expire_at": None})
+    elif event.tier == "short":
+        uniqueness = event.uniqueness if event.uniqueness is not None else 0.0
+        updates["expire_at"] = moment + ttl_for_uniqueness(uniqueness, settings)
     return event.model_copy(update=updates)
 
 
@@ -202,39 +232,23 @@ def register_hits(
         if item.memory_type != "episodic" or item.relevance < min_rel:
             continue
         event = stores.episodic.get(item.ref)
-        if event is None or event.tier == "forgotten":
+        if event is None:
             continue
-        hit_count = event.hit_count + 1
-        new_tier: MemoryTier = event.tier
-        reasons = list(event.tier_reasons)
-        if event.tier == "short" and hit_count >= settings.tier_promotion_hits_mid:
-            new_tier = "mid"
-            reasons.append("hits:short_to_mid")
-        elif event.tier == "mid" and hit_count >= settings.tier_promotion_hits_long:
-            new_tier = "long"
-            reasons.append("hits:mid_to_long")
-        updates: dict[str, Any] = {
-            "hit_count": hit_count,
-            "last_hit_at": moment,
-        }
-        if new_tier != event.tier:
-            updates["tier"] = new_tier
-            updates["tier_updated_at"] = moment
-            updates["tier_reasons"] = reasons
-            updates["expire_at"] = None
-            promotions.append((event.event_id, event.tier, new_tier))
-        elif event.tier == "short":
-            uniqueness = event.uniqueness if event.uniqueness is not None else 0.0
-            updates["expire_at"] = moment + ttl_for_uniqueness(uniqueness, settings)
-        stores.episodic.update(event.model_copy(update=updates))
-        if new_tier != event.tier:
+        updated = apply_local_event_hit(event, settings, now=moment)
+        if updated is event:
+            # QQ receipts register only memories actually adopted by a turn.
+            # Background retrieval and counterevidence must not strengthen them.
+            continue
+        stores.episodic.update(updated)
+        if updated.tier != event.tier:
+            promotions.append((event.event_id, event.tier, updated.tier))
             stores.audit.log(
                 op="TIER",
                 target_type="episodic",
                 target_id=event.event_id,
                 actor="hit_promotion",
                 success=True,
-                detail={"from": event.tier, "to": new_tier, "hit_count": hit_count},
+                detail={"from": event.tier, "to": updated.tier, "hit_count": updated.hit_count},
             )
     return promotions
 
@@ -262,6 +276,9 @@ def review_expiries(
     moment = _ensure_tz(now)
     reviewed: list[tuple[str, MemoryTier]] = []
     for event in stores.episodic.list_all():
+        if _is_qq_event(event):
+            # The QQ worker owns its state transaction and processing receipts.
+            continue
         if not due_for_review(event, now=moment, settings=settings):
             continue
         verdict = classifier.classify(event, persona, on_expiry=True)
@@ -295,6 +312,114 @@ def review_expiries(
         )
         reviewed.append((event.event_id, updated.tier))
     return reviewed
+
+
+def _is_qq_event(event: EpisodicEvent) -> bool:
+    scope = event.scope
+    return scope is not None and (scope.channel == "qq_group" or scope.qq_private_audience is not None)
+
+
+def qq_event_strength(event: EpisodicEvent, settings: Settings, *, now: datetime) -> float:
+    """Compute continuous strength without a write or a model request."""
+    if not _is_qq_event(event) or event.tier not in {"mid", "long"}:
+        return event.strength
+    anchor = event.strength_updated_at or event.tier_updated_at or event.time
+    days = max(0.0, (_ensure_tz(now) - _ensure_tz(anchor)).total_seconds() / 86400.0)
+    half_life = settings.qq_memory_decay_long_days if event.tier == "long" else settings.qq_memory_decay_mid_days
+    return max(0.0, event.strength * 2.0 ** (-days / half_life))
+
+
+def maintain_qq_events(
+    events: list[EpisodicEvent],
+    settings: Settings,
+    *,
+    now: datetime,
+) -> list[EpisodicEvent]:
+    """Pure QQ maintenance: short TTL, daily mid/long decay and one-step demotion.
+
+    Demotion records a new strength anchor at 0.50 and does not immediately
+    re-promote an old salient event. A new externally observed episode may clear
+    ``decay_demoted`` explicitly; retrieval alone cannot do so.
+    """
+    moment = _ensure_tz(now)
+    values: list[EpisodicEvent] = []
+    for event in events:
+        if not _is_qq_event(event) or event.tier == "forgotten":
+            values.append(event)
+            continue
+        if event.tier == "short":
+            if not due_for_review(event, now=moment, settings=settings):
+                values.append(event)
+                continue
+            verdict = (
+                TierVerdict(tier="forgotten", reason="qq_decay:short_expired")
+                if event.decay_demoted else rule_verdict(event, on_expiry=True)
+            )
+            updated = apply_verdict(event, verdict, now=moment)
+            values.append(updated.model_copy(update={
+                "strength_updated_at": moment, "last_decay_review_at": moment,
+            }))
+            continue
+        anchor = event.last_decay_review_at or event.strength_updated_at or event.tier_updated_at or event.time
+        if moment - _ensure_tz(anchor) < timedelta(hours=settings.qq_memory_review_hours):
+            values.append(event)
+            continue
+        strength = qq_event_strength(event, settings, now=moment)
+        changes: dict[str, Any] = {
+            "strength": strength, "strength_updated_at": moment, "last_decay_review_at": moment,
+        }
+        if strength < settings.qq_memory_decay_threshold:
+            next_tier = "mid" if event.tier == "long" else "short"
+            changes.update({
+                "tier": next_tier, "tier_updated_at": moment, "strength": 0.50,
+                "decay_demoted": True,
+                "tier_reasons": [*event.tier_reasons, f"qq_decay:{event.tier}_to_{next_tier}"],
+                "expire_at": moment + ttl_for_uniqueness(event.uniqueness or 0.0, settings)
+                if next_tier == "short" else None,
+            })
+        values.append(event.model_copy(update=changes))
+    return values
+
+
+def reinforce_qq_event(
+    event: EpisodicEvent,
+    *,
+    now: datetime,
+    amount: float = 0.15,
+    settings: Settings | None = None,
+    adopted: bool = True,
+) -> EpisodicEvent:
+    """Strengthen a verified adoption or contrast; caller owns receipt deduping.
+
+    Strength has headroom above its initial 1.0 so a new contrast episode can be
+    more memorable. This never changes belief confidence or silently revives an
+    archived event, and recall alone does not cancel a prior decay demotion.
+    """
+    if not 0.0 <= amount <= 1.0:
+        raise ValueError("QQ reinforcement amount must be between zero and one")
+    if not _is_qq_event(event) or event.tier == "forgotten" or amount == 0.0:
+        return event
+    settings = settings or Settings()
+    moment = _ensure_tz(now)
+    anchor = event.strength_updated_at or event.tier_updated_at or event.time
+    if moment < _ensure_tz(anchor):
+        raise ValueError("reinforcement cannot move the strength clock backwards")
+    changes: dict[str, Any] = {
+        "strength": min(2.0, qq_event_strength(event, settings, now=moment) + amount),
+        "strength_updated_at": moment,
+    }
+    if adopted:
+        changes.update({"last_hit_at": moment, "hit_count": event.hit_count + 1})
+    if event.tier == "short":
+        changes["expire_at"] = moment + ttl_for_uniqueness(event.uniqueness or 0.0, settings)
+    if adopted and not event.decay_demoted:
+        if event.tier == "short" and changes["hit_count"] >= settings.tier_promotion_hits_mid:
+            changes.update({"tier": "mid", "expire_at": None, "tier_updated_at": moment,
+                            "tier_reasons": [*event.tier_reasons, "qq_adoption:short_to_mid"]})
+        elif event.tier == "mid" and changes["hit_count"] >= settings.tier_promotion_hits_long:
+            changes.update({"tier": "long", "expire_at": None, "tier_updated_at": moment,
+                            "tier_reasons": [*event.tier_reasons, "qq_adoption:mid_to_long"]})
+    return event.model_copy(update=changes)
 
 
 def _ensure_tz(value: datetime) -> datetime:

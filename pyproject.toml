@@ -24,6 +24,8 @@ qq = [
     "fastapi>=0.111",
     "uvicorn>=0.30",
     "Pillow>=10.4",
+    "websockets>=15",
+    "qrcode>=8.2",
 ]
 postgres = [
     "psycopg2-binary>=2.9",

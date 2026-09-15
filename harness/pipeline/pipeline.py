@@ -7,7 +7,7 @@ import time
 from datetime import UTC, datetime
 from typing import Any, Protocol
 
-from harness.compiler.compiler import ContextCompiler
+from harness.compiler.compiler import ContextCompiler, emotion_enabled
 from harness.config import Settings, get_settings
 from harness.core.ids import new_id
 from harness.core.inference import (
@@ -16,6 +16,7 @@ from harness.core.inference import (
     ContextSegment,
     FinalResponse,
     InteroceptiveState,
+    MemoryEvidenceContext,
     ModelContext,
     ParsedInteraction,
     SessionTurn,
@@ -51,6 +52,7 @@ from harness.validator.validator import (
 from infra.trace.call_log import emit_pipeline_step, pipeline_emit_guard
 from infra.trace.recorder import NullTracer, Tracer
 from infra.trace.request_spans import current_trace_context, new_span_id, trace_scope
+from infra.trace.diagnostics import diagnostic_observer, diagnostic_scope, emit_diagnostic
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +101,8 @@ class InferencePipeline:
         self.character = character or CharacterModel(self.llm, settings=self.settings)
         self.validator = validator or ResponseValidator(settings=self.settings, llm=self.llm)
         self.session_store = session_store or SessionStore(window=self.settings.session_window)
+        # Runtime replaces this with the shared, persistent owner service.
+        self.emotion_service: Any = None
 
     def respond(
         self,
@@ -110,6 +114,7 @@ class InferencePipeline:
         call_id: str | None = None,
         interoception: InteroceptiveState | None = None,
         homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
+        emotion_guidance: Any = None,
     ) -> FinalResponse:
         ingest_kwargs: dict[str, Any] = {"session_id": session_id}
         if speaker:
@@ -128,6 +133,7 @@ class InferencePipeline:
                 context_segments=None,
                 interoception=interoception,
                 homeostatic_interoception=homeostatic_interoception,
+                emotion_guidance=emotion_guidance,
             )
             call.set_result(final)
             return final
@@ -141,8 +147,10 @@ class InferencePipeline:
         speaker: str | None = None,
         call_id: str | None = None,
         context_segments: list[ContextSegment] | None = None,
+        memory_evidence: MemoryEvidenceContext | None = None,
         interoception: InteroceptiveState | None = None,
         homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
+        emotion_guidance: Any = None,
     ) -> FinalResponse:
         """Generate a replayable response without mutating Session or Memory.
 
@@ -166,8 +174,10 @@ class InferencePipeline:
                     ingest_kwargs=ingest_kwargs,
                     commit_interaction=False,
                     context_segments=context_segments,
+                    memory_evidence=memory_evidence,
                     interoception=interoception,
                     homeostatic_interoception=homeostatic_interoception,
+                    emotion_guidance=emotion_guidance,
                 )
             call.set_result(final)
             return final
@@ -187,6 +197,7 @@ class InferencePipeline:
         call_id: str | None = None,
         interoception: InteroceptiveState | None = None,
         homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
+        emotion_guidance: Any = None,
     ) -> FinalResponse:
         """Prepare proactive speech from an internal assessment, not a user turn."""
 
@@ -211,6 +222,7 @@ class InferencePipeline:
                     now=now,
                     interoception=interoception,
                     homeostatic_interoception=homeostatic_interoception,
+                    emotion_guidance=emotion_guidance,
                 )
             call.set_result(final)
             return final
@@ -228,6 +240,7 @@ class InferencePipeline:
         now: datetime,
         interoception: InteroceptiveState | None = None,
         homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
+        emotion_guidance: Any = None,
     ) -> FinalResponse:
         started = time.perf_counter()
         retrieval_event = InteractionEvent(
@@ -296,6 +309,7 @@ class InferencePipeline:
                 insights=[insight],
                 session=recent,
                 homeostatic_interoception=homeostatic_interoception,
+                emotion_guidance=emotion_guidance,
             ),
             extra={"situation_id": situation.situation_id, "path": "deep", "mode": "autonomous"},
         )
@@ -359,6 +373,8 @@ class InferencePipeline:
         context_segments: list[ContextSegment] | None,
         interoception: InteroceptiveState | None,
         homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None,
+        emotion_guidance: Any = None,
+        memory_evidence: MemoryEvidenceContext | None = None,
     ) -> FinalResponse:
         started = time.perf_counter()
         event = self._traced("ingest", lambda: self.gateway.ingest(source, **ingest_kwargs))
@@ -416,6 +432,8 @@ class InferencePipeline:
                     timestamp=event.timestamp,
                 )
             )
+        if commit_interaction and getattr(self.settings, "emotion_mode", "off") != "off" and emotion_guidance is None:
+            emotion_guidance = self._observe_emotion(event, situation, recent, moment, homeostatic_interoception)
         context = self._traced(
             "compile",
             lambda: self.compiler.compile(
@@ -424,6 +442,8 @@ class InferencePipeline:
                 session=recent,
                 additional_segments=context_segments,
                 homeostatic_interoception=homeostatic_interoception,
+                emotion_guidance=emotion_guidance,
+                **({"memory_evidence": memory_evidence} if memory_evidence is not None else {}),
             ),
             extra={"situation_id": situation.situation_id, "path": request.path},
         )
@@ -477,6 +497,28 @@ class InferencePipeline:
             },
         )
         return final
+
+    def _observe_emotion(self, event, situation, recent, moment, summary):
+        """Legacy combined respond owns observation; Runtime prepare never does."""
+        from harness.emotion import EmotionInput, EmotionMessage, EmotionService
+
+        if self.emotion_service is None:
+            self.emotion_service = EmotionService(settings=self.settings, llm=self.llm)
+        scope = f"local:{event.session_id}"
+        unique_turns = {turn.event_id: turn for turn in recent if turn.event_id and turn.text.strip()}
+        unique_turns[event.event_id] = SessionTurn(role="user", text=event.raw_text, event_id=event.event_id,
+                                                  timestamp=event.timestamp, speaker=event.speaker)
+        messages = [EmotionMessage(source_id=turn.event_id, scope=scope, role=turn.role,
+                                   text=turn.text, timestamp=turn.timestamp or moment, speaker=turn.speaker)
+                    for turn in unique_turns.values()]
+        homeostasis = summary.model_dump(mode="json") if hasattr(summary, "model_dump") else (summary or {})
+        frame = self._traced("emotion_observe", lambda: self.emotion_service.observe(EmotionInput(
+            context_id=event.event_id, scope=scope, as_of=moment,
+            persona=situation.snapshot.persona if situation.snapshot else None,
+            homeostasis=homeostasis, messages=messages, new_source_ids=[event.event_id],
+        )), extra={"event_id": event.event_id})
+        guidance = self.emotion_service.guidance(frame)
+        return guidance if emotion_enabled(self.settings) else None
 
     def _speak(
         self,
@@ -610,8 +652,9 @@ class InferencePipeline:
         )
         usage = usage.add(candidate.usage)
         sampled_validation = self.validator.should_run(path)
+        emotion_text = next((segment.text for segment in context.segments if segment.kind == "emotion_guidance"), None)
         has_homeostatic_context = any(
-            segment.kind == "homeostatic_interoception" for segment in context.segments
+            segment.kind in {"homeostatic_interoception", "emotion_guidance"} for segment in context.segments
         )
         force_homeostatic_rules = isinstance(self.validator, ResponseValidator) and (
             has_homeostatic_context
@@ -635,7 +678,8 @@ class InferencePipeline:
             return candidate, validation, 0, usage
 
         revisions = 0
-        memory_empty = not situation.relevant_memories
+        memory_empty = (not context.memory_evidence.has_history if context.memory_evidence is not None
+                        else not situation.relevant_memories)
         while True:
             validator_kwargs: dict[str, Any] = {
                 "persona": situation.snapshot.persona if situation.snapshot else None,
@@ -644,7 +688,9 @@ class InferencePipeline:
             }
             if isinstance(self.validator, ResponseValidator):
                 validator_kwargs.update(
+                    memory_evidence=context.memory_evidence,
                     homeostatic_context=has_homeostatic_context,
+                    emotion_guidance=emotion_text,
                     # The current grounded BodyState proves only a generic
                     # resource level; it cannot substantiate hunger, pain, or
                     # other concrete symptoms.
@@ -708,7 +754,9 @@ class InferencePipeline:
     def _traced(self, kind: str, fn, extra: dict[str, Any] | None = None) -> Any:
         started = time.perf_counter()
         started_at = datetime.now(UTC).isoformat()
-        with trace_scope(stage=kind, span_id=new_span_id("stage"), parent_span_id=current_trace_context().get("span_id")):
+        with diagnostic_scope(**(extra or {})), trace_scope(
+            stage=kind, span_id=new_span_id("stage"), parent_span_id=current_trace_context().get("span_id")
+        ):
             try:
                 result = fn()
             except BaseException as exc:
@@ -752,6 +800,18 @@ class InferencePipeline:
 
     def _emit(self, kind: str, result: Any, payload: dict[str, Any]) -> None:
         payload = {**current_trace_context(), **payload}
+        if diagnostic_observer() is not None:
+            evidence = {"record_type": "pipeline_stage", "stage": kind, "metadata": payload}
+            if isinstance(result, CandidateResponse):
+                evidence.update(candidate_text=result.text, revision=result.revision)
+            elif isinstance(result, ValidationResult):
+                evidence["validation"] = result.model_dump(mode="json")
+            elif isinstance(result, FinalResponse):
+                evidence.update(final_text=result.text, segments=list(result.segments),
+                                revisions=result.revisions, stopped_by=result.stopped_by)
+            elif isinstance(result, ModelContext):
+                evidence["compiled_context"] = result.model_dump(mode="json")
+            emit_diagnostic(evidence)
         with pipeline_emit_guard():
             self.tracer.record(kind, payload)
         emit_pipeline_step(self.memory.call_log, kind, result, payload)

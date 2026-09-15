@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, cast
 
-from sqlalchemy import create_engine, select, text
+from sqlalchemy import and_, create_engine, or_, select, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -16,6 +16,7 @@ from harness.core.models import (
     CandidateMemory,
     EpisodicEvent,
     MemoryTier,
+    MemoryScope,
     PersonaCore,
     PersonaIdentity,
     PsychState,
@@ -37,6 +38,31 @@ from harness.memory.store.schema import (
     WorldStateRow,
 )
 from harness.memory.store.vector_util import cosine, event_in_filters
+from harness.memory.store.scope import candidate_matches
+
+
+def _visibility_filter(column, audience: str):
+    scoped = and_(column["owner_id"].astext == "misty", column["visibility"].contains([audience]))
+    if audience != "local:main":
+        private_boundary = (column["conversation_id"].astext == audience
+                            if audience.startswith("qq:private:") else False)
+        scoped = and_(scoped, or_(column["channel"].astext != "qq_private", private_boundary))
+    return or_(column.is_(None), scoped) if audience == "local:main" else scoped
+
+
+def _provenance(row) -> dict:
+    return {"scope": row.scope, "source_refs": list(row.source_refs or []),
+            "processing_version": row.processing_version}
+
+
+def _stored_provenance(memory) -> dict:
+    return {"scope": memory.scope.model_dump(mode="json") if memory.scope is not None else None,
+            "source_refs": list(memory.source_refs), "processing_version": memory.processing_version}
+
+
+def _update_provenance(row, memory) -> None:
+    for name, value in _stored_provenance(memory).items():
+        setattr(row, name, value)
 
 
 def make_engine(url: str | None = None, settings: Settings | None = None) -> Engine:
@@ -84,6 +110,11 @@ def _episodic_from_row(row: EpisodicEventRow) -> EpisodicEvent:
         tier_updated_at=row.tier_updated_at,
         tier_reasons=list(row.tier_reasons or []),
         embedding=embedding,
+        **_provenance(row),
+        strength=row.strength,
+        strength_updated_at=row.strength_updated_at,
+        last_decay_review_at=row.last_decay_review_at,
+        decay_demoted=row.decay_demoted,
     )
 
 
@@ -98,6 +129,7 @@ def _semantic_from_row(row: SemanticFactRow) -> SemanticFact:
         supporting_events=list(row.supporting_events),
         formed_at=row.formed_at,
         embedding=embedding,
+        **_provenance(row),
     )
 
 
@@ -115,6 +147,7 @@ def _candidate_from_row(row: MemoryCandidateRow) -> CandidateMemory:
         created_at=row.created_at,
         updated_at=row.updated_at,
         consolidated_fact_id=row.consolidated_fact_id,
+        **_provenance(row),
     )
 
 
@@ -187,6 +220,11 @@ class PostgresEpisodicStore:
                 tier_updated_at=event.tier_updated_at,
                 tier_reasons=event.tier_reasons,
                 embedding=event.embedding,
+                **_stored_provenance(event),
+                strength=event.strength,
+                strength_updated_at=event.strength_updated_at,
+                last_decay_review_at=event.last_decay_review_at,
+                decay_demoted=event.decay_demoted,
             )
         )
         self.session.flush()
@@ -224,6 +262,11 @@ class PostgresEpisodicStore:
         row.tier_updated_at = event.tier_updated_at
         row.tier_reasons = event.tier_reasons
         row.embedding = event.embedding
+        _update_provenance(row, event)
+        row.strength = event.strength
+        row.strength_updated_at = event.strength_updated_at
+        row.last_decay_review_at = event.last_decay_review_at
+        row.decay_demoted = event.decay_demoted
         self.session.flush()
 
     def list_all(self) -> list[EpisodicEvent]:
@@ -242,8 +285,12 @@ class PostgresEpisodicStore:
         channels: list[str] | None,
         entities: list[str] | None,
         limit: int,
+        trusted_audience: str = "local:main",
     ) -> list[EpisodicEvent]:
-        stmt = select(EpisodicEventRow)
+        stmt = select(EpisodicEventRow).where(
+            _visibility_filter(EpisodicEventRow.scope, trusted_audience),
+            EpisodicEventRow.tier != "forgotten",
+        )
         if since is not None:
             stmt = stmt.where(EpisodicEventRow.time >= since)
         if until is not None:
@@ -285,6 +332,7 @@ class PostgresSemanticStore:
                 supporting_events=fact.supporting_events,
                 formed_at=fact.formed_at,
                 embedding=fact.embedding,
+                **_stored_provenance(fact),
             )
         )
         self.session.flush()
@@ -306,6 +354,7 @@ class PostgresSemanticStore:
         row.supporting_events = fact.supporting_events
         row.formed_at = fact.formed_at
         row.embedding = fact.embedding
+        _update_provenance(row, fact)
         self.session.flush()
 
     def delete(self, fact_id: str) -> None:
@@ -318,11 +367,12 @@ class PostgresSemanticStore:
         rows = self.session.execute(select(SemanticFactRow)).scalars().all()
         return [_semantic_from_row(row) for row in rows]
 
-    def find(self, subject: str, predicate: str, value: str) -> SemanticFact | None:
+    def find(self, subject: str, predicate: str, value: str, *, scope: MemoryScope | None = None) -> SemanticFact | None:
         stmt = select(SemanticFactRow).where(
             SemanticFactRow.subject == subject,
             SemanticFactRow.predicate == predicate,
             SemanticFactRow.value == value,
+            SemanticFactRow.scope == scope.model_dump(mode="json") if scope is not None else SemanticFactRow.scope.is_(None),
         )
         row = self.session.execute(stmt).scalar_one_or_none()
         return _semantic_from_row(row) if row else None
@@ -333,8 +383,9 @@ class PostgresSemanticStore:
         query_embedding: list[float] | None,
         subject: str | None,
         limit: int,
+        trusted_audience: str = "local:main",
     ) -> list[SemanticFact]:
-        stmt = select(SemanticFactRow)
+        stmt = select(SemanticFactRow).where(_visibility_filter(SemanticFactRow.scope, trusted_audience))
         if subject:
             stmt = stmt.where(SemanticFactRow.subject == subject)
         if query_embedding:
@@ -489,6 +540,7 @@ class PostgresCandidateStore:
                 created_at=candidate.created_at,
                 updated_at=candidate.updated_at,
                 consolidated_fact_id=candidate.consolidated_fact_id,
+                **_stored_provenance(candidate),
             )
         )
         for event_id in candidate.evidence:
@@ -519,6 +571,7 @@ class PostgresCandidateStore:
         row.value = candidate.value
         row.updated_at = candidate.updated_at
         row.consolidated_fact_id = candidate.consolidated_fact_id
+        _update_provenance(row, candidate)
         self.session.flush()
 
     def list_open(self) -> list[CandidateMemory]:
@@ -542,14 +595,10 @@ class PostgresCandidateStore:
         predicate: str | None,
         value: str | None,
         claim: str,
+        scope: MemoryScope | None = None,
     ) -> CandidateMemory | None:
         for row in self.list_open():
-            if subject and predicate and value:
-                if row.subject == subject and row.predicate == predicate and row.value == value:
-                    return row
-            if value and (row.value == value or value in row.claim):
-                return row
-            if claim and claim == row.claim:
+            if candidate_matches(row, subject=subject, predicate=predicate, value=value, claim=claim, scope=scope):
                 return row
         return None
 

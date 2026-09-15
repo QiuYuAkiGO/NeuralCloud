@@ -102,7 +102,7 @@ def test_multimember_speak_uses_user_side_history_and_is_replayable(setup):
     assert result.automatic_send is False and result.new_decision is True
     assert set(result.source_record_ids) == {item.record_id for item in records}
     assert result.model == "synthetic-model" and result.persona_version
-    assert result.prompt_version == "qq-group-turn-taking-v6"
+    assert result.prompt_version == "qq-group-turn-taking-v15"
     assert result.usage.calls >= 2
     assert builds[0].call_log_enabled is False and builds[0].record_interaction is False
     all_messages = client.gate_messages + client.chat_calls
@@ -323,10 +323,11 @@ def test_unknown_trigger_is_not_guessed(setup):
     assert result.action == "wait" and result.decision_source == "unknown_trigger" and not builds
 
 
-def test_cli_keeps_reply_reason_and_secrets_in_private_file(setup, tmp_path, capsys):
+def test_cli_keeps_reply_reason_and_secrets_in_private_file(setup, tmp_path, capsys, monkeypatch):
+    monkeypatch.setenv("NC_CONTROL_MODE", "development_debug")
     store, _, _, kwargs, _ = setup
     output = tmp_path / "decision.json"
-    args = ["--memory-db", str(store.path), "--group-id", "10001", "--self-member-id", "29999", "--trigger-member-id", "20001",
+    args = ["--development-mode", "--memory-db", str(store.path), "--group-id", "10001", "--self-member-id", "29999", "--trigger-member-id", "20001",
             "--config", str(kwargs["config_path"]), "--preset", str(kwargs["preset_path"]), "--output", str(output)]
     assert decision.main(args) == 0
     result = json.loads(output.read_text(encoding="utf-8"))
@@ -337,11 +338,12 @@ def test_cli_keeps_reply_reason_and_secrets_in_private_file(setup, tmp_path, cap
     assert decision.main(args) == 2
 
 
-def test_draft_group_mode_uses_wait_decision_instead_of_forcing_reply(setup, tmp_path):
+def test_draft_group_mode_uses_wait_decision_instead_of_forcing_reply(setup, tmp_path, monkeypatch):
+    monkeypatch.setenv("NC_CONTROL_MODE", "development_debug")
     store, client, _, kwargs, _ = setup
     client.choice = '{"action":"wait","reason":"继续听大家聊。"}'
     output = tmp_path / "group-decision.json"
-    assert draft.main(["--mode", "group", "--memory-db", str(store.path), "--group-id", "10001",
+    assert draft.main(["--development-mode", "--mode", "group", "--memory-db", str(store.path), "--group-id", "10001",
                        "--member-id", "20002", "--self-member-id", "29999",
                        "--config", str(kwargs["config_path"]), "--preset", str(kwargs["preset_path"]),
                        "--output", str(output)]) == 0
@@ -590,7 +592,11 @@ def test_natural_wait_is_successful_model_only_and_has_stage_timing(setup, monke
     assert trace.snapshot()["decision_id"] == result.decision_id
     replay_trace = QQTurnTrace(clock=clock)
     replay = decision.decide_qq_reply(**kwargs, trace=replay_trace)
-    assert replay.replayed and replay_trace.snapshot()["counters"] == {"decision_cache_hits": 1}
+    assert replay.replayed and replay_trace.snapshot()["counters"] == {
+        "decision_cache_hits": 1,
+        "context_source_characters": trace.snapshot()["counters"]["context_source_characters"],
+        "context_base_characters": trace.snapshot()["counters"]["context_base_characters"],
+    }
 
 
 def test_already_expired_turn_never_calls_model_or_returns_active_intention(setup):
@@ -689,7 +695,8 @@ def test_caught_persona_helper_error_is_not_silently_a_ready_reply(setup, monkey
     trace = QQTurnTrace()
     result = decision.decide_qq_reply(**kwargs, deadline=QQDeadline.after(30), trace=trace)
     assert result.outcome == "model_error" and result.error_type == "model_timeout"
-    assert result.reply is None and trace.snapshot()["counters"]["failed_model_calls"] == 1
+    assert result.reply is None and trace.snapshot()["counters"]["failed_model_calls"] == 2
+    assert trace.snapshot()["counters"]["model_retries"] == 1
     assert "PRIVATE_BODY" not in result.model_dump_json() + json.dumps(trace.snapshot())
 
 
@@ -704,7 +711,7 @@ def test_model_failures_are_never_natural_wait(setup, failure, expected):
     result = decision.decide_qq_reply(**kwargs)
     assert result.outcome in {"model_error", "model_invalid"} and result.outcome != "natural_wait"
     assert result.error_type == expected and result.reply is None
-    assert result.model_call_counts["gate"] == 1
+    assert result.model_call_counts["gate"] == (2 if isinstance(failure, httpx.ReadTimeout) else 1)
 
 
 def test_verified_self_mention_has_exact_scoped_evidence_and_keeps_alias_user_side(setup):

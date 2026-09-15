@@ -1,0 +1,215 @@
+{
+  "$defs": {
+    "JsonValue": {},
+    "WebReadArguments": {
+      "additionalProperties": false,
+      "properties": {
+        "source_refs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 3,
+          "minItems": 1,
+          "title": "Source Refs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "source_refs"
+      ],
+      "title": "WebReadArguments",
+      "type": "object"
+    },
+    "WebResult": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_refs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 32,
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "failures": {
+          "items": {
+            "additionalProperties": {
+              "$ref": "#/$defs/JsonValue"
+            },
+            "type": "object"
+          },
+          "maxItems": 10,
+          "title": "Failures",
+          "type": "array"
+        },
+        "provider_request_id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Request Id"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/WebSource"
+          },
+          "maxItems": 10,
+          "title": "Sources",
+          "type": "array"
+        },
+        "status": {
+          "default": "completed",
+          "enum": [
+            "completed",
+            "partial"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "usage": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Usage",
+          "type": "object"
+        }
+      },
+      "title": "WebResult",
+      "type": "object"
+    },
+    "WebSearchArguments": {
+      "additionalProperties": false,
+      "properties": {
+        "max_results": {
+          "default": 5,
+          "maximum": 10,
+          "minimum": 1,
+          "title": "Max Results",
+          "type": "integer"
+        },
+        "query": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Query",
+          "type": "string"
+        },
+        "time_range": {
+          "anyOf": [
+            {
+              "enum": [
+                "day",
+                "week",
+                "month",
+                "year"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Time Range"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "title": "WebSearchArguments",
+      "type": "object"
+    },
+    "WebSource": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "default": "",
+          "maxLength": 12000,
+          "title": "Content",
+          "type": "string"
+        },
+        "origin": {
+          "default": "search",
+          "enum": [
+            "user_link",
+            "search",
+            "read"
+          ],
+          "title": "Origin",
+          "type": "string"
+        },
+        "published_at": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published At"
+        },
+        "retrieved_at": {
+          "format": "date-time",
+          "title": "Retrieved At",
+          "type": "string"
+        },
+        "snippet": {
+          "default": "",
+          "maxLength": 2000,
+          "title": "Snippet",
+          "type": "string"
+        },
+        "source_ref": {
+          "default": "",
+          "maxLength": 256,
+          "title": "Source Ref",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 1000,
+          "title": "Title",
+          "type": "string"
+        },
+        "truncated": {
+          "default": false,
+          "title": "Truncated",
+          "type": "boolean"
+        },
+        "url": {
+          "maxLength": 4096,
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "url",
+        "retrieved_at"
+      ],
+      "title": "WebSource",
+      "type": "object"
+    }
+  },
+  "anyOf": [
+    {
+      "$ref": "#/$defs/WebSearchArguments"
+    },
+    {
+      "$ref": "#/$defs/WebReadArguments"
+    },
+    {
+      "$ref": "#/$defs/WebSource"
+    },
+    {
+      "$ref": "#/$defs/WebResult"
+    }
+  ]
+}

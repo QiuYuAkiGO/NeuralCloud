@@ -82,6 +82,7 @@ class MemoryService:
         settings: Settings | None = None,
     ) -> None:
         self.stores = stores
+        self.qq_memory_state: dict[str, Any] = {}
         self.settings = settings or get_settings()
         self.llm = llm or MockLLM()
         self.embeddings = embeddings or MockEmbedding(dim=self.settings.embedding_dim)
@@ -253,7 +254,9 @@ class MemoryService:
     def curate(self, event: EpisodicEvent) -> list[CuratorOp]:
         with self.call_log.scope("curate", {"event_id": event.event_id}) as call:
             persona = self.stores.persona.get()
-            output = self.curator.propose(event, persona=persona, open_candidates=self.stores.candidates.list_open())
+            candidates = [candidate for candidate in self.stores.candidates.list_open()
+                          if candidate.scope == event.scope]
+            output = self.curator.propose(event, persona=persona, open_candidates=candidates)
             applied = self.pipeline.apply(output, event=event, strict=False)
             self.tracer.record(
                 "curator_ops",

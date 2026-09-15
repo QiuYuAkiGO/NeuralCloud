@@ -88,6 +88,7 @@ class InMemoryDeliveryBackend:
 
 ConsistencyBarrier = Callable[[ActionExecution], Awaitable[tuple[bool, VersionVector, str | None]]]
 CapabilityCheck = Callable[[str], bool]
+ExecutionGuard = Callable[[ActionExecution], Awaitable[tuple[bool, str | None]]]
 
 
 class ActionCoordinator:
@@ -97,10 +98,12 @@ class ActionCoordinator:
         *,
         consistency_barrier: ConsistencyBarrier | None = None,
         capability_check: CapabilityCheck | None = None,
+        execution_guard: ExecutionGuard | None = None,
     ) -> None:
         self.backend = backend or NoopActionBackend()
         self.consistency_barrier = consistency_barrier
         self.capability_check = capability_check or (lambda _capability: True)
+        self.execution_guard = execution_guard
         self._lock = asyncio.Lock()
         self._actions: dict[str, ActionExecution] = {}
         self._current_action_id: str | None = None
@@ -218,6 +221,8 @@ class ActionCoordinator:
             action = self._require(action_id)
             if action.state == ActionExecutionState.READY:
                 action = self._reserve_locked(action)
+                if action.terminal:
+                    return action
             elif not (
                 action.state == ActionExecutionState.RUNNING
                 and self._current_action_id == action_id
@@ -231,7 +236,29 @@ class ActionCoordinator:
             if not allowed:
                 return await self._finish_failed(action, reason or "consistency barrier rejected action")
             async with self._lock:
+                action = self._require(action_id)
+                if action.state != ActionExecutionState.RUNNING or self._current_action_id != action_id:
+                    return action
                 action = self._replace(action, version_vector=versions)
+
+        if self.execution_guard is not None:
+            try:
+                allowed, reason = await self.execution_guard(action)
+            except Exception:
+                return await self._finish_failed(action, "execution guard failed")
+            if allowed is not True:
+                return await self._finish_failed(action, reason or "execution guard rejected action")
+
+        # The guard may refresh a validated selector through restore(), or await
+        # while a user preempts the action. Re-read the reserved action before
+        # dispatch for every risk level, and never revive a superseded decision.
+        async with self._lock:
+            action = self._require(action_id)
+            if action.state != ActionExecutionState.RUNNING or self._current_action_id != action_id:
+                return action
+            if _utc_now() >= action.deadline:
+                self._current_action_id = None
+                return self._replace(action, state=ActionExecutionState.FAILED, error="action deadline expired")
 
         try:
             result = await self.backend.execute(action)

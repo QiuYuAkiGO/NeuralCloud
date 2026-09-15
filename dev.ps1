@@ -8,7 +8,8 @@ param(
     [string]$MistyAIPath,
     [string]$Distro = "Ubuntu-24.04",
 
-    [string]$Mode = "demo",
+    # Model backend only. Independent/debug authority is explicit in start.ps1 -Development.
+    [string]$Mode,
 
     [switch]$NonInteractive,
     [switch]$NoOpen,
@@ -37,7 +38,7 @@ function Exit-LauncherConfigurationError([string]$Message) {
 if ($Command -notin @("up", "down", "restart", "status", "doctor", "install", "logs")) {
     Exit-LauncherConfigurationError "Unknown launcher command '$Command'. Valid commands: up, down, restart, status, doctor, install, logs."
 }
-if ($Mode -notin @("demo", "live", "ollama")) {
+if ($PSBoundParameters.ContainsKey('Mode') -and $Mode -notin @("demo", "live", "ollama")) {
     Exit-LauncherConfigurationError "Unknown NeuralCloud mode '$Mode'. Valid modes: demo, live, ollama."
 }
 

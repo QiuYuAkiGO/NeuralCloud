@@ -130,7 +130,7 @@ def test_attempt_diagnostic_frame_survives_cache_invalidation(backend, monkeypat
             desktop._capture_unlocked()
 
     monkeypatch.setattr(desktop, "_agent_health", broken_health)
-    monkeypatch.setattr(desktop, "_body_runner", SimpleNamespace(run=broken_body_run))
+    monkeypatch.setattr(desktop, "_body_runner", SimpleNamespace(run=broken_body_run, close=lambda: None))
     monkeypatch.setattr(desktop, "verify_self", stop)
     result = desktop.deliver(**args)
     assert result.status == "not_sent"

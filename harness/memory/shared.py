@@ -1,0 +1,562 @@
+"""Persistent cross-channel memory with immutable sources and hard visibility.
+
+This facade does not operate QQ, call a model, update message-handled state, or
+replace any original store. Importers must supply authenticated source records.
+Read scopes and visibility grants come from trusted application configuration,
+never from model output or a display name.
+"""
+
+from __future__ import annotations
+
+from contextlib import closing
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import re
+import sqlite3
+from typing import Annotated, Literal
+import unicodedata
+
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstraints, model_validator
+
+from harness.qq.memory import QQGroupContext, QQImageAnalysis, QQPersonContext, QQVerifiedProfile, QQVisualObservation
+from harness.qq.conversation import conversation_audience, conversation_scope, private_scope_id
+
+
+NonBlank = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=2048, pattern=r"\S")]
+Identifier = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=256, pattern=r"^[A-Za-z0-9][A-Za-z0-9_.:-]*$")]
+Principal = Annotated[str, StringConstraints(strict=True, pattern=r"^(?:local:[A-Za-z0-9][A-Za-z0-9_.-]*|character:[A-Za-z0-9][A-Za-z0-9_.-]*|qq:member:[1-9][0-9]{0,19})$", max_length=256)]
+Audience = Annotated[str, StringConstraints(strict=True, pattern=r"^(?:local:[A-Za-z0-9][A-Za-z0-9_.-]*|qq:group:[1-9][0-9]{0,19}|qq:private:[1-9][0-9]{0,19}:[1-9][0-9]{0,19})$", max_length=256)]
+Channel = Literal["local_chat", "qq_group", "qq_private", "private_board"]
+Kind = Literal["local_incoming", "local_outgoing", "qq_profile", "qq_observation", "qq_delivery", "qq_segment_delivery", "board_entry"]
+Evidence = Annotated[tuple[NonBlank, ...], Field(min_length=1, max_length=128)]
+Visibility = Annotated[tuple[Audience, ...], Field(min_length=1, max_length=64)]
+
+
+def _json(value) -> str:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
+
+
+def _hash(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+class _Frozen(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+
+
+class SharedLocalEvent(_Frozen):
+    """A real local user utterance or displayed assistant utterance, not QQ."""
+
+    event_id: Identifier
+    session_id: Identifier
+    author_principal: Principal
+    role: Literal["user", "assistant"]
+    text: Annotated[str, StringConstraints(strict=True, min_length=1, max_length=32768, pattern=r"\S")]
+    occurred_at: AwareDatetime
+    evidence_refs: Evidence
+    display_name: Annotated[str, StringConstraints(strict=True, min_length=1, max_length=256)] | None = None
+    visibility: Visibility = ("local:main",)
+
+    @model_validator(mode="after")
+    def local_author(self):
+        expected = "local:" if self.role == "user" else "character:"
+        if not self.author_principal.startswith(expected):
+            raise ValueError("local role requires its own namespaced principal")
+        return self
+
+
+class SharedReadScope(_Frozen):
+    owner_id: Identifier = "misty"
+    audience: Audience
+    # None means all authorized records. Empty tuples explicitly select none.
+    channels: tuple[Channel, ...] | None = None
+    session_ids: tuple[Identifier, ...] | None = None
+    principals: tuple[Principal, ...] | None = None
+    kinds: tuple[Kind, ...] | None = None
+
+
+class SharedSource(_Frozen):
+    kind: Kind
+    original_record_id: Identifier
+    original_sha256: Annotated[str, StringConstraints(strict=True, pattern=r"^[0-9a-f]{64}$")]
+    original_json: Annotated[str, StringConstraints(strict=True, min_length=2, max_length=1048576)]
+    original_row_sha256: Annotated[str, StringConstraints(strict=True, pattern=r"^[0-9a-f]{64}$")] | None = None
+
+    @model_validator(mode="after")
+    def canonical_source(self):
+        value = json.loads(self.original_json)
+        if not isinstance(value, dict) or _json(value) != self.original_json or _hash(self.original_json) != self.original_sha256:
+            raise ValueError("original source must have a matching canonical JSON hash")
+        return self
+
+
+class SharedClaim(_Frozen):
+    kind: Literal["unverified_author_assertion"] = "unverified_author_assertion"
+    statement: str
+    supporting_quote: str
+    subject: Literal["self", "other", "account_relationship", "unspecified"]
+    subject_label: str | None = None
+
+
+class SharedMemoryRecord(_Frozen):
+    schema_version: Literal["shared-memory-record-v1"] = "shared-memory-record-v1"
+    record_id: Identifier
+    owner_id: Identifier
+    channel: Channel
+    session_id: Identifier
+    author_principal: Principal
+    display_name: str | None = None
+    kind: Kind
+    authority: Literal["speaker_utterance", "verified_profile_observation", "verified_delivery"]
+    text: str
+    occurred_at: AwareDatetime
+    stored_at: AwareDatetime
+    evidence_refs: Evidence
+    visibility: Visibility
+    source: SharedSource
+    profile_record_id: Identifier | None = None
+    claims: tuple[SharedClaim, ...] = ()
+    image_analysis: tuple[QQImageAnalysis, ...] = ()
+
+    @model_validator(mode="after")
+    def source_binding(self):
+        if self.kind != "qq_observation" and self.image_analysis:
+            raise ValueError("only QQ observations carry attached image interpretations")
+        if self.kind != self.source.kind:
+            raise ValueError("record and original source kind disagree")
+        if self.record_id != _record_id(self.owner_id, self.kind, self.source.original_record_id):
+            raise ValueError("record identifier does not bind its source")
+        original = json.loads(self.source.original_json)
+        source_id_key = "event_id" if self.kind.startswith("local_") else "record_id" if self.kind in {"qq_profile", "qq_observation"} else "receipt_id"
+        original_id = original.get("receipt", {}).get("entry_id") if self.kind == "board_entry" else original.get(source_id_key)
+        if original_id != self.source.original_record_id:
+            raise ValueError("original source identifier disagrees with source reference")
+        expected = _project_original(self.kind, original)
+        actual = self.model_dump(mode="json", include=set(expected))
+        actual["occurred_at"] = self.occurred_at.isoformat()
+        if actual != json.loads(_json(expected)):
+            raise ValueError("projection disagrees with its immutable original")
+        if self.kind.startswith("local_") and set(self.visibility) != set(original["visibility"]):
+            raise ValueError("local visibility disagrees with original event")
+        _validate_visibility(self.channel, self.session_id, self.visibility)
+        return self
+
+    def model_projection(self) -> dict:
+        """Safe data projection: original payload remains available in storage."""
+        value = self.model_dump(mode="json", exclude={"visibility", "source", "stored_at", "owner_id"})
+        value["source"] = self.source.model_dump(mode="json", exclude={"original_json"})
+        return value
+
+
+class SharedWriteResult(_Frozen):
+    created: bool
+    record: SharedMemoryRecord
+
+
+class SharedMigrationIssue(_Frozen):
+    kind: str
+    original_record_id: str | None = None
+    code: Literal["invalid_source", "invalid_database", "source_conflict", "shared_storage_unavailable"]
+
+
+class SharedMigrationSource(_Frozen):
+    kind: Kind
+    original_record_id: Identifier
+    shared_record_id: Identifier
+    original_sha256: str
+    original_row_sha256: str
+
+
+class SharedMigrationReport(_Frozen):
+    success: bool
+    selected_count: int
+    created_count: int
+    existing_count: int
+    excluded_count: int
+    counts_by_kind: dict[str, int]
+    sources: tuple[SharedMigrationSource, ...]
+    issues: tuple[SharedMigrationIssue, ...]
+    source_readonly: Literal[True] = True
+    partial_import: Literal[False] = False
+
+
+class SharedMemoryContext(_Frozen):
+    schema_version: Literal["shared-memory-context-v1"] = "shared-memory-context-v1"
+    scope: SharedReadScope
+    records: tuple[SharedMemoryRecord, ...]
+    visible_count: int
+    matched_count: int
+    omitted_count: int
+    query: str | None
+    selection: Literal["relevance_then_recent", "recent"]
+    authority: Literal["untrusted_source_attributed_memory"] = "untrusted_source_attributed_memory"
+
+    def model_payload(self, *, max_bytes: int = 16000) -> dict:
+        """Select whole records within a UTF-8 budget; never truncate quotations."""
+        if type(max_bytes) is not int or not 256 <= max_bytes <= 1048576:
+            raise ValueError("model payload budget must be an integer from 256 to 1048576")
+        payload = {
+            "schema_version": self.schema_version, "authority": self.authority,
+            "coverage": "selected_visible_records_only", "entries": [],
+            "visible_count": self.visible_count, "matched_count": self.matched_count,
+            "selected_count": 0, "omitted_count": self.matched_count,
+            "selection": self.selection,
+        }
+        if len(_json(payload).encode("utf-8")) > max_bytes:
+            raise ValueError("model payload budget cannot hold coverage metadata")
+        for record in self.records:
+            candidate = {**payload, "entries": [*payload["entries"], record.model_projection()],
+                         "selected_count": payload["selected_count"] + 1,
+                         "omitted_count": self.matched_count - payload["selected_count"] - 1}
+            if len(_json(candidate).encode("utf-8")) <= max_bytes:
+                payload = candidate
+        return payload
+
+
+class SharedMemoryConflict(ValueError):
+    """An immutable source or its visibility was supplied differently."""
+
+
+class SharedMemoryStorageError(RuntimeError):
+    """Persisted source, projection, or indexed scope is invalid."""
+
+
+def _record_id(owner_id: str, kind: str, source_id: str) -> str:
+    return "shared-memory:" + _hash(_json([owner_id, kind, source_id]))
+
+
+def _validate_visibility(channel, session, visibility):
+    if channel == "qq_group" and any(value.startswith("qq:") and value != session for value in visibility):
+        raise ValueError("QQ originals cannot be exposed to another QQ group")
+    if channel == "private_board" and set(visibility) != {"local:main"}:
+        raise ValueError("private board originals are visible only to local:main")
+    if channel == "qq_private" and (not session.startswith("qq:private:")
+            or any(value not in {"local:main", session} for value in visibility)):
+        raise ValueError("QQ private originals are visible only to their private peer and local:main")
+
+
+def _qq_projection_scope(group_id: str) -> dict:
+    scope = conversation_scope(group_id)
+    return {"channel": "qq_private" if scope["kind"] == "private" else "qq_group",
+            "session_id": conversation_audience(group_id)}
+
+
+def _project_original(kind: Kind, value: dict) -> dict:
+    """Derive every model-visible statement/identity from a typed original."""
+    if kind == "board_entry":
+        from harness.embodiment.board_contracts import BoardEntry
+        entry = BoardEntry.model_validate(value)
+        receipt = entry.receipt
+        if receipt.scope.owner_id != "misty" or _hash(entry.text) != receipt.text_sha256:
+            raise ValueError("board original requires its owner's matching text digest")
+        return dict(channel="private_board", session_id="board:" + _hash(_json(receipt.scope.model_dump(mode="json"))),
+                    author_principal="character:misty", display_name="Misty", kind=kind,
+                    authority="verified_delivery", text=entry.text, occurred_at=receipt.created_at.isoformat(),
+                    evidence_refs=[receipt.evidence_ref], profile_record_id=None, claims=[])
+    if kind.startswith("local_"):
+        event = SharedLocalEvent.model_validate(value)
+        if kind != ("local_incoming" if event.role == "user" else "local_outgoing"):
+            raise ValueError("local source role disagrees with source kind")
+        return dict(channel="local_chat", session_id=event.session_id, author_principal=event.author_principal,
+                    display_name=event.display_name, kind=kind, authority="speaker_utterance", text=event.text,
+                    occurred_at=event.occurred_at.isoformat(), evidence_refs=list(dict.fromkeys(event.evidence_refs)),
+                    profile_record_id=None, claims=[])
+    if kind == "qq_profile":
+        item = QQVerifiedProfile.model_validate(value)
+        return dict(**_qq_projection_scope(item.group_id), author_principal=f"qq:member:{item.member_id}",
+                    display_name=item.display_name, kind=kind, authority="verified_profile_observation",
+                    text=_json({"observed_display_name": item.display_name, "display_name_source": item.display_name_source}),
+                    occurred_at=item.observed_at.isoformat(), evidence_refs=list(dict.fromkeys([*item.group_evidence, *item.member_evidence])),
+                    profile_record_id=item.record_id, claims=[])
+    if kind == "qq_observation":
+        item = QQVisualObservation.model_validate(value)
+        return dict(**_qq_projection_scope(item.group_id), author_principal=f"qq:member:{item.member_id}",
+                    display_name=None, kind=kind, authority="speaker_utterance", text=item.text,
+                    occurred_at=item.observed_at.isoformat(), evidence_refs=list(dict.fromkeys([*item.evidence, *item.attribution_evidence])),
+                    profile_record_id=item.profile_record_id, claims=[claim.model_dump(mode="json") for claim in item.claims],
+                    image_analysis=[analysis.model_dump(mode="json") for analysis in item.image_analysis])
+    from harness.qq.decision import QQDeliveryReceipt, QQSegmentDeliveryReceipt
+    model = QQDeliveryReceipt if kind == "qq_delivery" else QQSegmentDeliveryReceipt
+    item = model.model_validate(value)
+    return dict(**_qq_projection_scope(item.group_id), author_principal=f"qq:member:{item.self_member_id}",
+                display_name=None, kind=kind, authority="verified_delivery", text=item.delivered_text,
+                occurred_at=item.delivered_at.isoformat(), evidence_refs=list(dict.fromkeys(item.evidence_refs)),
+                profile_record_id=None, claims=[])
+
+
+class SharedMemoryStore:
+    def __init__(self, path: Path | str, *, owner_id: str = "misty"):
+        if str(path) == ":memory:":
+            raise ValueError("shared memory requires a persistent database path")
+        self.path = Path(path)
+        self.owner_id = SharedReadScope(owner_id=owner_id, audience="local:main").owner_id
+
+    def _connect(self, *, write: bool) -> sqlite3.Connection:
+        if write:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            connection = sqlite3.connect(self.path, timeout=5)
+        else:
+            connection = sqlite3.connect(self.path.absolute().as_uri() + "?mode=ro", uri=True, timeout=5)
+        connection.row_factory = sqlite3.Row
+        if write:
+            connection.execute("""CREATE TABLE IF NOT EXISTS shared_memory_entries (
+                record_id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, source_kind TEXT NOT NULL,
+                source_id TEXT NOT NULL, source_sha256 TEXT NOT NULL, channel TEXT NOT NULL,
+                session_id TEXT NOT NULL, author_principal TEXT NOT NULL, record_json TEXT NOT NULL,
+                UNIQUE(owner_id, source_kind, source_id))""")
+            connection.commit()
+        else:
+            connection.execute("PRAGMA query_only=ON")
+        return connection
+
+    def _prepare(self, kind: Kind, source_id: str, original: BaseModel, visibility: tuple[str, ...], *, original_row_json: str | None = None) -> SharedMemoryRecord:
+        # Database migration retains the original field set, including the
+        # absence of newer DTO defaults. The exact row bytes get a second hash.
+        raw = _json(json.loads(original_row_json)) if original_row_json is not None else _json(original.model_dump(mode="json"))
+        projection = _project_original(kind, json.loads(raw))
+        source = SharedSource(kind=kind, original_record_id=source_id, original_sha256=_hash(raw), original_json=raw,
+                              original_row_sha256=_hash(original_row_json) if original_row_json is not None else None)
+        return SharedMemoryRecord(record_id=_record_id(self.owner_id, kind, source_id), owner_id=self.owner_id,
+                                  stored_at=_now(), source=source, visibility=tuple(sorted(set(visibility))), **projection)
+
+    @staticmethod
+    def _decode(row) -> SharedMemoryRecord:
+        try:
+            record = SharedMemoryRecord.model_validate_json(row["record_json"])
+            expected = (record.record_id, record.owner_id, record.kind, record.source.original_record_id,
+                        record.source.original_sha256, record.channel, record.session_id, record.author_principal)
+            actual = tuple(row[key] for key in ("record_id", "owner_id", "source_kind", "source_id", "source_sha256", "channel", "session_id", "author_principal"))
+            if expected != actual:
+                raise ValueError("index and source scope disagree")
+            return record
+        except (ValueError, TypeError, KeyError) as exc:
+            raise SharedMemoryStorageError("persisted shared memory binding is invalid") from exc
+
+    def _write(self, records: list[SharedMemoryRecord]) -> tuple[SharedWriteResult, ...]:
+        results = []
+        with closing(self._connect(write=True)) as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            for record in records:
+                row = connection.execute("SELECT * FROM shared_memory_entries WHERE record_id=?", (record.record_id,)).fetchone()
+                if row is not None:
+                    previous = self._decode(row)
+                    if previous.model_dump(exclude={"stored_at"}) != record.model_dump(exclude={"stored_at"}):
+                        raise SharedMemoryConflict("source identity or visibility already has different immutable content")
+                    results.append(SharedWriteResult(created=False, record=previous))
+                else:
+                    connection.execute("INSERT INTO shared_memory_entries VALUES (?,?,?,?,?,?,?,?,?)",
+                                       (record.record_id, record.owner_id, record.kind, record.source.original_record_id,
+                                        record.source.original_sha256, record.channel, record.session_id, record.author_principal, record.model_dump_json()))
+                    results.append(SharedWriteResult(created=True, record=record))
+        return tuple(results)
+
+    def record_local(self, event: SharedLocalEvent) -> SharedWriteResult:
+        event = SharedLocalEvent.model_validate_json(event.model_dump_json())
+        kind = "local_incoming" if event.role == "user" else "local_outgoing"
+        return self._write([self._prepare(kind, event.event_id, event, event.visibility)])[0]
+
+    def import_board_entry(self, entry) -> SharedWriteResult:
+        """Project a body-read verified receipt; callers must verify its source first."""
+        from harness.embodiment.board_contracts import BoardEntry
+        entry = BoardEntry.model_validate_json(entry.model_dump_json())
+        return self._write([self._prepare("board_entry", entry.receipt.entry_id, entry, ("local:main",))])[0]
+
+    def import_qq_context(self, context: QQGroupContext | QQPersonContext, *, visibility: tuple[str, ...] | None = None) -> tuple[SharedWriteResult, ...]:
+        """Import a detached verified snapshot atomically, preserving all originals."""
+        model = QQGroupContext if isinstance(context, QQGroupContext) else QQPersonContext
+        context = model.model_validate_json(context.model_dump_json())
+        people = context.members if isinstance(context, QQGroupContext) else [context]
+        if isinstance(context, QQGroupContext) and set(context.participants) != {person.member_id for person in people}:
+            raise ValueError("QQ group participants disagree with member contexts")
+        records = []
+        for person in people:
+            if person.group_id != context.group_id:
+                raise ValueError("QQ member context belongs to another group")
+            visible = visibility if visibility is not None else ("local:main", conversation_audience(person.group_id))
+            profiles = {profile.record_id: profile for profile in person.profiles}
+            if len(profiles) != len(person.profiles):
+                raise ValueError("duplicate QQ profile identity")
+            for profile in person.profiles:
+                if (profile.group_id, profile.member_id) != (person.group_id, person.member_id):
+                    raise ValueError("QQ profile identity is outside its context")
+                records.append(self._prepare("qq_profile", profile.record_id, profile, visible))
+            for observation in person.observations:
+                if ((observation.group_id, observation.member_id) != (person.group_id, person.member_id)
+                        or observation.profile_record_id not in profiles
+                        or profiles[observation.profile_record_id].verification != observation.author_attribution):
+                    raise ValueError("QQ observation requires its exact original profile snapshot")
+                records.append(self._prepare("qq_observation", observation.record_id, observation, visible))
+        return self._write(records)
+
+    def import_qq_delivery(self, receipt, *, visibility: tuple[str, ...] | None = None) -> SharedWriteResult:
+        from harness.qq.decision import QQDeliveryReceipt, QQSegmentDeliveryReceipt
+        if isinstance(receipt, QQSegmentDeliveryReceipt):
+            model, kind = QQSegmentDeliveryReceipt, "qq_segment_delivery"
+        elif isinstance(receipt, QQDeliveryReceipt):
+            model, kind = QQDeliveryReceipt, "qq_delivery"
+        else:
+            raise ValueError("a typed verified QQ receipt is required")
+        receipt = model.model_validate_json(receipt.model_dump_json())
+        visible = visibility if visibility is not None else ("local:main", conversation_audience(receipt.group_id))
+        return self._write([self._prepare(kind, receipt.receipt_id, receipt, visible)])[0]
+
+    def import_qq_database(self, path: Path | str, *, allowed_group_ids: tuple[str, ...] | list[str],
+                           self_member_id: str,
+                           allowed_private_peer_ids: tuple[str, ...] | list[str] = ()) -> SharedMigrationReport:
+        """Mirror ALL selected historical originals, not a recent query window.
+
+        The source is one read-only SQLite snapshot. Invalid selected rows abort
+        the entire import; excluded groups/accounts and exact source hashes are
+        reported separately. Nothing is submitted as a new QQ observation.
+        """
+        from harness.qq.decision import (
+            QQDeliveryReceipt, QQSegmentDeliveryReceipt, _check_aggregate, _check_sources,
+            _checked_receipt, _frozen_decision, _read_segment_receipts,
+        )
+        if (not isinstance(allowed_group_ids, (tuple, list))
+                or len(allowed_group_ids) > 100 or any(not isinstance(value, str) or not re.fullmatch(r"[1-9][0-9]{0,19}", value) for value in allowed_group_ids)
+                or not isinstance(self_member_id, str) or not re.fullmatch(r"[1-9][0-9]{0,19}", self_member_id)):
+            raise ValueError("explicit numeric group and self-account scopes are required")
+        if (not isinstance(allowed_private_peer_ids, (tuple, list)) or len(allowed_private_peer_ids) > 100
+                or any(not isinstance(value, str) or not re.fullmatch(r"[1-9][0-9]{0,19}", value)
+                       or value == self_member_id for value in allowed_private_peer_ids)
+                or not allowed_group_ids and not allowed_private_peer_ids):
+            raise ValueError("explicit numeric group or private peer scopes are required")
+        source_path = Path(path)
+        if source_path.absolute() == self.path.absolute() or (source_path.exists() and self.path.exists() and source_path.samefile(self.path)):
+            raise ValueError("the mirror must not write into the original QQ database")
+        kinds = {"qq_visual_profiles": "qq_profile", "qq_visual_observations": "qq_observation",
+                 "qq_reply_deliveries": "qq_delivery", "qq_reply_segment_deliveries": "qq_segment_delivery"}
+        records, issues, excluded = [], [], 0
+        counts = {kind: 0 for kind in kinds.values()}
+        allowed = {*allowed_group_ids,
+                   *(private_scope_id(self_member_id, peer) for peer in allowed_private_peer_ids)}
+        try:
+            if not source_path.is_file() or source_path.is_symlink():
+                raise ValueError("original database is unavailable")
+            with closing(sqlite3.connect(source_path.absolute().as_uri()+"?mode=ro", uri=True, timeout=5)) as connection:
+                connection.row_factory = sqlite3.Row
+                connection.execute("PRAGMA query_only=ON")
+                connection.execute("BEGIN")
+                tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+                if not {"qq_visual_profiles", "qq_visual_observations"}.issubset(tables):
+                    raise ValueError("original QQ tables are missing")
+                profiles = {}
+                for table, kind in kinds.items():
+                    if table not in tables:
+                        continue
+                    for row in connection.execute(f"SELECT * FROM {table}"):
+                        source_id = row["record_id" if kind in {"qq_profile", "qq_observation"} else "receipt_id"]
+                        if row["group_id"] not in allowed:
+                            excluded += 1
+                            continue
+                        counts[kind] += 1
+                        try:
+                            if kind == "qq_profile":
+                                item = QQVerifiedProfile.model_validate_json(row["record_json"])
+                                if (item.record_id, item.group_id, item.member_id, item.capture_id, item.observed_at) != (
+                                    row["record_id"], row["group_id"], row["member_id"], row["capture_id"], datetime.fromisoformat(row["observed_at"])):
+                                    raise ValueError("profile index mismatch")
+                                profiles[item.record_id] = item
+                            elif kind == "qq_observation":
+                                item = QQVisualObservation.model_validate_json(row["record_json"])
+                                if (item.record_id, item.group_id, item.member_id, item.profile_record_id, item.capture_id, item.capture_item_id, item.observed_at) != (
+                                    row["record_id"], row["group_id"], row["member_id"], row["profile_record_id"], row["capture_id"], row["capture_item_id"], datetime.fromisoformat(row["observed_at"])):
+                                    raise ValueError("observation index mismatch")
+                                profile = profiles.get(item.profile_record_id)
+                                if (profile is None or (profile.group_id, profile.member_id) != (item.group_id, item.member_id)
+                                        or profile.verification != item.author_attribution):
+                                    raise ValueError("observation profile mismatch")
+                            else:
+                                model = QQDeliveryReceipt if kind == "qq_delivery" else QQSegmentDeliveryReceipt
+                                item = _checked_receipt(row, model)
+                                if item.self_member_id != self_member_id:
+                                    excluded += 1
+                                    counts[kind] -= 1
+                                    continue
+                                frozen = _frozen_decision(connection, item.group_id, item.decision_id) if item.decision_id is not None else None
+                                _check_sources(connection, group_id=item.group_id, sources=item.source_record_ids, decision=frozen)
+                                if frozen is not None and frozen.self_member_id not in {None, self_member_id}:
+                                    raise ValueError("receipt self identity mismatch")
+                                if kind == "qq_segment_delivery":
+                                    prefix = _read_segment_receipts(connection, group_id=item.group_id, decision=frozen)
+                                    if item not in prefix:
+                                        raise ValueError("segment receipt is outside the validated prefix")
+                                elif item.delivered_segments:
+                                    _check_aggregate(item, _read_segment_receipts(connection, group_id=item.group_id, decision=frozen), frozen)
+                                elif frozen is not None and item.delivered_text != frozen.reply:
+                                    raise ValueError("receipt does not match frozen reply")
+                            records.append(self._prepare(kind, source_id, item,
+                                ("local:main", conversation_audience(item.group_id)), original_row_json=row["record_json"]))
+                        except (ValueError, TypeError, KeyError, IndexError, AttributeError):
+                            issues.append(SharedMigrationIssue(kind=kind, original_record_id=source_id, code="invalid_source"))
+        except (sqlite3.Error, OSError, ValueError, TypeError, KeyError, IndexError):
+            issues.append(SharedMigrationIssue(kind="database", code="invalid_database"))
+        writes = ()
+        if not issues and records:
+            try:
+                writes = self._write(records)
+            except SharedMemoryConflict:
+                issues.append(SharedMigrationIssue(kind="database", code="source_conflict"))
+            except (sqlite3.Error, OSError, SharedMemoryStorageError):
+                issues.append(SharedMigrationIssue(kind="database", code="shared_storage_unavailable"))
+        return SharedMigrationReport(success=not issues, selected_count=sum(counts.values()),
+            created_count=sum(item.created for item in writes), existing_count=sum(not item.created for item in writes),
+            excluded_count=excluded, counts_by_kind=counts,
+            sources=tuple(SharedMigrationSource(kind=item.kind, original_record_id=item.source.original_record_id,
+                shared_record_id=item.record_id, original_sha256=item.source.original_sha256,
+                original_row_sha256=item.source.original_row_sha256) for item in records), issues=tuple(issues))
+
+    def query(self, scope: SharedReadScope, *, text: str | None = None, limit: int = 20) -> SharedMemoryContext:
+        scope = SharedReadScope.model_validate_json(scope.model_dump_json())
+        if type(limit) is not int or not 1 <= limit <= 100:
+            raise ValueError("query limit must be an integer from 1 to 100")
+        if text is not None and (not isinstance(text, str) or not text.strip() or len(text) > 512):
+            raise ValueError("query text must be nonblank and at most 512 characters")
+        if scope.owner_id != self.owner_id:
+            raise ValueError("read scope belongs to another owner")
+        records, visible_count, matched_count = [], 0, 0
+        normalized = unicodedata.normalize("NFKC", text).casefold() if text is not None else None
+        terms_list = []
+        for term in re.findall(r"[\w]+", normalized or ""):
+            terms_list.append(term)
+            # Chinese has no whitespace boundaries. Deterministic bigrams
+            # make a conversational question retrieve its topic without an
+            # extra model call or weakening the author/audience filter.
+            for run in re.findall(r"[\u3400-\u9fff]{3,}", term):
+                terms_list.extend(run[index:index+2] for index in range(len(run)-1))
+        terms = tuple(dict.fromkeys(terms_list))
+        if normalized and not terms:
+            terms = (normalized,)
+        if self.path.is_file():
+            with closing(self._connect(write=False)) as connection, connection:
+                connection.execute("BEGIN")
+                exists = connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='shared_memory_entries'").fetchone()
+                rows = connection.execute("SELECT * FROM shared_memory_entries WHERE owner_id=?", (self.owner_id,)) if exists else ()
+                for row in rows:
+                    record = self._decode(row)
+                    if (scope.audience not in record.visibility
+                            or scope.channels is not None and record.channel not in scope.channels
+                            or scope.session_ids is not None and record.session_id not in scope.session_ids
+                            or scope.principals is not None and record.author_principal not in scope.principals
+                            or scope.kinds is not None and record.kind not in scope.kinds):
+                        continue
+                    visible_count += 1
+                    searchable = unicodedata.normalize("NFKC", record.text).casefold()
+                    score = sum(term in searchable for term in terms)
+                    if terms and not score:
+                        continue
+                    matched_count += 1
+                    records.append((score, record.occurred_at, record.stored_at, record.record_id, record))
+                    records.sort(key=lambda item: item[:4], reverse=True)
+                    del records[limit:]
+        selected = tuple(item[-1] for item in records)
+        return SharedMemoryContext(scope=scope, records=selected, visible_count=visible_count,
+                                   matched_count=matched_count, omitted_count=matched_count-len(selected),
+                                   query=text, selection="relevance_then_recent" if text is not None else "recent")

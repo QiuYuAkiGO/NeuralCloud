@@ -206,7 +206,7 @@ def api_client(tmp_path):
 
     from gui.server import create_app
 
-    with TestClient(create_app(config_path=tmp_path / "gui_settings.json")) as client:
+    with TestClient(create_app(development=True, control_mode="development_debug", config_path=tmp_path / "gui_settings.json")) as client:
         yield client
 
 
@@ -217,7 +217,7 @@ def test_debug_persona_and_chat_write_through_restart(tmp_path) -> None:
     from gui.server import create_app
 
     path = tmp_path / "gui_settings.json"
-    with TestClient(create_app(config_path=path)) as client:
+    with TestClient(create_app(development=True, control_mode="development_debug", config_path=path)) as client:
         patched = client.post("/api/debug/persona", json={"core_traits": ["傲慢", "debug"]})
         assert patched.status_code == 200
         chat = client.post("/api/chat", json={"text": "早上好。"})
@@ -229,7 +229,7 @@ def test_debug_persona_and_chat_write_through_restart(tmp_path) -> None:
     assert working["persona"]["identity"]["core_traits"] == ["傲慢", "debug"]
     assert len(working["transcript"]) >= 2
 
-    with TestClient(create_app(config_path=path)) as client:
+    with TestClient(create_app(development=True, control_mode="development_debug", config_path=path)) as client:
         body = client.get("/api/status").json()
         assert body["persona"]["identity"]["core_traits"] == ["傲慢", "debug"]
         assert body["relationship"]["closeness"] == pytest.approx(0.91)

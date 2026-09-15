@@ -65,6 +65,7 @@ class Desktop:
 
 @pytest.fixture
 def setup(tmp_path, monkeypatch):
+    monkeypatch.setenv("NC_CONTROL_MODE", "development_debug")
     monkeypatch.setattr("harness.qq.watcher.now", lambda: NOW + timedelta(seconds=3))
     memory = tmp_path / "memory.sqlite3"
     QQVisualMemoryStore(memory).record_profile(QQVerifiedProfileInput(
@@ -77,7 +78,7 @@ def setup(tmp_path, monkeypatch):
     session = tmp_path / "session.json"
     session.write_text(json.dumps({"memory_db": str(memory), "token_file": str(token),
                                    "allowed_group_ids": ["10001"], "self_member_id": "30001"}))
-    settings = WatcherSettings(session_config_path=session, state_db=tmp_path / "watch.sqlite3",
+    settings = WatcherSettings(development_mode=True, session_config_path=session, state_db=tmp_path / "watch.sqlite3",
                                status_file=tmp_path / "status.json", control_file=tmp_path / "control.json",
                                body_token_file=token, agent_token_file=token, group_id="10001", self_member_id="30001",
                                automatic_send=True)

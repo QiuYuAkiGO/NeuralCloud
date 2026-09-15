@@ -272,6 +272,48 @@ def test_optional_observation_defaults_and_explicit_trace_match_runtime(watcher_
     assert Path(result["TraceFile"]) == trace and result["AccessibilityEnabled"] is True
 
 
+def test_roster_launcher_preserves_legacy_and_observation_only_groups(watcher_case):
+    invoke, _, config, values = watcher_case
+    result = invoke("Read-QQWConfiguration $script:Config | ConvertTo-Json -Depth 5 -Compress")
+    assert result["GroupRoster"] == [{"group_id": "10001", "label": "", "observe": True, "send": True}]
+    values["group_roster"] = [{"group_id": "10001", "send": True}, {"group_id": "10002", "label": "Read only"}]
+    values["group_observation_seconds"] = 60
+    config.write_text(json.dumps(values), encoding="utf-8")
+    result = invoke("Read-QQWConfiguration $script:Config | ConvertTo-Json -Depth 5 -Compress")
+    assert result["GroupRoster"][1] == {"group_id": "10002", "label": "Read only", "observe": True, "send": False}
+
+
+@pytest.mark.parametrize("field,value", [
+    ("group_roster", []), ("group_roster", {}), ("group_roster", [{"group_id": "10002"}]),
+    ("group_roster", [{"group_id": "10001", "observe": False}]),
+    ("group_roster", [{"group_id": "10001"}, {"group_id": "10001"}]),
+    ("group_roster", [{"group_id": "10001"}, {"group_id": "10002", "send": True}]),
+    ("group_roster", [{"group_id": "10001", "send": 1}]),
+    ("group_roster", [{"group_id": "10001", "label": None}]),
+    ("group_roster", [{"group_id": "10001", "label": "x" * 129}]),
+    ("group_roster", [{"group_id": "10001", "label": "text\nmessage"}]),
+    ("group_roster", [{"group_id": "10001", "extra": True}]),
+    ("group_roster", [{"group_id": str(10001 + i)} for i in range(17)]),
+    ("group_observation_seconds", 59), ("group_observation_seconds", 3601),
+    ("group_observation_seconds", "300"), ("group_observation_seconds", True),
+])
+def test_roster_launcher_rejects_invalid_configuration_before_probe(watcher_case, field, value):
+    invoke, _, config, values = watcher_case
+    values[field] = value
+    config.write_text(json.dumps(values), encoding="utf-8")
+    result = invoke("@{result=(Invoke-QQWatcherStart $script:Config); probes=$script:Probes; starts=$script:Starts} | ConvertTo-Json -Compress")
+    assert result["result"]["exit_code"] == 20
+    assert result["probes"] == result["starts"] == 0
+
+
+def test_roster_launcher_rejects_send_when_globally_disabled(watcher_case):
+    invoke, _, config, values = watcher_case
+    values.update(automatic_send=False, group_roster=[{"group_id": "10001", "send": True}])
+    config.write_text(json.dumps(values), encoding="utf-8")
+    result = invoke("(Invoke-QQWatcherStart $script:Config) | ConvertTo-Json -Compress")
+    assert result["exit_code"] == 20
+
+
 @pytest.mark.parametrize("target", ["body_token_file", "agent_token_file", "state_db", "status_file", "control_file", "session_config_path"])
 def test_trace_never_overlaps_tokens_configuration_or_outputs(watcher_case, target):
     invoke, _, config, values = watcher_case

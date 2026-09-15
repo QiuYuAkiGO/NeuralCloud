@@ -9,6 +9,7 @@ The caller must independently verify the configured group and every author.
 from __future__ import annotations
 
 from contextlib import closing, contextmanager
+from collections.abc import Sequence
 from datetime import datetime, timedelta, timezone
 import hashlib
 import json
@@ -20,7 +21,9 @@ from uuid import uuid4
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, TypeAdapter, field_validator
 from pydantic import model_validator
 
+from harness.embodiment.capabilities import QQ_COMMUNICATION_READ, QQ_COMMUNICATION_SEND
 from harness.qq.memory import QQID
+from harness.qq.idle import QQIdleIntent, validated_idle_intent
 from harness.qq.segment_ledger import SegmentLedgerMixin
 
 
@@ -74,10 +77,12 @@ class WatchEvent(_Model):
     event_id: str
     group_id: QQID
     run_id: str
-    screen_id: str
+    origin: Literal["message", "homeostasis"] = "message"
+    idle_intent: QQIdleIntent | None = None
+    screen_id: str | None = None
     stream_revision: int
-    item_index: int
-    item: VisibleItem
+    item_index: int | None = None
+    item: VisibleItem | None = None
     observed_at: AwareDatetime
     state: EventState
     source_record_id: str | None = None
@@ -96,7 +101,39 @@ class WatchEvent(_Model):
             object.__setattr__(self, "first_seen_at", self.observed_at)
         if self.first_seen_at > self.observed_at:
             raise ValueError("first_seen_at cannot be later than observation time")
+        if self.origin == "message":
+            if self.screen_id is None or self.item_index is None or self.item is None or self.idle_intent is not None:
+                raise ValueError("message events require the original visible item")
+        else:
+            intent = validated_idle_intent(self.idle_intent)
+            if (any(value is not None for value in (self.screen_id, self.item_index, self.item, self.source_record_id))
+                    or (self.group_id, self.run_id) != (intent.group_id, intent.run_id)
+                    or self.first_seen_at != intent.created_at or self.observed_at != intent.created_at):
+                raise ValueError("homeostasis events cannot impersonate incoming observations")
+            object.__setattr__(self, "idle_intent", intent)
         return self
+
+
+def address_sources_for_event(event: WatchEvent) -> list[str]:
+    """Empty attribution is permitted only for a fully typed internal intent."""
+    event = WatchEvent.model_validate(event.model_dump(mode="python"))
+    if event.origin == "homeostasis":
+        return []
+    if event.source_record_id is None:
+        raise WatchLedgerError("the original message source must be bound")
+    return [event.source_record_id]
+
+
+def _check_idle_proof(event: WatchEvent, proof) -> None:
+    if event.origin != "homeostasis":
+        return
+    intent = validated_idle_intent(event.idle_intent)
+    if (proof.source_record_ids or proof.group_id != intent.group_id
+            or proof.self_member_id != intent.self_member_id
+            or proof.body_instance_id != intent.body_instance_id
+            or proof.environment_revision != intent.environment_revision
+            or proof.window_id != intent.window_id):
+        raise WatchLedgerError("idle proof must preserve the original body, window and empty attribution")
 
 
 class ObservationBatch(_Model):
@@ -320,9 +357,13 @@ class WatchLedger(SegmentLedgerMixin):
     without resolving it; no automatic path clears an uncertain send.
     """
 
-    def __init__(self, path: Path | str, *, group_id: str):
+    def __init__(self, path: Path | str, *, group_id: str, allowed_read_group_ids: Sequence[str] | None = None):
         self.path = Path(path)
         self.group_id = TypeAdapter(QQID).validate_python(group_id)
+        if isinstance(allowed_read_group_ids, (str, bytes)):
+            raise WatchLedgerError("capability read scopes must be a group list")
+        self.allowed_read_group_ids = frozenset(TypeAdapter(list[QQID]).validate_python(
+            list(allowed_read_group_ids) if allowed_read_group_ids is not None else [self.group_id]))
         self.run_id: str | None = None
         if not self.path.parent.is_dir():
             raise WatchLedgerError("the existing private database directory is required")
@@ -343,6 +384,14 @@ class WatchLedger(SegmentLedgerMixin):
                 CREATE TABLE IF NOT EXISTS qq_watch_events (
                     event_id TEXT PRIMARY KEY, run_id TEXT NOT NULL, group_id TEXT NOT NULL,
                     state TEXT NOT NULL, record_json TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS qq_watch_idle_opportunities (
+                    intent_id TEXT PRIMARY KEY, group_id TEXT NOT NULL, run_id TEXT NOT NULL,
+                    episode_signature TEXT NOT NULL, registered_at TEXT NOT NULL, record_json TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS qq_watch_capability_owner (
+                    singleton INTEGER PRIMARY KEY CHECK(singleton=1), record_json TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS qq_watch_capability_claims (
+                    opportunity_id TEXT PRIMARY KEY, run_id TEXT NOT NULL, request_json TEXT NOT NULL,
+                    event_id TEXT, status TEXT NOT NULL, result_json TEXT, acknowledged INTEGER NOT NULL DEFAULT 0);
                 CREATE TABLE IF NOT EXISTS qq_watch_sends (
                     reservation_id TEXT PRIMARY KEY, decision_id TEXT UNIQUE NOT NULL,
                     event_id TEXT UNIQUE NOT NULL, group_id TEXT NOT NULL,
@@ -405,6 +454,127 @@ class WatchLedger(SegmentLedgerMixin):
         if row is None:
             raise WatchLedgerError("unknown send reservation in this group")
         return SendReservation.model_validate_json(row[0])
+
+    def next_idle_opportunity_at(self, *, minimum_interval_seconds: float = 1800) -> datetime | None:
+        """Read the durable global opportunity boundary without GUI work.
+
+        This advisory lookup cannot reserve an opportunity. Registration still
+        checks the same boundary atomically, including after process restart.
+        """
+        if (isinstance(minimum_interval_seconds, bool) or not isinstance(minimum_interval_seconds, (int, float))
+                or not 0 <= minimum_interval_seconds <= 86400):
+            raise WatchLedgerError("idle opportunity interval must be finite and within one day")
+        with closing(sqlite3.connect(self.path.absolute().as_uri() + "?mode=ro", uri=True, timeout=3)) as connection:
+            connection.execute("PRAGMA query_only=ON")
+            row = connection.execute("SELECT registered_at FROM qq_watch_idle_opportunities WHERE group_id=? ORDER BY rowid DESC LIMIT 1",
+                                     (self.group_id,)).fetchone()
+        return None if row is None else datetime.fromisoformat(row[0]) + timedelta(seconds=minimum_interval_seconds)
+
+    def capability_owner(self):
+        with closing(self._connect()) as db:
+            row = db.execute("SELECT record_json FROM qq_watch_capability_owner WHERE singleton=1").fetchone()
+        return json.loads(row[0]) if row else None
+
+    def set_capability_owner(self, *, owner: str, generation: int):
+        if owner not in {"legacy", "shared", "off"} or type(generation) is not int or generation < 0:
+            raise WatchLedgerError("invalid capability owner")
+        with self._transaction() as (db, _):
+            db.execute("INSERT OR REPLACE INTO qq_watch_capability_owner VALUES(1,?)",
+                (json.dumps({"owner": owner, "generation": generation}),))
+
+    def register_capability_claim(self, request: dict):
+        group_id = request.get("scope", {}).get("group_id")
+        capability = request.get("capability_id")
+        allowed = (capability == QQ_COMMUNICATION_READ and group_id in self.allowed_read_group_ids
+            or capability == QQ_COMMUNICATION_SEND and group_id == self.group_id)
+        if request.get("run_id") != self.run_id or not allowed:
+            raise WatchLedgerError("capability claim scope mismatch")
+        encoded = json.dumps(request, sort_keys=True, separators=(",", ":"))
+        with self._transaction() as (db, _):
+            old = db.execute("SELECT request_json FROM qq_watch_capability_claims WHERE opportunity_id=?",
+                (request["opportunity_id"],)).fetchone()
+            if old and old[0] != encoded:
+                raise WatchLedgerError("capability opportunity cannot be rebound")
+            db.execute("INSERT OR IGNORE INTO qq_watch_capability_claims(opportunity_id,run_id,request_json,status) VALUES(?,?,?,'claimed')",
+                (request["opportunity_id"], self.run_id, encoded))
+
+    def capability_claims(self):
+        with closing(self._connect()) as db:
+            rows = db.execute("SELECT * FROM qq_watch_capability_claims WHERE acknowledged=0 ORDER BY rowid LIMIT 32").fetchall()
+        return [{**json.loads(row["request_json"]), "local_status": row["status"], "event_id": row["event_id"]} for row in rows]
+
+    def finish_capability_claim(self, opportunity_id, *, status: str, result: dict | None = None):
+        if status not in {"completed", "rejected", "expired", "failed", "superseded", "wait"}:
+            raise WatchLedgerError("invalid capability terminal state")
+        with self._transaction() as (db, _):
+            db.execute("UPDATE qq_watch_capability_claims SET status=?,result_json=? WHERE opportunity_id=? AND run_id=? AND status='claimed'",
+                (status, json.dumps(result) if result is not None else None, opportunity_id, self.run_id))
+
+    def finish_capability_ack(self, opportunity_id):
+        with self._transaction() as (db, _):
+            db.execute("UPDATE qq_watch_capability_claims SET acknowledged=1 WHERE opportunity_id=?", (opportunity_id,))
+
+    def expire_unstarted_capability_claims(self, *, now):
+        with self._transaction() as (db, _):
+            for row in db.execute("SELECT * FROM qq_watch_capability_claims WHERE status='claimed' AND event_id IS NULL").fetchall():
+                request = json.loads(row["request_json"])
+                if row["run_id"] != self.run_id or now >= datetime.fromisoformat(request["deadline_at"]):
+                    db.execute("UPDATE qq_watch_capability_claims SET status='expired' WHERE opportunity_id=?", (row["opportunity_id"],))
+
+    def register_idle_intent(
+        self, intent: QQIdleIntent, *, self_member_id: str, body_instance_id: str,
+        environment_revision: int, window_id: str, context_signature: str,
+        minimum_interval_seconds: float = 1800, now: datetime | None = None,
+    ) -> WatchEvent | None:
+        """Consume one durable opportunity, including subsequent wait/failure.
+
+        A new intent in the same episode is possible after the global interval.
+        Reusing an intent ID never creates work, including after a restart.
+        """
+        try:
+            intent = validated_idle_intent(intent)
+        except (ValueError, TypeError):
+            raise WatchLedgerError("a valid typed idle intent is required") from None
+        moment = _now(now)
+        if (isinstance(minimum_interval_seconds, bool) or not isinstance(minimum_interval_seconds, (int, float))
+                or not 0 <= minimum_interval_seconds <= 86400):
+            raise WatchLedgerError("idle opportunity interval must be finite and within one day")
+        expected = (self.group_id, self.run_id, self_member_id, body_instance_id, environment_revision, window_id, context_signature)
+        actual = (intent.group_id, intent.run_id, intent.self_member_id, intent.body_instance_id,
+                  intent.environment_revision, intent.window_id, intent.context_signature)
+        if actual != expected or type(environment_revision) is not int:
+            raise WatchLedgerError("idle intent does not match the active scope")
+        with self._transaction() as (connection, state):
+            existing = connection.execute("SELECT record_json FROM qq_watch_idle_opportunities WHERE intent_id=?", (intent.intent_id,)).fetchone()
+            if existing is not None:
+                if QQIdleIntent.model_validate_json(existing[0]) != intent:
+                    raise WatchLedgerError("an idle intent ID cannot be rebound")
+                return None
+            if state["baseline_required"]:
+                raise WatchLedgerError("idle requires a completed current-run baseline")
+            if not intent.created_at - timedelta(seconds=2) <= moment < intent.deadline_at:
+                raise WatchLedgerError("idle opportunity is expired or in the future")
+            last = connection.execute("SELECT registered_at FROM qq_watch_idle_opportunities WHERE group_id=? ORDER BY rowid DESC LIMIT 1", (self.group_id,)).fetchone()
+            if last is not None and (moment - datetime.fromisoformat(last[0])).total_seconds() < minimum_interval_seconds:
+                return None
+            event = WatchEvent(event_id=f"qq-watch-event:{uuid4().hex}", group_id=self.group_id,
+                run_id=self.run_id, origin="homeostasis", idle_intent=intent,
+                stream_revision=state["revision"], observed_at=intent.created_at, state="bound")
+            connection.execute("INSERT INTO qq_watch_idle_opportunities VALUES(?,?,?,?,?,?)", (
+                intent.intent_id, self.group_id, self.run_id, intent.episode_signature, moment.isoformat(), intent.model_dump_json()))
+            connection.execute("INSERT INTO qq_watch_events VALUES(?,?,?,?,?)", (
+                event.event_id, self.run_id, self.group_id, event.state, event.model_dump_json()))
+            if intent.opportunity_ref is not None:
+                claim = connection.execute("SELECT * FROM qq_watch_capability_claims WHERE opportunity_id=?", (intent.opportunity_ref,)).fetchone()
+                if claim is None or claim["run_id"] != self.run_id or claim["status"] != "claimed" or claim["event_id"] is not None:
+                    raise WatchLedgerError("shared idle requires an unused durable capability claim")
+                request = json.loads(claim["request_json"])
+                if (request["selection_ref"] != intent.selection_ref or request["generation"] != intent.scheduler_generation
+                        or datetime.fromisoformat(request["deadline_at"]) != intent.deadline_at):
+                    raise WatchLedgerError("shared idle claim binding mismatch")
+                connection.execute("UPDATE qq_watch_capability_claims SET event_id=?,status='bound' WHERE opportunity_id=?",
+                    (event.event_id, intent.opportunity_ref))
+            return event
 
     def start_run(self, *, now: datetime | None = None) -> str:
         """Start a new baseline, abandon old work, and quarantine pending sends."""
@@ -475,7 +645,7 @@ class WatchLedger(SegmentLedgerMixin):
             event = self._event(connection, event_id)
             if event.source_record_id == source_record_id:
                 return event
-            if event.state != "observed" or event.source_record_id is not None or event.item.direction != "incoming":
+            if event.origin != "message" or event.state != "observed" or event.source_record_id is not None or event.item.direction != "incoming":
                 raise WatchLedgerError("only an unbound incoming event can be bound")
             if event.attribution_recheck_required or state["baseline_required"] or event.stream_revision != state["revision"]:
                 raise WatchLedgerError("pending attribution requires a matching current screen before binding")
@@ -489,7 +659,7 @@ class WatchLedger(SegmentLedgerMixin):
         moment = _now(now)
         with self._transaction() as (connection, _):
             event = self._event(connection, event_id)
-            if (event.state != "observed" or event.item.direction != "incoming"
+            if (event.origin != "message" or event.state != "observed" or event.item.direction != "incoming"
                     or event.source_record_id is not None or event.decision_id is not None
                     or connection.execute("SELECT 1 FROM qq_watch_sends WHERE event_id=?", (event_id,)).fetchone()):
                 raise WatchLedgerError("only an unbound incoming observation can defer attribution")
@@ -524,7 +694,7 @@ class WatchLedger(SegmentLedgerMixin):
             rows = connection.execute("SELECT record_json FROM qq_watch_events WHERE run_id=? AND group_id=? AND state='observed'", (self.run_id, self.group_id)).fetchall()
             for row in rows:
                 event = WatchEvent.model_validate_json(row[0])
-                if (event.item.direction != "incoming" or event.source_record_id is not None or event.decision_id is not None
+                if (event.origin != "message" or event.item.direction != "incoming" or event.source_record_id is not None or event.decision_id is not None
                         or not 0 <= (moment - event.observed_at).total_seconds() <= age_limit
                         or connection.execute("SELECT 1 FROM qq_watch_sends WHERE event_id=?", (event.event_id,)).fetchone()):
                     continue
@@ -553,7 +723,7 @@ class WatchLedger(SegmentLedgerMixin):
         moment = _now(now)
         with self._transaction() as (connection, _):
             event = self._event(connection, event_id, current_run=False)
-            if (event.state != "ignored" or not (event.reason or "").startswith("attribution_")
+            if (event.origin != "message" or event.state != "ignored" or not (event.reason or "").startswith("attribution_")
                     or event.item.direction != "incoming" or event.source_record_id is not None or event.decision_id is not None
                     or not 0 <= (moment - event.observed_at).total_seconds() <= 900
                     or connection.execute("SELECT 1 FROM qq_watch_sends WHERE event_id=?", (event_id,)).fetchone()):
@@ -604,7 +774,7 @@ class WatchLedger(SegmentLedgerMixin):
         moment = _now(now)
         with self._transaction() as (connection, state):
             event = self._event(connection, event_id)
-            if event.state != "rate_limited" or event.rate_limit_reopens:
+            if event.origin == "homeostasis" or event.state != "rate_limited" or event.rate_limit_reopens:
                 return None
             if event.source_record_id is None or event.decision_id is None:
                 raise WatchLedgerError("a rate-limited event needs its original source and decision")
@@ -634,8 +804,9 @@ class WatchLedger(SegmentLedgerMixin):
                     event = event.model_copy(update={"state": "ignored", "reason": "cached_speak_not_queued"})
                     self._save_event(connection, event)
                 return event
-            if event.state != "bound" or event.source_record_id is None:
+            if event.state != "bound":
                 raise WatchLedgerError("only a bound, undecided event can receive a decision")
+            address_sources_for_event(event)
             status, reason = "decided_wait", "decision_wait"
             if action == "speak":
                 status, reason = ("ready", "fresh_speak") if new_decision and not replayed else ("ignored", "cached_speak_not_queued")
@@ -728,7 +899,9 @@ class WatchLedger(SegmentLedgerMixin):
                 return None
             reason = None
             rejected_state = "ignored"
-            deadline = event.first_seen_at + timedelta(seconds=60)
+            deadline = event.idle_intent.deadline_at if event.origin == "homeostasis" else event.first_seen_at + timedelta(seconds=60)
+            if event.origin == "homeostasis" and (priority != "ambient" or self_id != event.idle_intent.self_member_id):
+                raise WatchLedgerError("idle send must retain its own account and ambient priority")
             if moment >= deadline:
                 reason, rejected_state = "event_deadline_expired", "expired"
             elif moment < event.first_seen_at - timedelta(seconds=2):
@@ -866,6 +1039,7 @@ class WatchLedger(SegmentLedgerMixin):
                 event = self._event(connection, reservation.event_id)
                 if proof is None or reservation.reply_sha256 is None or reservation.self_member_id is None:
                     raise WatchLedgerError("bound reply, self identity and a pre-click proof are required")
+                _check_idle_proof(event, proof)
                 if (proof.group_id != self.group_id or proof.self_member_id != reservation.self_member_id
                         or (proof.reservation_id is not None and proof.reservation_id != reservation.reservation_id)
                         or proof.reply_sha256 != reservation.reply_sha256
@@ -1005,12 +1179,15 @@ class WatchLedger(SegmentLedgerMixin):
                         and reservation.preclick_proof.reservation_id != reservation.reservation_id)
                     or receipt.group_id != self.group_id or receipt.decision_id != reservation.decision_id
                     or receipt.self_member_id != reservation.self_member_id or expected_hash != reservation.reply_sha256
-                    or event.source_record_id is None or event.source_record_id not in receipt.source_record_ids
+                    or not set(address_sources_for_event(event)).issubset(receipt.source_record_ids)
                     or receipt.delivered_at < reservation.created_at or receipt.delivered_at > moment + timedelta(seconds=2)):
                 raise WatchLedgerError("receipt does not match the original group, self, reply and source")
-            allowed_sources = {event.source_record_id}
+            allowed_sources = set(address_sources_for_event(event))
             if reservation.preclick_proof is not None:
+                _check_idle_proof(event, reservation.preclick_proof)
                 allowed_sources.update(reservation.preclick_proof.source_record_ids)
+            elif event.origin == "homeostasis":
+                raise WatchLedgerError("idle delivery requires the original scoped proof")
             if not set(receipt.source_record_ids).issubset(allowed_sources):
                 raise WatchLedgerError("receipt addresses sources outside the original intent")
             self._require_click_timing(reservation)

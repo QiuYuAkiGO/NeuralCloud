@@ -185,6 +185,19 @@ class _Tree:
             raise AccessibilityUnavailable("a11y_label_unreadable")
         return text
 
+    def header_label(self, node: dict) -> str:
+        # Chromium may omit Text on the member-count child after changing
+        # chats, while this header's Text still contains the complete title.
+        # Prefer that bounded Text, never a Name-only substitute. Member labels
+        # retain their separate badge filtering and readability requirements.
+        try:
+            value = self.text(node, maximum=256)
+            if value.strip():
+                return value
+        except AccessibilityUnavailable:
+            pass
+        return self.label(node)
+
 
 def _editor_text(tree: _Tree, editor: dict) -> str:
     """Resolve QQ's paragraph objects without duplicating parent/leaf Text.
@@ -317,7 +330,7 @@ def _chat(tree: _Tree) -> tuple[TitleAnchor, list[GroundedMessage], dict, dict, 
     title_node = tree.unique("chat-header__contact-name", top=top)
     if not _inside(_rect(title_node), _TITLE):
         raise AccessibilityUnavailable("a11y_title_geometry")
-    title = TitleAnchor(display_name=tree.label(title_node), rect=_rect(title_node))
+    title = TitleAnchor(display_name=tree.header_label(title_node), rect=_rect(title_node))
     area = tree.unique("chat-msg-area", under=group)
     editor = tree.unique("ProseMirror", under=group)
     send = tree.unique("send-msg", under=group)
@@ -543,7 +556,7 @@ def project_qq_accessibility(
         title = None
         titles = parsed.matching("chat-header__contact-name", top=parsed.scope["top_node_id"])
         if len(titles) == 1 and _inside(_rect(titles[0]), _TITLE):
-            title = TitleAnchor(display_name=parsed.label(titles[0]), rect=_rect(titles[0]))
+            title = TitleAnchor(display_name=parsed.header_label(titles[0]), rect=_rect(titles[0]))
         if parsed.overlays:
             profile = _profile(parsed)
             reading = GroundedScreen(

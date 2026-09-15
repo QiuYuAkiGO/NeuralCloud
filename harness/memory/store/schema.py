@@ -41,6 +41,13 @@ class EpisodicEventRow(Base):
     __tablename__ = "episodic_events"
 
     event_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    scope: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True), nullable=True)
+    source_refs: Mapped[list] = mapped_column(JSONB, nullable=False, default=list, server_default=sql_text("'[]'::jsonb"))
+    processing_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    strength: Mapped[float] = mapped_column(Float, nullable=False, server_default="1")
+    strength_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_decay_review_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    decay_demoted: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=sql_text("false"))
     time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
     participants: Mapped[list] = mapped_column(JSONB, nullable=False)
     summary: Mapped[str] = mapped_column(Text, nullable=False)
@@ -78,6 +85,9 @@ class SemanticFactRow(Base):
     __tablename__ = "semantic_facts"
 
     fact_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    scope: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True), nullable=True)
+    source_refs: Mapped[list] = mapped_column(JSONB, nullable=False, default=list, server_default=sql_text("'[]'::jsonb"))
+    processing_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
     subject: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     predicate: Mapped[str] = mapped_column(String(128), nullable=False)
     value: Mapped[str] = mapped_column(Text, nullable=False)
@@ -126,6 +136,9 @@ class MemoryCandidateRow(Base):
     __tablename__ = "memory_candidates"
 
     candidate_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    scope: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True), nullable=True)
+    source_refs: Mapped[list] = mapped_column(JSONB, nullable=False, default=list, server_default=sql_text("'[]'::jsonb"))
+    processing_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
     claim: Mapped[str] = mapped_column(Text, nullable=False)
     source: Mapped[str] = mapped_column(Text, nullable=False)
     confidence: Mapped[float] = mapped_column(Float, nullable=False)

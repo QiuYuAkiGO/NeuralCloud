@@ -11,6 +11,7 @@ from typing import Any, Callable, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from harness.config import Settings
 from harness.homeostasis import load_profile
 from harness.homeostasis.models import (
     DimensionName,
@@ -335,6 +336,7 @@ class EvaluationSession:
         runtime_manifest: ExperimentManifest | None = None,
         clock: Callable[[], datetime] | None = None,
         monotonic: Callable[[], float] | None = None,
+        emotion_settings: Settings | None = None,
     ) -> None:
         self.generator = generator
         self.judge = judge
@@ -383,8 +385,10 @@ class EvaluationSession:
             raise ValueError("evaluation requires schema_version=homeostasis-state-v2")
         if self.runtime_manifest.prompt_version != metadata.prompt_version:
             raise ValueError("metadata prompt version does not match runtime manifest")
-        if self.runtime_manifest.prompt_version != INTEROCEPTION_SCHEMA:
-            raise ValueError(f"evaluation requires prompt_version={INTEROCEPTION_SCHEMA}")
+        emotion_on = self.runtime_manifest.emotion_mode == "on"
+        expected_prompt = "qwen-emotion-v1" if emotion_on else INTEROCEPTION_SCHEMA
+        if self.runtime_manifest.prompt_version != expected_prompt:
+            raise ValueError(f"evaluation requires prompt_version={expected_prompt}")
         if self.runtime_manifest.homeostatic_expression.mode != "full":
             raise ValueError("release evaluation requires homeostatic_expression.mode=full")
         if profile.persona_version != metadata.persona_version:
@@ -408,6 +412,8 @@ class EvaluationSession:
             prompt_version=metadata.prompt_version,
             temperature=metadata.generation_temperature,
             max_tokens=metadata.max_tokens,
+            emotion_mode="on" if emotion_on else "off",
+            emotion_settings=emotion_settings,
         )
         if self.production.persona_sha256 != metadata.persona_sha256:
             raise AssertionError("production pipeline loaded a different persona fixture")
@@ -719,6 +725,18 @@ class EvaluationSession:
                 )
                 for item in (nominal, marked)
             )
+            if nominal.emotion_evidence is not None or marked.emotion_evidence is not None:
+                def bound_emotion(item):
+                    evidence = item.emotion_evidence
+                    return bool(evidence and evidence["input"]["homeostasis"]["snapshot_revision"] == revision
+                        and any(entry.segment_kind == "emotion_guidance"
+                                and evidence["guidance"]["context_id"] in entry.source_ids
+                                for entry in item.context.provenance))
+                revision_sources_ok = bound_emotion(nominal) and bound_emotion(marked)
+                if (not nominal.emotion_evidence or not marked.emotion_evidence
+                        or nominal.emotion_evidence["non_homeostatic_input_sha256"]
+                        != marked.emotion_evidence["non_homeostatic_input_sha256"]):
+                    errors.append("integrity:emotion_inputs_differ_outside_homeostasis")
             if not same_context:
                 errors.append("integrity:compiled_context_differs_outside_homeostasis")
             if not same_prompt:
@@ -824,6 +842,8 @@ def _condition_evidence(prepared: PreparedCondition, segment: dict[str, Any]) ->
         "final_revisions": final.revisions,
         "final_stopped_by": final.stopped_by,
         "stage_payloads": prepared.stage_payloads,
+        **({"expression_segment": segment, "emotion_evidence": prepared.emotion_evidence}
+           if prepared.emotion_evidence is not None else {}),
     }
 
 

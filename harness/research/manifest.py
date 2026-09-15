@@ -11,6 +11,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from harness.embodiment.capabilities import CapabilityRequirement
+from harness.regulation.config import RegulationConfig
 from harness.research.grounded_agency.manifest import GroundedAgencyBinding, GroundedAgencyCondition
 
 ControlMode = Literal["development_debug", "study_runtime"]
@@ -105,8 +106,51 @@ class BasicTerminalCondition(BaseModel):
         return self
 
 
+class WebAccessCondition(BaseModel):
+    """Explicit, frozen authorization for the optional network information body."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    enabled: bool = False
+    conversation_enabled: bool = False
+    capability_requirements: list[CapabilityRequirement] = Field(default_factory=lambda: [
+        CapabilityRequirement(capability="web.search.v1", required=False),
+        CapabilityRequirement(capability="web.read.v1", required=False),
+    ])
+
+    @model_validator(mode="after")
+    def validate_web_capabilities(self):
+        names = [item.capability for item in self.capability_requirements]
+        if len(names) != len(set(names)) or set(names) - {"web.search.v1", "web.read.v1"}:
+            raise ValueError("invalid_web_capability_requirements")
+        return self
+
+
+class AutonomousCapabilitiesCondition(BaseModel):
+    """Opt-in shared capability scheduling, independent of autonomous chat."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    enabled: bool = False
+    owners: dict[Literal["board", "qq", "desktop", "voice", "web"], Literal["legacy", "shared", "off"]] = Field(
+        default_factory=lambda: {"board": "legacy", "qq": "legacy", "desktop": "off"})
+    allowed_capabilities: tuple[str, ...] = ()
+    qq_send_enabled: bool = False
+    quiet_seconds: int = Field(default=60, ge=30, le=3600)
+    opportunity_seconds: int = Field(default=1800, ge=300, le=86400)
+    deadline_seconds: int = Field(default=60, ge=5, le=60)
+
+    @model_validator(mode="after")
+    def unique_capabilities(self):
+        if len(set(self.allowed_capabilities)) != len(self.allowed_capabilities):
+            raise ValueError("autonomous capabilities must be unique")
+        return self
+
+
 class ExperimentManifest(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
+
+    web_access: WebAccessCondition = Field(default_factory=WebAccessCondition)
 
     experiment_id: str = Field(min_length=1, max_length=128)
     revision: int = Field(ge=1)
@@ -116,6 +160,7 @@ class ExperimentManifest(BaseModel):
     persona_version: str = Field(min_length=1)
     homeostatic_profile: str = Field(min_length=1)
     heartbeat_seconds: int = Field(default=60, ge=1, le=3600)
+    autonomous_chat_enabled: bool = True
     command_timeout_seconds: float = Field(default=30.0, ge=1, le=300, allow_inf_nan=False)
     policy_horizon: int = Field(default=3, ge=1, le=3)
     random_seed: int = Field(ge=0)
@@ -135,15 +180,25 @@ class ExperimentManifest(BaseModel):
     retention: str = Field(min_length=1)
     watchdog_action: str = Field(min_length=1)
     timezone: str = Field(default="Asia/Shanghai", min_length=1)
+    emotion_mode: Literal["off", "shadow", "on"] = "off"
     homeostatic_expression: HomeostaticExpressionCondition = Field(
         default_factory=HomeostaticExpressionCondition
     )
     embodiment: EmbodimentCondition = Field(default_factory=EmbodimentCondition)
     basic_terminal: BasicTerminalCondition = Field(default_factory=BasicTerminalCondition)
+    autonomous_capabilities: AutonomousCapabilitiesCondition = Field(default_factory=AutonomousCapabilitiesCondition)
+    goal_regulation: RegulationConfig = Field(default_factory=RegulationConfig)
     grounded_agency: GroundedAgencyCondition | None = None
 
     @model_validator(mode="after")
     def _validate_study_authority(self) -> ExperimentManifest:
+        if self.goal_regulation.enabled:
+            if self.grounded_agency is not None:
+                raise ValueError("production goal regulation and grounded research require separate manifests")
+            if not self.autonomous_capabilities.enabled:
+                raise ValueError("goal regulation requires shared autonomous capabilities")
+        if self.autonomous_capabilities.enabled and self.grounded_agency is not None:
+            raise ValueError("shared autonomous capabilities and grounded research require separate manifests")
         if self.basic_terminal.enabled:
             if self.grounded_agency is not None:
                 raise ValueError("basic terminal tasks and grounded-agency research must use separate manifests")
@@ -166,8 +221,12 @@ class ExperimentManifest(BaseModel):
             if missing:
                 raise ValueError(f"study_runtime manifest missing: {', '.join(missing)}")
         expression_mode = self.homeostatic_expression.mode
+        if self.emotion_mode == "on" and self.prompt_version != "qwen-emotion-v1":
+            raise ValueError("emotion_mode=on requires prompt_version=qwen-emotion-v1")
         if self.grounded_agency is not None:
             ga = self.grounded_agency
+            if self.emotion_mode != "off":
+                raise ValueError("grounded agency research requires emotion_mode=off")
             if ga.is_opaque and expression_mode != "off":
                 raise ValueError("opaque interoception requires homeostatic_expression.mode=off")
             if ga.action_selection == "model_structured" and self.condition == "argmin_efe":
@@ -180,16 +239,17 @@ class ExperimentManifest(BaseModel):
                 profile_revision = int(revision_text) if separator else 0
             except ValueError:
                 profile_revision = 0
-            if not _profile_id.strip() or profile_revision < 3:
+            supported_social_profile = self.homeostatic_profile == "qq-social-drive-v1@1"
+            if not _profile_id.strip() or (profile_revision < 3 and not supported_social_profile):
                 raise ValueError(
-                    "homeostatic expression requires a profile reference at revision 3 or later"
+                    "homeostatic expression requires a revision 3 profile or qq-social-drive-v1@1"
                 )
             if self.schema_version != "homeostasis-state-v2":
                 raise ValueError(
                     "homeostatic expression requires schema_version=homeostasis-state-v2"
                 )
         if expression_mode in {"responses", "full"} and (
-            self.prompt_version != "homeostatic-interoception-v1"
+            self.prompt_version != ("qwen-emotion-v1" if self.emotion_mode == "on" else "homeostatic-interoception-v1")
         ):
             raise ValueError(
                 "response injection requires prompt_version=homeostatic-interoception-v1"
@@ -203,10 +263,20 @@ class ExperimentManifest(BaseModel):
     def canonical_json(self) -> str:
         # An absent opt-in extension must not invalidate existing journal hashes.
         payload = self.model_dump(mode="json")
+        if self.emotion_mode == "off":
+            payload.pop("emotion_mode")
+        if self.web_access == WebAccessCondition():
+            payload.pop("web_access")
+        if self.autonomous_chat_enabled:
+            payload.pop("autonomous_chat_enabled")
         if self.command_timeout_seconds == 30.0:
             payload.pop("command_timeout_seconds")
         if not self.basic_terminal.enabled:
             payload.pop("basic_terminal")
+        if self.autonomous_capabilities == AutonomousCapabilitiesCondition():
+            payload.pop("autonomous_capabilities")
+        if self.goal_regulation == RegulationConfig():
+            payload.pop("goal_regulation")
         if self.grounded_agency is None:
             payload.pop("grounded_agency")
         else:
@@ -246,7 +316,8 @@ class ExperimentManifest(BaseModel):
     def model_copy(self, *, update: Mapping[str, Any] | None = None, deep: bool = False) -> ExperimentManifest:
         # Pydantic's default copy bypasses validators; preserve it only for legacy callers.
         if self.grounded_agency is None and (update or {}).get("grounded_agency") is None:
-            if self.basic_terminal.enabled or "basic_terminal" in (update or {}):
+            if (self.basic_terminal.enabled or self.goal_regulation.enabled
+                    or set(update or {}) & {"basic_terminal", "autonomous_capabilities", "goal_regulation"}):
                 return type(self).model_validate({**self.model_dump(mode="json"), **(update or {})})
             return super().model_copy(update=update, deep=deep)
         candidate = type(self).model_validate({**self.model_dump(mode="json"), **(update or {})})

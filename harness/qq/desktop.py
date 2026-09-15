@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 from collections import Counter, OrderedDict, deque
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta, timezone
@@ -206,11 +207,15 @@ class DesktopBackend:
         self._capture_times: OrderedDict[str, tuple[Frame, float]] = OrderedDict()
         self._body_runner = None
         self._body_client = None
+        self._body_io = None
+        self._body_io_lock = threading.Lock()
+        self._body_io_closed = False
         self.deadline = None
         self.trace = None
         self.last_preclick_proof: dict | None = None
         self.verified_self_aliases: list[QQVerifiedSelfAlias] = []
         self._owned_draft: tuple[str, str, str] | None = None
+        self._navigation_unverified = False
         self._body_token = self._read_token(config.body_token_file)
         agent_token = self._read_token(config.agent_token_file)
         self._owns_agent = agent_client is None
@@ -243,6 +248,27 @@ class DesktopBackend:
             raise DesktopError("private_token_unavailable") from None
 
     def close(self):
+        with self._body_io_lock:
+            if self._body_io_closed:
+                return
+            self._body_io_closed = True
+            executor = self._body_io
+            if executor is None and self._body_runner is not None:
+                executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="qq-body-io")
+            future = executor.submit(self._close_body_io) if executor is not None else None
+        try:
+            if future is not None:
+                future.result()
+        finally:
+            if executor is not None:
+                executor.shutdown(wait=True, cancel_futures=True)
+            self._body_io = None
+            if self._owns_agent:
+                self.agent.close()
+            if self._owns_llm:
+                self.llm.close()
+
+    def _close_body_io(self):
         if self._body_runner is not None:
             try:
                 if self._body_client is not None:
@@ -250,10 +276,46 @@ class DesktopBackend:
             finally:
                 self._body_runner.close()
                 self._body_runner = self._body_client = None
-        if self._owns_agent:
-            self.agent.close()
-        if self._owns_llm:
-            self.llm.close()
+
+    def _collect_body_evidence(self):
+        # Provider callbacks run inside an event loop on the sole GUI actor.
+        # Keep that actor and its locks in place; only async HTTP/evidence I/O
+        # uses a private thread with one persistent client and Runner.
+        scope = self.accessibility_scope() if self.config.accessibility_enabled else None
+        expires_mono = time.monotonic() + self._timeout()
+
+        def run():
+            if self._body_runner is None:
+                self._body_runner = asyncio.Runner()
+                self._body_client = MistyAIClient(self.config.body_url, token=self._body_token,
+                    timeout_seconds=self.config.request_timeout_seconds,
+                    evidence_byte_cache_bytes=16 * 1024 * 1024)
+
+            async def collect():
+                # Queueing and client setup consume the caller's original budget.
+                remaining = expires_mono - time.monotonic()
+                if remaining <= 0:
+                    raise TimeoutError("body_capture_deadline_expired")
+                async with asyncio.timeout(remaining):
+                    started_mono = time.monotonic()
+                    observation = await self._body_client.observe(a11y_scope=scope)
+                    png = await self._body_client.get_evidence(observation.frame.sha256, expected_media_type="image/png")
+                    tree = None
+                    if scope is not None and observation.a11y_ref:
+                        raw = await self._body_client.get_evidence(observation.a11y_ref.removeprefix("evidence://sha256/"),
+                            expected_media_type="application/vnd.mistyai.a11y+json")
+                        tree = json.loads(raw)
+                    return observation, png, tree, started_mono
+
+            return self._body_runner.run(collect())
+
+        with self._body_io_lock:
+            if self._body_io_closed:
+                raise DesktopError("body_capture_closed")
+            if self._body_io is None:
+                self._body_io = ThreadPoolExecutor(max_workers=1, thread_name_prefix="qq-body-io")
+            future = self._body_io.submit(run)
+        return future.result()
 
     def _check_stop(self):
         if self.should_stop():
@@ -393,29 +455,10 @@ class DesktopBackend:
         self._check_stop()
         self._latest_capture = None
         self._latest_capture_started_mono = None
-        if self._body_runner is None:
-            self._body_runner = asyncio.Runner()
-            self._body_client = MistyAIClient(self.config.body_url, token=self._body_token,
-                                            timeout_seconds=self.config.request_timeout_seconds,
-                                            evidence_byte_cache_bytes=16 * 1024 * 1024)
-
-        async def collect():
-            async with asyncio.timeout(self._timeout()):
-                scope = self.accessibility_scope() if self.config.accessibility_enabled else None
-                started_mono = time.monotonic()
-                observation = await self._body_client.observe(a11y_scope=scope)
-                png = await self._body_client.get_evidence(observation.frame.sha256, expected_media_type="image/png")
-                tree = None
-                if scope is not None and observation.a11y_ref:
-                    raw = await self._body_client.get_evidence(observation.a11y_ref.removeprefix("evidence://sha256/"),
-                                                              expected_media_type="application/vnd.mistyai.a11y+json")
-                    tree = json.loads(raw)
-                return observation, png, tree, started_mono
-
         try:
             with self._stage("body_capture"):
                 self._count("body_capture")
-                observation, png, tree, started_mono = self._body_runner.run(collect())
+                observation, png, tree, started_mono = self._collect_body_evidence()
                 if self.config.accessibility_enabled and tree is None:
                     # A just-opened card can move while the scoped snapshot is
                     # captured. Reacquire the entire evidence pair once; never
@@ -424,7 +467,7 @@ class DesktopBackend:
                     self._check_stop()
                     time.sleep(.15)
                     self._count("body_capture")
-                    observation, png, tree, started_mono = self._body_runner.run(collect())
+                    observation, png, tree, started_mono = self._collect_body_evidence()
                 self._check_stop()
                 frame = self.frame_from_observation(observation, png, a11y_tree=tree)
                 self._remember_capture(frame, started_mono)
@@ -1084,6 +1127,11 @@ class DesktopBackend:
             time.sleep(min(.15, self._timeout()))
         raise AssertionError("unreachable profile transition")
 
+    def select_group(self, group_id: str, *, allowed_group_ids, display_name: str | None = None) -> GroupVerification:
+        """Select an allowlisted chat; the numeric QQ profile must match."""
+        from harness.qq.navigation import select_group
+        return select_group(self, group_id, allowed_group_ids=allowed_group_ids, display_name=display_name)
+
     def verify_group(self, frame: Frame | None = None) -> GroupVerification:
         with self._lock:
             if frame is None:
@@ -1314,6 +1362,8 @@ class DesktopBackend:
                 return list(dict.fromkeys([*refs, *(self.frame_evidence_refs(attempt_frame) if attempt_frame is not None else [])]))
 
             try:
+                if self._navigation_unverified:
+                    raise DesktopError("group_navigation_not_verified")
                 if (not text.strip() or len(text) > 4000 or "\n" in text or "\r" in text
                         or any(ord(char) < 32 for char in text) or not reservation_id.strip()
                         or not re.fullmatch(r"[0-9a-f]{64}", expected_content_digest)):
@@ -1375,21 +1425,9 @@ class DesktopBackend:
                     raise DesktopError("input_anchor_unavailable")
                 baseline = Counter(message.text for message in screen.messages if message.direction == "outgoing" and message.kind == "text")
                 fresh = self._fresh(frame, screen, anchor=screen.send_button, force_capture=True)
-                draft_ax_verified = False
-                if self.config.identity_cache_enabled and fresh.capture_id in self._a11y_frames:
-                    fresh_reading = self.inspect(fresh)
-                    if (not self._identity_frame(fresh, fresh_reading) or fresh_reading.visible_draft != text
-                            or fresh_reading.input_box != screen.input_box):
-                        raise DesktopError("fresh_draft_not_verified")
-                    draft_ax_verified = frame.capture_id in self._a11y_frames
-                # The flashing caret changes pixels without changing text.
-                # Only complete, paired AX from this final capture can replace
-                # the exact pixel test; vision-only evidence cannot do so.
-                if (not draft_ax_verified and
-                        _pixels(frame.png, (screen.input_box.bounds,)) != _pixels(fresh.png, (screen.input_box.bounds,))):
-                    raise DesktopError("draft_pixels_changed_before_send")
-                if draft_ax_verified:
-                    self._count("final_draft_ax_verified")
+                # The staged group read above verifies the entered text. This
+                # final capture grounds the send target and records evidence;
+                # it does not repeat the input-box text or pixel checks.
                 refs.extend(self.frame_evidence_refs(fresh))
                 self._agent_health()
                 self._check_stop()

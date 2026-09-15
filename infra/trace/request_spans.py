@@ -27,6 +27,7 @@ _write_lock = threading.Lock()
 _CONTEXT_FIELDS = {
     "correlation_id", "event_id", "command_id", "phase", "stage",
     "span_id", "parent_span_id", "model_role",
+    "model_attempt", "model_budget_seconds",
 }
 
 
@@ -93,8 +94,8 @@ def model_request_span(settings: Settings, *, role: str) -> Iterator[dict[str, A
         "model": settings.llm_model,
         "endpoint": safe_endpoint(settings.llm_base_url),
         "started_at": started_at,
-        "attempt": 1,
-        "retries": 0,
+        "attempt": metadata.get("model_attempt", 1),
+        "retries": max(0, metadata.get("model_attempt", 1) - 1),
     }
     path = Path(settings.trace_dir) / "model_requests.jsonl"
     enabled = settings.call_log_enabled

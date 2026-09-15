@@ -23,8 +23,11 @@ import httpx
 
 TraceOutcome = Literal["ok", "error", "expired", "cancelled", "skipped", "late_result"]
 _OUTCOMES = {"ok", "error", "expired", "cancelled", "skipped", "late_result"}
+_QQ_ERRORS = frozenset({"capability_unavailable", "required_capability_unavailable",
+    "chat_context_changed", "active_scope_changed", "scope_not_allowed", "request_expired",
+    "request_time_invalid", "provider_activation_changed", "provider_not_activated", "driver_operation_busy"})
 _ERRORS = {"deadline_expired", "model_timeout", "model_http", "model_invalid", "model_error",
-           "storage_error", "cancelled", "late_result", "internal_error"}
+           "storage_error", "cancelled", "late_result", "internal_error", "qq_transport_error"} | _QQ_ERRORS
 _NAME = re.compile(r"^[a-z][a-z0-9_.-]{0,63}$")
 _IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9:_.-]{0,159}$")
 _FLUSH_LOCK = threading.Lock()
@@ -85,6 +88,11 @@ class QQDeadline:
 
 def classify_error(error: BaseException) -> str:
     """Return a fixed category, never exception text, HTTP bodies or URLs."""
+    from harness.embodiment.providers.qq import QQCommunicationError
+    if isinstance(error, QQCommunicationError):
+        # Only known port diagnostics are public telemetry. Callback details,
+        # arbitrary exception text and future/unrecognized codes stay private.
+        return error.code if type(error.code) is str and error.code in _QQ_ERRORS else "qq_transport_error"
     if isinstance(error, QQDeadlineExpired):
         return "deadline_expired"
     if isinstance(error, (httpx.TimeoutException, TimeoutError)):

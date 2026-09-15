@@ -56,6 +56,97 @@ class DimensionProfile(BaseModel):
         return self
 
 
+class QQSocialDriveProfile(BaseModel):
+    """Opt-in functional needs, never a claim of subjective boredom."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid", allow_inf_nan=False)
+
+    enabled: bool = False
+    social_depletion_per_hour: float = Field(default=0.14, gt=0, le=0.3)
+    novelty_depletion_per_hour: float = Field(default=0.12, gt=0, le=0.3)
+    social_floor: float = Field(default=0.22, ge=0, le=1)
+    novelty_floor: float = Field(default=0.16, ge=0, le=1)
+    idle_grace_seconds: int = Field(default=600, ge=60, le=86400)
+    interaction_social_recovery: float = Field(default=0.10, ge=0, le=0.12)
+    interaction_novelty_recovery: float = Field(default=0.02, ge=0, le=0.1)
+    message_novelty_recovery: float = Field(default=0.015, ge=0, le=0.03)
+    experience_novelty_recovery: float = Field(default=0.08, ge=0, le=0.1)
+
+
+class QQHomeostaticFact(BaseModel):
+    """A trusted collector's evidence-bound fact, with no dialogue body.
+
+    fact_id must be the stable observation/receipt identity, not a new delivery
+    command ID. An interaction must link an actual earlier own-send receipt.
+    Verification is an upstream assertion; the engine grants no action rights.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    schema_version: Literal["qq-homeostatic-fact-v1"] = "qq-homeostatic-fact-v1"
+    fact_id: str = Field(min_length=1, max_length=256)
+    group_id: str = Field(pattern=r"^[1-9][0-9]{0,19}$")
+    kind: Literal["verified_message", "verified_interaction", "verified_novelty", "send_attempt", "no_response"]
+    occurred_at: AwareDatetime
+    verification: Literal["qq_ui_verified"]
+    evidence_refs: list[str] = Field(min_length=1, max_length=16)
+    related_attempt_id: str | None = Field(default=None, min_length=1, max_length=256)
+
+    @model_validator(mode="after")
+    def _validate_evidence(self) -> QQHomeostaticFact:
+        if (not self.fact_id.strip()
+                or (self.related_attempt_id is not None and not self.related_attempt_id.strip())
+                or any(not item.strip() or len(item) > 2048 for item in self.evidence_refs)):
+            raise ValueError("QQ fact identity and evidence must be nonblank and bounded")
+        if self.kind == "verified_interaction" and self.related_attempt_id is None:
+            raise ValueError("a verified interaction requires an actual related send receipt")
+        return self
+
+    @property
+    def fact_key(self) -> str:
+        return f"qq:{self.group_id}:{self.fact_id}"
+
+    @property
+    def fact_hash(self) -> str:
+        body = self.model_dump(mode="json")
+        body["evidence_refs"] = sorted(set(self.evidence_refs))
+        return hashlib.sha256(json.dumps(body, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+class QQDriveContext(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid", strict=True)
+
+    resting: bool = False
+
+
+class QQFactLookup(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid", strict=True)
+    group_id: str = Field(pattern=r"^[1-9][0-9]{0,19}$")
+    fact_id: str = Field(min_length=1, max_length=256)
+
+    @property
+    def fact_key(self) -> str:
+        return f"qq:{self.group_id}:{self.fact_id}"
+
+
+class QQFactStatus(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    schema_version: Literal["qq-homeostatic-fact-status-v1"] = "qq-homeostatic-fact-status-v1"
+    service: Literal["homeostasis"] = "homeostasis"
+    fact_key: str
+    status: Literal["unknown", "applied"]
+    fact_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    committed_revision: int | None = Field(default=None, ge=1)
+
+    @model_validator(mode="after")
+    def complete_commit(self):
+        if (self.fact_hash is not None or self.committed_revision is not None) != (self.status == "applied"):
+            raise ValueError("Unknown facts cannot claim a commit")
+        if self.status == "applied" and (self.fact_hash is None or self.committed_revision is None):
+            raise ValueError("Applied facts require their original hash and revision")
+        return self
+
+
 class HomeostaticProfile(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -95,6 +186,7 @@ class HomeostaticProfile(BaseModel):
     salience_marked_enter: float = Field(default=0.50, ge=0.0, le=1.0)
     salience_noticeable_exit: float = Field(default=0.15, ge=0.0, le=1.0)
     salience_marked_exit: float = Field(default=0.35, ge=0.0, le=1.0)
+    qq_social_drive: QQSocialDriveProfile | None = None
 
     @field_validator("source_precision")
     @classmethod
@@ -150,6 +242,17 @@ class HomeostaticProfile(BaseModel):
                 "salience thresholds must satisfy noticeable_exit < "
                 "marked_exit < marked_enter"
             )
+        if self.qq_social_drive is not None and self.qq_social_drive.enabled:
+            drive = self.qq_social_drive
+            for dimension, floor, rate in (
+                ("social_connection", drive.social_floor, drive.social_depletion_per_hour),
+                ("novelty", drive.novelty_floor, drive.novelty_depletion_per_hour),
+            ):
+                spec = self.dimensions[dimension]
+                if not spec.hard_bounds[0] < floor < spec.baseline_band[0]:
+                    raise ValueError("QQ idle floors must stay above hard bounds and below baseline")
+                if rate <= spec.drift_per_hour:
+                    raise ValueError("QQ idle depletion must exceed baseline recovery")
         return self
 
     @property

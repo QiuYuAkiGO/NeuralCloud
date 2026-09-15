@@ -9,6 +9,7 @@ import httpx
 from harness.contracts.decisions import AutonomousAssessment, PreparedResponse
 from harness.contracts.envelope import DomainCommandEnvelope, DomainCommandResult, VersionVector
 from harness.runtime.adapters import DomainSnapshot, ServiceHealth
+from harness.homeostasis.models import QQFactLookup, QQFactStatus
 
 
 class DomainRpcError(ConnectionError):
@@ -77,11 +78,32 @@ class HttpCognitiveClient(_HttpDomainClient):
             **kwargs,
         )
 
+    async def observe_emotion(self, command: DomainCommandEnvelope[dict[str, Any]]) -> DomainCommandResult[dict[str, Any]]:
+        return DomainCommandResult[dict[str, Any]].model_validate((await self.command(command)).model_dump(mode="json"))
+
     async def prepare_response(
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[PreparedResponse]:
         result = await self.command(command)
         return DomainCommandResult[PreparedResponse].model_validate(result.model_dump(mode="json"))
+
+    async def prepare_qq_response(self, command: DomainCommandEnvelope[dict[str, Any]]) -> DomainCommandResult[dict[str, Any]]:
+        return DomainCommandResult[dict[str, Any]].model_validate((await self.command(command)).model_dump(mode="json"))
+
+    async def prepare_board_entry(self, command: DomainCommandEnvelope[dict[str, Any]]) -> DomainCommandResult[dict[str, Any]]:
+        return DomainCommandResult[dict[str, Any]].model_validate((await self.command(command)).model_dump(mode="json"))
+
+    async def prepare_capability_call(self, command: DomainCommandEnvelope[dict[str, Any]]) -> DomainCommandResult[dict[str, Any]]:
+        return DomainCommandResult[dict[str, Any]].model_validate((await self.command(command)).model_dump(mode="json"))
+
+    async def prepare_web_step(self, command: DomainCommandEnvelope[dict[str, Any]]) -> DomainCommandResult[dict[str, Any]]:
+        return DomainCommandResult[dict[str, Any]].model_validate((await self.command(command)).model_dump(mode="json"))
+
+    async def prepare_goal_decision(self, command: DomainCommandEnvelope[dict[str, Any]]) -> DomainCommandResult[dict[str, Any]]:
+        return DomainCommandResult[dict[str, Any]].model_validate((await self.command(command)).model_dump(mode="json"))
+
+    async def commit_board_entry(self, command: DomainCommandEnvelope[dict[str, Any]]) -> DomainCommandResult[dict[str, Any]]:
+        return DomainCommandResult[dict[str, Any]].model_validate((await self.command(command)).model_dump(mode="json"))
 
     async def assess_autonomous(
         self, command: DomainCommandEnvelope[dict[str, Any]]
@@ -131,6 +153,13 @@ class HttpHomeostasisClient(_HttpDomainClient):
             (await self.command(command)).model_dump(mode="json")
         )
 
+    async def read_qq_fact(self, lookup: QQFactLookup) -> QQFactStatus:
+        result = QQFactStatus.model_validate(await self._request(
+            "POST", "/v1/qq-facts:read", json=lookup.model_dump(mode="json")))
+        if result.fact_key != lookup.fact_key:
+            raise DomainRpcError("homeostasis fact lookup binding mismatch")
+        return result
+
     async def apply_heartbeat(
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[dict[str, Any]]:
@@ -144,6 +173,9 @@ class HttpHomeostasisClient(_HttpDomainClient):
     async def assimilate_observation(
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[dict[str, Any]]:
+        return await self.apply_event(command)
+
+    async def apply_appraisal(self, command: DomainCommandEnvelope[dict[str, Any]]) -> DomainCommandResult[dict[str, Any]]:
         return await self.apply_event(command)
 
     async def apply_observation(
@@ -184,12 +216,20 @@ def create_domain_service_app(service: Any, *, service_token: str, service_name:
         if command_type != envelope.command_type:
             raise HTTPException(status_code=400, detail="command type mismatch")
         methods = {
+            "ObserveEmotion": getattr(service, "observe_emotion", None),
             "AssessAutonomous": getattr(service, "assess_autonomous", None),
             "PrepareResponse": getattr(service, "prepare_response", None),
+            "PrepareQQResponse": getattr(service, "prepare_qq_response", None),
+            "PrepareBoardEntry": getattr(service, "prepare_board_entry", None),
+            "PrepareCapabilityCall": getattr(service, "prepare_capability_call", None),
+            "PrepareWebStep": getattr(service, "prepare_web_step", None),
+            "PrepareGoalDecision": getattr(service, "prepare_goal_decision", None),
+            "CommitBoardEntry": getattr(service, "commit_board_entry", None),
             "CommitInteraction": getattr(service, "commit_interaction", None),
             "ApplyEvent": getattr(service, "apply_event", None),
             "ApplyHeartbeat": getattr(service, "apply_heartbeat", None),
             "ApplyOutcome": getattr(service, "apply_outcome", None),
+            "ApplyAppraisal": getattr(service, "apply_appraisal", None),
             "AssimilateObservation": getattr(service, "assimilate_observation", None),
             "ApplyObservation": getattr(service, "apply_observation", None),
         }
@@ -210,6 +250,17 @@ def create_domain_service_app(service: Any, *, service_token: str, service_name:
             await service.resume_maintenance()
             return {"resumed": True}
     else:
+        @app.post("/v1/qq-facts:read", dependencies=[Depends(authenticate)])
+        async def read_qq_fact(payload: dict[str, Any]) -> dict[str, Any]:
+            try:
+                lookup = QQFactLookup.model_validate(payload)
+            except ValueError:
+                raise HTTPException(status_code=422, detail="invalid QQ fact lookup") from None
+            method = getattr(service, "read_qq_fact", None)
+            if method is None:
+                raise HTTPException(status_code=501, detail="QQ fact lookup unavailable")
+            return (await method(lookup)).model_dump(mode="json")
+
         @app.post("/v1/policies", dependencies=[Depends(authenticate)])
         async def policies(payload: dict[str, Any]) -> dict[str, Any]:
             vector = VersionVector.model_validate(payload.get("version_vector") or {})

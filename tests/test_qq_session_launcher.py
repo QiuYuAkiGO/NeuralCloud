@@ -61,7 +61,9 @@ function New-TestHealth {{
     return [pscustomobject]@{{
         service='qq-memory-session-v1'; status='healthy'; persistent_memory=$true
         memory_db={ps_literal(database)}; allowed_group_ids=@('10002','10001'); self_member_id='20001'
-        autonomous_decision_enabled=$true; automatic_send=$false; automatic_screen_capture=$false
+        configured_decision_enabled=$true; autonomous_decision_enabled=$false
+        development_mode=$false; cognitive_owner='shared_runtime'
+        automatic_send=$false; automatic_screen_capture=$false
         standard_runtime_started_by_this_service=$false; started_at='2026-09-11T00:00:00+00:00'
     }}
 }}
@@ -101,7 +103,17 @@ $result = Invoke-QQSessionStart -ConfigPath $script:Config -Port 28789
     "$health.memory_db = 'C:\\different\\memory.sqlite3'",
     "$health.self_member_id = '99999'",
     "$health.allowed_group_ids = @('10001')",
-    "$health.autonomous_decision_enabled = $false",
+    "$health.configured_decision_enabled = $false",
+    "$health.configured_decision_enabled = 'true'",
+    "$health.PSObject.Properties.Remove('configured_decision_enabled')",
+    "$health.autonomous_decision_enabled = 'false'",
+    "$health.PSObject.Properties.Remove('autonomous_decision_enabled')",
+    "$health.development_mode = $true",
+    "$health.development_mode = 'false'",
+    "$health.PSObject.Properties.Remove('development_mode')",
+    "$health.cognitive_owner = 'development_local'",
+    "$health.cognitive_owner = 'isolated_development'",
+    "$health.PSObject.Properties.Remove('cognitive_owner')",
     "$health.automatic_send = 'true'",
     "$health.service = 'other-service'",
     "$health.status = 'unhealthy'",
@@ -151,6 +163,62 @@ $result = Invoke-QQSessionStart -ConfigPath $script:Config -Port 28789
     assert Path(result["spawn"]["python"]) == ROOT / ".venv" / "Scripts" / "python.exe"
     assert Path(result["spawn"]["stdout"]).parent == private / "logs"
     assert result["spawn"]["stdout"] != result["spawn"]["stderr"]
+
+
+@pytest.mark.parametrize("active", [False, True])
+def test_shared_health_accepts_runtime_decision_state_independent_of_configuration(launch_case, active):
+    invoke, _, _, _ = launch_case
+    result = invoke(f"""
+function Get-QQSHealth {{ $health = New-TestHealth; $health.autonomous_decision_enabled = ${str(active).lower()}; return $health }}
+$result = Invoke-QQSessionStart -ConfigPath $script:Config -Port 28789
+@{{result=$result; starts=$script:Starts}} | ConvertTo-Json -Depth 5 -Compress
+""")
+    assert result["result"]["status"] == "already_running"
+    assert result["starts"] == 0
+
+
+@pytest.mark.parametrize("owner,accepted", [("isolated_development", True), ("shared_runtime", False), ("development_local", False)])
+def test_development_health_requires_explicit_matching_owner(launch_case, owner, accepted):
+    invoke, _, config, _ = launch_case
+    data = json.loads(config.read_text(encoding="utf-8"))
+    data["development_mode"] = True
+    config.write_text(json.dumps(data), encoding="utf-8")
+    result = invoke(f"""
+function Get-QQSHealth {{ $health = New-TestHealth; $health.development_mode = $true; $health.cognitive_owner = '{owner}'; return $health }}
+function Test-QQSPortListening {{ return $true }}
+$result = Invoke-QQSessionStart -ConfigPath $script:Config -Port 28789
+@{{result=$result; starts=$script:Starts; stops=$script:Stops}} | ConvertTo-Json -Depth 5 -Compress
+""")
+    assert result["result"]["exit_code"] == (0 if accepted else 20)
+    assert result["starts"] == result["stops"] == 0
+
+
+def test_configuration_disabled_decisions_can_be_verified(launch_case):
+    invoke, _, config, _ = launch_case
+    data = json.loads(config.read_text(encoding="utf-8"))
+    data["decision_enabled"] = False
+    config.write_text(json.dumps(data), encoding="utf-8")
+    result = invoke("""
+function Get-QQSHealth { $health = New-TestHealth; $health.configured_decision_enabled = $false; return $health }
+$result = Invoke-QQSessionStart -ConfigPath $script:Config -Port 28789
+@{result=$result; starts=$script:Starts} | ConvertTo-Json -Depth 5 -Compress
+""")
+    assert result["result"]["status"] == "already_running"
+    assert result["starts"] == 0
+
+
+@pytest.mark.parametrize("invalid", ["false", 0, None])
+def test_invalid_development_configuration_never_probes_or_launches(launch_case, invalid):
+    invoke, _, config, _ = launch_case
+    data = json.loads(config.read_text(encoding="utf-8"))
+    data["development_mode"] = invalid
+    config.write_text(json.dumps(data), encoding="utf-8")
+    result = invoke("""
+$result = Invoke-QQSessionStart -ConfigPath $script:Config -Port 28789
+@{result=$result; starts=$script:Starts; health_calls=$script:HealthCalls} | ConvertTo-Json -Depth 5 -Compress
+""")
+    assert result["result"]["reason"] == "configuration_or_launch_error"
+    assert result["starts"] == result["health_calls"] == 0
 
 
 def test_unhealthy_launch_has_bounded_deadline_without_stopping_processes(launch_case):

@@ -6,16 +6,19 @@ import asyncio
 import json
 import math
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from collections.abc import Callable
 from typing import Any, Literal, cast
+
+from pydantic import ValidationError
 
 from harness.contracts.envelope import DomainCommandEnvelope, DomainCommandResult, VersionVector
 from harness.embodiment.contracts import (
     HomeostaticObservation as EmbodimentHomeostaticObservation,
     evidence_ref_strings,
 )
+from harness.homeostasis.appraisal import ApplyPsychologicalAppraisal, PsychologicalAppraisal
 from harness.homeostasis.models import (
     DIMENSIONS,
     CoreAffect,
@@ -31,12 +34,16 @@ from harness.homeostasis.models import (
     HomeostaticSnapshot,
     HomeostaticTransitionTrace,
     PolicyCandidate,
+    QQDriveContext,
+    QQHomeostaticFact,
+    QQFactLookup,
+    QQFactStatus,
     build_interoceptive_summary,
     derive_homeostatic_salience,
     initial_snapshot,
     normalized_homeostatic_deviation,
 )
-from harness.homeostasis.ledger import CommandLedger
+from harness.homeostasis.ledger import CommandLedger, CommandLedgerConflictError, StaleSnapshotError
 from harness.runtime.adapters import DomainSnapshot, ServiceHealth
 
 
@@ -90,6 +97,7 @@ class HomeostasisEngine:
         )
         self._clock = clock or ((lambda: now) if now is not None else utc_now)
         self._started_at = now or self._clock()
+        self._qq_activity_at = self._started_at
         self.snapshot = initial_snapshot(profile, now=self._started_at)
         self._load()
         self._validate_profile_identity()
@@ -154,6 +162,13 @@ class HomeostasisEngine:
     ) -> DomainCommandResult[dict[str, Any]]:
         return await self._apply(command, kind="event")
 
+    async def read_qq_fact(self, lookup: QQFactLookup) -> QQFactStatus:
+        lookup = QQFactLookup.model_validate(lookup.model_dump())
+        async with self._lock:
+            stored = self._command_ledger.qq_fact_status(lookup.fact_key)
+            return QQFactStatus(fact_key=lookup.fact_key, status="applied" if stored else "unknown",
+                fact_hash=stored[0] if stored else None, committed_revision=stored[1] if stored else None)
+
     async def apply_heartbeat(
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[dict[str, Any]]:
@@ -163,6 +178,12 @@ class HomeostasisEngine:
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[dict[str, Any]]:
         return await self._apply(command, kind="outcome")
+
+    async def apply_appraisal(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[dict[str, Any]]:
+        """Apply an evidence-bound model suggestion with server-owned precision."""
+        return await self._apply(command, kind="appraisal")
 
     async def assimilate_observation(
         self, command: DomainCommandEnvelope[dict[str, Any]]
@@ -386,7 +407,7 @@ class HomeostasisEngine:
         self,
         command: DomainCommandEnvelope[dict[str, Any]],
         *,
-        kind: Literal["event", "heartbeat", "outcome"],
+        kind: Literal["event", "heartbeat", "outcome", "appraisal"],
     ) -> DomainCommandResult[dict[str, Any]]:
         async with self._lock:
             request_hash = command.effective_request_hash()
@@ -408,11 +429,79 @@ class HomeostasisEngine:
                     "conflict",
                 )
 
-            event = dict(command.payload.get("event") or command.payload)
-            occurred_at = _aware(event.get("source_time") or event.get("observed_at"), command.issued_at)
+            psychological: PsychologicalAppraisal | None = None
+            if kind == "appraisal":
+                if command.command_type != "ApplyAppraisal":
+                    return self._failure(command, request_hash, "appraisal requires ApplyAppraisal command", "rejected")
+                try:
+                    trusted = ApplyPsychologicalAppraisal.model_validate(command.payload)
+                except ValidationError:
+                    return self._failure(command, request_hash, "invalid psychological appraisal or Runtime evidence binding", "rejected")
+                psychological = trusted.appraisal
+                now = self._clock()
+                if psychological.created_at > now or now >= psychological.expires_at:
+                    return self._failure(command, request_hash, "appraisal is not currently valid", "rejected")
+                if psychological.basis_snapshot_revision != self.snapshot.revision:
+                    return self._failure(command, request_hash, "appraisal basis snapshot revision is stale", "conflict")
+                if self._command_ledger.appraisal_is_committed(
+                    episode_id=psychological.episode_id,
+                    appraisal_id=psychological.appraisal_id,
+                    evidence_set_hash=psychological.evidence_set_hash,
+                    observed_event_refs=psychological.observed_event_refs,
+                ):
+                    return self._failure(command, request_hash, "appraisal identity or episode evidence set already committed", "conflict")
+                # No text, success flag or explicit legacy appraisal enters the
+                # keyword/outcome appraisal path for this command.
+                event = {}
+                occurred_at = psychological.created_at
+            else:
+                event = dict(command.payload.get("event") or command.payload)
+                occurred_at = _aware(event.get("source_time") or event.get("observed_at"), command.issued_at)
             effective_at = max(occurred_at, self.snapshot.updated_at)
-            appraisal = self._appraise(event, kind=kind, event_id=command.event_id)
-            factors, applied, coupling = self._integrate(appraisal, effective_at, heartbeat=kind == "heartbeat")
+            fact = None
+            new_fact = False
+            activity_at = self._qq_activity_at
+            payload = dict(event.get("payload") or {})
+            try:
+                drive_context = QQDriveContext.model_validate(payload.get("qq_drive_context", {}))
+                if psychological is not None:
+                    appraisal = EventAppraisal(
+                        source=f"psychological:{psychological.appraisal_kind}",
+                        precision=min(0.35, self.profile.source_precision.get("llm_appraisal", 0.0)) * psychological.model_confidence,
+                        suggested_impacts=dict(psychological.suggested_impacts),
+                        evidence_refs=list(psychological.observed_event_refs),
+                    )
+                elif "qq_fact" in payload:
+                    drive = self.profile.qq_social_drive
+                    if drive is None or not drive.enabled or kind == "heartbeat":
+                        return self._failure(command, request_hash, "QQ facts require an enabled profile and event/outcome command", "rejected")
+                    if "appraisal" in payload or "appraisal" in event:
+                        return self._failure(command, request_hash, "QQ facts cannot override their deterministic appraisal", "rejected")
+                    fact = QQHomeostaticFact.model_validate(payload["qq_fact"])
+                    previous_fact_hash = self._command_ledger.qq_fact_hash(fact.fact_key)
+                    if previous_fact_hash is not None and previous_fact_hash != fact.fact_hash:
+                        return self._failure(command, request_hash, "QQ fact identity reused with different evidence", "conflict")
+                    new_fact = previous_fact_hash is None
+                    if new_fact and not -5 <= (self._clock() - fact.occurred_at).total_seconds() <= 300:
+                        return self._failure(command, request_hash, "QQ fact must be a recent verified event", "rejected")
+                    appraisal = self._qq_fact_appraisal(fact, apply=new_fact,
+                        regulation_feedback=command.payload.get("regulation_feedback") is True)
+                    if new_fact and fact.kind in {"verified_message", "verified_interaction", "verified_novelty"}:
+                        activity_at = max(activity_at, min(fact.occurred_at, command.issued_at))
+                else:
+                    appraisal = self._appraise(event, kind=kind, event_id=command.event_id)
+            except ValidationError:
+                return self._failure(command, request_hash, "invalid QQ homeostatic fact or context", "rejected")
+            factors, applied, coupling = self._integrate(
+                appraisal, effective_at, heartbeat=kind == "heartbeat", qq_resting=drive_context.resting,
+            )
+            if psychological is not None:
+                # Model suggestions may affect only the six psychological
+                # dimensions. Cross-factor coupling cannot modify energy or
+                # relabel its authoritative evidence/precision either.
+                factors["energy_reserve"] = self.snapshot.dimensions["energy_reserve"]
+                applied["energy_reserve"] = 0.0
+                coupling["energy_reserve"] = 0.0
             boundary_streaks, boundary_sides = self._next_boundary_heartbeat_streaks(
                 factors,
                 heartbeat=kind == "heartbeat",
@@ -475,6 +564,19 @@ class HomeostasisEngine:
                 applied_impacts=applied,
                 coupling_impacts=coupling,
                 watchdog=watchdog,
+                evidence_refs=(
+                    list(psychological.observed_event_refs) if psychological is not None
+                    else list(fact.evidence_refs) if fact is not None else []
+                ),
+                episode_id=psychological.episode_id if psychological is not None else None,
+                values_before=(
+                    {name: factor.value for name, factor in self.snapshot.dimensions.items()}
+                    if psychological is not None else {}
+                ),
+                values_after=(
+                    {name: factor.value for name, factor in factors.items()}
+                    if psychological is not None else {}
+                ),
             )
             result_payload = {
                 "revision": revision,
@@ -482,6 +584,19 @@ class HomeostasisEngine:
                 "interoceptive_summary": summary.model_dump(mode="json"),
                 "trace": trace.model_dump(mode="json"),
             }
+            if fact is not None:
+                result_payload["qq_fact"] = {"fact_id": fact.fact_id, "kind": fact.kind, "applied": new_fact}
+            if psychological is not None:
+                result_payload["appraisal"] = {
+                    "episode_id": psychological.episode_id,
+                    "appraisal_id": psychological.appraisal_id,
+                    "appraisal_kind": psychological.appraisal_kind,
+                    "basis_snapshot_revision": psychological.basis_snapshot_revision,
+                    "evidence_set_hash": psychological.evidence_set_hash,
+                    "model_confidence": psychological.model_confidence,
+                    "effective_precision": appraisal.precision,
+                    "applied": True,
+                }
             result = DomainCommandResult[dict[str, Any]](
                 command_id=command.command_id,
                 command_type=command.command_type,
@@ -493,23 +608,56 @@ class HomeostasisEngine:
                 result=result_payload,
                 completed_at=self._clock(),
             )
-            self._command_ledger.commit(
-                key,
-                request_hash=request_hash,
-                result=result.model_dump(mode="json"),
-                snapshot=next_snapshot.model_dump(mode="json"),
-                engine_state=self._engine_state_payload(
-                    boundary_streaks,
-                    boundary_sides,
-                ),
-                trace=trace.model_dump(mode="json"),
-            )
+            try:
+                self._command_ledger.commit(
+                    key,
+                    request_hash=request_hash,
+                    result=result.model_dump(mode="json"),
+                    snapshot=next_snapshot.model_dump(mode="json"),
+                    engine_state=self._engine_state_payload(
+                        boundary_streaks,
+                        boundary_sides,
+                        qq_activity_at=activity_at,
+                    ),
+                    trace=trace.model_dump(mode="json"),
+                    qq_fact=(fact.fact_key, fact.fact_hash) if fact is not None and new_fact else None,
+                    psychological_appraisal=(
+                        (psychological.episode_id, psychological.appraisal_id, psychological.evidence_set_hash,
+                         psychological.observed_event_refs)
+                        if psychological is not None else None
+                    ),
+                )
+            except (CommandLedgerConflictError, StaleSnapshotError):
+                if psychological is None:
+                    raise
+                return self._failure(command, request_hash, "appraisal state or semantic evidence changed during commit", "conflict")
             self.snapshot = next_snapshot
+            self._qq_activity_at = activity_at
             self._boundary_heartbeat_streaks = boundary_streaks
             self._boundary_heartbeat_sides = boundary_sides
             self._project_snapshot_mirror()
             self._project_trace(trace)
             return result
+
+    def _qq_fact_appraisal(self, fact: QQHomeostaticFact, *, apply: bool, regulation_feedback: bool = False) -> EventAppraisal:
+        drive = self.profile.qq_social_drive
+        assert drive is not None and drive.enabled
+        impacts: dict[DimensionName, float] = {}
+        if apply:
+            if fact.kind == "verified_message":
+                impacts = {"novelty": drive.message_novelty_recovery, "cognitive_load": 0.005}
+            elif fact.kind == "verified_interaction":
+                impacts = {"novelty": drive.interaction_novelty_recovery, "cognitive_load": 0.01}
+                if not regulation_feedback:
+                    impacts["social_connection"] = drive.interaction_social_recovery
+            elif fact.kind == "verified_novelty":
+                impacts = {"novelty": drive.experience_novelty_recovery}
+        # A send receipt proves an attempt, not a social reward. Silence is
+        # neither a rejection nor a reason to increase sending.
+        return EventAppraisal(
+            source="verified_outcome", precision=self.profile.source_precision.get("verified_outcome", 0.9),
+            suggested_impacts=impacts, evidence_refs=list(fact.evidence_refs),
+        )
 
     def _appraise(self, event: dict[str, Any], *, kind: str, event_id: str) -> EventAppraisal:
         payload = dict(event.get("payload") or {})
@@ -582,6 +730,7 @@ class HomeostasisEngine:
         now: datetime,
         *,
         heartbeat: bool,
+        qq_resting: bool = False,
     ) -> tuple[dict[DimensionName, FactorBelief], dict[DimensionName, float], dict[DimensionName, float]]:
         requested_base_delta: dict[DimensionName, float] = {
             key: 0.0 for key in DIMENSIONS
@@ -613,6 +762,9 @@ class HomeostasisEngine:
             suggested = float(appraisal.suggested_impacts.get(dimension, 0.0))
             bounded = _clamp(suggested, -spec.max_event_delta, spec.max_event_delta)
             requested_base_delta[dimension] += bounded * appraisal.precision
+
+        if heartbeat:
+            self._apply_qq_idle_drift(requested_base_delta, now, resting=qq_resting)
 
         base_values: dict[DimensionName, float] = {}
         realised_base_delta: dict[DimensionName, float] = {}
@@ -669,6 +821,28 @@ class HomeostasisEngine:
             else requested_coupling
         )
         return factors, applied, reported_coupling
+
+    def _apply_qq_idle_drift(self, deltas: dict[DimensionName, float], now: datetime, *, resting: bool) -> None:
+        drive = self.profile.qq_social_drive
+        if drive is None or not drive.enabled or resting:
+            return
+        energy = self.snapshot.dimensions["energy_reserve"]
+        load = self.snapshot.dimensions["cognitive_load"]
+        # Needs recede while resources recover or a current task is demanding.
+        # Existing recovery of every dimension remains independent of this term.
+        energy_scale = _clamp((energy.value - energy.target_band[0]) / max(0.01, sum(energy.target_band) / 2 - energy.target_band[0]), 0, 1)
+        load_scale = _clamp((load.target_band[1] - load.value) / max(0.01, load.target_band[1] - sum(load.target_band) / 2), 0, 1)
+        scale = min(energy_scale, load_scale)
+        idle_since = self._qq_activity_at + timedelta(seconds=drive.idle_grace_seconds)
+        for dimension, rate, floor in (
+            ("social_connection", drive.social_depletion_per_hour, drive.social_floor),
+            ("novelty", drive.novelty_depletion_per_hour, drive.novelty_floor),
+        ):
+            current = self.snapshot.dimensions[dimension]
+            elapsed = min(max(0.0, (now - max(current.updated_at, idle_since)).total_seconds()),
+                          float(self.profile.max_heartbeat_step_seconds))
+            available = max(0.0, current.value + deltas[dimension] - floor)
+            deltas[dimension] -= min(available, rate * elapsed / 3600 * scale)
 
     @staticmethod
     def _posterior(
@@ -860,7 +1034,12 @@ class HomeostasisEngine:
             low, high = factor.target_band
             error = max(low - factor.value, factor.value - high, 0.0)
             weight = spec.lower_weight if factor.value < low else spec.upper_weight
-            scored.append((error * weight, dimension, actions[dimension]))
+            action = actions[dimension]
+            if factor.value > high and dimension == "social_connection":
+                action = ("quiet", "降低社交密度并留出独处空间", {"social_connection": -0.10})
+            elif factor.value > high and dimension == "novelty":
+                action = ("familiar", "减少新刺激并回到熟悉节奏", {"novelty": -0.09})
+            scored.append((error * weight, dimension, action))
         scored.sort(key=lambda item: (-item[0], item[1]))
         candidates: list[PolicyCandidate] = []
         for rank, (error, dimension, (policy_id, label, impacts)) in enumerate(scored[:3], start=1):
@@ -1069,6 +1248,10 @@ class HomeostasisEngine:
         elif self.state_path.is_file():
             self.snapshot = HomeostaticSnapshot.model_validate_json(self.state_path.read_text(encoding="utf-8"))
         engine_state = self._command_ledger.load_engine_state()
+        if engine_state.get("qq_activity_at") is not None:
+            self._qq_activity_at = _aware(engine_state["qq_activity_at"], self.snapshot.updated_at)
+        else:
+            self._qq_activity_at = self.snapshot.updated_at
         raw_streaks = engine_state.get("boundary_heartbeat_streaks") or {}
         raw_sides = engine_state.get("boundary_heartbeat_sides") or {}
         if not isinstance(raw_streaks, dict) or not isinstance(raw_sides, dict):
@@ -1103,15 +1286,20 @@ class HomeostasisEngine:
         )
         self._project_snapshot_mirror()
 
-    @staticmethod
     def _engine_state_payload(
+        self,
         boundary_streaks: dict[DimensionName, int],
         boundary_sides: dict[DimensionName, Literal["low", "high"]],
+        *,
+        qq_activity_at: datetime | None = None,
     ) -> dict[str, Any]:
-        return {
+        result: dict[str, Any] = {
             "boundary_heartbeat_streaks": dict(boundary_streaks),
             "boundary_heartbeat_sides": dict(boundary_sides),
         }
+        if self.profile.qq_social_drive is not None and self.profile.qq_social_drive.enabled:
+            result["qq_activity_at"] = (qq_activity_at or self._qq_activity_at).isoformat()
+        return result
 
     def _project_snapshot_mirror(self) -> None:
         try:

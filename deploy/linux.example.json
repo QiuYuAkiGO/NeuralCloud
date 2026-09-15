@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "service_user": "neuralcloud",
+  "mode": "live",
+  "development": false,
+  "manifest_path": "presets/runtime/shared-misty-regulation-v1.json",
+  "profile_path": "presets/homeostasis/qq-social-drive-v1.json",
+  "paths": {
+    "install_root": "/opt/neuralcloud",
+    "releases": "/opt/neuralcloud/releases",
+    "current": "/opt/neuralcloud/current",
+    "config_root": "/etc/neuralcloud",
+    "state_root": "/var/lib/neuralcloud",
+    "log_root": "/var/log/neuralcloud",
+    "backup_root": "/var/backups/neuralcloud"
+  },
+  "ports": {"gui": 8790, "runtime": 8770, "cognitive": 8771, "homeostasis": 8772, "board": 8793},
+  "bindings": {
+    "NC_GUI_CONFIG": "/etc/neuralcloud/gui-settings.json",
+    "NC_GUI_PRESETS": "/var/lib/neuralcloud/presets",
+    "NC_RUNTIME_STATE_DIR": "/var/lib/neuralcloud/runtime",
+    "NC_COGNITIVE_STATE_PATH": "/var/lib/neuralcloud/cognitive/state.json",
+    "NC_HOMEOSTASIS_STATE_DIR": "/var/lib/neuralcloud/homeostasis/domain",
+    "NC_SHARED_MEMORY_DB": "/var/lib/neuralcloud/shared-memory.sqlite3",
+    "NC_CONTROL_TOKEN_FILE": "/etc/neuralcloud/control.token",
+    "NC_SERVICE_TOKEN_FILE": "/etc/neuralcloud/service.token",
+    "NC_QQ_INPUT_TOKEN_BUDGET": 96000,
+    "NC_QQ_MEMORY_RECALL_MAX_CHARACTERS": 16000
+  },
+  "enabled_components": ["cognitive", "homeostasis", "runtime", "gui"],
+  "public_origin": null,
+  "startup_timeout_seconds": 600,
+  "stop_timeout_seconds": 180
+}

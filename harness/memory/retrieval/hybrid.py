@@ -38,6 +38,7 @@ class HybridRetriever:
             channels=plan.channels or None,
             entities=None,
             limit=pool_size,
+            trusted_audience=query.trusted_audience,
         )
         time_fallback = False
         if not events and (since is not None or until is not None):
@@ -49,6 +50,7 @@ class HybridRetriever:
                 channels=plan.channels or None,
                 entities=None,
                 limit=pool_size,
+                trusted_audience=query.trusted_audience,
             )
             time_fallback = True
         channel_fallback = False
@@ -63,12 +65,14 @@ class HybridRetriever:
                 channels=None,
                 entities=None,
                 limit=pool_size,
+                trusted_audience=query.trusted_audience,
             )
             channel_fallback = True
         facts = self.stores.semantic.search_pool(
             query_embedding=query_embedding,
             subject=None,
             limit=max(8, pool_size // 4),
+            trusted_audience=query.trusted_audience,
         )
         scored: list[ScoredMemory] = []
         for event in events:

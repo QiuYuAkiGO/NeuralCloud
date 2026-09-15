@@ -26,6 +26,7 @@ def _run_isolated_start(
     local_token: str = LOCAL_TOKEN,
     token_read_error: bool = False,
     powershell: str | None = POWERSHELL,
+    development: bool = True,
 ) -> tuple[subprocess.CompletedProcess[str], list[dict[str, str]], list[str]]:
     """Exercise startup with fake processes, endpoints, and local credential I/O."""
     shutil.copy2(ROOT / "start.ps1", tmp_path / "start.ps1")
@@ -34,7 +35,7 @@ def _run_isolated_start(
     python_path.parent.mkdir(parents=True)
     python_path.touch()
     runtime_dir = tmp_path / "data" / "runtime"
-    runtime_dir.mkdir(parents=True)
+    runtime_dir.mkdir(parents=True, exist_ok=True)
     manifest = tmp_path / "presets" / "runtime" / "grounded-mistyai-v1.json"
     if saved_configuration != "default":
         (runtime_dir / f"{saved_configuration}-start.json").write_text(
@@ -100,15 +101,30 @@ function Start-Process {
           $RedirectStandardError, $WindowStyle, [switch]$PassThru)
     [pscustomobject]@{
         module = [string]$ArgumentList[1]
+        model_mode = [string]$env:NC_MODE
         token = [string]$env:NC_MISTYAI_TOKEN
         token_file = [string]$env:NC_MISTYAI_TOKEN_FILE
         base_url = [string]$env:NC_MISTYAI_BASE_URL
+        voice_config = [string]$env:NC_VOICE_CONFIG
+        web_config = [string]$env:NC_WEB_CONFIG
         provider = [string]$env:NC_EMBODIMENT_PROVIDER
         runtime_state_dir = [string]$env:NC_RUNTIME_STATE_DIR
         cognitive_state_path = [string]$env:NC_COGNITIVE_STATE_PATH
         homeostasis_state_dir = [string]$env:NC_HOMEOSTASIS_STATE_DIR
         gui_config = [string]$env:NC_GUI_CONFIG
         gui_presets = [string]$env:NC_GUI_PRESETS
+        gui_port = [string]$env:NC_GUI_PORT
+        control_mode = [string]$env:NC_CONTROL_MODE
+        isolated_development = [string]$env:NC_ISOLATED_DEVELOPMENT
+        profile_path = [string]$env:NC_HOMEOSTASIS_PROFILE_PATH
+        qq_session_config = [string]$env:NC_QQ_SESSION_CONFIG
+        qq_watcher_config = [string]$env:NC_QQ_WATCHER_CONFIG
+        qq_direct_config = [string]$env:NC_QQ_DIRECT_CONFIG
+        shared_memory_db = [string]$env:NC_SHARED_MEMORY_DB
+        control_token_file = [string]$env:NC_CONTROL_TOKEN_FILE
+        service_token_file = [string]$env:NC_SERVICE_TOKEN_FILE
+        control_token_sha256 = [BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes($env:NC_CONTROL_TOKEN))).Replace('-', '').ToLowerInvariant()
+        service_token_sha256 = [BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes($env:NC_SERVICE_TOKEN))).Replace('-', '').ToLowerInvariant()
     } | ConvertTo-Json -Compress | Add-Content -LiteralPath (Join-Path $global:StartTestRoot 'launches.jsonl')
     $global:StartTestProcessId += 1
     return [pscustomobject]@{ Id = $global:StartTestProcessId; StartTime = (Get-Date) }
@@ -138,11 +154,17 @@ exit $LASTEXITCODE
     env = {
         key: value
         for key, value in os.environ.items()
-        if not key.upper().startswith("NC_MISTYAI_") and key.upper() != "NC_EMBODIMENT_PROVIDER"
+        if not key.upper().startswith("NC_MISTYAI_") and key.upper() not in {
+            "NC_EMBODIMENT_PROVIDER", "NC_CONTROL_TOKEN_FILE", "NC_SERVICE_TOKEN_FILE",
+            "NC_HOMEOSTASIS_STATE_DIR",
+            "NC_RUNTIME_STATE_DIR", "NC_GUI_CONFIG", "NC_GUI_PRESETS",
+            "NC_QQ_SESSION_CONFIG", "NC_QQ_WATCHER_CONFIG", "NC_SHARED_MEMORY_DB", "NC_VOICE_CONFIG",
+        }
     }
     env.update(environment or {})
     result = subprocess.run(
-        [str(powershell), "-NoProfile", "-NonInteractive", "-File", str(runner), *arguments],
+        [str(powershell), "-NoProfile", "-NonInteractive", "-File", str(runner),
+         *(["-Development"] if development else []), *arguments],
         cwd=tmp_path,
         env=env,
         capture_output=True,
@@ -190,13 +212,17 @@ def test_no_argument_start_reuses_local_credentials_for_saved_mistyai_configurat
 @pytest.mark.parametrize("powershell", POWERSHELL_ENGINES)
 def test_no_argument_default_start_does_not_require_mistyai_credentials(tmp_path: Path, powershell: str) -> None:
     result, launches, token_reads = _run_isolated_start(
-        tmp_path, saved_configuration="default", powershell=powershell
+        tmp_path, saved_configuration="default", powershell=powershell, development=False
     )
 
     assert result.returncode == 0, result.stderr or result.stdout
     assert len(launches) == 4
     assert not token_reads
     assert all(not launch["token"] and not launch["token_file"] for launch in launches)
+    assert all(launch["gui_port"] == "8790" for launch in launches)
+    assert all(launch["control_mode"] == "study_runtime" for launch in launches)
+    assert all(launch["isolated_development"] == "0" for launch in launches)
+    assert all(Path(launch["profile_path"]).name == "qq-social-drive-v1.json" for launch in launches)
 
 
 @pytest.mark.skipif(POWERSHELL is None, reason="PowerShell is unavailable")
@@ -312,6 +338,7 @@ def test_required_misty_manifest_rejects_provider_override_before_launch(
             "-NonInteractive",
             "-File",
             str(ROOT / "start.ps1"),
+            "-Development",
             "-ManifestPath",
             str(ROOT / "presets" / "runtime" / "grounded-mistyai-v1.json"),
             "-EmbodimentProvider",
@@ -350,9 +377,69 @@ def test_acceptance_state_is_isolated_and_tokens_are_not_printed(tmp_path):
     assert (state / "gui_settings.json").read_bytes() == source.read_bytes()
     assert not (tmp_path / "data" / "runtime" / "active-start.json").exists()
     assert (state / "runtime" / "active-start.json").exists()
-    registry = json.loads((tmp_path / ".neuralcloud.pids.json").read_text(encoding="utf-8-sig"))
+    registry = json.loads((state / ".neuralcloud.pids.json").read_text(encoding="utf-8-sig"))
+    assert not (tmp_path / ".neuralcloud.pids.json").exists()
+    assert all(launch["isolated_development"] == "1" for launch in launches)
     for name in ("control", "service"):
         secret_file = Path(registry[f"{name}_token_file"])
         token = secret_file.read_text()
         assert len(token) >= 32 and token not in result.stdout + result.stderr
     assert "fixture-local-model-key" not in result.stdout + result.stderr
+
+
+@pytest.mark.skipif(POWERSHELL is None, reason="PowerShell is unavailable")
+def test_normal_start_cannot_create_independent_state(tmp_path):
+    result, launches, _ = _run_isolated_start(
+        tmp_path, "-StateRoot", str(tmp_path / "independent"), development=False,
+    )
+    assert result.returncode == 1
+    assert "requires -Development" in result.stdout
+    assert not launches
+    assert not (tmp_path / "independent").exists()
+
+
+@pytest.mark.skipif(POWERSHELL is None, reason="PowerShell is unavailable")
+def test_normal_start_rejects_explicit_development_manifest(tmp_path):
+    result, launches, _ = _run_isolated_start(
+        tmp_path, "-ManifestPath", str(tmp_path / "presets/runtime/development-demo.json"),
+        development=False,
+    )
+    assert result.returncode == 1
+    assert "require -Development" in result.stdout
+    assert not launches
+
+
+@pytest.mark.skipif(POWERSHELL is None, reason="PowerShell is unavailable")
+def test_normal_start_does_not_load_legacy_saved_development_manifest(tmp_path):
+    result, launches, reads = _run_isolated_start(tmp_path, development=False)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert launches and all(launch["control_mode"] == "study_runtime" for launch in launches)
+    assert not reads
+
+
+@pytest.mark.skipif(POWERSHELL is None, reason="PowerShell is unavailable")
+@pytest.mark.parametrize("explicit", [True, False])
+def test_normal_shared_start_preserves_canonical_state_and_channel_bindings(tmp_path, explicit):
+    canonical = tmp_path / "private" / "canonical-domain"
+    canonical.mkdir(parents=True)
+    sentinel = canonical / "state.json"
+    sentinel.write_text('{"synthetic_existing_state":true}')
+    bindings = {
+        "NC_QQ_SESSION_CONFIG": str(tmp_path / "session.json"),
+        "NC_QQ_WATCHER_CONFIG": str(tmp_path / "watcher.json"),
+        "NC_SHARED_MEMORY_DB": str(tmp_path / "shared.sqlite3"),
+        "NC_HOMEOSTASIS_STATE_DIR": str(canonical if not explicit else tmp_path / "ignored"),
+    }
+    result, launches, _ = _run_isolated_start(
+        tmp_path, *(["-HomeostasisStateDir", str(canonical)] if explicit else []),
+        development=False, environment=bindings,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert sentinel.read_text() == '{"synthetic_existing_state":true}'
+    assert not (tmp_path / "data/homeostasis").exists()
+    for launch in launches:
+        assert Path(launch["homeostasis_state_dir"]) == canonical
+        assert launch["qq_session_config"] == bindings["NC_QQ_SESSION_CONFIG"]
+        assert launch["qq_watcher_config"] == bindings["NC_QQ_WATCHER_CONFIG"]
+        assert launch["shared_memory_db"] == bindings["NC_SHARED_MEMORY_DB"]
+        assert launch["control_mode"] == "study_runtime"

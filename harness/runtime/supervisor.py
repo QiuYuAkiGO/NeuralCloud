@@ -127,7 +127,9 @@ _TRANSITIONS: dict[RuntimeLifecycle, frozenset[RuntimeLifecycle]] = {
 
 _HOMEOSTATIC_COGNITIVE_RESERVED_PAYLOAD_KEYS = frozenset(
     {"homeostatic_interoception", "homeostatic_profile_ref", "interoception",
-     "opaque_interoception", "grounded_manifest_hash", "provider_intents", "research_context", "basic_terminal"}
+     "opaque_interoception", "grounded_manifest_hash", "provider_intents", "research_context", "basic_terminal",
+     "web_context", "runtime_web_context", "runtime_web_deadline_at", "offers",
+     "emotion_context_ref", "emotion_revision"}
 )
 
 
@@ -345,6 +347,8 @@ class RuntimeSupervisor:
         self._command_intent_seqs: dict[str, int] = {}
         self._prepare_intent_seqs: dict[str, tuple[int, int]] = {}
         self._command_result_seqs: dict[str | None, int] = {}
+        self._qq_turn_event_seqs: dict[str, int] = {}
+        self._qq_turn_completed_seqs: dict[str, int] = {}
         self._command_index_cursor = 0
         self._sync_command_index()
         self.checkpoint_store = checkpoint_store or CheckpointStore(self.state_dir / "checkpoint.json")
@@ -451,6 +455,22 @@ class RuntimeSupervisor:
             from harness.runtime.basic_terminal import BasicTerminalRuntime
 
             self._basic_terminal = BasicTerminalRuntime(self)
+        from harness.runtime.capabilities import CapabilityController
+
+        self.capabilities = CapabilityController(self, self.state_dir)
+        from harness.runtime.goals import GoalController
+        self.goals = GoalController(self, self.state_dir)
+        prior_execution_guard = self.action_coordinator.execution_guard
+
+        async def capability_execution_guard(action):
+            if prior_execution_guard is not None:
+                allowed, reason = await prior_execution_guard(action)
+                if not allowed:
+                    return allowed, reason
+            reason = await self.capabilities.validate_action(action)
+            return reason is None, reason
+
+        self.action_coordinator.execution_guard = capability_execution_guard
 
     @property
     def version_vector(self) -> VersionVector:
@@ -535,6 +555,8 @@ class RuntimeSupervisor:
         return True
 
     async def submit_event(self, **kwargs: Any) -> RuntimeEvent | None:
+        if kwargs.get("event_type") == RuntimeEventType.IDLE and not self.manifest.autonomous_chat_enabled:
+            return None
         try:
             event = await self.ingress.accept(**kwargs)
             return event
@@ -669,6 +691,7 @@ class RuntimeSupervisor:
             previous_lifecycle = self._restore_runtime_indexes()
             if self._basic_terminal is not None:
                 self._basic_terminal.recover()
+            self.goals.recover_contributions()
             await self._restore_research_memory()
             await self._transition(RuntimeLifecycle.RECOVERING, reason="boot recovery started")
             if self.journal.truncated_tail_bytes:
@@ -1099,7 +1122,10 @@ class RuntimeSupervisor:
             )
             if not await self._drain_action_tasks(timeout=self.maintenance_drain_seconds):
                 raise RuntimeStateError("foreground action did not stop during shutdown")
-            drained = await self.cognitive.pause_maintenance(timeout=self.maintenance_drain_seconds)
+            drained = await asyncio.wait_for(
+                self.cognitive.pause_maintenance(timeout=self.maintenance_drain_seconds),
+                timeout=self.maintenance_drain_seconds + 1.0,
+            )
             if not drained:
                 raise RuntimeStateError("cognitive maintenance did not drain during shutdown")
             await self._pause_research_agency()
@@ -1119,6 +1145,8 @@ class RuntimeSupervisor:
                 self._opaque_store.close()
             await self._transition(RuntimeLifecycle.STOPPED, reason=reason, durable=True)
             await self.queue.close()
+            self.capabilities.close()
+            self.goals.close()
             self._closed = True
         except Exception as exc:
             await self._transition(RuntimeLifecycle.FAULTED, reason=f"graceful stop failed: {exc}")
@@ -1357,6 +1385,23 @@ class RuntimeSupervisor:
     async def _dispatch_domain_event(
         self, event: RuntimeEvent, process_seq: int
     ) -> EventDispatchResult:
+        if event.event_type == RuntimeEventType.CAPABILITY_OPPORTUNITY:
+            return await self.capabilities.dispatch(event, process_seq)
+        if event.event_type == RuntimeEventType.BOARD_REFLECTION:
+            board = getattr(self, "board", None)
+            if board is None:
+                raise DomainCommandError("board body unavailable")
+            return await board.dispatch(event, process_seq)
+        if event.event_type == RuntimeEventType.QQ_TURN:
+            return await self._dispatch_qq_turn(event, process_seq)
+        if event.event_type == RuntimeEventType.QQ_FACT:
+            from harness.homeostasis.models import QQHomeostaticFact
+
+            fact = QQHomeostaticFact.model_validate(event.payload.get("qq_fact"))
+            if not -5 <= (utc_now() - fact.occurred_at).total_seconds() <= 300:
+                return EventDispatchResult(event_id=event.event_id, receive_seq=event.receive_seq,
+                    process_seq=process_seq, status="failed", decision_kind="qq_fact",
+                    detail={"error_type": "qq_fact_expired"})
         if event.event_type == RuntimeEventType.BODY_STATE:
             if self.manifest.grounded_agency is not None:
                 return await self._handle_grounded_body(event, process_seq)
@@ -1384,7 +1429,7 @@ class RuntimeSupervisor:
                 decision_kind="action_result",
                 detail={"action": action.model_dump(mode="json")},
             )
-        if self.manifest.grounded_agency is not None:
+        if self.manifest.grounded_agency is not None and event.event_type != RuntimeEventType.QQ_FACT:
             return await self._dispatch_grounded_event(event, process_seq)
         if event.event_type == RuntimeEventType.TERMINAL_CONTINUATION:
             task = self._basic_terminal.tasks.get(str(event.payload.get("terminal_task_id") or "")) if self._basic_terminal else None
@@ -1434,7 +1479,8 @@ class RuntimeSupervisor:
                 command_type=homeostasis_command,
                 idempotency_key=f"homeostasis:{homeostasis_command}:{event.event_id}",
                 expected_revision=self._homeostasis_snapshot.revision,
-                payload={"event": event.model_dump(mode="json")},
+                payload={"event": event.model_dump(mode="json"),
+                    **({"regulation_feedback": True} if self.goals.enabled else {})},
             )
             method = (
                 self.homeostasis.apply_heartbeat
@@ -1532,9 +1578,14 @@ class RuntimeSupervisor:
             await self.check_watchdog()
             if self._basic_terminal is not None and self.lifecycle == RuntimeLifecycle.RUNNING:
                 await self._basic_terminal.expire_pending_approvals()
+            board = getattr(self, "board", None)
+            if board is not None:
+                await board.heartbeat()
+            await self.capabilities.heartbeat()
             policies: list[dict[str, Any]] = []
             if (
-                self.lifecycle == RuntimeLifecycle.RUNNING
+                self.manifest.autonomous_chat_enabled
+                and self.lifecycle == RuntimeLifecycle.RUNNING
                 and self.queue.empty()
                 and not self._pending_user_ingress_event_ids
                 and self.action_coordinator.current is None
@@ -1655,6 +1706,13 @@ class RuntimeSupervisor:
         terminal_context = await self._basic_terminal.context(event) if self._basic_terminal is not None else None
         if terminal_context is not None:
             cognitive_event_payload.update({"mode": "basic_terminal_task", "basic_terminal": terminal_context})
+        web_deadline = None
+        if event.event_type == RuntimeEventType.USER_MESSAGE and terminal_context is None:
+            from harness.runtime.web_dialogue import prepare_web_context
+            web_context, web_deadline = await prepare_web_context(self, event)
+            if web_context is not None:
+                cognitive_event_payload.update(runtime_web_context=web_context,
+                    runtime_web_deadline_at=web_deadline.isoformat())
         prepare_envelope = self._make_command(
             event,
             command_type="PrepareResponse",
@@ -1705,6 +1763,8 @@ class RuntimeSupervisor:
                 ),
             },
         )
+        if web_deadline is not None:
+            prepare_envelope = prepare_envelope.model_copy(update={"deadline": min(prepare_envelope.deadline, web_deadline)})
         self._journal_homeostatic_route(
             event=event,
             command_id=prepare_envelope.command_id,
@@ -2728,6 +2788,13 @@ class RuntimeSupervisor:
     ) -> ActionExecution:
         action_context = self._action_context.get(action.action_id)
         source_decision = action_context["prepared"].decision if action_context else None
+        capability_stop = await self.capabilities.validate_action(action)
+        if capability_stop:
+            rejected = await self.action_coordinator.reject(action.action_id, reason=capability_stop)
+            self._append_journal("action_blocked", event=event, data={"action": rejected.model_dump(mode="json")})
+            await self._submit_action_result(rejected)
+            return rejected
+        action = self.action_coordinator.get(action.action_id) or action
         if (
             self._basic_terminal is not None and event is not None
             and isinstance(source_decision, GoalProposal)
@@ -2951,7 +3018,9 @@ class RuntimeSupervisor:
         # ACTION_RESULT (when one exists).
         await self._commit_prepared(original_event, prepared, evidence)
         ga = self.manifest.grounded_agency
-        if ga is None or ga.action_selection == "engineered_argmin":
+        if original_event.event_type != RuntimeEventType.CAPABILITY_OPPORTUNITY and (
+            ga is None or ga.action_selection == "engineered_argmin"
+        ):
             outcome_command = self._make_command(
                 effective_outcome_event,
                 command_type="ApplyOutcome",
@@ -2987,6 +3056,8 @@ class RuntimeSupervisor:
             data={"action_id": action.action_id, "prepare_id": prepared.prepare_id},
         )
         self._action_context.pop(action.action_id, None)
+        if original_event.event_type == RuntimeEventType.CAPABILITY_OPPORTUNITY:
+            await self.capabilities.reconcile()
         if self._basic_terminal is not None:
             await self._basic_terminal.action_completed(original_event, action, evidence)
 
@@ -3132,7 +3203,34 @@ class RuntimeSupervisor:
                         self._prepare_intent_seqs[record.event_id] = (record.record_seq, count + 1)
                 elif record.record_type in {"domain_command_result", "domain_command_late_result"}:
                     self._command_result_seqs[record.command_id] = record.record_seq
+                elif record.record_type == "event_accepted" and record.event_id is not None:
+                    event = record.data.get("event", {})
+                    if event.get("event_type") == RuntimeEventType.QQ_TURN.value:
+                        self._qq_turn_event_seqs[record.event_id] = record.record_seq
+                        self._qq_turn_completed_seqs.pop(record.event_id, None)
+                elif record.record_type == "processing_completed" and record.event_id in self._qq_turn_event_seqs:
+                    self._qq_turn_completed_seqs[record.event_id] = record.record_seq
                 self._command_index_cursor = record.record_seq
+
+    def qq_turn_history(self, event_id: str):
+        """Seek an exact QQ turn; new identities never scan historical payloads."""
+        self._sync_command_index()
+        sequence = self._qq_turn_event_seqs.get(event_id)
+        if sequence is None:
+            return None, None
+        accepted = self._indexed_command_record(sequence)
+        if accepted.record_type != "event_accepted" or accepted.event_id != event_id:
+            raise RuntimeStateError("QQ event journal index binding is invalid")
+        event = RuntimeEvent.model_validate(accepted.data["event"])
+        if event.event_id != event_id or event.event_type != RuntimeEventType.QQ_TURN:
+            raise RuntimeStateError("QQ event journal index source is invalid")
+        completed_sequence = self._qq_turn_completed_seqs.get(event_id)
+        if completed_sequence is None:
+            return event, None
+        completed = self._indexed_command_record(completed_sequence)
+        if completed.record_type != "processing_completed" or completed.event_id != event_id:
+            raise RuntimeStateError("QQ completion journal index binding is invalid")
+        return event, completed.data
 
     def _indexed_command_record(self, record_seq: int) -> RuntimeJournalRecord:
         records = self.journal.records_after(record_seq - 1, limit=1)
@@ -3160,6 +3258,73 @@ class RuntimeSupervisor:
             }
         )
 
+    async def _dispatch_qq_turn(self, event: RuntimeEvent, process_seq: int) -> EventDispatchResult:
+        from harness.qq.shared import QQSharedPrepareRequest
+
+        request = QQSharedPrepareRequest.model_validate(event.payload)
+        if utc_now() >= request.deadline_at:
+            return EventDispatchResult(event_id=event.event_id, receive_seq=event.receive_seq,
+                process_seq=process_seq, status="failed", decision_kind="qq_prepare",
+                detail={"error_type": "qq_turn_expired"})
+        method = getattr(self.cognitive, "prepare_qq_response", None)
+        if method is None:
+            raise DomainCommandError("shared cognitive QQ preparation is unavailable")
+        key = f"cognitive:qq:{event.event_id}"
+        self._sync_command_index()
+        payload = request.model_dump(mode="json")
+        if key not in self._command_intent_seqs:
+            # Only the shared Runtime owns the current expression projection.
+            # Freeze it with the first command's VersionVector; retries below
+            # reuse the durable envelope, even after Homeostasis advances.
+            summary = self._response_homeostatic_interoception()
+            if summary is not None and summary["salience"] == "critical":
+                raise DomainCommandError("critical homeostatic state must pause before QQ cognition")
+            if request.idle_intent is not None:
+                if summary is None:
+                    raise DomainCommandError("QQ idle expression requires responses or full mode")
+                if request.idle_intent.homeostatic_interoception.model_dump(mode="json") != summary:
+                    raise DomainCommandError("QQ idle interoception differs from the current trusted summary")
+            # Ordinary body-supplied state is replaced, not trusted. Clearing
+            # it in off/shadow also prevents indirect user-JSON influence.
+            payload["homeostatic_interoception"] = summary
+            from harness.runtime.web_dialogue import prepare_web_context
+            web_context, _ = await prepare_web_context(self, event, channel="qq", deadline=request.deadline_at)
+            if web_context is not None:
+                payload["runtime_web_context"] = web_context
+            goal_context = self.goals.qq_context(request) if self.goals.enabled else None
+            if goal_context is not None:
+                payload["runtime_goal_context"] = goal_context
+        # QQ preparation reads the current owner under Cognitive's command lock.
+        # Background memory commits can advance it after Runtime's last snapshot;
+        # this request carries no write computed from that stale snapshot.
+        envelope = self._make_command(event, command_type="PrepareQQResponse",
+            idempotency_key=key, expected_revision=None, payload=payload)
+        envelope = envelope.model_copy(update={"deadline": min(envelope.deadline, request.deadline_at)})
+        self._journal_homeostatic_route(event=event, command_id=envelope.command_id,
+            target="qq_response", summary=envelope.payload.get("homeostatic_interoception"))
+        result = await self._invoke_domain(service="cognitive", envelope=envelope, method=method, event=event)
+        current = await asyncio.wait_for(self.cognitive.get_snapshot(), timeout=max(0.001,
+            (request.deadline_at - utc_now()).total_seconds()))
+        self._validate_snapshot(current, "cognitive")
+        if current.revision < max(self._cognitive_snapshot.revision, result.committed_revision or 0):
+            raise DomainCommandError("shared QQ cognitive snapshot regressed")
+        self._cognitive_snapshot = current
+        # This is preparation only. Neither the local chat delivery backend nor
+        # Homeostasis/CommitInteraction is invoked for a QQ preparation event.
+        if not isinstance(result.result, dict) or set(result.result) != {"decision", "trace"}:
+            raise DomainCommandError("shared QQ cognitive result is invalid")
+        from harness.qq.decision import QQReplyDecision
+
+        decision = QQReplyDecision.model_validate(result.result["decision"])
+        trace = result.result["trace"]
+        if ((decision.group_id, decision.self_member_id, decision.trace_id) !=
+                (request.group_id, request.self_member_id, request.trace.trace_id)
+                or not isinstance(trace, dict) or trace.get("trace_id") != request.trace.trace_id
+                or trace.get("event_id") != request.trace.event_id):
+            raise DomainCommandError("shared QQ cognitive result binding is invalid")
+        return EventDispatchResult(event_id=event.event_id, receive_seq=event.receive_seq,
+            process_seq=process_seq, status="completed", decision_kind="qq_prepare", detail=result.result)
+
     async def _invoke_domain(
         self,
         *,
@@ -3168,6 +3333,10 @@ class RuntimeSupervisor:
         method: Callable[[DomainCommandEnvelope[dict[str, Any]]], Awaitable[DomainCommandResult[Any]]],
         event: RuntimeEvent,
     ) -> DomainCommandResult[Any]:
+        if service == "cognitive":
+            from harness.runtime.emotion import with_emotion_context
+
+            envelope = await with_emotion_context(self, event, envelope)
         self._append_journal(
             "domain_command_intent",
             event=event,
@@ -3200,6 +3369,8 @@ class RuntimeSupervisor:
             raise DomainCommandError(
                 f"{service} {envelope.command_type} returned {result.status}: {result.error}"
             )
+        if service == "homeostasis":
+            self.goals.record_homeostasis(envelope, result)
         return result
 
     async def _check_services(self) -> tuple[str, ...]:
@@ -3208,6 +3379,8 @@ class RuntimeSupervisor:
             asyncio.wait_for(self.homeostasis.health(), timeout=self.command_timeout_seconds),
         )
         self._validate_health(cognitive_health, "cognitive")
+        if getattr(self.manifest, "emotion_mode", "off") != cognitive_health.detail.get("emotion_mode", "off"):
+            raise DomainCommandError("Runtime and Cognitive emotion rollout modes differ")
         health_watchdog = self._homeostasis_watchdog_reasons(homeostasis_health.detail)
         projection_errors = homeostasis_health.detail.get("projection_errors")
         watchdog_only = bool(health_watchdog) and not projection_errors
@@ -3247,6 +3420,15 @@ class RuntimeSupervisor:
         ]
         if snapshot_watchdog:
             self._degraded_reasons.append("homeostasis")
+        cursor_floor = max(self._cognitive_snapshot.acknowledged_receive_seq,
+                           self._homeostasis_snapshot.acknowledged_receive_seq)
+        # A retained domain can predate this Runtime journal. New ingress must
+        # start above both durable cursors; old event identities stay unchanged.
+        async with self.ingress._sequence_lock:
+            if cursor_floor > self._receive_seq:
+                previous = self._receive_seq
+                self._receive_seq = cursor_floor
+                self._append_journal("ingress_cursor_floor", data={"previous":previous, "receive_seq":cursor_floor})
         self._append_journal(
             "service_reconciled",
             data={
@@ -3669,7 +3851,7 @@ class RuntimeSupervisor:
         # be treated as preceding the autonomous trigger merely because it
         # arrived while Homeostasis or policy proposal was awaiting I/O.
         scheduled_after_user_receive_seq = self._causal_user_receive_seq(event)
-        if self.manifest.homeostatic_expression.mode != "full":
+        if not self.manifest.autonomous_chat_enabled or self.manifest.homeostatic_expression.mode != "full":
             return
         salience = str(summary["salience"])
         signature = str(summary["episode_signature"])
@@ -4033,6 +4215,8 @@ class RuntimeSupervisor:
         return min(self._last_user_receive_seq, event.receive_seq)
 
     def _autonomous_ineligible(self, event: RuntimeEvent) -> str | None:
+        if not self.manifest.autonomous_chat_enabled:
+            return "autonomous chat is disabled"
         if event.event_id in self._cancelled_autonomous_event_ids:
             return "autonomous output was cancelled"
         if self.lifecycle != RuntimeLifecycle.RUNNING:
@@ -4295,6 +4479,8 @@ class RuntimeSupervisor:
                     idempotency_key=envelope.idempotency_key,
                     data={"service": service, "result": result.model_dump(mode="json"), "reconciled": True},
                 )
+                if service == "homeostasis":
+                    self.goals.record_homeostasis(envelope, result)
             except Exception:
                 self._reconciliation_backlog += 1
 
@@ -4398,6 +4584,20 @@ class RuntimeSupervisor:
     def _command_method(
         self, service: str, command_type: str
     ) -> Callable[[DomainCommandEnvelope[dict[str, Any]]], Awaitable[DomainCommandResult[Any]]] | None:
+        if (service, command_type) == ("cognitive", "PrepareWebStep"):
+            return getattr(self.cognitive, "prepare_web_step", None)
+        if (service, command_type) == ("cognitive", "ObserveEmotion"):
+            return getattr(self.cognitive, "observe_emotion", None)
+        if (service, command_type) == ("cognitive", "PrepareGoalDecision"):
+            return getattr(self.cognitive, "prepare_goal_decision", None)
+        if (service, command_type) == ("homeostasis", "ApplyAppraisal"):
+            return getattr(self.homeostasis, "apply_appraisal", None)
+        if (service, command_type) == ("cognitive", "PrepareCapabilityCall"):
+            return getattr(self.cognitive, "prepare_capability_call", None)
+        if (service, command_type) == ("cognitive", "PrepareQQResponse"):
+            return getattr(self.cognitive, "prepare_qq_response", None)
+        if service == "cognitive" and command_type in {"PrepareBoardEntry", "CommitBoardEntry"}:
+            return getattr(self.cognitive, "prepare_board_entry" if command_type == "PrepareBoardEntry" else "commit_board_entry", None)
         mapping: dict[tuple[str, str], Callable[..., Awaitable[Any]]] = {
             ("cognitive", "AssessAutonomous"): self.cognitive.assess_autonomous,
             ("cognitive", "PrepareResponse"): self.cognitive.prepare_response,

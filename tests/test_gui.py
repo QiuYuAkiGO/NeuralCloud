@@ -110,7 +110,7 @@ def api_client(tmp_path):
 
     from gui.server import create_app
 
-    with TestClient(create_app(config_path=tmp_path / "gui_settings.json")) as client:
+    with TestClient(create_app(development=True, control_mode="development_debug", config_path=tmp_path / "gui_settings.json")) as client:
         yield client
 
 
@@ -511,7 +511,7 @@ def test_api_config_persists_across_restart(tmp_path) -> None:
     from gui.server import create_app
 
     path = tmp_path / "gui_settings.json"
-    with TestClient(create_app(config_path=path)) as client:
+    with TestClient(create_app(development=True, control_mode="development_debug", config_path=path)) as client:
         response = client.post(
             "/api/config",
             json={
@@ -527,7 +527,7 @@ def test_api_config_persists_across_restart(tmp_path) -> None:
         assert raw["mode"] == "live"
         assert raw["api_key"] == "sk-persist"
 
-    with TestClient(create_app(config_path=path)) as client:
+    with TestClient(create_app(development=True, control_mode="development_debug", config_path=path)) as client:
         body = client.get("/api/status").json()
         assert body["mode"] == "live"
         assert body["llm"]["base_url"] == "http://127.0.0.1:9/v1"
@@ -543,7 +543,7 @@ def test_api_config_aux_persists_across_restart(tmp_path) -> None:
     from gui.server import create_app
 
     path = tmp_path / "gui_settings.json"
-    with TestClient(create_app(config_path=path)) as client:
+    with TestClient(create_app(development=True, control_mode="development_debug", config_path=path)) as client:
         response = client.post(
             "/api/config",
             json={
@@ -566,7 +566,7 @@ def test_api_config_aux_persists_across_restart(tmp_path) -> None:
         assert raw["aux_model"] == "qwen3:4b-instruct"
         assert raw["aux_api_key"] == "sk-aux"
 
-    with TestClient(create_app(config_path=path)) as client:
+    with TestClient(create_app(development=True, control_mode="development_debug", config_path=path)) as client:
         body = client.get("/api/status").json()
         assert body["mode"] == "live"
         assert body["llm"]["aux"]["active"] is True
@@ -581,7 +581,7 @@ def test_api_tuning_persists_across_restart(tmp_path) -> None:
     from gui.server import create_app
 
     path = tmp_path / "gui_settings.json"
-    with TestClient(create_app(config_path=path)) as client:
+    with TestClient(create_app(development=True, control_mode="development_debug", config_path=path)) as client:
         response = client.post(
             "/api/debug/tuning",
             json={"retrieval_top_k": 3, "consolidation_threshold": 0.42},
@@ -589,7 +589,7 @@ def test_api_tuning_persists_across_restart(tmp_path) -> None:
         assert response.status_code == 200
         assert response.json()["tuning"]["retrieval_top_k"] == 3
 
-    with TestClient(create_app(config_path=path)) as client:
+    with TestClient(create_app(development=True, control_mode="development_debug", config_path=path)) as client:
         body = client.get("/api/debug/state").json()
         assert body["tuning"]["retrieval_top_k"] == 3
         assert body["tuning"]["consolidation_threshold"] == pytest.approx(0.42)
@@ -602,7 +602,7 @@ def test_api_speakers_persist_across_restart(tmp_path) -> None:
     from gui.server import create_app
 
     path = tmp_path / "gui_settings.json"
-    with TestClient(create_app(config_path=path)) as client:
+    with TestClient(create_app(development=True, control_mode="development_debug", config_path=path)) as client:
         response = client.post("/api/speakers", json={"user_name": "阿宁", "character_name": "薇莉丝"})
         assert response.status_code == 200
         client.post(
@@ -614,7 +614,7 @@ def test_api_speakers_persist_across_restart(tmp_path) -> None:
         assert raw["character_name"] == "薇莉丝"
         assert raw["tuning"]["retrieval_top_k"] == 3
 
-    with TestClient(create_app(config_path=path)) as client:
+    with TestClient(create_app(development=True, control_mode="development_debug", config_path=path)) as client:
         body = client.get("/api/status").json()
         assert body["speakers"]["user_name"] == "阿宁"
         assert body["speakers"]["character_name"] == "薇莉丝"

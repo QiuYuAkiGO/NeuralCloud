@@ -145,8 +145,7 @@ class SegmentLedgerMixin:
                               (parent.reservation_id,)).fetchone():
             raise api.WatchLedgerError("another unresolved send blocks this segment")
         event = self._event(connection, parent.event_id)
-        if event.source_record_id is None:
-            raise api.WatchLedgerError("the original source must remain bound")
+        api.address_sources_for_event(event)
         if segment.segment_index == 0:
             if event.stream_revision != state["revision"]:
                 raise api.WatchLedgerError("the visible stream changed before the first segment")
@@ -181,10 +180,11 @@ class SegmentLedgerMixin:
         with self._transaction() as (connection, state):
             segment = self._segment(connection, child_id)
             parent, event, siblings = self._segment_ready(connection, state, segment, moment)
+            api._check_idle_proof(event, proof)
             if (proof.reservation_id != child_id or proof.group_id != self.group_id
                     or proof.self_member_id != parent.self_member_id or proof.reply_sha256 != segment.reply_sha256
                     or not -2 <= (moment - proof.verified_at).total_seconds() <= 15
-                    or proof.source_record_ids != [event.source_record_id]
+                    or proof.source_record_ids != api.address_sources_for_event(event)
                     or not proof.window_id or not proof.body_instance_id or proof.environment_revision is None
                     or proof.title_pixels_sha256 is None or proof.before_outgoing_count is None
                     or proof.frame_evidence_ref not in proof.evidence_refs):
@@ -341,7 +341,7 @@ class SegmentLedgerMixin:
                     or receipt.group_id != self.group_id or receipt.self_member_id != parent.self_member_id
                     or receipt.decision_id != parent.decision_id or receipt.segment_index != segment.segment_index
                     or receipt.segment_count != segment.segment_count or receipt.delivered_text != segment.text
-                    or receipt.source_record_ids != [event.source_record_id]
+                    or receipt.source_record_ids != api.address_sources_for_event(event)
                     or receipt.delivered_at < bound or receipt.delivered_at > moment + timedelta(seconds=2)
                     or not set(segment.proof.evidence_refs) <= set(receipt.evidence_refs)
                     or segment.click_observed_evidence_ref is not None
@@ -383,7 +383,7 @@ class SegmentLedgerMixin:
                     or receipt.delivered_segments != [s.text for s in segments]
                     or receipt.segment_receipt_ids != [s.receipt_id for s in segments]
                     or receipt.delivered_text != "\n\n".join(s.text for s in segments)
-                    or receipt.source_record_ids != [event.source_record_id]
+                    or receipt.source_record_ids != api.address_sources_for_event(event)
                     or receipt.delivered_at < max(s.delivered_at for s in segments)
                     or receipt.delivered_at > moment + timedelta(seconds=2)
                     or set(receipt.evidence_refs) != {ref for s in segments for ref in s.evidence_refs}):

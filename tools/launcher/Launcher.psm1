@@ -201,6 +201,91 @@ function ConvertTo-LauncherCommandLineArgument {
     return $builder.ToString()
 }
 
+function Invoke-LauncherFileBackedCommand {
+    param(
+        [Parameter(Mandatory = $true)][string]$FilePath,
+        [string[]]$ArgumentList = @(),
+        [AllowEmptyString()][string]$WorkingDirectory = '',
+        [hashtable]$Environment = @{},
+        [AllowNull()][string[]]$SensitiveValues = @(),
+        [ValidateRange(0, 86400)][int]$TimeoutSeconds = 0
+    )
+    $process = $null
+    $outputDirectory = Join-Path ([System.IO.Path]::GetTempPath()) ('neuralcloud-command-' + [guid]::NewGuid().ToString('N'))
+    $stdoutPath = Join-Path $outputDirectory 'stdout.log'
+    $stderrPath = Join-Path $outputDirectory 'stderr.log'
+    $savedEnvironment = @{}
+    try {
+        [void][System.IO.Directory]::CreateDirectory($outputDirectory)
+        $startParameters = @{
+            FilePath = $FilePath
+            RedirectStandardOutput = $stdoutPath
+            RedirectStandardError = $stderrPath
+            WindowStyle = 'Hidden'
+            PassThru = $true
+            ErrorAction = 'Stop'
+        }
+        if ($ArgumentList.Count -gt 0) {
+            $startParameters.ArgumentList = (@($ArgumentList | ForEach-Object {
+                ConvertTo-LauncherCommandLineArgument -Value ([string]$_)
+            }) -join ' ')
+        }
+        if ($WorkingDirectory) { $startParameters.WorkingDirectory = $WorkingDirectory }
+        # Start-Process in Windows PowerShell 5.1 has no -Environment option.
+        # Save/restore only these keys around creation, before waiting on the child.
+        try {
+            foreach ($key in $Environment.Keys) {
+                $savedEnvironment[$key] = [Environment]::GetEnvironmentVariable([string]$key, 'Process')
+                [Environment]::SetEnvironmentVariable([string]$key, $Environment[$key], 'Process')
+            }
+            $process = Start-Process @startParameters
+            [void]$process.Handle
+        } finally {
+            foreach ($key in $savedEnvironment.Keys) {
+                [Environment]::SetEnvironmentVariable([string]$key, $savedEnvironment[$key], 'Process')
+            }
+        }
+        # Windows passes file handles directly to the process. Its descendants
+        # may keep them open without preventing us from observing the parent's
+        # exit. Never use Start-Process -Wait (which waits for the process tree),
+        # nor ReadToEndAsync (which waits for every inherited pipe to close).
+        $watch = [Diagnostics.Stopwatch]::StartNew()
+        $timedOut = $false
+        while (-not $process.WaitForExit(250)) {
+            if ($TimeoutSeconds -gt 0 -and $watch.Elapsed.TotalSeconds -ge $TimeoutSeconds) {
+                $timedOut = $true
+                break
+            }
+        }
+        $stopError = ''
+        if ($timedOut -and -not $process.HasExited) {
+            try {
+                $process.Kill()
+                [void]$process.WaitForExit(1000)
+            } catch { $stopError = '; parent termination failed: ' + $_.Exception.Message }
+        }
+        $stdout = if (Test-Path -LiteralPath $stdoutPath -PathType Leaf) { [string](Get-Content -LiteralPath $stdoutPath -Raw) } else { '' }
+        $stderr = if (Test-Path -LiteralPath $stderrPath -PathType Leaf) { [string](Get-Content -LiteralPath $stderrPath -Raw) } else { '' }
+        if ($timedOut) {
+            return [pscustomobject]@{
+                exit_code = 124; stdout = $stdout; timed_out = $true
+                stderr = Protect-LauncherText -Text ("Command timed out after $TimeoutSeconds seconds: $([System.IO.Path]::GetFileName($FilePath))$stopError`n$stderr").Trim() -Secrets $SensitiveValues
+            }
+        }
+        return [pscustomobject]@{ exit_code = [int]$process.ExitCode; stdout = $stdout; stderr = $stderr }
+    } catch {
+        return [pscustomobject]@{ exit_code = 127; stdout = ''; stderr = Protect-LauncherText -Text $_.Exception.Message -Secrets $SensitiveValues }
+    } finally {
+        if ($process) { $process.Dispose() }
+        # An inherited log handle may still be open. Preserve it rather than
+        # stopping a child just to delete a temporary output file.
+        foreach ($path in @($stdoutPath, $stderrPath)) {
+            if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force -ErrorAction SilentlyContinue }
+        }
+        try { [System.IO.Directory]::Delete($outputDirectory, $false) } catch { }
+    }
+}
+
 function Invoke-LauncherExternalCommand {
     [CmdletBinding()]
     param(
@@ -210,6 +295,7 @@ function Invoke-LauncherExternalCommand {
         [hashtable]$Environment = @{},
         [AllowNull()][string[]]$SensitiveValues = @(),
         [ValidateRange(0, 86400)][int]$TimeoutSeconds = 0,
+        [switch]$FileBackedOutput,
         [scriptblock]$CommandInvoker
     )
 
@@ -220,6 +306,7 @@ function Invoke-LauncherExternalCommand {
         Environment = $Environment
         SensitiveValues = @($SensitiveValues)
         TimeoutSeconds = $TimeoutSeconds
+        FileBackedOutput = [bool]$FileBackedOutput
     }
     if ($CommandInvoker) {
         $customResult = & $CommandInvoker $request
@@ -262,6 +349,11 @@ function Invoke-LauncherExternalCommand {
             $normalizedResult['timed_out'] = $true
         }
         return [pscustomobject]$normalizedResult
+    }
+
+    if ($FileBackedOutput) {
+        return Invoke-LauncherFileBackedCommand -FilePath $FilePath -ArgumentList $ArgumentList `
+            -WorkingDirectory $WorkingDirectory -Environment $Environment -SensitiveValues $SensitiveValues -TimeoutSeconds $TimeoutSeconds
     }
 
     $startInfo = New-Object System.Diagnostics.ProcessStartInfo
@@ -388,9 +480,11 @@ function Invoke-LauncherWslCommand {
     if ($User -eq 'root') {
         Write-LauncherRootOperation -Distro $Distro -Description $Description
     }
-    $effectiveScript = $Script
+    # PowerShell here-strings retain the checkout's CRLF line endings. Bash
+    # treats the carriage return as part of tokens (including set options).
+    $effectiveScript = $Script.Replace("`r`n", "`n").Replace("`r", "`n")
     if ($WorkingDirectory) {
-        $effectiveScript = "cd -- $(Quote-LauncherBashLiteral $WorkingDirectory) && $Script"
+        $effectiveScript = "cd -- $(Quote-LauncherBashLiteral $WorkingDirectory) && $effectiveScript"
     }
     $arguments = @('--distribution', $Distro)
     if ($User) { $arguments += @('--user', $User) }
@@ -778,8 +872,11 @@ function Get-LauncherProcessCommandLine {
 }
 
 function Get-NeuralCloudRegistryEntries {
-    param([Parameter(Mandatory = $true)][string]$Root)
-    $path = Join-Path $Root '.neuralcloud.pids.json'
+    param(
+        [Parameter(Mandatory = $true)][string]$Root,
+        [string]$RegistryPath = ''
+    )
+    $path = if ($RegistryPath) { $RegistryPath } else { Join-Path $Root '.neuralcloud.pids.json' }
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { return @() }
     try {
         $registry = Get-Content -Raw -LiteralPath $path | ConvertFrom-Json
@@ -937,7 +1034,7 @@ function Test-LauncherKnownPortOwner {
     $processName = ([string](Get-LauncherObjectProperty $Owner 'process_name' '')).ToLowerInvariant()
     $commandLine = [string](Get-LauncherObjectProperty $Owner 'command_line' '')
     $expectedModules = @{
-        8766 = 'gui.runtime_server'
+        8790 = 'gui.runtime_server'
         8770 = 'harness.runtime.service'
         8771 = 'harness.cognitive.service'
         8772 = 'harness.homeostasis.service'
@@ -1162,7 +1259,7 @@ if test -n "$docker_path"; then timeout --signal=TERM --kill-after=1s 10s "$dock
 
     if ($IncludeRuntimePorts) {
         $knownMistyPorts = if ($distroAvailable) { @(Get-MistyAIManagedPorts -Distro $Distro -CommandInvoker $CommandInvoker) } else { @() }
-        $runtimePorts = @(6080, 8765, 8766, 8767, 8768, 8769, 8770, 8771, 8772, 8787)
+        $runtimePorts = @(6080, 8765, 8790, 8767, 8768, 8769, 8770, 8771, 8772, 8787)
         $portOwners = @(Get-LauncherPortOwners -Ports $runtimePorts)
         foreach ($port in $runtimePorts) {
             $owner = $portOwners | Where-Object { $_.port -eq $port } | Select-Object -First 1
@@ -2698,39 +2795,112 @@ function Get-LauncherPowerShellExecutable {
 function Stop-NeuralCloud {
     param(
         [Parameter(Mandatory = $true)][string]$Root,
+        [string]$StateRoot = '',
         [scriptblock]$CommandInvoker
     )
     $shell = Get-LauncherPowerShellExecutable
-    $result = Invoke-LauncherExternalCommand -FilePath $shell -ArgumentList @(
+    $arguments = @(
         '-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $Root 'stop.ps1'), '-Quiet'
-    ) -WorkingDirectory $Root -CommandInvoker $CommandInvoker
+    )
+    if ($StateRoot) { $arguments += @('-StateRoot', $StateRoot) }
+    $result = Invoke-LauncherExternalCommand -FilePath $shell -ArgumentList $arguments -WorkingDirectory $Root -CommandInvoker $CommandInvoker
     return [pscustomobject][ordered]@{
         success = $result.exit_code -eq 0
         output = Protect-LauncherText (($result.stdout + "`n" + $result.stderr).Trim())
     }
 }
 
+function Stop-LauncherNewNeuralCloudProcesses {
+    param(
+        [Parameter(Mandatory = $true)][string]$Root,
+        [AllowEmptyCollection()][object[]]$BeforeEntries = @(),
+        [Parameter(Mandatory = $true)][datetime]$StartedAt,
+        [scriptblock]$CommandInvoker
+    )
+    $registryPath = Join-Path $Root '.neuralcloud.pids.json'
+    if (-not (Test-Path -LiteralPath $registryPath -PathType Leaf)) {
+        return [pscustomobject]@{ success = $true; skipped = $true; output = '' }
+    }
+    $originalText = Get-Content -LiteralPath $registryPath -Raw -ErrorAction Stop
+    $registry = $originalText | ConvertFrom-Json -ErrorAction Stop
+    $newEntries = New-Object System.Collections.Generic.List[object]
+    $keptEntries = New-Object System.Collections.Generic.List[object]
+    foreach ($entry in @((Get-LauncherObjectProperty $registry 'services' @()))) {
+        $pidValue = [int](Get-LauncherObjectProperty $entry 'pid' 0)
+        $rawStamp = Get-LauncherObjectProperty $entry 'process_start_time_utc' ''
+        $stamp = if ($rawStamp -is [datetime]) { $rawStamp.ToUniversalTime().ToString('o') } else { [string]$rawStamp }
+        $wasPresent = @($BeforeEntries | Where-Object {
+            $beforeStamp = Get-LauncherObjectProperty $_ 'process_start_time_utc' ''
+            if ($beforeStamp -is [datetime]) { $beforeStamp = $beforeStamp.ToUniversalTime().ToString('o') }
+            [int](Get-LauncherObjectProperty $_ 'pid' 0) -eq $pidValue -and
+            [string]$beforeStamp -eq $stamp
+        }).Count -gt 0
+        $entryTime = [datetime]::MinValue
+        $timeKnown = [datetime]::TryParse($stamp, [System.Globalization.CultureInfo]::InvariantCulture,
+            [System.Globalization.DateTimeStyles]::RoundtripKind, [ref]$entryTime)
+        $entryRoot = [string](Get-LauncherObjectProperty $entry 'root' '')
+        if (-not $wasPresent -and $pidValue -gt 0 -and $timeKnown -and
+            $entryTime.ToUniversalTime() -ge $StartedAt.ToUniversalTime().AddSeconds(-1) -and
+            $entryRoot.TrimEnd('\', '/') -eq $Root.TrimEnd('\', '/')) {
+            [void]$newEntries.Add($entry)
+        } else {
+            [void]$keptEntries.Add($entry)
+        }
+    }
+    if ($newEntries.Count -eq 0) {
+        return [pscustomobject]@{ success = $true; skipped = $true; output = '' }
+    }
+    # stop.ps1 rechecks executable, module and start time for this filtered
+    # registry. It never receives entries that existed before this invocation.
+    $cleanupRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('neuralcloud-rollback-' + [guid]::NewGuid().ToString('N'))
+    [void][System.IO.Directory]::CreateDirectory($cleanupRoot)
+    $cleanupRegistry = Join-Path $cleanupRoot '.neuralcloud.pids.json'
+    $registry.services = @($newEntries.ToArray())
+    [System.IO.File]::WriteAllText($cleanupRegistry, ($registry | ConvertTo-Json -Depth 12), (New-Object System.Text.UTF8Encoding($false)))
+    $cleanup = Stop-NeuralCloud -Root $Root -StateRoot $cleanupRoot -CommandInvoker $CommandInvoker
+    if ($cleanup.success) {
+        # Do not overwrite a registry changed by a concurrent launcher.
+        if ((Test-Path -LiteralPath $registryPath -PathType Leaf) -and
+            (Get-Content -LiteralPath $registryPath -Raw) -ceq $originalText) {
+            if ($keptEntries.Count -eq 0) {
+                Remove-Item -LiteralPath $registryPath -Force -ErrorAction Stop
+            } else {
+                $registry.services = @($keptEntries.ToArray())
+                [System.IO.File]::WriteAllText($registryPath, ($registry | ConvertTo-Json -Depth 12), (New-Object System.Text.UTF8Encoding($false)))
+            }
+        }
+        if (Test-Path -LiteralPath $cleanupRegistry) { Remove-Item -LiteralPath $cleanupRegistry -Force }
+        # Only remove this newly-created empty directory, never recursively.
+        [System.IO.Directory]::Delete($cleanupRoot, $false)
+    } else {
+        $cleanup.output += " Recovery registry retained at $cleanupRegistry"
+    }
+    return $cleanup
+}
+
 function Start-NeuralCloud {
     param(
         [Parameter(Mandatory = $true)][string]$Root,
-        [Parameter(Mandatory = $true)][ValidateSet('demo', 'live', 'ollama')][string]$Mode,
+        [AllowEmptyString()][ValidateSet('', 'demo', 'live', 'ollama')][string]$Mode = '',
         [Parameter(Mandatory = $true)][string]$Token,
         [scriptblock]$CommandInvoker
     )
     $shell = Get-LauncherPowerShellExecutable
-    $manifest = Join-Path $Root 'presets\runtime\grounded-mistyai-v1.json'
+    $manifest = Join-Path $Root 'presets\runtime\shared-misty-v1.json'
     $environment = @{
         NC_MISTYAI_TOKEN = $Token
         NC_MISTYAI_TOKEN_FILE = $null
         NC_MISTYAI_BASE_URL = 'http://127.0.0.1:8787'
     }
-    $result = Invoke-LauncherExternalCommand -FilePath $shell -ArgumentList @(
+    $arguments = @(
         '-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $Root 'start.ps1'),
         '-ManifestPath', $manifest,
-        '-Mode', $Mode,
-        '-EmbodimentProvider', 'mistyai',
+        '-EmbodimentProvider', 'auto',
         '-MistyAIBaseUrl', 'http://127.0.0.1:8787'
-    ) -WorkingDirectory $Root -Environment $environment -SensitiveValues @($Token) -CommandInvoker $CommandInvoker
+    )
+    if ($Mode) { $arguments += @('-Mode', $Mode) }
+    $result = Invoke-LauncherExternalCommand -FilePath $shell -ArgumentList $arguments `
+        -WorkingDirectory $Root -Environment $environment -SensitiveValues @($Token) -FileBackedOutput -CommandInvoker $CommandInvoker
     if ($result.exit_code -ne 0) {
         $detail = Protect-LauncherText (($result.stderr + "`n" + $result.stdout).Trim()) @($Token)
         Throw-LauncherFailure -Message "NeuralCloud startup failed: $detail" -ExitCode $script:ExitNeuralCloud
@@ -2742,14 +2912,24 @@ function Start-NeuralCloud {
 }
 
 function Test-NeuralCloudRegistryHealth {
-    param([Parameter(Mandatory = $true)][string]$Root)
-    $entries = @(Get-NeuralCloudRegistryEntries -Root $Root)
+    param(
+        [Parameter(Mandatory = $true)][string]$Root,
+        [string]$RegistryPath = '',
+        [hashtable]$Ports = @{}
+    )
+    $entries = @(Get-NeuralCloudRegistryEntries -Root $Root -RegistryPath $RegistryPath)
     $services = New-Object System.Collections.Generic.List[object]
     $expected = @{
         cognitive = [pscustomobject]@{ module = 'harness.cognitive.service'; port = 8771 }
         homeostasis = [pscustomobject]@{ module = 'harness.homeostasis.service'; port = 8772 }
         runtime = [pscustomobject]@{ module = 'harness.runtime.service'; port = 8770 }
-        gui = [pscustomobject]@{ module = 'gui.runtime_server'; port = 8766 }
+        gui = [pscustomobject]@{ module = 'gui.runtime_server'; port = 8790 }
+    }
+    foreach ($name in $Ports.Keys) {
+        if (-not $expected.ContainsKey($name) -or [int]$Ports[$name] -lt 1 -or [int]$Ports[$name] -gt 65535) {
+            throw "Invalid NeuralCloud service port: $name"
+        }
+        $expected[$name].port = [int]$Ports[$name]
     }
     $expectedPython = Join-Path $Root '.venv\Scripts\python.exe'
     foreach ($entry in $entries) {
@@ -2836,6 +3016,8 @@ function Wait-NeuralCloudReady {
     )
     $manifest = Get-Content -Raw -LiteralPath $ManifestPath | ConvertFrom-Json
     $embodimentSpec = Get-LauncherObjectProperty $manifest 'embodiment'
+    $expectedProvider = [string](Get-LauncherObjectProperty $embodimentSpec 'body_provider' 'none')
+    $expectedMode = [string](Get-LauncherObjectProperty $embodimentSpec 'mode' 'off')
     $expectedBody = [string](Get-LauncherObjectProperty $embodimentSpec 'body_instance_id' '')
     $required = @((Get-LauncherObjectProperty $embodimentSpec 'capability_requirements' @()) |
         Where-Object { (Get-LauncherObjectProperty $_ 'required' $false) -eq $true } |
@@ -2844,15 +3026,15 @@ function Wait-NeuralCloudReady {
     $lastReason = 'GUI status not available'
     do {
         try {
-            $status = Invoke-RestMethod -Method Get -Uri 'http://127.0.0.1:8766/api/status' -TimeoutSec 3
+            $status = Invoke-RestMethod -Method Get -Uri 'http://127.0.0.1:8790/api/status' -TimeoutSec 3
             $runtime = Get-LauncherObjectProperty $status 'runtime'
             $embodiment = Get-LauncherObjectProperty $runtime 'embodiment'
             $negotiated = Get-LauncherObjectProperty $embodiment 'negotiated'
             $activated = @((Get-LauncherObjectProperty $embodiment 'activated_capabilities' @()))
             $missing = @($required | Where-Object { $_ -notin $activated })
             if ((Get-LauncherObjectProperty $runtime 'lifecycle') -ne 'RUNNING') { $lastReason = 'Runtime lifecycle is not RUNNING' }
-            elseif ((Get-LauncherObjectProperty $embodiment 'state') -ne 'available') { $lastReason = 'Embodiment state is not available' }
-            elseif ((Get-LauncherObjectProperty $embodiment 'provider_id') -ne 'mistyai') { $lastReason = 'Embodiment provider is not mistyai' }
+            elseif ($expectedMode -ne 'off' -and (Get-LauncherObjectProperty $embodiment 'state') -ne 'available') { $lastReason = 'Embodiment state is not available' }
+            elseif ((Get-LauncherObjectProperty $embodiment 'provider_id') -ne $expectedProvider) { $lastReason = 'Embodiment provider does not match the manifest' }
             elseif ($expectedBody -and (Get-LauncherObjectProperty $embodiment 'body_instance_id') -ne $expectedBody) { $lastReason = 'Embodiment body identity does not match the manifest' }
             elseif (@((Get-LauncherObjectProperty $negotiated 'missing_required' @())).Count -ne 0) { $lastReason = 'Negotiation reports missing required capabilities' }
             elseif (@((Get-LauncherObjectProperty $negotiated 'incompatible_required' @())).Count -ne 0) { $lastReason = 'Negotiation reports incompatible required capabilities' }
@@ -2925,7 +3107,7 @@ function Invoke-LauncherStatusCommand {
     }
     $gui = $null
     if ($neural.running) {
-        try { $gui = Invoke-RestMethod -Method Get -Uri 'http://127.0.0.1:8766/api/status' -TimeoutSec 2 } catch { $gui = $null }
+        try { $gui = Invoke-RestMethod -Method Get -Uri 'http://127.0.0.1:8790/api/status' -TimeoutSec 2 } catch { $gui = $null }
     }
     $runtime = if ($gui) { Get-LauncherObjectProperty $gui 'runtime' } else { $null }
     $embodiment = Get-LauncherObjectProperty $runtime 'embodiment'
@@ -2950,10 +3132,39 @@ function Invoke-LauncherStatusCommand {
         mistyai_health_error = $mistyHealthError
         runtime = $runtime
         urls = [pscustomobject][ordered]@{
-            gui = 'http://127.0.0.1:8766'
-            operations = 'http://127.0.0.1:8766/ops'
+            gui = 'http://127.0.0.1:8790'
+            operations = 'http://127.0.0.1:8790/ops'
             novnc = 'http://127.0.0.1:6080'
         }
+    }
+}
+
+function Start-LauncherDockerDesktop {
+    param(
+        [Parameter(Mandatory = $true)][string]$Root,
+        [Parameter(Mandatory = $true)][string]$Distro,
+        [ValidateRange(1, 600)][int]$TimeoutSeconds = 120,
+        [scriptblock]$CommandInvoker
+    )
+    $scriptPath = Join-Path $Root 'tools\docker\Start-DockerDesktop.ps1'
+    if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) {
+        return [pscustomobject]@{ id = 'windows.docker_desktop'; status = 'manual'; detail = "Docker startup helper is missing: $scriptPath" }
+    }
+    # The helper starts only an installed Desktop, preserves running backends,
+    # and bounds each probe/retry. It does not install packages or shut down WSL.
+    $result = Invoke-LauncherExternalCommand -FilePath (Get-LauncherPowerShellExecutable) -ArgumentList @(
+        '-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
+        '-File', $scriptPath, '-WslDistro', $Distro, '-Json', '-TimeoutSeconds', [string]$TimeoutSeconds
+    ) -WorkingDirectory $Root -TimeoutSeconds (3 * $TimeoutSeconds + 100) -CommandInvoker $CommandInvoker
+    $detail = Protect-LauncherText (($result.stdout + "`n" + $result.stderr).Trim())
+    try {
+        $payload = $result.stdout | ConvertFrom-Json -ErrorAction Stop
+        $detail = [string](Get-LauncherObjectProperty $payload 'message' $detail)
+    } catch { }
+    return [pscustomobject]@{
+        id = 'windows.docker_desktop'
+        status = if ($result.exit_code -eq 0) { 'started' } else { 'manual' }
+        detail = $detail
     }
 }
 
@@ -2965,6 +3176,8 @@ function Assert-LauncherPrerequisites {
         [switch]$IncludeRuntimePorts,
         [switch]$NonInteractive,
         [switch]$Json,
+        [bool]$AutoStartDocker = $false,
+        [ValidateRange(1, 600)][int]$DockerStartupTimeoutSeconds = 120,
         [scriptblock]$CommandInvoker
     )
     $checkArguments = @{
@@ -2981,8 +3194,16 @@ function Assert-LauncherPrerequisites {
     if ($conflicts.Count -gt 0) {
         Throw-LauncherFailure -Message 'Repository validation or a runtime port ownership check failed.' -ExitCode $script:ExitConfiguration -Details $checks
     }
+    $startupActions = @()
+    if ($AutoStartDocker -and @($checks | Where-Object {
+        $_.id -eq 'windows.docker_desktop' -and $_.status -eq 'action_required'
+    }).Count -gt 0) {
+        if (-not $Json) { Write-Host 'Starting installed Docker Desktop in the background and waiting for its Linux engine...' }
+        $startupActions = @(Start-LauncherDockerDesktop -Root $Root -Distro $Distro -TimeoutSeconds $DockerStartupTimeoutSeconds -CommandInvoker $CommandInvoker)
+        $checks = @(Get-LauncherPrerequisiteChecks @checkArguments)
+    }
     if (Test-LauncherChecksReady $checks) {
-        return [pscustomobject]@{ checks = $checks; actions = @() }
+        return [pscustomobject]@{ checks = $checks; actions = $startupActions }
     }
     $installation = Invoke-LauncherInstallPrerequisites -Checks $checks -Distro $Distro -NonInteractive:$NonInteractive -Json:$Json -CommandInvoker $CommandInvoker
     $checks = @(Get-LauncherPrerequisiteChecks @checkArguments)
@@ -2998,9 +3219,9 @@ function Assert-LauncherPrerequisites {
         } else {
             'Prerequisites are not ready. Complete the reported remediation and re-run the launcher.'
         }
-        Throw-LauncherFailure -Message $message -ExitCode $script:ExitNeedsAction -Details ([pscustomobject]@{ checks = $checks; actions = $installation.actions })
+        Throw-LauncherFailure -Message $message -ExitCode $script:ExitNeedsAction -Details ([pscustomobject]@{ checks = $checks; actions = @($startupActions) + @($installation.actions) })
     }
-    return [pscustomobject]@{ checks = $checks; actions = $installation.actions }
+    return [pscustomobject]@{ checks = $checks; actions = @($startupActions) + @($installation.actions) }
 }
 
 function Invoke-LauncherInstallCommand {
@@ -3147,12 +3368,14 @@ function Invoke-LauncherUpCommand {
         [Parameter(Mandatory = $true)][string]$Root,
         [Parameter(Mandatory = $true)][string]$MistyAIPath,
         [Parameter(Mandatory = $true)][string]$Distro,
-        [Parameter(Mandatory = $true)][ValidateSet('demo', 'live', 'ollama')][string]$Mode,
+        [AllowEmptyString()][ValidateSet('', 'demo', 'live', 'ollama')][string]$Mode = '',
         [Parameter(Mandatory = $true)][object]$State,
         [Parameter(Mandatory = $true)][object]$Paths,
         [switch]$NonInteractive,
         [switch]$NoOpen,
         [switch]$Json,
+        [bool]$AutoStartDocker = $true,
+        [ValidateRange(1, 600)][int]$DockerStartupTimeoutSeconds = 120,
         [scriptblock]$CommandInvoker
     )
     $ownedState = Get-LauncherObjectProperty $State 'owned'
@@ -3188,13 +3411,51 @@ function Invoke-LauncherUpCommand {
     $State.install_phase = 'checking_prerequisites'
     $State.last_command = 'up'
     Write-LauncherState -State $State -Path $Paths.state
-    $preflight = Assert-LauncherPrerequisites -Root $Root -MistyAIPath $MistyAIPath -Distro $Distro -IncludeRuntimePorts -NonInteractive:$NonInteractive -Json:$Json -CommandInvoker $CommandInvoker
+    $preflight = Assert-LauncherPrerequisites -Root $Root -MistyAIPath $MistyAIPath -Distro $Distro -IncludeRuntimePorts -NonInteractive:$NonInteractive -Json:$Json -AutoStartDocker:$AutoStartDocker -DockerStartupTimeoutSeconds $DockerStartupTimeoutSeconds -CommandInvoker $CommandInvoker
+    $manifest = Join-Path $Root 'presets\runtime\shared-misty-v1.json'
+    $beforeNeuralEntries = @(Get-NeuralCloudRegistryEntries -Root $Root)
+    if ($beforeNeuralEntries.Count -gt 0) {
+        $existingNeural = Test-NeuralCloudRegistryHealth -Root $Root
+        if ($existingNeural.running) {
+            $existingRegistry = Get-Content -LiteralPath (Join-Path $Root '.neuralcloud.pids.json') -Raw | ConvertFrom-Json
+            $existingManifest = [string](Get-LauncherObjectProperty $existingRegistry 'manifest_path' '')
+            if (-not $existingManifest -or -not [System.IO.Path]::GetFullPath($existingManifest).Equals(
+                [System.IO.Path]::GetFullPath($manifest), [System.StringComparison]::OrdinalIgnoreCase)) {
+                Throw-LauncherFailure -Message 'A healthy NeuralCloud instance is already running with a different manifest. Its services were preserved; use its matching launcher configuration or stop it explicitly first.' -ExitCode $script:ExitConfiguration
+            }
+            $existingReady = Wait-NeuralCloudReady -ManifestPath $manifest
+            $existingMode = [string](Get-LauncherObjectProperty $existingReady 'mode' '')
+            if ($Mode -and $existingMode -ne $Mode) {
+                Throw-LauncherFailure -Message 'The existing NeuralCloud instance uses a different mode. Its services were preserved; stop it explicitly before changing mode.' -ExitCode $script:ExitConfiguration
+            }
+            $State.install_phase = 'running'
+            $State.last_success_at = (Get-Date).ToUniversalTime().ToString('o')
+            Write-LauncherState -State $State -Path $Paths.state
+            if (-not $NoOpen -and -not $Json) {
+                try { Start-Process 'http://127.0.0.1:8790' | Out-Null } catch { }
+            }
+            return [pscustomobject][ordered]@{
+                status = 'running'; exit_code = $script:ExitSuccess; reused = $true
+                mode = $(if ($existingMode) { $existingMode } else { 'configured' })
+                deployment_fingerprint = $recordedDeploymentFingerprint
+                neuralcloud = $existingNeural
+                runtime = Get-LauncherObjectProperty $existingReady 'runtime'
+                urls = [pscustomobject]@{ gui = 'http://127.0.0.1:8790'; operations = 'http://127.0.0.1:8790/ops'; novnc = 'http://127.0.0.1:6080' }
+                logs = Join-Path $Root 'logs'
+                checks = $preflight.checks
+            }
+        }
+        if (@($existingNeural.services | Where-Object { $_.running }).Count -gt 0) {
+            Throw-LauncherFailure -Message 'An existing NeuralCloud process registry is incomplete or does not match its live processes. Existing services were preserved; inspect or stop the recorded instance first.' -ExitCode $script:ExitConfiguration
+        }
+    }
     $initialMisty = Get-MistyAIServiceState -Distro $Distro -CommandInvoker $CommandInvoker
     Assert-MistyAIStableServiceState -State $initialMisty
     $deployment = $null
     $mistyStartedThisRun = [pscustomobject][ordered]@{ body = $false; operator = $false; compose = $false }
     $unitEnablementChangedThisRun = [pscustomobject][ordered]@{ body = $false; operator = $false }
-    $neuralStartAttempted = $false
+    $neuralStartSucceeded = $false
+    $neuralStartedAt = [datetime]::MinValue
     $token = $null
     try {
         $State.install_phase = 'preparing_neuralcloud'
@@ -3231,14 +3492,16 @@ function Invoke-LauncherUpCommand {
             -PreserveCompose:($initialMisty.compose -eq 'running') `
             -CommandInvoker $CommandInvoker)
         $token = Read-MistyAIServiceToken -Distro $Distro -CommandInvoker $CommandInvoker
-        $manifest = Join-Path $Root 'presets\runtime\grounded-mistyai-v1.json'
+        $manifest = Join-Path $Root 'presets\runtime\shared-misty-v1.json'
         $mistyReady = Wait-MistyAIReady -Distro $Distro -Token $token -ManifestPath $manifest -CommandInvoker $CommandInvoker
 
-        $neuralStartAttempted = $true
+        $beforeNeuralEntries = @(Get-NeuralCloudRegistryEntries -Root $Root)
+        $neuralStartedAt = [datetime]::UtcNow
         $State.owned.neuralcloud = $true
         $State.install_phase = 'starting_neuralcloud'
         Write-LauncherState -State $State -Path $Paths.state
         $neuralStart = Start-NeuralCloud -Root $Root -Mode $Mode -Token $token -CommandInvoker $CommandInvoker
+        $neuralStartSucceeded = $true
         $neuralReady = Wait-NeuralCloudReady -ManifestPath $manifest
         $neuralRegistry = Test-NeuralCloudRegistryHealth -Root $Root
         if (-not $neuralRegistry.running) {
@@ -3262,19 +3525,19 @@ function Invoke-LauncherUpCommand {
         $State.last_success_at = (Get-Date).ToUniversalTime().ToString('o')
         Write-LauncherState -State $State -Path $Paths.state
         if (-not $NoOpen -and -not $Json) {
-            try { Start-Process 'http://127.0.0.1:8766' | Out-Null } catch { }
+            try { Start-Process 'http://127.0.0.1:8790' | Out-Null } catch { }
         }
         return [pscustomobject][ordered]@{
             status = 'running'
             exit_code = $script:ExitSuccess
-            mode = $Mode
+            mode = $(if ($Mode) { $Mode } else { Get-LauncherObjectProperty $neuralReady 'mode' 'configured' })
             deployment_fingerprint = $deployment.fingerprint
             body_instance_id = $mistyReady.body_instance_id
             neuralcloud = $neuralRegistry
             runtime = Get-LauncherObjectProperty $neuralReady 'runtime'
             urls = [pscustomobject][ordered]@{
-                gui = 'http://127.0.0.1:8766'
-                operations = 'http://127.0.0.1:8766/ops'
+                gui = 'http://127.0.0.1:8790'
+                operations = 'http://127.0.0.1:8790/ops'
                 novnc = 'http://127.0.0.1:6080'
             }
             logs = Join-Path $Root 'logs'
@@ -3284,10 +3547,14 @@ function Invoke-LauncherUpCommand {
         $originalError = $_
         $deploymentRecoveryRequired = $originalError.Exception.Message -match 'deployment requires manual recovery'
         $cleanupErrors = New-Object System.Collections.Generic.List[string]
-        if ($neuralStartAttempted) {
-            $neuralCleanup = Stop-NeuralCloud -Root $Root -CommandInvoker $CommandInvoker
+        if ($neuralStartSucceeded) {
+            try {
+                $neuralCleanup = Stop-LauncherNewNeuralCloudProcesses -Root $Root -BeforeEntries $beforeNeuralEntries -StartedAt $neuralStartedAt -CommandInvoker $CommandInvoker
+            } catch {
+                $neuralCleanup = [pscustomobject]@{ success = $false; output = $_.Exception.Message }
+            }
             if ($neuralCleanup.success) {
-                $State.owned.neuralcloud = $false
+                $State.owned.neuralcloud = $priorNeuralOwned
             } else {
                 $State.owned.neuralcloud = $true
                 [void]$cleanupErrors.Add("NeuralCloud cleanup failed: $($neuralCleanup.output)")
@@ -3552,11 +3819,13 @@ function Invoke-NeuralCloudLauncher {
         [Parameter(Mandatory = $true)][string]$Root,
         [Parameter(Mandatory = $true)][string]$MistyAIPath,
         [Parameter(Mandatory = $true)][string]$Distro,
-        [ValidateSet('demo', 'live', 'ollama')][string]$Mode = 'demo',
+        [AllowEmptyString()][ValidateSet('', 'demo', 'live', 'ollama')][string]$Mode = '',
         [switch]$NonInteractive,
         [switch]$NoOpen,
         [switch]$Json,
         [string]$Service = 'all',
+        [bool]$AutoStartDocker = $true,
+        [ValidateRange(1, 600)][int]$DockerStartupTimeoutSeconds = 120,
         [scriptblock]$CommandInvoker
     )
     $result = $null
@@ -3594,10 +3863,10 @@ function Invoke-NeuralCloudLauncher {
             }
             'restart' {
                 [void](Invoke-LauncherDownCommand -Root $resolvedRoot -Distro $Distro -State $state -Paths $paths -CommandInvoker $CommandInvoker)
-                $payload = Invoke-LauncherUpCommand -Root $resolvedRoot -MistyAIPath $resolvedMistyAIPath -Distro $Distro -Mode $Mode -State $state -Paths $paths -NonInteractive:$NonInteractive -NoOpen:$NoOpen -Json:$Json -CommandInvoker $CommandInvoker
+                $payload = Invoke-LauncherUpCommand -Root $resolvedRoot -MistyAIPath $resolvedMistyAIPath -Distro $Distro -Mode $Mode -State $state -Paths $paths -NonInteractive:$NonInteractive -NoOpen:$NoOpen -Json:$Json -AutoStartDocker:$AutoStartDocker -DockerStartupTimeoutSeconds $DockerStartupTimeoutSeconds -CommandInvoker $CommandInvoker
             }
             default {
-                $payload = Invoke-LauncherUpCommand -Root $resolvedRoot -MistyAIPath $resolvedMistyAIPath -Distro $Distro -Mode $Mode -State $state -Paths $paths -NonInteractive:$NonInteractive -NoOpen:$NoOpen -Json:$Json -CommandInvoker $CommandInvoker
+                $payload = Invoke-LauncherUpCommand -Root $resolvedRoot -MistyAIPath $resolvedMistyAIPath -Distro $Distro -Mode $Mode -State $state -Paths $paths -NonInteractive:$NonInteractive -NoOpen:$NoOpen -Json:$Json -AutoStartDocker:$AutoStartDocker -DockerStartupTimeoutSeconds $DockerStartupTimeoutSeconds -CommandInvoker $CommandInvoker
             }
         }
         $properties = [ordered]@{
@@ -3646,6 +3915,7 @@ Export-ModuleMember -Function @(
     'ConvertTo-WslPath',
     'Invoke-LauncherWslCommand',
     'Invoke-LauncherExternalCommand',
+    'Test-NeuralCloudRegistryHealth',
     'Get-LauncherPortOwner',
     'Test-LauncherPathHasReparsePoint'
 )

@@ -16,14 +16,14 @@ Clock = fixtures.Clock
 NOW = fixtures.NOW
 
 
-def timed_response(request, clock, *, jump=0, elapsed=.55, envelope_ms=501):
+def timed_response(request, clock, *, jump=0, elapsed=.55, envelope_ms=501, ax_ms=490):
     nonce = json.loads(request.content).get("request_nonce")
     start = clock.wall()
     clock.value += elapsed
     return fixtures.response_tree(
         started_at=start.isoformat(),
         finished_at=(start + timedelta(seconds=.49 + jump)).isoformat(),
-        duration_ms=490,
+        duration_ms=ax_ms,
         request_nonce=nonce,
         read_timing={
             "schema_version": "a11y-read-timing-v1", "basis": "agent_monotonic",
@@ -59,7 +59,7 @@ def test_same_request_wall_step_uses_nonce_monotonic_envelope(http_case, jump):
     ("bool", "invalid_timing"), ("negative", "invalid_timing"),
     ("nonzero_start", "invalid_timing"), ("reversed", "invalid_timing"),
     ("ax_longer_than_envelope", "invalid_timing"), ("ax_over_budget", "invalid_timing"),
-    ("envelope_longer_than_rtt", "invalid_timing"), ("too_late", "request_timeout"),
+    ("envelope_over_hard_budget", "invalid_timing"), ("too_late", "request_timeout"),
     ("hard_limit_even_with_larger_config", "invalid_timing"), ("clock_skew", "clock_skew"),
 ])
 def test_invalid_new_evidence_never_falls_back_to_legacy_wall(http_case, fault, expected):
@@ -102,8 +102,8 @@ def test_invalid_new_evidence_never_falls_back_to_legacy_wall(http_case, fault, 
             tree["duration_ms"] = 502
         elif fault == "ax_over_budget":
             tree["duration_ms"] = 1000.001
-        elif fault == "envelope_longer_than_rtt":
-            timing["read_finished_offset_ms"] = 551
+        elif fault == "envelope_over_hard_budget":
+            timing["read_finished_offset_ms"] = 1500.001
         elif fault == "clock_skew":
             tree["started_at"] = (NOW + timedelta(seconds=6)).isoformat()
         return httpx.Response(200, content=json.dumps(tree), headers={"Content-Type": "application/json"})
@@ -165,3 +165,72 @@ def test_sub_tick_transport_interval_is_preserved_with_injected_high_resolution_
     )
     reader.read()  # 501ms Agent envelope inside true 503ms RTT, not a rounded 500ms RTT.
     assert reader.last_timing["request_duration_ms"] == pytest.approx(503)
+
+
+@pytest.mark.parametrize("local_ms,remote_ms", [
+    (430.8348, 434.235486), (651.7818, 655.268997), (462.0319, 464.349922),
+    (550, 501), (500, 500), (500, 1499),
+])
+def test_independent_clock_durations_use_fixed_budgets_and_only_diagnose_delta(http_case, local_ms, remote_ms):
+    clock = Clock()
+    reader = http_case(
+        lambda request: httpx.Response(200, json=timed_response(request, clock,
+            elapsed=local_ms / 1000, envelope_ms=remote_ms, ax_ms=min(remote_ms, 490))),
+        clock=clock, wall_clock=clock.wall, causal_freshness=True,
+    )
+    reader.read()
+    assert reader.last_timing["freshness_timing_basis"] == "agent_monotonic"
+    assert reader.last_timing["remote_local_duration_delta_ms"] == pytest.approx(remote_ms - local_ms)
+    assert reader.last_timing["request_duration_ms"] == pytest.approx(local_ms, abs=.001)
+    assert reader.timeout_seconds == 1.5 and reader._scope["maximum_duration_ms"] == 1000
+    status = ScopedQQObserver(read_fn=reader.read).status()
+    assert status["read_timing"]["remote_local_duration_delta_ms"] == pytest.approx(remote_ms - local_ms)
+    assert "request_nonce" not in json.dumps(status)
+
+
+@pytest.mark.parametrize("timeout,local_ms,remote_ms,ax_ms,expected", [
+    (.8, 600, 800.001, 490, "invalid_timing"),
+    (2, 550, 1500.001, 490, "invalid_timing"),
+    (2, 1500.001, 500, 490, "invalid_timing"),
+    (.8, 800.001, 500, 490, "request_timeout"),
+    (1.5, 550, 501, 501.001, "invalid_timing"),
+    (1.5, 1200, 1300, 1000.001, "invalid_timing"),
+])
+def test_independent_budgets_still_reject_slow_local_agent_and_ax_reads(http_case, timeout, local_ms, remote_ms, ax_ms, expected):
+    clock = Clock()
+    reader = http_case(
+        lambda request: httpx.Response(200, json=timed_response(request, clock,
+            elapsed=local_ms / 1000, envelope_ms=remote_ms, ax_ms=ax_ms)),
+        clock=clock, wall_clock=clock.wall, causal_freshness=True, timeout_seconds=timeout,
+    )
+    with pytest.raises(ObserverReadError, match=expected):
+        reader.read()
+    assert reader._previous_digest is None and reader._last_causal_sample is None
+
+
+def test_duration_delta_does_not_calibrate_or_carry_across_reads(http_case):
+    clock, count = Clock(), [0]
+
+    def handler(request):
+        count[0] += 1
+        if count[0] == 1:
+            tree = timed_response(request, clock, elapsed=.5, envelope_ms=1499)
+        elif count[0] == 2:
+            tree = timed_response(request, clock, elapsed=.5, envelope_ms=1501)
+        else:
+            tree = timed_response(request, clock)
+            tree["request_nonce"] = "f" * 64
+        return httpx.Response(200, json=tree)
+
+    reader = http_case(handler, clock=clock, wall_clock=clock.wall, causal_freshness=True)
+    reader.read()
+    previous = reader._last_causal_sample
+    assert reader.last_timing["remote_local_duration_delta_ms"] == 999
+    with pytest.raises(ObserverReadError, match="invalid_timing"):
+        reader.read()
+    assert reader.last_timing["remote_local_duration_delta_ms"] == 1001
+    assert reader._last_causal_sample == previous
+    with pytest.raises(ObserverReadError, match="nonce_mismatch"):
+        reader.read()
+    assert reader.last_timing["remote_local_duration_delta_ms"] is None
+    assert reader._last_causal_sample == previous

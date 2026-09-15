@@ -10,6 +10,7 @@ build/
 .pytest-tmp/
 .test-tmp/
 .launcher-staging/
+/.tmp/
 .mypy_cache/
 .ruff_cache/
 .coverage
@@ -17,11 +18,14 @@ htmlcov/
 traces/
 data/gui_settings.json
 data/gui_settings.json.tmp
+data/shared-misty-launch.json
 data/presets/
 *.log
 logs/
 .gui.pid
 .neuralcloud.pids.json
+.neuralcloud.pids.json.launch.json
+data/local-demo/
 data/runtime/
 data/cognitive/
 data/homeostasis/
@@ -35,3 +39,10 @@ eval/reports/traces/
 .vscode/
 *.swp
 .DS_Store
+
+# Content-bearing diagnostic requests and private rating maps stay local.
+eval/reports/emotional_expression_diagnostics/private/
+
+# Private conversation corpus and model-judge request/response evidence.
+/data/evaluations/misty-humanization-*/
+/data/evaluations/qq-brief-*/

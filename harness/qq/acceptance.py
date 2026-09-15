@@ -24,6 +24,8 @@ from uuid import uuid4
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator
 
+from harness.qq.idle import QQIdleIntent
+
 
 DURATION_SECONDS = 8 * 60 * 60
 TARGETS = {"warm_speak": 40, "cold_speak": 5, "natural_wait": 10}
@@ -605,6 +607,54 @@ def _independent_workload(trace):
                        for index, stage in enumerate(trace["stages"])]}
 
 
+def _turn_origin(trace, event, decision=None):
+    """A counter alone cannot exempt a message from author/source checks."""
+    if not isinstance(event, dict):
+        raise AcceptanceError("event_first_seen_mismatch")
+    origin = event.get("origin", "message")
+    marker = trace.get("counters", {}).get("homeostatic_idle", 0)
+    if origin == "message":
+        if (type(marker) is not int or marker != 0 or event.get("idle_intent") is not None
+                or decision is not None and (decision.get("initiated_by", "message") != "message"
+                                            or decision.get("idle_intent_id") is not None)):
+            raise AcceptanceError("turn_origin_mismatch")
+        return origin, None
+    if origin != "homeostasis" or type(marker) is not int or marker != 1:
+        raise AcceptanceError("turn_origin_mismatch")
+    try:
+        intent = QQIdleIntent.model_validate(event.get("idle_intent"))
+    except (ValueError, TypeError):
+        raise AcceptanceError("idle_intent_invalid") from None
+    if (any(event.get(key) is not None for key in ("item", "item_index", "screen_id", "source_record_id"))
+            or event.get("run_id") != intent.run_id or event.get("group_id") != intent.group_id
+            or _date(event["observed_at"]) != intent.created_at
+            or _date(event.get("first_seen_at") or event["observed_at"]) != intent.created_at
+            or _date(trace["first_seen_at"]) != intent.created_at):
+        raise AcceptanceError("idle_event_binding_mismatch")
+    if decision is not None and (
+            decision.get("initiated_by") != "homeostasis" or decision.get("idle_intent_id") != intent.intent_id
+            or decision.get("group_id") != intent.group_id or decision.get("self_member_id") != intent.self_member_id
+            or decision.get("trigger_member_id") is not None or decision.get("addressing", "ambient") != "ambient"
+            or decision.get("addressing_source_record_ids") or decision.get("addressing_evidence_refs")
+            or decision.get("new_observation_record_ids") or decision.get("seen_observation_record_ids")):
+        raise AcceptanceError("idle_decision_binding_mismatch")
+    return origin, intent
+
+
+def _idle_delivery_proof(intent, event, send, receipt, proof, *, click_started_at):
+    if intent is None:
+        return
+    if (send.get("run_id") != intent.run_id or event.get("decision_id") != send.get("decision_id")
+            or send.get("group_id") != intent.group_id or receipt.get("group_id") != intent.group_id
+            or send.get("self_member_id") != intent.self_member_id
+            or receipt.get("source_record_ids") != [] or proof.get("source_record_ids") != []
+            or proof.get("window_id") != intent.window_id or proof.get("body_instance_id") != intent.body_instance_id
+            or proof.get("environment_revision") != intent.environment_revision
+            or _date(send.get("deadline_at")) != intent.deadline_at
+            or not intent.created_at <= _date(send["created_at"]) <= _date(click_started_at) < intent.deadline_at):
+        raise AcceptanceError("idle_delivery_binding_mismatch")
+
+
 def _link_delivery(trace, event, sources):
     """Require exact automatic intent / body / receipt / proof correspondence."""
     decision = sources["decisions"].get(trace.get("decision_id"))
@@ -612,10 +662,12 @@ def _link_delivery(trace, event, sources):
     receipts = [receipt for receipt in sources["receipts"].values() if receipt.get("decision_id") == trace.get("decision_id")]
     if not decision or len(sends) != 1 or len(receipts) != 1:
         raise AcceptanceError("delivery_chain_not_unique")
+    origin, idle = _turn_origin(trace, event, decision)
     send, receipt = sends[0], receipts[0]
     if len(decision.get("reply_segments") or []) > 1 or send.get("segment_count", 0) > 1:
         return _link_segmented_delivery(trace, event, decision, send, receipt, sources)
     proof = send.get("preclick_proof") or {}
+    _idle_delivery_proof(idle, event, send, receipt, proof, click_started_at=send.get("click_started_at"))
     attempts = sources["attempts"].get(send["reservation_id"], [])
     reply_hash = hashlib.sha256(str(decision.get("reply", "")).encode("utf-8")).hexdigest()
     if (send["status"] != "sent" or event["state"] != "sent"
@@ -631,7 +683,7 @@ def _link_delivery(trace, event, sources):
             or proof.get("self_member_id") != receipt.get("self_member_id")
             or proof.get("group_id") != event["group_id"]
             or proof.get("reservation_id") not in (None, send["reservation_id"])
-            or not event.get("source_record_id") or event["source_record_id"] not in receipt.get("source_record_ids", [])
+            or (origin == "message" and (not event.get("source_record_id") or event["source_record_id"] not in receipt.get("source_record_ids", [])))
             or not set(receipt.get("source_record_ids", [])).issubset(decision.get("source_record_ids", []))
             or not receipt.get("evidence_refs") or sorted(set(receipt["evidence_refs"])) != sorted(set(send.get("evidence_refs", [])))
             or not proof.get("frame_evidence_ref") or not proof.get("context_signature")
@@ -673,6 +725,7 @@ def _link_segmented_delivery(trace, event, decision, send, receipt, sources):
     receipts = sorted((item for item in sources.get("segment_receipts", {}).values()
                        if item.get("decision_id") == decision["decision_id"]), key=lambda item: item["segment_index"])
     source = event.get("source_record_id")
+    origin, idle = _turn_origin(trace, event, decision)
     body = decision.get("reply")
     if (not 2 <= len(texts) <= 3 or len(children) != len(texts) or len(receipts) != len(texts)
             or any(not isinstance(text, str) or not text.strip() or len(text) > 4000
@@ -688,7 +741,8 @@ def _link_segmented_delivery(trace, event, decision, send, receipt, sources):
             or receipt.get("origin") != "decision" or receipt.get("verification") != "qq_ui_verified"
             or receipt.get("delivered_segments") != texts
             or receipt.get("segment_receipt_ids") != [item["receipt_id"] for item in receipts]
-            or not source or source not in receipt.get("source_record_ids", [])
+            or (origin == "message" and (not source or source not in receipt.get("source_record_ids", [])))
+            or (idle is not None and receipt.get("source_record_ids") != [])
             or not set(receipt.get("source_record_ids", [])).issubset(decision.get("source_record_ids", []))
             or set(receipt.get("evidence_refs", [])) != set(send.get("evidence_refs", []))):
         raise AcceptanceError("segmented_delivery_chain_mismatch")
@@ -696,6 +750,7 @@ def _link_segmented_delivery(trace, event, decision, send, receipt, sources):
     scopes, refs, addressed = set(), set(), set()
     for index, (text, child, item) in enumerate(zip(texts, children, receipts)):
         proof = child.get("proof") or {}
+        _idle_delivery_proof(idle, event, send, item, proof, click_started_at=child.get("click_started_at"))
         digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
         attempts = sources["attempts"].get(child["child_id"], [])
         if (child.get("segment_index") != index or item.get("segment_index") != index
@@ -710,7 +765,7 @@ def _link_segmented_delivery(trace, event, decision, send, receipt, sources):
                 or any(value.get("group_id") != event["group_id"] for value in (decision, send, receipt, child, item, proof))
                 or any(value.get("self_member_id") != send.get("self_member_id") for value in (receipt, item, proof))
                 or not send.get("self_member_id") or item.get("verification") != "qq_ui_verified"
-                or source not in item.get("source_record_ids", []) or source not in proof.get("source_record_ids", [])
+                or (origin == "message" and (source not in item.get("source_record_ids", []) or source not in proof.get("source_record_ids", [])))
                 or not set(item.get("source_record_ids", [])).issubset(decision.get("source_record_ids", []))
                 or not item.get("evidence_refs") or set(item["evidence_refs"]) != set(child.get("evidence_refs", []))
                 or not proof.get("frame_evidence_ref") or not proof.get("context_signature")
@@ -782,6 +837,7 @@ def report_run(run_dir, *, write=False, now=None):
         if abs(wall_delta - delta) > 5:
             reasons.add("wall_monotonic_discontinuity")
     metrics = {"warm_speak": [], "cold_speak": [], "natural_wait": []}
+    idle_metrics = {"speak": [], "natural_wait": []}
     turns, pending, observation_attempts, partial_deliveries = [], 0, [], []
     stage_durations, work_totals, preparations = {}, {}, {}
     try:
@@ -817,9 +873,13 @@ def report_run(run_dir, *, write=False, now=None):
                 pending += 1
                 continue
             try:
+                if event is None:
+                    raise AcceptanceError("event_first_seen_mismatch")
+                origin, idle = _turn_origin(trace, event, sources["decisions"].get(trace.get("decision_id")))
                 if (len(terminal) != 1 or counters[terminal[0]] != 1 or counters.get("events_dropped", 0)
-                        or (terminal[0] == "turn_sent" and type(counters.get("cold_path")) is not int)
-                        or counters.get("cold_path", 0) not in (0, 1)):
+                        or (origin == "message" and terminal[0] == "turn_sent" and type(counters.get("cold_path")) is not int)
+                        or counters.get("cold_path", 0) not in (0, 1)
+                        or (idle is not None and counters.get("cold_path", 0) != 0)):
                     raise AcceptanceError("invalid_terminal_trace")
                 if event is None or _date(event.get("first_seen_at") or event["observed_at"]) != _date(trace["first_seen_at"]):
                     raise AcceptanceError("event_first_seen_mismatch")
@@ -829,7 +889,7 @@ def report_run(run_dir, *, write=False, now=None):
                 _add_workload(trace, stage_durations, work_totals, preparations)
                 if terminal[0] in _EXCLUDED_TERMINALS:
                     turns.append({"trace_id": _opaque(identifier), "event_id": _opaque(event["event_id"]),
-                                  "kind": "excluded", "reason": terminal[0]})
+                                  "kind": "excluded", "origin": origin, "reason": terminal[0]})
                     continue
                 if trace["event_id"] in trace_events or (trace.get("decision_id") and trace["decision_id"] in trace_decisions):
                     raise AcceptanceError("duplicate_terminal_identity")
@@ -840,14 +900,14 @@ def report_run(run_dir, *, write=False, now=None):
                     raise AcceptanceError("turn_failed")
                 if counters.get("decision_cache_hits", 0):
                     raise AcceptanceError("cached_decision_not_natural_sample")
-                entry = {"event_id": _opaque(event["event_id"]), "trace_id": _opaque(identifier), "decision_id": _opaque(trace.get("decision_id"))}
+                entry = {"event_id": _opaque(event["event_id"]), "trace_id": _opaque(identifier), "decision_id": _opaque(trace.get("decision_id")), "origin": origin}
                 if terminal[0] == "turn_natural_wait":
                     decision = sources["decisions"].get(trace.get("decision_id"), {})
                     if (event["state"] != "decided_wait" or decision.get("outcome") != "natural_wait"
                             or decision.get("_stored_status") != "completed"
                             or event.get("decision_id") != trace.get("decision_id")
-                            or not event.get("source_record_id")
-                            or event["source_record_id"] not in decision.get("source_record_ids", [])
+                            or (origin == "message" and (not event.get("source_record_id")
+                                or event["source_record_id"] not in decision.get("source_record_ids", [])))
                             or decision.get("decision_source") != "model" or decision.get("action") != "wait"
                             or decision.get("error_type") or decision.get("reply") is not None):
                         raise AcceptanceError("wait_not_natural")
@@ -857,10 +917,12 @@ def report_run(run_dir, *, write=False, now=None):
                     wait_seconds = completions[0]["end_offset_ms"] / 1000
                     if not math.isfinite(wait_seconds) or not 0 <= wait_seconds <= 60:
                         raise AcceptanceError("wait_completion_timing_invalid")
+                    if idle is not None and wait_seconds > (idle.deadline_at - idle.created_at).total_seconds():
+                        raise AcceptanceError("idle_wait_deadline_expired")
                     if complete and wall_offset + wait_seconds > DURATION_SECONDS:
                         raise AcceptanceError("wait_completed_outside_run_window")
-                    kind = "natural_wait"
-                    metrics[kind].append(wait_seconds)
+                    kind = "idle_natural_wait" if idle is not None else "natural_wait"
+                    (idle_metrics if idle is not None else metrics)["natural_wait"].append(wait_seconds)
                 else:
                     send, receipt, latency = _link_delivery(trace, event, sources)
                     if complete and wall_offset + latency > DURATION_SECONDS:
@@ -868,8 +930,8 @@ def report_run(run_dir, *, write=False, now=None):
                     if receipt["receipt_id"] in manifest["baseline"]["receipts"] or send["reservation_id"] in manifest["baseline"]["sends"]:
                         raise AcceptanceError("baseline_delivery_cannot_count")
                     linked_sends.add(send["reservation_id"])
-                    kind = "cold_speak" if counters.get("cold_path", 0) == 1 else "warm_speak"
-                    metrics[kind].append(latency)
+                    kind = "idle_speak" if idle is not None else "cold_speak" if counters.get("cold_path", 0) == 1 else "warm_speak"
+                    (idle_metrics if idle is not None else metrics)["speak" if idle is not None else kind].append(latency)
                     entry.update(reservation_id=_opaque(send["reservation_id"]), receipt_id=_opaque(receipt["receipt_id"]), latency_seconds=latency)
                     entry["segment_count"] = max(1, send.get("segment_count", 0))
                     entry["click_timing_basis"] = "acknowledged" if send.get("click_acknowledged_at") is not None else "observed"
@@ -911,7 +973,14 @@ def report_run(run_dir, *, write=False, now=None):
                     continue
                 if event["state"] in {"failed", "expired"}:
                     reasons.add("event_failed_or_expired")
-                item = event.get("item", {})
+                if event.get("origin") == "homeostasis":
+                    if event["event_id"] not in traced_events and event["state"] != "superseded":
+                        reasons.add("event_without_terminal_trace")
+                    continue
+                item = event.get("item")
+                if not isinstance(item, dict):
+                    reasons.add("event_item_invalid")
+                    continue
                 if item.get("direction") != "incoming" or item.get("kind", "text") != "text":
                     continue
                 explicit_exclusion = event["state"] == "superseded" or (
@@ -935,6 +1004,10 @@ def report_run(run_dir, *, write=False, now=None):
               "started_at": manifest["started_at"], "build_hash": config.build_hash, "worker_pid": config.worker_identity.pid,
               "sample_count": len(samples), "targets": TARGETS, "counts": counts, "p95_seconds": p95,
               "latency_seconds": {key: _distribution(values) for key, values in metrics.items()},
+              "idle": {"counts": {key: len(values) for key, values in idle_metrics.items()},
+                       "latency_seconds": {key: _distribution(values) for key, values in idle_metrics.items()},
+                       "timing_basis": "internal_intent_creation_to_completion_or_final_durable_receipt",
+                       "included_in_message_targets": False},
               "stage_seconds": {key: _distribution(values) for key, values in sorted(stage_durations.items())},
               "work_counters": dict(sorted(work_totals.items())),
               "physical_work_preparation_count": len(preparations),

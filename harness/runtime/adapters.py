@@ -37,7 +37,7 @@ from harness.contracts.envelope import (
     VersionVector,
 )
 from harness.core.inference import ContextSegment, FinalResponse, InteroceptiveState, SessionTurn
-from harness.core.models import InteractionEvent
+from harness.core.models import EpisodicEvent, InteractionEvent
 from harness.homeostasis.models import HomeostaticInteroceptiveSummary
 from harness.pipeline.pipeline import InferencePipeline
 from infra.trace.request_spans import trace_scope
@@ -69,6 +69,10 @@ class ServiceHealth(BaseModel):
 
 
 class CognitiveServiceClient(Protocol):
+    async def observe_emotion(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[dict[str, Any]]: ...
+
     async def health(self) -> ServiceHealth: ...
 
     async def get_snapshot(self) -> DomainSnapshot: ...
@@ -76,6 +80,18 @@ class CognitiveServiceClient(Protocol):
     async def prepare_response(
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[PreparedResponse]: ...
+
+    async def prepare_capability_call(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[dict[str, Any]]: ...
+
+    async def prepare_goal_decision(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[dict[str, Any]]: ...
+
+    async def prepare_web_step(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[dict[str, Any]]: ...
 
     async def assess_autonomous(
         self, command: DomainCommandEnvelope[dict[str, Any]]
@@ -113,6 +129,10 @@ class HomeostasisServiceClient(Protocol):
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[dict[str, Any]]: ...
 
+    async def apply_appraisal(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[dict[str, Any]]: ...
+
     async def assimilate_observation(
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[dict[str, Any]]: ...
@@ -136,6 +156,7 @@ class _PreparedEntry(BaseModel):
     autonomous_record_ref: str | None = None
     autonomous_memory_ref: str | None = None
     research: bool = False
+    capability: bool = False
 
 
 def _utc_now() -> datetime:
@@ -207,6 +228,7 @@ class PipelineCognitiveAdapter:
         default_session_id: str = "sess_default",
         action_planner: ActionDecisionPlanner | None = None,
         persist_memory: Callable[[], None] | None = None,
+        context_provider: Callable[[InteractionEvent], list[ContextSegment]] | None = None,
     ) -> None:
         self.pipeline = pipeline
         self.character_id = character_id
@@ -220,6 +242,7 @@ class PipelineCognitiveAdapter:
         self.default_session_id = default_session_id
         self.action_planner = action_planner or ActionDecisionPlanner()
         self._persist_memory = persist_memory
+        self._context_provider = context_provider
         self._lock = asyncio.Lock()
         self._revision = 0
         self._cursor = 0
@@ -242,6 +265,11 @@ class PipelineCognitiveAdapter:
         self._closing = False
         self._close_task: asyncio.Task | None = None
         self._maintenance_paused = False
+        from harness.emotion import EmotionService
+
+        self.emotion_service = EmotionService(pipeline.settings, pipeline.llm, persist=self._persist_state)
+        self.pipeline.emotion_service = self.emotion_service
+        self.emotion_input_provider = None
         self._load_state()
         self._publish_snapshot()
 
@@ -252,7 +280,8 @@ class PipelineCognitiveAdapter:
             revision=snapshot.revision,
             acknowledged_receive_seq=snapshot.acknowledged_receive_seq,
             detail={"maintenance_paused": self._maintenance_paused,
-                    "commands_pending": sum(not task.done() for task in self.command_tasks)},
+                    "commands_pending": sum(not task.done() for task in self.command_tasks),
+                    "emotion_mode": snapshot.payload.get("emotion_mode", "off")},
         )
 
     async def get_snapshot(self) -> DomainSnapshot:
@@ -267,7 +296,10 @@ class PipelineCognitiveAdapter:
             acknowledged_receive_seq=self._cursor,
             acknowledged_event_id=self._event_id,
             component_revisions=dict(self._component_revisions),
-            payload={"prepared_count": len(self._prepared)},
+            payload={"prepared_count": len(self._prepared), **({
+                "emotion_mode": self.pipeline.settings.emotion_mode,
+                "default_session_id": self.default_session_id,
+            } if self.pipeline.settings.emotion_mode != "off" else {})},
         )
 
     async def _run_command(
@@ -287,6 +319,85 @@ class PipelineCognitiveAdapter:
         # The operation, not its caller, owns the state lock. HTTP timeouts
         # cannot release it while to_thread still mutates the same domain.
         return await asyncio.shield(task)
+
+    async def observe_emotion(self, command):
+        async def operation():
+            async with self._lock:
+                replay = self._lookup_replay(command)
+                if replay is not None:
+                    await asyncio.to_thread(self._persist_state)
+                    return replay
+                rejected = self._preflight(command)
+                if rejected is not None:
+                    return rejected
+                if (command.command_type != "ObserveEmotion" or self.pipeline.settings.emotion_mode == "off"
+                        or self._research_manifest is not None):
+                    return self._failure(command, "emotion observation is disabled", status="rejected")
+                from harness.runtime.emotion import observation_input
+
+                homeostasis = command.payload.get("homeostasis") or {}
+                if (command.version_vector is not None and homeostasis.get("snapshot_revision")
+                        != command.version_vector.homeostasis_state):
+                    return self._failure(command, "emotion snapshot revision mismatch", status="rejected")
+                request_key = (command.command_type, command.idempotency_key)
+                request_hash = command.effective_request_hash()
+                reserved_hash = self._request_hashes.get(request_key)
+                if reserved_hash is not None and reserved_hash != request_hash:
+                    return self._failure(command, "emotion reservation request conflict", status="conflict")
+                self._request_hashes[request_key] = request_hash
+                await asyncio.to_thread(self._persist_state)
+                provider = self.emotion_input_provider or (lambda value: observation_input(self, value))
+                with trace_scope(event_id=command.event_id, command_id=command.command_id, phase="emotion_appraisal"):
+                    observation = self.emotion_service.existing_input(command.payload["context_id"])
+                    if observation is None:
+                        observation = await asyncio.to_thread(provider, command)
+                    frame = await asyncio.to_thread(self.emotion_service.observe, observation)
+                self._cursor = max(self._cursor, command.receive_seq)
+                self._event_id = command.event_id
+                result = DomainCommandResult[dict](command_id=command.command_id,
+                    command_type=command.command_type, status="applied",
+                    request_hash=command.effective_request_hash(), committed_revision=self._revision,
+                    acknowledged_event_id=command.event_id, acknowledged_receive_seq=command.receive_seq,
+                    result={"emotion_context_ref": frame.context_id, "emotion_revision": frame.revision},
+                    completed_at=_utc_now())
+                self._remember(command, result)
+                await asyncio.to_thread(self._persist_state)
+                return result
+        return await self._run_command(operation)
+
+    async def emotion_guidance(self, command):
+        reference = command.payload.get("emotion_context_ref")
+        if reference is None or self.pipeline.settings.emotion_mode == "off":
+            return None
+        from harness.llm.deadline import call_before_deadline
+
+        observation = self.emotion_service.existing_input(reference)
+        if observation is None:
+            raise ValueError("emotion_context_not_committed")
+        if command.command_type == "PrepareQQResponse":
+            from harness.qq.conversation import conversation_audience
+            expected_scope = conversation_audience(command.payload["group_id"])
+        elif command.command_type == "PrepareBoardEntry":
+            expected_scope = "board:" + str(command.payload["board_id"])
+        else:
+            expected_scope = "local:" + str(command.payload.get("session_id") or self.default_session_id)
+        if observation.scope != expected_scope:
+            raise ValueError("emotion_guidance_scope_mismatch")
+        # Cache the second model result before main generation, including when
+        # generation fails. Reading it never adds a new emotional stimulus.
+        guidance = await asyncio.to_thread(call_before_deadline, command.deadline,
+            self.emotion_service.guidance, reference)
+        if guidance.revision != command.payload.get("emotion_revision"):
+            raise ValueError("emotion_guidance_revision_mismatch")
+        return guidance
+
+    def _emotion_model_deadline(self, command):
+        if self.pipeline.settings.emotion_mode == "off":
+            return None
+        reference = command.payload.get("emotion_context_ref")
+        observation = self.emotion_service.existing_input(reference) if reference else None
+        original = observation.deadline_at if observation is not None else None
+        return min(command.deadline, original) if original is not None else command.deadline
 
     async def prepare_response(
         self, command: DomainCommandEnvelope[dict[str, Any]]
@@ -328,6 +439,7 @@ class PipelineCognitiveAdapter:
             session_id = str(payload.get("session_id") or self.default_session_id)
             try:
                 homeostatic_interoception = _validated_homeostatic_interoception(command)
+                emotion_guidance = await self.emotion_guidance(command)
             except Exception as exc:
                 result = self._failure(command, f"invalid homeostatic interoception: {exc}")
                 self._remember(command, result)
@@ -358,6 +470,9 @@ class PipelineCognitiveAdapter:
             interoception_payload = payload.get("interoception")
             interoception: InteroceptiveState | None = None
             context_segments: list[ContextSegment] = []
+            if self._context_provider is not None:
+                context_segments.extend(await asyncio.to_thread(self._context_provider, event))
+            runtime_web_context = payload.get("runtime_web_context")
             if isinstance(interoception_payload, dict):
                 if "resource_label" in interoception_payload:
                     cognitive_payload = dict(interoception_payload)
@@ -397,6 +512,9 @@ class PipelineCognitiveAdapter:
                         evidence_refs=[f"body-state:{source_revision}"],
                     )
             try:
+                if runtime_web_context is not None:
+                    from harness.cognitive.web import web_context_segments
+                    context_segments.extend(web_context_segments(runtime_web_context))
                 terminal_decision = None
                 terminal_context = payload.get("basic_terminal") if mode == "basic_terminal_task" else None
                 if isinstance(terminal_context, dict) and terminal_context.get("enabled"):
@@ -436,7 +554,11 @@ class PipelineCognitiveAdapter:
                     if text and observer is not None:
                         observer.on_stage("final", final, {"latency_ms": 0.0})
                 elif autonomous and assessment is not None:
+                    from harness.llm.deadline import call_before_deadline
+
                     final = await asyncio.to_thread(
+                        call_before_deadline,
+                        self._emotion_model_deadline(command),
                         self.pipeline.prepare_autonomous,
                         event_id=command.event_id,
                         assessment_id=assessment.assessment_id,
@@ -450,9 +572,20 @@ class PipelineCognitiveAdapter:
                         call_id=str(payload.get("call_id") or command.correlation_id),
                         interoception=interoception,
                         homeostatic_interoception=homeostatic_interoception,
+                        **({"emotion_guidance": emotion_guidance} if emotion_guidance is not None else {}),
                     )
                 else:
+                    from harness.llm.deadline import call_before_deadline
+
+                    generation_deadline = self._emotion_model_deadline(command)
+                    if runtime_web_context is not None:
+                        generation_deadline = generation_deadline or command.deadline
+                        if payload.get("runtime_web_deadline_at") is not None:
+                            original_deadline = datetime.fromisoformat(str(payload["runtime_web_deadline_at"]).replace("Z", "+00:00"))
+                            generation_deadline = min(generation_deadline, original_deadline)
                     final = await asyncio.to_thread(
+                        call_before_deadline,
+                        generation_deadline,
                         self.pipeline.prepare,
                         event,
                         now=command.issued_at,
@@ -460,6 +593,7 @@ class PipelineCognitiveAdapter:
                         context_segments=context_segments,
                         interoception=interoception,
                         homeostatic_interoception=homeostatic_interoception,
+                        **({"emotion_guidance": emotion_guidance} if emotion_guidance is not None else {}),
                     )
                 now = _utc_now()
                 read_versions = command.version_vector or self._version_vector()
@@ -721,7 +855,12 @@ class PipelineCognitiveAdapter:
             assessment_id = assessment_id_for(command.idempotency_key)
             try:
                 homeostatic_interoception = _validated_homeostatic_interoception(command)
+                emotion_guidance = await self.emotion_guidance(command)
+                from harness.llm.deadline import call_before_deadline
+
                 run = await asyncio.to_thread(
+                    call_before_deadline,
+                    self._emotion_model_deadline(command),
                     run_or_load_assessment,
                     pipeline=self.pipeline,
                     log_dir=self.autonomous_log_dir,
@@ -732,6 +871,7 @@ class PipelineCognitiveAdapter:
                     homeostasis=dict(payload.get("homeostasis") or {}),
                     policies=[dict(item) for item in (payload.get("policies") or [])],
                     homeostatic_interoception=homeostatic_interoception,
+                    **({"emotion_guidance": emotion_guidance} if emotion_guidance is not None else {}),
                 )
                 memory_ref: str | None = None
                 if run.decision == "speak":
@@ -828,22 +968,40 @@ class PipelineCognitiveAdapter:
                     CommitEvidence
                 ).validate_python(command.payload.get("evidence"))
             except Exception as exc:
-                result = self._failure(command, f"invalid commit evidence: {exc}", status="rejected")
+                error = "capability_invalid_commit_evidence" if entry.capability else f"invalid commit evidence: {exc}"
+                result = self._failure(command, error, status="rejected")
                 self._remember(command, result)
+                if entry.capability:
+                    await asyncio.to_thread(self._persist_state)
                 return result
             if evidence.prepare_id != prepare_id:
                 result = self._failure(command, "evidence prepare_id mismatch", status="rejected")
                 self._remember(command, result)
                 return result
 
+            if entry.capability:
+                decision = entry.prepared.decision
+                valid_decision_end = (isinstance(evidence, DecisionEvidence)
+                    and evidence.recorded_at >= entry.prepared.prepared_at)
+                valid_action_end = (isinstance(evidence, ActionOutcomeEvidence) and isinstance(decision, GoalProposal)
+                    and evidence.goal_id == decision.goal_id and evidence.observed_at >= entry.prepared.prepared_at
+                    and (not evidence.success or bool(evidence.evidence_refs))
+                    and all(ref.strip() for ref in evidence.evidence_refs))
+                if not (valid_decision_end or valid_action_end):
+                    result = self._failure(command, "capability_commit_requires_bound_action_evidence", status="rejected")
+                    self._remember(command, result)
+                    await asyncio.to_thread(self._persist_state)
+                    return result
             await asyncio.to_thread(self._commit_entry, entry, evidence)
             if self._persist_memory is not None:
                 await asyncio.to_thread(self._persist_memory)
             self._revision += 1
             self._cursor = max(self._cursor, command.receive_seq)
             self._event_id = command.event_id
-            self._component_revisions["session"] = self._revision
-            self._component_revisions["memory"] = self._revision
+            if not entry.capability:
+                self._component_revisions["session"] = self._revision
+            if not entry.capability or isinstance(evidence, ActionOutcomeEvidence) and evidence.evidence_refs:
+                self._component_revisions["memory"] = self._revision
             payload = {
                 "prepare_id": prepare_id,
                 "evidence_kind": evidence.evidence_kind,
@@ -926,6 +1084,35 @@ class PipelineCognitiveAdapter:
         if entry.research:
             # Research evidence is maintained separately from legacy relationship enrichment.
             return
+        if entry.capability:
+            # The authenticated Runtime supplies independently verified action
+            # evidence. No incoming chat, persona inference, need satisfaction or
+            # relationship update follows from merely completing a capability.
+            if isinstance(evidence, DecisionEvidence):
+                return
+            if not isinstance(evidence, ActionOutcomeEvidence):
+                raise ValueError("capability_commit_requires_bound_action_evidence")
+            if not evidence.evidence_refs:
+                if evidence.success:
+                    raise ValueError("capability_commit_requires_bound_action_evidence")
+                return
+            decision = entry.prepared.decision
+            if not isinstance(decision, GoalProposal) or evidence.goal_id != decision.goal_id:
+                raise ValueError("capability_commit_requires_bound_action_evidence")
+            event_id = f"{entry.prepared.prepare_id}:action_outcome"
+            if self.pipeline.memory.stores.episodic.get(event_id) is None:
+                intent_id = decision.embodied_action.intent.intent_id if decision.embodied_action else "unknown"
+                # Store a fixed observation of the verifier outcome rather than
+                # copying arbitrary provider/model summary prose into fact text.
+                fact = f"身体能力 {intent_id} 的独立核验结果：{'通过' if evidence.success else '未通过'}。"
+                record = EpisodicEvent(event_id=event_id, time=evidence.observed_at,
+                    participants=["character"], summary=fact, objective_fact=fact,
+                    character_action=intent_id, outcome="verified_success" if evidence.success else "verified_failure",
+                    importance=0.4, emotional_valence=0.0,
+                    evidence=list(evidence.evidence_refs), supporting_evidence=list(evidence.evidence_refs),
+                    channel="body", event_type="capability_action_outcome", session_id=entry.prepared.session_id)
+                self.pipeline.memory.record_event(record, generate_insight=False, curate=False, now=evidence.observed_at)
+            return
         event = entry.event
         session = self.pipeline.session_store
         if entry.autonomous_assessment_id is None:
@@ -955,6 +1142,15 @@ class PipelineCognitiveAdapter:
                 )
 
         if isinstance(evidence, DeliveryEvidence) and evidence.success:
+            if self.pipeline.settings.emotion_mode != "off":
+                from harness.emotion import EmotionMessage
+
+                self.emotion_service.record_delivery([
+                    EmotionMessage(source_id=f"{entry.final.response_id}:s{index}",
+                        scope="local:" + event.session_id, role="character", text=segment,
+                        timestamp=evidence.delivered_at, speaker=self.pipeline._speaker_label("character"))
+                    for index, segment in enumerate(evidence.delivered_segments, start=1)
+                ])
             for index, segment in enumerate(evidence.delivered_segments, start=1):
                 segment_event_id = f"{entry.final.response_id}:s{index}"
                 if not session.contains_event(event.session_id, segment_event_id):
@@ -1011,7 +1207,8 @@ class PipelineCognitiveAdapter:
         if self._request_hashes[key] != command.effective_request_hash():
             return self._failure(command, "idempotency key reused with different request", status="conflict")
         return previous.model_copy(
-            update={"status": "idempotent_replay", "idempotency_hit": True}
+            update={"status": "idempotent_replay" if previous.status in {"applied", "idempotent_replay"}
+                    else previous.status, "idempotency_hit": True}
         )
 
     def _preflight(
@@ -1078,6 +1275,7 @@ class PipelineCognitiveAdapter:
             "prepared": {key: value.model_dump(mode="json") for key, value in self._prepared.items()},
             "research_manifest_hash": self._research_manifest_hash,
             "research_traces": self.research_traces,
+            "emotion": self.emotion_service.snapshot(),
             "sessions": {
                 key: [turn.model_dump(mode="json") for turn in turns]
                 for key, turns in self.pipeline.session_store.snapshot().items()
@@ -1100,6 +1298,7 @@ class PipelineCognitiveAdapter:
         self._event_id = payload.get("event_id")
         self._research_manifest_hash = payload.get("research_manifest_hash")
         self.research_traces = dict(payload.get("research_traces") or {})
+        self.emotion_service.load(payload.get("emotion") or {})
         self._component_revisions.update(payload.get("component_revisions") or {})
         for encoded, request_hash in (payload.get("request_hashes") or {}).items():
             self._request_hashes[tuple(encoded.split("\0", 1))] = request_hash

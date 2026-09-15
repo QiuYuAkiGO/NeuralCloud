@@ -61,10 +61,13 @@ function Read-QQSConfiguration {
     if ($self -isnot [string] -or $self -notmatch '^[1-9][0-9]{0,19}$') { throw 'self_identity_invalid' }
     $decision = Get-QQSProperty $config 'decision_enabled' $true
     if ($decision -isnot [bool]) { throw 'decision_setting_invalid' }
+    $development = Get-QQSProperty $config 'development_mode' $false
+    if ($development -isnot [bool]) { throw 'development_setting_invalid' }
     # The token stays in this private local object. Never serialize this object.
     return [pscustomobject]@{
         PrivateRoot = $root; Path = $path; MemoryDb = $db; Token = $token
         AllowedGroupIds = @($groups | Sort-Object -Unique); SelfMemberId = $self; DecisionEnabled = $decision
+        DevelopmentMode = $development
     }
 }
 
@@ -115,8 +118,13 @@ function Test-QQSMatchingHealth {
         (Get-QQSProperty $Health 'status') -cne 'healthy' -or
         (Get-QQSProperty $Health 'persistent_memory') -isnot [bool] -or
         (Get-QQSProperty $Health 'persistent_memory') -ne $true) { return $false }
-    $decision = Get-QQSProperty $Health 'autonomous_decision_enabled'
+    $decision = Get-QQSProperty $Health 'configured_decision_enabled'
     if ($decision -isnot [bool] -or $decision -ne $Configuration.DecisionEnabled) { return $false }
+    if ((Get-QQSProperty $Health 'autonomous_decision_enabled') -isnot [bool]) { return $false }
+    $development = Get-QQSProperty $Health 'development_mode'
+    if ($development -isnot [bool] -or $development -ne $Configuration.DevelopmentMode) { return $false }
+    $expectedOwner = if ($Configuration.DevelopmentMode) { 'isolated_development' } else { 'shared_runtime' }
+    if ((Get-QQSProperty $Health 'cognitive_owner') -cne $expectedOwner) { return $false }
     if ((Get-QQSProperty $Health 'self_member_id') -cne $Configuration.SelfMemberId) { return $false }
     $healthDb = Get-QQSProperty $Health 'memory_db'
     if ($healthDb -isnot [string] -or -not [IO.Path]::IsPathRooted($healthDb)) { return $false }

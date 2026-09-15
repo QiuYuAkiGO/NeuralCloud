@@ -115,6 +115,7 @@ def create_control_app(
     profile_store: ProfileRevisionStore | None = None,
     monitor: MonitorRecorder | None = None,
     qq_observation_store: QQObservationStore | None = None,
+    qq_session_config_path=None,
 ):
     """Create a localhost-oriented FastAPI app.
 
@@ -140,6 +141,31 @@ def create_control_app(
         from harness.runtime.qq_observations import create_qq_observation_router
 
         app.include_router(create_qq_observation_router(qq_observation_store, authenticate=authenticate))
+
+    from harness.runtime.qq_homeostasis import create_qq_homeostasis_router
+    app.include_router(create_qq_homeostasis_router(control, authenticate=authenticate, config_path=qq_session_config_path))
+    from harness.runtime.qq_capabilities import create_qq_capability_router
+    app.include_router(create_qq_capability_router(control, authenticate=authenticate, config_path=qq_session_config_path))
+    from fastapi import APIRouter
+    from harness.runtime.board import add_board_routes
+    board_router = APIRouter(dependencies=[Depends(authenticate)])
+    add_board_routes(board_router, control.supervisor)
+    app.include_router(board_router)
+    from harness.runtime.voice import add_voice_routes
+    voice_router = APIRouter(dependencies=[Depends(authenticate)])
+    add_voice_routes(voice_router, control.supervisor)
+    app.include_router(voice_router)
+    from harness.runtime.web_routes import add_web_routes
+    web_router = APIRouter(dependencies=[Depends(authenticate)])
+    add_web_routes(web_router, control.supervisor)
+    app.include_router(web_router)
+
+    @app.get("/v1/capabilities", dependencies=[Depends(authenticate)])
+    async def capabilities() -> dict[str, Any]:
+        return await control.supervisor.capabilities.snapshot()
+
+    from harness.runtime.goals import create_goal_router
+    app.include_router(create_goal_router(control, authenticate=authenticate))
 
     @app.get("/v1/status", dependencies=[Depends(authenticate)])
     async def status() -> dict[str, Any]:
@@ -393,6 +419,12 @@ def create_control_app(
 
     @app.post("/v1/events", dependencies=[Depends(authenticate)])
     async def event(payload: dict[str, Any]) -> dict[str, Any]:
+        if payload.get("event_type") in {RuntimeEventType.QQ_FACT, RuntimeEventType.QQ_TURN}:
+            raise HTTPException(status_code=403, detail="dedicated QQ ingress required")
+        if payload.get("event_type") == RuntimeEventType.BOARD_REFLECTION:
+            raise HTTPException(status_code=403, detail="dedicated board ingress required")
+        if payload.get("event_type") == RuntimeEventType.CAPABILITY_OPPORTUNITY:
+            raise HTTPException(status_code=403, detail="dedicated internal ingress required")
         accepted = await control.supervisor.submit_event(
             event_type=payload["event_type"],
             priority=payload.get("priority", RuntimeEventPriority.PERCEPTION),

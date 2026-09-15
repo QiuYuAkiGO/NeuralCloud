@@ -1,0 +1,646 @@
+{
+  "$defs": {
+    "BoardAppendRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "deadline": {
+          "format": "date-time",
+          "title": "Deadline",
+          "type": "string"
+        },
+        "decision_id": {
+          "pattern": "^[A-Za-z0-9:._-]{1,256}$",
+          "title": "Decision Id",
+          "type": "string"
+        },
+        "entry_id": {
+          "pattern": "^[A-Za-z0-9:._-]{1,256}$",
+          "title": "Entry Id",
+          "type": "string"
+        },
+        "requested_at": {
+          "format": "date-time",
+          "title": "Requested At",
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/BoardScope"
+        },
+        "source_event_ids": {
+          "items": {
+            "pattern": "^[A-Za-z0-9:._-]{1,256}$",
+            "type": "string"
+          },
+          "maxItems": 32,
+          "title": "Source Event Ids",
+          "type": "array"
+        },
+        "text": {
+          "maxLength": 8000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "title": {
+          "default": "",
+          "maxLength": 120,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "scope",
+        "requested_at",
+        "deadline",
+        "entry_id",
+        "decision_id",
+        "text"
+      ],
+      "title": "BoardAppendRequest",
+      "type": "object"
+    },
+    "BoardEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "receipt": {
+          "$ref": "#/$defs/BoardReceipt"
+        },
+        "source_event_ids": {
+          "items": {
+            "pattern": "^[A-Za-z0-9:._-]{1,256}$",
+            "type": "string"
+          },
+          "maxItems": 32,
+          "title": "Source Event Ids",
+          "type": "array"
+        },
+        "text": {
+          "maxLength": 8000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "title": {
+          "default": "",
+          "maxLength": 120,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "receipt",
+        "text"
+      ],
+      "title": "BoardEntry",
+      "type": "object"
+    },
+    "BoardEvidenceRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "deadline": {
+          "format": "date-time",
+          "title": "Deadline",
+          "type": "string"
+        },
+        "entry_id": {
+          "pattern": "^[A-Za-z0-9:._-]{1,256}$",
+          "title": "Entry Id",
+          "type": "string"
+        },
+        "requested_at": {
+          "format": "date-time",
+          "title": "Requested At",
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/BoardScope"
+        }
+      },
+      "required": [
+        "scope",
+        "requested_at",
+        "deadline",
+        "entry_id"
+      ],
+      "title": "BoardEvidenceRequest",
+      "type": "object"
+    },
+    "BoardReadRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "after_sequence": {
+          "default": 0,
+          "minimum": 0,
+          "title": "After Sequence",
+          "type": "integer"
+        },
+        "deadline": {
+          "format": "date-time",
+          "title": "Deadline",
+          "type": "string"
+        },
+        "latest": {
+          "default": false,
+          "title": "Latest",
+          "type": "boolean"
+        },
+        "limit": {
+          "default": 50,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        },
+        "requested_at": {
+          "format": "date-time",
+          "title": "Requested At",
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/BoardScope"
+        }
+      },
+      "required": [
+        "scope",
+        "requested_at",
+        "deadline"
+      ],
+      "title": "BoardReadRequest",
+      "type": "object"
+    },
+    "BoardReadResult": {
+      "additionalProperties": false,
+      "properties": {
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/BoardEntry"
+          },
+          "maxItems": 100,
+          "title": "Entries",
+          "type": "array"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/BoardScope"
+        }
+      },
+      "required": [
+        "scope",
+        "observed_at"
+      ],
+      "title": "BoardReadResult",
+      "type": "object"
+    },
+    "BoardReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "decision_id": {
+          "pattern": "^[A-Za-z0-9:._-]{1,256}$",
+          "title": "Decision Id",
+          "type": "string"
+        },
+        "entry_id": {
+          "pattern": "^[A-Za-z0-9:._-]{1,256}$",
+          "title": "Entry Id",
+          "type": "string"
+        },
+        "evidence_ref": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Evidence Ref",
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/BoardScope"
+        },
+        "sequence": {
+          "minimum": 1,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "text_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Text Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "scope",
+        "entry_id",
+        "decision_id",
+        "text_sha256",
+        "created_at",
+        "evidence_ref",
+        "sequence"
+      ],
+      "title": "BoardReceipt",
+      "type": "object"
+    },
+    "BoardReconcileRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "deadline": {
+          "format": "date-time",
+          "title": "Deadline",
+          "type": "string"
+        },
+        "decision_id": {
+          "pattern": "^[A-Za-z0-9:._-]{1,256}$",
+          "title": "Decision Id",
+          "type": "string"
+        },
+        "entry_id": {
+          "pattern": "^[A-Za-z0-9:._-]{1,256}$",
+          "title": "Entry Id",
+          "type": "string"
+        },
+        "requested_at": {
+          "format": "date-time",
+          "title": "Requested At",
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/BoardScope"
+        },
+        "text_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Text Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "scope",
+        "requested_at",
+        "deadline",
+        "entry_id",
+        "decision_id",
+        "text_sha256"
+      ],
+      "title": "BoardReconcileRequest",
+      "type": "object"
+    },
+    "BoardReconcileResult": {
+      "additionalProperties": false,
+      "properties": {
+        "decision_id": {
+          "pattern": "^[A-Za-z0-9:._-]{1,256}$",
+          "title": "Decision Id",
+          "type": "string"
+        },
+        "entry_id": {
+          "pattern": "^[A-Za-z0-9:._-]{1,256}$",
+          "title": "Entry Id",
+          "type": "string"
+        },
+        "receipt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BoardReceipt"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "scope": {
+          "$ref": "#/$defs/BoardScope"
+        },
+        "status": {
+          "enum": [
+            "committed",
+            "not_found"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "scope",
+        "entry_id",
+        "decision_id",
+        "status"
+      ],
+      "title": "BoardReconcileResult",
+      "type": "object"
+    },
+    "BoardScope": {
+      "additionalProperties": false,
+      "properties": {
+        "board_id": {
+          "default": "misty-thoughts",
+          "pattern": "^[A-Za-z0-9:._-]{1,256}$",
+          "title": "Board Id",
+          "type": "string"
+        },
+        "body_instance_id": {
+          "pattern": "^[A-Za-z0-9:._-]{1,256}$",
+          "title": "Body Instance Id",
+          "type": "string"
+        },
+        "owner_id": {
+          "default": "misty",
+          "pattern": "^[A-Za-z0-9:._-]{1,256}$",
+          "title": "Owner Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "body_instance_id"
+      ],
+      "title": "BoardScope",
+      "type": "object"
+    },
+    "BoardStatus": {
+      "additionalProperties": false,
+      "properties": {
+        "embodiment": {
+          "$ref": "#/$defs/EmbodimentStatus"
+        },
+        "scope": {
+          "$ref": "#/$defs/BoardScope"
+        },
+        "uncertain_entries": {
+          "items": {
+            "pattern": "^[A-Za-z0-9:._-]{1,256}$",
+            "type": "string"
+          },
+          "title": "Uncertain Entries",
+          "type": "array"
+        }
+      },
+      "required": [
+        "scope",
+        "embodiment"
+      ],
+      "title": "BoardStatus",
+      "type": "object"
+    },
+    "EmbodimentState": {
+      "enum": [
+        "disabled",
+        "available",
+        "degraded",
+        "unavailable",
+        "terminal"
+      ],
+      "title": "EmbodimentState",
+      "type": "string"
+    },
+    "EmbodimentStatus": {
+      "additionalProperties": false,
+      "properties": {
+        "activated_capabilities": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Activated Capabilities",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "body_instance_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Body Instance Id"
+        },
+        "effective_capabilities": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Effective Capabilities",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "health": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProviderHealth"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "negotiated": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/NegotiatedCapabilitySet"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "provider_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Id"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "state": {
+          "$ref": "#/$defs/EmbodimentState",
+          "default": "disabled"
+        }
+      },
+      "title": "EmbodimentStatus",
+      "type": "object"
+    },
+    "HealthStatus": {
+      "enum": [
+        "healthy",
+        "degraded",
+        "unavailable"
+      ],
+      "title": "HealthStatus",
+      "type": "string"
+    },
+    "NegotiatedCapabilitySet": {
+      "additionalProperties": false,
+      "properties": {
+        "degraded": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Degraded",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "enabled": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Enabled",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "incompatible_required": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Incompatible Required",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "missing_required": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Missing Required",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "provider_id": {
+          "title": "Provider Id",
+          "type": "string"
+        },
+        "provider_revision": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Revision"
+        },
+        "unavailable_optional": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Unavailable Optional",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "unknown_provided": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Unknown Provided",
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "provider_id"
+      ],
+      "title": "NegotiatedCapabilitySet",
+      "type": "object"
+    },
+    "ProviderHealth": {
+      "additionalProperties": false,
+      "properties": {
+        "body_instance_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Body Instance Id"
+        },
+        "capability_health": {
+          "additionalProperties": {
+            "$ref": "#/$defs/HealthStatus"
+          },
+          "title": "Capability Health",
+          "type": "object"
+        },
+        "detail": {
+          "additionalProperties": true,
+          "title": "Detail",
+          "type": "object"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "provider_id": {
+          "minLength": 1,
+          "title": "Provider Id",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/HealthStatus"
+        }
+      },
+      "required": [
+        "provider_id",
+        "status",
+        "observed_at"
+      ],
+      "title": "ProviderHealth",
+      "type": "object"
+    }
+  },
+  "anyOf": [
+    {
+      "$ref": "#/$defs/BoardReadRequest"
+    },
+    {
+      "$ref": "#/$defs/BoardReadResult"
+    },
+    {
+      "$ref": "#/$defs/BoardAppendRequest"
+    },
+    {
+      "$ref": "#/$defs/BoardReceipt"
+    },
+    {
+      "$ref": "#/$defs/BoardReconcileRequest"
+    },
+    {
+      "$ref": "#/$defs/BoardReconcileResult"
+    },
+    {
+      "$ref": "#/$defs/BoardEvidenceRequest"
+    },
+    {
+      "$ref": "#/$defs/BoardEntry"
+    },
+    {
+      "$ref": "#/$defs/BoardStatus"
+    }
+  ]
+}

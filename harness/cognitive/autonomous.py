@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
-from harness.compiler.compiler import render_homeostatic_interoception
+from harness.compiler.compiler import emotion_enabled, render_emotion_guidance, render_homeostatic_interoception
 from harness.homeostasis.models import HomeostaticInteroceptiveSummary
 from harness.llm.client import ChatResult, resolve_aux_endpoint
 from harness.validator.validator import contains_homeostatic_mechanism_leak
@@ -90,6 +90,7 @@ def run_or_load_assessment(
     homeostasis: dict[str, Any],
     policies: list[dict[str, Any]],
     homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
+    emotion_guidance: Any = None,
 ) -> AssessmentRun:
     target = assessment_record_path(log_dir, assessment_id, evaluated_at)
     messages = _assessment_messages(
@@ -100,6 +101,7 @@ def run_or_load_assessment(
         homeostasis=homeostasis,
         policies=policies,
         homeostatic_interoception=homeostatic_interoception,
+        emotion_guidance=emotion_guidance,
     )
     input_hash = hashlib.sha256(
         json.dumps(
@@ -269,6 +271,7 @@ def _assessment_messages(
     homeostasis: dict[str, Any],
     policies: list[dict[str, Any]],
     homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
+    emotion_guidance: Any = None,
 ) -> list[dict[str, str]]:
     snapshot = pipeline.memory.get_state(now=evaluated_at)
     persona = snapshot.persona.identity if snapshot.persona else None
@@ -287,19 +290,22 @@ def _assessment_messages(
             else "角色：未知"
         ),
     ]
-    if snapshot.relationship is not None:
+    use_emotion = emotion_enabled(pipeline.settings)
+    if snapshot.relationship is not None and not use_emotion:
         rel = snapshot.relationship
         lines.append(
             f"关系：对象={rel.target}，亲近={rel.closeness:.2f}，信任={rel.trust:.2f}，"
             f"张力={rel.recent_tension:.2f}"
         )
-    if snapshot.psych is not None and snapshot.psych.short:
+    if snapshot.psych is not None and snapshot.psych.short and not use_emotion:
         lines.append("近期心理：" + _plain_mapping(snapshot.psych.short))
     if snapshot.world is not None:
         lines.append(
             f"环境：presence={snapshot.world.user_presence}，activity={snapshot.world.user_activity}"
         )
-    if homeostatic_interoception is not None:
+    if use_emotion:
+        lines.append(render_emotion_guidance(emotion_guidance, homeostasis=homeostatic_interoception))
+    elif homeostatic_interoception is not None:
         lines.append(
             "角色的内在表达线索："
             + render_homeostatic_interoception(

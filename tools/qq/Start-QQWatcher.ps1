@@ -50,6 +50,40 @@ function Read-QQWJson {
     return ($json | ConvertFrom-Json -ErrorAction Stop)
 }
 
+function Read-QQWGroupRoster {
+    param([object]$Config, [bool]$AutomaticSend)
+    $qqHomeGroup = Get-QQWProperty $Config 'group_id'
+    $property = $Config.PSObject.Properties['group_roster']
+    if ($null -eq $property -or $null -eq $property.Value) {
+        return [pscustomobject]@{group_id=$qqHomeGroup; label=''; observe=$true; send=$AutomaticSend}
+    }
+    $raw = $property.Value
+    if ($raw -isnot [Array] -or $raw.Count -lt 1 -or $raw.Count -gt 16) { throw 'qq_group_roster_size_invalid' }
+    $seen = @{}
+    $homeObserved = $false
+    $entries = @()
+    foreach ($entry in $raw) {
+        if ($null -eq $entry -or $entry -isnot [pscustomobject]) { throw 'qq_group_roster_entry_invalid' }
+        foreach ($name in $entry.PSObject.Properties.Name) {
+            if ($name -notin @('group_id', 'label', 'observe', 'send')) { throw 'qq_group_roster_entry_invalid' }
+        }
+        $id = Get-QQWProperty $entry 'group_id'
+        if ($id -isnot [string] -or $id -notmatch '^[1-9][0-9]{0,19}$') { throw 'qq_group_roster_identity_invalid' }
+        if ($seen.ContainsKey($id)) { throw 'qq_group_roster_duplicate' }
+        $seen[$id] = $true
+        $label = Get-QQWProperty $entry 'label' ''
+        if ($label -isnot [string] -or $label.Length -gt 128 -or $label -match '[\x00-\x1f\x7f]') { throw 'qq_group_roster_label_invalid' }
+        $observe = Get-QQWProperty $entry 'observe' $true
+        $send = Get-QQWProperty $entry 'send' $false
+        if ($observe -isnot [bool] -or $send -isnot [bool]) { throw 'qq_group_roster_flags_invalid' }
+        if ($send -and ($id -cne $qqHomeGroup -or -not $AutomaticSend)) { throw 'qq_group_roster_send_scope_invalid' }
+        if ($id -ceq $qqHomeGroup -and $observe) { $homeObserved = $true }
+        $entries += [pscustomobject]@{group_id=$id; label=$label; observe=$observe; send=$send}
+    }
+    if (-not $homeObserved) { throw 'qq_group_roster_home_observation_required' }
+    return $entries
+}
+
 function Read-QQWConfiguration {
     param([string]$ConfigPath)
     $anchor = [IO.Path]::GetFullPath($env:LOCALAPPDATA)
@@ -88,9 +122,27 @@ function Read-QQWConfiguration {
     }
     $send = Get-QQWProperty $config 'automatic_send'
     if ($send -isnot [bool]) { throw 'automatic_send_must_be_explicit' }
+    $groupRoster = @(Read-QQWGroupRoster $config $send)
     $accessibility = Get-QQWProperty $config 'accessibility_enabled' $false
     if ($accessibility -isnot [bool]) { throw 'accessibility_must_be_boolean' }
-    foreach ($bound in @(@('observation_interval_seconds', 1, 0.25, 2), @('turn_deadline_seconds', 60, 1, 60))) {
+    $qqBody = Get-QQWProperty $config 'qq_body_enabled' $false
+    $qqIdle = Get-QQWProperty $config 'homeostatic_idle_enabled' $false
+    if ($qqBody -isnot [bool] -or $qqIdle -isnot [bool]) { throw 'qq_body_flags_must_be_boolean' }
+    if ($qqBody -and -not $accessibility) { throw 'qq_body_requires_accessibility' }
+    if ($qqIdle) {
+        if (-not $qqBody) { throw 'qq_idle_requires_negotiated_body' }
+        $domainPath = Resolve-QQWPrivatePath ([string](Get-QQWProperty $config 'homeostasis_state_dir')) $root
+        if ($domainPath -in $distinct -or (Test-Path -LiteralPath $domainPath -PathType Leaf)) { throw 'qq_homeostasis_state_overlap' }
+        $profile = [string](Get-QQWProperty $config 'homeostasis_profile_path')
+        $expectedProfile = [IO.Path]::GetFullPath((Join-Path $script:QQWRepositoryRoot 'presets\homeostasis\qq-social-drive-v1.json'))
+        if (-not [IO.Path]::IsPathRooted($profile) -or
+            -not [IO.Path]::GetFullPath($profile).Equals($expectedProfile, [StringComparison]::OrdinalIgnoreCase) -or
+            -not (Test-Path -LiteralPath $expectedProfile -PathType Leaf)) { throw 'qq_homeostasis_profile_invalid' }
+    }
+    foreach ($bound in @(@('observation_interval_seconds', 1, 0.25, 2), @('turn_deadline_seconds', 60, 1, 60),
+                         @('homeostasis_tick_seconds', 5, 1, 30), @('homeostatic_quiet_seconds', 120, 60, 3600),
+                         @('homeostatic_opportunity_seconds', 1800, 300, 86400),
+                         @('group_observation_seconds', 300, 60, 3600))) {
         $number = Get-QQWProperty $config $bound[0] $bound[1]
         if (($number -isnot [int] -and $number -isnot [long] -and $number -isnot [double] -and $number -isnot [decimal]) -or
             [double]::IsNaN([double]$number) -or [double]::IsInfinity([double]$number) -or
@@ -120,6 +172,7 @@ function Read-QQWConfiguration {
         PrivateRoot=$root; Path=$path; StatusFile=$paths.status_file; ControlFile=$paths.control_file
         StateDatabase=$paths.state_db; GroupId=$config.group_id; SelfMemberId=$config.self_member_id
         TraceFile=$trace; AccessibilityEnabled=$accessibility
+        GroupRoster=$groupRoster
         AutomaticSend=$send; HeartbeatMaxAgeSeconds=[Math]::Max(60.0, [double]$poll * 3.0)
     }
 }

@@ -33,13 +33,14 @@ def observation(person):
 
 
 @pytest.fixture
-def setup(tmp_path):
+def setup(tmp_path, monkeypatch):
+    monkeypatch.setenv("NC_CONTROL_MODE", "development_debug")
     db = tmp_path / "memory.sqlite3"
     store = QQVisualMemoryStore(db)
     person = store.record_profile(profile()).profile
     token = tmp_path / "session.token"
     token.write_text(TOKEN)
-    settings = QQSessionSettings(memory_db=db, token_file=token, allowed_group_ids=["10001"], self_member_id="30001")
+    settings = QQSessionSettings(development_mode=True, memory_db=db, token_file=token, allowed_group_ids=["10001"], self_member_id="30001")
     calls = []
 
     def gate(**kwargs):
@@ -126,6 +127,9 @@ def test_reopened_service_reads_multiple_people_and_truthful_status(setup):
     result = c.get("/v1/groups/10001/memory").json()
     assert set(result["participants"]) == {"20001", "20002"}
     status = c.get("/v1/status").json()
+    assert status["configured_decision_enabled"] is True
+    assert status["development_mode"] is True
+    assert status["cognitive_owner"] == "isolated_development"
     assert status["autonomous_decision_enabled"] is True
     assert status["new_verified_observations_trigger_decision"] is True
     assert status["automatic_send"] is False and status["automatic_screen_capture"] is False

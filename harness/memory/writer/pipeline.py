@@ -83,7 +83,7 @@ class WriterPipeline:
                 "semantic facts cannot be added directly from model output; use candidate consolidation"
             )
         if op.op == "DELETE" and op.type == "candidate":
-            self._drop_candidate(op, now=now)
+            self._drop_candidate(op, event=event, now=now)
             return
         if op.op == "ADD" and op.type == "episodic":
             self.stores.audit.log(
@@ -106,6 +106,7 @@ class WriterPipeline:
             predicate=op.predicate,
             value=op.value,
             claim=op.claim or "",
+            scope=event.scope,
         )
         if existing:
             merged = op.model_copy(update={"op": "UPDATE", "ref": existing.candidate_id, "type": "candidate"})
@@ -122,6 +123,9 @@ class WriterPipeline:
             value=op.value,
             created_at=now,
             updated_at=now,
+            scope=event.scope,
+            source_refs=list(event.source_refs),
+            processing_version=event.processing_version,
         )
         self.stores.candidates.insert(candidate)
         self.stores.audit.log(
@@ -140,15 +144,19 @@ class WriterPipeline:
         candidate = self.stores.candidates.get(op.ref)
         if candidate is None:
             raise InvalidCuratorOpError(f"unknown candidate {op.ref}")
-        new_evidence = [eid for eid in (op.evidence or [event.event_id]) if eid not in candidate.evidence]
+        self._check_target(candidate, op, event)
+        new_evidence = list(dict.fromkeys(eid for eid in (op.evidence or [event.event_id]) if eid not in candidate.evidence))
+        new_sources = [ref for ref in dict.fromkeys(event.source_refs) if ref not in candidate.source_refs]
+        independent_count = len(new_sources) if event.source_refs else len(new_evidence)
         evidence = candidate.evidence + new_evidence
         confidence = candidate.confidence
-        if op.confidence_delta is not None:
+        if op.confidence_delta is not None and (op.confidence_delta <= 0 or independent_count):
             confidence = min(1.0, max(0.0, confidence + op.confidence_delta))
-        elif new_evidence:
-            confidence = update_confidence(confidence, n_new_evidence=len(new_evidence), settings=self.settings)
+        elif op.confidence_delta is None and independent_count:
+            confidence = update_confidence(confidence, n_new_evidence=independent_count, settings=self.settings)
         updated = candidate.model_copy(
-            update={"evidence": evidence, "confidence": confidence, "updated_at": now}
+            update={"evidence": evidence, "confidence": confidence, "updated_at": now,
+                    "source_refs": [*candidate.source_refs, *new_sources]}
         )
         self.stores.candidates.update(updated)
         self.stores.audit.log(
@@ -167,13 +175,17 @@ class WriterPipeline:
         fact = self.stores.semantic.get(op.ref)
         if fact is None:
             raise InvalidCuratorOpError(f"unknown semantic fact {op.ref}")
+        self._check_target(fact, op, event)
         supporting = list(fact.supporting_events)
+        new_sources = [ref for ref in dict.fromkeys(event.source_refs) if ref not in fact.source_refs]
+        independent = bool(new_sources) if event.source_refs else event.event_id not in supporting
         if event.event_id not in supporting:
             supporting.append(event.event_id)
         confidence = fact.confidence
-        if op.confidence_delta is not None:
+        if op.confidence_delta is not None and (op.confidence_delta <= 0 or independent):
             confidence = min(1.0, max(0.0, confidence + op.confidence_delta))
-        updated = fact.model_copy(update={"supporting_events": supporting, "confidence": confidence})
+        updated = fact.model_copy(update={"supporting_events": supporting, "confidence": confidence,
+                                          "source_refs": [*fact.source_refs, *new_sources]})
         self.stores.semantic.update(updated)
         self.stores.audit.log(
             op="UPDATE",
@@ -184,12 +196,21 @@ class WriterPipeline:
             detail={"confidence_delta": op.confidence_delta},
         )
 
-    def _drop_candidate(self, op: CuratorOp, *, now: datetime) -> None:
+    @staticmethod
+    def _check_target(target, op: CuratorOp, event: EpisodicEvent) -> None:
+        if target.scope != event.scope:
+            raise InvalidCuratorOpError("memory operation crosses its source scope")
+        if ((op.subject is not None and op.subject != target.subject)
+                or (op.predicate is not None and op.predicate != target.predicate)):
+            raise InvalidCuratorOpError("memory operation changes its subject or predicate")
+
+    def _drop_candidate(self, op: CuratorOp, *, event: EpisodicEvent, now: datetime) -> None:
         if not op.ref:
             raise InvalidCuratorOpError("DELETE candidate requires ref")
         candidate = self.stores.candidates.get(op.ref)
         if candidate is None:
             return
+        self._check_target(candidate, op, event)
         updated = candidate.model_copy(update={"status": "dropped", "updated_at": now})
         self.stores.candidates.update(updated)
         self.stores.audit.log(
@@ -211,16 +232,19 @@ class WriterPipeline:
         subject = candidate.subject or "user"
         predicate = candidate.predicate or "fact"
         value = candidate.value or candidate.claim
-        existing = self.stores.semantic.find(subject, predicate, value)
+        existing = self.stores.semantic.find(subject, predicate, value, scope=candidate.scope)
         text = f"{subject} {predicate} {value}"
         embedding = self.embeddings.embed_one(text)
         if existing:
             supporting = list(dict.fromkeys(existing.supporting_events + candidate.evidence))
+            independent = (bool(set(candidate.source_refs) - set(existing.source_refs)) if candidate.source_refs
+                           else bool(set(candidate.evidence) - set(existing.supporting_events)))
             fact = existing.model_copy(
                 update={
-                    "confidence": max(existing.confidence, candidate.confidence),
+                    "confidence": max(existing.confidence, candidate.confidence) if independent else existing.confidence,
                     "supporting_events": supporting,
                     "embedding": embedding,
+                    "source_refs": list(dict.fromkeys([*existing.source_refs, *candidate.source_refs])),
                 }
             )
             self.stores.semantic.update(fact)
@@ -234,6 +258,9 @@ class WriterPipeline:
                 supporting_events=list(candidate.evidence),
                 formed_at=now,
                 embedding=embedding,
+                scope=candidate.scope,
+                source_refs=list(candidate.source_refs),
+                processing_version=candidate.processing_version,
             )
             self.stores.semantic.insert(fact)
         closed = candidate.model_copy(

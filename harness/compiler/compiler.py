@@ -8,6 +8,8 @@ from harness.config import Settings, get_settings
 from harness.core.inference import (
     ContextBudget,
     ContextSegment,
+    MemoryEvidenceContext,
+    MemoryEvidenceEntry,
     ModelContext,
     ProvenanceEntry,
     SessionTurn,
@@ -28,8 +30,100 @@ from harness.research.manifest import ExperimentManifest
 
 MEMORY_EMPTY_CONSTRAINT = (
     "no_fabricated_memory：记忆库中没有相关记录——禁止编造共同经历、"
-    "引用不存在的往事或对话（如「你上次说过」「我们之前」）；不记得就坦率回应"
+    "引用不存在的往事或对话（如「你上次说过」「我们之前」）；回应当前内容，必要时只询问具体缺口。"
 )
+
+MEMORY_EVIDENCE_CONSTRAINT = (
+    "历史引用须逐条有本轮入模记录支持；有记录甲不代表往事乙发生过。"
+    "用户陈述不等于已核实事实，暂定或争议记忆不可当成定论。"
+    "当前消息不是过去对话的证据；回应可核对的内容，必要时只询问具体缺口。"
+)
+
+PERSONA_EXPRESSION_DEFAULTS = (
+    "性格特质与表达习惯描述通常状态；有依据的强烈情绪可以暂时突破轻柔、克制等表达习惯，"
+    "情绪缓和后逐渐恢复平常表达。身份、事实、价值观和知识边界持续有效。"
+)
+
+
+def emotion_enabled(settings: Any) -> bool:
+    return getattr(settings, "emotion_mode", "off") == "on"
+
+
+def emotion_guidance_text(guidance: Any) -> str:
+    if isinstance(guidance, str):
+        return guidance.strip()
+    if isinstance(guidance, dict):
+        return str(guidance.get("text") or "").strip()
+    return str(getattr(guidance, "text", "") or "").strip()
+
+
+def render_emotion_guidance(guidance: Any = None, *, homeostasis: Any = None) -> str:
+    """Render an already prepared brief; this boundary never calls a model."""
+    summary = None
+    if homeostasis:
+        try:
+            summary = HomeostaticInteroceptiveSummary.model_validate(homeostasis)
+        except (TypeError, ValueError):
+            pass
+    if summary is not None and summary.salience == "critical":
+        raise ValueError("critical homeostatic state must pause before model invocation")
+    text = emotion_guidance_text(guidance)
+    if not text:
+        text = (render_homeostatic_interoception(summary) if summary is not None else
+                "当前没有可靠的新情绪提示，沿用通常的表达习惯，不凭空制造强烈感受或原因。")
+    return ("当前情绪演绎提示：" + text + "\n" + PERSONA_EXPRESSION_DEFAULTS
+            + "只自然演绎，不复述提示、权重、内部指标或形成机制；不能把不明原因归咎于当前对象。")
+
+
+def command_emotion_context(host: Any, payload: dict[str, Any]) -> tuple[dict[str, Any], Any]:
+    """Separate the Runtime-owned reference before strict request parsing."""
+    request = dict(payload)
+    reference = request.pop("emotion_context_ref", None)
+    request.pop("emotion_revision", None)
+    return request, reference
+
+
+def command_emotion_deadline(host: Any, command: Any, deadline: Any) -> Any:
+    """A renewed RPC window cannot extend the frozen expression model budget."""
+    deadline = min(command.deadline, deadline)
+    settings = getattr(getattr(host, "chat", None), "settings", None)
+    reference = command.payload.get("emotion_context_ref")
+    if getattr(settings, "emotion_mode", "off") == "off" or reference is None:
+        return deadline
+    service = getattr(getattr(host, "adapter", None), "emotion_service", None)
+    if service is None:
+        service = getattr(getattr(getattr(host, "chat", None), "pipeline", None), "emotion_service", None)
+    if service is not None:
+        observation = service.existing_input(reference)
+        if observation is not None and observation.deadline_at is not None:
+            deadline = min(deadline, observation.deadline_at)
+    return deadline
+
+
+async def resolve_command_emotion(host: Any, command: Any) -> Any:
+    """Resolve after request validation, within the original Runtime deadline."""
+    import asyncio
+    from datetime import datetime, timezone
+
+    reference = command.payload.get("emotion_context_ref")
+    settings = getattr(getattr(host, "chat", None), "settings", None)
+    if getattr(settings, "emotion_mode", "off") == "off" or reference is None:
+        return None
+    adapter = getattr(host, "adapter", None)
+    resolve = getattr(adapter, "emotion_guidance", None)
+    service = getattr(adapter, "emotion_service", None)
+    if service is None:
+        service = getattr(getattr(getattr(host, "chat", None), "pipeline", None), "emotion_service", None)
+    try:
+        if callable(resolve):
+            return await resolve(command)
+        if service is not None:
+            remaining = (command.deadline - datetime.now(timezone.utc)).total_seconds()
+            return await asyncio.wait_for(asyncio.to_thread(service.guidance, reference), timeout=max(0, remaining))
+    except (KeyError, ValueError, TypeError, TimeoutError):
+        # Missing/stale context degrades to semantic needs, never raw numbers.
+        return None
+    return None
 
 _HOMEOSTATIC_EMOTION_TEXT = {
     "strained": "内在感受偏紧绷",
@@ -127,15 +221,30 @@ class ContextCompiler:
         session: list[SessionTurn] | None = None,
         additional_segments: list[ContextSegment] | None = None,
         homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
+        emotion_guidance: Any = None,
         opaque_interoception: tuple | list | None = None,
         opaque_token_budget: int = 256,
         required_user_context: bool = False,
         required_additional_context: bool = False,
+        has_additional_memory: bool = False,
+        memory_evidence: MemoryEvidenceContext | None = None,
     ) -> ModelContext:
         insights = insights or []
         session = session or []
         additional_segments = additional_segments or []
+        use_emotion = emotion_enabled(self.settings) and opaque_interoception is None
+        if use_emotion:
+            additional_segments = [item for item in additional_segments
+                                   if item.kind not in {"emotion_guidance", "homeostatic_interoception", "psych", "relationship"}]
         total = self.settings.context_token_budget
+        web_segments = [item for item in additional_segments if item.why == "verified_web_context"]
+        if web_segments:
+            # The web projection is bounded before compile. Preserve its full
+            # serialized source records and the original user turn; URLs must
+            # not disappear under the ordinary 120-token optional-segment cap.
+            required_user_context = True
+            total = max(total, sum(estimate_tokens(item.text) for item in additional_segments)
+                        + estimate_tokens(situation.utterance) + 3000)
         remaining = total
         segments: list[ContextSegment] = []
 
@@ -160,6 +269,9 @@ class ContextCompiler:
             homeostatic = HomeostaticInteroceptiveSummary.model_validate(
                 homeostatic_interoception
             )
+            if homeostatic.salience == "critical":
+                raise ValueError("critical homeostatic state must pause before model invocation")
+        if homeostatic is not None and not use_emotion:
             homeostatic_text = render_homeostatic_interoception(homeostatic)
             homeostatic_tokens = estimate_tokens(homeostatic_text)
             if not homeostatic_text or homeostatic_tokens > total:
@@ -169,6 +281,9 @@ class ContextCompiler:
 
         persona = situation.snapshot.persona if situation.snapshot else None
         persona_text = _persona_anchor(persona)
+        if use_emotion:
+            homeostatic_text = render_emotion_guidance(emotion_guidance, homeostasis=homeostatic_interoception)
+            homeostatic_tokens = estimate_tokens(homeostatic_text)
         remaining = _push(
             segments,
             kind="persona",
@@ -189,7 +304,15 @@ class ContextCompiler:
                 remaining=remaining,
             )
 
-        if homeostatic is not None:
+        if use_emotion:
+            reference = (emotion_guidance.get("context_id") if isinstance(emotion_guidance, dict)
+                         else getattr(emotion_guidance, "context_id", None))
+            remaining = _push_required(
+                segments, kind="emotion_guidance", text=homeostatic_text,
+                source_ids=[reference] if reference else [], why="prepared_emotion_guidance",
+                remaining=remaining,
+            )
+        elif homeostatic is not None:
             remaining = _push_required(
                 segments,
                 kind="homeostatic_interoception",
@@ -203,8 +326,12 @@ class ContextCompiler:
             )
 
         constraint_lines = [ins.constraint for ins in insights if ins.constraint]
-        empty_memory = not situation.relevant_memories
-        if empty_memory:
+        # The old boolean remains accepted for callers, but cannot grant memory
+        # authority. Only evidence bound by a trusted adapter can do that.
+        empty_memory = not situation.relevant_memories and memory_evidence is None
+        if memory_evidence is not None:
+            constraint_lines.append(MEMORY_EVIDENCE_CONSTRAINT)
+        elif empty_memory:
             constraint_lines.append(MEMORY_EMPTY_CONSTRAINT)
         if constraint_lines:
             remaining = _push(
@@ -212,12 +339,13 @@ class ContextCompiler:
                 kind="constraint",
                 text="红线：" + "；".join(dict.fromkeys(constraint_lines)),
                 source_ids=[ins.insight_id for ins in insights] + (["memory_guard"] if empty_memory else []),
-                why="subagent_constraint" if insights else "memory_empty_guard",
+                why=("subagent_constraint" if insights else
+                     "memory_evidence_guard" if memory_evidence is not None else "memory_empty_guard"),
                 remaining=remaining,
                 preferred=min(80, remaining),
             )
 
-        if situation.interoception is not None:
+        if situation.interoception is not None and not use_emotion:
             interoception = situation.interoception
             remaining = _push(
                 segments,
@@ -246,7 +374,7 @@ class ContextCompiler:
             )
 
         for additional in additional_segments:
-            if required_additional_context and additional.text:
+            if (required_additional_context or additional.why == "verified_web_context") and additional.text:
                 remaining = _push_required(
                     segments, kind=additional.kind, text=additional.text,
                     source_ids=list(additional.source_ids), why=additional.why or "runtime_context",
@@ -263,7 +391,7 @@ class ContextCompiler:
                 preferred=min(120, remaining),
             )
 
-        psych_text = _psych_text(situation)
+        psych_text = "" if use_emotion else _psych_text(situation)
         if psych_text:
             remaining = _push(
                 segments,
@@ -275,7 +403,7 @@ class ContextCompiler:
                 preferred=min(150, remaining),
             )
 
-        rel_text = _relationship_text(situation)
+        rel_text = "" if use_emotion else _relationship_text(situation)
         if rel_text:
             rel_id = situation.relationship.relation_id if situation.relationship else "rel"
             remaining = _push(
@@ -304,7 +432,7 @@ class ContextCompiler:
             remaining = _push(
                 segments,
                 kind="insight",
-                text=_insight_text(insight),
+                text=_insight_text(insight, include_stance=not use_emotion),
                 source_ids=[insight.insight_id],
                 why="social_interpreter",
                 remaining=remaining,
@@ -339,6 +467,34 @@ class ContextCompiler:
                 preferred=min(220, remaining),
             )
 
+        admitted_evidence = None
+        if memory_evidence is not None:
+            # Compiler-selected retrieval is also available to the same critic,
+            # but never includes a clipped record or widens its visibility.
+            entries = list(memory_evidence.entries)
+            for memory in situation.relevant_memories[:top_k]:
+                record = memory.episodic or memory.semantic
+                scope = getattr(record, "scope", None)
+                if ((scope is not None and memory_evidence.audience not in scope.visibility)
+                        or (scope is None and memory_evidence.audience != "local:main")):
+                    continue
+                full_text = _memory_text(memory)
+                segment = next((item for item in segments if item.kind == "memory"
+                                and item.source_ids == [memory.ref] and item.text == full_text), None)
+                if segment is None:
+                    continue
+                entry = MemoryEvidenceEntry(
+                    source_id=memory.ref, text=full_text, audience=memory_evidence.audience,
+                    source_channel=scope.channel if scope else getattr(record, "channel", "chat"),
+                    source_conversation_id=(scope.conversation_id if scope else getattr(record, "session_id", None)),
+                    source_refs=list(getattr(record, "source_refs", []) or getattr(record, "evidence", [])),
+                    status="retained_fact", kind="derived_memory",
+                )
+                entries.extend(MemoryEvidenceContext.bind(audience=memory_evidence.audience,
+                                                         entries=[entry], segment=segment).entries)
+            admitted_evidence = memory_evidence.model_copy(update={"entries": entries}).admitted(
+                segments, trigger_ref=situation.trigger.ref)
+
         used = total - remaining
         per_kind: dict[str, int] = {}
         for seg in segments:
@@ -353,6 +509,7 @@ class ContextCompiler:
             budget=ContextBudget(total=total, used=used, per_kind=per_kind),
             provenance=provenance,
             trigger_text=situation.utterance,
+            memory_evidence=admitted_evidence,
         )
 
 
@@ -562,10 +719,10 @@ def homeostatic_interoception_source_ids(
     ]
 
 
-def _insight_text(insight: StructuredInsight) -> str:
+def _insight_text(insight: StructuredInsight, *, include_stance: bool = True) -> str:
     intents = ", ".join(f"{item.intent}:{item.confidence:.2f}" for item in insight.possible_intents)
     parts = [f"社交判断：{intents}"]
-    if insight.recommended_stance:
+    if include_stance and insight.recommended_stance:
         parts.append(f"建议姿态：{insight.recommended_stance}")
     if insight.constraint:
         parts.append(f"约束：{insight.constraint}（角色绝不能说出心理分析）")

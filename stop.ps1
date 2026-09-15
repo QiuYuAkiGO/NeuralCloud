@@ -1,11 +1,19 @@
 param(
-    [switch]$Quiet
+    [switch]$Quiet,
+    [string]$StateRoot
 )
 
 $ErrorActionPreference = "Continue"
 $Root = $PSScriptRoot
 $RegistryPath = Join-Path $Root ".neuralcloud.pids.json"
 $LegacyPidPath = Join-Path $Root ".gui.pid"
+if ($StateRoot) {
+    $resolvedState = if ([System.IO.Path]::IsPathRooted($StateRoot)) {
+        [System.IO.Path]::GetFullPath($StateRoot)
+    } else { [System.IO.Path]::GetFullPath((Join-Path $Root $StateRoot)) }
+    $RegistryPath = Join-Path $resolvedState ".neuralcloud.pids.json"
+    $LegacyPidPath = Join-Path $resolvedState ".gui.pid"
+}
 
 function Write-Info([string]$Message) {
     if (-not $Quiet) { Write-Host $Message }

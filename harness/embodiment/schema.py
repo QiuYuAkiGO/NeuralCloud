@@ -8,7 +8,15 @@ from typing import Any
 
 from pydantic import TypeAdapter
 
+from harness.embodiment.board_contracts import (
+    BoardAppendRequest, BoardEntry, BoardEvidenceRequest, BoardReadRequest, BoardReadResult,
+    BoardReceipt, BoardReconcileRequest, BoardReconcileResult, BoardStatus,
+)
 from harness.embodiment.capabilities import ProviderCapabilities
+from harness.embodiment.web_contracts import WebReadArguments, WebResult, WebSearchArguments, WebSource
+from harness.embodiment.voice_contracts import (
+    VoiceJob, VoiceProfile, VoiceRenderRequest, VoiceScope, VoiceStatus,
+)
 from harness.embodiment.contracts import (
     BodyStateSnapshot,
     EmbodiedActionSpec,
@@ -23,7 +31,15 @@ def schema_catalog() -> dict[str, dict[str, Any]]:
         "observation.v1": TypeAdapter(PerceptionSnapshot).json_schema(),
         "evidence.v1": TypeAdapter(EvidenceRef).json_schema(),
         "capability.v1": TypeAdapter(ProviderCapabilities).json_schema(),
+        "web.v1": TypeAdapter(WebSearchArguments | WebReadArguments | WebSource | WebResult).json_schema(),
         "physiology.body-state.v1": TypeAdapter(BodyStateSnapshot).json_schema(),
+        "expression.voice.v1": TypeAdapter(
+            VoiceScope | VoiceStatus | VoiceProfile | VoiceRenderRequest | VoiceJob
+        ).json_schema(),
+        "expression.board.v1": TypeAdapter(
+            BoardReadRequest | BoardReadResult | BoardAppendRequest | BoardReceipt
+            | BoardReconcileRequest | BoardReconcileResult | BoardEvidenceRequest | BoardEntry | BoardStatus
+        ).json_schema(),
     }
 
 

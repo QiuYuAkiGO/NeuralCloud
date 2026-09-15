@@ -550,8 +550,8 @@ function renderSubsystems(snap) {
   }
   const controlBadge = $("control-badge");
   if (controlBadge) {
-    controlBadge.textContent = `模式 · ${manifest.control_mode || "legacy"}`;
-    controlBadge.className = `badge ${manifest.control_mode === "study_runtime" ? "bad" : "ghost"}`;
+    controlBadge.textContent = state.snapshot?.authority?.development === true ? "模式 · 开发调试" : "模式 · 共享运行";
+    controlBadge.className = `badge ${state.snapshot?.authority?.development === true ? "ghost" : "ok"}`;
   }
   const homeButton = $("btn-homeostasis");
   if (homeButton) homeButton.disabled = !home.profile;
@@ -625,7 +625,7 @@ function applySnapshot(snap, opts = {}) {
   const nextId = snap?.presets?.active_id || snap?.session?.preset_id || state.activePresetId;
   const presetChanged = Boolean(nextId) && nextId !== state.activePresetId;
   const replaceTranscript = Boolean(opts.replaceTranscript) || presetChanged || !state.messages.length;
-  state.snapshot = snap;
+  state.snapshot = { ...snap, authority: snap?.authority ?? state.snapshot?.authority };
   if (nextId) state.activePresetId = nextId;
   syncSpeakerFields(snap);
   if (replaceTranscript) {
@@ -635,6 +635,116 @@ function applySnapshot(snap, opts = {}) {
   renderSubsystems(snap);
   renderTranscript();
   if ($("presets-dialog")?.open) renderPresetList(snap);
+  renderSharedMemory(snap);
+  applyDevelopmentAuthority();
+}
+
+function applyDevelopmentAuthority() {
+  const allowed = state.snapshot?.authority?.development === true;
+  document.querySelectorAll("#btn-settings, #btn-reset, #user-name, #character-name, [data-preset-open], #preset-list [data-act], #debug-body input, #debug-body textarea, #debug-body select, #debug-body button, #homeostasis-form button[type=submit]").forEach((node) => {
+    node.disabled = !allowed;
+    node.title = allowed ? "" : "共享运行中只读；修改需要开发模式";
+  });
+}
+
+function renderSharedMemory(snap) {
+  const root = $("shared-memory");
+  if (!root) return;
+  const owner = snap?.shared_mind;
+  if (!owner) {
+    root.innerHTML = "";
+    return;
+  }
+  const memory = snap.shared_memory || {};
+  const entries = Array.isArray(memory.entries) ? memory.entries : [];
+  root.innerHTML = `<article class="card"><h2>共享记忆 · ${esc(owner.owner_id)}</h2>
+    <p class="hint">${esc(owner.mode)} · ${esc(owner.memory_records)} 条持久记录 · 当前展示 ${entries.length} 条，来源范围以服务端检索为准。</p>
+    ${snap.qq_memory ? renderQQMemorySummary(snap.qq_memory, true) : ""}
+    ${entries.map((entry) => `<details><summary>${esc(entry.channel)} · ${esc(entry.display_name || entry.author_principal || "未知作者")} · ${esc(entry.occurred_at)}</summary>
+      <p style="white-space: pre-wrap">${esc(entry.text)}</p>
+      <p class="hint">作者 ${esc(entry.author_principal)} · 会话 ${esc(entry.session_id)} · 记录 ${esc(entry.record_id)}</p>
+      <p class="hint">原记录 ${esc(entry.source?.original_record_id)} · ${esc(entry.source?.original_sha256)}</p></details>`).join("")}
+    </article>`;
+}
+
+function renderQQMemorySummary(memory, compact = false) {
+  const queue = memory.queue || {};
+  const tiers = memory.tiers || {};
+  const flags = `${memory.enabled === true ? "清洗已启用" : "清洗未启用"} · ${memory.recall_enabled === true ? "召回已启用" : "召回未启用"} · ${memory.processing === true ? "正在处理" : "空闲"}`;
+  const summary = `<section aria-label="QQ记忆汇总">
+    <p class="hint">${esc(flags)}</p>
+    ${memory.input_budget ? `<p class="hint">QQ资料输入预算约 ${esc(memory.input_budget.estimated_tokens)} tokens · 记忆最多 ${esc(memory.input_budget.recall_items)} 条 / ${esc(memory.input_budget.recall_characters)} 字符</p>` : ""}
+    <p class="hint">私聊清洗${memory.private_enabled === true ? "已启用" : "未启用"} · 私聊召回${memory.private_recall_enabled === true ? "已启用" : "未启用"} · 所有者私聊完整召回${memory.owner_private_full_recall_enabled === true ? "已启用" : "未启用"}</p>
+    ${memory.channels ? `<p class="hint">群聊情景 ${esc(memory.channels.qq_group?.episodes ?? 0)} · 群聊印象 ${esc(memory.channels.qq_group?.impressions ?? 0)} · 私聊情景 ${esc(memory.channels.qq_private?.episodes ?? 0)} · 私聊印象 ${esc(memory.channels.qq_private?.impressions ?? 0)}</p>` : ""}
+    <p class="hint">排队 ${esc(queue.pending ?? 0)} · 处理中 ${esc(queue.preparing ?? 0)} · 待重试 ${esc(queue.retry ?? 0)}</p>
+    <p class="hint">短期 ${esc(tiers.short ?? 0)} · 中期 ${esc(tiers.mid ?? 0)} · 长期 ${esc(tiers.long ?? 0)} · 已淡忘 ${esc(tiers.forgotten ?? 0)}</p>
+    <p class="hint">情景 ${esc(memory.episodes ?? 0)} · 印象 ${esc(memory.impressions ?? 0)} · 稳定判断 ${esc(memory.stable_judgments ?? 0)}</p>`;
+  if (compact) return `${summary}<p class="hint">初印象、反证和修订过程见「调试 → QQ记忆」。</p></section>`;
+  const states = memory.impression_states || {};
+  return `${summary}
+    <p class="hint">初步 ${esc(states.provisional ?? 0)} · 稳定 ${esc(states.stable ?? 0)} · 有争议 ${esc(states.disputed ?? 0)} · 已淡化 ${esc(states.dormant ?? 0)}</p>
+    <div class="kv">
+      <div class="kv-row"><span>已提交观察窗口</span><span>${esc(memory.committed_windows ?? 0)}</span></div>
+      <div class="kv-row"><span>最近完成</span><span>${esc(memory.last_completed_at || "尚未完成")}</span></div>
+      <div class="kv-row"><span>最近处理耗时</span><span>${esc(memory.last_duration_ms ?? "—")} ms</span></div>
+      <div class="kv-row"><span>最近召回耗时</span><span>${esc(memory.last_recall_ms ?? "—")} ms</span></div>
+      <div class="kv-row"><span>最近错误类型</span><span>${esc(memory.last_error_type || "无")}</span></div>
+    </div></section>`;
+}
+
+function qqMemoryStatusLabel(value) {
+  return ({ provisional: "初步印象", stable: "稳定判断", disputed: "有反证待观察", dormant: "已淡化" })[value] || value || "未知状态";
+}
+
+function renderQQMemoryEvidence(records, stance, labelOverride = null) {
+  const selected = stance ? records.filter((record) => record?.stance === stance) : records;
+  const label = labelOverride || (stance === "support" ? "支持证据" : "反证");
+  return `<details${stance === "contradict" && selected.length ? " open" : ""}>
+    <summary>${esc(label)} · ${esc(selected.length)} 条</summary>
+    ${selected.length ? selected.map((record) => `<article class="debug-item">
+      <p style="white-space: pre-wrap">${esc(record.statement || "—")}</p>
+      <p style="white-space: pre-wrap">${esc(record.rationale || "—")}</p>
+      ${record.observed_text ? `<details><summary>查看有作者归属的原始经历</summary><p style="white-space: pre-wrap">${esc(record.observed_text)}</p></details>` : ""}
+      <p class="hint">${esc(record.time || "—")} · 情景 ${esc(record.episode_id)}</p>
+      <p class="hint" style="overflow-wrap: anywhere">原始来源 ${esc((Array.isArray(record.source_refs) ? record.source_refs : Array.isArray(record.source_ids) ? record.source_ids : []).join(" · ") || "—")}</p>
+    </article>`).join("") : `<p class="hint">暂无${esc(label)}。</p>`}
+  </details>`;
+}
+
+function renderQQMemoryTab(data) {
+  const memory = data.qq_memory;
+  if (!memory) return `<p class="hint">当前服务尚未提供QQ记忆状态。</p>`;
+  const records = Array.isArray(memory.impression_records) ? memory.impression_records : [];
+  const kindLabels = { person: "成员", relationship: "关系", topic: "话题", group: "群体" };
+  return `<p class="hint">只读 · 展示 Misty 的初印象、当前判断和证据修订。印象置信度与记忆强度分别展示。</p>
+    <article class="debug-item">${renderQQMemorySummary(memory)}</article>
+    ${records.length ? records.map((record) => {
+      const evidence = Array.isArray(record.evidence) ? record.evidence : [];
+      const continuations = Array.isArray(record.continuation_evidence) ? record.continuation_evidence : [];
+      const history = Array.isArray(record.history) ? record.history : [];
+      const subjects = (Array.isArray(record.subject_refs) ? record.subject_refs : []).join(" · ");
+      return `<article class="debug-item" data-kind="qq-memory-impression" data-impression-id="${esc(record.impression_id)}">
+        <h3>${esc(kindLabels[record.kind] || record.kind || "印象")} · ${esc(subjects || record.topic || "群体印象")}</h3>
+        <p class="hint">${record.scope?.channel === "qq_private" ? "私聊" : "群"} ${esc(record.scope?.conversation_id || "—")} · ${esc(qqMemoryStatusLabel(record.status))}</p>
+        ${record.topic ? `<p>话题：${esc(record.topic)}</p>` : ""}
+        ${record.context ? `<p style="white-space: pre-wrap">情境：${esc(record.context)}</p>` : ""}
+        <section aria-label="初印象"><h4>初印象</h4><p style="white-space: pre-wrap">${esc(record.first_impression || "—")}</p></section>
+        <section aria-label="当前印象"><h4>当前印象</h4><p style="white-space: pre-wrap">${esc(record.current_impression || "—")}</p></section>
+        <p class="hint">置信度 ${esc(record.confidence ?? "—")} · 记忆强度 ${esc(record.strength ?? "—")}</p>
+        ${renderQQMemoryEvidence(evidence, "support")}
+        ${renderQQMemoryEvidence(evidence, "contradict")}
+        ${continuations.length ? renderQQMemoryEvidence(continuations, null, "同轮延续（不计独立证据）") : ""}
+        <details><summary>修订历史 · ${esc(history.length)} 次</summary>
+          ${history.length ? history.map((revision) => `<article class="debug-item">
+            <h4>第 ${esc(revision.revision)} 次 · ${esc(qqMemoryStatusLabel(revision.status))}</h4>
+            <p style="white-space: pre-wrap">${esc(revision.statement || "—")}</p>
+            <p class="hint">${esc(revision.revised_at || "—")} · 置信度 ${esc(revision.confidence ?? "—")}</p>
+            <p class="hint">${esc(revision.evidence_stance === "support" ? "支持证据" : revision.evidence_stance === "contradict" ? "反证" : revision.evidence_stance || "—")} · 情景 ${esc(revision.evidence_episode_id)}</p>
+          </article>`).join("") : `<p class="hint">暂无修订记录。</p>`}
+        </details>
+        <p class="hint" style="overflow-wrap: anywhere">印象编号 ${esc(record.impression_id)}</p>
+      </article>`;
+    }).join("") : `<p class="hint">${Number(memory.impressions || 0) > 0 ? "印象详情尚未返回，请重新打开此页签加载。" : "尚未形成QQ印象。群聊与私聊记录清洗后，初印象与后续证据会出现在这里。"}</p>`}`;
 }
 
 function beginRun() {
@@ -1038,6 +1148,7 @@ function renderPresetList(snap) {
   root.querySelectorAll("[data-act]").forEach((btn) => {
     btn.addEventListener("click", () => presetAction(btn.dataset.act, btn.dataset.id));
   });
+  applyDevelopmentAuthority();
 }
 
 async function openPresetDialog() {
@@ -1431,6 +1542,9 @@ function renderDebugBody() {
     case "candidates":
       root.innerHTML = renderCandidatesTab(data);
       break;
+    case "qqmemory":
+      root.innerHTML = renderQQMemoryTab(data);
+      break;
     case "tuning":
       root.innerHTML = renderTuningTab(data);
       break;
@@ -1438,6 +1552,7 @@ function renderDebugBody() {
       root.innerHTML = "";
   }
   bindDebugEvents(root);
+  applyDevelopmentAuthority();
 }
 
 function collectTags(field) {
@@ -1695,12 +1810,20 @@ $("btn-debug-close").addEventListener("click", closeDebugDialog);
 $("debug-dialog").addEventListener("close", () => {
   state.debug.open = false;
 });
-$("debug-tabs").addEventListener("click", (event) => {
+$("debug-tabs").addEventListener("click", async (event) => {
   const btn = event.target.closest("button[data-tab]");
   if (!btn) return;
   event.preventDefault();
   state.debug.tab = btn.dataset.tab;
   renderDebugBody();
+  if (state.debug.tab === "qqmemory") {
+    try {
+      await loadDebugState();
+      setDebugStatus("QQ记忆 · 只读");
+    } catch (err) {
+      setDebugStatus(err.message, true);
+    }
+  }
 });
 
 function setHomeostasisStatus(message, error = false) {

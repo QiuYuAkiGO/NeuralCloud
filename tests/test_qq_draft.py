@@ -20,6 +20,7 @@ NOW = datetime(2026, 9, 11, 2, tzinfo=timezone.utc)
 
 @pytest.fixture
 def setup(tmp_path, monkeypatch):
+    monkeypatch.setenv("NC_CONTROL_MODE", "development_debug")
     def forbidden(*args, **kwargs):
         pytest.fail("Draft test attempted network access or committed an interaction")
 
@@ -148,7 +149,7 @@ def test_cli_writes_only_new_draft_and_does_not_print_content(setup, tmp_path, c
     store, config, preset, _, configurations, key = setup
     add_context(store)
     output = tmp_path / "private-draft.json"
-    args = ["--memory-db", str(store.path), "--group-id", "10001", "--member-id", "20001",
+    args = ["--development-mode", "--memory-db", str(store.path), "--group-id", "10001", "--member-id", "20001",
             "--config", str(config), "--preset", str(preset), "--output", str(output)]
     assert draft.main(args) == 0
     result = json.loads(output.read_text(encoding="utf-8"))
@@ -170,7 +171,7 @@ def test_cli_redacts_provider_failures(setup, tmp_path, monkeypatch, capsys):
 
     monkeypatch.setattr(draft, "build_llm_client", broken)
     output = tmp_path / "not-created.json"
-    assert draft.main(["--memory-db", str(store.path), "--group-id", "10001", "--member-id", "20001",
+    assert draft.main(["--development-mode", "--memory-db", str(store.path), "--group-id", "10001", "--member-id", "20001",
                        "--config", str(config), "--preset", str(preset), "--output", str(output)]) == 2
     printed = capsys.readouterr().out
     assert key not in printed and "PRIVATE_CHAT" not in printed

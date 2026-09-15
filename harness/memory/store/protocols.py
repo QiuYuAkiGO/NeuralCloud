@@ -8,6 +8,7 @@ from typing import Any, Protocol
 from harness.core.models import (
     CandidateMemory,
     EpisodicEvent,
+    MemoryScope,
     PersonaCore,
     PsychState,
     RelationshipState,
@@ -45,6 +46,7 @@ class EpisodicStore(Protocol):
         channels: list[str] | None,
         entities: list[str] | None,
         limit: int,
+        trusted_audience: str = "local:main",
     ) -> list[EpisodicEvent]: ...
 
     def count(self) -> int: ...
@@ -61,7 +63,7 @@ class SemanticStore(Protocol):
 
     def list_all(self) -> list[SemanticFact]: ...
 
-    def find(self, subject: str, predicate: str, value: str) -> SemanticFact | None: ...
+    def find(self, subject: str, predicate: str, value: str, *, scope: MemoryScope | None = None) -> SemanticFact | None: ...
 
     def search_pool(
         self,
@@ -69,6 +71,7 @@ class SemanticStore(Protocol):
         query_embedding: list[float] | None,
         subject: str | None,
         limit: int,
+        trusted_audience: str = "local:main",
     ) -> list[SemanticFact]: ...
 
 
@@ -103,7 +106,7 @@ class CandidateStore(Protocol):
 
     def list_all(self) -> list[CandidateMemory]: ...
 
-    def find_similar(self, *, subject: str | None, predicate: str | None, value: str | None, claim: str) -> CandidateMemory | None: ...
+    def find_similar(self, *, subject: str | None, predicate: str | None, value: str | None, claim: str, scope: MemoryScope | None = None) -> CandidateMemory | None: ...
 
 
 class AuditStore(Protocol):

@@ -9,20 +9,25 @@
 **文档**：
 
 - **情绪表达与参数语义调研计划**：[诊断方案](docs/harness/16-emotional-expression-diagnostic-research-plan.md) — DeepSeek V4.1 Flash 实际输入审计、参数语义/强度投影/表达风格对照，以及后训练决策；当前为计划，未执行真实实验。
+- **QQ 协议接入**：[NapCat / OneBot 与图片理解](docs/QQ_DIRECT.md) — 按群名单直接读取、原图与动图识别、同一 Misty 认知和记忆、发送回执与桌面回退。
+- **一键启动**：[入口、默认配置与故障排查](docs/ONE_CLICK_START.md) — 双击启动现有共享小雾，启动参数集中在 `launch.json`。
+- **Linux 迁移与部署**：[完整操作手册](docs/LINUX_DEPLOYMENT.md) — systemd 四服务、QQDirect/NapCat、状态快照、路径迁移、公网入口与回滚；实机验收独立记录。
+- **持续目标与心理调节**：[配置、控制与验收](docs/GOAL_REGULATION.md) — 用户目标、有限自主活动、证据复查、受限自评和 `/goals` 控制页；真实调节效果独立验收。
 - **项目模块进度（持续更新）**：[docs/PROJECT_PROGRESS.md](docs/PROJECT_PROGRESS.md) — 模块状态、验收缺口、下一步与更新记录；模块变更时同步维护。
+- **联网搜索身体**：[配置与使用](docs/WEB_BODY.md) — GUI 配置 Tavily 搜索和正文提取，经过能力协商供共享对话与自主目标使用，默认关闭。
 - **BR-1 基本功能里程碑**：[目标与差距](docs/milestones/BASIC_RUNTIME_V1.md)、[测试案例](docs/milestones/BASIC_RUNTIME_V1_TEST_CASES.md)、[执行记录](docs/milestones/BASIC_RUNTIME_V1_EXECUTION.md) — 真实在线 8 小时、内稳态、Linux 桌面终端、对话与人设一致性。
 
 **内稳态 Harness 研究设计（V2；确定性开发纵切已实现）**：[docs/harness/07-homeostatic-harness-research-design.md](docs/harness/07-homeostatic-harness-research-design.md)
 
 **Runtime Supervisor 与三服务架构（V2 Runtime 核心与 Windows 四进程开发拓扑已实现）**：[docs/harness/08-runtime-supervisor.md](docs/harness/08-runtime-supervisor.md)
 
-可视化 GUI 已接入（阶段级实时推送）。本轮**不包含** token 流式生成 / TTS、数字身体采集、Experience Evaluator。默认 MockLLM，测试不依赖 GPU。
+可视化 GUI 已接入（阶段级实时推送）。独立语音资产生成已通过 [MistyAI 语音身体功能](docs/VOICE_BODY.md)接入；token 流式生成、自动语音播放与 Experience Evaluator 尚未实现。单元测试使用 MockLLM，不依赖 GPU；一键共享入口沿用现有模型配置。
 
 - 技术文档（已落地代码的架构、数据流与实现细节）：[docs/TECHNICAL.md](docs/TECHNICAL.md)
 - 记忆使用说明：[docs/harness/06-memory-subsystem-usage.md](docs/harness/06-memory-subsystem-usage.md)
 - 设计论证：[docs/harness/](docs/harness/) 文档集 00–06
 
-可视化 GUI 已接入（阶段级实时推送 + 调试面板）。V1 **不包含** token 流式生成 / TTS、数字身体采集、Experience Evaluator。默认 MockLLM，测试不依赖 GPU。
+可视化 GUI 已接入（阶段级实时推送 + 调试面板）。数字身体和语音资产通过独立身体适配器接入；`local` 演示配置使用 MockLLM，不依赖 GPU。
 
 ## 架构
 
@@ -45,44 +50,23 @@ Raw Message
 
 ## 快速开始
 
-Windows 11 上的推荐入口是根目录 [`dev.ps1`](dev.ps1)。它统一检查、准备、部署和启动相邻的 MistyAI 工程与本仓库；默认目录布局为：
+Windows 上双击根目录 [`start.cmd`](start.cmd) 启动，双击 [`stop.cmd`](stop.cmd) 停止。日常使用无需输入参数；启动配置集中在 [`launch.json`](launch.json)。
 
-```text
-<parent>/
-├── MistyAI/
-└── NeuralCloud/
-```
+默认选择 **`shared`：现有共享小雾实例**，沿用已有历史、模型设置和 QQ 配置，启动 Cognitive、Homeostasis、Runtime、GUI 四个服务。浏览器在服务就绪后打开 <http://127.0.0.1:8790>；运维页为 <http://127.0.0.1:8790/ops>。默认 manifest 关闭桌面身体，因此此入口不要求 Docker 或 WSL。
 
-第一次运行先检查环境，再启动：
+首次启动会按配置准备本仓库的 Python 环境。现有共享实例的私有配置和模型凭据必须可用；新机器可将 `launch.json` 的 `profile` 改为 `local`，使用独立目录中的 MockLLM 演示实例，地址为 <http://127.0.0.1:18890>。
+
+也可在 PowerShell 中操作同一入口：
 
 ```powershell
-.\dev.ps1 doctor
-.\dev.ps1 up
+.\launch.ps1                     # 启动 launch.json 选定的实例
+.\launch.ps1 -Command check      # 检查配置和 Python 依赖，不启动服务
+.\launch.ps1 -Command status
+.\launch.ps1 -Command restart    # 修改启动配置后应用
+.\launch.ps1 -Command down
 ```
 
-启动拓扑如下：
-
-```text
-Windows 11
-├── NeuralCloud（Windows Python 3.12；Cognitive / Homeostasis / Runtime / GUI）
-├── WSL2 Ubuntu 24.04
-│   └── MistyAI Body Service（systemd）
-└── Docker Desktop（Linux containers）
-    └── MistyAI desktop / agent / loopback-gateway
-```
-
-`up` 会检查 Windows、Git、Python 3.12、WSL2、Ubuntu 24.04、Docker Desktop/Compose、WSL systemd、uv 0.12.9 及端口占用。交互模式会对缺失依赖的安装或 Windows 系统功能变更逐项确认；执行 `install`/`up` 本身即授权依赖就绪后的 WSL root 部署与服务操作，这些操作会显示脱敏的阶段提示。`-NonInteractive` 不自动安装缺失依赖，但前置已满足时仍执行所请求的部署或启停。Docker Desktop 首次协议、WSL integration 和系统重启仍需按提示手动完成，之后重新运行同一命令即可续跑。
-
-```powershell
-.\dev.ps1 up                         # 检查、部署并启动两套工程
-.\dev.ps1 down                       # 先停 NeuralCloud，再停 MistyAI
-.\dev.ps1 restart
-.\dev.ps1 status
-.\dev.ps1 install                    # 只准备环境，不启动
-.\dev.ps1 logs -Service all
-```
-
-常用参数包括 `-MistyAIPath <path>`（默认 `..\MistyAI`）、`-Distro <name>`（默认 `Ubuntu-24.04`）、`-Mode demo|live|ollama`、`-NonInteractive`、`-NoOpen` 和 `-Json`。这里的 `demo` 只表示 NeuralCloud 使用 MockLLM；统一入口始终使用真实 MistyAI 与 `grounded-mistyai-v1.json`，身体服务、身份或能力协商失败时会中止，不会退回 simulator。成功后可访问 GUI <http://127.0.0.1:8766>、运维页 <http://127.0.0.1:8766/ops> 和 noVNC <http://127.0.0.1:6080>。完整命令、退出码与故障排查见 [新手入门](docs/GETTING_STARTED.md#3-windows-统一启动入口)。
+重复启动健康且配置相同的实例会复用已有进程。需要修改端口、路径或模式时，编辑 `launch.json` 后使用 `restart`。字段说明、默认值、MistyAI 可选部署和故障排查见 [一键启动说明](docs/ONE_CLICK_START.md)。`dev.ps1` 保留为完整 MistyAI 部署和诊断入口；相关环境要求见 [新手入门](docs/GETTING_STARTED.md#3-windows-统一启动入口)。
 
 只调试 NeuralCloud 时，仍可手动准备 Python 环境：
 
@@ -105,7 +89,7 @@ PostgreSQL 驱动为可选 extra：`pip install -e ".[dev,postgres]"`（`postgre
 
 ## Runtime Supervisor
 
-`harness.runtime` 提供 `RuntimeSupervisor`、journal/checkpoint、事件队列、心跳、watchdog 和认证控制面；`harness.homeostasis` 提供七维确定性状态、belief、情感、策略排序、幂等 ledger 与本地持久化。Windows `start.ps1` 默认通过 `HttpCognitiveClient` / `HttpHomeostasisClient` 启动 Cognitive、Homeostasis、Runtime、GUI 四个独立进程；`PassiveHomeostasisAdapter` 仅保留给隔离测试。
+`harness.runtime` 提供 `RuntimeSupervisor`、journal/checkpoint、事件队列、心跳、watchdog 和认证控制面；`harness.homeostasis` 提供七维确定性状态、belief、情感、策略排序、幂等 ledger 与本地持久化。Windows 一键入口通过低层 `start.ps1` 和 `HttpCognitiveClient` / `HttpHomeostasisClient` 启动 Cognitive、Homeostasis、Runtime、GUI 四个独立进程；`PassiveHomeostasisAdapter` 仅保留给隔离测试。
 
 Runtime 的编排事实写入 hash-chain 分段 JSONL journal，领域状态仍由 Cognitive/Homeostasis store 负责；checkpoint 只保存启动索引和领域游标。相关恢复、幂等、暂停汇总和队列降载验收见 `tests/test_runtime_supervisor.py`。
 
@@ -115,26 +99,28 @@ Runtime 的编排事实写入 hash-chain 分段 JSONL journal，领域状态仍�
 
 MistyAI adapter 支持 typed action、独立 verify、safe-point、reconcile、下载并校验内容寻址 evidence，以及可选 `physiology.body-state.v1`。Grounded 部署使用显式 token/token file 且执行严格就绪判定；生产 Cognitive 可把受信任的结构化 action request 编译为安全 `GoalProposal`，不会从普通聊天文本猜测动作。Simulator 不使用 HTTP 或 MistyAI DTO，可脚本化 success/failure/unknown、健康变化及 energy terminal。配置与黑盒验收顺序见 [Embodiment 运行手册](docs/EMBODIMENT_RUNBOOK.md)。
 
+独立语音身体注册 `expression.voice.*.v1`，提供固定档案的异步生成、任务管理与资产校验，通过 `NC_VOICE_CONFIG` 绑定服务。默认关闭，真实 VoiceProfile 与 worker 准备完成后可显式调用或加入共享能力选择；配置和接口见 [语音身体功能](docs/VOICE_BODY.md)。
+
 空闲心跳不会直接调用角色主模型：Runtime 先让 Cognitive 使用辅助模型做 `SILENT` / `SPEAK` 纯文本判定，并把原始判定写入 `data/cognitive/autonomous/YYYYMMDD/*.txt`。`SILENT` 不进入 Session 或记忆；`SPEAK` 才写一条 `internal_reflection` 并调用主模型表达。若辅助模型未配置、失败或输出无效，会按故障策略用主模型做一次同格式判定；用户消息在判定前或判定期间到达都会取消后续主动表达。
 
 ## 可视化 GUI
 
-三栏 Web 界面：左侧角色对话，中间九阶段推理时间线，右侧 Persona / 关系 / 心理 / 世界 / 记忆及七维 Homeostasis。顶栏可查看四服务健康、Runtime 生命周期、manifest/profile revision；内稳态面板展示 belief、目标带、precision、情感、候选策略并可在开发模式保存新的参数 revision。保存不会热改运行实例，重新执行 `start.ps1` 后原子激活。
+三栏 Web 界面：左侧角色对话，中间九阶段推理时间线，右侧 Persona / 关系 / 心理 / 世界 / 记忆及七维 Homeostasis。顶栏可查看四服务健康、Runtime 生命周期、manifest/profile revision；内稳态面板展示 belief、目标带、precision、情感、候选策略并可在开发模式保存新的参数 revision。保存不会热改运行实例；使用一键入口时，将目标 manifest/profile 路径写入 `launch.json` 后执行 `.\launch.ps1 -Command restart` 激活。
 
-完整四进程拓扑另提供 `http://127.0.0.1:8766/ops` 独立运维页：实时和最近 7 天的 Runtime 事件、journal、队列趋势、推理运行、watchdog、Embodiment 与 ActionExecution 可关联下钻；`development_debug` 模式可直接暂停/恢复、写 checkpoint、注入调试事件并处理动作/交付对账。监控历史保存在可重建的 `data/runtime/observability.sqlite3`，不会取代 hash-chain journal 或调用日志。
+默认共享四进程拓扑另提供 `http://127.0.0.1:8790/ops` 独立运维页：实时和最近 7 天的 Runtime 事件、journal、队列趋势、推理运行、watchdog、Embodiment 与 ActionExecution 可关联下钻；`development_debug` 模式可直接暂停/恢复、写 checkpoint、注入调试事件并处理动作/交付对账。监控历史保存在 Runtime 状态目录中的可重建 `observability.sqlite3`，不会取代 hash-chain journal 或调用日志。
 
 ```bash
 pip install -e ".[dev,gui]"
 python -m gui.server  # 兼容的单进程 GUI
 # 浏览器打开 http://127.0.0.1:8766
-# 完整拓扑启动后打开 http://127.0.0.1:8766/ops
+# 一键启动的默认共享拓扑运维页为 http://127.0.0.1:8790/ops
 ```
 
-`start.ps1` / `stop.ps1` 保留为 NeuralCloud 四进程的低层启停器（已在运行则原子重启，分服务日志写入 `logs/`）；它们不会检查或安装前置依赖，也不会部署 MistyAI。日常双工程开发请使用 `dev.ps1`。`start.sh` / `stop.sh` 当前仍是兼容的单进程 GUI 路径。
+`start.ps1` / `stop.ps1` 保留为 NeuralCloud 四进程的低层启停器；它们不准备前置依赖，也不部署 MistyAI。日常请使用 `start.cmd` 或 `launch.ps1`，让入口读取统一配置并处理实例复用。Linux 常驻四服务使用 [`python -m harness.deploy`](docs/LINUX_DEPLOYMENT.md)；`start.sh` / `stop.sh` 当前仍是兼容的单进程 GUI 路径。
 
-可直接运行 `./start.ps1`，无需重复填写参数：manifest/profile 依次使用待激活配置、上次启动配置或内置 demo 默认值。若配置使用本机 MistyAI（`http://127.0.0.1:8787` 或 `http://localhost:8787`）且未提供令牌，脚本会从 `dev.ps1` 已配置的 WSL 服务读取现有凭据；优先使用该工程记录的 WSL 发行版，默认 `Ubuntu-24.04`。显式令牌/令牌文件仍优先，远程 MistyAI 仍需单独配置凭据。
+一键入口默认 **`shared` / `configured` 模式**，读取已有 `gui_settings.json` 中的运行模式与模型设置。需要离线演示时显式选择 `local`，它使用独立状态目录、MockLLM 和小雾（Misty）出厂预设（`presets/builtin/misty.json`），与共享历史分开。该预设完整导入相邻 MistyDigitalBody 冻结设定包 v0.2.0 的姓名、年龄、生日、身高、爱好、人格、表达基线、自我外观认知与背景物品。旧 Vaelith 模板仍保留在预设库中。
 
-默认 **demo 模式**：内存记忆 + MockLLM + 小雾（Misty）出厂预设（`presets/builtin/misty.json`）。该预设完整导入相邻 MistyDigitalBody 冻结设定包 v0.2.0 的姓名、年龄、生日、身高、爱好、人格、表达基线、自我外观认知与背景物品，并以干净关系/记忆状态启动，避免继承旧角色经历。旧 Vaelith 模板仍保留在预设库中，但不再是默认角色。顶栏「预设」可打开/套用模板；调试与对话写回 `data/presets/` 工作副本。可在顶栏「设置」切换模式：`demo`（Mock）、`live`（任意 OpenAI 兼容端点）、`ollama`（未填 URL 时默认 `http://127.0.0.1:11434/v1`）。端点变量为 `NC_LLM_BASE_URL` / `NC_LLM_API_KEY`（代码默认 `http://127.0.0.1:8080/v1`）；另可配 `NC_AUX_LLM_*` 辅助小模型端点。切换模式时不会丢掉当前预设存档；对话阶段才会请求 LLM。
+顶栏「预设」可打开/套用模板；顶栏「设置」可配置 `demo`（Mock）、`live`（任意 OpenAI 兼容端点）、`ollama`（未填 URL 时默认 `http://127.0.0.1:11434/v1`）。端点变量为 `NC_LLM_BASE_URL` / `NC_LLM_API_KEY`（代码默认 `http://127.0.0.1:8080/v1`）；另可配 `NC_AUX_LLM_*` 辅助小模型端点。`launch.json` 用于选择启动模式和配置文件位置，API key 仍由原有设置保存。
 
 ### live 模式本地模型栈（推荐）
 

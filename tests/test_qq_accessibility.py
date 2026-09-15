@@ -127,6 +127,50 @@ def test_chat_container_dedup_labels_and_empty_editor_have_provenance():
     assert result.chat_digest == chat_change_signature(make_tree()).chat_digest
 
 
+def split_header_tree():
+    tree = make_tree()
+    tree["nodes"] += [
+        node("title-name", "title", text="Test group", bounds=(20, 83, 150, 23), role="static"),
+        node("title-count", "title", text="(7)", bounds=(170, 83, 45, 23), role="static"),
+    ]
+    get(tree, "title-count")["name"] = "(7)"
+    return tree
+
+
+def test_chat_header_full_text_survives_missing_member_count_child_text():
+    tree = split_header_tree()
+    get(tree, "title-count").pop("text")
+    reading = project(tree).screen
+    assert reading.group_title.display_name == "Test group(7)"
+    assert reading.messages[0].display_name == "Alice"
+    assert reading.visible_draft == ""
+
+
+@pytest.mark.parametrize("parent_text", [None, "\ufffc\ufffc", ""])
+def test_chat_header_unresolved_parent_uses_complete_static_children(parent_text):
+    tree = split_header_tree()
+    get(tree, "title")["text"] = parent_text
+    assert project(tree).screen.group_title.display_name == "Test group(7)"
+
+
+def test_chat_header_name_cannot_replace_unreadable_text():
+    tree = split_header_tree()
+    get(tree, "title").pop("text")
+    get(tree, "title")["name"] = "Test group(7)"
+    get(tree, "title-count").pop("text")
+    with pytest.raises(AccessibilityUnavailable, match="a11y_text_unreadable"):
+        project(tree)
+
+
+def test_complete_header_does_not_relax_member_label_readability():
+    tree = split_header_tree()
+    get(tree, "title-count").pop("text")
+    get(tree, "name").pop("text")
+    get(tree, "name")["name"] = "Alice"
+    with pytest.raises(AccessibilityUnavailable, match="a11y_text_unreadable"):
+        project(tree)
+
+
 def test_digest_ignores_draft_hover_focus_and_roster_but_changes_for_message():
     tree = make_tree()
     digest = chat_change_signature(tree).chat_digest

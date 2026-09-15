@@ -1,0 +1,19 @@
+# Optional template. Install explicitly; the deploy CLI does not enable it.
+[Unit]
+Description=NeuralCloud consistent scheduled snapshot
+ConditionPathExists=/etc/neuralcloud/deploy.json
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/neuralcloud/current
+ExecStart=/opt/neuralcloud/current/.venv/bin/python -m harness.deploy.backup_job --config /etc/neuralcloud/deploy.json
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+TimeoutStartSec=7200
+TimeoutStopSec=180
+KillMode=control-group
+StandardOutput=journal
+StandardError=journal

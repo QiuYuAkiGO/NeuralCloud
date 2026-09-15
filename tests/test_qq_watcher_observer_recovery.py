@@ -6,6 +6,7 @@ from types import SimpleNamespace as NS
 import pytest
 
 from harness.qq import watcher as module
+from harness.qq.desktop import DesktopError
 from harness.qq.telemetry import QQDeadline
 from tests.test_qq_watcher import NOW, setup as setup
 from tests.test_qq_watcher_cleanup import pending_retry
@@ -29,7 +30,10 @@ def gap_case(setup, monkeypatch, *, pending=False):
     actions, budgets = [], []
     desktop.active_deadline = None
     screen = NS(scene="member_profile", blocked=False, uncertainties=[],
-                opened_profile=NS(kind="member", uncertainties=[]))
+                group_title=NS(display_name="Synthetic group"),
+                opened_profile=NS(kind="member", member_id="30001", uncertainties=[],
+                                  verified_self_indicator="own_space_link"))
+    desktop._group = NS(group_id="10001", display_name="Synthetic group")
     state = NS(watcher=watcher, desktop=desktop, sensor=sensor, clock=clock, actions=actions,
                budgets=budgets, screen=screen, calls=calls, receipts=receipts, verify_delay=0)
 
@@ -54,21 +58,24 @@ def gap_case(setup, monkeypatch, *, pending=False):
         actions.append("inspect")
         return state.screen
 
-    def verify_group(*, frame):
+    def dismiss(frame, screen):
         assert frame is desktop.current and desktop.active_deadline is not None
-        actions.append("verify_group")
+        actions.append("dismiss")
         clock[0] += state.verify_delay
         desktop.active_deadline.check()
-        return NS(group_id="10001", chat_frame=frame)
+        return frame, NS(scene="group_chat", blocked=False, opened_profile=None,
+                         group_title=NS(display_name="Synthetic group"))
 
-    desktop.turn, desktop.capture, desktop.inspect, desktop.verify_group = turn, capture, inspect, verify_group
+    desktop.turn, desktop.capture, desktop.inspect, desktop._dismiss = turn, capture, inspect, dismiss
+    desktop.invalidate_identity_cache = lambda: None
+    desktop._require_chat = lambda frame, reading: None
     if pending:
         watcher._observer_baselined = True
         watcher._pending_turn.deadline = QQDeadline(clock[0] + 20, clock=lambda: clock[0])
     return state
 
 
-@pytest.mark.parametrize("reason", ["startup", "attribution", "precheck", "pending"])
+@pytest.mark.parametrize("reason", ["startup", "attribution", "precheck", "pending", "superseded", "natural_wait", "idle"])
 def test_known_profile_gap_recovers_in_startup_and_actor_failure_contexts(setup, monkeypatch, reason):
     state = gap_case(setup, monkeypatch, pending=reason == "pending")
     watcher = state.watcher
@@ -78,9 +85,12 @@ def test_known_profile_gap_recovers_in_startup_and_actor_failure_contexts(setup,
         watcher._attribution_retry = True
     if reason == "precheck":
         watcher.set_status(last_turn_outcome="failed", last_error_type="synthetic_precheck_failure")
+    if reason in {"superseded", "natural_wait", "idle"}:
+        watcher.set_status(state="watching", last_turn_outcome=None if reason == "idle" else reason)
+        assert watcher._pending_turn is None and not watcher._attribution_retry
     original = watcher._pending_turn.deadline if watcher._pending_turn else None
     watcher.cycle()
-    assert state.actions == ["capture", "inspect", "verify_group"]
+    assert state.actions == ["capture", "inspect", "dismiss"]
     assert state.budgets == [15]
     assert watcher.status["captures"] >= 1 and watcher.status["automatic_send"] is False
     assert state.desktop.active_deadline is None
@@ -96,6 +106,8 @@ def test_known_profile_gap_recovers_in_startup_and_actor_failure_contexts(setup,
 ])
 def test_transport_failure_and_evidence_pending_never_trigger_ui_recovery(setup, monkeypatch, changes):
     state = gap_case(setup, monkeypatch)
+    state.watcher._observer_baselined = True
+    state.watcher.set_status(last_turn_outcome="superseded")
     state.sensor.gap.update(changes)
     state.watcher.cycle()
     assert not state.actions and state.watcher._observer_gap_recovery_attempts == 0
@@ -105,8 +117,10 @@ def test_transport_failure_and_evidence_pending_never_trigger_ui_recovery(setup,
     ("other", False, False), ("login", False, False), ("uncertain", False, False),
     ("member_profile", True, False), ("member_profile", False, True), ("group_chat", False, False),
 ])
-def test_only_positive_profile_classification_permits_verify_group(setup, monkeypatch, scene, blocked, uncertain):
+def test_only_positive_profile_classification_permits_dismissal(setup, monkeypatch, scene, blocked, uncertain):
     state = gap_case(setup, monkeypatch)
+    state.watcher._observer_baselined = True
+    state.watcher.set_status(last_turn_outcome="natural_wait")
     state.screen.scene, state.screen.blocked = scene, blocked
     if scene == "group_chat":
         state.screen.opened_profile = None
@@ -119,20 +133,90 @@ def test_only_positive_profile_classification_permits_verify_group(setup, monkey
 
 def test_two_attempt_limit_and_three_second_resampling_wait(setup, monkeypatch):
     state = gap_case(setup, monkeypatch)
+    state.watcher._observer_baselined = True
+    state.watcher.set_status(last_turn_outcome="superseded")
     state.watcher.cycle()
     state.clock[0] += 2.99
     state.watcher.cycle()
-    assert state.actions.count("verify_group") == 1
+    assert state.actions.count("dismiss") == 1
     state.clock[0] += .01
     state.watcher.cycle()
-    assert state.actions.count("verify_group") == 2
+    assert state.actions.count("dismiss") == 2
     state.clock[0] += 3
     # Sensor can observe short actor-created transitions; no fresh usable snapshot
     # means those transitions must not renew the recovery budget.
     state.sensor.gap["gap_started_at"] = (NOW + timedelta(seconds=2)).isoformat()
     state.watcher.cycle()
-    assert state.actions.count("verify_group") == 2
+    assert state.actions.count("dismiss") == 2
     assert state.watcher.status["state"] == "observer_recovery_exhausted"
+
+
+def test_idle_recovery_control_pause_after_inspection_prevents_card_action(setup, monkeypatch):
+    state = gap_case(setup, monkeypatch)
+    state.watcher._observer_baselined = True
+    state.watcher.set_status(last_turn_outcome="superseded")
+    control_checks = []
+
+    def control():
+        control_checks.append(True)
+        if len(control_checks) == 3:
+            raise InterruptedError("synthetic operator pause")
+
+    monkeypatch.setattr(state.watcher, "check_control", control)
+    with pytest.raises(InterruptedError):
+        state.watcher.cycle()
+    assert state.actions == ["capture", "inspect"]
+    assert not state.receipts and state.desktop.clicks == 0
+    assert state.watcher._pending_turn is None
+
+
+def test_idle_recovery_rejects_wrong_target_group_without_deciding_or_sending(setup, monkeypatch):
+    state = gap_case(setup, monkeypatch)
+    state.watcher._observer_baselined = True
+    state.watcher.set_status(last_turn_outcome="natural_wait")
+    state.screen.scene = "group_profile"
+    state.screen.opened_profile = NS(kind="group", group_id="10002", display_name="Synthetic group", uncertainties=[])
+    state.watcher.cycle()
+    assert state.watcher.status["state"] == "observer_gap_recovery_failed"
+    assert state.watcher.status["last_error_type"] == "observer_recovery_profile_scope_mismatch"
+    assert state.actions == ["capture", "inspect"]
+    assert state.watcher._pending_turn is None and not state.receipts and state.desktop.clicks == 0
+
+
+def test_idle_self_preparation_failure_can_recover_after_one_transient_gate_busy(setup, monkeypatch):
+    state = gap_case(setup, monkeypatch)
+    watcher = state.watcher
+    watcher._observer_baselined = True
+    watcher.set_status(last_turn_outcome="superseded", preparation={
+        "phase": "self_verification", "outcome": "error", "last_error_type": "observation_gate_busy"})
+    assert watcher._pending_turn is None and not watcher._attribution_retry
+    dismiss = state.desktop._dismiss
+    attempts = []
+
+    def transient_dismiss(frame, screen):
+        attempts.append(True)
+        if len(attempts) == 1:
+            raise DesktopError("observation_gate_busy")
+        return dismiss(frame, screen)
+
+    monkeypatch.setattr(state.desktop, "_dismiss", transient_dismiss)
+    watcher.cycle()
+    assert watcher.status["state"] == "observer_gap_recovery_failed"
+    assert watcher.status["last_error_type"] == "observation_gate_busy"
+    assert len(attempts) == 1 and state.budgets == [15]
+    state.clock[0] += 2.99
+    watcher.cycle()
+    assert len(attempts) == 1
+    state.clock[0] += .01
+    watcher.cycle()
+    assert len(attempts) == 2 and state.budgets == [15, 15]
+    assert watcher.status["state"] == "waiting_for_observer" and watcher.status["last_error_type"] is None
+    assert watcher.status["last_turn_outcome"] == "superseded" and watcher._pending_turn is None
+    assert watcher._observer_gap_recovery_attempts == 2
+    state.clock[0] += 3
+    watcher.cycle()
+    assert watcher.status["state"] == "observer_recovery_exhausted" and len(attempts) == 2
+    assert not state.calls and not state.receipts and state.desktop.clicks == 0
 
 
 def test_success_waits_even_if_sensor_publishes_chat_immediately(setup, monkeypatch):

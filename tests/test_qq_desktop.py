@@ -6,6 +6,8 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import io
 import json
+import sys
+import time
 from types import SimpleNamespace
 
 import httpx
@@ -13,6 +15,7 @@ from PIL import Image, ImageDraw
 import pytest
 
 from harness.qq.desktop import AttributedMessage, DesktopBackend, DesktopConfig, DesktopError, Frame, GroupVerification
+from harness.qq import desktop as desktop_module
 from harness.qq.grounding import GroundedMessage, GroundedScreen, GroundingError, Rect
 
 
@@ -32,7 +35,8 @@ def png(*, change=None):
     return target.getvalue()
 
 
-def frame(backend, name, *, image=None, moment=NOW):
+def frame(backend, name, *, image=None, moment=None):
+    moment = desktop_module.datetime.now(timezone.utc) if moment is None else moment
     image = png() if image is None else image
     config = backend.config
     item = Frame(name, moment, "evidence://sha256/" + hashlib.sha256(image).hexdigest(), image,
@@ -55,7 +59,21 @@ def screen(item, *, draft="", messages=(), profile=None, scene="group_chat"):
 
 
 @pytest.fixture
-def backend(tmp_path):
+def backend(tmp_path, monkeypatch):
+    # Collection can precede this test by minutes. Share one test-local clock
+    # with synthetic frames without weakening the production freshness checks.
+    origin = datetime.now(timezone.utc)
+    clock_monotonic = time.monotonic
+    started_mono = clock_monotonic()
+    monkeypatch.setattr(sys.modules[__name__], "NOW", origin)
+
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            current = origin + timedelta(seconds=clock_monotonic() - started_mono)
+            return current.astimezone(tz) if tz is not None else current.replace(tzinfo=None)
+
+    monkeypatch.setattr(desktop_module, "datetime", Clock)
     token = tmp_path / "synthetic.token"
     token.write_text("synthetic-private-token-" + "x" * 32)
     calls = []
@@ -73,8 +91,11 @@ def backend(tmp_path):
     config = DesktopConfig("http://127.0.0.1:8788", token, "http://127.0.0.1:8766", token,
                            "10001", "20001", "synthetic-vision", settle_seconds=0)
     value = DesktopBackend(config, agent_client=client, llm=object())
-    yield value, calls
-    client.close()
+    try:
+        yield value, calls
+    finally:
+        value.close()
+        client.close()
 
 
 def test_digest_ignores_clock_input_and_sidebar_but_tracks_chat_and_title(backend):
@@ -134,7 +155,8 @@ def delivery_setup(desktop, monkeypatch, *, post_missing=False, callback=None, c
                    GroupVerification("10001", "虚构群", [staged.evidence_ref], staged, readings[staged.capture_id])])
     captures = iter([empty, fresh_empty, fresh_staged, after])
     monkeypatch.setattr(desktop, "verify_group", lambda: next(groups))
-    monkeypatch.setattr(desktop, "verify_self", lambda: AttributedMessage("20001", "虚构本人", "own", NOW, ["evidence-own"], ["evidence-own"]))
+    monkeypatch.setattr(desktop, "verify_self", lambda: AttributedMessage(
+        "20001", "虚构本人", "own", desktop_module.datetime.now(timezone.utc), ["evidence-own"], ["evidence-own"]))
     monkeypatch.setattr(desktop, "capture", lambda: next(captures))
     monkeypatch.setattr(desktop, "inspect", lambda item: readings[item.capture_id])
     return {"text": TEXT, "reservation_id": "synthetic-reservation", "expected_content_digest": "0" * 64 if changed else empty.content_digest,
@@ -777,7 +799,8 @@ def test_popup_projection_is_unchanged(backend):
     assert desktop._complete_chat_messages(reading) is reading and reading.messages == []
 
 
-def accessibility_frame(desktop, ident, *, image=None, text="hello", moment=NOW):
+def accessibility_frame(desktop, ident, *, image=None, text="hello", moment=None):
+    moment = desktop_module.datetime.now(timezone.utc) if moment is None else moment
     from tests.test_qq_accessibility import make_tree
 
     item = frame(desktop, ident, image=image, moment=moment)

@@ -98,6 +98,44 @@ class CommandLedger:
         payload = json.loads(str(row[0]))
         return payload if isinstance(payload, dict) else None
 
+    def qq_fact_hash(self, fact_key: str) -> str | None:
+        """Read the durable semantic identity, independently of command retries."""
+        connection = self._connect()
+        try:
+            row = connection.execute("SELECT fact_hash FROM qq_homeostatic_facts WHERE fact_key=?", (fact_key,)).fetchone()
+            return str(row[0]) if row is not None else None
+        finally:
+            connection.close()
+
+    def qq_fact_status(self, fact_key: str) -> tuple[str, int] | None:
+        """Read only the semantic hash and its original committed revision."""
+        connection = self._connect()
+        try:
+            row = connection.execute("SELECT fact_hash,revision FROM qq_homeostatic_facts WHERE fact_key=?", (fact_key,)).fetchone()
+            return (str(row[0]), int(row[1])) if row is not None else None
+        finally:
+            connection.close()
+
+    def appraisal_is_committed(
+        self, *, episode_id: str, appraisal_id: str, evidence_set_hash: str,
+        observed_event_refs: list[str] | None = None,
+    ) -> bool:
+        """Check semantic identity independently of delivery IDs and kind."""
+        connection = self._connect()
+        try:
+            if connection.execute(
+                """SELECT 1 FROM psychological_appraisals
+                   WHERE episode_id = ? AND (appraisal_id = ? OR evidence_set_hash = ?)""",
+                (episode_id, appraisal_id, evidence_set_hash),
+            ).fetchone() is not None:
+                return True
+            return any(connection.execute(
+                """SELECT 1 FROM psychological_appraisal_evidence
+                   WHERE episode_id = ? AND evidence_ref = ?""", (episode_id, ref),
+            ).fetchone() is not None for ref in observed_event_refs or [])
+        finally:
+            connection.close()
+
     def load_engine_state(self) -> dict[str, Any]:
         connection = self._connect()
         try:
@@ -162,6 +200,8 @@ class CommandLedger:
         snapshot: dict[str, Any],
         engine_state: dict[str, Any],
         trace: dict[str, Any],
+        qq_fact: tuple[str, str] | None = None,
+        psychological_appraisal: tuple[str, str, str, list[str]] | None = None,
     ) -> None:
         validated_result = DomainCommandResult[dict[str, Any]].model_validate(result)
         validated_snapshot = HomeostaticSnapshot.model_validate(snapshot)
@@ -213,6 +253,36 @@ class CommandLedger:
                 encoded_snapshot=encoded_snapshot,
                 encoded_engine_state=encoded_engine_state,
             )
+            if qq_fact is not None:
+                # A second writer cannot reward an already committed fact. The
+                # unique insertion rolls back its entire snapshot transaction.
+                try:
+                    connection.execute(
+                        "INSERT INTO qq_homeostatic_facts(fact_key,fact_hash,revision) VALUES (?,?,?)",
+                        (*qq_fact, revision),
+                    )
+                except sqlite3.IntegrityError as exc:
+                    raise CommandLedgerConflictError("QQ fact already committed") from exc
+            if psychological_appraisal is not None:
+                # Reserve both appraisal identity and the episode's evidence
+                # set in the same transaction as the state change. Different
+                # commands, IDs or appraisal kinds cannot reward it twice.
+                episode_id, appraisal_id, evidence_set_hash, references = psychological_appraisal
+                try:
+                    connection.execute(
+                        """INSERT INTO psychological_appraisals(
+                            episode_id, appraisal_id, evidence_set_hash, revision
+                        ) VALUES (?, ?, ?, ?)""",
+                        (episode_id, appraisal_id, evidence_set_hash, revision),
+                    )
+                    connection.executemany(
+                        """INSERT INTO psychological_appraisal_evidence(
+                            episode_id, evidence_ref, appraisal_id, revision
+                        ) VALUES (?, ?, ?, ?)""",
+                        [(episode_id, ref, appraisal_id, revision) for ref in references],
+                    )
+                except sqlite3.IntegrityError as exc:
+                    raise CommandLedgerConflictError("psychological appraisal already committed") from exc
             connection.commit()
         except Exception:
             connection.rollback()
@@ -351,6 +421,47 @@ class CommandLedger:
                     )
                     """
                 )
+                connection.execute(
+                    """CREATE TABLE IF NOT EXISTS qq_homeostatic_facts (
+                        fact_key TEXT PRIMARY KEY,
+                        fact_hash TEXT NOT NULL,
+                        revision INTEGER NOT NULL
+                    )"""
+                )
+                connection.execute(
+                    """CREATE TABLE IF NOT EXISTS psychological_appraisals (
+                        episode_id TEXT NOT NULL,
+                        appraisal_id TEXT NOT NULL,
+                        evidence_set_hash TEXT NOT NULL,
+                        revision INTEGER NOT NULL,
+                        PRIMARY KEY (episode_id, appraisal_id),
+                        UNIQUE (episode_id, evidence_set_hash)
+                    )"""
+                )
+                connection.execute(
+                    """CREATE TABLE IF NOT EXISTS psychological_appraisal_evidence (
+                        episode_id TEXT NOT NULL,
+                        evidence_ref TEXT NOT NULL,
+                        appraisal_id TEXT NOT NULL,
+                        revision INTEGER NOT NULL,
+                        PRIMARY KEY (episode_id, evidence_ref)
+                    )"""
+                )
+                # Upgrade any earlier exact-set claims from their durable
+                # transition evidence. A new reference appended to an old set
+                # must not make that original fact eligible for another gain.
+                for episode_id, appraisal_id, revision, trace_json in connection.execute(
+                    """SELECT p.episode_id, p.appraisal_id, p.revision, t.trace_json
+                       FROM psychological_appraisals p
+                       JOIN transition_traces t ON t.revision = p.revision
+                       ORDER BY p.revision"""
+                ).fetchall():
+                    prior = HomeostaticTransitionTrace.model_validate_json(trace_json)
+                    connection.executemany(
+                        """INSERT OR IGNORE INTO psychological_appraisal_evidence
+                           (episode_id, evidence_ref, appraisal_id, revision) VALUES (?, ?, ?, ?)""",
+                        [(episode_id, ref, appraisal_id, revision) for ref in prior.evidence_refs],
+                    )
                 columns = {
                     str(row[1])
                     for row in connection.execute(

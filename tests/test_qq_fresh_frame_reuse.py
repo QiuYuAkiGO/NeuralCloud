@@ -142,9 +142,9 @@ def test_final_send_proof_and_postsend_always_capture_and_use_local_time(backend
         return original_reuse()
 
     monkeypatch.setattr(desktop, "_current_ax_frame_or_capture", reuse)
-    before = datetime.now(timezone.utc)
+    before = fixtures.desktop_module.datetime.now(timezone.utc)
     result = desktop.deliver(**arguments)
-    after = datetime.now(timezone.utc)
+    after = fixtures.desktop_module.datetime.now(timezone.utc)
     assert result.status == "sent" and force_flags == [False, True]
     assert before <= datetime.fromisoformat(desktop.last_preclick_proof["verified_at"]) <= after
     assert before <= result.delivered_at <= after
@@ -176,14 +176,16 @@ def test_capture_age_starts_before_http_read_not_when_evidence_returns(backend, 
         async def get_evidence(self, _ref, *, expected_media_type):
             return item.png if expected_media_type == "image/png" else json.dumps(item.a11y_tree).encode()
 
+        async def close(self):
+            pass
+
     desktop._body_client = Body()
     desktop._body_runner = asyncio.Runner()
     monkeypatch.setattr(desktop, "frame_from_observation", lambda *args, **kwargs: item)
     try:
         assert desktop.capture() is item
     finally:
-        desktop._body_runner.close()
-        desktop._body_runner = desktop._body_client = None
+        desktop.close()
     assert desktop._latest_capture_started_mono == 100.0
     fallback = fixtures.frame(desktop, "fresh-after-slow-request")
     monkeypatch.setattr(desktop, "capture", lambda: fallback)

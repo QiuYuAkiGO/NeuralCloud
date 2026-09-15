@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from harness.config import Settings
-from harness.core.inference import FinalResponse, ModelContext
+from harness.core.inference import FinalResponse, ModelContext, SessionTurn
 from harness.core.models import InteractionEvent, PersonaCore, PsychState
 from harness.homeostasis.models import HomeostaticInteroceptiveSummary
 from harness.llm.client import ChatResult, LLMClient, MockLLM
@@ -73,12 +73,18 @@ class CapturingGenerationRouter:
     def bind(self, condition: str | None) -> None:
         self.condition = condition
 
+    @property
+    def aux_distinct(self) -> bool:
+        return getattr(self.delegate, "aux_distinct", False) is True
+
     def complete_json(
         self,
         *,
         system: str,
         user: str,
         max_tokens: int | None = None,
+        timeout_seconds: float | None = None,
+        response_format: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         self.auxiliary_calls.append(
             {
@@ -86,9 +92,12 @@ class CapturingGenerationRouter:
                 "system_sha256": hashlib.sha256(system.encode("utf-8")).hexdigest(),
                 "user_sha256": hashlib.sha256(user.encode("utf-8")).hexdigest(),
                 "max_tokens": max_tokens,
+                **({"response_format": copy.deepcopy(response_format)} if response_format is not None else {}),
             }
         )
-        return self.delegate.complete_json(system=system, user=user, max_tokens=max_tokens)
+        return self.delegate.complete_json(system=system, user=user, max_tokens=max_tokens,
+            **({"timeout_seconds": timeout_seconds} if timeout_seconds is not None else {}),
+            **({"response_format": response_format} if response_format is not None else {}))
 
     def complete_chat(
         self,
@@ -124,12 +133,19 @@ class CapturingGenerationRouter:
             "max_tokens": actual_max_tokens,
         }
         self.main_calls.append(call)
-        return self.delegate.complete_chat_result(
-            messages,
-            temperature=actual_temperature,
-            stream=stream,
-            max_tokens=actual_max_tokens,
-        )
+        try:
+            result = self.delegate.complete_chat_result(
+                messages,
+                temperature=actual_temperature,
+                stream=stream,
+                max_tokens=actual_max_tokens,
+            )
+        except Exception as exc:
+            call.update(outcome="error", error_type=type(exc).__name__)
+            raise
+        call.update(outcome="returned", response_metadata=result.response_metadata(),
+                    response_sha256=json_hash(result.text))
+        return result
 
 
 class CapturingStageObserver:
@@ -161,6 +177,7 @@ class PreparedCondition:
     final: FinalResponse
     main_calls: list[dict[str, Any]]
     stage_payloads: list[dict[str, Any]]
+    emotion_evidence: dict[str, Any] | None = None
 
 
 class ProductionPairPipeline:
@@ -178,16 +195,30 @@ class ProductionPairPipeline:
         prompt_version: str,
         temperature: float,
         max_tokens: int,
+        emotion_mode: str = "off",
+        emotion_preparer=None,
+        emotion_settings: Settings | None = None,
+        session_history: list[SessionTurn] | None = None,
     ) -> None:
+        if emotion_mode not in {"off", "on"} or (emotion_mode == "on" and emotion_preparer is None and emotion_settings is None):
+            raise ValueError("emotion evaluation requires an explicit prepared-input provider")
+        self.emotion_preparer = emotion_preparer
         self.fixed_user_text = fixed_user_text
         self.fixed_at = fixed_at
+        self.session_history = [SessionTurn.model_validate(turn).model_copy(deep=True)
+                                for turn in session_history or []]
+        if any(turn.timestamp is None or turn.timestamp >= fixed_at for turn in self.session_history):
+            raise ValueError("frozen session history must precede the current input")
         self.persona, self.psych, self.persona_sha256 = load_persona_fixture(persona_path)
         self.router = CapturingGenerationRouter(
             llm,
             temperature=temperature,
             max_tokens=max_tokens,
         )
+        if emotion_mode == "on" and self.emotion_preparer is None:
+            self.emotion_preparer = make_emotion_preparer(emotion_settings, self.router)
         self.settings = Settings(
+            emotion_mode=emotion_mode,
             llm_model=generator_model,
             model_version=runtime_model_version,
             prompt_version=prompt_version,
@@ -223,11 +254,13 @@ class ProductionPairPipeline:
             gate=gate,
             validator=validator,
         )
+        if len(self.session_history) > self.pipeline.session_store.window:
+            raise ValueError("frozen session history exceeds the production session window")
         self.fixture_sha256 = json_hash(
             {
                 "persona_sha256": self.persona_sha256,
                 "memory": [],
-                "session": [],
+                "session": [turn.model_dump(mode="json") for turn in self.session_history],
                 "session_id": FIXED_SESSION_ID,
                 "speaker": FIXED_SPEAKER,
                 "user_text": fixed_user_text,
@@ -242,6 +275,10 @@ class ProductionPairPipeline:
         event_id: str,
         summary: HomeostaticInteroceptiveSummary,
     ) -> PreparedCondition:
+        # Reapply the same fixture for every condition; generated replies never
+        # become the next arm's context, even if production internals change.
+        self.pipeline.session_store.replace(FIXED_SESSION_ID,
+            [turn.model_copy(deep=True) for turn in self.session_history])
         before = len(self.router.main_calls)
         self.router.bind(condition)
         self.observer.bind(condition)
@@ -255,12 +292,39 @@ class ProductionPairPipeline:
             session_id=FIXED_SESSION_ID,
             evidence=["eval:fixed-user-input"],
         )
+        emotion_guidance = None
+        emotion_evidence = None
+        if self.settings.emotion_mode == "on":
+            from harness.emotion.models import EmotionFrame, EmotionGuidance, EmotionInput
+
+            before_aux = len(self.router.auxiliary_calls)
+            supplied = self.emotion_preparer(condition=condition, event=event, summary=summary, persona=self.persona)
+            emotion_input = EmotionInput.model_validate(supplied[0])
+            frame = EmotionFrame.model_validate(supplied[1])
+            emotion_guidance = EmotionGuidance.model_validate(supplied[2])
+            if (emotion_input.context_id != frame.context_id or frame.context_id != emotion_guidance.context_id
+                    or emotion_input.scope != frame.scope or frame.scope != emotion_guidance.scope
+                    or frame.revision != emotion_guidance.revision
+                    or emotion_input.homeostasis != summary.model_dump(mode="json")
+                    or emotion_input.as_of != event.timestamp or frame.as_of != event.timestamp
+                    or emotion_input.persona != self.persona):
+                raise ValueError("emotion evaluation inputs, frame and guidance must share frozen provenance")
+            input_json = emotion_input.model_dump(mode="json")
+            fixed_input = {key: value for key, value in input_json.items() if key not in {"homeostasis", "context_id"}}
+            emotion_evidence = {
+                "schema_version": "emotion-production-evidence-v1",
+                "input": input_json, "input_sha256": json_hash(input_json),
+                "non_homeostatic_input_sha256": json_hash(fixed_input),
+                "frame": frame.model_dump(mode="json"), "guidance": emotion_guidance.model_dump(mode="json"),
+                "auxiliary_calls": copy.deepcopy(self.router.auxiliary_calls[before_aux:]),
+            }
         final = self.pipeline.prepare(
             event,
             now=self.fixed_at,
             session_id=FIXED_SESSION_ID,
             speaker=FIXED_SPEAKER,
             homeostatic_interoception=summary,
+            **({"emotion_guidance": emotion_guidance} if emotion_guidance is not None else {}),
         )
         contexts = self.observer.contexts.get(condition, [])
         if len(contexts) != 1:
@@ -276,21 +340,42 @@ class ProductionPairPipeline:
             final=final,
             main_calls=calls,
             stage_payloads=copy.deepcopy(self.observer.stage_payloads.get(condition, [])),
+            emotion_evidence=emotion_evidence,
         )
 
     def close(self) -> None:
         self.memory.close()
 
 
+def make_emotion_preparer(settings: Settings, llm):
+    """Use fresh production EmotionService state on each side of a causal pair."""
+    from harness.emotion import EmotionInput, EmotionMessage, EmotionService
+
+    def prepare(*, condition, event, summary, persona):
+        service = EmotionService(settings.model_copy(update={"emotion_mode": "on"}), llm)
+        request = EmotionInput(
+            context_id=f"emotion-eval:{event.event_id}:{condition}", scope="eval:expression",
+            as_of=event.timestamp, persona=persona, homeostasis=summary.model_dump(mode="json"),
+            messages=[EmotionMessage(source_id=event.event_id, scope="eval:expression", role="user",
+                                     text=event.raw_text, timestamp=event.timestamp, speaker=event.speaker)],
+            new_source_ids=[event.event_id],
+        )
+        frame = service.observe(request)
+        return request, frame, service.guidance(frame)
+
+    return prepare
+
+
 def normalized_context_without_homeostasis(context: ModelContext) -> dict[str, Any]:
+    expression_kind = homeostatic_segment(context)["kind"]
     segments: list[dict[str, Any]] = []
     homeostatic_count = 0
     for segment in context.segments:
-        if segment.kind == "homeostatic_interoception":
+        if segment.kind == expression_kind:
             homeostatic_count += 1
             segments.append(
                 {
-                    "kind": "homeostatic_interoception",
+                    "kind": expression_kind,
                     "text": "<HOMEOSTATIC_INTEROCEPTION>",
                     "source_ids": ["<HOMEOSTATIC_SOURCE>"],
                     "why": "<HOMEOSTATIC_PROVENANCE>",
@@ -304,11 +389,11 @@ def normalized_context_without_homeostasis(context: ModelContext) -> dict[str, A
     provenance = [
         (
             {
-                "segment_kind": "homeostatic_interoception",
+                "segment_kind": expression_kind,
                 "source_ids": ["<HOMEOSTATIC_SOURCE>"],
                 "why": "<HOMEOSTATIC_PROVENANCE>",
             }
-            if item.segment_kind == "homeostatic_interoception"
+            if item.segment_kind == expression_kind
             else item.model_dump(mode="json")
         )
         for item in context.provenance
@@ -319,7 +404,7 @@ def normalized_context_without_homeostasis(context: ModelContext) -> dict[str, A
         "trigger_text": context.trigger_text,
         "budget_total": context.budget.total,
         "non_homeostatic_budget": {
-            key: value for key, value in context.budget.per_kind.items() if key != "homeostatic_interoception"
+            key: value for key, value in context.budget.per_kind.items() if key != expression_kind
         },
     }
 
@@ -329,9 +414,11 @@ def context_hash_without_homeostasis(context: ModelContext) -> str:
 
 
 def homeostatic_segment(context: ModelContext) -> dict[str, Any]:
-    matches = [segment for segment in context.segments if segment.kind == "homeostatic_interoception"]
+    """Legacy name for exactly one versioned production expression segment."""
+    matches = [segment for segment in context.segments
+               if segment.kind in {"homeostatic_interoception", "emotion_guidance"}]
     if len(matches) != 1:
-        raise ValueError("expected exactly one production homeostatic context segment")
+        raise ValueError("expected exactly one production expression context segment")
     return matches[0].model_dump(mode="json")
 
 

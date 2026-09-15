@@ -5,7 +5,8 @@ import json
 import httpx
 import pytest
 
-from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace
+from harness.embodiment.providers.qq import QQCommunicationError
+from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace, classify_error
 
 
 NOW = datetime(2026, 9, 11, 5, tzinfo=timezone.utc)
@@ -87,6 +88,43 @@ def test_errors_store_only_categories_and_preserve_exception(error, outcome, cat
     assert snapshot["stages"][0]["outcome"] == outcome
     assert snapshot["stages"][0]["error_type"] == category
     assert "PRIVATE_GROUP_TEXT" not in json.dumps(snapshot)
+
+
+@pytest.mark.parametrize("code", [
+    "capability_unavailable", "required_capability_unavailable", "chat_context_changed",
+    "active_scope_changed", "scope_not_allowed", "request_expired", "request_time_invalid",
+    "provider_activation_changed", "provider_not_activated", "driver_operation_busy",
+])
+def test_qq_port_errors_have_specific_content_free_categories(code):
+    error = QQCommunicationError(code)
+    error.args = ("PRIVATE_GROUP_TEXT",)
+    trace = QQTurnTrace()
+    with pytest.raises(QQCommunicationError):
+        with trace.stage("segment_1_delivery"):
+            raise error
+    snapshot = trace.snapshot()
+    assert snapshot["stages"][0]["error_type"] == code
+    assert "PRIVATE_GROUP_TEXT" not in json.dumps(snapshot)
+
+
+@pytest.mark.parametrize("code", ["PRIVATE_GROUP_TEXT", "driver_callback_failed", "unknown_bounded_code",
+                                  "x" * 10000, None, ["PRIVATE_GROUP_TEXT"]])
+def test_unknown_or_malformed_qq_error_codes_are_never_exposed(code):
+    error = QQCommunicationError("PRIVATE_GROUP_TEXT")
+    error.code = code
+    trace = QQTurnTrace()
+    with pytest.raises(QQCommunicationError):
+        with trace.stage("segment_1_delivery"):
+            raise error
+    snapshot = trace.snapshot()
+    assert snapshot["stages"][0]["error_type"] == "qq_transport_error"
+    assert "PRIVATE_GROUP_TEXT" not in json.dumps(snapshot)
+
+
+def test_unrelated_exception_cannot_supply_a_qq_telemetry_code():
+    error = RuntimeError("PRIVATE_GROUP_TEXT")
+    error.code = "capability_unavailable"
+    assert classify_error(error) == "model_error"
 
 
 def test_event_budget_remains_bounded_and_reports_truncation():

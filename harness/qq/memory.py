@@ -18,16 +18,57 @@ from uuid import uuid4
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstraints, ValidationError, field_validator, model_validator
 
+from harness.qq.conversation import QQConversationID, conversation_scope
+
 
 QQID = Annotated[str, StringConstraints(strict=True, pattern=r"^[1-9][0-9]{0,19}$")]
 Reference = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=2048)]
 Label = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=256)]
 ObservedText = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=32768)]
 Evidence = Annotated[list[Reference], Field(min_length=1, max_length=16)]
+ProtocolMessageID = Annotated[str, StringConstraints(strict=True, pattern=r"^-?[0-9]{1,20}$")]
+
+
+def protocol_message_evidence_ref(group_id: str, member_id: str, message_id: str) -> str:
+    """A protocol identity reference, separate from the retained JSON hash."""
+    from pydantic import TypeAdapter
+
+    scope = conversation_scope(group_id)
+    member_id = TypeAdapter(QQID).validate_python(member_id)
+    message_id = TypeAdapter(ProtocolMessageID).validate_python(message_id)
+    if scope["kind"] == "private":
+        if member_id not in {scope["self_member_id"], scope["peer_id"]}:
+            raise ValueError("private message author is outside its conversation")
+        return "qq-protocol-private-message:" + ":".join((
+            scope["self_member_id"], scope["peer_id"], member_id, message_id))
+    return "qq-protocol-message:" + ":".join((group_id, member_id, message_id))
+
+
+def has_protocol_evidence(references) -> bool:
+    return any(re.fullmatch(r"qq-protocol://sha256/[0-9a-f]{64}", reference) for reference in references)
 
 
 class _Model(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
+
+    @model_validator(mode="after")
+    def private_conversation_members(self):
+        group_id = getattr(self, "group_id", None)
+        if group_id is None:
+            return self
+        scope = conversation_scope(group_id)
+        if scope["kind"] == "private":
+            allowed = {scope["self_member_id"], scope["peer_id"]}
+            members = [getattr(self, "member_id", None)]
+            members += list(getattr(self, "participants", None) or [])
+            members += list(getattr(self, "member_ids", None) or [])
+            if any(member is not None and member not in allowed for member in members):
+                raise ValueError("private conversation has only its self account and peer")
+            for field in ("verification", "author_attribution"):
+                value = getattr(self, field, None)
+                if value is not None and value != "qq_protocol_verified":
+                    raise ValueError("private conversation requires protocol verification")
+        return self
 
     @field_validator("*", mode="before")
     @classmethod
@@ -40,16 +81,26 @@ class _Model(BaseModel):
 
 
 class QQVerifiedProfileInput(_Model):
-    group_id: QQID
+    group_id: QQConversationID
     member_id: QQID
     display_name: Label
-    display_name_source: Literal["qq_profile", "qq_group_card", "qq_member_list"]
-    verification: Literal["qq_ui_verified"]
+    display_name_source: Literal["qq_profile", "qq_group_card", "qq_member_list", "qq_metadata"]
+    verification: Literal["qq_ui_verified", "qq_protocol_verified"]
     capture_id: Reference
     observed_at: AwareDatetime
     # These may refer to separate screenshots of the group and member profile.
     group_evidence: Evidence
     member_evidence: Evidence
+
+    @model_validator(mode="after")
+    def verification_source(self):
+        if self.verification == "qq_protocol_verified":
+            if (self.display_name_source != "qq_metadata" or not has_protocol_evidence(self.group_evidence)
+                    or not has_protocol_evidence(self.member_evidence)):
+                raise ValueError("protocol profile requires retained QQ metadata evidence")
+        elif self.display_name_source == "qq_metadata":
+            raise ValueError("QQ protocol metadata is not UI verification")
+        return self
 
     @field_validator("observed_at")
     @classmethod
@@ -70,8 +121,31 @@ class QQAuthorClaim(_Model):
     subject_label: Label | None = None
 
 
+class QQImageAnalysis(_Model):
+    """A bounded model interpretation of attached pixels, never author speech."""
+
+    authority: Literal["model_inference"] = "model_inference"
+    image_index: int = Field(ge=1, le=8, strict=True)
+    status: Literal["described", "unknown"]
+    evidence_ref: Annotated[str, StringConstraints(pattern=r"^qq-direct-image:sha256:[0-9a-f]{64}$")] | None = None
+    description: Annotated[str, StringConstraints(max_length=6000)] | None = None
+    ocr_text: Annotated[str, StringConstraints(max_length=6000)] | None = None
+    uncertainties: list[Annotated[str, StringConstraints(max_length=512)]] = Field(default_factory=list, max_length=16)
+    error: Literal["download_failed", "unsupported_media", "vision_failed", "deadline_expired",
+                   "invalid_image", "image_too_large", "unavailable"] | None = None
+
+    @model_validator(mode="after")
+    def inference_evidence(self):
+        if self.status == "described":
+            if self.evidence_ref is None or not (self.description or self.ocr_text) or self.error is not None:
+                raise ValueError("described image requires retained pixels and an interpretation")
+        elif self.description is not None or self.ocr_text is not None:
+            raise ValueError("unknown image cannot claim a model description")
+        return self
+
+
 class QQVisualObservationInput(_Model):
-    group_id: QQID
+    group_id: QQConversationID
     member_id: QQID
     profile_record_id: Reference
     capture_id: Reference
@@ -80,12 +154,13 @@ class QQVisualObservationInput(_Model):
     text: ObservedText
     evidence: Evidence
     # Verifying a profile alone does not prove who authored a visible bubble.
-    author_attribution: Literal["qq_ui_verified"]
+    author_attribution: Literal["qq_ui_verified", "qq_protocol_verified"]
     attribution_evidence: Evidence
     claims: list[QQAuthorClaim] = Field(default_factory=list, max_length=16)
     extraction_method: Label = "manual"
     message_id: Label | None = None
     message_id_source: Literal["qq_metadata", "qq_visible_identifiers"] | None = None
+    image_analysis: list[QQImageAnalysis] = Field(default_factory=list, max_length=8)
 
     @field_validator("observed_at")
     @classmethod
@@ -106,6 +181,16 @@ class QQVisualObservationInput(_Model):
                 raise ValueError("message_id cannot contain whitespace or control characters")
         if any(claim.supporting_quote not in self.text for claim in self.claims):
             raise ValueError("every claim must quote the observed text; interpretation is still unverified")
+        if len({item.image_index for item in self.image_analysis}) != len(self.image_analysis):
+            raise ValueError("each attached image has one interpretation slot")
+        if any(item.evidence_ref is not None and item.evidence_ref not in self.evidence for item in self.image_analysis):
+            raise ValueError("image interpretation must retain its original pixel evidence")
+        if self.author_attribution == "qq_protocol_verified":
+            if (self.message_id_source != "qq_metadata" or self.message_id is None
+                    or not has_protocol_evidence(self.evidence) or not has_protocol_evidence(self.attribution_evidence)
+                    or protocol_message_evidence_ref(self.group_id, self.member_id, self.message_id)
+                    not in self.attribution_evidence):
+                raise ValueError("protocol author attribution requires bound message metadata evidence")
         return self
 
 
@@ -126,7 +211,7 @@ class QQVisualWriteResult(_Model):
 
 
 class QQPersonContext(_Model):
-    group_id: QQID
+    group_id: QQConversationID
     member_id: QQID
     authority: Literal["untrusted_qq_observations"] = "untrusted_qq_observations"
     profiles: list[QQVerifiedProfile]
@@ -134,7 +219,7 @@ class QQPersonContext(_Model):
 
 
 class _ContextQuery(_Model):
-    group_id: QQID
+    group_id: QQConversationID
     member_id: QQID
     limit: int = Field(default=20, ge=1, le=100, strict=True)
 
@@ -180,7 +265,7 @@ class QQGroupRetrieval(_Model):
 
 
 class QQGroupContext(_Model):
-    group_id: QQID
+    group_id: QQConversationID
     authority: Literal["untrusted_qq_observations"] = "untrusted_qq_observations"
     participants: list[QQID]
     members: list[QQPersonContext]
@@ -189,7 +274,7 @@ class QQGroupContext(_Model):
 
 
 class _GroupContextQuery(_Model):
-    group_id: QQID
+    group_id: QQConversationID
     member_ids: list[QQID] | None = Field(default=None, max_length=100)
     query: Annotated[str, StringConstraints(strict=True, min_length=1, max_length=512)] | None = None
     max_members: int = Field(default=20, ge=1, le=100, strict=True)
@@ -326,6 +411,16 @@ class QQVisualMemoryStore:
         return expected == actual
 
     def record_profile(self, incoming: QQVerifiedProfileInput) -> QQProfileWriteResult:
+        if incoming.verification != "qq_ui_verified":
+            raise ValueError("UI collection cannot assert protocol verification")
+        return self._record_profile(incoming)
+
+    def record_protocol_profile(self, incoming: QQVerifiedProfileInput) -> QQProfileWriteResult:
+        if incoming.verification != "qq_protocol_verified":
+            raise ValueError("protocol collection requires protocol verification")
+        return self._record_profile(incoming)
+
+    def _record_profile(self, incoming: QQVerifiedProfileInput) -> QQProfileWriteResult:
         incoming = QQVerifiedProfileInput.model_validate(incoming.model_dump())
         with closing(self._connect()) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
@@ -349,6 +444,16 @@ class QQVisualMemoryStore:
             return QQProfileWriteResult(created=True, profile=profile)
 
     def record_observation(self, incoming: QQVisualObservationInput) -> QQVisualWriteResult:
+        if incoming.author_attribution != "qq_ui_verified":
+            raise ValueError("UI collection cannot assert protocol attribution")
+        return self._record_observation(incoming)
+
+    def record_protocol_observation(self, incoming: QQVisualObservationInput) -> QQVisualWriteResult:
+        if incoming.author_attribution != "qq_protocol_verified":
+            raise ValueError("protocol collection requires protocol attribution")
+        return self._record_observation(incoming)
+
+    def _record_observation(self, incoming: QQVisualObservationInput) -> QQVisualWriteResult:
         incoming = QQVisualObservationInput.model_validate(incoming.model_dump())
         with closing(self._connect()) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
@@ -367,7 +472,9 @@ class QQVisualMemoryStore:
             ).fetchone()
             if profile_row is None:
                 raise ValueError("observation requires a stored verified profile for this exact group and member")
-            self._decode(QQVerifiedProfile, profile_row["record_json"])
+            profile = self._decode(QQVerifiedProfile, profile_row["record_json"])
+            if profile.verification != incoming.author_attribution:
+                raise ValueError("observation and profile verification transports must agree")
             observation = QQVisualObservation(
                 **incoming.model_dump(), record_id=f"qq-visual:{uuid4().hex}", stored_at=datetime.now(timezone.utc)
             )

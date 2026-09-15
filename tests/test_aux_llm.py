@@ -63,6 +63,34 @@ def test_routing_json_goes_to_aux_chat_to_main() -> None:
     assert not aux.chat_calls
 
 
+def test_aux_json_schema_reaches_the_serialized_http_request() -> None:
+    import json
+
+    captured = []
+    schema_format = {"type": "json_schema", "json_schema": {"name": "emotion_guidance", "strict": True,
+        "schema": {"type": "object", "properties": {"text": {"type": "string"}},
+                   "required": ["text"], "additionalProperties": False}}}
+
+    def respond(request):
+        captured.append(json.loads(request.content))
+        return httpx.Response(200, json={"choices": [{"message": {"content": '{"text":"calm"}'},
+                                                     "finish_reason": "stop"}]})
+
+    aux = OpenAICompatClient(Settings(llm_base_url="http://aux.invalid/v1", llm_model="qwen"))
+    aux.close()
+    aux._client = httpx.Client(transport=httpx.MockTransport(respond))
+    main = MockLLM()
+    client = RoutingLLMClient(main, aux)
+    try:
+        result = client.complete_json(system="emotion", user="fixture", response_format=schema_format,
+                                      timeout_seconds=4, max_tokens=128)
+        assert result == {"text": "calm"}
+        assert captured[0]["response_format"] == schema_format
+        assert captured[0]["model"] == "qwen" and not main.chat_calls
+    finally:
+        client.close()
+
+
 def test_routing_plain_text_assessment_goes_to_distinct_aux() -> None:
     main = MockLLM(chat_script=["main"])
     aux = MockLLM(chat_script=["SILENT\n保持安静。"])

@@ -93,8 +93,9 @@ def main(argv: list[str] | None = None) -> int:
         )
     if manifest.schema_version != "homeostasis-state-v2":
         parser.error("evaluation requires schema_version=homeostasis-state-v2")
-    if manifest.prompt_version != "homeostatic-interoception-v1":
-        parser.error("evaluation requires prompt_version=homeostatic-interoception-v1")
+    expected_prompt = "qwen-emotion-v1" if manifest.emotion_mode == "on" else "homeostatic-interoception-v1"
+    if manifest.prompt_version != expected_prompt:
+        parser.error(f"evaluation requires prompt_version={expected_prompt}")
     if manifest.homeostatic_expression.mode != "full":
         parser.error("release evaluation requires homeostatic_expression.mode=full")
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
@@ -153,6 +154,7 @@ def main(argv: list[str] | None = None) -> int:
             persona_path=args.persona,
             profile_path=args.profile,
             runtime_manifest=manifest,
+            emotion_settings=settings,
         )
         if args.command == "run":
             artifacts = session.run(pairs_per_condition=args.pairs)

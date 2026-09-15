@@ -1,0 +1,12 @@
+# Optional template. No timer is enabled automatically.
+[Unit]
+Description=NeuralCloud daily consistent backup at 03:30 China time
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 Asia/Shanghai
+Persistent=true
+AccuracySec=1min
+Unit=neuralcloud-backup.service
+
+[Install]
+WantedBy=timers.target

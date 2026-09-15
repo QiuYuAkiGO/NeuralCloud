@@ -51,12 +51,19 @@ class CharacterModel:
         )
 
     def _complete(self, messages: list[dict[str, str]], *, stream: bool) -> ChatResult:
+        from harness.llm.deadline import remaining_model_seconds
+
+        remaining = remaining_model_seconds()
         result_fn = getattr(self.llm, "complete_chat_result", None)
         if callable(result_fn):
-            result = result_fn(messages, stream=stream)
+            result = result_fn(messages, stream=stream,
+                               **({"timeout_seconds": remaining} if remaining is not None else {}))
+            remaining_model_seconds()
             usage = result.usage if result.usage.total_tokens or result.usage.prompt_tokens else estimate_chat_usage(
                 messages, result.text
             )
+            if isinstance(result, ChatResult):
+                return result.model_copy(update={"usage": usage})
             return ChatResult(text=result.text, usage=usage)
         text = self.llm.complete_chat(messages, stream=stream)
         return ChatResult(text=text, usage=estimate_chat_usage(messages, text))

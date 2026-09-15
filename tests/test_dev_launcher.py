@@ -1289,6 +1289,18 @@ def test_up_treats_pid_registry_health_as_a_hard_final_gate(tmp_path: Path) -> N
                 [scriptblock]$CommandInvoker
             )
             $script:neuralStarts++
+            # A successful real start writes its process registry. The rollback
+            # may only stop identities created during this launch attempt.
+            [pscustomobject]@{{
+                schema_version = 'neuralcloud-processes-v2'
+                root = $Root
+                services = @([pscustomobject]@{{
+                    name = 'runtime'; pid = 4321; port = 8770
+                    root = $Root; module = 'harness.runtime.service'
+                    python_path = (Join-Path $Root '.venv/Scripts/python.exe')
+                    process_start_time_utc = [datetime]::UtcNow.ToString('o')
+                }})
+            }} | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $Root '.neuralcloud.pids.json')
             return [pscustomobject]@{{ output = ''; manifest = 'grounded-mistyai-v1.json' }}
         }}
         function Wait-NeuralCloudReady {{
@@ -1406,6 +1418,10 @@ def test_start_process_registry_v2_records_full_service_identity(tmp_path: Path)
         $Root = [System.IO.Path]::GetFullPath({_ps_literal(runtime_root)})
         $StateRoot = ''
         $effectiveStateRoot = Join-Path $Root 'data'
+        $effectiveHomeostasisStateDir = Join-Path $effectiveStateRoot 'homeostasis'
+        $effectiveRuntimeStateDir = Join-Path $effectiveStateRoot 'runtime'
+        $controlTokenFile = Join-Path $effectiveRuntimeStateDir 'control.token'
+        $serviceTokenFile = Join-Path $effectiveRuntimeStateDir 'service.token'
         $RegistryPath = Join-Path $Root '.neuralcloud.pids.json'
         $LogDir = Join-Path $Root 'logs'
         [void](New-Item -ItemType Directory -Path $LogDir -Force)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import Literal
 from pathlib import Path
 
 from pydantic import Field
@@ -12,6 +13,8 @@ SCHEMA_VERSION = "state-v1"
 PROMPT_VERSION = "homeostatic-interoception-v1"
 DEFAULT_EMBEDDING_DIM = 1024
 DEFAULT_EMBEDDING_BASE_URL = "http://127.0.0.1:8080/v1"
+DEFAULT_QQ_INPUT_TOKEN_BUDGET = 96_000
+DEFAULT_QQ_MEMORY_RECALL_CHARACTERS = 16_000
 
 # 01-cognitive-harness.md §4.1 default hybrid weights (sum = 1.0).
 DEFAULT_RETRIEVAL_WEIGHTS: dict[str, float] = {
@@ -46,6 +49,16 @@ class Settings(BaseSettings):
     # Cap KV cache. qwen3:4b-instruct defaults to 256K context (~40GB+), which
     # spills onto CPU even on a 32GB GPU. Helper JSON calls do not need that.
     aux_llm_num_ctx: int = 8192
+    # The frozen runtime manifest selects the rollout mode for shared owners.
+    emotion_mode: Literal["off", "shadow", "on"] = "off"
+    emotion_half_life_seconds: float = Field(default=600.0, gt=0)
+    emotion_window_seconds: float = Field(default=1800.0, gt=0)
+    emotion_window_messages: int = Field(default=20, ge=1, le=100)
+    emotion_personality_baseline: float = Field(default=0.25, gt=0, le=1)
+    emotion_appraisal_timeout_seconds: float = Field(default=8.0, gt=0)
+    emotion_guidance_timeout_seconds: float = Field(default=4.0, gt=0)
+    emotion_main_reserve_seconds: float = Field(default=10.0, ge=0)
+    emotion_input_token_budget: int = Field(default=6000, ge=512, le=6000)
     # When False the Context Parser never calls the LLM and runs rule-only.
     parser_llm_enabled: bool = True
     # When False the Retrieval Planner builds plans from rules only; the plan is a
@@ -82,6 +95,30 @@ class Settings(BaseSettings):
     short_term_ttl_days: int = 7  # retained as uniqueness_ttl_max alias in docs
     long_term_recency_floor: float = 0.4
     mid_term_half_life_factor: float = 7.0
+    # QQ observation distillation is opt-in and separate from legacy chat memory.
+    qq_memory_enabled: bool = False
+    qq_memory_recall_enabled: bool = False
+    qq_memory_poll_seconds: float = Field(default=5.0, gt=0)
+    qq_memory_window_idle_seconds: float = Field(default=30.0, gt=0)
+    qq_memory_window_max_seconds: float = Field(default=120.0, gt=0)
+    qq_memory_window_max_messages: int = Field(default=32, ge=1)
+    qq_memory_model_timeout_seconds: float = Field(default=45.0, gt=0)
+    qq_memory_recall_max_items: int = Field(default=8, ge=1)
+    qq_memory_recall_max_characters: int = Field(default=DEFAULT_QQ_MEMORY_RECALL_CHARACTERS, ge=1)
+    # QQ's whole-record input uses the compiler's two-characters/token estimate.
+    # This ceiling never changes completion limits or the caller's deadline.
+    qq_input_token_budget: int = Field(default=DEFAULT_QQ_INPUT_TOKEN_BUDGET, ge=8192)
+    qq_memory_decay_mid_days: float = Field(default=14.0, gt=0)
+    qq_memory_decay_long_days: float = Field(default=90.0, gt=0)
+    qq_memory_decay_threshold: float = Field(default=0.20, gt=0, lt=0.5)
+    qq_memory_review_hours: float = Field(default=24.0, gt=0)
+    qq_impression_initial_confidence: float = Field(default=0.15, ge=0, le=1)
+    qq_impression_support_increment: float = Field(default=0.35, gt=0, le=1)
+    qq_impression_counter_multiplier: float = Field(default=0.65, ge=0, lt=1)
+    qq_impression_stable_confidence: float = Field(default=0.70, gt=0, le=1)
+    qq_impression_min_support_episodes: int = Field(default=4, ge=2)
+    qq_impression_min_distinct_days: int = Field(default=2, ge=1)
+    qq_impression_continuation_gap_minutes: float = Field(default=60.0, ge=0, le=1440)
     # Regex-side deep threshold. The rule score and the gate LLM are two parallel
     # judges: deep path triggers when either votes deep, fast only when both agree.
     # Stands alone only when no gate LLM is configured (or its call fails).

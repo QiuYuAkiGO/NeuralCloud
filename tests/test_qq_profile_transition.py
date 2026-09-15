@@ -1,4 +1,5 @@
 from dataclasses import replace
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -7,6 +8,25 @@ from harness.qq.telemetry import QQDeadline, QQDeadlineExpired
 from tests import test_qq_desktop as fixtures
 
 backend = fixtures.backend
+
+
+def test_frame_defaults_use_injected_clock_after_collection_without_reviving_old_frames(backend, monkeypatch):
+    desktop, actions = backend
+    later = fixtures.NOW + timedelta(hours=8)
+
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return later.astimezone(tz) if tz is not None else later.replace(tzinfo=None)
+
+    monkeypatch.setattr("harness.qq.desktop.datetime", Clock)
+    current = fixtures.frame(desktop, "newly-captured")
+    ax_frame = fixtures.accessibility_frame(desktop, "newly-captured-ax")
+    historical = fixtures.frame(desktop, "old-capture", moment=fixtures.NOW)
+    assert current.captured_at == ax_frame.captured_at == later
+    assert desktop._frame_is_recent(current) and desktop._frame_is_recent(ax_frame)
+    assert not desktop._frame_is_recent(historical)
+    assert not actions and current.captured_at.utcoffset() == timezone.utc.utcoffset(current.captured_at)
 
 
 def profile_screen(frame, *, member_id="20001", scene="member_profile"):

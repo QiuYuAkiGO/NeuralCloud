@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from datetime import datetime
+import hashlib
+import json
 from typing import Any, Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -140,12 +142,92 @@ class StructuredInsight(BaseModel):
     source: str = "social_interpreter"
 
 
+class MemoryEvidenceEntry(BaseModel):
+    """A trusted adapter's attribution, not a model-authored claim of authority."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    source_id: str = Field(min_length=1)
+    text: str = Field(min_length=1)
+    audience: str = Field(min_length=1)
+    source_channel: str = Field(min_length=1)
+    source_conversation_id: str | None = None
+    speaker_id: str | None = None
+    # Source observation/delivery timestamp, not proof of when narrated events occurred.
+    observed_at: AwareDatetime | None = None
+    source_refs: list[str] = Field(default_factory=list)
+    status: Literal["user_claim", "verified_delivery", "retained_fact", "provisional", "disputed"]
+    kind: Literal["history", "derived_memory", "current"] = "history"
+    # Binds metadata to a complete adapter-owned serialization. A copied ID or
+    # quote in user text cannot keep evidence alive after its segment is cut.
+    segment_sha256: str = Field(default="", pattern=r"^(?:[0-9a-f]{64})?$")
+
+
+class MemoryEvidenceContext(BaseModel):
+    """Optional scoped evidence surviving the *final* context admission step.
+
+    Only trusted adapters may construct this metadata, after validating stored
+    records and visibility. Binding a segment verifies admission, not truth.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    audience: str = Field(min_length=1)
+    entries: list[MemoryEvidenceEntry] = Field(default_factory=list)
+    current_speaker_id: str | None = None
+
+    @classmethod
+    def bind(cls, *, audience: str, entries: list[MemoryEvidenceEntry],
+             segment: ContextSegment, current_speaker_id: str | None = None) -> MemoryEvidenceContext:
+        digest = hashlib.sha256(segment.text.encode("utf-8")).hexdigest()
+        return cls(audience=audience, current_speaker_id=current_speaker_id,
+                   entries=[entry.model_copy(update={"segment_sha256": digest})
+                                              for entry in entries])
+
+    def admitted(self, segments: list[ContextSegment], *, trigger_ref: str) -> MemoryEvidenceContext:
+        by_digest = {hashlib.sha256(segment.text.encode("utf-8")).hexdigest(): segment
+                     for segment in segments if segment.text and segment.why != "trigger_utterance"}
+        admitted = []
+        for entry in self.entries:
+            segment = by_digest.get(entry.segment_sha256)
+            if (entry.audience != self.audience or entry.kind == "current"
+                    or trigger_ref in {entry.source_id, *entry.source_refs}
+                    or segment is None or entry.source_id not in segment.source_ids):
+                continue
+            # JSON quotes/newlines must be decoded before checking completeness.
+            try:
+                value = json.loads(segment.text)
+            except (ValueError, TypeError):
+                visible = entry.text in segment.text
+            else:
+                visible = _contains_evidence_text(value, entry.text)
+            if visible:
+                admitted.append(entry)
+        return self.model_copy(update={"entries": admitted})
+
+    @property
+    def has_history(self) -> bool:
+        return any(entry.kind != "current" for entry in self.entries)
+
+
+def _contains_evidence_text(value: Any, text: str) -> bool:
+    if isinstance(value, str):
+        return value == text
+    if isinstance(value, dict):
+        return any(_contains_evidence_text(item, text) for item in value.values())
+    if isinstance(value, list):
+        return any(_contains_evidence_text(item, text) for item in value)
+    return False
+
+
 class ContextSegment(BaseModel):
     kind: str
     text: str
     source_ids: list[str] = Field(default_factory=list)
     why: str | None = None
     token_estimate: int = 0
+    # Internal metadata. render_messages serializes text only.
+    memory_evidence: MemoryEvidenceContext | None = None
 
 
 class ContextBudget(BaseModel):
@@ -166,6 +248,7 @@ class ModelContext(BaseModel):
     budget: ContextBudget
     provenance: list[ProvenanceEntry] = Field(default_factory=list)
     trigger_text: str = ""
+    memory_evidence: MemoryEvidenceContext | None = None
 
     def render_messages(self) -> list[dict[str, str]]:
         system_parts = [seg.text for seg in self.segments if seg.kind != "user" and seg.text]

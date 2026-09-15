@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 import secrets
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
@@ -16,10 +17,11 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from gui.presets import DEFAULT_SESSION_ID
+from gui.origin import GUIOriginMiddleware, normalize_origin
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 HOST = os.environ.get("NC_GUI_HOST", "127.0.0.1")
-PORT = int(os.environ.get("NC_GUI_PORT", "8766"))
+PORT = int(os.environ.get("NC_GUI_PORT", "8790"))
 
 
 class RuntimeGateway:
@@ -65,6 +67,10 @@ class RuntimeGateway:
         ui["runtime"] = composite.get("runtime")
         ui["homeostasis"] = (composite.get("homeostasis") or {}).get("payload")
         ui["manifest"] = composite.get("manifest")
+        ui["authority"] = {
+            "instance_mode": "shared",
+            "development": (composite.get("manifest") or {}).get("control_mode") == "development_debug",
+        }
         ui["pending_start"] = composite.get("pending_start")
         ui["services"] = {
             "gui": {"healthy": True},
@@ -163,6 +169,11 @@ class RuntimeGateway:
 
 
 def create_app(*, runtime_url: str | None = None, control_token: str | None = None) -> FastAPI:
+    public_origin = os.environ.get("NC_PUBLIC_ORIGIN", "").strip()
+    if public_origin:
+        public_origin = normalize_origin(public_origin)
+        if not public_origin.startswith("https://"):
+            raise ValueError("NC_PUBLIC_ORIGIN requires HTTPS")
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         gateway = RuntimeGateway(
@@ -177,6 +188,7 @@ def create_app(*, runtime_url: str | None = None, control_token: str | None = No
             await gateway.close()
 
     app = FastAPI(title="NeuralCloud Runtime GUI", lifespan=lifespan)
+    app.add_middleware(GUIOriginMiddleware, public_origin=public_origin)
 
     def gateway(request: Request) -> RuntimeGateway:
         return request.app.state.gateway
@@ -188,6 +200,78 @@ def create_app(*, runtime_url: str | None = None, control_token: str | None = No
     @app.get("/ops")
     async def operations() -> FileResponse:
         return FileResponse(STATIC_DIR / "ops.html")
+
+    @app.get("/board")
+    async def board_page() -> FileResponse:
+        return FileResponse(STATIC_DIR / "board.html")
+
+    @app.get("/goals")
+    async def goals_page() -> FileResponse:
+        return FileResponse(STATIC_DIR / "goals.html")
+
+    @app.get("/web")
+    async def web_page() -> FileResponse:
+        return FileResponse(STATIC_DIR / "web.html")
+
+    def require_web_origin(request: Request) -> None:
+        origin = request.headers.get("origin")
+        if origin and normalize_origin(origin) != (public_origin or normalize_origin(str(request.base_url))):
+            raise HTTPException(status_code=403, detail="same_origin_required")
+        if request.headers.get("sec-fetch-site") == "cross-site":
+            raise HTTPException(status_code=403, detail="same_origin_required")
+
+    @app.get("/api/web/config")
+    async def web_config_read(request: Request):
+        return await gateway(request).request("GET", "/v1/web/config")
+
+    @app.put("/api/web/config")
+    async def web_config_save(request: Request):
+        require_web_origin(request)
+        return await gateway(request).request("PUT", "/v1/web/config", json=await _json_body(request))
+
+    @app.post("/api/web/test")
+    async def web_connection_test(request: Request):
+        require_web_origin(request)
+        return await gateway(request).request("POST", "/v1/web/test", json=await _json_body(request))
+
+    @app.get("/api/web/status")
+    async def web_status(request: Request):
+        return await gateway(request).request("GET", "/v1/web/status")
+
+    @app.get("/api/goals")
+    async def goals_read(request: Request):
+        return await gateway(request).request("GET", "/v1/goals")
+
+    def require_goal_origin(request: Request) -> None:
+        require_web_origin(request)
+
+    @app.post("/api/goals")
+    async def goal_create(request: Request):
+        require_goal_origin(request)
+        return await gateway(request).request("POST", "/v1/goals", json=await _json_body(request))
+
+    @app.post("/api/goals/{goal_id}/{operation}")
+    async def goal_operation(goal_id: str, operation: str, request: Request):
+        require_goal_origin(request)
+        if operation not in {"pause", "resume", "cancel"}:
+            raise HTTPException(status_code=404, detail="unknown goal operation")
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}", goal_id):
+            raise HTTPException(status_code=422, detail="invalid goal identity")
+        return await gateway(request).request(
+            "POST", f"/v1/goals/{goal_id}/{operation}", json=await _json_body(request)
+        )
+
+    @app.get("/api/board")
+    async def board_read(request: Request):
+        return await gateway(request).request("GET", "/v1/board")
+
+    @app.post("/api/board/{operation}")
+    async def board_operation(operation: str, request: Request):
+        if operation not in {"reflect", "pause", "resume"}:
+            raise HTTPException(status_code=404, detail="unknown board operation")
+        # Same-origin GUI actions; no board credentials are exposed to the browser.
+        require_web_origin(request)
+        return await gateway(request).request("POST", f"/v1/board/{operation}", json=await _json_body(request))
 
     @app.get("/api/status")
     async def status(request: Request) -> dict[str, Any]:
@@ -409,7 +493,8 @@ app = create_app()
 def main() -> None:
     import uvicorn
 
-    uvicorn.run(app, host=HOST, port=PORT, reload=False)
+    uvicorn.run(app, host=HOST, port=PORT, reload=False, proxy_headers=True,
+                forwarded_allow_ips="127.0.0.1,::1")
 
 
 if __name__ == "__main__":

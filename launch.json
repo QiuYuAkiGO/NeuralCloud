@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "profile": "shared",
+  "open_browser": true,
+  "prepare_environment": true,
+  "profiles": {
+    "shared": {
+      "mode": "configured",
+      "development": false,
+      "startup_timeout_seconds": 600,
+      "state_root": null,
+      "manifest_path": "presets/runtime/shared-misty-regulation-v1.json",
+      "profile_path": "presets/homeostasis/qq-social-drive-v1.json",
+      "embodiment_provider": "auto",
+      "mistyai_base_url": "http://127.0.0.1:8787",
+      "mistyai_token_file": null,
+      "ports": { "gui": 8790, "runtime": 8770, "cognitive": 8771, "homeostasis": 8772 },
+      "bindings": {
+        "NC_GUI_CONFIG": "data/gui_settings.json",
+        "NC_GUI_PRESETS": "data/presets",
+        "NC_HOMEOSTASIS_STATE_DIR": "%LOCALAPPDATA%/NeuralCloud/QQDesktop/homeostasis-qq-social-v1/domain",
+        "NC_RUNTIME_STATE_DIR": "%LOCALAPPDATA%/NeuralCloud/QQDesktop/shared-runtime",
+        "NC_QQ_SESSION_CONFIG": "%LOCALAPPDATA%/NeuralCloud/QQDesktop/session.json",
+        "NC_QQ_WATCHER_CONFIG": "%LOCALAPPDATA%/NeuralCloud/QQDesktop/watcher.json",
+        "NC_QQ_DIRECT_CONFIG": "%LOCALAPPDATA%/NeuralCloud/QQDirect/direct.json",
+        "NC_SHARED_MEMORY_DB": "%LOCALAPPDATA%/NeuralCloud/QQDesktop/shared-memory.sqlite3",
+        "NC_CONTROL_TOKEN_FILE": "%LOCALAPPDATA%/NeuralCloud/QQDesktop/shared-runtime-control.token",
+        "NC_SERVICE_TOKEN_FILE": "%LOCALAPPDATA%/NeuralCloud/QQDesktop/shared-runtime-service.token",
+        "NC_BOARD_CONFIG": "%LOCALAPPDATA%/NeuralCloud/Board/board-client.json",
+        "NC_QQ_INPUT_TOKEN_BUDGET": 96000,
+        "NC_QQ_MEMORY_RECALL_MAX_CHARACTERS": 16000
+      },
+      "mistyai": { "enabled": false, "source_path": "../MistyAI", "distro": "Ubuntu-24.04" }
+    },
+    "local": {
+      "mode": "demo",
+      "development": true,
+      "startup_timeout_seconds": 60,
+      "state_root": "data/local-demo",
+      "manifest_path": "presets/runtime/development-demo.json",
+      "profile_path": "presets/homeostasis/functional-proxy-v1.json",
+      "embodiment_provider": "none",
+      "mistyai_base_url": "http://127.0.0.1:8787",
+      "mistyai_token_file": null,
+      "ports": { "gui": 18890, "runtime": 18870, "cognitive": 18871, "homeostasis": 18872 },
+      "bindings": {},
+      "mistyai": { "enabled": false, "source_path": "../MistyAI", "distro": "Ubuntu-24.04" }
+    }
+  }
+}

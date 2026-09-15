@@ -21,21 +21,31 @@ import time
 from typing import Annotated
 from urllib.parse import urlsplit
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StringConstraints, model_validator
 
 from harness.qq.decision import decide_qq_reply, get_qq_delivery, record_qq_delivery
 from harness.qq.memory import QQID, QQVerifiedProfileInput, QQVisualMemoryStore, QQVisualObservationInput
 from harness.qq.session import QQSessionSettings
 from harness.qq.segment_delivery import SegmentedDeliveryMixin
+from harness.qq.embodied import QQEmbodiedMixin
+from harness.qq.group_observation import QQGroupObservationMixin
+from harness.qq.roster import QQGroupRosterEntry, configured_groups
+from harness.qq.watch_ledger import address_sources_for_event
 from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace, classify_error
+from harness.runtime.ownership import require_development
 
 
 def runtime_source_hash() -> str:
     root = Path(__file__).absolute().parents[2]
-    files = sorted((root / "harness/qq").glob("*.py")) + [
-        root / "harness/llm/client.py", root / "harness/embodiment/providers/mistyai.py"]
+    files = sorted((root / "harness/qq").glob("*.py")) + sorted((root / "harness/homeostasis").glob("*.py")) + sorted((root / "harness/embodiment").glob("*.py")) + [
+        root / "harness/llm/client.py", root / "harness/embodiment/providers/mistyai.py",
+        root / "harness/embodiment/providers/qq.py", root / "presets/homeostasis/qq-social-drive-v1.json",
+        root / "presets/runtime/shared-misty-v1.json", root / "harness/config.py",
+        root / "harness/__init__.py", root / "harness/embodiment/providers/board.py"]
+    for directory in ("harness/runtime", "harness/cognitive", "harness/memory", "harness/pipeline", "harness/core", "harness/compiler", "harness/board", "harness/contracts", "harness/llm", "harness/embodiment/providers", "gui"):
+        files.extend((root / directory).rglob("*.py"))
     digest = hashlib.sha256()
-    for path in files:
+    for path in sorted(set(files)):
         digest.update(path.relative_to(root).as_posix().encode("utf-8"))
         digest.update(path.read_bytes())
     return "qq-unattended:" + digest.hexdigest()
@@ -46,14 +56,20 @@ def now() -> datetime:
 
 
 def error_code(exc: Exception) -> str:
+    from harness.embodiment.providers.qq import QQCommunicationError
     from harness.qq.desktop import DesktopError
     from harness.qq.grounding import GroundingError
+    if isinstance(exc, QQCommunicationError) and isinstance(exc.code, str) and re.fullmatch(r"[a-z_]{1,100}", exc.code):
+        return exc.code
     return str(exc) if isinstance(exc, (DesktopError, GroundingError)) and re.fullmatch(r"[a-z_]{1,100}", str(exc)) else type(exc).__name__
 
 
 class WatcherSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
     session_config_path: Path
+    development_mode: StrictBool = False
+    shared_runtime_url: str = "http://127.0.0.1:8770"
+    shared_control_token_file: Path | None = None
     state_db: Path
     status_file: Path
     control_file: Path
@@ -65,11 +81,20 @@ class WatcherSettings(BaseModel):
     expected_revision: int = Field(default=2, ge=1)
     window_id: Annotated[str, StringConstraints(pattern=r"^0x[0-9a-fA-F]+$")] = "0x200002e"
     group_id: QQID
+    group_roster: list[QQGroupRosterEntry] | None = Field(default=None, min_length=1, max_length=16)
+    group_observation_seconds: float = Field(default=300, ge=60, le=3600)
     self_member_id: QQID
     vision_model: str = "deepseek-v4-flash-vision-exp"
     poll_seconds: float = Field(default=15, ge=5, le=300)
     cooldown_seconds: float = Field(default=60, ge=30, le=3600)
     automatic_send: bool = False
+    qq_body_enabled: bool = False
+    homeostatic_idle_enabled: bool = False
+    homeostasis_profile_path: Path | None = None
+    homeostasis_state_dir: Path | None = None
+    homeostasis_tick_seconds: float = Field(default=5, ge=1, le=30)
+    homeostatic_quiet_seconds: float = Field(default=120, ge=60, le=3600)
+    homeostatic_opportunity_seconds: float = Field(default=1800, ge=300, le=86400)
     accessibility_enabled: bool = False
     identity_cache_enabled: bool = False
     settle_seconds: float = Field(default=0.65, ge=0.1, le=3)
@@ -81,6 +106,9 @@ class WatcherSettings(BaseModel):
 
     @model_validator(mode="after")
     def local_configuration(self):
+        groups = configured_groups(self)
+        if len(groups) > 1 and not (self.qq_body_enabled and self.accessibility_enabled):
+            raise ValueError("QQ group roster requires the negotiated accessibility body")
         for name in ("session_config_path", "state_db", "status_file", "control_file", "body_token_file", "agent_token_file"):
             if not getattr(self, name).is_absolute():
                 raise ValueError("Watcher state and token paths must be absolute")
@@ -89,12 +117,23 @@ class WatcherSettings(BaseModel):
             if parts.scheme != "http" or parts.hostname not in {"127.0.0.1", "::1"} or parts.username or parts.password:
                 raise ValueError("Desktop endpoints must use authenticated loopback HTTP")
         paths = [self.state_db, self.status_file, self.control_file]
+        if self.shared_control_token_file is not None and (
+                not self.shared_control_token_file.is_absolute() or self.shared_control_token_file in paths):
+            raise ValueError("Shared Runtime token must be a separate absolute private path")
         if len(set(paths)) != len(paths) or any(p == self.session_config_path for p in paths):
             raise ValueError("Watcher outputs and configuration must use distinct files")
         if self.trace_file is not None and (not self.trace_file.is_absolute() or self.trace_file in paths or self.trace_file == self.session_config_path):
             raise ValueError("Trace output must be a separate absolute private path")
         if self.initial_baseline_observation is not None and not self.initial_baseline_observation.is_absolute():
             raise ValueError("Initial baseline observation path must be absolute")
+        if self.qq_body_enabled and not self.accessibility_enabled:
+            raise ValueError("QQ body capabilities require scoped accessibility observations")
+        if self.homeostatic_idle_enabled and (not self.qq_body_enabled
+                or self.homeostasis_state_dir is None or (self.development_mode and self.homeostasis_profile_path is None)):
+            raise ValueError("QQ homeostasis requires the negotiated body, private state and explicit profile")
+        for path in (self.homeostasis_profile_path, self.homeostasis_state_dir):
+            if path is not None and (not path.is_absolute() or path in paths):
+                raise ValueError("QQ homeostasis uses separate absolute paths")
         return self
 
 
@@ -139,8 +178,8 @@ def worker_lock(path: Path):
 @dataclass
 class PendingTurn:
     event: object
-    member_id: str
-    source_id: str
+    member_id: str | None
+    source_id: str | None
     frame: object
     verification: object
     deadline: QQDeadline
@@ -153,27 +192,43 @@ class PendingTurn:
     segment_texts: tuple[str, ...] = ()
     active_segment_text: str | None = None
     confirmed_context_digests: set[str] = field(default_factory=set)
+    homeostatic_interoception: object = None
+    delivery_counted: bool = False
 
 
-class QQWatcher(SegmentedDeliveryMixin):
-    def __init__(self, settings: WatcherSettings, *, desktop=None, decide=decide_qq_reply):
+class QQWatcher(QQGroupObservationMixin, QQEmbodiedMixin, SegmentedDeliveryMixin):
+    def __init__(self, settings: WatcherSettings, *, desktop=None, decide=None):
         self.settings = settings
         self.session = QQSessionSettings.model_validate_json(settings.session_config_path.read_text(encoding="utf-8"))
-        if settings.group_id not in self.session.allowed_group_ids or settings.self_member_id != self.session.self_member_id:
+        if (any(g.group_id not in self.session.allowed_group_ids for g in configured_groups(settings) if g.observe)
+                or settings.self_member_id != self.session.self_member_id):
             raise ValueError("Watcher scope must match the persistent QQ session")
         if not self.session.decision_enabled:
             raise ValueError("Autonomous speech decisions must be enabled")
         if not self.session.memory_db.is_file():
             raise ValueError("Existing persistent QQ memory is required")
+        self._shared_cognition = None
+        if settings.development_mode:
+            require_development("qq.local_decision")
+            selected_decide = decide or decide_qq_reply
+        else:
+            if decide is not None:
+                raise ValueError("shared_cognitive_callback_requires_development")
+            if settings.shared_control_token_file is None or not settings.shared_control_token_file.is_absolute():
+                raise ValueError("shared_runtime_token_required")
+            from harness.qq.shared import QQSharedCognitiveClient
+            self._shared_cognition = QQSharedCognitiveClient(settings.shared_runtime_url, settings.shared_control_token_file)
+            selected_decide = self._shared_cognition
         self.store = QQVisualMemoryStore(self.session.memory_db)
         from harness.qq.watch_ledger import WatchLedger
         self.first_deployment = not settings.state_db.exists()
-        self.ledger = WatchLedger(settings.state_db, group_id=settings.group_id)
+        self.ledger = WatchLedger(settings.state_db, group_id=settings.group_id,
+            allowed_read_group_ids=tuple(g.group_id for g in configured_groups(settings) if g.observe))
         self.ledger.start_run()
         if settings.recover_attribution_event_id:
             self.ledger.recover_unbound_attribution_event(settings.recover_attribution_event_id)
         self.desktop = desktop
-        self.decide = decide
+        self.decide = selected_decide
         self.last_digest = None
         self.last_items = []
         self.observer = None
@@ -193,6 +248,7 @@ class QQWatcher(SegmentedDeliveryMixin):
         self._replans = 0
         self._traces = {}
         self._latencies = deque(maxlen=200)
+        self._idle_latencies = deque(maxlen=200)
         self._self_aliases = []
         self._trace_file = settings.trace_file or settings.status_file.with_name("watcher-trace.jsonl")
         self._active_preparation = None
@@ -207,10 +263,32 @@ class QQWatcher(SegmentedDeliveryMixin):
             "state": "starting", "last_error_type": None, "last_capture_at": None,
             "last_decision_action": None, "last_delivery_at": None, "captures": 0, "decisions": 0, "deliveries": 0,
             "config_path": None, "state_db": str(settings.state_db),
+            "development_mode": settings.development_mode,
+            "cognitive_owner": "development_local" if settings.development_mode else "shared_runtime",
         }
+        try:
+            self._init_group_observation()
+            self._init_embodied()
+            self._refresh_segment_delivery_status()
+        except BaseException:
+            if self._shared_cognition is not None:
+                self._shared_cognition.close()
+            raise
 
     def set_status(self, **updates):
         with self._guard:
+            if self.settings.qq_body_enabled and updates.get("automatic_send", self.status.get("automatic_send")) is True:
+                from harness.embodiment.capabilities import QQ_COMMUNICATION_SEND, EVIDENCE_REFERENCE, EmbodimentState
+                provider = getattr(self, "_qq_provider", None)
+                body = provider.manager.status() if provider is not None else None
+                required = ({item.capability for item in provider.manager.condition.capability_requirements if item.required}
+                            if provider is not None else set())
+                if (body is None or body.state in {EmbodimentState.DISABLED, EmbodimentState.TERMINAL}
+                        or body.negotiated is None or not body.negotiated.required_satisfied
+                        or not required.issubset(body.effective_capabilities)
+                        or not provider.manager.supports(QQ_COMMUNICATION_SEND)
+                        or not provider.manager.supports(EVIDENCE_REFERENCE)):
+                    updates["automatic_send"] = False
             self.status.update(updates)
 
     def heartbeat(self):
@@ -409,10 +487,13 @@ class QQWatcher(SegmentedDeliveryMixin):
         self.set_status(last_turn_outcome=outcome, last_trace_id=trace.trace_id, backlog=0)
         if outcome == "sent":
             receipt = next(stage for stage in reversed(value["stages"]) if stage["name"] == "receipt_persisted")
-            self._latencies.append(receipt["end_offset_ms"])
-            values = sorted(self._latencies)
-            self.set_status(latency_ms={"samples": len(values), "p50": values[len(values)//2],
-                                      "p95": values[math.ceil(len(values)*.95)-1], "max": values[-1]})
+            idle = value["counters"].get("homeostatic_idle", 0) > 0
+            samples = self._idle_latencies if idle else self._latencies
+            samples.append(receipt["end_offset_ms"])
+            values = sorted(samples)
+            self.set_status(**{"idle_latency_ms" if idle else "latency_ms": {
+                "samples": len(values), "p50": values[len(values)//2],
+                "p95": values[math.ceil(len(values)*.95)-1], "max": values[-1]}})
 
     def _new_trace(self, event, first_seen_at, first_seen_mono=None):
         prior = self._traces.get(event.event_id)
@@ -426,37 +507,96 @@ class QQWatcher(SegmentedDeliveryMixin):
             self._traces.pop(next(iter(self._traces)))
         return trace
 
+    @staticmethod
+    def _identity_gap_key(started_at, sequence, duration):
+        if (not isinstance(started_at, str) or not 1 <= len(started_at) <= 80
+                or type(sequence) is not int or sequence < 1
+                or type(duration) not in (int, float) or not math.isfinite(duration)
+                or duration < 10):
+            return None
+        try:
+            started = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
+            if started.utcoffset() is None:
+                return None
+            return started.astimezone(timezone.utc).isoformat(), sequence
+        except (ValueError, OverflowError):
+            return None
+
+    def _acknowledge_verified_identity_gaps(self, verification, account, *, started_at):
+        """Retain fresh numerical identity after an already completed sensor gap.
+
+        A cached account or an open/newer gap cannot grant this recovery. The
+        account profile must have been acquired in this verification, followed
+        by a bound home-chat frame and the sensor's independent matching view.
+        The gap remains in observation history; only its identity invalidation
+        has been satisfied by this newer proof.
+        """
+        if not self.settings.identity_cache_enabled or self.observer is None:
+            return
+        try:
+            frame, screen = verification.chat_frame, verification.chat_screen
+            observed_at, completed_at = account.observed_at, now()
+            if (verification.group_id != self.settings.group_id
+                    or account.member_id != self.settings.self_member_id
+                    or not account.profile_evidence_refs or not verification.evidence_refs
+                    or account.attribution_method == "qq_session_cached_self_v1"
+                    or any(value.utcoffset() is None for value in (started_at, observed_at, frame.captured_at))
+                    or not started_at <= observed_at <= frame.captured_at <= completed_at
+                    or not 0 <= (completed_at - frame.captured_at).total_seconds() <= 5
+                    or frame.window_id != self.settings.window_id or frame.active_window_id != self.settings.window_id
+                    or screen.frame_id != frame.capture_id or screen.evidence_ref != frame.evidence_ref
+                    or screen.scene != "group_chat" or screen.blocked or screen.opened_profile is not None):
+                return
+            observer_status, snapshot = self.observer.status(), self.observer.latest()
+            if (observer_status.get("running") is not True or observer_status.get("last_error_type")
+                    or observer_status.get("gap_started_at") or observer_status.get("gap_seconds")
+                    or snapshot is None or not 0 <= time.monotonic() - snapshot.polled_mono <= 5):
+                return
+            from harness.qq.accessibility import chat_change_signature
+            signature = chat_change_signature(frame.a11y_tree)
+            if not signature.chat_visible or signature.chat_digest != snapshot.digest:
+                return
+            recent = observer_status.get("recent_gaps")
+            if not isinstance(recent, list):
+                return
+            for gap in recent[-64:]:
+                if not isinstance(gap, dict):
+                    continue
+                key = self._identity_gap_key(gap.get("started_at"), gap.get("sequence"), gap.get("duration_seconds"))
+                if key is None or key in self._identity_cache_invalidated_gaps:
+                    continue
+                try:
+                    finished = datetime.fromisoformat(gap["finished_at"].replace("Z", "+00:00"))
+                    started = datetime.fromisoformat(key[0])
+                    # A gap beginning after the profile capture is new evidence
+                    # loss, even if it closed before this callback executed.
+                    if (finished.utcoffset() is None or not started <= observed_at
+                            or not started <= finished <= completed_at):
+                        continue
+                except (KeyError, ValueError, TypeError, AttributeError, OverflowError):
+                    continue
+                self._identity_cache_invalidated_gaps.append(key)
+        except (AttributeError, TypeError, ValueError):
+            # Incomplete/legacy injected evidence never acknowledges a gap.
+            return
+
     def _invalidate_identity_after_observer_gap(self, observer_status):
         if not self.settings.identity_cache_enabled or not isinstance(observer_status, dict):
             return
-
-        def gap_key(started_at, sequence, duration):
-            if (not isinstance(started_at, str) or not 1 <= len(started_at) <= 80
-                    or type(sequence) is not int or sequence < 1
-                    or type(duration) not in (int, float) or not math.isfinite(duration)
-                    or duration < 10):
-                return None
-            try:
-                started = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
-                if started.utcoffset() is None:
-                    return None
-                return started.astimezone(timezone.utc).isoformat(), sequence
-            except (ValueError, OverflowError):
-                return None
 
         candidates = []
         recent = observer_status.get("recent_gaps")
         if isinstance(recent, list):
             for gap in recent[-64:]:
                 if isinstance(gap, dict):
-                    candidates.append(gap_key(gap.get("started_at"), gap.get("sequence"),
-                                              gap.get("duration_seconds")))
+                    candidates.append(self._identity_gap_key(gap.get("started_at"), gap.get("sequence"),
+                                                            gap.get("duration_seconds")))
         # The observer assigns a sequence when closing a gap. While it is open,
         # gap_sequence is the completed count, so +1 identifies that same gap.
         completed_sequence = observer_status.get("gap_sequence")
         if type(completed_sequence) is int and completed_sequence >= 0:
-            candidates.append(gap_key(observer_status.get("gap_started_at"), completed_sequence + 1,
-                                      observer_status.get("gap_seconds")))
+            candidates.append(self._identity_gap_key(observer_status.get("gap_started_at"), completed_sequence + 1,
+                                                    observer_status.get("gap_seconds")))
         for key in candidates:
             if key is None or key in self._identity_cache_invalidated_gaps:
                 continue
@@ -506,7 +646,7 @@ class QQWatcher(SegmentedDeliveryMixin):
             self.ledger.supersede_send(turn.reservation_id, now=now())
         else:
             self.ledger.finish_event(turn.event.event_id, outcome="superseded", reason="newer_context")
-        if cleaned and self._replans < 1:
+        if cleaned and self._replans < 1 and getattr(turn.event, "origin", "message") != "homeostasis":
             self._carry_first_seen = (turn.trace.first_seen_at, turn.trace.first_seen_mono)
             self._replans += 1
         else:
@@ -533,7 +673,16 @@ class QQWatcher(SegmentedDeliveryMixin):
         if not any(stage["name"] == label for stage in turn.trace.snapshot()["stages"]):
             turn.trace.record(label)
 
+    def _delivery_count(self, turn):
+        """Count one logical reply even if port verification fails after commit."""
+        if getattr(turn, "delivery_counted", False):
+            return self.status["deliveries"]
+        turn.delivery_counted = True
+        return self.status["deliveries"] + 1
+
     def _persist_delivery(self, turn, result, *, reconcile=False):
+        if self._qq_was_persisted(turn):
+            return
         self._retain_click_timing(turn, acknowledged_at=getattr(result, "click_acknowledged_at", None),
             observed_at=getattr(result, "click_observed_at", None),
             evidence_ref=getattr(result, "click_observed_evidence_ref", None))
@@ -541,7 +690,7 @@ class QQWatcher(SegmentedDeliveryMixin):
             receipt = record_qq_delivery(memory_db=self.session.memory_db, group_id=self.settings.group_id,
                 self_member_id=self.settings.self_member_id, delivered_text=turn.decision.reply,
                 evidence_refs=result.evidence_refs, verification="qq_ui_verified",
-                decision_id=turn.decision.decision_id, source_record_ids=[turn.source_id], delivered_at=result.delivered_at)
+                decision_id=turn.decision.decision_id, source_record_ids=address_sources_for_event(turn.event), delivered_at=result.delivered_at)
         if not any(stage["name"] == "receipt_persisted" and stage["outcome"] == "ok"
                    for stage in turn.trace.snapshot()["stages"]):
             turn.trace.record("receipt_persisted")
@@ -550,11 +699,14 @@ class QQWatcher(SegmentedDeliveryMixin):
         else:
             # Compatibility for injected test collectors; production always returns a receipt.
             self.ledger.mark_sent(turn.reservation_id, evidence_refs=result.evidence_refs, now=result.delivered_at)
-        self.set_status(last_delivery_at=result.delivered_at.isoformat(), deliveries=self.status["deliveries"]+1,
-                        state="watching", last_error_type=None, automatic_send=self.settings.automatic_send)
+        self.set_status(last_delivery_at=result.delivered_at.isoformat(), deliveries=self._delivery_count(turn),
+                        state="watching", last_error_type=None, automatic_send=self.automatic_send_enabled)
         self._finish_trace(turn.trace, "sent")
         self._pending_turn = None
         self._replans = 0
+        if receipt is not None:
+            self._homeostatic_feedback(fact_id=receipt.receipt_id, kind="send_attempt",
+                occurred_at=receipt.delivered_at, evidence_refs=receipt.evidence_refs)
 
     def _recover_existing_receipts(self):
         for reservation in self.ledger.unsettled_sends():
@@ -584,6 +736,7 @@ class QQWatcher(SegmentedDeliveryMixin):
             nonlocal clicked
             self.check_control()
             turn.deadline.check()
+            self._check_homeostatic_turn(turn)
             identity_version = (getattr(self.desktop, "_identity_epoch", None),
                                 self._identity_cache_gap_generation)
             newer_context = self._newer_visible_context()
@@ -597,7 +750,7 @@ class QQWatcher(SegmentedDeliveryMixin):
             proof = getattr(self.desktop, "last_preclick_proof", None)
             if proof is None:
                 raise RuntimeError("preclick_proof_missing")
-            proof = dict(proof) | {"source_record_ids": [turn.source_id]}
+            proof = dict(proof) | {"source_record_ids": address_sources_for_event(turn.event)}
             self.ledger.mark_click_started(turn.reservation_id, proof=proof, now=now(),
                                            require_click_timing=click_timing_required)
             clicked = True
@@ -608,14 +761,14 @@ class QQWatcher(SegmentedDeliveryMixin):
 
         self.set_status(state="sending")
         try:
-            if attempt.attempt_number > 1:
-                with self._desktop_turn(turn.deadline, turn.trace), turn.trace.stage("retry_relocation"):
-                    turn.verification = self.desktop.verify_group()
             with self._desktop_turn(turn.deadline, turn.trace), turn.trace.stage("delivery"):
                 click_options = {"after_click": after_click} if click_timing_required else {}
-                result = self.desktop.deliver(turn.decision.reply, reservation_id=turn.reservation_id,
+                result = self._qq_action(turn, persist=lambda result: self._persist_delivery(turn, result),
+                    execute=lambda: self.desktop.deliver(turn.decision.reply, reservation_id=turn.reservation_id,
                     expected_content_digest=turn.frame.content_digest, expected_context_frame=turn.frame,
-                    group_verification=turn.verification, before_click=before_click, **click_options)
+                    # Attribution may have replaced the incoming group object.
+                    # Reverify inside the authorized delivery and original deadline.
+                    group_verification=None, before_click=before_click, **click_options))
             if result.status == "sent" and clicked:
                 self._persist_delivery(turn, result)
                 return
@@ -663,8 +816,10 @@ class QQWatcher(SegmentedDeliveryMixin):
                         self.check_control()
                         time.sleep(min(.2, max(0, stop_at-time.monotonic())))
                     with self._desktop_turn(reconciliation, turn.trace), turn.trace.stage("reconciliation"):
-                        result = self.desktop.reconcile_delivery(turn.decision.reply,
-                            reservation_id=turn.reservation_id, proof=proof.model_dump(mode="json"))
+                        result = self._qq_action(turn, reconcile=True,
+                            persist=lambda result: self._persist_delivery(turn, result, reconcile=True),
+                            execute=lambda: self.desktop.reconcile_delivery(turn.decision.reply,
+                            reservation_id=turn.reservation_id, proof=proof.model_dump(mode="json")))
                     self.ledger.record_postclick_evidence(turn.reservation_id, evidence_refs=getattr(result, "evidence_refs", []))
                     if result.status == "sent":
                         self._persist_delivery(turn, result, reconcile=True)
@@ -682,11 +837,12 @@ class QQWatcher(SegmentedDeliveryMixin):
             self._pending_turn = None
             raise
         except Exception as exc:
+            code = error_code(exc)
             if clicked:
                 current = self.ledger.get_send(turn.reservation_id)
                 if current.status != "sent":
-                    self.ledger.mark_uncertain(turn.reservation_id, reason=type(exc).__name__, now=now())
-                self.set_status(automatic_send=False, state="delivery_uncertain", last_error_type=type(exc).__name__)
+                    self.ledger.mark_uncertain(turn.reservation_id, reason=code, now=now())
+                self.set_status(automatic_send=False, state="delivery_uncertain", last_error_type=code)
                 receipt = get_qq_delivery(memory_db=self.session.memory_db, group_id=self.settings.group_id,
                                           decision_id=turn.decision.decision_id)
                 if receipt is not None:
@@ -702,14 +858,15 @@ class QQWatcher(SegmentedDeliveryMixin):
                         # first flush failed after recording the durable receipt.
                         turn.trace.flush(self._trace_file)
                         self.set_status(last_turn_outcome="sent", last_trace_id=turn.trace.trace_id, backlog=0)
-                    self.set_status(last_delivery_at=receipt.delivered_at.isoformat(), deliveries=self.status["deliveries"]+1,
-                                    state="watching", automatic_send=self.settings.automatic_send, last_error_type=None)
+                    self.set_status(last_delivery_at=receipt.delivered_at.isoformat(), deliveries=self._delivery_count(turn),
+                                    state="watching", automatic_send=self.automatic_send_enabled, last_error_type=None)
                     self._pending_turn = None
                     return
-                self.ledger.mark_uncertain(turn.reservation_id, reason=type(exc).__name__, now=now())
-                self.set_status(automatic_send=False, state="delivery_uncertain", last_error_type=type(exc).__name__)
+                self.ledger.mark_uncertain(turn.reservation_id, reason=code, now=now())
+                self.set_status(automatic_send=False, state="delivery_uncertain", last_error_type=code)
             else:
-                self.ledger.defer_preclick(turn.reservation_id, reason=type(exc).__name__, retryable=False, now=now())
+                self.ledger.defer_preclick(turn.reservation_id, reason=code, retryable=False, now=now())
+                self.set_status(last_error_type=code)
                 if not self._cleanup_owned_draft(turn):
                     self._finish_trace(turn.trace, "failed")
                     self._pending_turn = None
@@ -722,14 +879,20 @@ class QQWatcher(SegmentedDeliveryMixin):
         self.check_control()
         turn.deadline.check()
         self.set_status(state="deciding")
+        context = {}
+        if turn.homeostatic_interoception is not None:
+            context["homeostatic_interoception"] = turn.homeostatic_interoception
+        if getattr(turn.event, "idle_intent", None) is not None:
+            context["idle_intent"] = turn.event.idle_intent
         with turn.trace.stage("decision"):
             decision = self.decide(memory_db=self.session.memory_db, group_id=self.settings.group_id,
                 trigger_member_id=turn.member_id, self_member_id=self.settings.self_member_id,
                 config_path=self.session.model_config_path, preset_path=self.session.preset_path,
                 deadline=turn.deadline, trace=turn.trace, verified_self_aliases=self._self_aliases,
-                request=turn.recheck_request)
+                request=turn.recheck_request, **context)
         self.check_control()
         turn.decision = decision
+        self._maybe_interaction_feedback(decision)
         turn.trace.bind_decision(decision.decision_id)
         self.set_status(last_decision_action=decision.action, decisions=self.status["decisions"]+1)
         outcome = getattr(decision, "outcome", "cached_legacy")
@@ -748,7 +911,7 @@ class QQWatcher(SegmentedDeliveryMixin):
             self._pending_turn = None
             self.set_status(state="watching")
             return
-        if not self.settings.automatic_send or self.ledger.has_uncertain_send():
+        if not self.automatic_send_enabled or self.ledger.has_uncertain_send():
             self._finish_trace(turn.trace, "send_disabled")
             self._pending_turn = None
             return
@@ -756,6 +919,10 @@ class QQWatcher(SegmentedDeliveryMixin):
         allowed_at = self.ledger.next_allowed_at(priority=priority)
         if allowed_at is not None and allowed_at > now():
             self.ledger.finish_event(turn.event.event_id, outcome="rate_limited", reason="cadence_wait")
+            if getattr(turn.event, "origin", "message") == "homeostasis":
+                self._finish_trace(turn.trace, "rate_limited")
+                self._pending_turn = None
+                return
             turn.retry_at = allowed_at
             turn.trace.add_counter("rate_limited")
             turn.trace.flush(self._trace_file)
@@ -796,9 +963,11 @@ class QQWatcher(SegmentedDeliveryMixin):
 
     def _recover_observer_gap(self, observer_status) -> None:
         """Recover a known card, never an unknown dialog or pending evidence read."""
-        eligible = (not self._observer_baselined or self._pending_turn is not None or self._attribution_retry
-                    or self.status.get("last_turn_outcome") == "failed")
-        if (not eligible or observer_status.get("running") is not True
+        from harness.qq.desktop import DesktopError, _title
+
+        # A preparation can leave a card open without creating a pending turn.
+        # Occlusion recovery must not depend on the previous turn's outcome.
+        if (observer_status.get("running") is not True
                 or observer_status.get("last_error_type") is not None
                 or observer_status.get("gap_started_at") is None
                 or observer_status.get("evidence_in_progress") is True
@@ -840,10 +1009,30 @@ class QQWatcher(SegmentedDeliveryMixin):
                     return
                 self.check_control()
                 deadline.check()
-                verification = self.desktop.verify_group(frame=frame)
+                title = _title(getattr(getattr(screen, "group_title", None), "display_name", None))
+                if kind == "group":
+                    authorized_card = (getattr(profile, "group_id", None) == self.settings.group_id
+                                       and _title(getattr(profile, "display_name", None)) == title)
+                else:
+                    prior_group = getattr(self.desktop, "_group", None)
+                    authorized_card = (getattr(profile, "member_id", None) == self.settings.self_member_id
+                                       and getattr(profile, "verified_self_indicator", "none") != "none"
+                                       and getattr(prior_group, "group_id", None) == self.settings.group_id
+                                       and _title(getattr(prior_group, "display_name", None)) == title)
+                if not title or not authorized_card:
+                    raise DesktopError("observer_recovery_profile_scope_mismatch")
+                # Reopening a numerical group card here can immediately hide
+                # chat again. Recovery only dismisses this freshly bound card;
+                # it grants no identity continuity or authority to send.
+                self.desktop.invalidate_identity_cache()
+                self._identity_prepared = False
+                self._self_aliases = []
+                chat, reading = self.desktop._dismiss(frame, screen)
                 deadline.check()
-                if verification.group_id != self.settings.group_id:
-                    raise RuntimeError("observer_recovery_group_mismatch")
+                self.desktop._require_chat(chat, reading)
+                if _title(reading.group_title.display_name) != title:
+                    raise DesktopError("observer_recovery_group_changed")
+                measured_trace.add_counter("observer_profile_dismissed")
                 self.set_status(state="waiting_for_observer", last_error_type=None)
         except InterruptedError:
             raise
@@ -859,6 +1048,10 @@ class QQWatcher(SegmentedDeliveryMixin):
     def cycle(self):
         from harness.qq.watch_ledger import VisibleItem
         self.check_control()
+        self._capability_cycle()
+        if getattr(self, "_qq_provider", None) is not None:
+            # Cached sensor health only; no screenshot or GUI action.
+            self._qq_ensure_provider()
         # Sensor gaps must not keep an old candidate alive indefinitely.
         if not self._expire_pending():
             return
@@ -918,9 +1111,14 @@ class QQWatcher(SegmentedDeliveryMixin):
         arrivals = self._retire_expired_observations(list(changes.observations) if changes is not None else [])
         if (snapshot is not None and self._observer_baselined
                 and snapshot.sequence <= self._observer_sequence and not self._attribution_retry
-                and self._expired_observation is None):
+                and self._expired_observation is None
+                and (not self.settings.qq_body_enabled or self._identity_prepared)):
             self.set_status(state="watching", automatic_screen_capture=True,
-                            automatic_send=self.settings.automatic_send and not self.ledger.has_uncertain_send())
+                            automatic_send=self.automatic_send_enabled and not self.ledger.has_uncertain_send())
+            self._tick_homeostasis()
+            self._maybe_shared_capability(snapshot)
+            self._maybe_homeostatic_idle(snapshot)
+            self._maybe_roster_observation()
             return
         if changes is not None and changes.overflowed:
             self.set_status(observation_overflow=True, observation_missed_changes=changes.missed_changes)
@@ -949,6 +1147,7 @@ class QQWatcher(SegmentedDeliveryMixin):
         with self._observation_preparation(first_seen_at=first_seen_at, first_seen_mono=first_seen_mono,
                                            observation_sequence=observation_sequence) as preparation:
             with self._desktop_turn(observation_deadline, preparation):
+                identity_started_at, account = now(), None
                 self.set_status(state="capturing")
                 with preparation.stage("initial_capture"):
                     observation_deadline.check()
@@ -962,7 +1161,7 @@ class QQWatcher(SegmentedDeliveryMixin):
                                                               now=now(), max_age_seconds=60)
                     if not pending:
                         self.set_status(state="watching_send_blocked" if blocked else "watching",
-                                        automatic_send=self.settings.automatic_send and not blocked)
+                                        automatic_send=self.automatic_send_enabled and not blocked)
                         return
                 self._preparation_phase = "group_verification"
                 self.set_status(state="verifying_group")
@@ -973,10 +1172,16 @@ class QQWatcher(SegmentedDeliveryMixin):
                 if (self.settings.identity_cache_enabled or not self._identity_prepared) and hasattr(self.desktop, "verify_self"):
                     self._preparation_phase = "self_verification"
                     with preparation.stage("initial_self_verification"):
-                        self.desktop.verify_self()
+                        account = self.desktop.verify_self()
                         observation_deadline.check()
                     self._self_aliases = list(getattr(self.desktop, "verified_self_aliases", []))
                     self._identity_prepared = True
+                if self.settings.qq_body_enabled:
+                    observation_deadline.check()
+                    verification = self._qq_accept_group_read(verification, observation_deadline)
+                    observation_deadline.check()
+                if account is not None:
+                    self._acknowledge_verified_identity_gaps(verification, account, started_at=identity_started_at)
         self._attribution_retry = False
         self._carry_first_seen = None
         frame, screen = verification.chat_frame, verification.chat_screen
@@ -1006,7 +1211,7 @@ class QQWatcher(SegmentedDeliveryMixin):
         pending = self.ledger.pending_attribution(items=items, frame_signature=frame.content_digest,
                                                   now=now(), max_age_seconds=60)
         events = {event.event_id: event for event in [*batch.events, *pending]}
-        allowed = self.settings.automatic_send and not self.ledger.has_uncertain_send()
+        allowed = self.automatic_send_enabled and not self.ledger.has_uncertain_send()
         self.set_status(automatic_send=allowed, state="watching", last_transition=batch.plan.status,
                         last_error_type=None, backlog=len(events))
         if discarded:
@@ -1055,6 +1260,9 @@ class QQWatcher(SegmentedDeliveryMixin):
                     if fresh_profile and self.settings.identity_cache_enabled and hasattr(self.desktop, "remember_verified_identity"):
                         self.desktop.remember_verified_identity(message, frame, attributed, profile_id)
                 self.ledger.bind_event(event.event_id, source_record_id=observation.record_id)
+                event = self.ledger.get_event(event.event_id)
+                self._homeostatic_feedback(fact_id=observation.record_id, kind="verified_message",
+                    occurred_at=observation.stored_at, evidence_refs=observation.evidence)
                 bound.append(PendingTurn(event, attributed.member_id, observation.record_id, frame, verification, deadline, trace,
                                          context_digest=context_digest))
             except InterruptedError:
@@ -1077,6 +1285,9 @@ class QQWatcher(SegmentedDeliveryMixin):
             self.ledger.mark_ignored(earlier.event.event_id, reason="considered_in_batch")
             self._finish_trace(earlier.trace, "batched")
         turn = bound[-1]
+        self._tick_homeostasis()
+        if self._homeostasis is not None:
+            turn.homeostatic_interoception = self._homeostasis.summary
         self._pending_turn = turn
         self._decide_turn(turn)
 
@@ -1101,6 +1312,7 @@ class QQWatcher(SegmentedDeliveryMixin):
             self._recover_existing_receipts()
             if self.desktop is None:
                 self.make_desktop()
+            self._prepare_roster_home()
             if self.settings.accessibility_enabled:
                 from harness.qq.observer import QQScopedAccessibilityClient, ScopedQQObserver
                 from harness.qq.accessibility import chat_change_signature
@@ -1165,6 +1377,9 @@ class QQWatcher(SegmentedDeliveryMixin):
                 deadline = time.monotonic() + interval
                 while time.monotonic() < deadline and not self.should_stop():
                     time.sleep(min(0.5, max(0, deadline - time.monotonic())))
+        except Exception as exc:
+            self.set_status(last_error_type=error_code(exc))
+            raise
         finally:
             stop_heartbeat.set()
             thread.join(timeout=6)
@@ -1174,6 +1389,9 @@ class QQWatcher(SegmentedDeliveryMixin):
                 self._evidence_desktop.close()
             if self.desktop is not None:
                 self.desktop.close()
+            self._close_embodied()
+            if self._shared_cognition is not None:
+                self._shared_cognition.close()
             self.set_status(running=False, automatic_screen_capture=False, automatic_send=False,
                             state="paused" if self.should_stop() else "stopped")
             self.heartbeat()

@@ -15,9 +15,9 @@ from harness.embodiment.capabilities import (
     ProviderHealth,
 )
 from harness.embodiment.negotiation import CapabilityNegotiator
-from harness.embodiment.ports import CapabilityProvider
 
 if TYPE_CHECKING:
+    from harness.embodiment.ports import CapabilityProvider
     from harness.research.manifest import EmbodimentCondition
 
 

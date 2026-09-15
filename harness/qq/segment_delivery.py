@@ -5,6 +5,10 @@ GUI lane and original deadline; restart recovery only joins durable receipts.
 """
 from __future__ import annotations
 
+from contextlib import closing
+import sqlite3
+
+from harness.embodiment.providers.qq import QQCommunicationError
 from harness.qq.accessibility import chat_change_signature
 from harness.qq.decision import (
     get_qq_delivery,
@@ -13,6 +17,7 @@ from harness.qq.decision import (
     record_qq_segment_delivery,
 )
 from harness.qq.telemetry import QQDeadline, QQDeadlineExpired
+from harness.qq.watch_ledger import address_sources_for_event
 
 
 def _runtime():
@@ -22,6 +27,44 @@ def _runtime():
 
 
 class SegmentedDeliveryMixin:
+    def _refresh_segment_delivery_status(self):
+        """Durable group totals distinguish real bubbles from complete replies."""
+        candidates = []
+        with closing(sqlite3.connect(self.ledger.path.as_uri() + "?mode=ro", uri=True)) as db:
+            segments = db.execute("""SELECT COUNT(*) FROM qq_watch_send_segments
+                WHERE group_id=? AND status='sent'""", (self.settings.group_id,)).fetchone()[0]
+            partial = db.execute("""SELECT COUNT(*) FROM qq_watch_sends
+                WHERE group_id=? AND status='partial'""", (self.settings.group_id,)).fetchone()[0]
+            db.execute("ATTACH DATABASE ? AS receipts", (self.session.memory_db.as_uri() + "?mode=ro",))
+            for ledger_table, receipt_table, segmented in (
+                ("qq_watch_sends", "qq_reply_deliveries", False),
+                ("qq_watch_send_segments", "qq_reply_segment_deliveries", True),
+            ):
+                if db.execute("SELECT 1 FROM receipts.sqlite_master WHERE type='table' AND name=?",
+                              (receipt_table,)).fetchone() is None:
+                    continue
+                # Table names are fixed above. Cancellation/recovery updated_at
+                # values never establish when a real QQ bubble was delivered.
+                row = db.execute(f"""SELECT r.receipt_id,r.decision_id FROM {ledger_table} AS s
+                    JOIN receipts.{receipt_table} AS r ON r.group_id=s.group_id
+                      AND r.decision_id=json_extract(s.record_json,'$.decision_id')
+                      AND r.receipt_id=json_extract(s.record_json,'$.receipt_id')
+                    WHERE s.group_id=? AND s.status='sent'
+                      AND json_extract(r.record_json,'$.self_member_id')=?
+                    ORDER BY julianday(json_extract(r.record_json,'$.delivered_at')) DESC LIMIT 1""",
+                    (self.settings.group_id, self.settings.self_member_id)).fetchone()
+                if row is not None:
+                    candidates.append((*row, segmented))
+        delivered = []
+        for receipt_id, decision_id, segmented in candidates:
+            options = dict(memory_db=self.session.memory_db, group_id=self.settings.group_id, decision_id=decision_id)
+            receipts = get_qq_segment_deliveries(**options) if segmented else [get_qq_delivery(**options)]
+            delivered.extend(item.delivered_at for item in receipts
+                             if item is not None and item.receipt_id == receipt_id
+                             and item.self_member_id == self.settings.self_member_id)
+        self.set_status(verified_segments_sent=segments, partial_deliveries=partial,
+                        last_delivery_at=max(delivered).isoformat() if delivered else None)
+
     def _segment_receipts(self, turn):
         return get_qq_segment_deliveries(memory_db=self.session.memory_db,
             group_id=self.settings.group_id, decision_id=turn.decision.decision_id)
@@ -45,18 +88,24 @@ class SegmentedDeliveryMixin:
             raise RuntimeError("segment_click_timing_unavailable")
 
     def _persist_segment(self, turn, segment, result):
+        if self._qq_was_persisted(turn, segment.segment_index):
+            return next(item for item in self._segment_receipts(turn) if item.segment_index == segment.segment_index)
         self._retain_segment_timing(turn, segment, result=result)
         with turn.trace.stage(f"segment_{segment.segment_index}_receipt_storage"):
             receipt = record_qq_segment_delivery(memory_db=self.session.memory_db,
                 group_id=self.settings.group_id, self_member_id=self.settings.self_member_id,
                 decision_id=turn.decision.decision_id, segment_index=segment.segment_index,
                 segment_count=segment.segment_count, delivered_text=segment.text,
-                evidence_refs=result.evidence_refs, source_record_ids=[turn.source_id],
+                evidence_refs=result.evidence_refs, source_record_ids=address_sources_for_event(turn.event),
                 delivered_at=result.delivered_at, verification="qq_ui_verified")
             self.ledger.reconcile_segment_sent(segment.child_id, receipt=receipt, now=_runtime().now())
         turn.trace.record(f"segment_{segment.segment_index}_receipt_persisted")
         turn.trace.add_counter("segments_sent")
+        self._refresh_segment_delivery_status()
+        self.set_status(last_delivery_at=receipt.delivered_at.isoformat())
         turn.active_segment_text = None
+        self._homeostatic_feedback(fact_id=receipt.receipt_id, kind="send_attempt",
+            occurred_at=receipt.delivered_at, evidence_refs=receipt.evidence_refs)
         return receipt
 
     def _finish_segmented_delivery(self, turn):
@@ -70,7 +119,7 @@ class SegmentedDeliveryMixin:
                 delivered_at=max(item.delivered_at for item in receipts), verification="qq_ui_verified")
             self.ledger.finish_segmented_send(turn.reservation_id, aggregate_receipt=receipt, now=_runtime().now())
         turn.trace.record("receipt_persisted")
-        self.set_status(last_delivery_at=receipt.delivered_at.isoformat(), deliveries=self.status["deliveries"] + 1,
+        self.set_status(last_delivery_at=receipt.delivered_at.isoformat(), deliveries=self._delivery_count(turn),
             state="watching", automatic_send=self.settings.automatic_send, last_error_type=None)
         self._finish_trace(turn.trace, "sent")
         self._pending_turn = None
@@ -83,6 +132,7 @@ class SegmentedDeliveryMixin:
         prefix = sum(item.status == "sent" for item in segments)
         reason = ("partial_" + reason) if prefix and not reason.startswith("partial_") else reason
         self.ledger.cancel_remaining_segments(turn.reservation_id, reason=reason, now=runtime.now())
+        self._refresh_segment_delivery_status()
         if prefix:
             turn.trace.add_counter(reason)
         cleaned = True if uncertain else self._cleanup_owned_draft(turn)
@@ -128,8 +178,10 @@ class SegmentedDeliveryMixin:
             self.check_control()
             deadline.check()
             with self._desktop_turn(deadline, turn.trace), turn.trace.stage(f"segment_{segment.segment_index}_reconciliation"):
-                result = self.desktop.reconcile_delivery(segment.text, reservation_id=segment.child_id,
-                    proof=current.proof.model_dump(mode="json"))
+                result = self._qq_action(turn, segment=segment, reconcile=True,
+                    persist=lambda result: self._persist_segment(turn, segment, result),
+                    execute=lambda: self.desktop.reconcile_delivery(segment.text, reservation_id=segment.child_id,
+                    proof=current.proof.model_dump(mode="json")))
             if result.status == "sent":
                 return result
             self.ledger.mark_segment_uncertain(segment.child_id, reason=result.reason_code,
@@ -167,6 +219,7 @@ class SegmentedDeliveryMixin:
                     nonlocal clicked
                     self.check_control()
                     turn.deadline.check()
+                    self._check_homeostatic_turn(turn)
                     version = (getattr(self.desktop, "_identity_epoch", None), self._identity_cache_gap_generation)
                     newer = self._newer_visible_context()
                     if self.settings.identity_cache_enabled and version != (
@@ -179,7 +232,7 @@ class SegmentedDeliveryMixin:
                     if proof is None:
                         raise RuntimeError("preclick_proof_missing")
                     self.ledger.mark_segment_click_started(segment.child_id,
-                        proof=dict(proof) | {"source_record_ids": [turn.source_id]}, now=runtime.now())
+                        proof=dict(proof) | {"source_record_ids": address_sources_for_event(turn.event)}, now=runtime.now())
                     clicked = True
                     turn.trace.record(f"segment_{segment.segment_index}_send_click_started")
 
@@ -187,13 +240,14 @@ class SegmentedDeliveryMixin:
                     self._retain_segment_timing(turn, segment, acknowledged_at=acknowledged_at)
 
                 self.set_status(state="sending")
-                if attempt.attempt_count > 1:
-                    with self._desktop_turn(turn.deadline, turn.trace), turn.trace.stage(f"segment_{segment.segment_index}_retry_relocation"):
-                        turn.verification = self.desktop.verify_group()
                 with self._desktop_turn(turn.deadline, turn.trace), turn.trace.stage(f"segment_{segment.segment_index}_delivery"):
-                    result = self.desktop.deliver(segment.text, reservation_id=segment.child_id,
+                    result = self._qq_action(turn, segment=segment,
+                        persist=lambda result: self._persist_segment(turn, segment, result),
+                        execute=lambda: self.desktop.deliver(segment.text, reservation_id=segment.child_id,
                         expected_content_digest=turn.frame.content_digest, expected_context_frame=turn.frame,
-                        group_verification=turn.verification, before_click=before_click, after_click=after_click)
+                        # Every child starts with current group evidence, even
+                        # its first attempt. The original context/deadline remain.
+                        group_verification=None, before_click=before_click, after_click=after_click))
                 if clicked and result.status != "sent":
                     self.ledger.mark_segment_uncertain(segment.child_id, reason=result.reason_code,
                         evidence_refs=getattr(result, "evidence_refs", []), cancel_remaining=False, now=runtime.now())
@@ -258,7 +312,10 @@ class SegmentedDeliveryMixin:
                         self.ledger.mark_segment_uncertain(segment.child_id, reason=type(exc).__name__, now=runtime.now())
                     self._terminate_segments(turn, "delivery_uncertain", uncertain=True)
                 else:
-                    reason = "paused" if isinstance(exc, InterruptedError) else "expired" if isinstance(exc, QQDeadlineExpired) else "precheck_failed"
+                    reason = ("paused" if isinstance(exc, InterruptedError) else
+                              "expired" if isinstance(exc, QQDeadlineExpired) else
+                              "superseded" if isinstance(exc, QQCommunicationError) and exc.code == "chat_context_changed" else
+                              exc.code if isinstance(exc, QQCommunicationError) else "precheck_failed")
                     self._terminate_segments(turn, reason)
                 if isinstance(exc, InterruptedError):
                     raise
@@ -287,3 +344,4 @@ class SegmentedDeliveryMixin:
         else:
             self.ledger.cancel_remaining_segments(reservation.reservation_id,
                 reason="process_restarted_no_segment_replay", now=runtime.now())
+        self._refresh_segment_delivery_status()

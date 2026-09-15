@@ -8,14 +8,105 @@ param(
     [string]$MistyAIBaseUrl,
     [string]$MistyAITokenFile,
     [string]$StateRoot,
-    [ValidateRange(1, 65535)][int]$GuiPort = 8766,
+    [string]$HomeostasisStateDir,
+    [string]$SharedLaunchConfigPath,
+    [switch]$IgnoreSharedLaunchDefaults,
+    [switch]$Development,
+    [ValidateRange(10, 1800)][int]$StartupTimeoutSeconds = 180,
+    [ValidateRange(1, 65535)][int]$GuiPort = 8790,
     [ValidateRange(1, 65535)][int]$RuntimePort = 8770,
     [ValidateRange(1, 65535)][int]$CognitivePort = 8771,
     [ValidateRange(1, 65535)][int]$HomeostasisPort = 8772
 )
 
 $ErrorActionPreference = "Stop"
+# Load this PowerShell host's own ACL implementation (.NET/Framework differ).
+Import-Module (Join-Path $PSHOME 'Modules\Microsoft.PowerShell.Security') -ErrorAction Stop
 $Root = $PSScriptRoot
+if (-not $PSBoundParameters.ContainsKey('StartupTimeoutSeconds') -and $env:NC_STARTUP_TIMEOUT_SECONDS) {
+    $configuredStartupTimeout = 0
+    if (-not [int]::TryParse($env:NC_STARTUP_TIMEOUT_SECONDS, [ref]$configuredStartupTimeout) -or
+        $configuredStartupTimeout -lt 10 -or $configuredStartupTimeout -gt 1800) {
+        Write-Host 'Configuration error: startup timeout must be an integer from 10 to 1800 seconds.'
+        exit 1
+    }
+    $StartupTimeoutSeconds = $configuredStartupTimeout
+}
+$sharedLaunchPathKeys = @(
+    'NC_HOMEOSTASIS_STATE_DIR', 'NC_GUI_CONFIG', 'NC_QQ_SESSION_CONFIG',
+    'NC_QQ_WATCHER_CONFIG', 'NC_QQ_DIRECT_CONFIG', 'NC_SHARED_MEMORY_DB', 'NC_CONTROL_TOKEN_FILE',
+    'NC_SERVICE_TOKEN_FILE', 'NC_GUI_PRESETS', 'NC_RUNTIME_STATE_DIR', 'NC_BOARD_CONFIG', 'NC_VOICE_CONFIG', 'NC_WEB_CONFIG'
+)
+$sharedLaunchIntegerMinimums = @{
+    NC_QQ_INPUT_TOKEN_BUDGET = 8192
+    NC_QQ_MEMORY_RECALL_MAX_CHARACTERS = 1
+}
+$sharedLaunchKeys = @($sharedLaunchPathKeys) + @($sharedLaunchIntegerMinimums.Keys)
+$sharedLaunchDefaults = @{}
+if (-not $PSBoundParameters.ContainsKey('IgnoreSharedLaunchDefaults') -and $env:NC_IGNORE_SHARED_LAUNCH_DEFAULTS -eq '1') {
+    $IgnoreSharedLaunchDefaults = $true
+}
+$sharedLaunchPath = Join-Path $Root 'data\shared-misty-launch.json'
+if ($SharedLaunchConfigPath) {
+    $sharedLaunchPath = if ([IO.Path]::IsPathRooted($SharedLaunchConfigPath)) {
+        $SharedLaunchConfigPath
+    } else { Join-Path $Root $SharedLaunchConfigPath }
+}
+if (-not $Development -and -not $IgnoreSharedLaunchDefaults -and
+    ($SharedLaunchConfigPath -or (Test-Path -LiteralPath $sharedLaunchPath))) {
+    try {
+        $entry = Get-Item -LiteralPath $sharedLaunchPath -Force
+        if ($entry.PSIsContainer -or $entry.Length -gt 65536 -or
+            (($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)) { throw 'invalid_shared_launch_file' }
+        $launchConfig = Get-Content -Raw -LiteralPath $sharedLaunchPath | ConvertFrom-Json
+        if ($launchConfig -isnot [pscustomobject]) { throw 'invalid_shared_launch_object' }
+        foreach ($property in $launchConfig.PSObject.Properties) {
+            if ($sharedLaunchIntegerMinimums.ContainsKey($property.Name)) {
+                # Keep the same minimums as harness.config.Settings. Numeric
+                # strings remain valid for older environment-binding files.
+                if (($property.Value -isnot [string] -and $property.Value -isnot [ValueType]) -or
+                    [string]$property.Value -notmatch '^[1-9][0-9]*$' -or
+                    [bigint]$property.Value -lt $sharedLaunchIntegerMinimums[$property.Name]) {
+                    throw 'invalid_shared_launch_integer'
+                }
+            } elseif ($property.Name -notin $sharedLaunchPathKeys -or $property.Value -isnot [string] -or
+                -not [IO.Path]::IsPathRooted($property.Value) -or $property.Value -match '[\r\n\x00]') {
+                throw 'invalid_shared_launch_binding'
+            }
+            $sharedLaunchDefaults[$property.Name] = [string]$property.Value
+        }
+    } catch {
+        Write-Host 'Configuration error: shared launch configuration must contain only approved absolute path bindings and valid positive integer budgets (input tokens >= 8192; memory characters >= 1).'
+        exit 1
+    }
+}
+function Get-SharedLaunchValue([string]$Name) {
+    $explicit = [Environment]::GetEnvironmentVariable($Name, 'Process')
+    if ($explicit) { return $explicit }
+    return $sharedLaunchDefaults[$Name]
+}
+if ($StateRoot -and -not $Development) {
+    Write-Host "Configuration error: -StateRoot creates an independent instance and requires -Development."
+    exit 1
+}
+if (-not $Development -and -not $PSBoundParameters.ContainsKey('Mode')) {
+    $modeConfigPath = Get-SharedLaunchValue 'NC_GUI_CONFIG'
+    $explicitModeConfig = [bool]$modeConfigPath
+    if (-not $modeConfigPath) { $modeConfigPath = Join-Path $Root 'data\gui_settings.json' }
+    if ($explicitModeConfig -or (Test-Path -LiteralPath $modeConfigPath)) {
+        try {
+            if (-not (Test-Path -LiteralPath $modeConfigPath -PathType Leaf)) { throw 'mode_configuration_missing' }
+            $modeConfig = Get-Content -Raw -LiteralPath $modeConfigPath | ConvertFrom-Json
+            if ($modeConfig.mode -isnot [string] -or $modeConfig.mode -cnotin @('demo', 'live', 'ollama')) {
+                throw 'invalid_saved_model_mode'
+            }
+            $Mode = [string]$modeConfig.mode
+        } catch {
+            Write-Host 'Configuration error: shared model configuration must declare demo, live, or ollama mode.'
+            exit 1
+        }
+    }
+}
 $effectiveStateRoot = Join-Path $Root "data"
 if ($StateRoot) {
     if ([System.IO.Path]::IsPathRooted($StateRoot)) {
@@ -24,14 +115,49 @@ if ($StateRoot) {
         $effectiveStateRoot = [System.IO.Path]::GetFullPath((Join-Path $Root $StateRoot))
     }
 }
+$effectiveHomeostasisStateDir = Join-Path $effectiveStateRoot "homeostasis"
+$effectiveRuntimeStateDir = Join-Path $effectiveStateRoot "runtime"
+if (-not ($Development -and $StateRoot)) {
+    $runtimeStateOverride = Get-SharedLaunchValue 'NC_RUNTIME_STATE_DIR'
+    if ($runtimeStateOverride) {
+        if (-not [IO.Path]::IsPathRooted($runtimeStateOverride)) {
+            Write-Host 'Configuration error: Runtime state path must be absolute.'
+            exit 1
+        }
+        $effectiveRuntimeStateDir = [IO.Path]::GetFullPath($runtimeStateOverride)
+        if (Test-Path -LiteralPath $effectiveRuntimeStateDir -PathType Leaf) {
+            Write-Host 'Configuration error: Runtime state must be a directory.'
+            exit 1
+        }
+    }
+}
+$homeostasisStateOverride = $HomeostasisStateDir
+if (-not $homeostasisStateOverride -and -not ($Development -and $StateRoot)) {
+    $homeostasisStateOverride = Get-SharedLaunchValue 'NC_HOMEOSTASIS_STATE_DIR'
+}
+if ($homeostasisStateOverride) {
+    $effectiveHomeostasisStateDir = if ([System.IO.Path]::IsPathRooted($homeostasisStateOverride)) {
+        [System.IO.Path]::GetFullPath($homeostasisStateOverride)
+    } else { [System.IO.Path]::GetFullPath((Join-Path $Root $homeostasisStateOverride)) }
+    if (Test-Path -LiteralPath $effectiveHomeostasisStateDir -PathType Leaf) {
+        Write-Host "Configuration error: Homeostasis state must be a directory."
+        exit 1
+    }
+}
 $RegistryPath = Join-Path $Root ".neuralcloud.pids.json"
 $LegacyPidPath = Join-Path $Root ".gui.pid"
+if ($StateRoot) {
+    $RegistryPath = Join-Path $effectiveStateRoot ".neuralcloud.pids.json"
+    $LegacyPidPath = Join-Path $effectiveStateRoot ".gui.pid"
+}
 $LogDir = Join-Path $Root "logs"
 if ($StateRoot) { $LogDir = Join-Path $effectiveStateRoot "logs" }
-$PendingPath = Join-Path $effectiveStateRoot "runtime\pending-start.json"
-$ActivePath = Join-Path $effectiveStateRoot "runtime\active-start.json"
-$DefaultManifest = Join-Path $Root "presets\runtime\development-demo.json"
-$DefaultProfile = Join-Path $Root "presets\homeostasis\functional-proxy-v1.json"
+$PendingPath = Join-Path $effectiveRuntimeStateDir "pending-start.json"
+$ActivePath = Join-Path $effectiveRuntimeStateDir "active-start.json"
+$DefaultManifest = Join-Path $Root "presets\runtime\shared-misty-v1.json"
+if ($Development) { $DefaultManifest = Join-Path $Root "presets\runtime\development-demo.json" }
+$DefaultProfile = Join-Path $Root "presets\homeostasis\qq-social-drive-v1.json"
+if ($Development) { $DefaultProfile = Join-Path $Root "presets\homeostasis\functional-proxy-v1.json" }
 $started = New-Object System.Collections.Generic.List[object]
 $launchStartedAt = (Get-Date).ToUniversalTime().ToString("o")
 $savedEnvironment = @{}
@@ -58,8 +184,10 @@ function Write-ProcessRegistry {
         manifest_path = $ManifestPath
         profile_path = $ProfilePath
         state_root = $effectiveStateRoot
-        control_token_file = $(if ($StateRoot) { Join-Path $effectiveStateRoot "control.token" } else { $null })
-        service_token_file = $(if ($StateRoot) { Join-Path $effectiveStateRoot "service.token" } else { $null })
+        homeostasis_state_dir = $effectiveHomeostasisStateDir
+        runtime_state_dir = $effectiveRuntimeStateDir
+        control_token_file = $controlTokenFile
+        service_token_file = $serviceTokenFile
         services = @($started | ForEach-Object { $_ })
     }
     $temporary = "$RegistryPath.$([guid]::NewGuid().ToString('N')).tmp"
@@ -101,6 +229,87 @@ function Restore-LaunchEnvironment {
 function Stop-Configuration([string]$Message) {
     Write-Host "Configuration error: $Message"
     exit 1
+}
+
+function Resolve-SharedTokenFile([string]$Override, [string]$Default) {
+    $candidate = if ($Override) { $Override } else { $Default }
+    if (-not [IO.Path]::IsPathRooted($candidate)) { throw 'shared_token_path_must_be_absolute' }
+    $full = [IO.Path]::GetFullPath($candidate)
+    $cursor = $full
+    while ($cursor) {
+        if (Test-Path -LiteralPath $cursor) {
+            $entry = Get-Item -LiteralPath $cursor -Force
+            if (($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+                throw 'shared_token_path_reparse_point'
+            }
+        }
+        $cursor = [IO.Path]::GetDirectoryName($cursor)
+    }
+    if (-not (Test-Path -LiteralPath ([IO.Path]::GetDirectoryName($full)) -PathType Container)) {
+        throw 'shared_token_parent_must_exist'
+    }
+    if ((Test-Path -LiteralPath $full) -and -not (Test-Path -LiteralPath $full -PathType Leaf)) {
+        throw 'shared_token_path_must_be_file'
+    }
+    return $full
+}
+
+function Set-SharedTokenPrivateAcl([string]$Path) {
+    $info = New-Object IO.FileInfo($Path)
+    # Framework and modern .NET expose this API differently; preserve owner,
+    # group and SACL while replacing only access rules before writing a secret.
+    $acl = if ($PSVersionTable.PSVersion.Major -ge 6) {
+        [IO.FileSystemAclExtensions]::GetAccessControl($info, [Security.AccessControl.AccessControlSections]::Access)
+    } else { $info.GetAccessControl([Security.AccessControl.AccessControlSections]::Access) }
+    $acl.SetAccessRuleProtection($true, $false)
+    foreach ($rule in @($acl.Access)) { [void]$acl.RemoveAccessRuleSpecific($rule) }
+    $userSid = [Security.Principal.WindowsIdentity]::GetCurrent().User
+    $systemSid = New-Object Security.Principal.SecurityIdentifier('S-1-5-18')
+    foreach ($sid in @($userSid, $systemSid)) {
+        $acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule($sid, 'FullControl', 'Allow')))
+    }
+    if ($PSVersionTable.PSVersion.Major -ge 6) {
+        [IO.FileSystemAclExtensions]::SetAccessControl($info, $acl)
+    } else { $info.SetAccessControl($acl) }
+}
+
+function Read-SharedToken([string]$Path) {
+    if ((Get-Item -LiteralPath $Path -Force).Length -gt 65536) { throw 'shared_token_file_invalid' }
+    $value = [IO.File]::ReadAllText($Path).Trim()
+    if ($value.Length -lt 32 -or $value.Length -gt 4096 -or $value -notmatch '^[!-~]+$' -or
+        $value -match '^(development|dummy|example|placeholder|replace|test|your|changeme|change-me)' -or
+        (Test-UnsafeMistyAIToken $value)) {
+        throw 'shared_token_file_invalid'
+    }
+    return $value
+}
+
+function Get-OrCreateSharedToken([string]$Path) {
+    if (Test-Path -LiteralPath $Path -PathType Leaf) {
+        $value = Read-SharedToken $Path
+        Set-SharedTokenPrivateAcl $Path
+        return $value
+    }
+    $temporary = Join-Path ([IO.Path]::GetDirectoryName($Path)) ('.shared-token-' + [guid]::NewGuid().ToString('N') + '.tmp')
+    try {
+        # Empty file first: no secret exists until the explicit private DACL.
+        $stream = [IO.File]::Open($temporary, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+        $stream.Dispose()
+        Set-SharedTokenPrivateAcl $temporary
+        $bytes = New-Object byte[] 32
+        $random = [Security.Cryptography.RandomNumberGenerator]::Create()
+        try { $random.GetBytes($bytes) } finally { $random.Dispose() }
+        $value = [BitConverter]::ToString($bytes).Replace('-', '').ToLowerInvariant()
+        [IO.File]::WriteAllText($temporary, $value, (New-Object Text.UTF8Encoding($false)))
+        try { [IO.File]::Move($temporary, $Path) } catch {
+            # Another authorized startup may have won creation; never replace it.
+            if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { throw }
+            [void](Resolve-SharedTokenFile $Path $Path)
+        }
+        return Read-SharedToken $Path
+    } finally {
+        Remove-Item -LiteralPath $temporary -Force -ErrorAction SilentlyContinue
+    }
 }
 
 function Test-UnsafeMistyAIToken([AllowEmptyString()][string]$Token) {
@@ -215,6 +424,7 @@ function Get-PortOwner([int]$Port) {
         Select-Object -First 1
     if ($connection) { return [int]$connection.OwningProcess }
     $netstat = netstat -ano 2>$null
+    if (-not $?) { throw 'port_inspection_failed' }
     foreach ($line in @($netstat)) {
         $text = "$line"
         if ($text -match "LISTENING" -and $text -match ":$Port\s") {
@@ -223,6 +433,87 @@ function Get-PortOwner([int]$Port) {
         }
     }
     return $null
+}
+
+function Remove-ConfirmedStaleSharedRegistry([int[]]$RequestedPorts) {
+    # A dead PID alone is insufficient: retain incomplete identity data and
+    # registries whose former child may still be listening under another PID.
+    try {
+        $file = Get-Item -LiteralPath $RegistryPath -Force -ErrorAction Stop
+        if ($file.PSIsContainer -or $file.Length -gt 65536 -or
+            (($file.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)) { return $false }
+        $original = [IO.File]::ReadAllText($RegistryPath)
+        $registry = $original | ConvertFrom-Json
+        $expectedRoot = [IO.Path]::GetFullPath($Root).TrimEnd('\', '/')
+        if ($registry -isnot [pscustomobject] -or
+            $registry.schema_version -cne 'neuralcloud-processes-v2' -or
+            $registry.root -isnot [string] -or -not [IO.Path]::IsPathRooted($registry.root) -or
+            -not [IO.Path]::GetFullPath($registry.root).TrimEnd('\', '/').Equals(
+                $expectedRoot, [StringComparison]::OrdinalIgnoreCase) -or
+            $registry.python_path -isnot [string] -or -not [IO.Path]::IsPathRooted($registry.python_path) -or
+            $registry.services -isnot [array]) { return $false }
+        $expectedModules = @{
+            cognitive = 'harness.cognitive.service'
+            homeostasis = 'harness.homeostasis.service'
+            runtime = 'harness.runtime.service'
+            gui = 'gui.runtime_server'
+        }
+        $entries = @($registry.services)
+        if ($entries.Count -lt 1 -or $entries.Count -gt 4) { return $false }
+        $names = @{}; $pids = @{}; $registeredPorts = @{}
+        foreach ($entry in $entries) {
+            $pidValue = 0; $portValue = 0
+            if ($entry -isnot [pscustomobject] -or $entry.name -isnot [string] -or
+                -not $expectedModules.ContainsKey($entry.name) -or
+                $entry.module -cne $expectedModules[$entry.name] -or
+                -not [int]::TryParse([string]$entry.pid, [ref]$pidValue) -or $pidValue -le 0 -or
+                -not [int]::TryParse([string]$entry.port, [ref]$portValue) -or $portValue -lt 1 -or $portValue -gt 65535 -or
+                $entry.root -isnot [string] -or -not [IO.Path]::IsPathRooted($entry.root) -or
+                -not [IO.Path]::GetFullPath($entry.root).TrimEnd('\', '/').Equals(
+                    $expectedRoot, [StringComparison]::OrdinalIgnoreCase) -or
+                $entry.python_path -isnot [string] -or -not [IO.Path]::IsPathRooted($entry.python_path) -or
+                -not [IO.Path]::GetFullPath($entry.python_path).Equals(
+                    [IO.Path]::GetFullPath($registry.python_path), [StringComparison]::OrdinalIgnoreCase) -or
+                $names.ContainsKey($entry.name) -or $pids.ContainsKey($pidValue) -or
+                $registeredPorts.ContainsKey($portValue)) { return $false }
+            $recordedStart = [datetime]::MinValue
+            if ($entry.process_start_time_utc -isnot [datetime] -and -not [datetime]::TryParse(
+                    [string]$entry.process_start_time_utc, [Globalization.CultureInfo]::InvariantCulture,
+                    [Globalization.DateTimeStyles]::RoundtripKind, [ref]$recordedStart)) { return $false }
+            $names[$entry.name] = $pidValue
+            $pids[$pidValue] = $true
+            $registeredPorts[$portValue] = $true
+        }
+        $legacyOriginal = $null
+        if (Test-Path -LiteralPath $LegacyPidPath) {
+            $legacy = Get-Item -LiteralPath $LegacyPidPath -Force
+            if ($legacy.PSIsContainer -or $legacy.Length -gt 128 -or
+                (($legacy.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)) { return $false }
+            $legacyOriginal = [IO.File]::ReadAllText($LegacyPidPath)
+            if (-not $names.ContainsKey('gui') -or $legacyOriginal.Trim() -cne [string]$names.gui) { return $false }
+        }
+        foreach ($pidValue in $pids.Keys) {
+            $processErrors = @()
+            if (Get-Process -Id $pidValue -ErrorAction SilentlyContinue -ErrorVariable processErrors) { return $false }
+            if (@($processErrors | Where-Object { $_.FullyQualifiedErrorId -notmatch '^NoProcessFoundForGivenId' }).Count) {
+                return $false
+            }
+        }
+        foreach ($port in @(@($registeredPorts.Keys) + $RequestedPorts | Select-Object -Unique)) {
+            if ($null -ne (Get-PortOwner ([int]$port))) { return $false }
+        }
+        # Do not remove a registry replaced by another launcher during inspection.
+        if ([IO.File]::ReadAllText($RegistryPath) -cne $original) { return $false }
+        if ($null -ne $legacyOriginal) {
+            if ([IO.File]::ReadAllText($LegacyPidPath) -cne $legacyOriginal) { return $false }
+            Remove-Item -LiteralPath $LegacyPidPath -Force
+        }
+        Remove-Item -LiteralPath $RegistryPath -Force
+        return $true
+    } catch {
+        # File/process inspection failures imply unknown ownership.
+        return $false
+    }
 }
 
 function Wait-Endpoint(
@@ -282,19 +573,39 @@ function Start-NeuralService(
 }
 
 function Stop-StartedProcesses {
+    function Test-StartedServicePortOwner([object]$Entry, [int]$OwnerPid) {
+        if ($OwnerPid -eq [int]$Entry.pid) { return $true }
+        # On Windows a venv python.exe can remain as a parent launcher while its
+        # interpreter child owns the socket. Only that verified direct child belongs
+        # to this startup; an unrelated owner must never be stopped.
+        $owner = Get-CimInstance Win32_Process -Filter "ProcessId=$OwnerPid" -ErrorAction SilentlyContinue
+        $live = Get-Process -Id $OwnerPid -ErrorAction SilentlyContinue
+        if (-not $owner -or -not $live -or -not $owner.CommandLine -or -not $owner.ExecutablePath -or
+            -not $owner.PSObject.Properties['ParentProcessId']) { return $false }
+        $parent = Get-Process -Id ([int]$Entry.pid) -ErrorAction SilentlyContinue
+        return ($parent -and [int]$owner.ParentProcessId -eq [int]$Entry.pid -and
+            $owner.Name -match '^python(w)?\.exe$' -and
+            $owner.CommandLine -match ('(?:^|\s)-m\s+"?' + [regex]::Escape([string]$Entry.module) + '"?(?:\s|$)') -and
+            $live.StartTime.ToUniversalTime() -ge $parent.StartTime.ToUniversalTime())
+    }
     $identityMatched = $true
+    $childPids = New-Object System.Collections.Generic.List[int]
     for ($index = $started.Count - 1; $index -ge 0; $index--) {
         $entry = $started[$index]
         $live = Get-Process -Id $entry.pid -ErrorAction SilentlyContinue
         if ($live) {
             $processInfo = Get-CimInstance Win32_Process -Filter "ProcessId=$($entry.pid)" -ErrorAction SilentlyContinue
             $recordedStart = [datetime]::MinValue
-            $startMatches = [datetime]::TryParse(
-                [string]$entry.process_start_time_utc,
-                [System.Globalization.CultureInfo]::InvariantCulture,
-                [System.Globalization.DateTimeStyles]::RoundtripKind,
-                [ref]$recordedStart
-            ) -and [math]::Abs(($live.StartTime.ToUniversalTime() - $recordedStart.ToUniversalTime()).TotalSeconds) -le 1
+            $parsedStart = if ($entry.process_start_time_utc -is [datetime]) {
+                $recordedStart = ([datetime]$entry.process_start_time_utc).ToUniversalTime()
+                $true
+            } else {
+                [datetime]::TryParse([string]$entry.process_start_time_utc,
+                    [Globalization.CultureInfo]::InvariantCulture,
+                    [Globalization.DateTimeStyles]::RoundtripKind, [ref]$recordedStart)
+            }
+            $startMatches = $parsedStart -and
+                [math]::Abs(($live.StartTime.ToUniversalTime() - $recordedStart.ToUniversalTime()).TotalSeconds) -le 1
             $expectedPython = [System.IO.Path]::GetFullPath([string]$entry.python_path)
             $entryRoot = [System.IO.Path]::GetFullPath([string]$entry.root).TrimEnd('\', '/')
             $expectedRoot = [System.IO.Path]::GetFullPath($Root).TrimEnd('\', '/')
@@ -312,21 +623,35 @@ function Stop-StartedProcesses {
                 $actualPython.Equals($expectedPython, [System.StringComparison]::OrdinalIgnoreCase) -and
                 $commandLine.IndexOf($expectedPython, [System.StringComparison]::OrdinalIgnoreCase) -ge 0 -and
                 $commandLine -match [regex]::Escape([string]$entry.module) -and
-                ($null -eq $portOwner -or [int]$portOwner -eq [int]$entry.pid)
+                ($null -eq $portOwner -or [int]$portOwner -eq [int]$entry.pid -or
+                    (Test-StartedServicePortOwner $entry ([int]$portOwner)))
             if (-not $identityMatches) {
                 $identityMatched = $false
                 continue
+            }
+            if ($null -ne $portOwner -and [int]$portOwner -ne [int]$entry.pid) {
+                if (-not (Test-StartedServicePortOwner $entry ([int]$portOwner))) {
+                    $identityMatched = $false
+                    continue
+                }
+                [void]$childPids.Add([int]$portOwner)
+                Stop-Process -Id ([int]$portOwner) -Force -ErrorAction SilentlyContinue
             }
             Stop-Process -Id $entry.pid -Force -ErrorAction SilentlyContinue
         }
     }
     $deadline = (Get-Date).AddSeconds(10)
     do {
-        $remaining = @($started | Where-Object { Get-Process -Id $_.pid -ErrorAction SilentlyContinue })
+        $remaining = @(@($started | ForEach-Object { [int]$_.pid }) + @($childPids) |
+            Where-Object { Get-Process -Id $_ -ErrorAction SilentlyContinue })
         if ($remaining.Count -eq 0) { break }
         Start-Sleep -Milliseconds 200
     } while ((Get-Date) -lt $deadline)
-    return $identityMatched -and $remaining.Count -eq 0
+    $occupied = @()
+    if ($childPids.Count -gt 0) {
+        $occupied = @($started | Where-Object { $null -ne (Get-PortOwner ([int]$_.port)) })
+    }
+    return $identityMatched -and $remaining.Count -eq 0 -and $occupied.Count -eq 0
 }
 
 $python = Get-PythonExe
@@ -335,14 +660,14 @@ if (-not $python) {
     exit 1
 }
 
-if (-not $ManifestPath -and -not $ProfilePath -and (Test-Path -LiteralPath $PendingPath)) {
+if ($Development -and -not $ManifestPath -and -not $ProfilePath -and (Test-Path -LiteralPath $PendingPath)) {
     $pending = Get-Content -Raw -LiteralPath $PendingPath | ConvertFrom-Json
     $ManifestPath = [string]$pending.manifest_path
     $ProfilePath = [string]$pending.profile_path
     $usingPending = $true
     Write-Host "Activating pending configuration: $($pending.profile_ref) / $($pending.manifest_ref)"
 }
-if (-not $ManifestPath -and -not $ProfilePath -and (Test-Path -LiteralPath $ActivePath)) {
+if ($Development -and -not $ManifestPath -and -not $ProfilePath -and (Test-Path -LiteralPath $ActivePath)) {
     $active = Get-Content -Raw -LiteralPath $ActivePath | ConvertFrom-Json
     $ManifestPath = [string]$active.manifest_path
     $ProfilePath = [string]$active.profile_path
@@ -356,6 +681,13 @@ try {
     $manifest = Get-Content -Raw -LiteralPath $ManifestPath | ConvertFrom-Json
 } catch {
     Stop-Configuration "Manifest is not valid JSON: $ManifestPath"
+}
+$controlMode = [string]$manifest.control_mode
+if ($controlMode -notin @("study_runtime", "development_debug")) {
+    Stop-Configuration "Manifest must declare a valid control_mode"
+}
+if (($controlMode -eq "development_debug") -ne [bool]$Development) {
+    Stop-Configuration "Development manifests require -Development; normal startup requires study_runtime."
 }
 $manifestProvider = if ($manifest.embodiment.body_provider) {
     "$($manifest.embodiment.body_provider)".Trim().ToLowerInvariant()
@@ -447,20 +779,30 @@ if ($effectiveProvider -eq "mistyai") {
     }
 }
 
-if ((Test-Path -LiteralPath $RegistryPath) -or (Test-Path -LiteralPath $LegacyPidPath)) {
-    Write-Host "Existing NeuralCloud processes detected; restarting them."
-    & (Join-Path $Root "stop.ps1") -Quiet
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "Could not stop existing NeuralCloud processes."
-        exit 1
-    }
-}
-
 $ports = @($GuiPort, $RuntimePort, $CognitivePort, $HomeostasisPort)
 if (($ports | Select-Object -Unique).Count -ne $ports.Count) {
     Write-Host "All four service ports must be unique."
     exit 1
 }
+if ((Test-Path -LiteralPath $RegistryPath) -or (Test-Path -LiteralPath $LegacyPidPath)) {
+    if (-not $Development) {
+        if (-not (Remove-ConfirmedStaleSharedRegistry $ports)) {
+            Write-Host "Shared NeuralCloud registry already exists; attach to its GUI or explicitly stop/restart it. No owner was stopped."
+            exit 1
+        }
+        Write-Host "Removed a confirmed stale shared process registry; all recorded processes exited and all ports are free."
+    } else {
+        Write-Host "Existing development processes detected; restarting that instance."
+        $stopArguments = @{ Quiet = $true }
+        if ($StateRoot) { $stopArguments.StateRoot = $effectiveStateRoot }
+        & (Join-Path $Root "stop.ps1") @stopArguments
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Could not stop existing NeuralCloud processes."
+            exit 1
+        }
+    }
+}
+
 foreach ($port in $ports) {
     $owner = Get-PortOwner $port
     if ($owner) {
@@ -470,13 +812,23 @@ foreach ($port in $ports) {
 }
 
 New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $effectiveStateRoot "runtime") -Force | Out-Null
-$serviceToken = ([guid]::NewGuid().ToString("N") + [guid]::NewGuid().ToString("N"))
-$controlToken = ([guid]::NewGuid().ToString("N") + [guid]::NewGuid().ToString("N"))
+New-Item -ItemType Directory -Path $effectiveRuntimeStateDir -Force | Out-Null
+$defaultTokenDirectory = if ($StateRoot) { $effectiveStateRoot } else { $effectiveRuntimeStateDir }
+try {
+    $controlTokenFile = Resolve-SharedTokenFile (Get-SharedLaunchValue 'NC_CONTROL_TOKEN_FILE') (Join-Path $defaultTokenDirectory 'control.token')
+    $serviceTokenFile = Resolve-SharedTokenFile (Get-SharedLaunchValue 'NC_SERVICE_TOKEN_FILE') (Join-Path $defaultTokenDirectory 'service.token')
+    if ([string]::Equals($controlTokenFile, $serviceTokenFile, [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'shared_token_paths_must_be_distinct'
+    }
+    $controlToken = Get-OrCreateSharedToken $controlTokenFile
+    $serviceToken = Get-OrCreateSharedToken $serviceTokenFile
+    if ($controlToken -eq $serviceToken) { throw 'shared_tokens_must_be_distinct' }
+} catch {
+    # Never print exception values, token bytes or file contents.
+    Stop-Configuration 'Shared token files could not be validated or privately initialized.'
+}
 if ($StateRoot) {
     # The isolated acceptance directory is local private runtime state, not a report.
-    [System.IO.File]::WriteAllText((Join-Path $effectiveStateRoot "control.token"), $controlToken)
-    [System.IO.File]::WriteAllText((Join-Path $effectiveStateRoot "service.token"), $serviceToken)
     $isolatedConfig = Join-Path $effectiveStateRoot "gui_settings.json"
     $sourceConfig = Join-Path $Root "data\gui_settings.json"
     if ($env:NC_GUI_CONFIG) { $sourceConfig = $env:NC_GUI_CONFIG }
@@ -486,8 +838,12 @@ if ($StateRoot) {
 }
 $environment = @{
     NC_MODE = $Mode
+    NC_CONTROL_MODE = $controlMode
+    NC_ISOLATED_DEVELOPMENT = $(if ($Development -and $StateRoot) { "1" } else { "0" })
     NC_SERVICE_TOKEN = $serviceToken
     NC_CONTROL_TOKEN = $controlToken
+    NC_SERVICE_TOKEN_FILE = $serviceTokenFile
+    NC_CONTROL_TOKEN_FILE = $controlTokenFile
     NC_GUI_PORT = "$GuiPort"
     NC_RUNTIME_PORT = "$RuntimePort"
     NC_COGNITIVE_PORT = "$CognitivePort"
@@ -496,11 +852,13 @@ $environment = @{
     NC_COGNITIVE_URL = "http://127.0.0.1:$CognitivePort"
     NC_HOMEOSTASIS_URL = "http://127.0.0.1:$HomeostasisPort"
     NC_RUNTIME_MANIFEST_PATH = $ManifestPath
+    NC_COGNITIVE_MANIFEST_PATH = $ManifestPath
+    NC_EXPERIMENT_MANIFEST = $null
     NC_EMBODIMENT_PROVIDER = $effectiveProvider
     NC_HOMEOSTASIS_PROFILE_PATH = $ProfilePath
-    NC_RUNTIME_STATE_DIR = (Join-Path $effectiveStateRoot "runtime")
+    NC_RUNTIME_STATE_DIR = $effectiveRuntimeStateDir
     NC_COGNITIVE_STATE_PATH = (Join-Path $effectiveStateRoot "cognitive\state.json")
-    NC_HOMEOSTASIS_STATE_DIR = (Join-Path $effectiveStateRoot "homeostasis")
+    NC_HOMEOSTASIS_STATE_DIR = $effectiveHomeostasisStateDir
     # Provider credentials are injected only while the Runtime child is created.
     NC_MISTYAI_BASE_URL = $null
     NC_MISTYAI_URL = $null
@@ -508,6 +866,14 @@ $environment = @{
     NC_MISTYAI_TOKEN_FILE = $null
     NC_MISTYAI_TIMEOUT_SECONDS = $null
     NC_MISTYAI_POLL_INTERVAL_SECONDS = $null
+    NC_VOICE_CONFIG = $null
+    NC_WEB_CONFIG = $null
+}
+foreach ($key in $sharedLaunchKeys) {
+    if (-not $environment.ContainsKey($key)) {
+        $binding = Get-SharedLaunchValue $key
+        if ($binding) { $environment[$key] = $binding }
+    }
 }
 if ($StateRoot) {
     $environment.NC_GUI_CONFIG = $isolatedConfig
@@ -516,6 +882,14 @@ if ($StateRoot) {
     $environment.NC_CALL_LOG_DIR = Join-Path $effectiveStateRoot "calls"
 }
 $runtimeMistyAIEnvironment = @{}
+$voiceConfigBinding = Get-SharedLaunchValue 'NC_VOICE_CONFIG'
+if ($voiceConfigBinding) {
+    $runtimeMistyAIEnvironment.NC_VOICE_CONFIG = $voiceConfigBinding
+}
+$webConfigBinding = Get-SharedLaunchValue 'NC_WEB_CONFIG'
+if ($webConfigBinding -and -not ($Development -and $StateRoot)) {
+    $runtimeMistyAIEnvironment.NC_WEB_CONFIG = $webConfigBinding
+}
 if ($effectiveProvider -eq "mistyai") {
     $runtimeMistyAIEnvironment.NC_MISTYAI_BASE_URL = $effectiveMistyAIBaseUrl
     if ($resolvedMistyAITokenFile) {
@@ -538,10 +912,10 @@ try {
 
     Start-NeuralService "cognitive" "harness.cognitive.service" $CognitivePort $python | Out-Null
     Start-NeuralService "homeostasis" "harness.homeostasis.service" $HomeostasisPort $python | Out-Null
-    if (-not (Wait-Endpoint "http://127.0.0.1:$CognitivePort/v1/health" $serviceHeaders 30 { param($body) $body.healthy })) {
+    if (-not (Wait-Endpoint "http://127.0.0.1:$CognitivePort/v1/health" $serviceHeaders $StartupTimeoutSeconds { param($body) $body.healthy })) {
         throw "Cognitive service did not pass its health check"
     }
-    if (-not (Wait-Endpoint "http://127.0.0.1:$HomeostasisPort/v1/health" $serviceHeaders 30 { param($body) $body.healthy })) {
+    if (-not (Wait-Endpoint "http://127.0.0.1:$HomeostasisPort/v1/health" $serviceHeaders $StartupTimeoutSeconds { param($body) $body.healthy })) {
         throw "Homeostasis service did not pass its health check"
     }
 
@@ -556,8 +930,10 @@ try {
         NC_MISTYAI_TOKEN_FILE = $null
         NC_MISTYAI_TIMEOUT_SECONDS = $null
         NC_MISTYAI_POLL_INTERVAL_SECONDS = $null
+        NC_VOICE_CONFIG = $null
+        NC_WEB_CONFIG = $null
     }
-    $runtime = Wait-Endpoint "http://127.0.0.1:$RuntimePort/v1/status" $controlHeaders 40 {
+    $runtime = Wait-Endpoint "http://127.0.0.1:$RuntimePort/v1/status" $controlHeaders $StartupTimeoutSeconds {
         param($body)
         $body.lifecycle -notin @("booting", "recovering", "faulted")
     }
@@ -599,7 +975,7 @@ try {
     }
 
     Start-NeuralService "gui" "gui.runtime_server" $GuiPort $python | Out-Null
-    if (-not (Wait-Endpoint "http://127.0.0.1:$GuiPort/api/status" @{} 30 { param($body) $null -ne $body.runtime })) {
+    if (-not (Wait-Endpoint "http://127.0.0.1:$GuiPort/api/status" @{} $StartupTimeoutSeconds { param($body) $null -ne $body.runtime })) {
         throw "GUI did not pass its composite status check"
     }
 

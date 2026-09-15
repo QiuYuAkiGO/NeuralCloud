@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+import re
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -84,6 +85,44 @@ class PersonaCore(BaseModel):
 MemoryTier = Literal["short", "mid", "long", "forgotten"]
 
 
+class MemoryScope(BaseModel):
+    """Application-assigned provenance and visibility, never a retrieval-plan guess."""
+
+    owner_id: str = "misty"
+    channel: str
+    conversation_id: str | None = None
+    visibility: list[str] = Field(default_factory=lambda: ["local:main"])
+
+    @field_validator("visibility")
+    @classmethod
+    def _canonical_visibility(cls, value: list[str]) -> list[str]:
+        if any(not audience.strip() for audience in value):
+            raise ValueError("memory visibility cannot contain blank audiences")
+        return sorted(set(value))
+
+    @property
+    def qq_private_audience(self) -> str | None:
+        """Return a bound QQ private audience, excluding unbound legacy scopes."""
+        if self.channel != "qq_private" or not self.conversation_id:
+            return None
+        match = re.fullmatch(r"qq:private:([1-9][0-9]{0,19}):([1-9][0-9]{0,19})", self.conversation_id)
+        if match is None or match[1] == match[2]:
+            return None
+        return self.conversation_id
+
+    @model_validator(mode="after")
+    def _private_visibility(self) -> MemoryScope:
+        if self.channel != "qq_private":
+            return self
+        audience = self.qq_private_audience
+        if self.conversation_id is not None and audience is None:
+            raise ValueError("QQ private memory requires an exact self and peer audience")
+        allowed = {"local:main", audience} if audience else {"local:main"}
+        if not set(self.visibility).issubset(allowed):
+            raise ValueError("QQ private memory cannot be visible outside its self and peer scope")
+        return self
+
+
 class DualMemoryRecord(BaseModel):
     event_id: str
     objective_fact: str
@@ -117,6 +156,13 @@ class EpisodicEvent(BaseModel):
     last_hit_at: datetime | None = None
     tier_updated_at: datetime | None = None
     tier_reasons: list[str] = Field(default_factory=list)
+    scope: MemoryScope | None = None
+    source_refs: list[str] = Field(default_factory=list)
+    processing_version: str | None = None
+    strength: float = Field(default=1.0, ge=0.0)
+    strength_updated_at: datetime | None = None
+    last_decay_review_at: datetime | None = None
+    decay_demoted: bool = False
 
     @field_validator("evidence")
     @classmethod
@@ -144,6 +190,9 @@ class SemanticFact(BaseModel):
     supporting_events: list[str]
     formed_at: datetime
     embedding: list[float] | None = None
+    scope: MemoryScope | None = None
+    source_refs: list[str] = Field(default_factory=list)
+    processing_version: str | None = None
 
     @field_validator("supporting_events")
     @classmethod
@@ -227,6 +276,9 @@ class CandidateMemory(BaseModel):
     created_at: datetime
     updated_at: datetime
     consolidated_fact_id: str | None = None
+    scope: MemoryScope | None = None
+    source_refs: list[str] = Field(default_factory=list)
+    processing_version: str | None = None
 
 
 class RetrievalPlan(BaseModel):
@@ -297,6 +349,7 @@ class RetrievalQuery(BaseModel):
     current_inference: CurrentInference | None = None
     include_conflicts: bool = False
     top_k: int | None = None
+    trusted_audience: str = Field(default="local:main", min_length=1)
 
 
 class CharacterSnapshot(BaseModel):

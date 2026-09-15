@@ -10,6 +10,7 @@ from harness.core.exceptions import EvidenceRequiredError, PersonaLockedError
 from harness.core.models import (
     CandidateMemory,
     EpisodicEvent,
+    MemoryScope,
     PersonaCore,
     PsychState,
     RelationshipState,
@@ -17,6 +18,7 @@ from harness.core.models import (
     WorldState,
 )
 from harness.memory.store.vector_util import cosine, event_in_filters
+from harness.memory.store.scope import candidate_matches, visible_to
 
 
 class InMemoryPersonaStore:
@@ -83,11 +85,13 @@ class InMemoryEpisodicStore:
         channels: list[str] | None,
         entities: list[str] | None,
         limit: int,
+        trusted_audience: str = "local:main",
     ) -> list[EpisodicEvent]:
         pool = [
             event
             for event in self._rows.values()
             if event.tier != "forgotten"
+            and visible_to(event.scope, trusted_audience)
             and event_in_filters(event, since=since, until=until, channels=channels, entities=entities)
         ]
         if query_embedding:
@@ -125,9 +129,9 @@ class InMemorySemanticStore:
     def list_all(self) -> list[SemanticFact]:
         return list(self._rows.values())
 
-    def find(self, subject: str, predicate: str, value: str) -> SemanticFact | None:
+    def find(self, subject: str, predicate: str, value: str, *, scope: MemoryScope | None = None) -> SemanticFact | None:
         for fact in self._rows.values():
-            if fact.subject == subject and fact.predicate == predicate and fact.value == value:
+            if fact.scope == scope and fact.subject == subject and fact.predicate == predicate and fact.value == value:
                 return fact
         return None
 
@@ -137,11 +141,12 @@ class InMemorySemanticStore:
         query_embedding: list[float] | None,
         subject: str | None,
         limit: int,
+        trusted_audience: str = "local:main",
     ) -> list[SemanticFact]:
         pool = [
             fact
             for fact in self._rows.values()
-            if subject is None or fact.subject == subject
+            if visible_to(fact.scope, trusted_audience) and (subject is None or fact.subject == subject)
         ]
         if query_embedding:
             pool.sort(key=lambda fact: cosine(query_embedding, fact.embedding or []), reverse=True)
@@ -214,17 +219,11 @@ class InMemoryCandidateStore:
         predicate: str | None,
         value: str | None,
         claim: str,
+        scope: MemoryScope | None = None,
     ) -> CandidateMemory | None:
         open_rows = self.list_open()
         for row in open_rows:
-            if subject and predicate and value:
-                if row.subject == subject and row.predicate == predicate and row.value == value:
-                    return row
-            if value and row.value == value:
-                return row
-            if value and value in row.claim:
-                return row
-            if claim and claim == row.claim:
+            if candidate_matches(row, subject=subject, predicate=predicate, value=value, claim=claim, scope=scope):
                 return row
         return None
 

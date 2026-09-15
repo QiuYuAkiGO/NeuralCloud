@@ -64,7 +64,7 @@ def test_runtime_presets_enable_full_homeostatic_expression() -> None:
         (
             "shadow",
             {"homeostatic_profile": "functional-proxy-v1@2"},
-            "revision 3 or later",
+            "revision 3",
         ),
         (
             "responses",

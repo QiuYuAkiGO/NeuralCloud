@@ -6,6 +6,7 @@ import json
 import os
 import re
 import secrets
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -44,11 +45,13 @@ def atomic_write_json(path: Path, payload: dict[str, Any]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     data = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
     tmp = path.with_name(f"{path.name}.{os.getpid()}.{os.urandom(3).hex()}.tmp")
-    tmp.write_text(data, encoding="utf-8")
     try:
+        with tmp.open("w", encoding="utf-8") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
         os.replace(tmp, path)
-    except OSError:
-        path.write_text(data, encoding="utf-8")
+    finally:
         tmp.unlink(missing_ok=True)
     return path
 
@@ -79,6 +82,7 @@ class CharacterPreset(BaseModel):
     semantic: list[SemanticFact] = Field(default_factory=list)
     candidates: list[CandidateMemory] = Field(default_factory=list)
     transcript: list[SessionTurn] = Field(default_factory=list)
+    qq_memory_state: dict[str, Any] = Field(default_factory=dict)
     updated_at: datetime
 
     def is_protected(self) -> bool:
@@ -130,6 +134,7 @@ def snapshot_memory(
         semantic=list(stores.semantic.list_all()),
         candidates=list(stores.candidates.list_all()),
         transcript=list(transcript),
+        qq_memory_state=deepcopy(memory.qq_memory_state),
         updated_at=updated_at or _now(),
     )
 
@@ -137,6 +142,7 @@ def snapshot_memory(
 def hydrate_memory(memory: MemoryService, preset: CharacterPreset) -> None:
     """Load a preset into an empty MemoryService. Does not call record_event."""
     memory.bootstrap_persona(preset.persona)
+    memory.qq_memory_state = deepcopy(preset.qq_memory_state)
     for row in preset.relationships:
         memory.stores.relationship.upsert(row)
     if preset.psych is not None:

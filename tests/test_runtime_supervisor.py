@@ -2887,6 +2887,33 @@ def test_pause_transport_wait_is_bounded(tmp_path) -> None:
     asyncio.run(scenario())
 
 
+def test_shutdown_transport_wait_is_bounded_and_does_not_report_stopped(tmp_path) -> None:
+    _, _, cognitive = _pipeline_adapter(tmp_path)
+
+    async def blocked_pause_maintenance(*, timeout: float) -> bool:
+        await asyncio.Event().wait()
+        return True
+
+    cognitive.pause_maintenance = blocked_pause_maintenance  # type: ignore[method-assign]
+    supervisor = RuntimeSupervisor(
+        manifest=_manifest(), cognitive=cognitive,
+        homeostasis=PassiveHomeostasisAdapter(),
+        state_dir=tmp_path / "runtime-blocked-shutdown",
+        maintenance_drain_seconds=0.01,
+    )
+
+    async def scenario() -> None:
+        await supervisor.boot_and_recover()
+        with pytest.raises(TimeoutError):
+            await asyncio.wait_for(supervisor.stop(reason="migration test"), timeout=2.0)
+        assert supervisor.lifecycle == RuntimeLifecycle.FAULTED
+        assert "graceful stop failed" in supervisor.lifecycle_reason
+        assert supervisor._closed is False
+        cognitive.pipeline.memory.close()
+
+    asyncio.run(scenario())
+
+
 def test_domain_timeout_requeues_event_even_when_recovery_pause_fails(tmp_path) -> None:
     _, _, cognitive = _pipeline_adapter(tmp_path)
 

@@ -6,7 +6,10 @@ import json
 import logging
 import math
 import re
-from typing import Any, Protocol
+import time
+from typing import Any, Literal, Protocol
+from urllib.parse import urlsplit
+from uuid import uuid4
 
 import httpx
 from pydantic import BaseModel, Field
@@ -14,6 +17,9 @@ from pydantic import BaseModel, Field
 from harness.config import Settings, get_settings
 from harness.core.inference import TokenUsage
 from infra.trace.request_spans import model_request_span, trace_scope
+from infra.trace.diagnostics import (
+    DiagnosticObserver, diagnostic_observer, emit_diagnostic, request_evidence, response_evidence,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +32,31 @@ DEFAULT_REPLY = "……知道了。"
 class ChatResult(BaseModel):
     text: str
     usage: TokenUsage = Field(default_factory=TokenUsage)
+    finish_reason: str | None = None
+    response_id: str | None = None
+    content_type: Literal["text", "null", "missing", "array", "object", "invalid"] | None = None
+    reasoning_tokens: int | None = Field(default=None, ge=0)
+    has_tool_calls: bool = False
+    has_refusal: bool = False
+
+    def response_metadata(self) -> dict[str, Any]:
+        """Operational fields only; never completion, refusal or reasoning text."""
+        return {
+            "finish_reason": self.finish_reason,
+            "response_id": self.response_id,
+            "content_type": self.content_type,
+            "content_characters": len(self.text),
+            "reasoning_tokens": self.reasoning_tokens,
+            "has_tool_calls": self.has_tool_calls,
+            "has_refusal": self.has_refusal,
+        }
 
 
 class LLMClient(Protocol):
     def complete_json(
         self, *, system: str, user: str, max_tokens: int | None = None,
         timeout_seconds: float | None = None,
+        response_format: dict[str, Any] | None = None,
     ) -> dict[str, Any]: ...
 
     def complete_chat(
@@ -50,6 +75,8 @@ class LLMClient(Protocol):
         stream: bool = False,
         max_tokens: int | None = None,
         timeout_seconds: float | None = None,
+        response_format: dict[str, Any] | None = None,
+        reasoning_effort: str | None = None,
     ) -> ChatResult: ...
 
 
@@ -115,15 +142,44 @@ def usage_from_api_payload(raw: Any, messages: list[dict[str, Any]], text: str) 
     return estimate_chat_usage(messages, text)
 
 
+def _chat_result(body: dict[str, Any], messages: list[dict[str, Any]]) -> ChatResult:
+    choice = body["choices"][0]
+    message = choice["message"]
+    content = message.get("content")
+    content_type = ("missing" if "content" not in message else "null" if content is None else
+                    "text" if isinstance(content, str) else "array" if isinstance(content, list) else
+                    "object" if isinstance(content, dict) else "invalid")
+    # Structured/tool-only responses must not become Python repr strings that
+    # downstream callers could mistake for generated natural-language text.
+    text = content if isinstance(content, str) else ""
+    finish = choice.get("finish_reason")
+    finish = (finish if finish in {"stop", "length", "tool_calls", "function_call", "content_filter"}
+              else None if finish is None else "unknown") if isinstance(finish, (str, type(None))) else "unknown"
+    response_id = body.get("id")
+    if not isinstance(response_id, str) or not re.fullmatch(r"[A-Za-z0-9_.:/-]{1,200}", response_id):
+        response_id = None
+    raw_usage = body.get("usage")
+    details = raw_usage.get("completion_tokens_details") if isinstance(raw_usage, dict) else None
+    reasoning_tokens = details.get("reasoning_tokens") if isinstance(details, dict) else None
+    if type(reasoning_tokens) is not int or reasoning_tokens < 0:
+        reasoning_tokens = None
+    return ChatResult(text=text, usage=usage_from_api_payload(raw_usage, messages, text),
+        finish_reason=finish, response_id=response_id, content_type=content_type,
+        reasoning_tokens=reasoning_tokens, has_tool_calls=bool(message.get("tool_calls") or message.get("function_call")),
+        has_refusal=bool(message.get("refusal")))
+
+
 class OpenAICompatClient:
     def __init__(
         self,
         settings: Settings | None = None,
         *,
         extra_payload: dict[str, Any] | None = None,
+        request_observer: DiagnosticObserver | None = None,
     ) -> None:
         self.settings = settings or get_settings()
         self._extra_payload = dict(extra_payload or {})
+        self._request_observer = request_observer
         # One long-lived client: keep-alive reuse across all pipeline stages
         # instead of a fresh TCP+TLS handshake per call.
         self._client = httpx.Client(timeout=self.settings.llm_timeout)
@@ -134,6 +190,7 @@ class OpenAICompatClient:
     def complete_json(
         self, *, system: str, user: str, max_tokens: int | None = None,
         timeout_seconds: float | None = None,
+        response_format: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         with trace_scope(model_role="aux"):
             content = self.complete_chat_result(
@@ -143,6 +200,7 @@ class OpenAICompatClient:
                 ],
                 temperature=0.1,
                 max_tokens=max_tokens,
+                **({} if response_format is None else {"response_format": response_format}),
                 **({} if timeout_seconds is None else {"timeout_seconds": timeout_seconds}),
             ).text
         return parse_json_object(content)
@@ -164,9 +222,16 @@ class OpenAICompatClient:
         stream: bool = False,
         max_tokens: int | None = None,
         timeout_seconds: float | None = None,
+        response_format: dict[str, Any] | None = None,
+        reasoning_effort: str | None = None,
     ) -> ChatResult:
         if stream:
             raise NotImplementedError("streaming is reserved for a later milestone")
+        from harness.llm.deadline import remaining_model_seconds
+
+        remaining = remaining_model_seconds()
+        if remaining is not None:
+            timeout_seconds = min(remaining, timeout_seconds if timeout_seconds is not None else self.settings.llm_timeout)
         request_options: dict[str, Any] = {}
         if timeout_seconds is not None:
             if not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
@@ -180,25 +245,100 @@ class OpenAICompatClient:
         }
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
+        if response_format is not None:
+            payload["response_format"] = response_format
+        if reasoning_effort is not None:
+            payload["reasoning_effort"] = reasoning_effort
         headers = {"Authorization": f"Bearer {self.settings.llm_api_key}"}
         with model_request_span(self.settings, role="main") as span:
+            if diagnostic_observer(self._request_observer) is not None:
+                return self._complete_observed(payload, headers, request_options, messages, span)
             response = self._client.post(
                 f"{self.settings.llm_base_url.rstrip('/')}/chat/completions",
                 json=payload,
                 headers=headers,
                 **request_options,
             )
+            remaining_model_seconds()
             span["http_status"] = response.status_code
             response.raise_for_status()
             body = response.json()
-            text = str(body["choices"][0]["message"]["content"])
-            usage = usage_from_api_payload(body.get("usage"), messages, text)
-            span.update(usage=usage.model_dump(mode="json"), usage_source=usage.source)
-            return ChatResult(text=text, usage=usage)
+            result = _chat_result(body, messages)
+            span.update(usage=result.usage.model_dump(mode="json"), usage_source=result.usage.source,
+                        **result.response_metadata())
+            return result
+
+    def _complete_observed(self, payload, headers, request_options, messages, span) -> ChatResult:
+        """Opt-in evidence at the serialization boundary, with no production log content."""
+        from harness.llm.deadline import remaining_model_seconds
+
+        observer = diagnostic_observer(self._request_observer)
+        # Hooks/auth flows can change the request after validation, including
+        # after transmission. The opt-in evidence path requires a plain client.
+        if any(self._client.event_hooks.values()) or self._client.auth is not None:
+            raise ValueError("diagnostic_http_hooks_or_auth_unsupported")
+        request = self._client.build_request("POST",
+            f"{self.settings.llm_base_url.rstrip('/')}/chat/completions",
+            json=payload, headers=headers, **request_options)
+        request_id = f"diagnostic-request-{uuid4().hex}"
+        before = request_evidence(request)
+        emit_diagnostic({"record_type": "http_request_prepared", "request_id": request_id,
+                         "payload_verified": False, **before}, observer)
+        started = time.perf_counter()
+        response = None
+        try:
+            response = self._client.send(request)
+            # Hooks/auth are excluded above, so the returned request still
+            # describes the body passed to the transport.
+            actual = request_evidence(response.request)
+            span["http_status"] = response.status_code
+            try:
+                body = response.json()
+            except (ValueError, UnicodeError):
+                body = None
+            emit_diagnostic({"record_type": "http_response_received", "request_id": request_id,
+                "http_status": response.status_code, "payload_verified": True, **actual,
+                "request_changed_after_prepare": actual["request_body_sha256"] != before["request_body_sha256"],
+                "elapsed_ms": round((time.perf_counter() - started) * 1000, 3),
+                **response_evidence(body)}, observer)
+            remaining_model_seconds()
+            response.raise_for_status()
+            if not isinstance(body, dict):
+                raise ValueError("llm_response_invalid_json_object")
+            result = _chat_result(body, messages)
+            span.update(usage=result.usage.model_dump(mode="json"), usage_source=result.usage.source,
+                        **result.response_metadata())
+            return result
+        except BaseException as exc:
+            emit_diagnostic({"record_type": "http_request_error", "request_id": request_id,
+                "error_type": type(exc).__name__, "http_status": span.get("http_status"),
+                "transmission_status": "response_received" if response is not None else "unknown",
+                "elapsed_ms": round((time.perf_counter() - started) * 1000, 3)}, observer)
+            raise
+        finally:
+            if response is not None:
+                response.close()
 
 
 def _filled(value: str | None) -> bool:
     return bool((value or "").strip())
+
+
+def deepseek_low_reasoning_options(settings: Settings) -> dict[str, str]:
+    """Opt bounded decisions into low thinking on the supported official API."""
+    if settings.llm_model not in {"deepseek-v4-flash", "deepseek-v4-pro"}:
+        return {}
+    raw = settings.llm_base_url
+    try:
+        endpoint = urlsplit(raw)
+        supported = (raw == raw.strip() and endpoint.scheme == "https"
+            and endpoint.hostname == "api.deepseek.com" and endpoint.port in {None, 443}
+            and endpoint.path in {"", "/", "/v1", "/v1/"}
+            and endpoint.username is None and endpoint.password is None
+            and not endpoint.query and not endpoint.fragment)
+    except ValueError:
+        return {}
+    return {"reasoning_effort": "low"} if supported else {}
 
 
 def resolve_aux_endpoint(settings: Settings) -> tuple[str, str, str]:
@@ -265,9 +405,12 @@ class RoutingLLMClient:
     def complete_json(
         self, *, system: str, user: str, max_tokens: int | None = None,
         timeout_seconds: float | None = None,
+        response_format: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         with trace_scope(model_role="aux"):
             options = {} if timeout_seconds is None else {"timeout_seconds": timeout_seconds}
+            if response_format is not None:
+                options["response_format"] = response_format
             return self._aux.complete_json(system=system, user=user, max_tokens=max_tokens, **options)
 
     def complete_chat(
@@ -288,9 +431,15 @@ class RoutingLLMClient:
         stream: bool = False,
         max_tokens: int | None = None,
         timeout_seconds: float | None = None,
+        response_format: dict[str, Any] | None = None,
+        reasoning_effort: str | None = None,
     ) -> ChatResult:
         with trace_scope(model_role="main"):
             options = {} if timeout_seconds is None else {"timeout_seconds": timeout_seconds}
+            if response_format is not None:
+                options["response_format"] = response_format
+            if reasoning_effort is not None:
+                options["reasoning_effort"] = reasoning_effort
             return self._main.complete_chat_result(
                 messages,
                 temperature=temperature,
@@ -480,10 +629,12 @@ class MockLLM:
         self._script_i = 0
         self.calls: list[tuple[str, str]] = []
         self.chat_calls: list[list[dict[str, str]]] = []
+        self.chat_call_options: list[dict[str, Any]] = []
 
     def complete_json(
         self, *, system: str, user: str, max_tokens: int | None = None,
         timeout_seconds: float | None = None,
+        response_format: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         self.calls.append((system, user))
         blob = system + "\n" + user
@@ -521,10 +672,15 @@ class MockLLM:
         stream: bool = False,
         max_tokens: int | None = None,
         timeout_seconds: float | None = None,
+        response_format: dict[str, Any] | None = None,
+        reasoning_effort: str | None = None,
     ) -> ChatResult:
         if stream:
             raise NotImplementedError("streaming is reserved for a later milestone")
         self.chat_calls.append(messages)
+        self.chat_call_options.append({"temperature": temperature, "stream": stream,
+            "max_tokens": max_tokens, "timeout_seconds": timeout_seconds, "response_format": response_format,
+            **({"reasoning_effort": reasoning_effort} if reasoning_effort is not None else {})})
         blob = "\n".join(message.get("content", "") for message in messages)
         for key, value in self.chat_routes.items():
             if key in blob:

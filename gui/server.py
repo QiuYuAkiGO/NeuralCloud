@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -40,10 +41,11 @@ from gui.presets import DEFAULT_PRESET_ID, PresetLibrary
 from gui.service import HarnessChatService, Mode, new_run_id
 from harness.core.exceptions import EvidenceRequiredError, MemoryNotFoundError, PersonaLockedError
 from harness.llm.client import list_endpoint_models
+from harness.runtime.ownership import ControlMode, SharedDomainLease, require_development
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 HOST = "127.0.0.1"
-PORT = 8766
+PORT = int(os.environ.get("NC_GUI_PORT", "8790"))
 
 
 class ChatRequest(BaseModel):
@@ -135,36 +137,52 @@ def _persist(app: FastAPI, service: HarnessChatService) -> None:
     )
 
 
-def create_app(*, config_path: Path | None = None, presets_dir: Path | None = None) -> FastAPI:
+def create_app(
+    *, config_path: Path | None = None, presets_dir: Path | None = None,
+    development: bool = False, control_mode: ControlMode | None = None,
+    runtime_url: str | None = None, control_token: str | None = None,
+) -> FastAPI:
+    if not development:
+        if config_path is not None or presets_dir is not None:
+            raise ValueError("independent_gui_state_requires_development")
+        from gui.runtime_server import create_app as create_runtime_app
+
+        return create_runtime_app(runtime_url=runtime_url, control_token=control_token)
+    require_development("gui.independent_instance", control_mode=control_mode)
+    if config_path is None:
+        raise ValueError("independent_gui_requires_explicit_config_path")
+
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        require_development("gui.independent_instance", control_mode=control_mode)
         loop = asyncio.get_running_loop()
         subscribers: set[asyncio.Queue[dict[str, Any]]] = set()
         observer = QueueObserver(loop, subscribers)
         resolved = config_path if config_path is not None else default_config_path()
-        persisted = load_gui_settings(resolved)
-        library = PresetLibrary(working_dir=presets_dir if presets_dir is not None else resolved.parent / "presets")
-        active_id, open_ids = _resolve_open_presets(library, persisted)
-        service = HarnessChatService(
-            observer=observer,
-            mode=persisted.mode,
-            base_url=persisted.base_url,
-            model=persisted.model,
-            api_key=persisted.api_key,
-            aux_base_url=persisted.aux_base_url,
-            aux_model=persisted.aux_model,
-            aux_api_key=persisted.aux_api_key,
-            library=library,
-            active_preset_id=active_id,
-            open_preset_ids=open_ids,
-        )
-        apply_loaded_tuning(service.settings, persisted)
-        app.state.service = service
-        app.state.config_path = resolved
-        app.state.subscribers = subscribers
-        app.state.observer = observer
-        app.state.run_lock = asyncio.Lock()
-        yield
+        with SharedDomainLease("cognition", resolved, control_mode=control_mode, isolated=True):
+            persisted = load_gui_settings(resolved)
+            library = PresetLibrary(working_dir=presets_dir if presets_dir is not None else resolved.parent / "presets")
+            active_id, open_ids = _resolve_open_presets(library, persisted)
+            service = HarnessChatService(
+                observer=observer,
+                mode=persisted.mode,
+                base_url=persisted.base_url,
+                model=persisted.model,
+                api_key=persisted.api_key,
+                aux_base_url=persisted.aux_base_url,
+                aux_model=persisted.aux_model,
+                aux_api_key=persisted.aux_api_key,
+                library=library,
+                active_preset_id=active_id,
+                open_preset_ids=open_ids,
+            )
+            apply_loaded_tuning(service.settings, persisted)
+            app.state.service = service
+            app.state.config_path = resolved
+            app.state.subscribers = subscribers
+            app.state.observer = observer
+            app.state.run_lock = asyncio.Lock()
+            yield
 
     app = FastAPI(title="NeuralCloud Harness GUI", lifespan=lifespan)
 
@@ -186,7 +204,9 @@ def create_app(*, config_path: Path | None = None, presets_dir: Path | None = No
     @app.get("/api/status")
     async def status(session_id: str | None = None) -> dict[str, Any]:
         service: HarnessChatService = app.state.service
-        return service.status(session_id)
+        payload = service.status(session_id)
+        payload["authority"] = {"instance_mode": "development_isolated", "development": True}
+        return payload
 
     @app.get("/api/presets")
     async def list_presets() -> dict[str, Any]:
@@ -398,9 +418,15 @@ app = create_app()
 
 
 def main() -> None:
+    import argparse
     import uvicorn
 
-    uvicorn.run("gui.server:app", host=HOST, port=PORT, reload=False)
+    parser = argparse.ArgumentParser(description="Shared Runtime GUI; independent cognition requires development authority.")
+    parser.add_argument("--development", action="store_true")
+    parser.add_argument("--config-path", type=Path)
+    args = parser.parse_args()
+    selected = create_app(development=args.development, config_path=args.config_path)
+    uvicorn.run(selected, host=HOST, port=PORT, reload=False)
 
 
 if __name__ == "__main__":

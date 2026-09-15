@@ -18,6 +18,18 @@ OBSERVATION_SNAPSHOT = "observation.snapshot.v1"
 EVIDENCE_REFERENCE = "evidence.reference.v1"
 PHYSIOLOGY_BODY_STATE = "physiology.body-state.v1"
 PHYSIOLOGY_VIRTUAL_RESOURCE_LEDGER = "physiology.virtual-resource-ledger.v1"
+QQ_COMMUNICATION_READ = "communication.qq.read.v1"
+QQ_COMMUNICATION_SEND = "communication.qq.send.v1"
+QQ_COMMUNICATION_RECONCILE = "communication.qq.reconcile.v1"
+BOARD_READ = "expression.board.read.v1"
+BOARD_APPEND = "expression.board.append.v1"
+BOARD_RECONCILE = "expression.board.reconcile.v1"
+VOICE_PROFILES = "expression.voice.profiles.v1"
+VOICE_RENDER = "expression.voice.render.v1"
+VOICE_JOBS = "expression.voice.jobs.v1"
+VOICE_ASSETS = "expression.voice.assets.v1"
+WEB_SEARCH = "web.search.v1"
+WEB_READ = "web.read.v1"
 
 RUNTIME_CAPABILITIES = frozenset(
     {
@@ -29,6 +41,18 @@ RUNTIME_CAPABILITIES = frozenset(
         EVIDENCE_REFERENCE,
         PHYSIOLOGY_BODY_STATE,
         PHYSIOLOGY_VIRTUAL_RESOURCE_LEDGER,
+        QQ_COMMUNICATION_READ,
+        QQ_COMMUNICATION_SEND,
+        QQ_COMMUNICATION_RECONCILE,
+        BOARD_READ,
+        BOARD_APPEND,
+        BOARD_RECONCILE,
+        VOICE_PROFILES,
+        VOICE_RENDER,
+        VOICE_JOBS,
+        VOICE_ASSETS,
+        WEB_SEARCH,
+        WEB_READ,
     }
 )
 
