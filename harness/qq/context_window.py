@@ -134,6 +134,13 @@ def split_model_payload(payload: dict) -> tuple[dict, dict]:
     return base, turn
 
 
+def encode_model_payload(payload: dict) -> tuple[str, str]:
+    """Serialize the exact two user messages used for selection and inference."""
+    base, turn = split_model_payload(payload)
+    options = {"sort_keys": True, "ensure_ascii": False, "separators": (",", ":")}
+    return json.dumps(base, **options), json.dumps(turn, **options)
+
+
 def combined_user_payload(messages: list[dict]) -> dict:
     """Rebuild the logical payload from split user messages. Tests only."""
     merged: dict[str, Any] = {}

@@ -46,7 +46,7 @@ def test_projection_preserves_every_semantic_field_and_does_not_mutate_original(
             assert new == {key: value for key, value in old.items() if key not in {"group_evidence", "member_evidence"}}
     assert actual.payload["verified_self_aliases"] == [{key: value for key, value in before["verified_self_aliases"][0].items() if key != "evidence_refs"}]
     assert actual.payload["model_context_selection"]["proof_refs_stored_outside_model"] is True
-    assert actual.characters == len(decision._canonical(actual.payload))
+    assert actual.characters == sum(len(message) for message in decision.encode_model_payload(actual.payload))
 
 
 @pytest.mark.parametrize("corruption", ["missing", "foreign_member", "foreign_group"])
@@ -72,7 +72,7 @@ def test_budget_counts_omission_metadata_and_reserves_worst_escaped_assessment(s
         reply_style="conversational", reply_style_reason="\x00" * 256,
     )
     assert len(decision._canonical({**full.payload, "assessment": gate.model_dump()})) <= full.characters + reserved
-    assert full.characters == len(decision._canonical(full.payload))
+    assert full.characters == sum(len(message) for message in decision.encode_model_payload(full.payload))
     boundary = _select(payload, required=required, maximum=full.characters + reserved, reserve=reserved)
     assert boundary.fits
     too_small = _select(payload, required=required, maximum=full.characters + reserved - 1, reserve=reserved)

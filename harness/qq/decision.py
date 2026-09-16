@@ -34,8 +34,8 @@ from harness.pipeline.pipeline import InferencePipeline
 from harness.pipeline import parser as parser_module
 from harness.qq.context_budget import project_group_context, select_model_context
 from harness.qq.context_window import (
-    WINDOW_BLOCK_SIZE, combined_user_payload, decode_window_start, encode_window_start,
-    is_qq_gate_messages as _is_qq_gate_messages, select_append_window, split_closed_open, split_model_payload,
+    WINDOW_BLOCK_SIZE, combined_user_payload as combined_user_payload, decode_window_start, encode_model_payload, encode_window_start,
+    is_qq_gate_messages as _is_qq_gate_messages, select_append_window, split_closed_open,
 )
 from harness.qq.draft import (
     QQDraftError, _GROUP_DRAFT_RULES, _DraftCompiler, _evidence_refs, _load_configuration, emotion_draft_rules,
@@ -512,11 +512,10 @@ def _hash(value: Any) -> str:
     return hashlib.sha256(_canonical(value).encode("utf-8")).hexdigest()
 
 
-def _checked_model_payloads(base: dict, turn: dict, *, trace: QQTurnTrace,
+def _checked_model_payloads(payload: dict, *, trace: QQTurnTrace,
                             stage: Literal["base", "final", "persona"],
                             reserve: int = 0, max_characters: int = MAX_GROUP_CONTEXT_CHARACTERS) -> tuple[str, str]:
-    encoded_base = _canonical(base)
-    encoded_turn = _canonical(turn)
+    encoded_base, encoded_turn = encode_model_payload(payload)
     total = len(encoded_base) + len(encoded_turn)
     trace.add_counter(f"context_{stage}_characters", total)
     trace.add_counter(f"context_{stage}_estimated_tokens", estimate_tokens(encoded_base) + estimate_tokens(encoded_turn))
@@ -555,8 +554,8 @@ def _assessment_reserve() -> int:
         raise ValueError("Unbounded QQ assessment schema")
 
     largest = largest_value(schema)
-    # An existing nonempty object needs a comma before this new field.
-    return len(_canonical({"assessment": largest})) - 1
+    # The persona receives this as a separate user message, with its own braces.
+    return len(_canonical({"assessment": largest}))
 
 
 def _checked_model_payload(value: dict, *, trace: QQTurnTrace, stage: Literal["base", "final", "persona"],
@@ -1435,6 +1434,10 @@ def decide_qq_reply(
         # Never leave a pending row or turn corrupt evidence into a model hint.
         cross_turn_context_invalid = True
         trace.record("decision.cross_turn_context", outcome="error", error_type="model_invalid")
+    if emotion_on:
+        # Reuse the exact text validated before reservation and fingerprinted
+        # above. Selection must budget every eventual model-message field.
+        payload["emotion_guidance_text"] = trusted_fingerprint["emotion_guidance"]["text"]
     assessment_reserve = _assessment_reserve()
     input_character_budget = settings.qq_input_token_budget * 2
     trace.add_counter("context_input_token_budget", settings.qq_input_token_budget)
@@ -1499,11 +1502,8 @@ def decide_qq_reply(
         llm = None
         usage = TokenUsage()
         try:
-            if emotion_on:
-                payload["emotion_guidance_text"] = render_emotion_guidance(emotion_guidance, homeostasis=summary)
-            base_context, turn_context = split_model_payload(payload)
             encoded_base, encoded_turn = _checked_model_payloads(
-                base_context, turn_context, trace=trace, stage="final",
+                payload, trace=trace, stage="final",
                 reserve=assessment_reserve, max_characters=input_character_budget)
             user_payload = encoded_base + encoded_turn
             # The same reasoning model serves the persona parser and gate.

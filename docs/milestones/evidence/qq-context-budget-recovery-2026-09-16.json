@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "incident_day": "2026-09-16",
+  "timezone": "Asia/Shanghai",
+  "incident": {
+    "event_id": "qq-watch-event:cd8ac8c900a7dcbc7838eea4d9e4514d",
+    "decision_id": "qq-decision:3bbc24d61fb84245bb6edf8599a392f6",
+    "received_at": "2026-09-16T01:42:07.649852+00:00",
+    "fallback_delivered_at": "2026-09-16T01:42:31.153129+00:00",
+    "fallback_message_id": "1225599381",
+    "decision_source": "model_invalid",
+    "outcome": "error_fallback",
+    "reason_code": "context_budget_exceeded",
+    "encoded_context_characters": 176672,
+    "assessment_reserve_characters_before_fix": 15489,
+    "configured_character_budget": 192000,
+    "excess_characters": 161,
+    "failure_before_reply_model_call": true,
+    "qq_transport_delivery_succeeded": true,
+    "uncertain_deliveries": 0
+  },
+  "correction": {
+    "selection_and_final_check_share_actual_two_message_encoder": true,
+    "validated_emotion_guidance_included_before_selection": true,
+    "standalone_assessment_envelope_fully_reserved": true,
+    "configured_budget_increased": false,
+    "required_observations_truncated": false,
+    "old_message_resent": false
+  },
+  "tests": {
+    "passed": 213,
+    "failed": 0,
+    "groups": [
+      {
+        "scope": "budget envelopes, selection, context window, decision budget, input budget, brief reply and decision",
+        "passed": 160
+      },
+      {
+        "scope": "emotion protocol time, emotion window, cached draft proof, goal context and idle decision",
+        "passed": 53
+      }
+    ],
+    "ruff": "passed",
+    "diff_check": "passed"
+  },
+  "release": {
+    "previous": "20260916-recovery-v2",
+    "target": "20260916-context-v1",
+    "files": 352,
+    "archive_sha256": "ba33251e3af57a05fd4900cd5bffc6014584f8bd2c18b835db7762a89293217b",
+    "active": "20260916-context-v1",
+    "activation_seconds": 235.37,
+    "verified_files": 352
+  },
+  "backup": {
+    "path": "/var/backups/neuralcloud/incident-20260916-before-context-v1",
+    "verified": true,
+    "files": 2228,
+    "bytes": 2021199023,
+    "sqlite_databases": 18,
+    "journal_records": 162257,
+    "manifest_sha256": "846bf848674d08d8f66aac5e80b43bebd3a3b491460c854dfbcef99e4472a25b",
+    "journal_last_hash": "6a4fe760bce2239a4453ea792f8643d0d47079dd744904f1eb1f4a481fd6e4cb"
+  },
+  "live_verification": {
+    "verified_at": "2026-09-16T02:02:53.106698+00:00",
+    "services": {
+      "cognitive": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq-direct": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "uncertain_deliveries": 0,
+    "qq": {
+      "connected": true,
+      "automatic_send": true,
+      "last_error_type": null,
+      "last_reconciliation_error": null
+    },
+    "runtime": {
+      "http": 200,
+      "seconds": 0.013,
+      "lifecycle": "RUNNING",
+      "queue": {
+        "size": 0,
+        "capacity": 1024,
+        "high_watermark": 819,
+        "by_priority": {},
+        "coalesced": 0,
+        "dropped": 0,
+        "rejected": 0
+      }
+    },
+    "last_checked_at": "2026-09-16T02:04:28.220545+00:00",
+    "new_live_reply_verified": false,
+    "new_live_reply_status": "Awaiting a new QQ message; startup history observations only so far. No synthetic group message was sent."
+  }
+}

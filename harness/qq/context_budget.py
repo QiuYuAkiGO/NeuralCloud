@@ -9,13 +9,13 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime
-import json
 
+from harness.qq.context_window import encode_model_payload
 from harness.qq.reply_context import refresh_topic_window
 
 
 def _size(value: dict) -> int:
-    return len(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+    return sum(len(message) for message in encode_model_payload(value))
 
 
 def project_group_context(context: dict) -> dict:
@@ -54,7 +54,8 @@ def select_model_context(
 ) -> ModelContextSelection:
     """Keep mandatory records; remove only optional complete historical items.
 
-    Budget includes omission metadata and the maximum later assessment. Receipt
+    Budget includes both serialized user-message envelopes, omission metadata,
+    and the maximum later assessment. Receipt
     inputs must already be validated semantic projections in chronological order.
     Latest numeric profiles remain even when a member's old observations are
     omitted; every retained observation also keeps its original profile snapshot.
