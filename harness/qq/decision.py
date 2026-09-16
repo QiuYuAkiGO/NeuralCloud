@@ -55,8 +55,8 @@ from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace, cla
 from infra.trace.request_spans import trace_scope
 
 
-PROMPT_VERSION = "qq-group-turn-taking-v18"
-PRIVATE_PROMPT_VERSION = "qq-private-turn-taking-v6"
+PROMPT_VERSION = "qq-group-turn-taking-v19"
+PRIVATE_PROMPT_VERSION = "qq-private-turn-taking-v7"
 MAX_GROUP_CONTEXT_CHARACTERS = DEFAULT_QQ_INPUT_TOKEN_BUDGET * 2
 _CONTEXT_BUDGET_REASON = "context_budget_exceeded：模型上下文超过字符预算，本次未生成可发送正文；这不是网络故障或模型 JSON 解析失败。"
 _SENDABLE_SPEAK_OUTCOMES = frozenset({"ready", "error_fallback"})
@@ -421,9 +421,32 @@ def effective_reply_segments(decision: QQReplyDecision) -> list[str]:
     return [decision.reply] if decision.reply else []
 
 
-def _prepared_group_segments(final, trace: QQTurnTrace) -> tuple[list[str], str]:
+def _conversational_sentence_segments(segments: list[str]) -> list[str] | None:
+    """Split casual prose on Chinese periods and drop those delimiters.
+
+    Question and exclamation marks stay with their sentence. Results above the
+    three-bubble plan keep the original segments so long replies are not cut.
+    """
+    sentences: list[str] = []
+    for part in segments:
+        if "。" not in part:
+            sentences.append(part)
+            continue
+        for piece in re.split(r"。+", part):
+            text = piece.strip()
+            if text:
+                sentences.append(text)
+    if not sentences or len(sentences) > 3:
+        return None
+    return sentences
+
+
+def _prepared_group_segments(final, trace: QQTurnTrace, *,
+                             reply_style: Literal["conversational", "formal"]) -> tuple[list[str], str]:
     """Accept explicit paragraph boundaries without cutting or rewriting prose.
 
+    Conversational replies may additionally split on Chinese periods. Formal
+    replies keep generated punctuation and paragraph or protocol boundaries.
     Protocol splitting already happened in the shared pipeline. Empty parts,
     remaining single line breaks, and too many paragraphs still fail closed.
     """
@@ -433,11 +456,15 @@ def _prepared_group_segments(final, trace: QQTurnTrace) -> tuple[list[str], str]
             or final.text != "\n\n".join(original)):
         raise QQDraftError("The prepared reply segments failed validation.")
     flattened = [part for body in original for part in re.split(r"\r?\n[ \t]*(?:\r?\n)+", body)]
-    reply = "\n\n".join(flattened)
-    segments = _validate_reply_segments(flattened, reply)
     if flattened != original:
         trace.add_counter("paragraph_segmentation")
-    return segments, reply
+    if reply_style == "conversational":
+        sentences = _conversational_sentence_segments(flattened)
+        if sentences is not None and sentences != flattened:
+            trace.add_counter("sentence_segmentation")
+            flattened = sentences
+    reply = "\n\n".join(flattened)
+    return _validate_reply_segments(flattened, reply), reply
 
 
 class QQSegmentDeliveryReceipt(_StrictModel):
@@ -1583,7 +1610,7 @@ def decide_qq_reply(
                             raise RuntimeError("A QQ persona helper model call failed.")
                         if not final.text.strip() or len(final.text) > 8000 or (final.validation is not None and final.validation.verdict != "pass"):
                             raise QQDraftError("The prepared reply failed validation.")
-                        segments, reply = _prepared_group_segments(final, trace)
+                        segments, reply = _prepared_group_segments(final, trace, reply_style=choice.reply_style)
                         result = result.model_copy(update={"action": "speak", "reply": reply,
                             "reply_segments": segments, "outcome": "ready",
                             "style_diagnostics": {**style_diagnostics(reply, segments=len(segments),
