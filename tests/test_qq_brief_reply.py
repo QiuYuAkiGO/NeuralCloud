@@ -65,7 +65,7 @@ def test_missing_detail_plan_asks_the_concrete_gap_without_inventory_or_unrelate
         assert "first_point直接写成询问日期、原话或必要线索的具体疑问句" in rules
         assert "问句本身已经表达信息缺口，necessary_boundary默认null" in rules
         assert "不附带无关已知事实盘点，也不假装知道" in rules
-    assert decision.PROMPT_VERSION == "qq-group-turn-taking-v17"
+    assert decision.PROMPT_VERSION == "qq-group-turn-taking-v18"
     assert decision.PRIVATE_PROMPT_VERSION == "qq-private-turn-taking-v6"
 
 

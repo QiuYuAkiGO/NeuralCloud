@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-16",
+  "scope": "Lower the gate threshold for joining an ongoing group conversation after a new incoming message.",
+  "prompt_versions": {
+    "old": "qq-group-turn-taking-v17",
+    "new": "qq-group-turn-taking-v18",
+    "private": "qq-private-turn-taking-v6"
+  },
+  "unchanged": {
+    "direct_cooldown_seconds": 10,
+    "ambient_cooldown_seconds": 60,
+    "quiet_time_opportunity_rules": true,
+    "original_deadlines": true,
+    "newer_context_and_uncertain_delivery_guards": true,
+    "private_prompt": true
+  },
+  "validation": {
+    "regression_passed": 192,
+    "ruff": "passed",
+    "diff_check": "passed"
+  },
+  "gate_comparison": {
+    "model": "deepseek-v4-flash",
+    "temperature": 0.2,
+    "synthetic_cases": 8,
+    "model_calls": 16,
+    "stateless": true,
+    "qq_test_messages_sent": 0,
+    "ordinary_participation": {
+      "cases": 4,
+      "old_speak": 1,
+      "new_speak": 4
+    },
+    "wait_controls": {
+      "cases": 4,
+      "old_wait": 4,
+      "new_wait": 4
+    },
+    "results": [
+      {
+        "case_id": "ambient_share",
+        "expected": "speak",
+        "old_action": "wait",
+        "new_action": "speak",
+        "description": "未点名的具体生活分享，有细节可自然接话。"
+      },
+      {
+        "case_id": "ambient_opinion",
+        "expected": "speak",
+        "old_action": "wait",
+        "new_action": "speak",
+        "description": "两位成员公开闲聊观点，角色可以加入一个具体看法。"
+      },
+      {
+        "case_id": "described_image",
+        "expected": "speak",
+        "old_action": "speak",
+        "new_action": "speak",
+        "description": "未点名分享图片，有已完成的可靠视觉描述，可以就具体画面接话。"
+      },
+      {
+        "case_id": "ambient_preference",
+        "expected": "speak",
+        "old_action": "wait",
+        "new_action": "speak",
+        "description": "成员交换兴趣偏好，角色无需等提问即可表达自己的具体偏好。"
+      },
+      {
+        "case_id": "answered_duplicate",
+        "expected": "wait",
+        "old_action": "wait",
+        "new_action": "wait",
+        "description": "同一问题已经完整回复，当前仅再次原样点名，无新增条件或澄清需求。"
+      },
+      {
+        "case_id": "explicit_do_not_interrupt",
+        "expected": "wait",
+        "old_action": "wait",
+        "new_action": "wait",
+        "description": "两人明确请求本轮不要插话，继续等待。"
+      },
+      {
+        "case_id": "unknown_image",
+        "expected": "wait",
+        "old_action": "wait",
+        "new_action": "wait",
+        "description": "仅有未点名图片且视觉分析未知，没有正文依据，不能猜图接话。"
+      },
+      {
+        "case_id": "self_only_update",
+        "expected": "wait",
+        "old_action": "wait",
+        "new_action": "wait",
+        "description": "仅本人新消息，生产路径应在模型前由 self_only_update 拦截；另检查提示不会自答。"
+      }
+    ],
+    "limitation": "One paired sample per synthetic case; these results are not a production response-rate estimate. Self-only input is normally blocked before the model.",
+    "synthetic_fixture_sha256": "bd46288a6af3a487a25ad9fdc6c8f7125d15e41b59359ba7b8fc9ea13b85d189"
+  },
+  "release": {
+    "target": "20260916-participation-v1",
+    "previous": "20260916-context-v1",
+    "files": 352,
+    "archive_sha256": "1508d85f0d50fb71d389c720e499c19b4307b11778b2110a93afaf725dba6b14",
+    "active": "20260916-participation-v1",
+    "verified_files": 352,
+    "activation_seconds": 232.95
+  },
+  "backup": {
+    "path": "/var/backups/neuralcloud/incident-20260916-before-participation-v1",
+    "verified": true,
+    "files": 2340,
+    "sqlite_databases": 18,
+    "bytes": 2065050885,
+    "manifest_sha256": "51311ad7b683cbb6a9736190f14940f08f5a7092b5f929f9c32d20d011b0624f",
+    "journal_records": 163959
+  },
+  "live_verification": {
+    "verified_at": "2026-09-16T02:42:56.758988+00:00",
+    "loaded_prompt_versions": {
+      "group_prompt": "qq-group-turn-taking-v18",
+      "private_prompt": "qq-private-turn-taking-v6"
+    },
+    "services": {
+      "cognitive": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq-direct": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "qq": {
+      "connected": true,
+      "automatic_send": true,
+      "last_error_type": null,
+      "last_reconciliation_error": null
+    },
+    "uncertain_deliveries": 0,
+    "runtime": {
+      "http": 200,
+      "seconds": 0.013,
+      "lifecycle": "RUNNING"
+    },
+    "new_group_reply_observed_after_deployment": false
+  }
+}
