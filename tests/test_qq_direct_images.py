@@ -49,7 +49,8 @@ def public_dns(monkeypatch):
 
 
 def run_image(tmp_path, segment=None, *, data=None, handler=None, api_result=None, api=None,
-              vision=None, deadline=None, roots=(), hosts=images.DEFAULT_QQ_MEDIA_HOSTS):
+              vision=None, deadline=None, roots=(), hosts=images.DEFAULT_QQ_MEDIA_HOSTS,
+              reserve_seconds=0.0):
     calls = []
     requests = []
     data = picture() if data is None else data
@@ -69,6 +70,7 @@ def run_image(tmp_path, segment=None, *, data=None, handler=None, api_result=Non
                 segment or {"file": "abc123.png"}, call_api=api or default_api,
                 cache_dir=tmp_path, llm=vision, deadline=deadline or QQDeadline.after(20),
                 allowed_local_roots=roots, allowed_hosts=hosts, http_client=client,
+                reserve_seconds=reserve_seconds,
             )
 
     return asyncio.run(execute()), vision, calls, requests
@@ -78,7 +80,7 @@ def run_image(tmp_path, segment=None, *, data=None, handler=None, api_result=Non
     ("PNG", "image/png", "png"), ("JPEG", "image/jpeg", "jpg"),
     ("WEBP", "image/webp", "webp"), ("GIF", "image/gif", "gif"),
 ])
-def test_formats_preserve_original_and_send_normalized_png(tmp_path, fmt, media, ext):
+def test_formats_preserve_original_and_send_normalized_jpeg(tmp_path, fmt, media, ext):
     data = picture(fmt)
     result, vision, calls, _ = run_image(tmp_path, data=data)
     digest = hashlib.sha256(data).hexdigest()
@@ -91,11 +93,13 @@ def test_formats_preserve_original_and_send_normalized_png(tmp_path, fmt, media,
     assert calls[0][:2] == ("get_image", {"file": "abc123.png"})
     contents = vision.calls[0][0][1]["content"]
     encoded = contents[1]["image_url"]["url"]
+    assert encoded.startswith("data:image/jpeg;base64,")
+    assert contents[1]["image_url"]["detail"] == "low"
     normalized = base64.b64decode(encoded.split(",", 1)[1])
     with Image.open(io.BytesIO(normalized)) as image:
-        assert image.format == "PNG"
+        assert image.format == "JPEG"
     assert "不可信" in vision.calls[0][0][0]["content"]
-    assert 0 < vision.calls[0][1]["timeout_seconds"] <= 20
+    assert 0 < vision.calls[0][1]["timeout_seconds"] <= images.MAX_VISION_SECONDS
 
 
 def test_official_url_is_preferred_and_dns_address_pinned(tmp_path):
@@ -244,21 +248,34 @@ def test_napcat_base64_is_validated_and_bounded(tmp_path, monkeypatch, value, er
     assert result.error == error and not vision.calls
 
 
+def test_sticker_sized_animation_sends_one_low_detail_frame(tmp_path):
+    result, vision, _, _ = run_image(tmp_path, data=picture("GIF", animated=True))
+    assert result.status == "described" and result.frame_count == 4
+    assert result.sampled_frame_indices == [0] and result.animation_sampled
+    contents = vision.calls[0][0][1]["content"]
+    assert len(contents) == 2 and contents[1]["image_url"]["detail"] == "low"
+    assert any("未完整" in item for item in result.uncertainties)
+
+
 @pytest.mark.parametrize("fmt", ["GIF", "WEBP", "PNG"])
-def test_animations_only_send_initial_three_frames(tmp_path, fmt):
-    result, vision, _, _ = run_image(tmp_path, data=picture(fmt, animated=True))
+def test_large_animations_only_send_initial_three_frames(tmp_path, fmt):
+    result, vision, _, _ = run_image(tmp_path, data=picture(fmt, size=(900, 700), animated=True))
     assert result.status == "described" and result.frame_count == 4
     assert result.sampled_frame_indices == [0, 1, 2] and result.animation_sampled
-    assert len(vision.calls[0][0][1]["content"]) == 4
+    contents = vision.calls[0][0][1]["content"]
+    assert len(contents) == 4 and contents[1]["image_url"]["detail"] == "high"
     assert any("未完整" in item for item in result.uncertainties)
 
 
 def test_large_picture_is_resized_for_model_but_original_is_preserved(tmp_path):
     data = picture(size=(3000, 1600))
     result, vision, _, _ = run_image(tmp_path, data=data)
-    encoded = vision.calls[0][0][1]["content"][1]["image_url"]["url"]
+    image_block = vision.calls[0][0][1]["content"][1]["image_url"]
+    assert image_block["detail"] == "high"
+    encoded = image_block["url"]
     with Image.open(io.BytesIO(base64.b64decode(encoded.split(",")[1]))) as normalized:
         assert max(normalized.size) <= images.MAX_FRAME_EDGE
+        assert normalized.format == "JPEG"
     assert result.width == 3000 and result.height == 1600
     assert (tmp_path / f"{result.sha256}.png").read_bytes() == data
 
@@ -377,3 +394,56 @@ def test_unrecognized_bridge_error_does_not_leak_content(tmp_path):
     result, _, _, _ = run_image(tmp_path, api=api)
     assert result.error == "bridge_image_failed"
     assert "secret" not in result.model_dump_json()
+
+
+def test_same_pixels_reuse_vision_cache(tmp_path):
+    vision = Vision()
+    first, vision, _, _ = run_image(tmp_path, vision=vision)
+    second, vision, _, _ = run_image(tmp_path, vision=vision)
+    assert first.status == second.status == "described"
+    assert second.description == first.description and second.ocr_text == first.ocr_text
+    assert len(vision.calls) == 1
+    assert (tmp_path / f"{first.sha256}.vision.json").is_file()
+
+
+def test_failed_vision_is_not_cached(tmp_path):
+    first, _, _, _ = run_image(tmp_path, vision=Vision(error=RuntimeError("unavailable")))
+    assert first.status == "unknown" and first.evidence_ref
+    second, vision, _, _ = run_image(tmp_path)
+    assert second.status == "described" and len(vision.calls) == 1
+
+
+def test_prompt_change_invalidates_vision_cache(tmp_path, monkeypatch):
+    vision = Vision()
+    run_image(tmp_path, vision=vision)
+    monkeypatch.setattr(images, "_PROMPT", images._PROMPT + "\n版本变化。")
+    run_image(tmp_path, vision=vision)
+    assert len(vision.calls) == 2
+
+
+def test_model_change_invalidates_vision_cache(tmp_path):
+    vision = Vision()
+    vision.settings = Settings(_env_file=None, llm_model="vision-a", call_log_enabled=False,
+                               record_interaction=False)
+    run_image(tmp_path, vision=vision)
+    vision.settings = Settings(_env_file=None, llm_model="vision-b", call_log_enabled=False,
+                               record_interaction=False)
+    run_image(tmp_path, vision=vision)
+    assert len(vision.calls) == 2
+
+
+def test_vision_timeout_is_capped_below_turn_deadline(tmp_path):
+    _, vision, _, _ = run_image(tmp_path, deadline=QQDeadline.after(60))
+    assert 0 < vision.calls[0][1]["timeout_seconds"] <= images.MAX_VISION_SECONDS
+
+
+def test_reply_reserve_caps_vision_without_dropping_pixels(tmp_path):
+    result, vision, _, _ = run_image(tmp_path, deadline=QQDeadline.after(20), reserve_seconds=18)
+    assert result.status == "described" and result.evidence_ref
+    assert 0 < vision.calls[0][1]["timeout_seconds"] <= 2.5
+
+
+def test_exhausted_reserve_skips_vision_after_storing_pixels(tmp_path):
+    result, vision, _, _ = run_image(tmp_path, deadline=QQDeadline.after(10), reserve_seconds=18)
+    assert result.error == "deadline_expired" and result.evidence_ref and not vision.calls
+    assert result.description is None and result.ocr_text is None

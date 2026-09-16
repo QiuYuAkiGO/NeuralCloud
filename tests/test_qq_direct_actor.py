@@ -221,6 +221,43 @@ def test_readonly_group_records_pixels_and_shared_image_analysis_without_sending
     assert not shared.query(SharedReadScope(audience=f"qq:group:{MAIN}", kinds=("qq_observation",))).records
 
 
+def test_repeated_sticker_skips_second_vision_call(actor_factory):
+    actor, cognition, model = actor_factory()
+
+    async def execute():
+        await actor.verify_connection()
+        first = await consume(actor, incoming(1, group=GUEST, images=True))
+        second = await consume(actor, incoming(2, group=GUEST, images=True))
+        return first, second
+
+    first, second = asyncio.run(execute())
+    assert first["state"] == second["state"] == "observed" and not cognition.calls
+    assert len(model.calls) == 1
+    analyses = [item.image_analysis[0] for item in messages(actor, GUEST)]
+    assert len(analyses) == 2 and {item.status for item in analyses} == {"described"}
+    assert analyses[0].description == analyses[1].description == "绿色矩形"
+
+
+def test_sendable_image_reserves_reply_budget(actor_factory, monkeypatch):
+    actor, _, _ = actor_factory()
+    seen = []
+
+    async def image(*args, **kwargs):
+        seen.append(kwargs.get("reserve_seconds"))
+        return DirectImageObservation(status="described", evidence_ref="qq-direct-image:sha256:" + "a" * 64,
+            description="图片说明", ocr_text=None)
+
+    monkeypatch.setattr(direct, "load_and_describe_image", image)
+
+    async def execute():
+        await actor.verify_connection()
+        return await consume(actor, incoming(images=True))
+
+    asyncio.run(execute())
+    assert seen == [direct.REPLY_RESERVE_SECONDS]
+
+
+
 def test_long_ocr_is_bounded_without_rewriting_author_message(actor_factory, monkeypatch):
     actor, _, _ = actor_factory()
 

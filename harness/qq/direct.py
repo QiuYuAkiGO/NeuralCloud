@@ -14,13 +14,15 @@ import signal
 import sqlite3
 import time
 
+import httpx
+
 from harness.llm.client import OpenAICompatClient
 from harness.core.error_notice import ERROR_FALLBACK_SEND_SECONDS
 from harness.qq.decision import (QQVerifiedSelfAlias, _frozen_decision, effective_reply_segments,
     get_qq_delivery, get_qq_segment_deliveries,
     record_qq_protocol_delivery, record_qq_protocol_segment_delivery, sendable_speak_outcome)
 from harness.qq.direct_config import DirectQQSettings, atomic_status
-from harness.qq.direct_images import load_and_describe_image
+from harness.qq.direct_images import REPLY_RESERVE_SECONDS, load_and_describe_image
 from harness.qq.direct_store import DirectStore, message_parts, normalize_message, numeric, utcnow
 from harness.qq.direct_store import normalize_evidence
 from harness.qq.conversation import conversation_scope, private_scope_id
@@ -218,22 +220,31 @@ class DirectQQActor:
             observed_at=datetime.fromisoformat(event["received_at"]),
             group_evidence=[self.group_evidence[event["group_id"]]], member_evidence=[ref])).profile
         analyses, refs = [], [ref, message_ref]
-        for index, image in enumerate(event["images"], 1):
-            value = await load_and_describe_image(image, call_api=self.client.call,
-                cache_dir=self.settings.image_cache_dir, llm=self.llm, deadline=deadline,
-                allowed_local_roots=tuple(self.settings.allowed_local_image_roots))
-            if value.evidence_ref:
-                refs.append(value.evidence_ref)
-            error = value.error if value.error in {"download_failed", "unsupported_media", "vision_failed",
-                "deadline_expired", "invalid_image", "image_too_large", "unavailable"} else "unavailable"
-            uncertainties = value.uncertainties[:16]
-            ocr = value.ocr_text or None
-            if ocr is not None and len(ocr) > 6000:
-                ocr = ocr[:6000]
-                uncertainties = [*uncertainties[:15], "OCR因上下文预算截断；原图证据仍保留。"]
-            analyses.append(QQImageAnalysis(image_index=index, status=value.status, evidence_ref=value.evidence_ref,
-                description=value.description or None, ocr_text=ocr,
-                uncertainties=uncertainties, error=None if value.status == "described" else error))
+        sendable = (not event["historical"] and not event["own"]
+                    and self.conversations[event["group_id"]].send)
+        reserve = REPLY_RESERVE_SECONDS if sendable else 0.0
+        owned_client = httpx.AsyncClient(trust_env=False, follow_redirects=False) if event["images"] else None
+        try:
+            for index, image in enumerate(event["images"], 1):
+                value = await load_and_describe_image(image, call_api=self.client.call,
+                    cache_dir=self.settings.image_cache_dir, llm=self.llm, deadline=deadline,
+                    allowed_local_roots=tuple(self.settings.allowed_local_image_roots),
+                    http_client=owned_client, reserve_seconds=reserve)
+                if value.evidence_ref:
+                    refs.append(value.evidence_ref)
+                error = value.error if value.error in {"download_failed", "unsupported_media", "vision_failed",
+                    "deadline_expired", "invalid_image", "image_too_large", "unavailable"} else "unavailable"
+                uncertainties = value.uncertainties[:16]
+                ocr = value.ocr_text or None
+                if ocr is not None and len(ocr) > 6000:
+                    ocr = ocr[:6000]
+                    uncertainties = [*uncertainties[:15], "OCR因上下文预算截断；原图证据仍保留。"]
+                analyses.append(QQImageAnalysis(image_index=index, status=value.status, evidence_ref=value.evidence_ref,
+                    description=value.description or None, ocr_text=ocr,
+                    uncertainties=uncertainties, error=None if value.status == "described" else error))
+        finally:
+            if owned_client is not None:
+                await owned_client.aclose()
         observation = self.memory.record_protocol_observation(QQVisualObservationInput(group_id=event["group_id"],
             member_id=event["member_id"], profile_record_id=profile.record_id, capture_id=event["event_id"],
             capture_item_id=event["event_id"], observed_at=datetime.fromisoformat(event["message_time"]), text=event["text"],
