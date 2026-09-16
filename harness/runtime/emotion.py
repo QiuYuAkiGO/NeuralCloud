@@ -37,12 +37,22 @@ def project_homeostasis(payload: dict, revision: int) -> dict:
 
 
 async def with_emotion_context(supervisor, event, envelope):
-    """A nested, journaled observation, sharing the original turn deadline."""
+    """A nested, journaled observation, sharing the original turn deadline.
+
+    QQ preparation reads a previously committed affect snapshot instead of
+    waiting for appraisal. Runtime submits new stimuli through AffectWorker.
+    """
     if (envelope.command_type not in EXPRESSION_COMMANDS
+            or envelope.command_type == "PrepareQQResponse"
             or getattr(supervisor.manifest, "emotion_mode", "off") == "off"
             or supervisor.manifest.grounded_agency is not None
             or envelope.payload.get("mode") == "grounded_agency_decision"):
         return envelope
+    return await attach_emotion_context(supervisor, event, envelope)
+
+
+async def attach_emotion_context(supervisor, event, envelope):
+    """Journal ObserveEmotion and attach the frozen reference to ``envelope``."""
     # Only a previously journaled command may supply a frozen reference.
     supervisor._sync_command_index()
     if envelope.idempotency_key in supervisor._command_intent_seqs and envelope.payload.get("emotion_context_ref"):
@@ -53,6 +63,7 @@ async def with_emotion_context(supervisor, event, envelope):
     source = dict(envelope.payload)
     source.pop("emotion_context_ref", None)
     source.pop("emotion_revision", None)
+    source.pop("emotion_snapshot", None)
     if envelope.command_type == "PrepareResponse":
         source.setdefault("source_time", event.source_time)
     if envelope.command_type == "PrepareQQResponse":
@@ -75,7 +86,8 @@ async def with_emotion_context(supervisor, event, envelope):
             "homeostasis": project_homeostasis(supervisor._homeostasis_snapshot.payload,
                                                 supervisor._homeostasis_snapshot.revision)})
     observation = observation.model_copy(update={"deadline": min(observation.deadline, envelope.deadline)})
-    observed = await supervisor._invoke_domain(service="cognitive", envelope=observation, method=method, event=event)
+    observed = await supervisor._invoke_domain(service="cognitive", envelope=observation, method=method,
+        event=event, degrade_on_failure=True)
     result = observed.result or {}
     if result.get("emotion_context_ref") != context_id:
         raise ValueError("emotion observation context binding mismatch")
@@ -124,6 +136,8 @@ def observation_input(adapter, command):
 
 def shared_observation_input(host, command):
     """QQ sources are re-read and verified inside the Cognitive owner."""
+    if getattr(command, "command_type", None) == "AppraiseAffect":
+        return affect_observation_input(host, command)
     if command.payload.get("source_command_type") != "PrepareQQResponse":
         return observation_input(host.adapter, command)
     import os
@@ -134,7 +148,8 @@ def shared_observation_input(host, command):
     from harness.runtime.qq_turns import _source
 
     source = dict(command.payload["source_payload"])
-    for key in ("runtime_goal_context", "runtime_web_context", "emotion_context_ref", "emotion_revision"):
+    for key in ("runtime_goal_context", "runtime_web_context", "emotion_context_ref",
+                "emotion_revision", "emotion_snapshot"):
         source.pop(key, None)
     request = QQSharedPrepareRequest.model_validate(source)
     settings = host.shared.qq_settings
@@ -156,3 +171,48 @@ def shared_observation_input(host, command):
     return EmotionInput(context_id=command.payload["context_id"], scope=scope, as_of=command.issued_at,
         persona=host.chat.memory.get_persona(), homeostasis=command.payload.get("homeostasis") or {},
         messages=messages, new_source_ids=new_ids, deadline_at=min(command.deadline, request.deadline_at))
+
+
+def affect_observation_input(host, command):
+    """Re-verify each merged trigger after the QQ turn; never trust Runtime text."""
+    import os
+    from pathlib import Path
+    from harness.emotion import EmotionInput
+    from harness.qq.emotion_window import build_qq_emotion_messages
+    from harness.qq.shared import QQSharedPrepareRequest
+    from harness.runtime.qq_turns import _source
+
+    payload = command.payload
+    settings = host.shared.qq_settings
+    if settings is None:
+        raise ValueError("emotion QQ owner is not configured")
+    configured = os.environ.get("NC_QQ_WATCHER_CONFIG")
+    status = getattr(settings, "watcher_status_file", None)
+    watcher = Path(configured) if configured else status.parent / "watcher.json" if status else None
+    protocol_state_db = None
+    transport = payload["transport"]
+    if transport == "onebot":
+        from harness.qq.direct_config import DirectQQSettings
+
+        protocol_state_db = DirectQQSettings.read(Path(os.environ["NC_QQ_DIRECT_CONFIG"])).state_db
+    pairs = []
+    for trigger in payload.get("triggers") or []:
+        request = QQSharedPrepareRequest.model_validate({
+            "transport": transport, "group_id": payload["group_id"],
+            "self_member_id": payload["self_member_id"], "trigger_member_id": trigger["member_id"],
+            "deadline_at": trigger["deadline_at"],
+            "trace": {"trace_id": trigger["trace_id"], "event_id": trigger["event_id"],
+                      "first_seen_at": trigger["first_seen_at"],
+                      "first_seen_mono": trigger.get("first_seen_mono", 0)},
+        })
+        _source(settings, watcher, request, completed_replay=True)
+        pairs.append((trigger["event_id"], trigger["member_id"]))
+    scope, messages, new_ids = build_qq_emotion_messages(
+        memory_db=settings.memory_db, group_id=payload["group_id"],
+        self_member_id=payload["self_member_id"], as_of=command.issued_at,
+        triggers=pairs, protocol_state_db=protocol_state_db)
+    if payload.get("scope") not in {None, scope}:
+        raise ValueError("emotion_affect_scope_mismatch")
+    return EmotionInput(context_id=payload["context_id"], scope=scope, as_of=command.issued_at,
+        persona=host.chat.memory.get_persona(), homeostasis=payload.get("homeostasis") or {},
+        messages=messages, new_source_ids=new_ids, deadline_at=command.deadline, isolated=True)

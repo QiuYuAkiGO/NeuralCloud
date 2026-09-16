@@ -30,6 +30,8 @@ VOICE_JOBS = "expression.voice.jobs.v1"
 VOICE_ASSETS = "expression.voice.assets.v1"
 WEB_SEARCH = "web.search.v1"
 WEB_READ = "web.read.v1"
+AFFECT_WINDOW_READ = "affect.window.read.v1"
+AFFECT_APPRAISE = "affect.appraise.v1"
 
 RUNTIME_CAPABILITIES = frozenset(
     {
@@ -53,6 +55,8 @@ RUNTIME_CAPABILITIES = frozenset(
         VOICE_ASSETS,
         WEB_SEARCH,
         WEB_READ,
+        AFFECT_WINDOW_READ,
+        AFFECT_APPRAISE,
     }
 )
 

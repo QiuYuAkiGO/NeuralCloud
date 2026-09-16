@@ -28,7 +28,7 @@ from harness.homeostasis.models import HomeostaticInteroceptiveSummary
 from harness.core.error_notice import ERROR_FALLBACK_REPLY
 from harness.core.ids import new_id
 from harness.core.inference import ContextSegment, MemoryEvidenceContext, ParsedInteraction, TokenUsage
-from harness.llm.client import build_llm_client, estimate_chat_usage
+from harness.llm.client import build_llm_client, deepseek_low_reasoning_options, estimate_chat_usage
 from harness.memory.service import build_inmemory_service
 from harness.pipeline.pipeline import InferencePipeline
 from harness.pipeline import parser as parser_module
@@ -1087,13 +1087,15 @@ def _prepare_group_speech(*, settings, preset, llm, payload: str, evidence_refs:
 class _QQScopedLLM:
     """Bound every main/aux request in this QQ client, preserving its routing."""
 
-    def __init__(self, client, *, deadline: QQDeadline | None, trace: QQTurnTrace, timeout: float):
+    def __init__(self, client, *, deadline: QQDeadline | None, trace: QQTurnTrace, timeout: float,
+                 reasoning_options: dict[str, str] | None = None):
         self.client = client
         self.deadline = deadline
         self.trace = trace
         self.timeout = timeout
         self.stage_name = "gate"
         self.failed_error_type: str | None = None
+        self._reasoning_options = dict(reasoning_options or {})
 
     def __getattr__(self, name):
         return getattr(self.client, name)
@@ -1128,6 +1130,8 @@ class _QQScopedLLM:
                     time.sleep(delay)
 
     def complete_chat_result(self, messages, **kwargs):
+        for key, value in self._reasoning_options.items():
+            kwargs.setdefault(key, value)
         return self._call("complete_chat_result", messages, **kwargs)
 
     def complete_chat(self, messages, **kwargs):
@@ -1550,7 +1554,8 @@ def decide_qq_reply(
             if deadline is not None:
                 deadline.check()
             raw_llm = shared_owner.llm if shared_owner is not None else build_llm_client(settings)
-            llm = _QQScopedLLM(raw_llm, deadline=deadline, trace=trace, timeout=settings.llm_timeout)
+            llm = _QQScopedLLM(raw_llm, deadline=deadline, trace=trace, timeout=settings.llm_timeout,
+                               reasoning_options=deepseek_low_reasoning_options(settings))
             result = result.model_copy(update={"source_record_ids": list(selection.observation_ids),
                                               "evidence_refs": evidence_refs, "delivery_refs": list(selection.delivery_ids)})
             messages = [{"role": "system", "content": (_PRIVATE_RULES if private else _RULES) + web_rules + (_IDLE_RULES if idle_intent is not None else "") + "\n当前角色人设：\n" + preset.persona.model_dump_json()},
@@ -1563,7 +1568,9 @@ def decide_qq_reply(
             gate_started = trace.clock()
             try:
                 with trace.stage("gate"), trace_scope(phase="qq_gate", stage="qq_gate"):
-                    response = llm.complete_chat_result(messages, temperature=0.2, stream=False, max_tokens=gate_token_budget)
+                    response = llm.complete_chat_result(
+                        messages, temperature=0.2, stream=False, max_tokens=gate_token_budget,
+                        response_format={"type": "json_object"})
                     reported_usage = response.usage if response.usage.total_tokens else estimate_chat_usage(messages, response.text)
                     usage = usage.add(reported_usage.for_call())
                     choice = _GateDecision.model_validate_json(response.text)

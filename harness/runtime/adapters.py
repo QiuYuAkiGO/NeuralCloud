@@ -75,6 +75,12 @@ class CognitiveServiceClient(Protocol):
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[dict[str, Any]]: ...
 
+    async def appraise_affect(
+        self, command: DomainCommandEnvelope[dict[str, Any]]
+    ) -> DomainCommandResult[dict[str, Any]]: ...
+
+    async def read_affect_snapshot(self, payload: dict[str, Any]) -> dict[str, Any]: ...
+
     async def health(self) -> ServiceHealth: ...
 
     async def get_snapshot(self) -> DomainSnapshot: ...
@@ -369,6 +375,71 @@ class PipelineCognitiveAdapter:
                     request_hash=command.effective_request_hash(), committed_revision=self._revision,
                     acknowledged_event_id=command.event_id, acknowledged_receive_seq=command.receive_seq,
                     result={"emotion_context_ref": frame.context_id, "emotion_revision": frame.revision},
+                    completed_at=_utc_now())
+                self._remember(command, result)
+                await asyncio.to_thread(self._persist_state)
+                return result
+        return await self._run_command(operation)
+
+    async def read_affect_snapshot(self, payload: dict[str, Any]) -> dict[str, Any]:
+        if (self.pipeline.settings.emotion_mode == "off" or self._research_manifest is not None):
+            scope = str(payload.get("scope") or "")
+            return {"status": "off", "revision": 0, "frame": None, "guidance": {"text": "", "status": "off"},
+                    "window_hash": "", "source_ids": [], "degraded": True, "scope": scope}
+        as_of = payload["as_of"]
+        if isinstance(as_of, str):
+            as_of = datetime.fromisoformat(as_of.replace("Z", "+00:00"))
+        persona = self.pipeline.memory.get_persona()
+        return await asyncio.to_thread(
+            self.emotion_service.read_snapshot, scope=payload["scope"], as_of=as_of,
+            persona=persona, homeostasis=payload.get("homeostasis") or {})
+
+    async def appraise_affect(self, command):
+        async def operation():
+            async with self._lock:
+                replay = self._lookup_replay(command)
+                if replay is not None:
+                    await asyncio.to_thread(self._persist_state)
+                    return replay
+                rejected = self._preflight(command)
+                if rejected is not None:
+                    return rejected
+                if (command.command_type != "AppraiseAffect" or self.pipeline.settings.emotion_mode == "off"
+                        or self._research_manifest is not None):
+                    return self._failure(command, "emotion observation is disabled", status="rejected")
+                from harness.runtime.emotion import observation_input
+
+                homeostasis = command.payload.get("homeostasis") or {}
+                if (command.version_vector is not None and homeostasis.get("snapshot_revision")
+                        != command.version_vector.homeostasis_state):
+                    return self._failure(command, "emotion snapshot revision mismatch", status="rejected")
+                request_key = (command.command_type, command.idempotency_key)
+                request_hash = command.effective_request_hash()
+                reserved_hash = self._request_hashes.get(request_key)
+                if reserved_hash is not None and reserved_hash != request_hash:
+                    return self._failure(command, "emotion reservation request conflict", status="conflict")
+                self._request_hashes[request_key] = request_hash
+                await asyncio.to_thread(self._persist_state)
+                provider = self.emotion_input_provider or (lambda value: observation_input(self, value))
+                with trace_scope(event_id=command.event_id, command_id=command.command_id, phase="emotion_appraisal"):
+                    observation = self.emotion_service.existing_input(command.payload["context_id"])
+                    dropped = []
+                    if observation is None:
+                        observation = await asyncio.to_thread(provider, command)
+                        observation, dropped = self.emotion_service.drop_conflicting_new_sources(observation)
+                    frame = await asyncio.to_thread(self.emotion_service.observe, observation)
+                    guidance = await asyncio.to_thread(self.emotion_service.guidance, frame)
+                self._cursor = max(self._cursor, command.receive_seq)
+                self._event_id = command.event_id
+                result = DomainCommandResult[dict](command_id=command.command_id,
+                    command_type=command.command_type, status="applied",
+                    request_hash=command.effective_request_hash(), committed_revision=self._revision,
+                    acknowledged_event_id=command.event_id, acknowledged_receive_seq=command.receive_seq,
+                    result={"accepted_ids": self.emotion_service.accepted_new_sources(frame.context_id),
+                            "dropped_conflict_ids": dropped, "emotion_revision": frame.revision,
+                            "frame_status": frame.status, "guidance_status": guidance.status,
+                            "appraisal_ms": frame.diagnostics.get("elapsed_ms"),
+                            "guidance_ms": guidance.diagnostics.get("elapsed_ms")},
                     completed_at=_utc_now())
                 self._remember(command, result)
                 await asyncio.to_thread(self._persist_state)

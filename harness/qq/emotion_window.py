@@ -54,9 +54,10 @@ def build_qq_emotion_messages(
     *, memory_db: Path | str, group_id: str, self_member_id: str,
     as_of: datetime, trigger_event_id: str | None = None,
     trigger_member_id: str | None = None,
+    triggers: list[tuple[str, str]] | None = None,
     protocol_state_db: Path | str | None = None,
 ):
-    """Read 20 recent records; only the exact validated incoming trigger is new.
+    """Read 20 recent records; only the exact validated incoming triggers are new.
 
     The caller must first validate Runtime's QQ source authority. Search results,
     distilled memory and unsent drafts are deliberately absent from this input.
@@ -69,18 +70,24 @@ def build_qq_emotion_messages(
     if as_of.tzinfo is None:
         raise ValueError("qq_emotion_requires_aware_time")
     as_of = as_of.astimezone(timezone.utc)
+    if triggers is None:
+        triggers = [] if trigger_event_id is None else [(trigger_event_id, trigger_member_id)]
+    elif trigger_event_id is not None:
+        raise ValueError("qq_emotion_trigger_argument_conflict")
+    trigger_members = {member_id for _, member_id in triggers}
     scope = conversation_scope(group_id)
     if scope["kind"] == "private" and (
         self_member_id != scope["self_member_id"]
-        or trigger_member_id not in {None, scope["peer_id"]}
+        or (trigger_members and trigger_members != {scope["peer_id"]})
     ):
         raise ValueError("qq_emotion_private_scope_mismatch")
-    if trigger_event_id is not None and (not trigger_member_id or trigger_member_id == self_member_id):
+    if any(not event_id or not member_id or member_id == self_member_id
+           for event_id, member_id in triggers):
         raise ValueError("qq_emotion_trigger_requires_external_author")
     audience = conversation_audience(group_id)
     cutoff = as_of - timedelta(minutes=30)
     messages = []
-    trigger = None
+    bound_triggers = []
     with closing(_readonly(memory_db)) as db, (
         closing(_readonly(protocol_state_db)) if protocol_state_db is not None else nullcontext(None)
     ) as protocol_db:
@@ -90,21 +97,27 @@ def build_qq_emotion_messages(
             "ORDER BY observed_at DESC, rowid DESC LIMIT 80",
             (group_id, cutoff.isoformat(), (as_of + timedelta(seconds=5)).isoformat()),
         ).fetchall()
-        if trigger_event_id is not None:
+        extra_rows = []
+        for event_id, member_id in triggers:
             matches = db.execute(
                 "SELECT record_id, observed_at FROM qq_visual_observations "
                 "WHERE group_id=? AND capture_item_id=? AND member_id=?",
-                (group_id, trigger_event_id, trigger_member_id),
+                (group_id, event_id, member_id),
             ).fetchall()
             if len(matches) != 1:
                 raise ValueError("qq_emotion_trigger_missing_or_ambiguous")
             trigger = _observation(db, group_id, matches[0]["record_id"])
-            if (trigger is None or trigger.member_id != trigger_member_id
-                    or trigger.capture_item_id != trigger_event_id
+            if (trigger is None or trigger.member_id != member_id
+                    or trigger.capture_item_id != event_id
                     or trigger.observed_at != datetime.fromisoformat(matches[0]["observed_at"])
                     or _protocol_message_time(protocol_db, trigger, self_member_id) > as_of):
                 raise ValueError("qq_emotion_trigger_invalid")
-            rows = [matches[0], *[row for row in rows if row["record_id"] != trigger.record_id]]
+            bound_triggers.append(trigger)
+            extra_rows.append(matches[0])
+        if extra_rows:
+            seen = {row["record_id"] for row in extra_rows}
+            rows = [*extra_rows, *[row for row in rows if row["record_id"] not in seen]]
+        trigger_ids = {item.record_id for item in bound_triggers}
 
         receipts = [item for item in _receipts(db, group_id, cutoff)
                     if item.self_member_id == self_member_id and item.delivered_at <= as_of]
@@ -118,7 +131,7 @@ def build_qq_emotion_messages(
             if observation is None or observation.observed_at != datetime.fromisoformat(row["observed_at"]):
                 raise ValueError("qq_emotion_observation_invalid")
             timestamp = _protocol_message_time(protocol_db, observation, self_member_id)
-            if timestamp > as_of or (timestamp < cutoff and (trigger is None or observation.record_id != trigger.record_id)):
+            if timestamp > as_of or (timestamp < cutoff and observation.record_id not in trigger_ids):
                 continue
             # Protocol self observations are transport echoes. Only durable send
             # receipts represent this character's protocol output, including when
@@ -138,8 +151,15 @@ def build_qq_emotion_messages(
 
     messages.sort(key=lambda item: (item.timestamp, item.source_id))
     selected = messages[-20:]
-    if trigger is not None and trigger.record_id not in {item.source_id for item in selected}:
-        current = next(item for item in messages if item.source_id == trigger.record_id)
-        selected = [current, *selected[-19:]]
-        selected.sort(key=lambda item: (item.timestamp, item.source_id))
-    return audience, selected, [] if trigger is None else [trigger.record_id]
+    required = [next(item for item in messages if item.source_id == trigger.record_id)
+                for trigger in bound_triggers]
+    if len(required) > 20:
+        raise ValueError("emotion_new_sources_exceed_window")
+    selected_ids = {item.source_id for item in selected}
+    if any(item.source_id not in selected_ids for item in required):
+        required_ids = {item.source_id for item in required}
+        remaining = [item for item in messages if item.source_id not in required_ids]
+        available = 20 - len(required)
+        selected = sorted([*required, *(remaining[-available:] if available else [])],
+                          key=lambda item: (item.timestamp, item.source_id))
+    return audience, selected, [item.record_id for item in bound_triggers]

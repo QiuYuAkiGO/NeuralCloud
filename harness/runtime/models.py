@@ -14,7 +14,7 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validato
 
 from harness.contracts.envelope import VersionVector
 from harness.core.ids import new_id
-from harness.embodiment.capabilities import EmbodimentStatus
+from harness.embodiment.capabilities import EmbodimentStatus, CapabilityDescriptor
 from harness.embodiment.contracts import EmbodiedActionSpec, EvidenceRef
 
 RUNTIME_SCHEMA_VERSION: Literal["runtime-v1"] = "runtime-v1"
@@ -356,6 +356,7 @@ class RuntimeStatus(BaseModel):
     pending_events: int = Field(default=0, ge=0)
     embodiment: EmbodimentStatus | None = None
     agency_state: AgencyState = AgencyState.AVAILABLE
+    affect: list[CapabilityDescriptor] = Field(default_factory=list)
 
 
 class EventDispatchResult(BaseModel):

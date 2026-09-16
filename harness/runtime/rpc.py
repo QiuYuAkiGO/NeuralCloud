@@ -81,6 +81,12 @@ class HttpCognitiveClient(_HttpDomainClient):
     async def observe_emotion(self, command: DomainCommandEnvelope[dict[str, Any]]) -> DomainCommandResult[dict[str, Any]]:
         return DomainCommandResult[dict[str, Any]].model_validate((await self.command(command)).model_dump(mode="json"))
 
+    async def appraise_affect(self, command: DomainCommandEnvelope[dict[str, Any]]) -> DomainCommandResult[dict[str, Any]]:
+        return DomainCommandResult[dict[str, Any]].model_validate((await self.command(command)).model_dump(mode="json"))
+
+    async def read_affect_snapshot(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._request("POST", "/v1/affect/snapshot", json=payload)
+
     async def prepare_response(
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[PreparedResponse]:
@@ -234,6 +240,7 @@ def create_domain_service_app(service: Any, *, service_token: str, service_name:
             raise HTTPException(status_code=400, detail="command type mismatch")
         methods = {
             "ObserveEmotion": getattr(service, "observe_emotion", None),
+            "AppraiseAffect": getattr(service, "appraise_affect", None),
             "AssessAutonomous": getattr(service, "assess_autonomous", None),
             "PrepareResponse": getattr(service, "prepare_response", None),
             "PrepareQQResponse": getattr(service, "prepare_qq_response", None),
@@ -259,6 +266,13 @@ def create_domain_service_app(service: Any, *, service_token: str, service_name:
         return result.model_dump(mode="json")
 
     if service_name == "cognitive":
+        @app.post("/v1/affect/snapshot", dependencies=[Depends(authenticate)])
+        async def affect_snapshot(payload: dict[str, Any]) -> dict[str, Any]:
+            method = getattr(service, "read_affect_snapshot", None)
+            if method is None:
+                raise HTTPException(status_code=404, detail="unsupported command")
+            return await method(payload)
+
         @app.post("/v1/maintenance/pause", dependencies=[Depends(authenticate)])
         async def pause_maintenance(payload: dict[str, Any]) -> dict[str, Any]:
             drained = await service.pause_maintenance(timeout=float(payload.get("timeout", 5.0)))

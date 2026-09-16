@@ -216,6 +216,12 @@ class CognitiveServiceHost:
     async def observe_emotion(self, command):
         return await self.adapter.observe_emotion(command)
 
+    async def appraise_affect(self, command):
+        return await self.adapter.appraise_affect(command)
+
+    async def read_affect_snapshot(self, payload):
+        return await self.adapter.read_affect_snapshot(payload)
+
     async def prepare_web_step(self, command):
         with trace_scope(correlation_id=command.correlation_id, event_id=command.event_id,
                          command_id=command.command_id, phase="web_prepare", span_id=command.command_id):
@@ -281,6 +287,7 @@ class CognitiveServiceHost:
                 qq_payload = dict(command.payload)
                 qq_payload.pop("emotion_context_ref", None)
                 qq_payload.pop("emotion_revision", None)
+                emotion_snapshot = qq_payload.pop("emotion_snapshot", None)
                 runtime_goal_context = qq_payload.pop("runtime_goal_context", None)
                 runtime_web_context = qq_payload.pop("runtime_web_context", None)
                 request = QQSharedPrepareRequest.model_validate(qq_payload)
@@ -312,9 +319,14 @@ class CognitiveServiceHost:
                 # Keep validated DTOs for identity and state evidence.
                 values.update(verified_self_aliases=request.verified_self_aliases,
                     idle_intent=request.idle_intent, homeostatic_interoception=request.homeostatic_interoception)
-                emotion_guidance = await adapter.emotion_guidance(command)
-                if emotion_guidance is not None:
-                    values["emotion_guidance"] = emotion_guidance
+                if emotion_snapshot is not None and adapter.pipeline.settings.emotion_mode == "on":
+                    guidance = emotion_snapshot.get("guidance")
+                    if guidance is not None:
+                        values["emotion_guidance"] = guidance
+                elif command.payload.get("emotion_context_ref"):
+                    emotion_guidance = await adapter.emotion_guidance(command)
+                    if emotion_guidance is not None:
+                        values["emotion_guidance"] = emotion_guidance
                 if runtime_goal_context is not None:
                     values["goal_context"] = runtime_goal_context
                 if runtime_web_context is not None:
