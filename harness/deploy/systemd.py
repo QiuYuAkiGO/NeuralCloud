@@ -135,14 +135,26 @@ def wait_healthy(cfg: DeploymentConfig, service: str, *, boot_only: bool = False
                 ready = isinstance(body.get("runtime"), dict) and body["runtime"].get("lifecycle") in ({"RUNNING", "PAUSED"} if boot_only else {"RUNNING"})
             elif service == "qq_direct":
                 stamp = datetime.fromisoformat(body.get("heartbeat_at", ""))
-                ready = body.get("running") is True and body.get("connected") is True and 0 <= (datetime.now(timezone.utc) - stamp).total_seconds() <= 30
+                main_pid = int(unit.get("MainPID", "0"))
+                repository = body.get("repository_root")
+                ready = (body.get("service") == "qq-direct-onebot-v1"
+                    and body.get("running") is True
+                    and type(body.get("pid")) is int and body["pid"] == main_pid and main_pid > 0
+                    and isinstance(repository, str) and Path(repository).is_absolute()
+                    and Path(repository).resolve() == cfg.path("current").resolve()
+                    and stamp.tzinfo is not None
+                    and 0 <= (datetime.now(timezone.utc) - stamp).total_seconds() <= 30)
+                # A booted worker can wait for NapCat login and reconnect on its
+                # own. Do not kill it through ExecStartPost while the account is
+                # offline; explicit deployment verification still needs QQ online.
+                ready = ready and (boot_only or body.get("connected") is True)
             elif service == "board":
                 ready = body.get("status") == "healthy"
             else:
                 ready = body.get("healthy") is True
             if ready and unit.get("ActiveState") in ({"active", "activating"} if boot_only else {"active"}):
                 return
-        except (OSError, ValueError, HTTPError, URLError, DeployError, KeyError):
+        except (OSError, ValueError, TypeError, HTTPError, URLError, DeployError, KeyError):
             pass
         time.sleep(0.5)
     raise DeployError(f"{service} did not become ready; inspect status (PAUSED requires explicit review/resume)")

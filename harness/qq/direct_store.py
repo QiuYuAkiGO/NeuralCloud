@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from contextlib import closing
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 import math
@@ -304,13 +304,31 @@ class DirectStore:
             moments = [datetime.fromisoformat(json.loads(row[0])["delivered_at"]) for row in rows]
         return bool(moments and (utcnow() - max(moments)).total_seconds() < seconds)
 
-    def outstanding_reconciliation(self, *, limit=8):
-        """Return only acknowledged identities for read-only proof recovery."""
+    def cancel_untransmitted(self, value):
+        """Cancel an intent while its owning sender has not called the protocol.
+
+        Only the uninterrupted pre-call path may use this API. Once a protocol
+        call starts, even a timeout without an ACK must remain uncertain.
+        """
+        with closing(self.connect()) as db, db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT * FROM qq_direct_sends WHERE send_id=?", (value["send_id"],)).fetchone()
+            if (row is None or row["status"] != "attempted" or row["message_id"] is not None
+                    or row["receipt_id"] is not None or json.loads(row["record_json"]) != value):
+                raise ValueError("onebot_send_pretransmission_cancel_invalid")
+            result = value | {"status": "cancelled", "cancelled_at": utcnow().isoformat(),
+                "cancel_reason": "direct_send_budget_insufficient", "cancel_phase": "before_protocol_call"}
+            db.execute("UPDATE qq_direct_sends SET status='cancelled',record_json=? WHERE send_id=?",
+                       (canonical(result), value["send_id"]))
+        return result
+
+    def outstanding_reconciliation(self, *, limit=8, include_unidentified=False):
+        """Return uncertain sends for read-only proof recovery."""
         if type(limit) is not int or not 1 <= limit <= 32:
             raise ValueError("onebot_reconciliation_limit_invalid")
         with closing(self.connect()) as db:
-            rows = db.execute("SELECT * FROM qq_direct_sends WHERE status IN ('attempted','unknown') AND message_id IS NOT NULL ORDER BY rowid LIMIT ?",
-                              (limit,)).fetchall()
+            rows = db.execute("""SELECT * FROM qq_direct_sends WHERE status IN ('attempted','unknown')
+                AND (message_id IS NOT NULL OR ?) ORDER BY rowid LIMIT ?""", (include_unidentified, limit)).fetchall()
             result = []
             for row in rows:
                 value = json.loads(row["record_json"])
@@ -318,8 +336,90 @@ class DirectStore:
                 if (event is None or value["self_member_id"] != event["self_id"]
                         or any(value[key] != row[key] for key in ("send_id", "event_id", "decision_id", "group_id", "segment_index", "status", "message_id", "receipt_id"))):
                     raise ValueError("onebot_reconciliation_source_invalid")
-                numeric(value["message_id"], signed=True)
+                if value["message_id"] is not None:
+                    numeric(value["message_id"], signed=True)
                 result.append(value)
+        return result
+
+    def _protocol_evidence(self, ref):
+        if not isinstance(ref, str) or re.fullmatch(r"qq-protocol://sha256/[0-9a-f]{64}", ref) is None:
+            raise ValueError("onebot_reconciliation_evidence_invalid")
+        digest = ref.rsplit("/", 1)[-1]
+        path = self.evidence_dir / (digest + ".json")
+        if path.is_symlink() or path.stat().st_size > 1024 * 1024:
+            raise ValueError("onebot_reconciliation_evidence_invalid")
+        data = path.read_bytes()
+        if hashlib.sha256(data).hexdigest() != digest:
+            raise ValueError("onebot_reconciliation_evidence_invalid")
+        return json.loads(data)
+
+    def reconciliation_echo(self, value, *, db=None):
+        """Find one exact, live own echo near the original group-send attempt.
+
+        This only proposes an identity. A separate protocol read must verify it
+        before binding, and no deadline or sending authorization is renewed.
+        """
+        if db is None:
+            with closing(self.connect()) as connection:
+                return self.reconciliation_echo(value, db=connection)
+        if value.get("message_id") is not None or value.get("status") not in {"unknown", "attempted"}:
+            return None
+        # Private own pushes do not establish the recipient on this bridge.
+        if not value["group_id"].isdigit() or not value.get("attempted_at"):
+            return None
+        attempted = datetime.fromisoformat(value["attempted_at"])
+        if attempted.tzinfo is None:
+            raise ValueError("onebot_reconciliation_source_invalid")
+        rows = db.execute("""SELECT record_json FROM qq_direct_events
+            WHERE self_id=? AND group_id=? AND member_id=self_id
+            AND json_extract(record_json,'$.own')=1 AND json_extract(record_json,'$.historical')=0
+            AND json_extract(record_json,'$.text')=?
+            AND julianday(received_at) BETWEEN julianday(?) AND julianday(?)
+            AND julianday(json_extract(record_json,'$.message_time')) BETWEEN julianday(?) AND julianday(?)
+            LIMIT 2""", (value["self_member_id"], value["group_id"], value["text"],
+                attempted.isoformat(), (attempted + timedelta(seconds=15)).isoformat(),
+                attempted.replace(microsecond=0).isoformat(), (attempted + timedelta(seconds=10)).isoformat())).fetchall()
+        if len(rows) != 1:
+            return None
+        event = json.loads(rows[0]["record_json"])
+        payload = self._protocol_evidence(event["event_evidence_ref"])
+        confirmed = normalize_message(payload, self_id=value["self_member_id"], groups=[value["group_id"]],
+                                      received_at=datetime.fromisoformat(event["received_at"]))
+        if (confirmed is None or confirmed["images"] or not confirmed["own"]
+                or any(part.get("type") != "text" for part in payload.get("message", []))
+                or any(confirmed[key] != event[key] for key in confirmed)
+                or confirmed["text"] != value["text"]):
+            raise ValueError("onebot_reconciliation_echo_invalid")
+        used = db.execute("""SELECT 1 FROM qq_direct_sends WHERE group_id=? AND message_id=?
+            AND json_extract(record_json,'$.self_member_id')=? LIMIT 1""",
+            (value["group_id"], event["message_id"], value["self_member_id"])).fetchone()
+        return None if used else event
+
+    def bind_reconciliation_echo(self, value, *, event_id, proof_ref):
+        """Bind an exact own echo only after independently verified protocol proof."""
+        with closing(self.connect()) as db, db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT * FROM qq_direct_sends WHERE send_id=?", (value["send_id"],)).fetchone()
+            if (row is None or row["status"] not in {"attempted", "unknown"} or row["message_id"] is not None
+                    or json.loads(row["record_json"]) != value):
+                raise ValueError("onebot_reconciliation_binding_invalid")
+            echo = self.reconciliation_echo(value, db=db)
+            if echo is None or echo["event_id"] != event_id:
+                raise ValueError("onebot_reconciliation_echo_invalid")
+            proof = self._protocol_evidence(proof_ref)
+            message = proof.get("result", {})
+            if (proof.get("action") not in {"get_msg", "get_group_msg_history"}
+                    or proof.get("group_id") != value["group_id"]
+                    or numeric(message.get("group_id")) != value["group_id"]
+                    or numeric(message.get("message_id"), signed=True) != echo["message_id"]
+                    or numeric(message.get("sender", {}).get("user_id")) != value["self_member_id"]
+                    or message_parts(message.get("message")) != (value["text"], [])
+                    or any(part.get("type") != "text" for part in message["message"])):
+                raise ValueError("onebot_reconciliation_proof_invalid")
+            result = value | {"message_id": echo["message_id"],
+                "recovery_echo_ref": echo["event_evidence_ref"], "recovery_proof_ref": proof_ref}
+            db.execute("UPDATE qq_direct_sends SET message_id=?,record_json=? WHERE send_id=?",
+                       (echo["message_id"], canonical(result), value["send_id"]))
         return result
 
     def confirm_reconciled(self, value, *, receipt_id, delivered_at):

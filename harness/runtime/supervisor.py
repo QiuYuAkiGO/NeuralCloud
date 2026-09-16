@@ -1122,6 +1122,9 @@ class RuntimeSupervisor:
         if self.body_monitor is not None:
             await self.body_monitor.stop()
         try:
+            daily_report = getattr(self, "daily_report", None)
+            if daily_report is not None:
+                await daily_report.close()
             await asyncio.wait_for(
                 self.action_coordinator.request_preemption(reason=reason),
                 timeout=self.maintenance_drain_seconds,

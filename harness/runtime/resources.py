@@ -57,7 +57,7 @@ class ResourceSampler:
             candidates.append(self.state_dir / ".neuralcloud.pids.json")
         candidates.append(Path.cwd() / ".neuralcloud.pids.json")
         self.pid_candidates = candidates
-        self._primed: set[int] = set()
+        self._processes: dict[int, Any] = {}
         self._cmdline_cache: list[tuple[str, int]] = []
         self._cmdline_cache_at: float = 0.0
 
@@ -93,16 +93,20 @@ class ResourceSampler:
                     continue
                 seen.add(pid)
                 rows.append(self._process_row(psutil, pid, role, observed_at, host_cpu, host_mem))
+        for pid in self._processes.keys() - seen:
+            self._processes.pop(pid, None)
         return rows
 
     def _process_row(
         self, psutil: Any, pid: int, role: str, observed_at: str, host_cpu: float, host_mem: float,
     ) -> ResourceSample:
         try:
-            process = psutil.Process(pid)
-            if pid not in self._primed:
-                process.cpu_percent(interval=None)
-                self._primed.add(pid)
+            process = self._processes.get(pid)
+            # cpu_percent(None) stores its previous times on the Process
+            # instance. is_running() also checks creation time for PID reuse.
+            if process is None or not process.is_running():
+                process = psutil.Process(pid)
+                self._processes[pid] = process
             cpu = float(process.cpu_percent(interval=None))
             memory = process.memory_info()
             threads = int(process.num_threads())
@@ -112,6 +116,7 @@ class ResourceSampler:
                 host_cpu_percent=host_cpu, host_mem_percent=host_mem, available=True,
             )
         except Exception as exc:
+            self._processes.pop(pid, None)
             return ResourceSample(
                 observed_at=observed_at, role=role, pid=pid, available=False,
                 detail=type(exc).__name__, host_cpu_percent=host_cpu, host_mem_percent=host_mem,

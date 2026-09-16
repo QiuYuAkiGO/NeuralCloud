@@ -583,6 +583,170 @@ def test_recovery_without_ack_message_id_never_queries_or_retries_send(actor_fac
     assert actor.store.uncertain() and len(actor.client.sent) == 1
 
 
+async def own_echo(actor, *, number=800, variant=None):
+    payload = actor.client.sent["800"] | {"post_type": "message_sent", "message_type": "group",
+        "self_id": int(SELF), "user_id": int(SELF), "message_id": number, "time": int(utcnow().timestamp())}
+    if variant == "group":
+        payload["group_id"] = int(GUEST)
+    elif variant == "sender":
+        payload |= {"user_id": int(MEMBER), "sender": {"user_id": int(MEMBER)}}
+    elif variant == "text":
+        payload["message"] = [{"type": "text", "data": {"text": "收到。 "}}]
+    elif variant == "old":
+        payload["time"] -= 2
+    await actor.on_event(payload, historical=variant == "historical")
+
+
+def test_missing_ack_recovers_from_unique_own_echo_after_restart_without_resend(actor_factory):
+    actor, cognition, _ = actor_factory()
+    actor.client.send_error = OneBotError("onebot_request_timeout")
+    actor.client.after_send = lambda: own_echo(actor)
+
+    async def execute():
+        await actor.verify_connection()
+        row = await consume(actor, incoming())
+        assert row["state"] == "unknown"
+        assert actor.store.outstanding_reconciliation() == []
+        replacement = direct.DirectQQActor(actor.settings, cognition=FrozenCognition(), llm=ImageModel())
+        replacement.client, replacement.connected = actor.client, True
+        before = len(actor.client.calls)
+        await replacement.reconcile_unknown()
+        assert [call[0] for call in actor.client.calls[before:]] == ["get_msg"]
+        assert not replacement.store.uncertain()
+        await replacement.reconcile_unknown()
+        return replacement.store.get(row["event_id"])
+
+    assert asyncio.run(execute())["state"] == "sent"
+    assert len(actor.client.sent) == 1
+    receipt = decision.get_qq_delivery(memory_db=actor.session.memory_db, group_id=MAIN,
+                                      decision_id=cognition.plans[0].decision_id)
+    assert receipt.protocol_message_ids == ["800"]
+    with closing(actor.store.connect()) as db:
+        send = json.loads(db.execute("SELECT record_json FROM qq_direct_sends").fetchone()[0])
+    assert send["recovery_echo_ref"] in receipt.evidence_refs
+    assert send["recovery_proof_ref"] in receipt.evidence_refs
+
+
+@pytest.mark.parametrize("variant", ["group", "sender", "text", "old", "historical", "duplicate", "evidence"])
+def test_missing_ack_ambiguous_or_invalid_echo_keeps_unknown_without_protocol_calls(actor_factory, variant):
+    actor, _, _ = actor_factory()
+    actor.client.send_error = OneBotError("onebot_request_timeout")
+
+    async def echo():
+        await own_echo(actor, variant=variant)
+        if variant == "duplicate":
+            await own_echo(actor, number=801)
+        if variant == "evidence":
+            with closing(actor.store.connect()) as db:
+                row = db.execute("SELECT record_json FROM qq_direct_events WHERE message_id='800'").fetchone()
+            digest = json.loads(row[0])["event_evidence_ref"].rsplit("/", 1)[-1]
+            (actor.store.evidence_dir / (digest + ".json")).write_text("{}")
+
+    actor.client.after_send = echo
+
+    async def execute():
+        await actor.verify_connection()
+        row = await consume(actor, incoming())
+        before = len(actor.client.calls)
+        await actor.reconcile_unknown()
+        assert len(actor.client.calls) == before
+        return actor.store.get(row["event_id"])
+
+    assert asyncio.run(execute())["state"] == "unknown"
+    assert actor.store.uncertain() and len(actor.client.sent) == 1
+    assert actor.store.outstanding_reconciliation() == []
+
+
+def test_missing_ack_echo_requires_independent_protocol_confirmation_before_binding(actor_factory):
+    actor, _, _ = actor_factory()
+    actor.client.send_error = OneBotError("onebot_request_timeout")
+    actor.client.after_send = lambda: own_echo(actor)
+    actor.client.receipt_change = lambda result: result | {"group_id": int(GUEST)}
+
+    async def execute():
+        await actor.verify_connection()
+        row = await consume(actor, incoming())
+        await actor.reconcile_unknown()
+        return actor.store.get(row["event_id"])
+
+    assert asyncio.run(execute())["state"] == "unknown"
+    assert actor.store.uncertain() and len(actor.client.sent) == 1
+    assert actor.store.outstanding_reconciliation() == []
+
+
+@pytest.mark.parametrize("variant", ["exact", "wrong_group", "duplicate", "disconnected"])
+def test_missing_ack_echo_recovery_survives_bridge_message_cache_loss(actor_factory, variant):
+    actor, _, _ = actor_factory()
+    actor.client.send_error = OneBotError("onebot_request_timeout")
+    actor.client.after_send = lambda: own_echo(actor)
+
+    async def execute():
+        await actor.verify_connection()
+        row = await consume(actor, incoming())
+        actor.client.history = list(actor.client.sent.values())
+        if variant == "wrong_group":
+            actor.client.history = [actor.client.history[0] | {"group_id": int(GUEST)}]
+        elif variant == "duplicate":
+            actor.client.history *= 2
+        code = "onebot_disconnected" if variant == "disconnected" else "onebot_action_failed"
+        actor.client.receipt_change = lambda _: (_ for _ in ()).throw(OneBotError(code))
+        before = len(actor.client.calls)
+        await actor.reconcile_unknown()
+        reads = actor.client.calls[before:]
+        assert [call[0] for call in reads] == (["get_msg"] if variant == "disconnected"
+                                             else ["get_msg", "get_group_msg_history"])
+        if variant != "disconnected":
+            assert reads[-1][1] == {"group_id": int(MAIN), "count": 200}
+        return actor.store.get(row["event_id"])
+
+    assert asyncio.run(execute())["state"] == ("sent" if variant == "exact" else "unknown")
+    assert actor.store.uncertain() is (variant != "exact")
+    assert len(actor.client.sent) == 1
+
+
+@pytest.mark.parametrize("stage", ["before_reserve", "after_reserve", "after_attempted"])
+def test_insufficient_send_budget_never_attempts_protocol_mutation(actor_factory, monkeypatch, stage):
+    actor, _, _ = actor_factory()
+    original_send, original_reserve = actor.send_decision, actor.store.reserve
+    original_update = actor.store.update_send
+    clock = [59.988 if stage == "before_reserve" else 0]
+
+    async def nearly_expired(event, plan, deadline, epoch):
+        await original_send(event, plan, direct.QQDeadline(60, clock=lambda: clock[0]), epoch)
+
+    def reserve(*args):
+        result = original_reserve(*args)
+        if stage == "after_reserve":
+            clock[0] = 59.988
+        return result
+
+    def update(value, status, **changes):
+        result = original_update(value, status, **changes)
+        if status == "attempted" and stage == "after_attempted":
+            clock[0] = 59.988
+        return result
+
+    monkeypatch.setattr(actor, "send_decision", nearly_expired)
+    monkeypatch.setattr(actor.store, "reserve", reserve)
+    monkeypatch.setattr(actor.store, "update_send", update)
+
+    async def execute():
+        await actor.verify_connection()
+        return await consume(actor, incoming())
+
+    assert asyncio.run(execute())["state"] == "failed"
+    assert actor.state["last_error_type"] == "direct_send_budget_insufficient"
+    assert actor.store.counts()["sends"] == ({} if stage == "before_reserve" else {"cancelled": 1})
+    assert not actor.store.uncertain() and not actor.client.sent
+    if stage == "after_attempted":
+        with closing(actor.store.connect()) as db:
+            send = json.loads(db.execute("SELECT record_json FROM qq_direct_sends").fetchone()[0])
+        assert send["attempted_at"] and send["cancelled_at"]
+        assert send["cancel_phase"] == "before_protocol_call"
+        assert send["cancel_reason"] == "direct_send_budget_insufficient"
+        assert send["message_id"] is None and send["receipt_id"] is None
+
+
 @pytest.mark.parametrize("tamper", ["group", "sender", "text"])
 def test_readonly_recovery_keeps_unknown_when_message_binding_mismatches(actor_factory, tamper):
     actor, _, _ = actor_factory()
@@ -677,6 +841,44 @@ def test_incoming_storage_failure_reaches_connection_gap_handler(actor_factory, 
     with pytest.raises(OneBotError, match="onebot_event_callback_failed"):
         asyncio.run(actor.on_event(incoming()))
     assert actor.state["last_error_type"] == "direct_incoming_storage_failed"
+
+
+@pytest.mark.parametrize("error,code", [
+    (OSError("private websocket URL and token"), "onebot_connection_unavailable"),
+    (OneBotError("onebot_account_offline"), "onebot_account_offline"),
+])
+def test_reconnect_logs_only_safe_state_changes(actor_factory, monkeypatch, caplog, error, code):
+    actor, _, _ = actor_factory()
+    actor.connected = False
+    attempts = []
+
+    class ReconnectingClient(FakeOneBot):
+        async def open(self):
+            attempts.append(self)
+            if len(attempts) <= 2:
+                raise error
+
+    actor.client_factory = lambda *args, **kwargs: ReconnectingClient()
+    original_wait = asyncio.wait_for
+
+    async def fast_backoff(awaitable, *, timeout):
+        if timeout == 3:
+            awaitable.close()
+            await asyncio.sleep(0)
+            raise TimeoutError
+        return await original_wait(awaitable, timeout)
+
+    async def finish_after_recovery():
+        actor.stop.set()
+
+    monkeypatch.setattr(direct.asyncio, "wait_for", fast_backoff)
+    monkeypatch.setattr(actor, "history", finish_after_recovery)
+    caplog.set_level("INFO", logger=direct.__name__)
+    asyncio.run(actor.run())
+    assert len(attempts) == 3
+    messages = [record.getMessage() for record in caplog.records if record.name == direct.__name__]
+    assert messages == [f"qq_direct_disconnected error_type={code}; retrying", "qq_direct_connected"]
+    assert "private" not in caplog.text
 
 
 def test_forward_websocket_auth_and_interleaved_event_can_request_metadata():

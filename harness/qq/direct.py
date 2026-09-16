@@ -7,6 +7,7 @@ from contextlib import closing
 from datetime import datetime, timedelta
 import hashlib
 import json
+import logging
 import os
 from pathlib import Path
 import signal
@@ -36,6 +37,9 @@ _CONNECTION_ERRORS = frozenset({"onebot_logged_in_account_mismatch", "onebot_acc
     "onebot_groups_invalid", "onebot_configured_group_not_joined", "onebot_action_failed",
     "onebot_friends_invalid", "onebot_configured_peer_not_friend",
     "onebot_invalid_result", "onebot_disconnected", "onebot_request_timeout"})
+
+logger = logging.getLogger(__name__)
+_MIN_SEND_SECONDS = 2
 
 
 def source_hash():
@@ -240,7 +244,7 @@ class DirectQQActor:
                           observation=observation.model_dump(mode="json"))
         return observation
 
-    async def verify_sent(self, event, message_id, text, *, timeout=10):
+    async def verify_sent(self, event, message_id, text, *, timeout=10, history_count=20):
         scope = conversation_scope(event["group_id"])
         if scope["kind"] == "private":
             if scope["self_member_id"] != self.settings.self_member_id or scope["peer_id"] not in self.private_peers:
@@ -262,22 +266,31 @@ class DirectQQActor:
                     or confirmed["text"] != text or confirmed["message_id"] != message_id or confirmed["images"]):
                 raise OneBotError("onebot_sent_message_mismatch")
             return self.store.evidence(envelope)
-        result = await self.client.call("get_msg", {"message_id": int(message_id)}, timeout=timeout)
+        proof_action = "get_msg"
+        try:
+            result = await self.client.call("get_msg", {"message_id": int(message_id)}, timeout=timeout)
+        except OneBotError as exc:
+            # NapCat loses its message-ID cache on restart. A bounded history
+            # read can still prove that exact ID; never retry a send.
+            if exc.code != "onebot_action_failed":
+                raise
+            result = {}
         if not result.get("group_id"):
             history = await self.client.call("get_group_msg_history", {"group_id": int(event["group_id"]),
-                "count": 20}, timeout=timeout)
+                "count": history_count}, timeout=timeout)
             matches = [item for item in history.get("messages", [])
-                       if str(item.get("message_id")) == message_id]
+                       if isinstance(item, dict) and str(item.get("message_id")) == message_id]
             if len(matches) != 1:
                 raise OneBotError("onebot_sent_group_unverified")
             result = matches[0]
+            proof_action = "get_group_msg_history"
         sender = result.get("sender", {})
         if (numeric(result.get("group_id")) != event["group_id"]
                 or numeric(result.get("message_id"), signed=True) != message_id
                 or numeric(sender.get("user_id")) != self.settings.self_member_id
                 or message_parts(result.get("message"))[0] != text):
             raise OneBotError("onebot_sent_message_mismatch")
-        return self.store.evidence({"action": "get_msg", "group_id": event["group_id"], "result": result})
+        return self.store.evidence({"action": proof_action, "group_id": event["group_id"], "result": result})
 
     async def send_decision(self, event, decision, deadline, epoch):
         async with self._delivery_lock:
@@ -310,13 +323,26 @@ class DirectQQActor:
         receipts = []
         for index, text in enumerate(texts):
             self.check_send(event, deadline, epoch)
+            if deadline.check() < _MIN_SEND_SECONDS:
+                raise OneBotError("direct_send_budget_insufficient")
             send = self.store.reserve(event, decision, index, text)
-            self.check_send(event, deadline, epoch)
-            send = self.store.update_send(send, "attempted", attempted_at=utcnow().isoformat())
             try:
-                scope = conversation_scope(event["group_id"])
-                action = "send_private_msg" if scope["kind"] == "private" else "send_group_msg"
-                target = {"user_id": scope["peer_id"]} if scope["kind"] == "private" else {"group_id": int(event["group_id"])}
+                self.check_send(event, deadline, epoch)
+                if deadline.check() < _MIN_SEND_SECONDS:
+                    raise OneBotError("direct_send_budget_insufficient")
+            except Exception:
+                self.store.update_send(send, "cancelled")
+                raise
+            scope = conversation_scope(event["group_id"])
+            action = "send_private_msg" if scope["kind"] == "private" else "send_group_msg"
+            target = {"user_id": scope["peer_id"]} if scope["kind"] == "private" else {"group_id": int(event["group_id"])}
+            send = self.store.update_send(send, "attempted", attempted_at=utcnow().isoformat())
+            # SQLite can wait for a write lock. Check again after its commit,
+            # before any protocol call, while non-transmission is still known.
+            if deadline.remaining() < _MIN_SEND_SECONDS:
+                self.store.cancel_untransmitted(send)
+                raise OneBotError("direct_send_budget_insufficient")
+            try:
                 result = await self.client.call(action, target | {
                     "message": [{"type": "text", "data": {"text": text}}], "auto_escape": True},
                     timeout=min(10, deadline.check()))
@@ -349,9 +375,10 @@ class DirectQQActor:
         self.store.update(event["event_id"], state="sent")
 
     async def reconcile_unknown(self):
-        """Recover only already identified sends, using read-only protocol calls.
+        """Recover uncertain sends, using read-only protocol calls.
 
-        An absent message ID remains unknown. No retry, reservation, continuation
+        Missing ACK identities require a unique, exact persisted own echo and
+        independent protocol confirmation. No retry, reservation, continuation
         or renewed reply deadline is created, including after process restart.
         The delivery lock prevents racing an in-flight sender's receipt write.
         """
@@ -362,7 +389,7 @@ class DirectQQActor:
             budget = QQDeadline.after(15)
             recovered = 0
             checked = 0
-            for send in self.store.outstanding_reconciliation(limit=4):
+            for send in self.store.outstanding_reconciliation(limit=4, include_unidentified=True):
                 if (not self.active() or self.stop.is_set() or self.epoch != epoch
                         or self.client is not client or client.closed.is_set() or budget.expired):
                     break
@@ -388,12 +415,21 @@ class DirectQQActor:
                             or type(index) is not int or not 0 <= index < len(texts)
                             or texts[index] != send["text"] or send["source_record_id"] not in frozen.source_record_ids):
                         raise OneBotError("direct_reconciliation_binding_invalid")
+                    echo = None
+                    message_id = send["message_id"]
+                    if message_id is None:
+                        echo = self.store.reconciliation_echo(send)
+                        if echo is None:
+                            raise OneBotError("direct_reconciliation_echo_unresolved")
+                        message_id = echo["message_id"]
                     async with asyncio.timeout(budget.check()):
-                        proof = await self.verify_sent(event, send["message_id"], send["text"],
-                                                       timeout=min(3, budget.check()))
+                        proof = await self.verify_sent(event, message_id, send["text"],
+                                                       timeout=min(3, budget.check()), history_count=200)
                     if (not self.active() or self.stop.is_set() or self.epoch != epoch
                             or self.client is not client or client.closed.is_set()):
                         break
+                    if echo is not None:
+                        send = self.store.bind_reconciliation_echo(send, event_id=echo["event_id"], proof_ref=proof)
                     prefix = get_qq_segment_deliveries(memory_db=self.session.memory_db,
                         group_id=send["group_id"], decision_id=send["decision_id"])
                     if index < len(prefix):
@@ -408,7 +444,8 @@ class DirectQQActor:
                             decision_id=send["decision_id"], segment_index=index, segment_count=len(texts),
                             delivered_text=send["text"], source_record_ids=[send["source_record_id"]],
                             delivered_at=utcnow(), protocol_message_id=send["message_id"],
-                            evidence_refs=[proof, protocol_message_evidence_ref(send["group_id"],
+                            evidence_refs=([send["recovery_echo_ref"]] if send.get("recovery_echo_ref") else []) +
+                                [proof, protocol_message_evidence_ref(send["group_id"],
                                 self.settings.self_member_id, send["message_id"])])
                     prefix = get_qq_segment_deliveries(memory_db=self.session.memory_db,
                         group_id=send["group_id"], decision_id=send["decision_id"])
@@ -534,6 +571,7 @@ class DirectQQActor:
 
     async def run(self):
         worker = asyncio.create_task(self.worker())
+        last_connection_error = None
         try:
             while not self.stop.is_set():
                 connection_error = None
@@ -546,6 +584,8 @@ class DirectQQActor:
                     self.connected_at = utcnow()
                     self.connected = True
                     self.epoch += 1
+                    logger.info("qq_direct_connected")
+                    last_connection_error = None
                     self.write_status(state="watching" if self.active() else "paused", last_error_type=None,
                                       observation_gap=False)
                     next_history = 0
@@ -568,12 +608,20 @@ class DirectQQActor:
                     self.state["last_error_type"] = connection_error
                 finally:
                     self.connected = False
+                    error = connection_error or getattr(self.client, "last_error_type", None) or "onebot_disconnected"
+                    self.state.update(observation_gap=True, last_disconnect_at=utcnow().isoformat(),
+                                      last_gap_error_type=error)
+                    if not self.stop.is_set():
+                        self.state["last_error_type"] = error
+                        if error != last_connection_error:
+                            # Only locally defined codes reach the journal;
+                            # remote exception text can contain credentials.
+                            safe_error = error if error in _CONNECTION_ERRORS or error in {
+                                "onebot_event_callback_failed", "onebot_event_queue_overflow",
+                                "onebot_invalid_envelope"} else "onebot_connection_unavailable"
+                            logger.warning("qq_direct_disconnected error_type=%s; retrying", safe_error)
+                            last_connection_error = error
                     if self.client:
-                        error = connection_error or getattr(self.client, "last_error_type", None) or "onebot_disconnected"
-                        self.state.update(observation_gap=True, last_disconnect_at=utcnow().isoformat(),
-                                          last_gap_error_type=error)
-                        if not self.stop.is_set():
-                            self.state["last_error_type"] = error
                         await self.client.close()
                 self.write_status(state="disconnected")
                 try:
@@ -589,6 +637,8 @@ class DirectQQActor:
 
 
 def main(argv=None):
+    logging.basicConfig(format="%(asctime)s %(levelname)s %(name)s %(message)s")
+    logger.setLevel(logging.INFO)
     parser = argparse.ArgumentParser(description="Misty QQ via authenticated OneBot 11, with retained image understanding")
     parser.add_argument("--config", type=Path, required=True)
     args = parser.parse_args(argv)

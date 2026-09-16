@@ -57,6 +57,8 @@ sudo /opt/neuralcloud/current/.venv/bin/python /opt/neuralcloud/current/tools/de
 
 之后按迁移流程分别验证：登录账号、指定群/好友存在、OneBot 认证与真实消息读取、图片理解、QQDirect 新鲜心跳。旧发送方完全停止并完成账本对账后，才按 NeuralCloud 迁移流程恢复目标 QQDirect 发送。安装成功、systemd active 或出现二维码都不证明收发链路已经就绪。
 
+QQDirect 的 systemd 启动检查只确认当前 release、当前 PID 和新鲜工作心跳，允许进程等待 NapCat 扫码并自动重连，避免登录失效时反复被启动超时杀掉。普通部署健康检查仍要求 `connected=true`。断线与重连会写入脱敏 journal；`direct.status.json` 的 `automatic_send=false`、`last_error_type=direct_delivery_unknown` 则表示发送账本存在未确认交付，需要核对回执，与未登录是不同故障。
+
 ## 重复运行与恢复
 
 相同参数、制品、令牌和私有配置可重复运行，保留已有登录数据；不会默认重启正在运行的服务。prefix、unit、用户身份或关键配置不匹配时拒绝接管，不覆盖，不停止其他服务。NapCat 自身补充的默认字段不视为冲突，但绑定端口、凭据、网络服务器列表和消息格式必须保持一致。

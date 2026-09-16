@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import sqlite3
@@ -15,6 +16,16 @@ from pydantic import BaseModel, ConfigDict, Field
 from harness.homeostasis.models import DIMENSIONS
 from harness.files import replace_path
 from harness.runtime.monitor import MonitorStore, _percentile, utc_now
+
+
+async def _report_io(function, *args, **kwargs):
+    """Keep report I/O off the runtime loop and drain it before stores close."""
+    task = asyncio.create_task(asyncio.to_thread(function, *args, **kwargs))
+    try:
+        return await asyncio.shield(task)
+    except asyncio.CancelledError:
+        await task
+        raise
 
 
 _FLASH_OFFPEAK = (0.007, 0.22, 0.66)
@@ -193,14 +204,12 @@ class DailyReportBuilder:
     async def build(self, day: str, *, finalized: bool = False) -> dict[str, Any]:
         start, end = day_bounds(day, self.settings.timezone)
         since, until = start.isoformat(), end.isoformat()
-        samples = self.monitor.query_samples(since, until)
-        runs = self.monitor.query_runs(since, until)
-        events = self.monitor.query_events(since, until)
-        resources = self.monitor.query_resources(since, until)
-        actions = self.monitor.query_actions(since, until)
+        samples, runs, events, resources, actions = await _report_io(self._monitor_rows, since, until)
         traces = await self._traces(since, until)
         revision = await self._revision(day)
-        qq_tokens = self._qq_tokens(start, end)
+        qq_tokens = await _report_io(self._qq_tokens, start, end)
+        qq_idle = await _report_io(self._qq_idle, start, end)
+        resource_summary = await _report_io(self._resources, resources)
         return {
             "schema_version": "daily-report-v1",
             "day": day,
@@ -209,15 +218,24 @@ class DailyReportBuilder:
             "finalized": finalized,
             "generated_at": utc_now().isoformat(),
             "uptime": self._uptime(samples, start, end),
-            "resources": self._resources(resources),
+            "resources": resource_summary,
             "homeostasis": self._homeostasis(traces, events),
-            "intent": self._intent(events, start, end),
+            "intent": self._intent(events, start, end, qq=qq_idle),
             "pipelines": self._pipelines(runs, events),
             "memory_revision": revision,
             "tokens": self._tokens(runs, qq_tokens, revision, start),
             "diary": {"wrote": bool(self.diary_store and self.diary_store.count(day) > 0)},
             "extras": self._extras(events, actions, start, end),
         }
+
+    def _monitor_rows(self, since: str, until: str):
+        return (
+            self.monitor.query_samples(since, until),
+            self.monitor.query_runs(since, until),
+            self.monitor.query_events(since, until),
+            self.monitor.query_resources(since, until),
+            self.monitor.query_actions(since, until),
+        )
 
     async def _traces(self, since: str, until: str) -> list[dict[str, Any]]:
         client = self.homeostasis
@@ -378,7 +396,7 @@ class DailyReportBuilder:
             ),
         }
 
-    def _intent(self, events: list[dict[str, Any]], start: datetime, end: datetime) -> dict[str, Any]:
+    def _intent(self, events: list[dict[str, Any]], start: datetime, end: datetime, *, qq: dict[str, Any]) -> dict[str, Any]:
         marked: dict[str, int] = {}
         for event in events:
             topic = str(event.get("topic") or "")
@@ -422,7 +440,6 @@ class DailyReportBuilder:
                 continue
             status = str(payload.get("status") or "completed")
             idle[status] = idle.get(status, 0) + 1
-        qq = self._qq_idle(start, end)
         return {"marked": marked, "capabilities": capabilities, "board": board, "idle": idle, "qq": qq}
 
     def _qq_idle(self, start: datetime, end: datetime) -> dict[str, Any]:
@@ -632,19 +649,49 @@ class DailyReportController:
         self.builder = builder
         self.store = store
         self.settings = settings
+        self._task: asyncio.Task | None = None
+        self._finalize_lock = asyncio.Lock()
+        self._closed = False
+        self._last_finalized_day: str | None = None
 
     async def heartbeat(self) -> dict[str, Any] | None:
+        if self._closed:
+            return None
+        if self._task is not None:
+            if not self._task.done():
+                return None
+            task, self._task = self._task, None
+            # Preserve the supervisor's daily_report_failed journal entry.
+            task.result()
         zone = ZoneInfo(self.settings.timezone)
         now = utc_now().astimezone(zone)
         if now.strftime("%H:%M") < self.settings.finalize_time:
             return None
         day = (now.date() - timedelta(days=1)).isoformat()
-        if self.store.meta().get("last_finalized_day") == day and self.store.load(day):
+        if day == self._last_finalized_day:
             return None
-        return await self.finalize(day)
+        self._task = asyncio.create_task(self._finalize_due(day), name="daily-report-finalize")
+        # A report is an observability projection; it must never occupy the
+        # sequential event dispatcher while waiting on a domain or disk.
+        return None
+
+    async def _finalize_due(self, day: str) -> dict[str, Any] | None:
+        async with self._finalize_lock:
+            archived = await _report_io(self.store.load, day)
+            if archived is not None and archived.get("finalized"):
+                self._last_finalized_day = day
+                return None
+            return await self._build_and_save(day)
+
+    async def close(self) -> None:
+        self._closed = True
+        if self._task is not None:
+            self._task.cancel()
+            await asyncio.gather(self._task, return_exceptions=True)
+            self._task = None
 
     async def report(self, day: str, *, live: bool = True) -> dict[str, Any]:
-        archived = self.store.load(day)
+        archived = await _report_io(self.store.load, day)
         if archived is not None:
             return archived
         if not live:
@@ -652,8 +699,13 @@ class DailyReportController:
         return await self.builder.build(day, finalized=False)
 
     async def finalize(self, day: str) -> dict[str, Any]:
+        async with self._finalize_lock:
+            return await self._build_and_save(day)
+
+    async def _build_and_save(self, day: str) -> dict[str, Any]:
         report = await self.builder.build(day, finalized=True)
-        self.store.save(report)
+        await _report_io(self.store.save, report)
+        self._last_finalized_day = day
         return report
 
     def days(self) -> list[str]:

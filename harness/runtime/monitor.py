@@ -724,7 +724,15 @@ class MonitorStore:
             return 0
 
     def query_samples(self, since: str, until: str) -> list[dict[str, Any]]:
-        return self._query_range("monitor_samples", "observed_at", since, until, self._sample_from_row)
+        with self._lock:
+            rows = self._connection.execute(
+                """SELECT seq, observed_at, lifecycle, queue_size, receive_process_lag,
+                          pending_actions, coalesced, dropped, rejected, healthy,
+                          '{}' AS payload_json
+                   FROM monitor_samples WHERE observed_at >= ? AND observed_at < ? ORDER BY seq ASC""",
+                (_iso(since), _iso(until)),
+            ).fetchall()
+        return [self._sample_from_row(row).model_dump(mode="json") for row in rows]
 
     def query_runs(self, since: str, until: str) -> list[dict[str, Any]]:
         return self._query_range("monitor_runs", "started_at", since, until, self._run_from_row)
@@ -887,24 +895,35 @@ class MonitorStore:
         seconds = _window_seconds(window)
         since = (utc_now() - timedelta(seconds=seconds)).isoformat()
         with self._lock:
-            event_rows = self._connection.execute(
-                "SELECT * FROM monitor_events WHERE observed_at >= ? ORDER BY seq DESC", (since,)
+            counts = self._connection.execute(
+                """SELECT COUNT(*) AS events,
+                          COALESCE(SUM(severity = 'warning'), 0) AS warnings,
+                          COALESCE(SUM(severity = 'error'), 0) AS errors,
+                          COALESCE(SUM(CASE WHEN topic = 'event.completed' THEN json_extract(payload_json, '$.status') = 'completed' ELSE 0 END), 0) AS completed,
+                          COALESCE(SUM(CASE WHEN topic = 'event.completed' THEN json_extract(payload_json, '$.status') = 'failed' ELSE 0 END), 0) AS failed,
+                          COALESCE(SUM(CASE WHEN topic = 'event.completed' THEN json_extract(payload_json, '$.status') = 'deferred' ELSE 0 END), 0) AS deferred
+                   FROM monitor_events WHERE observed_at >= ?""", (since,)
+            ).fetchone()
+            alert_rows = self._connection.execute(
+                """SELECT * FROM monitor_events WHERE observed_at >= ?
+                   AND severity IN ('warning', 'error') ORDER BY seq DESC LIMIT 20""", (since,)
             ).fetchall()
             run_rows = self._connection.execute(
-                "SELECT * FROM monitor_runs WHERE updated_at >= ? ORDER BY seq DESC", (since,)
+                """SELECT status, path, latency_ms, total_tokens, revisions
+                   FROM monitor_runs WHERE updated_at >= ? ORDER BY seq DESC""", (since,)
             ).fetchall()
-        events = [self._event_from_row(row).model_dump(mode="json") for row in event_rows]
-        runs = [self._run_from_row(row).model_dump(mode="json") for row in run_rows]
+        runs = [dict(row) for row in run_rows]
         latencies = [float(run["latency_ms"]) for run in runs if run.get("latency_ms") is not None]
-        completed = sum(1 for item in events if item["topic"] == "event.completed" and item["payload"].get("status") == "completed")
-        failed = sum(1 for item in events if item["topic"] == "event.completed" and item["payload"].get("status") == "failed")
-        deferred = sum(1 for item in events if item["topic"] == "event.completed" and item["payload"].get("status") == "deferred")
+        completed, failed, deferred = counts["completed"], counts["failed"], counts["deferred"]
         with self._lock:
             samples = self._connection.execute(
-                "SELECT * FROM monitor_samples WHERE observed_at >= ? ORDER BY seq ASC", (since,)
+                """SELECT seq, observed_at, lifecycle, queue_size, receive_process_lag,
+                          pending_actions, coalesced, dropped, rejected, healthy,
+                          '{}' AS payload_json
+                   FROM monitor_samples WHERE observed_at >= ? ORDER BY seq ASC""", (since,)
             ).fetchall()
         sample_items = [self._sample_from_row(row).model_dump(mode="json") for row in _downsample(samples, 720)]
-        alerts = [item for item in events if item["severity"] in {"warning", "error"}][:20]
+        alerts = [self._event_from_row(row).model_dump(mode="json") for row in alert_rows]
         paths: dict[str, int] = {}
         for run in runs:
             key = str(run.get("path") or "unknown")
@@ -922,9 +941,9 @@ class MonitorStore:
                 "retention_days": self.retention_days,
             },
             "aggregates": {
-                "events": len(events),
-                "warnings": sum(1 for item in events if item["severity"] == "warning"),
-                "errors": sum(1 for item in events if item["severity"] == "error"),
+                "events": counts["events"],
+                "warnings": counts["warnings"],
+                "errors": counts["errors"],
                 "completed": completed,
                 "failed": failed,
                 "deferred": deferred,

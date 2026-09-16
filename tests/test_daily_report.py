@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import asyncio
 import json
+import threading
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
 from harness.diary.models import DiaryOriginal
 from harness.diary.store import DiaryStore
-from harness.runtime.daily_report import DailyReportBuilder, DailyReportSettings, DailyReportStore, day_bounds
+from harness.runtime.daily_report import DailyReportBuilder, DailyReportController, DailyReportSettings, DailyReportStore, day_bounds
 from harness.runtime.monitor import MonitorStore
 from harness.runtime.resources import ResourceSample
 
@@ -96,3 +98,86 @@ def test_daily_report_aggregates_uptime_paths_tokens_and_diary(tmp_path) -> None
     assert archive.load(DAY)["diary"]["wrote"] is True
     store.close()
     diary.close()
+
+
+def test_daily_report_heartbeat_does_not_wait_for_slow_report_and_deduplicates(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr("harness.runtime.daily_report.utc_now", lambda: datetime(2026, 9, 16, 1, tzinfo=UTC))
+
+    async def scenario():
+        entered = asyncio.Event()
+        release = asyncio.Event()
+        calls = []
+
+        class SlowBuilder:
+            async def build(self, day, *, finalized):
+                calls.append(day)
+                entered.set()
+                await release.wait()
+                return {"day": day, "finalized": finalized}
+
+        controller = DailyReportController(SlowBuilder(), DailyReportStore(tmp_path), DailyReportSettings())
+        try:
+            await asyncio.wait_for(controller.heartbeat(), timeout=0.5)
+            await asyncio.wait_for(entered.wait(), timeout=1)
+            await asyncio.wait_for(controller.heartbeat(), timeout=0.5)
+            assert calls == [DAY]
+            release.set()
+            await asyncio.wait_for(controller._task, timeout=1)
+            await controller.heartbeat()
+            assert calls == [DAY]
+            assert controller.store.load(DAY)["finalized"] is True
+        finally:
+            release.set()
+            await controller.close()
+
+    asyncio.run(scenario())
+
+
+def test_daily_report_disk_work_does_not_block_loop_and_shutdown_drains_worker(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr("harness.runtime.daily_report.utc_now", lambda: datetime(2026, 9, 16, 1, tzinfo=UTC))
+    store = MonitorStore(tmp_path / "monitor.sqlite3")
+    entered = threading.Event()
+    release = threading.Event()
+    finished = threading.Event()
+    original = store.query_samples
+
+    def blocked_query(*args):
+        entered.set()
+        try:
+            if not release.wait(timeout=3):
+                raise TimeoutError("test worker not released")
+            return original(*args)
+        finally:
+            finished.set()
+
+    monkeypatch.setattr(store, "query_samples", blocked_query)
+    controller = DailyReportController(
+        DailyReportBuilder(monitor=store, state_dir=tmp_path, settings=DailyReportSettings()),
+        DailyReportStore(tmp_path / "reports"), DailyReportSettings(),
+    )
+
+    async def scenario():
+        closing = None
+        try:
+            await controller.heartbeat()
+            assert await asyncio.to_thread(entered.wait, 1)
+            closing = asyncio.create_task(controller.close())
+            await asyncio.sleep(0.02)
+            assert not closing.done()
+            assert not finished.is_set()
+            release.set()
+            await asyncio.wait_for(closing, timeout=1)
+            assert finished.is_set()
+            assert controller.store.load(DAY) is None
+        finally:
+            release.set()
+            if closing is not None:
+                await closing
+            else:
+                await controller.close()
+
+    try:
+        asyncio.run(scenario())
+    finally:
+        release.set()
+        store.close()

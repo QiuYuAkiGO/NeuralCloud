@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "incident_day": "2026-09-16",
+  "timezone": "Asia/Shanghai",
+  "release": {
+    "previous": "20260916-linux-1",
+    "active": "20260916-recovery-v2",
+    "archive_sha256": "0ca49d1ec2db676e049bbe53e9627e722d6cc4b8dbfa9dd2ba7375a82de28224",
+    "verified_files": 352,
+    "configuration_valid": true,
+    "activation_seconds": 219.54
+  },
+  "root_causes": [
+    {
+      "component": "qq-direct",
+      "occurred_at": "2026-09-16T00:10:19+08:00",
+      "finding": "A send began with about 12 ms left of its original 60 s budget. Delivery succeeded but ACK timed out; the unidentified unknown record permanently blocked later automatic sends.",
+      "correction": "Require a minimum send budget at each pre-transport boundary; reconcile a unique persisted live own echo only after independent protocol verification. Never resend an uncertain delivery."
+    },
+    {
+      "component": "napcat",
+      "finding": "After the approximately 08:40 host reboot, the account was waiting for QR login and OneBot port 6301 was unavailable.",
+      "correction": "User completed QR login. Boot-only readiness now accepts a fresh disconnected worker; normal health checks still require a connection."
+    },
+    {
+      "component": "runtime-reporting",
+      "finding": "Daily aggregation blocked the sequential heartbeat and synchronous I/O blocked the event loop; monitor overview repeatedly decoded and returned full runtime snapshots.",
+      "correction": "Single-flight background report finalization, drained worker I/O on shutdown, SQL aggregates, compact monitor samples, reusable CPU measurement baselines."
+    }
+  ],
+  "backup": {
+    "path": "/var/backups/neuralcloud/incident-20260916-before-recovery-v1",
+    "verified": true,
+    "files": 2124,
+    "bytes": 1966584608,
+    "sqlite_databases": 18,
+    "journal_records": 159684,
+    "manifest_sha256": "d1ad464250a749e6bde0fe2c44b93ee510a46d8ca399257d2c90c8a36c4440d4",
+    "journal_last_hash": "2458aeb4c534e4bd1fd8e62454077dae8cc8682e1dec73bf6c4aa6ee950f30fd"
+  },
+  "local_validation": {
+    "passed": 287,
+    "skipped": 1,
+    "ruff": "passed",
+    "test_groups": [
+      {"scope": "runtime, daily report, monitoring, report routes, diary, QQ deadline, supervisor, Linux readiness/deployment", "passed": 154, "skipped": 1},
+      {"scope": "QQ source, actor, private actor, status, launcher and resource monitoring", "passed": 132, "skipped": 0},
+      {"scope": "added attempted-write deadline exhaustion regression", "passed": 1, "skipped": 0}
+    ]
+  },
+  "live_verification": {
+    "verified_at": "2026-09-16T09:18:38+08:00",
+    "services": {
+      "cognitive": {"state": "active/running", "restarts": 0},
+      "homeostasis": {"state": "active/running", "restarts": 0},
+      "runtime": {"state": "active/running", "restarts": 0},
+      "gui": {"state": "active/running", "restarts": 0},
+      "board": {"state": "active/running", "restarts": 0},
+      "qq-direct": {"state": "active/running", "restarts": 0}
+    },
+    "concurrent_http_probes": [
+      {"path": "/v1/status", "http": 200, "seconds": 0.028, "queue_size": 0, "lifecycle": "RUNNING", "degraded_reasons": []},
+      {"path": "/v1/monitor/overview?window=24h", "http": 200, "seconds": 0.154, "bytes": 159983, "samples": 670, "healthy": true, "ingest_dropped": 0},
+      {"path": "/v1/report/daily?day=2026-09-16", "http": 200, "seconds": 4.746, "resources_available": true, "finalized": false}
+    ],
+    "gui_chat": {
+      "run_id": "run_7ca979a6",
+      "event_id": "evt_b27876d3",
+      "accepted_http": 200,
+      "accepted_seconds": 2.19,
+      "received_at": "2026-09-16T01:18:36.133998Z",
+      "reply_delivered_at": "2026-09-16T01:19:27.067260Z",
+      "event_completed_at": "2026-09-16T01:19:45.399576Z",
+      "decision_kind": "reply",
+      "delivered": true,
+      "delivery_success": true
+    },
+    "web_provider_probe": {"http": 200, "seconds": 3.61, "search_status": "completed", "search_sources": 1, "read_status": "completed", "read_sources": 1},
+    "qq": {
+      "connected": true,
+      "automatic_send": true,
+      "unknown_or_attempted_deliveries": 0,
+      "last_error_type": null,
+      "last_reconciliation_error": null,
+      "recovered_send_id": "qq-direct-send:b487aebe14fb412bad2e63f0288e7ec0",
+      "recovered_message_id": "875609104",
+      "recovered_receipt_id": "qq-segment-delivery:db27f0bd261e459ea4ff9da3efc2b863",
+      "echo_evidence": "qq-protocol://sha256/54e03ec7de84c48b1e97575451b549805180af276b72042f570d20c4c65db28f",
+      "readback_evidence": "qq-protocol://sha256/abdbf48d847ab1113b4a28182c397ff8951dd3878f9d0cdb910f58b5868e2a1b",
+      "recovery_resent_message": false,
+      "live_inbound_and_cognitive_wait_observed": true,
+      "new_automatic_replies_verified_at": "2026-09-16T01:26:15.909482+00:00",
+      "sent_records_after_new_replies": 87,
+      "new_automatic_replies": [
+        {"send_id": "qq-direct-send:25d01738c332421a9af4b6071230cb51", "attempted_at": "2026-09-16T01:24:29.882113+00:00", "status": "sent", "message_id": "932016978", "receipt_id": "qq-segment-delivery:89bf8566a1864be68f40246388cce8cd"},
+        {"send_id": "qq-direct-send:8aaa026dea8b49618584bae86762542d", "attempted_at": "2026-09-16T01:24:58.338547+00:00", "status": "sent", "message_id": "542420724", "receipt_id": "qq-segment-delivery:301ae5c97d98484a92b02509618d3935"}
+      ],
+      "synthetic_external_messages_sent": false
+    }
+  },
+  "limitations": [
+    "Activation still takes roughly 220 seconds while replaying durable state; this incident fix does not optimize startup replay.",
+    "The GUI model reply took about 51 seconds from receipt to delivery; interface responsiveness does not imply low model latency.",
+    "QQ continues to apply its original deadline and newer-context protection. Cumulative failed counts include superseded events and are not sufficient to diagnose a persistent outage.",
+    "Provider cache hit tokens were observed in live QQ traces, but no controlled cache-hit-ratio benchmark was performed."
+  ]
+}

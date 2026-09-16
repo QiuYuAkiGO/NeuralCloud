@@ -1,7 +1,84 @@
 from __future__ import annotations
 
+import os
+import sys
+from types import SimpleNamespace
+
 from harness.runtime.monitor import MonitorStore
 from harness.runtime.resources import ResourceSampler, ResourceSample
+
+
+def _fake_processes(monkeypatch):
+    processes = {os.getpid(): {"generation": 1, "cpu": 0.0}, 42: {"generation": 1, "cpu": 0.0}}
+
+    class Process:
+        def __init__(self, pid):
+            if pid not in processes:
+                raise ProcessLookupError(pid)
+            self.pid = pid
+            self.generation = processes[pid]["generation"]
+            self.previous_cpu = None
+
+        def is_running(self):
+            return self.pid in processes and processes[self.pid]["generation"] == self.generation
+
+        def cpu_percent(self, interval=None):
+            assert interval is None
+            current_cpu = processes[self.pid]["cpu"]
+            result = 0.0 if self.previous_cpu is None else current_cpu - self.previous_cpu
+            self.previous_cpu = current_cpu
+            return result
+
+        def memory_info(self):
+            return SimpleNamespace(rss=4096)
+
+        def num_threads(self):
+            return 2
+
+    monkeypatch.setitem(sys.modules, "psutil", SimpleNamespace(
+        Process=Process, cpu_percent=lambda interval: 10.0,
+        virtual_memory=lambda: SimpleNamespace(percent=20.0),
+    ))
+    return processes
+
+
+def test_resource_sampler_measures_cpu_between_samples_and_resets_reused_pid(tmp_path, monkeypatch) -> None:
+    processes = _fake_processes(monkeypatch)
+    sampler = ResourceSampler(state_dir=tmp_path)
+    monkeypatch.setattr(sampler, "_registry_pids", lambda: [("cognitive", 42)])
+    first = sampler.sample()
+    assert next(row for row in first if row.pid == 42).cpu_percent == 0.0
+
+    processes[42]["cpu"] = 57.0
+    second = sampler.sample()
+    assert next(row for row in second if row.pid == 42).cpu_percent == 57.0
+
+    processes[42] = {"generation": 2, "cpu": 2.0}
+    third = sampler.sample()
+    assert next(row for row in third if row.pid == 42).cpu_percent == 0.0
+    processes[42]["cpu"] = 35.0
+    fourth = sampler.sample()
+    assert next(row for row in fourth if row.pid == 42).cpu_percent == 33.0
+
+
+def test_resource_sampler_discards_exited_and_untracked_processes(tmp_path, monkeypatch) -> None:
+    processes = _fake_processes(monkeypatch)
+    sampler = ResourceSampler(state_dir=tmp_path)
+    monkeypatch.setattr(sampler, "_registry_pids", lambda: [("cognitive", 42)])
+    sampler.sample()
+    assert 42 in sampler._processes
+    del processes[42]
+    rows = sampler.sample()
+    assert not next(row for row in rows if row.pid == 42).available
+    assert 42 not in sampler._processes
+
+    processes[42] = {"generation": 2, "cpu": 0.0}
+    sampler.sample()
+    assert 42 in sampler._processes
+    monkeypatch.setattr(sampler, "_registry_pids", lambda: [])
+    monkeypatch.setattr(sampler, "_cmdline_pids", lambda _: [])
+    sampler.sample()
+    assert set(sampler._processes) == {os.getpid()}
 
 
 def test_resource_sampler_uses_pid_file_without_scanning_all_processes(tmp_path, monkeypatch) -> None:

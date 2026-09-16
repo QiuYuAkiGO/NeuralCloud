@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
 
@@ -71,6 +73,46 @@ def test_monitor_store_sanitizes_projects_runs_and_pages(tmp_path) -> None:
         {item["seq"] for item in second["items"]}
     )
     store.close()
+
+
+def test_overview_keeps_samples_small_and_preserves_aggregate_counts(tmp_path) -> None:
+    store = MonitorStore(tmp_path / "monitor.sqlite3")
+    now = datetime.now(UTC).isoformat()
+    large_state = json.dumps({"diagnostic_history": "x" * 65536})
+    try:
+        with store._lock:
+            store._connection.executemany(
+                """INSERT INTO monitor_samples(
+                    observed_at, lifecycle, queue_size, receive_process_lag, pending_actions,
+                    coalesced, dropped, rejected, healthy, payload_json
+                ) VALUES(?, 'RUNNING', 3, 2, 1, 0, 0, 0, 1, ?)""",
+                [(now, large_state)] * 20,
+            )
+            store._connection.commit()
+        for status in ("completed", "completed", "failed", "deferred"):
+            store.append_event("event.completed", {"status": status})
+        for index in range(24):
+            store.append_event("watchdog", {"index": index})
+        overview = store.overview(
+            window="24h", status=SimpleNamespace(model_dump=lambda **_: {"lifecycle": "RUNNING"}),
+            manifest={},
+        )
+        assert overview["aggregates"]["events"] == 28
+        assert overview["aggregates"]["completed"] == 2
+        assert overview["aggregates"]["failed"] == 1
+        assert overview["aggregates"]["deferred"] == 1
+        assert overview["aggregates"]["warnings"] == 24
+        assert overview["aggregates"]["errors"] == 1
+        assert overview["aggregates"]["failure_rate"] == 0.25
+        assert len(overview["alerts"]) == 20
+        assert len(overview["samples"]) == 20
+        assert all(sample["queue_size"] == 3 and sample["payload"] == {} for sample in overview["samples"])
+        assert len(json.dumps(overview)) < 20000
+        # The complete diagnostic sample remains persisted for other readers.
+        with store._lock:
+            assert len(store._connection.execute("SELECT payload_json FROM monitor_samples LIMIT 1").fetchone()[0]) > 65000
+    finally:
+        store.close()
 
 
 def test_call_log_backfill_is_idempotent_and_cleanup_is_projection_only(tmp_path) -> None:
