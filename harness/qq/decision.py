@@ -549,12 +549,12 @@ def _conversational_sentence_segments(segments: list[str]) -> list[str] | None:
 
 def _prepared_group_segments(final, trace: QQTurnTrace, *,
                              reply_style: Literal["conversational", "formal"]) -> tuple[list[str], str]:
-    """Accept explicit paragraph boundaries without cutting or rewriting prose.
+    """Accept explicit paragraph and line boundaries without rewriting prose.
 
     Conversational replies may additionally split on Chinese periods. Formal
-    replies keep generated punctuation and paragraph or protocol boundaries.
-    Protocol splitting already happened in the shared pipeline. Empty parts,
-    remaining single line breaks, and too many paragraphs still fail closed.
+    replies keep generated punctuation and paragraph, line, or protocol
+    boundaries. Protocol splitting already happened in the shared pipeline.
+    Empty parts and too many paragraphs still fail closed.
     """
     original = final.segments
     if (not isinstance(original, list) or not 1 <= len(original) <= 3
@@ -568,6 +568,10 @@ def _prepared_group_segments(final, trace: QQTurnTrace, *,
     flattened = [part for body in original for part in re.split(r"\r?\n[ \t]*(?:\r?\n)+", body)]
     if flattened != original:
         trace.add_counter("paragraph_segmentation")
+    lined = [part for body in flattened for part in re.split(r"\r?\n", body)]
+    if lined != flattened:
+        trace.add_counter("line_segmentation")
+        flattened = lined
     if reply_style == "conversational":
         sentences = _conversational_sentence_segments(flattened)
         if sentences is not None and sentences != flattened:

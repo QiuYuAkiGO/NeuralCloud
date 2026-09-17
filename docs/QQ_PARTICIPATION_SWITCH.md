@@ -2,7 +2,7 @@
 
 本次将群聊参与偏好恢复为 v17 的较克制门槛：先判断是否值得开口，多人彼此闲聊、没有新需求或缺乏具体内容时可等待。direct/ambient 冷却仍为 10/60 秒。这是模型判断偏好，不是固定回复概率。
 
-当前生产已前进到 `20260917-json-body-guard-v1`（群提示仍为 `qq-group-turn-taking-v23-substance`），并拦截把 gate JSON 当正文发出。不要直接激活本节两个旧 release，以免丢失其后的留言板/日记修复、言之有物规则与 JSON 拦截。回退请使用 `20260917-substance-v1`。
+当前生产已前进到 `20260917-line-break-v1`（群提示仍为 `qq-group-turn-taking-v23-substance`），拦截把 gate JSON 当正文发出，并把正文中的单个换行拆成独立气泡。不要直接激活本节两个旧 release，以免丢失其后的留言板/日记修复、言之有物规则、JSON 拦截与换行分段。回退请使用 `20260917-json-body-guard-v1`。
 
 只替换群 gate 开头的参与规则，保留最新版本的重复回答判断、正文、图片、发送保护和独立 DeepSeek 情绪通道。群 1060979317 的 observe/send 均保持 false。
 

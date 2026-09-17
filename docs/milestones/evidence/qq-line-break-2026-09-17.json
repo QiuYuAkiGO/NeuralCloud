@@ -1,0 +1,35 @@
+{
+  "release_id": "20260917-line-break-v1",
+  "previous_release": "20260917-json-body-guard-v1",
+  "archive_sha256": "88f30dee40914ef0174e4a44a9d65d048f2066d01c071d765b9ef975fea72599",
+  "files": 369,
+  "tests": {
+    "related_passed": 133,
+    "ruff": "passed"
+  },
+  "services_active": [
+    "cognitive",
+    "homeostasis",
+    "board",
+    "runtime",
+    "gui",
+    "qq_direct"
+  ],
+  "qq_direct": {
+    "connected": true,
+    "automatic_send": true,
+    "state": "watching",
+    "paused": false,
+    "qq_image_mode": "off",
+    "repository_root": "/opt/neuralcloud/releases/20260917-line-break-v1",
+    "group_1044946257": {"observe": true, "send": true},
+    "group_1060979317": {"observe": false, "send": false}
+  },
+  "prompt_needles": [
+    "line_segmentation",
+    "gate_json_body_rejected",
+    "The prepared reply is a decision object, not sendable speech.",
+    "qq-group-turn-taking-v23-substance",
+    "qq-private-turn-taking-v9"
+  ]
+}

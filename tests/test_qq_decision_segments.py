@@ -97,7 +97,7 @@ def test_invalid_style_never_generates_text(setup, monkeypatch, style, reason):
     assert result.reply == decision.ERROR_FALLBACK_REPLY and result.decision_source == "model_invalid"
 
 
-@pytest.mark.parametrize("segments,reply", [([], "text"), (["text\nline"], "text\nline"),
+@pytest.mark.parametrize("segments,reply", [([], "text"),
     (["text\rline"], "text\rline"), (["text\u2028line"], "text\u2028line"),
     (["x" * 4001], "x" * 4001), (["x" * 4000, "y" * 4000], "x" * 4000 + "\n\n" + "y" * 4000),
     (["one", "two", "three", "four"], "one\n\ntwo\n\nthree\n\nfour"),
@@ -136,14 +136,31 @@ def test_natural_paragraph_fallback_preserves_all_prose_and_uses_no_extra_call(s
     assert len(setup[1].gate_messages) == 1 and setup[1].chat_calls == []
 
 
-@pytest.mark.parametrize("text", ["first\n\nsecond\n\nthird\n\nfourth", "first\nsecond",
-                                 "first\r\nsecond", "first\n\n", "\n\nfirst", " \n\nfirst"])
-def test_paragraph_fallback_refuses_extra_or_empty_segments_and_single_line_breaks(setup, monkeypatch, text):
+@pytest.mark.parametrize("text", ["first\n\nsecond\n\nthird\n\nfourth", "first\n\n",
+                                 "\n\nfirst", " \n\nfirst", "first\nsecond\nthird\nfourth"])
+def test_paragraph_fallback_refuses_extra_or_empty_segments(setup, monkeypatch, text):
     monkeypatch.setattr(decision, "_prepare_group_speech", lambda **kw: SimpleNamespace(
         segments=[text], text=text, usage=TokenUsage(), validation=None))
     result = decision.decide_qq_reply(**setup[3])
     assert result.outcome == "error_fallback" and result.reply == decision.ERROR_FALLBACK_REPLY
     assert result.reply_segments == [decision.ERROR_FALLBACK_REPLY]
+
+
+@pytest.mark.parametrize("text,expected", [
+    ("first\nsecond", ["first", "second"]),
+    ("first\r\nsecond", ["first", "second"]),
+    ("谈不上洞察，就是顺着你那几句话把感觉接了下去\n平时也没干什么，只是听得多、记得多一点",
+     ["谈不上洞察，就是顺着你那几句话把感觉接了下去", "平时也没干什么，只是听得多、记得多一点"]),
+])
+def test_single_line_breaks_become_sendable_segments(setup, monkeypatch, text, expected):
+    monkeypatch.setattr(decision, "_prepare_group_speech", lambda **kw: SimpleNamespace(
+        segments=[text], text=text, usage=TokenUsage(), validation=None))
+    trace = QQTurnTrace()
+    result = decision.decide_qq_reply(**setup[3], trace=trace)
+    assert result.outcome == "ready" and result.reply_segments == expected
+    assert result.reply == "\n\n".join(expected)
+    assert trace.snapshot()["counters"]["line_segmentation"] == 1
+    assert "sentence_segmentation" not in trace.snapshot()["counters"]
 
 
 def test_mixed_protocol_and_natural_paragraphs_pass_through_the_real_pipeline_once(setup):
@@ -187,6 +204,22 @@ def test_conversational_sentences_are_sent_as_separate_bubbles_without_periods(s
     assert trace.snapshot()["counters"]["sentence_segmentation"] == 1
     assert "按句号拆成独立消息" in draft._GROUP_DRAFT_RULES
     assert "不按句号拆条，句号保留" in draft._GROUP_DRAFT_RULES
+
+
+def test_formal_single_line_breaks_keep_punctuation(setup, monkeypatch):
+    _, client, _, kwargs, _ = setup
+    text = "今天天气不错。\n你去哪了。"
+    client.choice = json.dumps({"action": "speak", "reason": "需要正式说明。", "reply_style": "formal",
+                                "reply_style_reason": "对方要求正式回复。"})
+    monkeypatch.setattr(decision, "_prepare_group_speech", lambda **kw: SimpleNamespace(
+        segments=[text], text=text, usage=TokenUsage(), validation=None))
+    trace = QQTurnTrace()
+    result = decision.decide_qq_reply(**kwargs, trace=trace)
+    assert result.reply_style == "formal"
+    assert result.reply_segments == ["今天天气不错。", "你去哪了。"]
+    assert result.reply == "今天天气不错。\n\n你去哪了。"
+    assert trace.snapshot()["counters"]["line_segmentation"] == 1
+    assert "sentence_segmentation" not in trace.snapshot()["counters"]
 
 
 def test_formal_reply_keeps_periods_and_is_not_sentence_split(setup, monkeypatch):
