@@ -54,6 +54,7 @@ def build_qq_emotion_messages(
     *, memory_db: Path | str, group_id: str, self_member_id: str,
     as_of: datetime, trigger_event_id: str | None = None,
     trigger_member_id: str | None = None,
+    triggers: list[tuple[str, str]] | None = None,
     protocol_state_db: Path | str | None = None,
     required_event_ids: list[str] | None = None,
 ):
@@ -70,20 +71,27 @@ def build_qq_emotion_messages(
     if as_of.tzinfo is None:
         raise ValueError("qq_emotion_requires_aware_time")
     as_of = as_of.astimezone(timezone.utc)
+    if triggers is None:
+        triggers = [] if trigger_event_id is None else [(trigger_event_id, trigger_member_id)]
+    elif trigger_event_id is not None:
+        raise ValueError("qq_emotion_trigger_argument_conflict")
+    trigger_members = {member_id for _, member_id in triggers}
     scope = conversation_scope(group_id)
     if scope["kind"] == "private" and (
         self_member_id != scope["self_member_id"]
-        or trigger_member_id not in {None, scope["peer_id"]}
+        or (trigger_members and trigger_members != {scope["peer_id"]})
     ):
         raise ValueError("qq_emotion_private_scope_mismatch")
-    if trigger_event_id is not None and (not trigger_member_id or trigger_member_id == self_member_id):
+    if any(not event_id or not member_id or member_id == self_member_id
+           for event_id, member_id in triggers):
         raise ValueError("qq_emotion_trigger_requires_external_author")
     required_events = list(required_event_ids) if required_event_ids is not None else (
-        [trigger_event_id] if trigger_event_id is not None else [])
+        [event_id for event_id, _ in triggers])
     if ((required_event_ids is not None and trigger_event_id is not None and not required_events)
             or any(not isinstance(item, str) or not item for item in required_events)
-            or (required_events and (trigger_event_id is None or required_events[0] != trigger_event_id
-                                    or len(set(required_events)) != len(required_events)))):
+            or (required_events and ((required_event_ids is not None
+                and (trigger_event_id is None or required_events[0] != trigger_event_id))
+                or len(set(required_events)) != len(required_events)))):
         raise ValueError("qq_emotion_request_sources_invalid")
     if len(required_events) > 20:
         raise ValueError("qq_emotion_new_sources_exceed_window")
@@ -100,17 +108,19 @@ def build_qq_emotion_messages(
             "ORDER BY observed_at DESC, rowid DESC LIMIT 80",
             (group_id, cutoff.isoformat(), (as_of + timedelta(seconds=5)).isoformat()),
         ).fetchall()
+        expected_members = dict(triggers)
         for event_id in required_events:
+            member_id = expected_members.get(event_id)
             matches = db.execute(
                 "SELECT record_id, observed_at FROM qq_visual_observations "
-                "WHERE group_id=? AND capture_item_id=?" + (" AND member_id=?" if event_id == trigger_event_id else ""),
-                (group_id, event_id, trigger_member_id) if event_id == trigger_event_id else (group_id, event_id),
+                "WHERE group_id=? AND capture_item_id=?" + (" AND member_id=?" if member_id is not None else ""),
+                (group_id, event_id, member_id) if member_id is not None else (group_id, event_id),
             ).fetchall()
             if len(matches) != 1:
                 raise ValueError("qq_emotion_trigger_missing_or_ambiguous")
             trigger = _observation(db, group_id, matches[0]["record_id"])
             if (trigger is None or trigger.member_id == self_member_id
-                    or (event_id == trigger_event_id and trigger.member_id != trigger_member_id)
+                    or (member_id is not None and trigger.member_id != member_id)
                     or trigger.capture_item_id != event_id
                     or trigger.observed_at != datetime.fromisoformat(matches[0]["observed_at"])
                     or _protocol_message_time(protocol_db, trigger, self_member_id) > as_of):

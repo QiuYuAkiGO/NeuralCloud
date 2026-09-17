@@ -246,11 +246,11 @@ def test_off_reuses_frozen_ocr_without_mutating_it_or_starting_more_work(actor_f
         await actor.verify_connection()
         payload = pictures()
         await actor.on_event(payload)
-        await actor.observe(event_row(actor, payload)["event"], QQDeadline.after(10))
+        await actor.observe(event_row(actor, payload)["event"], QQDeadline.after(60))
         row = event_row(actor, payload)
         before = deepcopy(row["event"]["bound_observation"])
         configure(actor, "off")
-        result = await actor.observe(row["event"], QQDeadline.after(10), image_admission=frozenset())
+        result = await actor.observe(row["event"], QQDeadline.after(60), image_admission=frozenset())
         assert result.model_dump(mode="json") == before
         assert event_row(actor, payload)["event"]["bound_observation"] == before
     asyncio.run(run())

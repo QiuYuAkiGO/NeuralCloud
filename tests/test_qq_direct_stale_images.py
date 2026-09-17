@@ -143,7 +143,7 @@ def test_already_bound_ocr_is_never_replaced_by_deferred_unknown(actor_factory):
         payload = incoming(1, images=True)
         await actor.on_event(payload)
         row = event_row(actor, payload)
-        bound = await actor.observe(row["event"], QQDeadline.after(10))
+        bound = await actor.observe(row["event"], QQDeadline.after(60))
         await actor.on_event(incoming(2))
         await actor.process(event_row(actor, payload))
         current = event_row(actor, payload)

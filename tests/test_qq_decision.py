@@ -39,11 +39,13 @@ class DecisionLLM(MockLLM):
         super().__init__(chat_routes={"": "嗯，我也想听听。"})
         self.choice = choice
         self.gate_messages = []
+        self.gate_options = []
         self.closed = False
 
     def complete_chat_result(self, messages, **kwargs):
         if decision.is_qq_gate_messages(messages):
             self.gate_messages.append(messages)
+            self.gate_options.append(kwargs)
             if isinstance(self.choice, Exception):
                 raise self.choice
             return ChatResult(text=self.choice, usage=TokenUsage(prompt_tokens=30, completion_tokens=10, source="api"))
@@ -132,6 +134,32 @@ def test_persona_model_can_wait_even_when_a_member_triggers(setup, monkeypatch):
     result = decision.decide_qq_reply(**kwargs, trigger_member_id="20002")
     assert result.action == "wait" and result.reply is None and result.decision_source == "model"
     assert result.usage.calls == 1
+
+
+def test_qq_gate_and_persona_use_low_reasoning_on_official_deepseek(setup, monkeypatch):
+    _, client, _, kwargs, _ = setup
+    settings, preset = decision._load_configuration(kwargs["config_path"], kwargs["preset_path"])
+    tuned = settings.model_copy(update={"llm_model": "deepseek-v4-flash", "llm_base_url": "https://api.deepseek.com/v1"})
+    monkeypatch.setattr(decision, "_load_configuration", lambda *args: (tuned, preset))
+    result = decision.decide_qq_reply(**kwargs, trigger_member_id="20002")
+    assert result.action == "speak" and result.outcome == "ready"
+    assert client.gate_options[0].get("reasoning_effort") == "low"
+    assert client.gate_options[0].get("response_format") == {"type": "json_object"}
+    persona_options = [item for item in client.chat_call_options if item.get("reasoning_effort") == "low"]
+    assert persona_options
+    assert all(item.get("response_format") is None for item in persona_options)
+
+
+def test_qq_gate_and_persona_skip_low_reasoning_off_official_deepseek(setup, monkeypatch):
+    _, client, _, kwargs, _ = setup
+    settings, preset = decision._load_configuration(kwargs["config_path"], kwargs["preset_path"])
+    tuned = settings.model_copy(update={"llm_model": "deepseek-v4-flash", "llm_base_url": "https://proxy.invalid/v1"})
+    monkeypatch.setattr(decision, "_load_configuration", lambda *args: (tuned, preset))
+    result = decision.decide_qq_reply(**kwargs, trigger_member_id="20002")
+    assert result.action == "speak" and result.outcome == "ready"
+    assert all("reasoning_effort" not in item for item in client.gate_options)
+    assert client.gate_options[0].get("response_format") == {"type": "json_object"}
+    assert all(item.get("reasoning_effort") != "low" for item in client.chat_call_options)
 
 
 @pytest.mark.parametrize("configured,expected", [(512, 8192), (12288, 12288), (32768, 16384)])

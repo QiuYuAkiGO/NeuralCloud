@@ -252,7 +252,7 @@ def test_same_analysis_preserves_distinct_message_author_and_wire_binding(actor_
             await actor.on_event(payload)
             event = normalize_message(payload, self_id=SELF, groups=[MAIN])
             row = actor.store.get(event["event_id"])
-            observations.append(await actor.observe(row["event"], QQDeadline.after(10)))
+            observations.append(await actor.observe(row["event"], QQDeadline.after(60)))
         return observations
     first, second = asyncio.run(execute())
     assert len(actor.llm.calls) == 1

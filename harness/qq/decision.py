@@ -29,7 +29,7 @@ from harness.homeostasis.models import HomeostaticInteroceptiveSummary
 from harness.core.error_notice import ERROR_FALLBACK_REPLY
 from harness.core.ids import new_id
 from harness.core.inference import ContextSegment, MemoryEvidenceContext, ParsedInteraction, TokenUsage
-from harness.llm.client import build_llm_client, estimate_chat_usage
+from harness.llm.client import build_llm_client, deepseek_low_reasoning_options, estimate_chat_usage
 from harness.memory.service import build_inmemory_service
 from harness.pipeline.pipeline import InferencePipeline
 from harness.pipeline import parser as parser_module
@@ -502,9 +502,32 @@ def effective_reply_segments(decision: QQReplyDecision) -> list[str]:
     return [decision.reply] if decision.reply else []
 
 
-def _prepared_group_segments(final, trace: QQTurnTrace) -> tuple[list[str], str]:
+def _conversational_sentence_segments(segments: list[str]) -> list[str] | None:
+    """Split casual prose on Chinese periods and drop those delimiters.
+
+    Question and exclamation marks stay with their sentence. Results above the
+    three-bubble plan keep the original segments so long replies are not cut.
+    """
+    sentences: list[str] = []
+    for part in segments:
+        if "。" not in part:
+            sentences.append(part)
+            continue
+        for piece in re.split(r"。+", part):
+            text = piece.strip()
+            if text:
+                sentences.append(text)
+    if not sentences or len(sentences) > 3:
+        return None
+    return sentences
+
+
+def _prepared_group_segments(final, trace: QQTurnTrace, *,
+                             reply_style: Literal["conversational", "formal"]) -> tuple[list[str], str]:
     """Accept explicit paragraph boundaries without cutting or rewriting prose.
 
+    Conversational replies may additionally split on Chinese periods. Formal
+    replies keep generated punctuation and paragraph or protocol boundaries.
     Protocol splitting already happened in the shared pipeline. Empty parts,
     remaining single line breaks, and too many paragraphs still fail closed.
     """
@@ -514,11 +537,15 @@ def _prepared_group_segments(final, trace: QQTurnTrace) -> tuple[list[str], str]
             or final.text != "\n\n".join(original)):
         raise QQDraftError("The prepared reply segments failed validation.")
     flattened = [part for body in original for part in re.split(r"\r?\n[ \t]*(?:\r?\n)+", body)]
-    reply = "\n\n".join(flattened)
-    segments = _validate_reply_segments(flattened, reply)
     if flattened != original:
         trace.add_counter("paragraph_segmentation")
-    return segments, reply
+    if reply_style == "conversational":
+        sentences = _conversational_sentence_segments(flattened)
+        if sentences is not None and sentences != flattened:
+            trace.add_counter("sentence_segmentation")
+            flattened = sentences
+    reply = "\n\n".join(flattened)
+    return _validate_reply_segments(flattened, reply), reply
 
 
 class QQSegmentDeliveryReceipt(_StrictModel):
@@ -1156,7 +1183,8 @@ class _QQScopedLLM:
     """Bound every main/aux request in this QQ client, preserving its routing."""
 
     def __init__(self, client, *, deadline: QQDeadline | None, trace: QQTurnTrace, timeout: float,
-                 policy: QQLatencyOptions | None = None, request_validator=None):
+                 policy: QQLatencyOptions | None = None, request_validator=None,
+                 reasoning_options: dict[str, str] | None = None):
         self.client = client
         self.deadline = deadline
         self.trace = trace
@@ -1166,6 +1194,7 @@ class _QQScopedLLM:
         self.stable_messages: list[dict[str, str]] = []
         self.policy = policy or QQLatencyOptions()
         self.request_validator = request_validator
+        self._reasoning_options = dict(reasoning_options or {})
         self._stage_deadlines: dict[str, QQDeadline] = {}
 
     def __getattr__(self, name):
@@ -1224,6 +1253,8 @@ class _QQScopedLLM:
                     time.sleep(delay)
 
     def complete_chat_result(self, messages, **kwargs):
+        for key, value in self._reasoning_options.items():
+            kwargs.setdefault(key, value)
         return self._call("complete_chat_result", messages, **kwargs)
 
     def complete_chat(self, messages, **kwargs):
@@ -1761,7 +1792,8 @@ def decide_qq_reply(
             raw_llm = shared_owner.llm if shared_owner is not None else build_llm_client(settings)
             llm = _QQScopedLLM(raw_llm, deadline=deadline, trace=trace, timeout=settings.llm_timeout,
                 policy=QQLatencyOptions.from_settings(settings),
-                request_validator=(_turn_preparation or {}).get("request_validator"))
+                request_validator=(_turn_preparation or {}).get("request_validator"),
+                reasoning_options=deepseek_low_reasoning_options(settings))
             result = result.model_copy(update={"source_record_ids": list(selection.observation_ids),
                                               "evidence_refs": evidence_refs, "delivery_refs": list(selection.delivery_ids)})
             messages = [{"role": "system", "content": persona_prefix(preset.persona)
@@ -1842,7 +1874,7 @@ def decide_qq_reply(
                             raise RuntimeError("A QQ persona helper model call failed.")
                         if not final.text.strip() or len(final.text) > 8000 or (final.validation is not None and final.validation.verdict != "pass"):
                             raise QQDraftError("The prepared reply failed validation.")
-                        segments, reply = _prepared_group_segments(final, trace)
+                        segments, reply = _prepared_group_segments(final, trace, reply_style=choice.reply_style)
                         result = result.model_copy(update={"action": "speak", "reply": reply,
                             "reply_segments": segments, "outcome": "ready",
                             "source_record_ids": list(body_selection.observation_ids),

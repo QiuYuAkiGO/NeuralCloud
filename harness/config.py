@@ -84,6 +84,10 @@ class Settings(BaseSettings, QQLatencyOptions):
     emotion_guidance_timeout_seconds: float = Field(default=4.0, gt=0)
     emotion_main_reserve_seconds: float = Field(default=10.0, ge=0)
     emotion_input_token_budget: int = Field(default=6000, ge=512, le=6000)
+    emotion_affect_min_interval_seconds: float = Field(default=2.0, gt=0)
+    emotion_affect_appraisal_timeout_seconds: float = Field(default=6.0, gt=0)
+    emotion_affect_guidance_timeout_seconds: float = Field(default=3.0, gt=0)
+    emotion_affect_read_timeout_seconds: float = Field(default=2.0, gt=0)
     # When False the Context Parser never calls the LLM and runs rule-only.
     parser_llm_enabled: bool = True
     # When False the Retrieval Planner builds plans from rules only; the plan is a

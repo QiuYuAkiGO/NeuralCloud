@@ -20,7 +20,7 @@ from harness.qq.decision import (QQVerifiedSelfAlias, _frozen_decision, effectiv
     get_qq_delivery, get_qq_segment_deliveries,
     record_qq_protocol_delivery, record_qq_protocol_segment_delivery, sendable_speak_outcome)
 from harness.qq.direct_config import DirectQQSettings, atomic_status
-from harness.qq.direct_images import DirectImageObservation, load_and_describe_image
+from harness.qq.direct_images import DirectImageObservation, REPLY_RESERVE_SECONDS, load_and_describe_image
 from harness.qq.direct_media import close_media_work, stage
 from harness.qq.direct_store import DirectStore, message_parts, normalize_message, numeric, utcnow
 from harness.qq.direct_store import normalize_evidence, verified_protocol_addressing
@@ -333,6 +333,7 @@ class DirectQQActor:
                 cache_dir=self.settings.image_cache_dir, llm=self.llm, deadline=deadline,
                 allowed_local_roots=tuple(self.settings.allowed_local_image_roots), trace=trace,
                 cache_enabled=policy["media_cache"],
+                reserve_seconds=0.0 if observation_only else REPLY_RESERVE_SECONDS,
                 defer_analysis=defer_image_analysis,
                 priority=10 if event["historical"] or event["own"] else 0)
         indexed_images = list(enumerate(event["images"], 1))

@@ -93,12 +93,12 @@ def test_profile_and_observation_rollback_together(actor_factory, monkeypatch): 
         event = actor.store.get(event["event_id"])["event"]
         monkeypatch.setattr(actor.memory, "_write_observation", fail)
         with pytest.raises(RuntimeError):
-            await actor.observe(event, QQDeadline.after(10))
+            await actor.observe(event, QQDeadline.after(60))
         with closing(actor.memory._connect()) as db:
             assert db.execute("SELECT COUNT(*) FROM qq_visual_profiles").fetchone()[0] == 0
             assert db.execute("SELECT COUNT(*) FROM qq_visual_observations").fetchone()[0] == 0
         monkeypatch.setattr(actor.memory, "_write_observation", original)
-        return await actor.observe(event, QQDeadline.after(10))
+        return await actor.observe(event, QQDeadline.after(60))
     result = asyncio.run(execute())
     assert result.author_attribution == "qq_protocol_verified"
     with closing(actor.memory._connect()) as db:
@@ -116,10 +116,10 @@ def test_eight_images_keep_all_artifact_refs_and_bound_reuse_avoids_inference(ac
         payload["message"] += [deepcopy(payload["message"][-1]) for _ in range(7)]
         await actor.on_event(payload)
         event = normalize_message(payload, self_id=SELF, groups=[MAIN])
-        first = await actor.observe(actor.store.get(event["event_id"])["event"], QQDeadline.after(10))
+        first = await actor.observe(actor.store.get(event["event_id"])["event"], QQDeadline.after(60))
         actor.settings = actor.settings.model_copy(update={"qq_media_cache_enabled": False})
         actor.llm.error = RuntimeError("bound source must not be inferred again")
-        second = await actor.observe(actor.store.get(event["event_id"])["event"], QQDeadline.after(10))
+        second = await actor.observe(actor.store.get(event["event_id"])["event"], QQDeadline.after(60))
         return first, second
     first, second = asyncio.run(execute())
     assert first == second and len(first.image_analysis) == 8 and len(actor.llm.calls) == 1

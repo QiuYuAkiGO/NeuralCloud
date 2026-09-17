@@ -93,7 +93,7 @@ def _assert_expired(runtime, event, result):
     assert records[-1].data["status"] == "ignored"
 
 
-@pytest.mark.parametrize("stage", ["web", "emotion", "prepare", "snapshot"])
+@pytest.mark.parametrize("stage", ["web", "prepare", "snapshot"])
 def test_whole_qq_prepare_expires_locally_and_next_turn_runs(runtime, monkeypatch, stage):
     async def scenario():
         original_prepare = runtime.cognitive.prepare_qq_response
@@ -110,9 +110,6 @@ def test_whole_qq_prepare_expires_locally_and_next_turn_runs(runtime, monkeypatc
 
         if stage == "web":
             monkeypatch.setattr("harness.runtime.web_dialogue.prepare_web_context", slow)
-        elif stage == "emotion":
-            runtime.manifest = runtime.manifest.model_copy(update={"emotion_mode": "on"})
-            monkeypatch.setattr(runtime.cognitive, "observe_emotion", slow)
         elif stage == "prepare":
             monkeypatch.setattr(runtime.cognitive, "prepare_qq_response", slow)
         else:
@@ -277,22 +274,33 @@ def test_explicit_owner_deadline_failure_uses_original_qq_arrival_deadline(
     asyncio.run(scenario())
 
 
-def test_emotion_preflight_deadline_rejection_expires_only_its_qq_turn(runtime, monkeypatch):
+def test_qq_affect_rejection_does_not_block_or_expire_the_turn(runtime, monkeypatch):
     async def scenario():
-        runtime.manifest = runtime.manifest.model_copy(update={"emotion_mode": "on"})
+        runtime.manifest = runtime.manifest.model_copy(update={
+            "emotion_mode": "on", "prompt_version": "qwen-emotion-v1"})
         request = _request(seconds=10)
         event = await _accept(runtime, request)
+        observed = []
 
         async def reject(command):
-            monkeypatch.setattr("harness.runtime.adapters._utc_now", lambda: request.deadline_at)
-            monkeypatch.setattr(module, "utc_now", lambda: request.deadline_at)
-            return runtime.cognitive._preflight(command)
+            observed.append(command.command_type)
+            return runtime.cognitive._failure(command, "command deadline expired", status="rejected")
 
-        monkeypatch.setattr(runtime.cognitive, "observe_emotion", reject)
-        _assert_expired(runtime, event, await runtime.dispatch(event))
+        monkeypatch.setattr(runtime.cognitive, "appraise_affect", reject)
+        result = await runtime.dispatch(event)
+        assert result.status == "completed"
+        if runtime.affect.tasks:
+            await asyncio.wait(set(runtime.affect.tasks))
         intents = [r.data["envelope"]["command_type"] for r in runtime.journal.records()
             if r.record_type == "domain_command_intent"]
-        assert intents == ["ObserveEmotion"]
+        assert intents[0] == "PrepareQQResponse"
+        assert "AppraiseAffect" in intents
+        assert intents.index("PrepareQQResponse") < intents.index("AppraiseAffect")
+        assert observed == ["AppraiseAffect"]
+        assert runtime.lifecycle == RuntimeLifecycle.RUNNING
+        assert not runtime.watchdog._failures.get("cognitive", 0)
+        assert not hasattr(runtime, "_qq_emotion_tasks")
+        assert not hasattr(runtime, "_schedule_qq_emotion_sidecar")
 
     asyncio.run(scenario())
 

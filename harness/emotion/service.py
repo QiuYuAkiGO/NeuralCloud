@@ -314,6 +314,13 @@ class EmotionService:
         return reservation
 
     def _budget(self, request: EmotionInput, stage: str) -> float:
+        if request.isolated:
+            timeout = self._setting(
+                f"emotion_affect_{stage}_timeout_seconds", 6 if stage == "appraisal" else 3)
+            if request.deadline_at is not None:
+                available = (request.deadline_at - datetime.now(timezone.utc)).total_seconds()
+                timeout = min(timeout, available)
+            return max(0.0, timeout)
         timeout = self._setting(f"emotion_{stage}_timeout_seconds", 8 if stage == "appraisal" else 4)
         if request.deadline_at is not None:
             available = (request.deadline_at - datetime.now(timezone.utc)).total_seconds()
@@ -624,6 +631,72 @@ class EmotionService:
                        changed={"reservations": {context_id}})
             self._emit_guidance(guidance, replayed=False)
             return guidance.model_copy(deep=True)
+
+    def drop_conflicting_new_sources(self, value: EmotionInput) -> tuple[EmotionInput, list[str]]:
+        """Drop fingerprint conflicts from one AppraiseAffect batch; keep the rest."""
+        request = value.model_copy(deep=True) if isinstance(value, EmotionInput) else EmotionInput.model_validate(value)
+        with self._lock:
+            dropped: list[str] = []
+            kept_messages: list[EmotionMessage] = []
+            for message in request.messages:
+                seen = self._state.sources.get(_source_key(message))
+                if seen is not None and seen.fingerprint != _message_hash(message):
+                    if message.source_id in request.new_source_ids:
+                        dropped.append(message.source_id)
+                    continue
+                kept_messages.append(message)
+            if not dropped:
+                return request, []
+            kept_ids = [source_id for source_id in request.new_source_ids if source_id not in set(dropped)]
+            return request.model_copy(update={"messages": kept_messages, "new_source_ids": kept_ids}), dropped
+
+    def accepted_new_sources(self, context_id: str) -> list[str]:
+        with self._lock:
+            reservation = self._state.reservations.get(context_id)
+            return list(reservation.new_source_ids) if reservation is not None else []
+
+    def read_snapshot(self, *, scope: str, as_of: datetime, persona=None, homeostasis: dict | None = None) -> dict:
+        """Return the decayed frame and latest still-fresh guidance without calling a model."""
+        from harness.emotion.semantics import fallback_guidance
+
+        homeostasis = homeostasis or {}
+        with self._lock:
+            dummy = EmotionInput(context_id="affect-snapshot:" + scope, scope=scope, as_of=as_of,
+                                 persona=persona, homeostasis=homeostasis)
+            window = list(self._state.windows.get(scope, []))
+            window_hash = _hash([item.model_dump(mode="json") for item in window])
+            source_ids = [item.source_id for item in window]
+            if not self.enabled:
+                frame = self._frame(dummy, {}, status="off", diagnostics={"model_calls": 0})
+                return {"revision": self._state.revision, "frame": frame.model_dump(mode="json"),
+                        "guidance": {"text": "", "context_id": frame.context_id, "scope": scope,
+                                     "revision": frame.revision, "status": "off"},
+                        "window_hash": window_hash, "source_ids": source_ids, "degraded": True, "status": "off"}
+            previous = dict(self._state.global_affect)
+            balances = _decay(self._state.global_affect, self._state.global_updated_at, as_of,
+                              self._setting("emotion_half_life_seconds", 600))
+            frame = self._frame(dummy, balances, status="empty", diagnostics={"model_calls": 0},
+                                previous_balances=previous)
+            guidance_obj = None
+            window_seconds = self._setting("emotion_window_seconds", 1800)
+            candidates = [item for item in self._state.reservations.values()
+                          if item.request.scope == scope and item.guidance is not None and item.frame is not None]
+            if candidates:
+                latest = max(candidates, key=lambda item: (item.frame.revision, item.request.as_of, item.sequence))
+                age = (as_of - latest.frame.as_of).total_seconds()
+                if latest.frame.revision == self._state.revision and 0 <= age <= window_seconds:
+                    guidance_obj = latest.guidance
+            if guidance_obj is not None:
+                guidance = {"text": guidance_obj.text, "context_id": guidance_obj.context_id,
+                            "scope": guidance_obj.scope, "revision": guidance_obj.revision,
+                            "status": guidance_obj.status}
+            else:
+                text = fallback_guidance(frame)
+                guidance = {"text": text, "context_id": frame.context_id, "scope": scope,
+                            "revision": frame.revision, "status": "fallback"}
+            return {"revision": self._state.revision, "frame": frame.model_dump(mode="json"),
+                    "guidance": guidance, "window_hash": window_hash, "source_ids": source_ids,
+                    "degraded": guidance["status"] != "model", "status": frame.status}
 
     def record_delivery(self, messages: list[EmotionMessage]) -> None:
         """Append only caller-verified delivered segments; never add an affect impulse."""

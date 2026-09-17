@@ -255,7 +255,8 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
             raise qq._QQContextBudgetExceeded(qq._CONTEXT_BUDGET_REASON)
         raw_llm = shared_owner.llm if shared_owner is not None else qq.build_llm_client(settings)
         llm = qq._QQScopedLLM(raw_llm, deadline=deadline, trace=trace, timeout=settings.llm_timeout,
-                             policy=policy, request_validator=request_validator)
+                             policy=policy, request_validator=request_validator,
+                             reasoning_options=qq.deepseek_low_reasoning_options(settings))
         llm.stage_name = "persona"
         llm.stable_messages = snapshot["messages"][:-1]
         entries = [MemoryEvidenceEntry.model_validate(item) for item in snapshot["memory_evidence"]]
@@ -279,7 +280,7 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
             raise RuntimeError("QQ persona call failed")
         if not final.text.strip() or len(final.text) > 8000 or (final.validation is not None and final.validation.verdict != "pass"):
             raise qq.QQDraftError("The prepared reply failed validation.")
-        segments, reply = qq._prepared_group_segments(final, trace)
+        segments, reply = qq._prepared_group_segments(final, trace, reply_style=choice.reply_style)
         presentation = snapshot.get("presentation", {})
         body_ids = presentation.get("body_observation_ids", result.source_record_ids)
         result = result.model_copy(update={"action": "speak", "reply": reply, "reply_segments": segments,

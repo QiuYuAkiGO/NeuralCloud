@@ -112,3 +112,28 @@ def test_protocol_receive_time_requires_matching_bound_observation(tmp_path, mon
         build_qq_emotion_messages(memory_db=memory.path, group_id=event["group_id"], self_member_id=SELF,
             as_of=command.issued_at, trigger_event_id=event["event_id"], trigger_member_id=PEER,
             protocol_state_db=store.path)
+
+
+def test_affect_input_accepts_completed_replay_after_decision_is_written(tmp_path, monkeypatch):
+    from harness.runtime.emotion import affect_observation_input
+    from harness.runtime.qq_turns import _source
+
+    host, command, memory, store, event, observation, moment = source(tmp_path, monkeypatch)
+    store.update(event["event_id"], state="prepared", decision_id="qq-decision:done")
+    settings = host.shared.qq_settings
+    request = QQSharedPrepareRequest.model_validate(command.payload["source_payload"])
+    with pytest.raises(ValueError, match="source_not_pending"):
+        _source(settings, None, request)
+    affect_command = SimpleNamespace(
+        command_type="AppraiseAffect", issued_at=command.issued_at, deadline=command.deadline,
+        payload={"context_id": "affect:replay", "scope": conversation_audience(event["group_id"]),
+                 "group_id": event["group_id"], "self_member_id": SELF, "transport": "onebot",
+                 "triggers": [{"event_id": event["event_id"], "member_id": PEER,
+                               "trace_id": request.trace.trace_id,
+                               "first_seen_at": request.trace.first_seen_at.isoformat(),
+                               "first_seen_mono": request.trace.first_seen_mono,
+                               "deadline_at": request.deadline_at.isoformat()}],
+                 "homeostasis": {}})
+    observed = affect_observation_input(host, affect_command)
+    assert observed.new_source_ids == [observation.record_id]
+    assert observed.isolated is True

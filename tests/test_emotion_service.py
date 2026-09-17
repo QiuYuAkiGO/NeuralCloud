@@ -617,3 +617,57 @@ def test_all_canonical_needs_pass_dominant_need_coverage_without_physical_sympto
             {"dimension": dimension, "direction": direction, "normalized_deviation": .95, "confidence": 1.0}]}))
         guidance = service.guidance(frame)
         assert guidance.status == "model", (dimension, direction, guidance.diagnostics)
+
+
+def test_read_snapshot_decays_without_calling_the_model_or_changing_revision():
+    llm = FakeAux()
+    service = EmotionService(settings(), llm)
+    frame = service.observe(request())
+    revision = service.snapshot()["revision"]
+    calls = len(llm.calls)
+    snapshot = service.read_snapshot(scope="local:main", as_of=NOW + timedelta(minutes=10))
+    assert snapshot["revision"] == revision == frame.revision
+    assert snapshot["frame"]["labels"]["anger"] == pytest.approx(0.45)
+    assert snapshot["status"] == "empty"
+    assert len(llm.calls) == calls
+    assert service.snapshot()["revision"] == revision
+
+
+def test_read_snapshot_uses_fallback_when_guidance_is_stale():
+    llm = FakeAux()
+    service = EmotionService(settings(), llm)
+    frame = service.observe(request())
+    guidance = service.guidance(frame)
+    fresh = service.read_snapshot(scope="local:main", as_of=NOW)
+    assert fresh["guidance"]["status"] == "model" and fresh["guidance"]["text"] == guidance.text
+    assert fresh["degraded"] is False
+    stale = service.read_snapshot(scope="local:main", as_of=NOW + timedelta(minutes=31))
+    assert stale["guidance"]["status"] == "fallback"
+    assert stale["guidance"]["text"] != guidance.text
+    later = service.observe(request("context-2", messages=[message("message-2", text="又来了。")],
+                                    as_of=NOW + timedelta(seconds=1)))
+    superseded = service.read_snapshot(scope="local:main", as_of=NOW + timedelta(seconds=1))
+    assert later.revision != frame.revision
+    assert superseded["guidance"]["status"] == "fallback"
+
+
+def test_isolated_budget_does_not_reserve_main_model_time():
+    llm = FakeAux()
+    deadline = datetime.now(timezone.utc) + timedelta(seconds=5)
+    service = EmotionService(settings(), llm)
+    frame = service.observe(request(deadline_at=deadline, isolated=True))
+    assert frame.status == "model" and llm.calls
+    guidance = service.guidance(frame)
+    assert guidance.status == "model"
+
+
+def test_fingerprint_conflict_drops_only_the_conflicting_id():
+    service = EmotionService(settings(), FakeAux())
+    service.observe(request())
+    conflict = message(text="被替换的原文")
+    other = message("message-2", text="另一条刺激")
+    filtered, dropped = service.drop_conflicting_new_sources(
+        request("batch", messages=[conflict, other], new_source_ids=["message-1", "message-2"]))
+    assert dropped == ["message-1"]
+    assert [item.source_id for item in filtered.messages] == ["message-2"]
+    assert filtered.new_source_ids == ["message-2"]

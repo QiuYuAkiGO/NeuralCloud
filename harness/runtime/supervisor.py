@@ -290,6 +290,9 @@ class RuntimeSupervisor:
         self._agency_service = None
         self._social_world_service = None
         self._social_appraisal_tasks: set[asyncio.Task] = set()
+        from harness.runtime.affect import AffectWorker
+
+        self.affect = AffectWorker(self)
         self._agency_decision_bindings: dict[str, dict[str, str]] = {}
         if manifest.grounded_agency is not None:
             from harness.research.grounded_agency.manifest import GroundedAgencyRuntimeOptions
@@ -1171,6 +1174,7 @@ class RuntimeSupervisor:
     def _research_workers_pending(self) -> bool:
         """Keep exclusive state ownership while an uncancellable model worker runs."""
         tasks = list(self._social_appraisal_tasks)
+        tasks.extend(self.affect.tasks)
         tasks.extend(getattr(self.cognitive, "research_tasks", ()))
         tasks.extend(getattr(self.cognitive, "command_tasks", ()))
         if self._research_memory is not None:
@@ -1319,6 +1323,7 @@ class RuntimeSupervisor:
             pending_events=self.queue.qsize(),
             embodiment=embodiment_status,
             agency_state=self._agency_state,
+            affect=self.affect.status(),
         )
 
     async def check_watchdog(self) -> None:
@@ -2161,9 +2166,12 @@ class RuntimeSupervisor:
                 raise RuntimeStateError("agency model call did not drain")
             checkpoint_goals(self)
         if self._social_appraisal_tasks:
-            _, pending = await asyncio.wait(self._social_appraisal_tasks, timeout=self.maintenance_drain_seconds)
+            pending_tasks = set(self._social_appraisal_tasks)
+            _, pending = await asyncio.wait(pending_tasks, timeout=self.maintenance_drain_seconds)
             if pending:
                 raise RuntimeStateError("entity appraisal did not drain")
+        if not await self.affect.drain(self.maintenance_drain_seconds):
+            raise RuntimeStateError("affect appraisal did not drain")
 
     async def _restore_research_memory(self) -> None:
         bridge = self._research_memory
@@ -3308,6 +3316,7 @@ class RuntimeSupervisor:
                     result.status == "completed" and _qq_error_fallback_payload(result.detail)
                     and utc_now() < request.deadline_at + timedelta(seconds=grace)
                 ):
+                    self._submit_affect_after_qq(event, request, result)
                     return result
             except (QQTurnRejected, QQWebBindingError):
                 return EventDispatchResult(event_id=event.event_id, receive_seq=event.receive_seq,
@@ -3405,6 +3414,18 @@ class RuntimeSupervisor:
             goal_context = self.goals.qq_context(request) if self.goals.enabled else None
             if goal_context is not None:
                 payload["runtime_goal_context"] = goal_context
+            from harness.qq.conversation import conversation_audience
+
+            remaining = (request.deadline_at - utc_now()).total_seconds()
+            read_timeout = 2.0
+            settings = getattr(getattr(self.cognitive, "pipeline", None), "settings", None)
+            if settings is not None:
+                read_timeout = float(getattr(settings, "emotion_affect_read_timeout_seconds", read_timeout))
+            snapshot = await self.affect.read(
+                conversation_audience(request.group_id), utc_now(),
+                timeout=min(read_timeout, max(0.001, remaining)))
+            if snapshot is not None:
+                payload["emotion_snapshot"] = snapshot
         # QQ preparation reads the current owner under Cognitive's command lock.
         # Background memory commits can advance it after Runtime's last snapshot;
         # this request carries no write computed from that stale snapshot.
@@ -3423,6 +3444,7 @@ class RuntimeSupervisor:
         envelope: DomainCommandEnvelope[dict[str, Any]],
         method: Callable[[DomainCommandEnvelope[dict[str, Any]]], Awaitable[DomainCommandResult[Any]]],
         event: RuntimeEvent,
+        degrade_on_failure: bool = True,
     ) -> DomainCommandResult[Any]:
         if service == "cognitive":
             from harness.runtime.emotion import with_emotion_context
@@ -3446,7 +3468,7 @@ class RuntimeSupervisor:
         except Exception as exc:
             # Losing a QQ reply window is not evidence that a dependency is
             # unhealthy. Preserve earlier failures rather than clearing them.
-            if not (isinstance(exc, TimeoutError) and self._qq_turn_expired(event)):
+            if degrade_on_failure and not (isinstance(exc, TimeoutError) and self._qq_turn_expired(event)):
                 self.watchdog.record_failure(service)
                 if service not in self._degraded_reasons:
                     self._degraded_reasons.append(service)
@@ -3460,7 +3482,8 @@ class RuntimeSupervisor:
             idempotency_key=envelope.idempotency_key,
             data={"service": service, "result": result.model_dump(mode="json")},
         )
-        if event.event_type == RuntimeEventType.QQ_TURN and result.status not in {"applied", "idempotent_replay"}:
+        if (event.event_type == RuntimeEventType.QQ_TURN and envelope.command_type != "AppraiseAffect"
+                and result.status not in {"applied", "idempotent_replay"}):
             if service == "cognitive" and envelope.command_type in {"PrepareQQTurn", "ResumeQQResponse"}:
                 from harness.runtime.qq_pipeline import QQTurnRejected
                 raise QQTurnRejected("qq_turn_rejected")
@@ -3489,6 +3512,31 @@ class RuntimeSupervisor:
         if service == "homeostasis":
             self.goals.record_homeostasis(envelope, result)
         return result
+
+    def _submit_affect_after_qq(self, event: RuntimeEvent, request, result: EventDispatchResult) -> None:
+        if result.status != "completed" or request.idle_intent is not None or request.trigger_member_id is None:
+            return
+        # The staged pipeline already appraises the validated request sources
+        # in ObserveEmotion. Only the legacy snapshot path needs background work.
+        if f"cognitive:qq-prepare-turn:{event.event_id}" in self._command_intent_seqs:
+            return
+        from harness.qq.conversation import conversation_audience
+
+        self.affect.submit(
+            conversation_audience(request.group_id),
+            {
+                "event_id": request.trace.event_id,
+                "member_id": request.trigger_member_id,
+                "trace_id": request.trace.trace_id,
+                "first_seen_at": request.trace.first_seen_at.isoformat(),
+                "first_seen_mono": request.trace.first_seen_mono,
+                "deadline_at": request.deadline_at.isoformat(),
+                "group_id": request.group_id,
+                "self_member_id": request.self_member_id,
+                "transport": request.transport,
+            },
+            event=event,
+        )
 
     async def _check_services(self) -> tuple[str, ...]:
         cognitive_health, homeostasis_health = await asyncio.gather(
@@ -4725,6 +4773,8 @@ class RuntimeSupervisor:
             return getattr(self.cognitive, "prepare_web_step", None)
         if (service, command_type) == ("cognitive", "ObserveEmotion"):
             return getattr(self.cognitive, "observe_emotion", None)
+        if (service, command_type) == ("cognitive", "AppraiseAffect"):
+            return getattr(self.cognitive, "appraise_affect", None)
         if (service, command_type) == ("cognitive", "PrepareGoalDecision"):
             return getattr(self.cognitive, "prepare_goal_decision", None)
         if (service, command_type) == ("homeostasis", "ApplyAppraisal"):

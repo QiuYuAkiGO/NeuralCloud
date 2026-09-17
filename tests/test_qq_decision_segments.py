@@ -15,6 +15,7 @@ from tests.test_qq_decision import NOW, add_member, isolated_static_parser_cache
 
 
 TEXTS = ["嗯，我记得这件事。", "你后来有再试过吗？", "我也有点好奇结果。"]
+CASUAL_TEXTS = ["嗯，我记得这件事", "你后来有再试过吗？", "我也有点好奇结果"]
 
 
 def plan(setup, *, count=2):
@@ -22,7 +23,7 @@ def plan(setup, *, count=2):
     client.chat_routes = {"": "\n[CONTINUE]\n".join(TEXTS[:count]) + "\n[END]"}
     result = decision.decide_qq_reply(**kwargs)
     assert result.outcome == "ready", result.reason
-    assert result.reply_segments == TEXTS[:count]
+    assert result.reply_segments == CASUAL_TEXTS[:count]
     return result
 
 
@@ -53,8 +54,8 @@ def test_one_persona_output_produces_frozen_protocol_plan_without_continuation(s
     _, client, builds, kwargs, _ = setup
     loaded, _ = draft._load_configuration(kwargs["config_path"], kwargs["preset_path"])
     result = plan(setup, count=count)
-    assert result.reply == "\n\n".join(TEXTS[:count])
-    assert decision.effective_reply_segments(result) == TEXTS[:count]
+    assert result.reply == "\n\n".join(CASUAL_TEXTS[:count])
+    assert decision.effective_reply_segments(result) == CASUAL_TEXTS[:count]
     assert result.reply_style == "conversational"
     assert len(client.gate_messages) == 1 and len(client.chat_calls) == 1
     assert builds[0].max_reply_segments == 3 and not builds[0].continuation_enabled
@@ -150,9 +151,58 @@ def test_mixed_protocol_and_natural_paragraphs_pass_through_the_real_pipeline_on
     client.chat_routes = {"": TEXTS[0] + "\n[CONTINUE]\n" + TEXTS[1] + "\n\n" + TEXTS[2] + "\n[END]"}
     trace = QQTurnTrace()
     result = decision.decide_qq_reply(**kwargs, trace=trace)
-    assert result.reply_segments == TEXTS and result.reply == "\n\n".join(TEXTS)
+    assert result.reply_segments == CASUAL_TEXTS and result.reply == "\n\n".join(CASUAL_TEXTS)
     assert trace.snapshot()["counters"]["paragraph_segmentation"] == 1
+    assert trace.snapshot()["counters"]["sentence_segmentation"] == 1
     assert len(client.chat_calls) == 1
+
+
+def test_conversational_sentences_are_sent_as_separate_bubbles_without_periods(setup, monkeypatch):
+    text = "今天天气不错。你去哪了。我也在附近。"
+    monkeypatch.setattr(decision, "_prepare_group_speech", lambda **kw: SimpleNamespace(
+        segments=[text], text=text, usage=TokenUsage(), validation=None))
+    trace = QQTurnTrace()
+    result = decision.decide_qq_reply(**setup[3], trace=trace)
+    assert result.reply_style == "conversational"
+    assert result.reply_segments == ["今天天气不错", "你去哪了", "我也在附近"]
+    assert result.reply == "今天天气不错\n\n你去哪了\n\n我也在附近"
+    assert trace.snapshot()["counters"]["sentence_segmentation"] == 1
+    assert "按句号拆成独立消息" in draft._GROUP_DRAFT_RULES
+    assert "不按句号拆条，句号保留" in draft._GROUP_DRAFT_RULES
+
+
+def test_formal_reply_keeps_periods_and_is_not_sentence_split(setup, monkeypatch):
+    _, client, _, kwargs, _ = setup
+    text = "今天天气不错。你去哪了。"
+    client.choice = json.dumps({"action": "speak", "reason": "需要正式说明。", "reply_style": "formal",
+                                "reply_style_reason": "对方要求正式回复。"})
+    monkeypatch.setattr(decision, "_prepare_group_speech", lambda **kw: SimpleNamespace(
+        segments=[text], text=text, usage=TokenUsage(), validation=None))
+    trace = QQTurnTrace()
+    result = decision.decide_qq_reply(**kwargs, trace=trace)
+    assert result.reply_style == "formal"
+    assert result.reply_segments == [text] and result.reply == text
+    assert "sentence_segmentation" not in trace.snapshot()["counters"]
+
+
+def test_conversational_split_keeps_question_and_exclamation_with_the_sentence(setup, monkeypatch):
+    text = "先这样吧。真的可以吗？太好了！"
+    monkeypatch.setattr(decision, "_prepare_group_speech", lambda **kw: SimpleNamespace(
+        segments=[text], text=text, usage=TokenUsage(), validation=None))
+    result = decision.decide_qq_reply(**setup[3])
+    assert result.reply_segments == ["先这样吧", "真的可以吗？太好了！"]
+    assert result.reply == "先这样吧\n\n真的可以吗？太好了！"
+
+
+def test_conversational_overflow_keeps_original_prose_instead_of_cutting(setup, monkeypatch):
+    text = "一句。二句。三句。四句。"
+    monkeypatch.setattr(decision, "_prepare_group_speech", lambda **kw: SimpleNamespace(
+        segments=[text], text=text, usage=TokenUsage(), validation=None))
+    trace = QQTurnTrace()
+    result = decision.decide_qq_reply(**setup[3], trace=trace)
+    assert result.outcome == "ready" and result.reply == text
+    assert result.reply_segments == [text]
+    assert "sentence_segmentation" not in trace.snapshot()["counters"]
 
 
 def test_legacy_speak_json_keeps_single_body_fallback(setup):
@@ -268,9 +318,9 @@ def test_partial_actual_send_is_in_context_without_unverified_remainder_or_dupli
     partial = decision.decide_qq_reply(**kwargs, request="检查现在实际已经发送的内容。")
     payload = decision.combined_user_payload(client.gate_messages[-1])
     assert payload["delivery_receipts"] == []
-    assert [item["delivered_text"] for item in payload["segment_delivery_receipts"]] == [TEXTS[0]]
+    assert [item["delivered_text"] for item in payload["segment_delivery_receipts"]] == [CASUAL_TEXTS[0]]
     assert not payload["prior_decisions"][0]["was_delivered"]
-    assert TEXTS[1] not in json.dumps(payload, ensure_ascii=False)
+    assert CASUAL_TEXTS[1] not in json.dumps(payload, ensure_ascii=False)
     assert partial.delivery_refs == [first.receipt_id]
     second = segment(setup, result, 1)
     full = aggregate(setup, result, [first, second])

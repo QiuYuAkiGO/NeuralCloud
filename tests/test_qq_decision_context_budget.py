@@ -10,7 +10,7 @@ import pytest
 from harness.qq import decision
 from harness.qq.telemetry import QQTurnTrace
 from tests.test_qq_decision import NOW, add_member, isolated_static_parser_cache as isolated_static_parser_cache, setup as setup
-from tests.test_qq_decision_segments import TEXTS, aggregate, plan, segment
+from tests.test_qq_decision_segments import CASUAL_TEXTS, aggregate, plan, segment
 
 
 @pytest.fixture(autouse=True)
@@ -141,7 +141,7 @@ def test_compact_partial_prefix_never_exposes_unverified_suffix_to_either_model(
     assert projected["segment_index"] == 0 and projected["segment_count"] == 2
     for payload in (gate, persona):
         encoded = decision._canonical(payload)
-        assert TEXTS[0] in encoded and TEXTS[1] not in encoded and "PARTIAL_PROOF" not in encoded
+        assert CASUAL_TEXTS[0] in encoded and CASUAL_TEXTS[1] not in encoded and "PARTIAL_PROOF" not in encoded
 
 
 def test_completed_aggregate_projects_one_actual_body_with_exact_segment_links(setup):

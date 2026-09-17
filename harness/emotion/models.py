@@ -40,6 +40,7 @@ class EmotionInput(StrictModel):
     messages: list[EmotionMessage] = Field(default_factory=list, max_length=200)
     new_source_ids: list[Identity] = Field(default_factory=list, max_length=200)
     deadline_at: AwareDatetime | None = None
+    isolated: bool = False
 
     @model_validator(mode="after")
     def bound_sources(self):

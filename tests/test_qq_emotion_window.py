@@ -71,6 +71,44 @@ def test_window_caps_at_twenty_but_keeps_the_bound_trigger(tmp_path):
     assert new_ids == [trigger.record_id]
 
 
+def test_window_merges_multiple_triggers_and_keeps_all_new_ids(tmp_path):
+    store = QQVisualMemoryStore(tmp_path / "qq.db")
+    first = add_observation(store, event="trigger-a", at=NOW - timedelta(seconds=2), text="第一条")
+    second = add_observation(store, event="trigger-b", text="第二条")
+    scope, messages, new_ids = build_qq_emotion_messages(
+        memory_db=store.path, group_id="10001", self_member_id="29999", as_of=NOW,
+        triggers=[("trigger-a", "20001"), ("trigger-b", "20001")],
+    )
+    assert scope == "qq:group:10001"
+    assert new_ids == [first.record_id, second.record_id]
+    assert {first.record_id, second.record_id} <= {item.source_id for item in messages}
+
+
+def test_own_send_receipt_is_processed_context_and_not_a_new_source(setup):
+    from harness.emotion import EmotionInput, EmotionService
+    from harness.llm.client import MockLLM
+    from eval.emotional_expression_diagnostics.emotion import offline_settings
+
+    store = setup[0]
+    result = plan(setup, count=1)
+    receipt = segment(setup, result, index=0)
+    trigger = add_observation(store, event="trigger", text="外部刺激")
+    _, messages, new_ids = build_qq_emotion_messages(
+        memory_db=store.path, group_id="10001", self_member_id="29999", as_of=NOW + timedelta(seconds=6),
+        trigger_event_id="trigger", trigger_member_id="20001",
+    )
+    assert receipt.receipt_id in {item.source_id for item in messages}
+    assert new_ids == [trigger.record_id]
+    service = EmotionService(offline_settings("rule-fallback"), MockLLM())
+    service.observe(EmotionInput(context_id="receipts", scope="qq:group:10001",
+                                 as_of=NOW + timedelta(seconds=6), messages=messages, new_source_ids=new_ids))
+    sources = service.snapshot()["sources"]
+    own = next(item for item in sources.values() if item["source_id"] == receipt.receipt_id)
+    assert own["processed"] is True and own["role"] == "character"
+    fresh = next(item for item in sources.values() if item["source_id"] == trigger.record_id)
+    assert fresh["processed"] is True and fresh["role"] == "user"
+
+
 def test_idle_window_does_not_reappraise_history(tmp_path):
     store = QQVisualMemoryStore(tmp_path / "qq.db")
     add_observation(store)

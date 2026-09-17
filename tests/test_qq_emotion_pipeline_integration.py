@@ -153,6 +153,10 @@ def test_runtime_qq_keeps_two_real_emotion_steps_once_across_prepare_resume_and_
         try:
             result = await runtime._prepare_qq_turn(event, 1, request)
             assert result.status == "completed"
+            def unexpected_background(*args, **kwargs):
+                pytest.fail("staged QQ turn must not appraise the same sources again")
+            monkeypatch.setattr(runtime.affect, "submit", unexpected_background)
+            runtime._submit_affect_after_qq(event, request, result)
             assert result.detail["decision"]["action"] == action
             assert order == ["emotion_appraisal", "emotion_guidance", "gate", *(["body"] if action == "speak" else [])]
             assert service_calls == {"observe": 1, "guidance": 1}
