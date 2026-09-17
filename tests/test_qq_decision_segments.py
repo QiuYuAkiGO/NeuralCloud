@@ -157,6 +157,24 @@ def test_mixed_protocol_and_natural_paragraphs_pass_through_the_real_pipeline_on
     assert len(client.chat_calls) == 1
 
 
+def test_gate_json_body_is_rejected_before_sentence_split(setup, monkeypatch):
+    leaked = json.dumps({
+        "action": "speak",
+        "reason": "当前有人直接点名并请求查看状态，需要给出具体回应。",
+        "reply_plan": {"intent": "answer", "first_point": "说明当前运行正常。",
+                       "new_questions": [], "detail_level": "brief", "necessary_boundary": None},
+    }, ensure_ascii=False)
+    monkeypatch.setattr(decision, "_prepare_group_speech", lambda **kw: SimpleNamespace(
+        segments=[leaked], text=leaked, usage=TokenUsage(), validation=None))
+    trace = QQTurnTrace()
+    result = decision.decide_qq_reply(**setup[3], trace=trace)
+    assert result.outcome == "error_fallback" and result.reply == decision.ERROR_FALLBACK_REPLY
+    assert result.reply_segments == [decision.ERROR_FALLBACK_REPLY]
+    assert leaked not in result.reply
+    assert "sentence_segmentation" not in trace.snapshot()["counters"]
+    assert trace.snapshot()["counters"]["gate_json_body_rejected"] == 1
+
+
 def test_conversational_sentences_are_sent_as_separate_bubbles_without_periods(setup, monkeypatch):
     text = "今天天气不错。你去哪了。我也在附近。"
     monkeypatch.setattr(decision, "_prepare_group_speech", lambda **kw: SimpleNamespace(

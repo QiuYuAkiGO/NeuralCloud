@@ -1,5 +1,9 @@
 # NeuralCloud 项目模块进度表
 
+**2026-09-17 正文 JSON 泄漏拦截**：正文若整体是 speak/wait 决策对象，发送前失败关闭并改用错误兜底，不把 JSON 改写成口语。历史回执仍接受已存 JSON。提示词要求正文只输出自然语言。发布 `20260917-json-body-guard-v1`，相关回归 285 passed。见 [拦截记录](milestones/qq-gate-json-body-guard-2026-09-17.md)。
+
+**2026-09-17 回复言之有物**：减少点评式和敷衍回应。群 gate 升至 `qq-group-turn-taking-v23-substance`，私聊升至 `qq-private-turn-taking-v9`；正文规则要求每条回复至少一项实质内容，篇幅仍为 20–60 字、1–2 句。ambient 闲聊无实质则等待，被点名或提问有新需求时须作答。人格 `speech_style` 同步，版本 `misty-digitalbody-0.2.1`。发布 `20260917-substance-v1`，相关回归 235 passed。见 [修改记录](milestones/qq-substance-2026-09-17.md) 与 [简短回复约定](QQ_BRIEF_REPLIES.md)。
+
 > 持续维护文档：模块实现、测试、验收或计划发生变化时，同步更新对应行和文末变更记录。
 >
 > 最近核对：**2026-09-11（Asia/Shanghai；本次增量为 Docker 启动防护与 QQ 桌面实机接入，其余条目保留各自核对日期）**。基线：`codex/grounded-agency`，HEAD `159d55d`，**包含核对时的未提交修改**。本表描述当前工作区，不代表已合入主分支或已部署。
@@ -174,6 +178,13 @@
 ```
 
 ## 10. 变更记录
+
+### 2026-09-17 · 回复言之有物
+
+- 群 gate 升至 `qq-group-turn-taking-v23-substance`，私聊升至 `qq-private-turn-taking-v9`；保留 v17 克制参与前缀。线上版本 `20260917-json-body-guard-v1`。
+- ambient 闲聊只能点评时等待；direct 有新需求时须作答并落到具体内容。正文规则要求每条回复至少一项实质要素，篇幅仍为 20–60 字、1–2 句。
+- 内置与工作副本人格 `speech_style` 增加言之有物条目，版本 `misty-digitalbody-0.2.1`。
+- 行为约定见 [简短回复约定](QQ_BRIEF_REPLIES.md)。
 
 ### 2026-09-15 · Qwen 64K 试验与窗口回调
 

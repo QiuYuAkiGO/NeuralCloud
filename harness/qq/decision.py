@@ -59,8 +59,8 @@ from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace, cla
 from infra.trace.request_spans import trace_scope
 
 
-PROMPT_VERSION = "qq-group-turn-taking-v20"
-PRIVATE_PROMPT_VERSION = "qq-private-turn-taking-v8"
+PROMPT_VERSION = "qq-group-turn-taking-v23-substance"
+PRIVATE_PROMPT_VERSION = "qq-private-turn-taking-v9"
 MAX_GROUP_CONTEXT_CHARACTERS = DEFAULT_QQ_INPUT_TOKEN_BUDGET * 2
 _CONTEXT_BUDGET_REASON = "context_budget_exceeded：模型上下文超过字符预算，本次未生成可发送正文；这不是网络故障或模型 JSON 解析失败。"
 _SENDABLE_SPEAK_OUTCOMES = frozenset({"ready", "error_fallback"})
@@ -99,8 +99,14 @@ def _deadline_override(result: "QQReplyDecision", deadline: QQDeadline | None) -
         "reason": "本轮截止时间已过，结果不进入发送意图。"})
 
 
-_STATIC_PERSONA_INSTRUCTION = "请根据用户资料块，准备一份符合当前角色的自然群聊发言正文。"
-_STATIC_PRIVATE_INSTRUCTION = "请根据用户资料块，准备一份符合当前角色的自然 QQ 私聊回复正文。"
+_STATIC_PERSONA_INSTRUCTION = (
+    "请根据用户资料块，准备一份符合当前角色的自然群聊发言正文。"
+    "只输出自然语言正文，不要输出JSON对象。"
+)
+_STATIC_PRIVATE_INSTRUCTION = (
+    "请根据用户资料块，准备一份符合当前角色的自然 QQ 私聊回复正文。"
+    "只输出自然语言正文，不要输出JSON对象。"
+)
 _STATIC_PARSE_TTL_SECONDS = 24 * 60 * 60
 _STATIC_PARSE_LIMIT = 8
 _STATIC_PARSE_CACHE: OrderedDict[str, tuple[float, ParsedInteraction]] = OrderedDict()
@@ -114,7 +120,10 @@ _REPLY_PLANNING_RULES = (
     "\nreply_plan是可选的简短回应计划，speak时提供，wait时为null，不输出逐步推理或正文。"
     "顶层严格只输出已列字段，计划说明使用已有reason，禁止新增reply_plan_note等注释字段，即使值为null。"
     "reply_plan字段：intent只能为answer、stance、relationship、clarify、acknowledge或other；"
-    "first_point为首句要点(最多120字)，new_questions只列用户本轮提出、Misty需要回答的新问题"
+    "acknowledge仅在能附带具体承接内容时使用，纯反应、空泛点评或敷衍附和不构成回复。"
+    "first_point为首句要点(最多120字)，至少包含一项实质要素："
+    "具体观点或判断及一个理由、与话题相关的具体信息或自身偏好经验、针对具体细节的有针对性疑问、或直接问题的答案本身；"
+    "不允许只写评价、感叹或附和。new_questions只列用户本轮提出、Misty需要回答的新问题"
     "(最多3项，每项最多120字)，不是Misty想主动反问用户的问题；没有用户新问题就填空数组。"
     "detail_level为brief或expanded，necessary_boundary为必要认识边界(最多120字)或null。"
     "普通聊天detail_level为brief，以约40字组织，全部正文目标20至60字、1至2句，"
@@ -152,19 +161,10 @@ _REPLY_PLANNING_RULES = (
     "未送达或partial_prefix只有实际前缀，不能推断整题已答完。不得仅凭风格片段判断答案覆盖。"
 )
 _RULES = (
-    "你是当前人设的群聊参与者，积极而自然地参与正在进行的对话，不要求每条消息都回复。"
-    "根据当群多人近期对话、与当前问题相关的持久历史、已经考虑过的观察以及已核验的自己发言判断。"
-    "考虑过一条观察不等于回复过它；回执的source_record_ids只表示调用者明确核验已回应的观察。"
-    "对新收到的群消息采用较低的接话门槛：只要有一个贴合当前话题、能具体回应的点，优先speak。"
-    "普通分享、闲聊、轻松调侃、兴趣偏好和有可靠描述的图片都可以自然接话，"
-    "不必等到被点名、被提问、有人求助或能够提供重要的新信息。"
-    "多人正在彼此聊天也可以简短加入，不能仅因他们没有对你说话、没有新需求或没有@你就wait。"
-    "具体的认同、不同看法、偏好、当下感受或针对某个细节的好奇都足以构成回应，"
-    "以一句贴题的话参与即可，不必把群聊变成提供帮助或另起话题。"
-    "被叫到或被提问时，有内容可回应就优先接话；仍按实际已发回执判断是否已经完整回答。"
-    "已完整回应且没有新内容、仅看到自己的新消息、作者身份未知、内容或图片无法可靠理解、"
-    "对方明确要求暂不插话，或只能无关附和、泛泛安抚、机械邀聊与重复表态时，优先wait。"
-    "这项接话偏好只针对新收到的群消息，不把安静本身当作必须发言的理由。"
+    "你是当前人设的群聊参与者，判断此刻是否值得开口，而不是每来一条消息就回复。根据当群多人近期对话、与当前问题相关的持久历史、已经考虑过的观察以及已核验的自己发言判断。考虑过一条观察不等于回复过它；回执的source_record_ids只表示调用者明确核验已回应的观察。被叫到或被提问可以增加回复价值，但不强制说话；多人正在彼此闲聊时可以等待。没有新需求、自己已经回应、仅看到自己的新消息、内容不足或身份未知时优先等待。可以根据人设自然参与有价值的话题，不要求必须被点名。值得开口可以是对当前事情有具体观点、判断、偏好、感受或有针对性的问题，不必把群聊变成提供帮助；如果只能泛泛安抚、邀对方继续聊或重复表态，优先wait。"
+    "点评式开口是只给评价、感叹或附和，没有新增信息、具体理由、自身经验或针对性问题。"
+    "ambient闲聊若只能给出这类点评而无实质增量，优先wait。"
+    "direct有新需求时仍须作答，并落到具体内容，不能用空泛点评或敷衍反应代替；纯重复点名仍优先wait。"
     "先前草稿或speak决定不是发送记录；只有delivery_receipts才代表调用者已核验发送。"
     "segment_delivery_receipts只证明其中各条单段已实际发送，未包含的后续段没有发送证据；"
     "不能把部分已发前缀当成整个decision已发或某个问题已全部答完。完整聚合回执不会再重复列出这些单段。"
@@ -194,7 +194,8 @@ _RULES = (
 _IDLE_RULES = (
     "\n本轮由经验证的内部稳态意图发起，不是新收到的群消息，也不是任何群成员的请求。"
     "可以结合完整人设、当前话题及语义内感受判断是否自然开口；需求不强制发言。"
-    "没有合适内容、会打扰或只会重复旧话时仍可wait。不要声称任何成员刚刚发言、提问或要求你回应。"
+    "没有合适内容、会打扰或只会重复旧话时仍可wait。自主开口同样需要具体内容，不做无所指的点评、感叹或敷衍附和。"
+    "不要声称任何成员刚刚发言、提问或要求你回应。"
     "本轮一律ambient，addressing的两个来源字段为null；历史仅作为背景，不算已回应的消息。"
 )
 
@@ -204,6 +205,7 @@ _PRIVATE_RULES = (
     "group_context.group_id 是旧字段名，其中 private:self:peer 是独立私聊存储范围，不是QQ群号。"
     "根据本私聊的近期消息、已核验自己发言和当前需求决定 speak 或 wait；不需要 @ 才能回应。"
     "当前对方的新消息属于 direct，但不强制回复；已经回应、只有自己的新消息或无新需求可以等待。"
+    "对方有新需求时作答须落到具体内容，不用空泛点评或敷衍反应凑一轮；无实质可说且无新需求时优先wait。"
     "只使用本私聊资料及程序经权限校验提供的 derived_memory 和 operator_confirmed_facts。"
     "用户资料按顺序分为范围说明、零个或多个closed_observations历史块、最后的本轮JSON。"
     "历史块按时间顺序保留原始观察；用profile_record_id关联末段group_context中的已核验资料快照。"
@@ -493,6 +495,29 @@ def _validate_reply_segments(segments: list[str], reply: str | None) -> list[str
     return list(segments)
 
 
+def _looks_like_gate_json_reply(text: str) -> bool:
+    """True when the whole body is a speak/wait decision object, not speech.
+
+    Historical receipts already store leaked JSON, so receipt validation must
+    keep accepting that text. The send path rejects it before any split.
+    """
+    if type(text) is not str:
+        return False
+    candidate = text.strip()
+    if not candidate:
+        return False
+    fenced = re.fullmatch(r"```(?:json)?[ \t]*\r?\n(.*?)\r?\n```", candidate, re.DOTALL)
+    if fenced is not None:
+        candidate = fenced[1].strip()
+    if not candidate.startswith("{") or not candidate.endswith("}"):
+        return False
+    try:
+        payload = json.loads(candidate)
+    except (json.JSONDecodeError, ValueError, RecursionError):
+        return False
+    return type(payload) is dict and payload.get("action") in {"speak", "wait"}
+
+
 def effective_reply_segments(decision: QQReplyDecision) -> list[str]:
     """Read an immutable plan; old single-body decisions remain compatible."""
     if decision.action != "speak":
@@ -536,6 +561,10 @@ def _prepared_group_segments(final, trace: QQTurnTrace, *,
             or any(not isinstance(part, str) for part in original)
             or final.text != "\n\n".join(original)):
         raise QQDraftError("The prepared reply segments failed validation.")
+    if (any(_looks_like_gate_json_reply(part) for part in original)
+            or _looks_like_gate_json_reply(final.text)):
+        trace.add_counter("gate_json_body_rejected")
+        raise QQDraftError("The prepared reply is a decision object, not sendable speech.")
     flattened = [part for body in original for part in re.split(r"\r?\n[ \t]*(?:\r?\n)+", body)]
     if flattened != original:
         trace.add_counter("paragraph_segmentation")

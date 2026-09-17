@@ -1,0 +1,56 @@
+{
+  "date": "2026-09-17",
+  "change": "Require substantive QQ/GUI replies while keeping brief length and conservative participation",
+  "new_release": "20260917-substance-v1",
+  "previous_release": "20260917-board-diary-repair-v3",
+  "archive_sha256": "59d091286f8d6a0d5e3cfa037bb25646475cf22cdb18f026fcabab4b80499a05",
+  "verified_files": 369,
+  "configuration_valid": true,
+  "group_prompt_version": "qq-group-turn-taking-v23-substance",
+  "private_prompt_version": "qq-private-turn-taking-v9",
+  "persona_version": "misty-digitalbody-0.2.1",
+  "changed_release_files": [
+    "harness/qq/decision.py",
+    "harness/qq/draft.py",
+    "presets/builtin/misty.json"
+  ],
+  "file_sha256": {
+    "harness/qq/decision.py": "d1153f5e6a3696ce038860ddc61c49e527ccc9cab460ca1bb2fe5e9c4c2c4c5d",
+    "harness/qq/draft.py": "7053d53db337be7752012c9f44af15fe67a5e4a643a5b09abbb0dff465492316",
+    "presets/builtin/misty.json": "f546dda88c3476750cfae52d65299022e5abfa29527385e7b56f6264ecdc08f1"
+  },
+  "tests": {
+    "related_passed": 235,
+    "ruff": "passed"
+  },
+  "activation": "verified",
+  "services": {
+    "cognitive": "active",
+    "homeostasis": "active",
+    "runtime": "active",
+    "gui": "active",
+    "board": "active",
+    "qq-direct": "active"
+  },
+  "qq": {
+    "connected": true,
+    "automatic_send": true,
+    "state": "watching",
+    "paused": false,
+    "qq_image_mode": "off",
+    "last_error_type": "direct_incoming_invalid",
+    "last_error_type_note": "Observed after activation; not treated as introduced by this prompt change. No new err-level journal entries since 15:35."
+  },
+  "preserved": {
+    "qq_1060979317_observe": false,
+    "qq_1060979317_send": false,
+    "qq_1044946257_observe": true,
+    "qq_1044946257_send": true,
+    "conservative_participation_prefix": true,
+    "validator_enabled": false
+  },
+  "working_persona_patched": true,
+  "backup_directory": "/var/backups/neuralcloud/substance-variants-20260917",
+  "snapshot_restored": false,
+  "qq_test_messages_sent": 0
+}

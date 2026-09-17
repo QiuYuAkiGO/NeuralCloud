@@ -1,0 +1,35 @@
+{
+  "release_id": "20260917-json-body-guard-v1",
+  "previous_release": "20260917-substance-v1",
+  "archive_sha256": "119d02c6ea73b80e67cfe1591494428946c989aba4b601425bd9ed9264d216b7",
+  "files": 369,
+  "tests": {
+    "related_passed": 285,
+    "ruff": "passed"
+  },
+  "services_active": [
+    "cognitive",
+    "homeostasis",
+    "board",
+    "runtime",
+    "gui",
+    "qq_direct"
+  ],
+  "qq_direct": {
+    "connected": true,
+    "automatic_send": true,
+    "state": "watching",
+    "paused": false,
+    "qq_image_mode": "off",
+    "repository_root": "/opt/neuralcloud/releases/20260917-json-body-guard-v1",
+    "group_1044946257": {"observe": true, "send": true},
+    "group_1060979317": {"observe": false, "send": false}
+  },
+  "prompt_needles": [
+    "gate_json_body_rejected",
+    "The prepared reply is a decision object, not sendable speech.",
+    "不要输出JSON对象",
+    "qq-group-turn-taking-v23-substance",
+    "qq-private-turn-taking-v9"
+  ]
+}

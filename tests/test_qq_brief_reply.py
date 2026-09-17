@@ -14,6 +14,7 @@ from harness.qq.draft import _GROUP_DRAFT_RULES
 from harness.qq.context_budget import project_group_context, select_model_context
 from harness.qq.memory_evidence import build_qq_memory_evidence, current_qq_burst_ids
 from harness.qq.reply_context import delivered_style_window, refresh_topic_window, select_partial_receipt_turns
+from harness.qq.telemetry import QQTurnTrace
 from tests.test_qq_decision import (
     NOW, add_member, isolated_static_parser_cache as isolated_static_parser_cache, setup as setup,
 )
@@ -65,8 +66,8 @@ def test_missing_detail_plan_asks_the_concrete_gap_without_inventory_or_unrelate
         assert "first_point直接写成询问日期、原话或必要线索的具体疑问句" in rules
         assert "问句本身已经表达信息缺口，necessary_boundary默认null" in rules
         assert "不附带无关已知事实盘点，也不假装知道" in rules
-    assert decision.PROMPT_VERSION == "qq-group-turn-taking-v20"
-    assert decision.PRIVATE_PROMPT_VERSION == "qq-private-turn-taking-v8"
+    assert decision.PROMPT_VERSION == "qq-group-turn-taking-v23-substance"
+    assert decision.PRIVATE_PROMPT_VERSION == "qq-private-turn-taking-v9"
 
 
 def test_both_generation_stages_use_concrete_gap_and_single_praise_feedback_contract():
@@ -84,6 +85,31 @@ def test_both_generation_stages_use_concrete_gap_and_single_praise_feedback_cont
     for rules in (decision._RULES, decision._PRIVATE_RULES):
         assert "顶层严格只输出已列字段" in rules
         assert "禁止新增reply_plan_note等注释字段，即使值为null" in rules
+
+
+def test_substance_rules_keep_conservative_prefix_and_reach_both_stages():
+    assert decision._RULES.startswith(
+        "你是当前人设的群聊参与者，判断此刻是否值得开口，而不是每来一条消息就回复。")
+    assert "如果只能泛泛安抚、邀对方继续聊或重复表态，优先wait。" in decision._RULES
+    assert "点评式开口是只给评价、感叹或附和" in decision._RULES
+    assert "ambient闲聊若只能给出这类点评而无实质增量，优先wait。" in decision._RULES
+    assert "direct有新需求时仍须作答" in decision._RULES
+    assert "自主开口同样需要具体内容" in decision._IDLE_RULES
+    assert "不用空泛点评或敷衍反应凑一轮" in decision._PRIVATE_RULES
+    for rules in (decision._RULES, decision._PRIVATE_RULES, _GROUP_DRAFT_RULES, decision._PRIVATE_DRAFT_RULES):
+        assert "评价、感叹或附和" in rules
+        assert "空泛点评或敷衍" in rules
+        assert "20至60字" in rules
+    assert "言之有物不增加篇幅" in _GROUP_DRAFT_RULES
+    assert "言之有物不增加篇幅" in decision._PRIVATE_DRAFT_RULES
+    assert "赞同或反对须落到对方话中的具体细节" in _GROUP_DRAFT_RULES
+    assert "acknowledge仅在能附带具体承接内容时使用" in decision._RULES
+    assert "acknowledge仅在能附带具体承接内容时使用" in decision._PRIVATE_RULES
+    assert "不要输出JSON对象" in _GROUP_DRAFT_RULES
+    assert "不要输出JSON对象" in decision._PRIVATE_DRAFT_RULES
+    assert "不要复述action、reply_plan、reply_style、addressing等决策字段" in _GROUP_DRAFT_RULES
+    assert "不要输出JSON对象" in decision._STATIC_PERSONA_INSTRUCTION
+    assert "不要输出JSON对象" in decision._STATIC_PRIVATE_INSTRUCTION
 
 
 def test_soft_style_violations_are_observed_without_rewrite_or_silence(setup):
@@ -434,3 +460,55 @@ def test_invalid_top_level_gate_is_still_rejected_even_with_optional_plan(setup,
     result = decision.decide_qq_reply(**kwargs)
     assert result.outcome == "error_fallback" and result.reply == decision.ERROR_FALLBACK_REPLY
     assert len(client.gate_messages) == 1 and not client.chat_calls
+
+
+def _leaked_gate_json() -> str:
+    return json.dumps({
+        "action": "speak",
+        "reason": "当前有人直接点名并请求查看状态，需要给出具体回应。",
+        "reply_style": "conversational",
+        "addressing": "direct",
+        "reply_plan": {
+            "intent": "answer",
+            "first_point": "说明当前运行正常。",
+            "new_questions": [],
+            "detail_level": "brief",
+            "necessary_boundary": None,
+        },
+    }, ensure_ascii=False)
+
+
+@pytest.mark.parametrize("text,expected", [
+    (_leaked_gate_json(), True),
+    ('{"action":"wait","reason":"先听着。"}', True),
+    ('{"action":"speak"}', True),
+    ("```json\n" + _leaked_gate_json() + "\n```", True),
+    ("我选先修复事实判断。", False),
+    ("配置大概是 {先修} 这样。", False),
+    ('{"foo":1}', False),
+    ('{"action":"delete"}', False),
+    ('好的 {"action":"speak","reason":"ok"}', False),
+])
+def test_gate_json_body_detector_is_structural(text, expected):
+    assert decision._looks_like_gate_json_reply(text) is expected
+
+
+def test_gate_shaped_json_body_fails_closed_without_salvage(setup):
+    _, client, _, kwargs, _ = setup
+    leaked = _leaked_gate_json()
+    client.chat_routes = {"": leaked}
+    trace = QQTurnTrace()
+    result = decision.decide_qq_reply(**kwargs, trace=trace)
+    assert result.outcome == "error_fallback" and result.action == "speak"
+    assert result.reply == decision.ERROR_FALLBACK_REPLY
+    assert result.reply_segments == [decision.ERROR_FALLBACK_REPLY]
+    assert result.decision_source == "model_invalid"
+    assert leaked not in result.reply
+    assert "first_point" not in result.reply
+    assert trace.snapshot()["counters"]["gate_json_body_rejected"] == 1
+    assert len(client.gate_messages) == len(client.chat_calls) == 1
+
+
+def test_historical_gate_json_receipt_text_still_validates():
+    leaked = _leaked_gate_json()
+    assert decision._validate_reply_segments([leaked], leaked) == [leaked]
