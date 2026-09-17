@@ -77,7 +77,9 @@ def test_owner_step_routes_main_without_prepared_memory_or_turn_and_replays(tmp_
             assert len(main.calls) == 1 and not aux.calls
             system, user = main.calls[0][0]
             assert "小雾" in system["content"] and "最新资料" in user["content"]
-            shown = json.loads(user["content"])["available_offers"][0]["input_schema"]
+            shown_payload = json.loads(user["content"])
+            shown = next(item["input_schema"] for item in shown_payload["available_offer_definitions"]
+                         if item["definition_id"] == shown_payload["available_offers"][0]["definition_id"])
             assert shown["properties"]["max_results"]["maximum"] == 3
             assert main.calls[0][1]["timeout_seconds"] <= web.MODEL_SECONDS
         finally:
@@ -193,7 +195,7 @@ def test_qq_web_selection_reads_scoped_sources_without_decision_reservation(setu
     from harness.qq.telemetry import QQTurnTrace
     from harness.runtime import qq_turns
 
-    store, _, _, _, _ = setup
+    store, _, _, _, records = setup
     async def scenario():
         owner, _ = _host(tmp_path, monkeypatch, [])
         original = owner.chat.llm
@@ -202,6 +204,10 @@ def test_qq_web_selection_reads_scoped_sources_without_decision_reservation(setu
         owner.shared.qq_settings = SimpleNamespace(memory_db=store.path, allowed_group_ids=["10001"], self_member_id="29999")
         monkeypatch.setattr(qq_turns, "_source", lambda *args: None)
         trace = QQTurnTrace(event_id="qq-watch-event:" + "a" * 32)
+        from harness.qq.memory import QQVisualObservationInput
+        store.record_observation(QQVisualObservationInput.model_validate({
+            **records[0].model_dump(include=set(QQVisualObservationInput.model_fields)), "capture_item_id": trace.event_id,
+        }))
         incoming = {"group_id": "10001", "self_member_id": "29999", "trigger_member_id": "20001",
             "deadline_at": (now() + timedelta(seconds=30)).isoformat(), "trace": {"trace_id": trace.trace_id,
                 "event_id": trace.event_id, "first_seen_at": trace.first_seen_at.isoformat(), "first_seen_mono": trace.first_seen_mono}}
@@ -231,10 +237,14 @@ def test_oversized_qq_history_is_compacted_instead_of_failing(setup, tmp_path, m
     store, _, _, _, _ = setup
     bulky = "外站资料请求 " + ("历史记录" * 400)
     for index in range(40):
-        qq_fixtures.add_member(
+        _, latest = qq_fixtures.add_member(
             store, "20001", text=f"{bulky}-{index}",
-            capture=f"web-hist-{index}", moment=qq_fixtures.NOW + timedelta(minutes=index + 1),
+            capture=f"web-hist-{index}", moment=now() - timedelta(minutes=40 - index),
         )
+    from harness.qq.memory import QQVisualObservationInput
+    store.record_observation(QQVisualObservationInput.model_validate({
+        **latest.model_dump(include=set(QQVisualObservationInput.model_fields)), "capture_item_id": "qq-watch-event:" + "b" * 32,
+    }))
 
     async def scenario():
         owner, _ = _host(tmp_path, monkeypatch, [])
@@ -261,8 +271,7 @@ def test_oversized_qq_history_is_compacted_instead_of_failing(setup, tmp_path, m
             assert len(user) <= web.WEB_STEP_PAYLOAD_LIMIT
             shown = json.loads(user)
             assert shown["context"]["query"] == "请联网查证这个主题"
-            observations = [item for member in shown["context"]["group_context"]["members"]
-                            for item in member.get("observations") or []]
+            observations = [shown["context"]["current_request"], *shown["context"]["recent_dialogue"]]
             assert observations
             assert any(str(item.get("text") or "").endswith("-39") for item in observations)
             assert not any(str(item.get("text") or "").endswith("-0") for item in observations)

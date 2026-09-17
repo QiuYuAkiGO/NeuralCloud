@@ -142,6 +142,7 @@ def test_final_assessment_reserve_rejects_mandatory_content_before_spending_mode
 
 
 def test_long_proof_only_context_fits_both_models_and_retains_full_private_refs(setup, monkeypatch):
+    monkeypatch.setenv("NC_QQ_CONTEXT_PROJECTION", "legacy")
     store, client, _, kwargs, records = setup
     context = store.group_context(group_id="10001")
     raw = context.model_dump(mode="json")

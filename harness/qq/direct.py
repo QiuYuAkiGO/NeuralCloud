@@ -20,16 +20,18 @@ from harness.qq.decision import (QQVerifiedSelfAlias, _frozen_decision, effectiv
     get_qq_delivery, get_qq_segment_deliveries,
     record_qq_protocol_delivery, record_qq_protocol_segment_delivery, sendable_speak_outcome)
 from harness.qq.direct_config import DirectQQSettings, atomic_status
-from harness.qq.direct_images import load_and_describe_image
+from harness.qq.direct_images import DirectImageObservation, load_and_describe_image
+from harness.qq.direct_media import close_media_work, stage
 from harness.qq.direct_store import DirectStore, message_parts, normalize_message, numeric, utcnow
-from harness.qq.direct_store import normalize_evidence
+from harness.qq.direct_store import normalize_evidence, verified_protocol_addressing
 from harness.qq.conversation import conversation_scope, private_scope_id
 from harness.qq.memory import (QQImageAnalysis, QQVerifiedProfileInput, QQVisualMemoryStore,
-    QQVisualObservationInput, protocol_message_evidence_ref)
+    QQVisualObservation, QQVisualObservationInput, protocol_message_evidence_ref)
 from harness.qq.onebot import OneBotClient, OneBotError
 from harness.qq.session import QQSessionSettings
 from harness.qq.shared import QQSharedCognitiveClient
-from harness.qq.telemetry import QQDeadline, QQTurnTrace
+from harness.qq.reply_requests import ReplyRequestChanged, binding as reply_binding
+from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace, classify_error, current_qq_trace, qq_trace_scope
 from harness.qq.vision import load_vision_settings
 
 
@@ -66,7 +68,8 @@ class DirectQQActor:
         self.client_factory = client_factory
         self.client = None
         self.cognition = cognition or QQSharedCognitiveClient(settings.shared_runtime_url, settings.shared_control_token_file)
-        self.llm = llm or OpenAICompatClient(load_vision_settings(settings.model_config_path, model=settings.vision_model))
+        self.llm = llm or (None if settings.qq_image_mode == "off" else
+            OpenAICompatClient(load_vision_settings(settings.model_config_path, model=settings.vision_model)))
         self.stop = asyncio.Event()
         self.wakeup = asyncio.Event()
         self._delivery_lock = asyncio.Lock()
@@ -78,12 +81,39 @@ class DirectQQActor:
         self.history_supported = True
         self.state = dict(service="qq-direct-onebot-v1", pid=os.getpid(), run_id=self.run_id,
             started_at=utcnow().isoformat(), source_hash=source_hash(), running=True, state="starting",
-            connected=False, automatic_send=False, images_enabled=True, last_error_type=None,
+            connected=False, automatic_send=False, images_enabled=settings.qq_image_mode != "off", last_error_type=None,
             self_member_id=settings.self_member_id, observation_gap=True,
             repository_root=str(Path(__file__).resolve().parents[2]), state_db=str(settings.state_db),
             group_roster=[group.model_dump() for group in settings.group_roster],
             private_contacts=[contact.model_dump() for contact in settings.private_contacts],
+            qq_reply_scheduler=settings.qq_reply_scheduler, qq_reply_scheduler_source="direct_persisted",
+            qq_media_cache_enabled=settings.qq_media_cache_enabled,
+            qq_media_parallel_enabled=settings.qq_media_parallel_enabled,
+            qq_image_mode=settings.qq_image_mode, qq_image_mode_source="direct_persisted",
+            qq_latency_conversations=settings.qq_latency_conversations,
             last_received_at=None, last_delivery_at=None, last_decision_action=None)
+
+    def scope_policy(self, group_id):
+        selected = (self.settings.qq_latency_conversations is None
+            or f"{self.settings.self_member_id}/{group_id}" in self.settings.qq_latency_conversations)
+        return {"scheduler": self.settings.qq_reply_scheduler if selected else "shadow",
+            "media_cache": self.settings.qq_media_cache_enabled if selected else False,
+            "media_parallel": self.settings.qq_media_parallel_enabled if selected else False,
+            # This resource limit is independent of experimental latency rollout.
+            "image_mode": self.settings.qq_image_mode}
+
+    def event_policy(self, event):
+        # Older inbox records predate scope rollout. Newly received records
+        # freeze these diagnostic choices without changing protocol authority.
+        value = event.get("_direct_policy", self.scope_policy(event["group_id"]))
+        if isinstance(value, dict) and set(value) == {"scheduler", "media_cache", "media_parallel"}:
+            value = value | {"image_mode": "all"}
+        if (not isinstance(value, dict) or set(value) != {"scheduler", "media_cache", "media_parallel", "image_mode"}
+                or value["scheduler"] not in {"legacy", "shadow", "coalesced"}
+                or type(value["media_cache"]) is not bool or type(value["media_parallel"]) is not bool
+                or type(value["image_mode"]) is not str or value["image_mode"] not in {"all", "one", "off"}):
+            raise OneBotError("direct_request_binding_invalid")
+        return value
 
     def paused(self):
         try:
@@ -107,22 +137,57 @@ class DirectQQActor:
     def active(self):
         return self.settings.enabled and self.connected and not self.paused() and not self.desktop_active()
 
-    def check_send(self, event, deadline, epoch):
+    def check_send(self, event, deadline, epoch, *, decision=None, untransmitted_send=None):
         deadline.check()
         if not self.active() or self.stop.is_set() or self.epoch != epoch:
             raise OneBotError("direct_owner_unavailable")
         if not self.conversations[event["group_id"]].send:
             raise OneBotError("direct_group_read_only")
-        if self.store.uncertain():
+        if (untransmitted_send is not None and (decision is None
+                or untransmitted_send.get("event_id") != event["event_id"]
+                or untransmitted_send.get("decision_id") != decision.decision_id)):
             raise OneBotError("direct_delivery_unknown")
-        if self.store.newer(event):
+        uncertain = (self.store.uncertain() if untransmitted_send is None
+                     else self.store.uncertain(untransmitted_send=untransmitted_send))
+        if uncertain:
+            raise OneBotError("direct_delivery_unknown")
+        request = self.store.reply_requests.check(event)
+        addressing = verified_protocol_addressing(event, evidence_dir=self.settings.evidence_dir,
+            self_id=self.settings.self_member_id, groups=self.groups, private_peers=self.private_peers)
+        protected = addressing in {"self_mention", "private"}
+        if protected and decision is not None:
+            row = self.store.get(event["event_id"])
+            observation = row["event"].get("bound_observation", {})
+            source = row["source_record_id"]
+            refs = {event["event_evidence_ref"], protocol_message_evidence_ref(
+                event["group_id"], event["member_id"], event["message_id"])}
+            expected_source = "verified_private_message" if addressing == "private" else "verified_self_mention"
+            active_authority = (request is not None and request["authority_anchor"] == event["event_id"]
+                and request["addressing"] == addressing)
+            protected = (decision.addressing == "direct" and decision.addressing_source == expected_source
+                and decision.trigger_member_id == event["member_id"]
+                and source in decision.source_record_ids
+                and (source in decision.new_observation_record_ids or active_authority)
+                and source in decision.addressing_source_record_ids
+                and refs.issubset(decision.addressing_evidence_refs)
+                and observation.get("record_id") == source
+                and observation.get("author_attribution") == "qq_protocol_verified"
+                and observation.get("group_id") == event["group_id"]
+                and observation.get("member_id") == event["member_id"]
+                and observation.get("message_id") == event["message_id"]
+                and observation.get("capture_id") == event["event_id"]
+                and refs.issubset(observation.get("attribution_evidence", [])))
+        if self.store.newer(event, same_member_only=protected,
+                excluded_event_ids=request["source_event_ids"] if request else ()):
             raise OneBotError("direct_newer_context")
 
     def write_status(self, **values):
         self.state.update(values)
         self.state.update(heartbeat_at=utcnow().isoformat(), connected=self.connected,
             automatic_send=self.active() and not self.store.uncertain(), counts=self.store.counts(),
-            paused=self.paused(), desktop_owner_active=self.desktop_active())
+            paused=self.paused(), desktop_owner_active=self.desktop_active(),
+            qq_latency_conversations=self.settings.qq_latency_conversations,
+            qq_conversation_policies={group: self.scope_policy(group) for group in self.conversations})
         atomic_status(self.settings.status_file, self.state)
 
     async def on_event(self, payload, *, historical=False, history_peer_id=None):
@@ -142,10 +207,14 @@ class DirectQQActor:
                     private_peers=self.private_peers)
             if event is None:
                 return
+            event["_direct_policy"] = self.scope_policy(event["group_id"])
             stale = (utcnow() - datetime.fromisoformat(event["message_time"])).total_seconds() > 60
             historical = historical or stale or datetime.fromisoformat(event["message_time"]) < self.connected_at - timedelta(seconds=2)
             ref = self.store.evidence(payload)
             if self.store.receive(event, run_id=self.run_id, evidence_ref=ref, historical=historical):
+                if (self.event_policy(event)["scheduler"] == "coalesced" and not historical and not event["own"]
+                        and self.conversations[event["group_id"]].send):
+                    self.enqueue_reply(self.store.get(event["event_id"])["event"])
                 self.state["last_received_at"] = event["received_at"]
                 self.wakeup.set()
         except (ValueError, TypeError, KeyError):
@@ -154,6 +223,11 @@ class DirectQQActor:
         except Exception:
             self.state["last_error_type"] = "direct_incoming_storage_failed"
             raise OneBotError("onebot_event_callback_failed") from None
+
+    def enqueue_reply(self, event):
+        addressing = verified_protocol_addressing(event, evidence_dir=self.settings.evidence_dir,
+            self_id=self.settings.self_member_id, groups=self.groups, private_peers=self.private_peers)
+        return self.store.reply_requests.ingest(event, addressing=addressing)
 
     async def verify_connection(self):
         login = await self.client.call("get_login_info", timeout=8)
@@ -209,19 +283,62 @@ class DirectQQActor:
                     alias=name, evidence_refs=[login_ref, ref], verification="qq_protocol_verified")
                     for name in dict.fromkeys(names)]
 
-    async def observe(self, event, deadline):
+    async def observe(self, event, deadline, *, trace=None, defer_image_analysis=None, image_admission=None):
+        policy = self.event_policy(event)
         ref = event["event_evidence_ref"]
         message_ref = protocol_message_evidence_ref(event["group_id"], event["member_id"], event["message_id"])
-        profile = self.memory.record_protocol_profile(QQVerifiedProfileInput(group_id=event["group_id"],
+        if event.get("bound_observation") is not None:
+            # A new request revision can include the same already committed
+            # message. Reuse only that exact immutable message, never a prior
+            # profile from another message or freshly re-inferred image claims.
+            existing = QQVisualObservation.model_validate(event["bound_observation"])
+            with closing(sqlite3.connect(self.session.memory_db.as_uri() + "?mode=ro", uri=True)) as db:
+                raw = db.execute("SELECT record_json FROM qq_visual_observations WHERE record_id=?",
+                                 (existing.record_id,)).fetchone()
+            if (raw is None or QQVisualObservation.model_validate_json(raw[0]) != existing
+                    or existing.capture_id != event["event_id"] or existing.capture_item_id != event["event_id"]
+                    or existing.group_id != event["group_id"] or existing.member_id != event["member_id"]
+                    or existing.message_id != event["message_id"] or existing.text != event["text"]
+                    or existing.author_attribution != "qq_protocol_verified"
+                    or not {ref, message_ref}.issubset(existing.attribution_evidence)):
+                raise OneBotError("direct_decision_source_mismatch")
+            if trace:
+                trace.add_counter("protocol_observation_reused")
+            return existing
+        profile_input = QQVerifiedProfileInput(group_id=event["group_id"],
             member_id=event["member_id"], display_name=event["display_name"], display_name_source="qq_metadata",
             verification="qq_protocol_verified", capture_id=event["event_id"] + ":profile",
             observed_at=datetime.fromisoformat(event["received_at"]),
-            group_evidence=[self.group_evidence[event["group_id"]]], member_evidence=[ref])).profile
+            group_evidence=[self.group_evidence[event["group_id"]]], member_evidence=[ref])
         analyses, refs = [], [ref, message_ref]
-        for index, image in enumerate(event["images"], 1):
-            value = await load_and_describe_image(image, call_api=self.client.call,
+        async def read_image(index, image):
+            mode = policy["image_mode"]
+            observation_only = (event["historical"] or event["own"]
+                                or not self.conversations[event["group_id"]].send)
+            admitted = (mode != "off" and (mode != "one" or not observation_only)
+                and ((event["event_id"], index) in image_admission if image_admission is not None
+                     else mode != "one" or index == 1))
+            if not admitted:
+                if trace:
+                    trace.add_counter("image_policy_skipped")
+                reason = ("图片处理已关闭" if mode == "off" else
+                          "受限图片策略不处理历史、自身回显或只读会话附件" if observation_only else
+                          "本次回复最多处理一张图片，此附件未准入" if mode == "one" else
+                          "本次回复的图片策略未准入此附件")
+                return DirectImageObservation(error="vision_unavailable", uncertainties=[
+                    reason + "；保留原始消息中的附件记录，未下载或识别图片。"])
+            if trace:
+                trace.add_counter("image_policy_admitted")
+            return await load_and_describe_image(image, call_api=self.client.call,
                 cache_dir=self.settings.image_cache_dir, llm=self.llm, deadline=deadline,
-                allowed_local_roots=tuple(self.settings.allowed_local_image_roots))
+                allowed_local_roots=tuple(self.settings.allowed_local_image_roots), trace=trace,
+                cache_enabled=policy["media_cache"],
+                defer_analysis=defer_image_analysis,
+                priority=10 if event["historical"] or event["own"] else 0)
+        indexed_images = list(enumerate(event["images"], 1))
+        values = (await asyncio.gather(*(read_image(index, image) for index, image in indexed_images))
+                  if policy["media_parallel"] else [await read_image(index, image) for index, image in indexed_images])
+        for index, value in enumerate(values, 1):
             if value.evidence_ref:
                 refs.append(value.evidence_ref)
             error = value.error if value.error in {"download_failed", "unsupported_media", "vision_failed",
@@ -232,14 +349,18 @@ class DirectQQActor:
                 ocr = ocr[:6000]
                 uncertainties = [*uncertainties[:15], "OCR因上下文预算截断；原图证据仍保留。"]
             analyses.append(QQImageAnalysis(image_index=index, status=value.status, evidence_ref=value.evidence_ref,
+                analysis_ref=value.analysis_ref,
                 description=value.description or None, ocr_text=ocr,
                 uncertainties=uncertainties, error=None if value.status == "described" else error))
-        observation = self.memory.record_protocol_observation(QQVisualObservationInput(group_id=event["group_id"],
-            member_id=event["member_id"], profile_record_id=profile.record_id, capture_id=event["event_id"],
-            capture_item_id=event["event_id"], observed_at=datetime.fromisoformat(event["message_time"]), text=event["text"],
-            evidence=refs, author_attribution="qq_protocol_verified", attribution_evidence=[ref, message_ref],
-            extraction_method="onebot11_message_array", message_id=event["message_id"], message_id_source="qq_metadata",
-            image_analysis=analyses)).observation
+        with stage(trace, "protocol.observation_commit"):
+            _, written = self.memory.record_protocol_message(profile_input, lambda profile:
+                QQVisualObservationInput(group_id=event["group_id"],
+                    member_id=event["member_id"], profile_record_id=profile.record_id, capture_id=event["event_id"],
+                    capture_item_id=event["event_id"], observed_at=datetime.fromisoformat(event["message_time"]), text=event["text"],
+                    evidence=refs, author_attribution="qq_protocol_verified", attribution_evidence=[ref, message_ref],
+                    extraction_method="onebot11_message_array", message_id=event["message_id"], message_id_source="qq_metadata",
+                    image_analysis=analyses))
+            observation = written.observation
         self.store.update(event["event_id"], state="bound", source_record_id=observation.record_id,
                           observation=observation.model_dump(mode="json"))
         return observation
@@ -292,15 +413,15 @@ class DirectQQActor:
             raise OneBotError("onebot_sent_message_mismatch")
         return self.store.evidence({"action": proof_action, "group_id": event["group_id"], "result": result})
 
-    async def send_decision(self, event, decision, deadline, epoch):
+    async def send_decision(self, event, decision, deadline, epoch, *, trace=None):
         async with self._delivery_lock:
-            await self._send_decision(event, decision, deadline, epoch)
+            await self._send_decision(event, decision, deadline, epoch, trace=trace or current_qq_trace())
 
-    async def _send_decision(self, event, decision, deadline, epoch):
+    async def _send_decision(self, event, decision, deadline, epoch, *, trace=None):
         if not decision.new_decision or decision.replayed or not sendable_speak_outcome(decision.outcome) or decision.action != "speak":
             return
         texts = effective_reply_segments(decision)
-        self.check_send(event, deadline, epoch)
+        self.check_send(event, deadline, epoch, decision=decision)
         # Receipt validation happens after sending; reject an unfrozen or
         # changed plan before the first protocol mutation as well.
         try:
@@ -310,7 +431,8 @@ class DirectQQActor:
                 frozen = _frozen_decision(db, event["group_id"], decision.decision_id)
             fields = ("decision_id", "input_hash", "group_id", "self_member_id", "action", "outcome",
                 "reply", "reply_segments", "source_record_ids", "new_observation_record_ids",
-                "initiated_by", "idle_intent_id", "addressing")
+                "initiated_by", "idle_intent_id", "addressing", "trigger_member_id",
+                "addressing_source", "addressing_source_record_ids", "addressing_evidence_refs")
             if (not sendable_speak_outcome(frozen.outcome) or frozen.initiated_by != "message"
                     or any(getattr(frozen, name) != getattr(decision, name) for name in fields)
                     or self.store.get(event["event_id"])["source_record_id"] not in frozen.source_record_ids):
@@ -318,16 +440,17 @@ class DirectQQActor:
         except Exception:
             raise OneBotError("direct_frozen_plan_mismatch") from None
         if self.store.cooldown(event["group_id"], 10 if decision.addressing == "direct" else 60):
-            self.store.update(event["event_id"], state="rate_limited")
+            self.store.update(event["event_id"], state="rate_limited",
+                              terminal_reason="direct_cooldown", terminal_stage="protocol.delivery")
             return
         receipts = []
         for index, text in enumerate(texts):
-            self.check_send(event, deadline, epoch)
+            self.check_send(event, deadline, epoch, decision=frozen)
             if deadline.check() < _MIN_SEND_SECONDS:
                 raise OneBotError("direct_send_budget_insufficient")
             send = self.store.reserve(event, decision, index, text)
             try:
-                self.check_send(event, deadline, epoch)
+                self.check_send(event, deadline, epoch, decision=frozen)
                 if deadline.check() < _MIN_SEND_SECONDS:
                     raise OneBotError("direct_send_budget_insufficient")
             except Exception:
@@ -339,9 +462,13 @@ class DirectQQActor:
             send = self.store.update_send(send, "attempted", attempted_at=utcnow().isoformat())
             # SQLite can wait for a write lock. Check again after its commit,
             # before any protocol call, while non-transmission is still known.
-            if deadline.remaining() < _MIN_SEND_SECONDS:
-                self.store.cancel_untransmitted(send)
-                raise OneBotError("direct_send_budget_insufficient")
+            try:
+                self.check_send(event, deadline, epoch, decision=frozen, untransmitted_send=send)
+                if deadline.check() < _MIN_SEND_SECONDS:
+                    raise OneBotError("direct_send_budget_insufficient")
+            except Exception as exc:
+                self.store.cancel_untransmitted(send, reason=getattr(exc, "code", "direct_send_budget_insufficient"))
+                raise
             try:
                 result = await self.client.call(action, target | {
                     "message": [{"type": "text", "data": {"text": text}}], "auto_escape": True},
@@ -352,6 +479,10 @@ class DirectQQActor:
                     "self_id": self.settings.self_member_id, "result": result})
                 # Read-only receipt verification may finish after the send TTL.
                 proof = await self.verify_sent(event, message_id, text)
+                if index == 0 and trace is not None:
+                    trace.record("protocol.first_verified_segment", started_mono=trace.clock())
+                    trace.add_counter("protocol_first_verified_segment_ms", round(max(0,
+                        trace.clock() - trace.first_seen_mono) * 1000))
                 delivered_at = utcnow()
                 receipt = record_qq_protocol_segment_delivery(memory_db=self.session.memory_db,
                     group_id=event["group_id"], self_member_id=self.settings.self_member_id,
@@ -372,6 +503,10 @@ class DirectQQActor:
             evidence_refs=list(dict.fromkeys(ref for receipt in receipts for ref in receipt.evidence_refs)),
             protocol_message_ids=[receipt.protocol_message_id for receipt in receipts],
             delivered_at=max(receipt.delivered_at for receipt in receipts))
+        if trace is not None:
+            trace.record("protocol.fully_verified", started_mono=trace.clock())
+            trace.add_counter("protocol_fully_verified_ms", round(max(0,
+                trace.clock() - trace.first_seen_mono) * 1000))
         self.store.update(event["event_id"], state="sent")
 
     async def reconcile_unknown(self):
@@ -482,6 +617,11 @@ class DirectQQActor:
 
     async def process(self, row):
         event, epoch = row["event"], self.epoch
+        request = row.get("reply_request")
+        policy = self.event_policy(event)
+        if request is not None:
+            # A persisted request remains a coalesced intent after rollout is disabled.
+            policy = policy | {"scheduler": "coalesced"}
         first_seen = datetime.fromisoformat(event["received_at"])
         if event["historical"] or event["own"]:
             # These observations never enter cognition or delivery. A short
@@ -494,49 +634,147 @@ class DirectQQActor:
                 deadline = QQDeadline(min(deadline.deadline_mono, deadline.clock() + 12), deadline.clock)
         trace = QQTurnTrace(event_id=event["event_id"], first_seen_at=first_seen,
             first_seen_mono=max(0, time.monotonic() - max(0, (utcnow() - first_seen).total_seconds())))
+        trace.bind_conversation(group_id=event["group_id"], self_member_id=event["self_member_id"])
         trace.add_counter("protocol_queue_wait_ms", round(max(0, (utcnow() - first_seen).total_seconds()) * 1000))
+        trace.add_counter("scheduler_mode_" + policy["scheduler"])
+        trace.add_counter("media_cache_enabled", int(policy["media_cache"]))
+        trace.add_counter("media_parallel_enabled", int(policy["media_parallel"]))
+        trace.add_counter("image_mode_" + policy["image_mode"])
+        image_count = sum(len(self.store.get(source)["event"]["images"]) for source in request["source_event_ids"]) if request else len(event["images"])
+        trace.add_counter("input_image_count", image_count)
+        trace.add_counter("input_has_images", int(image_count > 0))
+        trace.add_counter("input_reply_eligible", int(not event["historical"] and not event["own"]
+            and self.conversations[event["group_id"]].send))
+        if request:
+            trace.add_counter("reply_request_revision", request["revision"])
+            trace.add_counter("reply_request_source_count", len(request["source_event_ids"]))
+        terminal_reason = None
+        terminal_stage = "protocol.read"
         try:
             self.write_status(state="reading_message", last_error_type=None)
+            defer_image_analysis = None
+            if (event["images"] and request is None and event.get("_reply_request") is None
+                    and not event["historical"] and not event["own"]
+                    and self.conversations[event["group_id"]].send
+                    and event.get("protocol_addressing") == "ambient"
+                    and verified_protocol_addressing(event, evidence_dir=self.settings.evidence_dir,
+                        self_id=self.settings.self_member_id, groups=self.groups,
+                        private_peers=self.private_peers) == "ambient"):
+                def defer_image_analysis():
+                    # Retain the immutable text and pixels even when this
+                    # ambient reply is obsolete, but do not spend foreground
+                    # vision time on it. Explicit requests and batch sources
+                    # always keep their normal image preparation.
+                    try:
+                        self.check_send(event, deadline, epoch)
+                    except OneBotError as exc:
+                        return exc.code == "direct_newer_context"
+                    except QQDeadlineExpired:
+                        return False
+                    return False
             with trace.stage("protocol.read"):
-                observation = await self.observe(event, deadline)
+                self.store.reply_requests.check(event)
+                image_admission = None
+                if policy["image_mode"] != "all":
+                    sources = (request["source_event_ids"] if request else [event["event_id"]])
+                    # Sources only append on revision. The first attachment is
+                    # therefore stable across revisions, including a failed or
+                    # already-bound first image; failure never grants a new slot.
+                    selected_image = next(((source, 1) for source in sources
+                        if self.store.get(source)["event"]["images"]), None)
+                    image_admission = (frozenset({selected_image}) if policy["image_mode"] == "one"
+                                       and selected_image is not None else frozenset())
+                observation = await self.observe(event, deadline, trace=trace,
+                    defer_image_analysis=defer_image_analysis, image_admission=image_admission)
+                if request:
+                    for source in request["source_event_ids"][1:]:
+                        self.store.reply_requests.check(event)
+                        source_row = self.store.get(source)
+                        await self.observe(source_row["event"], deadline, trace=trace, image_admission=image_admission)
             if event["historical"] or event["own"] or not self.conversations[event["group_id"]].send:
+                terminal_reason = ("observed_history" if event["historical"] else
+                                   "observed_own" if event["own"] else "observed_read_only")
                 self.store.update(event["event_id"], state="observed")
                 return
-            self.check_send(event, deadline, epoch)
-            self.store.update(event["event_id"], state="preparing")
+            terminal_stage = "protocol.precheck"
+            with trace.stage("protocol.precheck"):
+                self.check_send(event, deadline, epoch)
+            self.store.reply_requests.check(event, state="preparing")
+            self.store.update(event["event_id"], state="preparing", reply_request=event.get("_reply_request"))
             self.write_status(state="deciding")
+            terminal_stage = "protocol.shared_prepare"
             with trace.stage("protocol.shared_prepare"):
                 decision = await asyncio.to_thread(self.cognition, transport="onebot", deadline=deadline, trace=trace,
                     group_id=event["group_id"], self_member_id=self.settings.self_member_id,
-                    trigger_member_id=event["member_id"], verified_self_aliases=self.aliases[event["group_id"]])
+                    trigger_member_id=event["member_id"], verified_self_aliases=self.aliases[event["group_id"]],
+                    **(reply_binding(request) if request else {}))
+            terminal_stage = "protocol.decision"
+            trace.add_counter("protocol_error_fallback", int(decision.outcome == "error_fallback"))
+            self.store.reply_requests.check(event, state="frozen")
             if (decision.group_id != event["group_id"] or decision.self_member_id != self.settings.self_member_id
-                    or observation.record_id not in decision.source_record_ids):
+                    or observation.record_id not in decision.source_record_ids
+                    or (request and not {self.store.get(source)["source_record_id"] for source in request["source_event_ids"]}
+                        .issubset(decision.source_record_ids))):
                 raise OneBotError("direct_decision_source_mismatch")
             self.state["last_decision_action"] = decision.action
             self.store.update(event["event_id"], state="ready" if decision.action == "speak" else "wait",
-                              decision_id=decision.decision_id)
+                              decision_id=decision.decision_id, reply_request=event.get("_reply_request"))
             if decision.action == "speak":
+                terminal_stage = "protocol.delivery"
                 self.write_status(state="sending")
                 send_deadline = QQDeadline.after(ERROR_FALLBACK_SEND_SECONDS) if decision.outcome == "error_fallback" else deadline
-                with trace.stage("protocol.delivery"):
+                with trace.stage("protocol.delivery"), qq_trace_scope(trace):
                     await self.send_decision(event, decision, send_deadline, epoch)
+                current = self.store.get(event["event_id"])
+                terminal_reason = (current["terminal_reason"] or
+                    ("sent" if current["state"] == "sent" else
+                     "decision_replayed" if decision.replayed or not decision.new_decision else "decision_not_sendable"))
+            else:
+                terminal_reason = (decision.error_type if decision.error_type else
+                                   decision.outcome if decision.outcome in {"natural_wait", "guard_wait"} else "decision_wait")
         except Exception as exc:
+            if isinstance(exc, ReplyRequestChanged):
+                terminal_reason = exc.code
+                if exc.code == "direct_request_revision_changed":
+                    # Ingress has already queued the new revision. Do not let
+                    # this obsolete evaluation overwrite its still-live anchor.
+                    trace.record_termination(reason=terminal_reason, stage=terminal_stage)
+                    terminal_reason = None
+                    return
+            terminal_reason = classify_error(exc)
+            if isinstance(exc, ReplyRequestChanged):
+                terminal_reason = exc.code
+            if isinstance(exc, sqlite3.Error) or (isinstance(exc, OSError) and not isinstance(exc, (TimeoutError, ConnectionError))):
+                terminal_reason = "storage_error"
+            elif terminal_stage != "protocol.shared_prepare" and terminal_reason.startswith("model_"):
+                terminal_reason = "internal_error"
             current = self.store.get(event["event_id"])
             if current["state"] != "unknown":
                 with closing(self.store.connect()) as db:
                     sent = db.execute("SELECT 1 FROM qq_direct_sends WHERE event_id=? AND status='sent'", (event["event_id"],)).fetchone()
                 self.store.update(event["event_id"], state="partial" if sent else "expired" if deadline.expired else "failed")
-            code = exc.code if isinstance(exc, OneBotError) else "direct_turn_expired" if deadline.expired else "direct_turn_failed"
+            code = terminal_reason if isinstance(exc, OneBotError) else "direct_turn_expired" if deadline.expired else "direct_turn_failed"
             self.state["last_error_type"] = code
         finally:
+            if terminal_reason is not None:
+                self.store.update(event["event_id"], terminal_reason=terminal_reason, terminal_stage=terminal_stage)
+                trace.record_termination(reason=terminal_reason, stage=terminal_stage)
+                self.store.reply_requests.finish(event, self.store.get(event["event_id"])["state"])
             trace.flush(self.settings.state_db.with_suffix(".trace.jsonl"))
             self.write_status(state="watching" if self.active() else "paused")
 
     async def worker(self):
         while not self.stop.is_set():
             if self.active():
-                row = self.store.pending(self.run_id)
+                row = self.store.pending(self.run_id, scheduler_mode=self.settings.qq_reply_scheduler)
                 if row is not None:
+                    if (self.event_policy(row["event"])["scheduler"] == "coalesced" and not row.get("reply_request")
+                            and not row["event"]["historical"] and not row["event"]["own"]
+                            and self.conversations[row["event"]["group_id"]].send):
+                        # Recover the narrow receive/intent-write interruption
+                        # without dropping the durable source or refreshing TTL.
+                        self.enqueue_reply(row["event"])
+                        continue
                     await self.process(row)
                     continue
             self.wakeup.clear()
@@ -631,8 +869,10 @@ class DirectQQActor:
         finally:
             self.stop.set()
             await worker
+            await close_media_work()
             self.cognition.close()
-            self.llm.close()
+            if self.llm is not None:
+                self.llm.close()
             self.write_status(running=False, state="stopped")
 
 

@@ -17,6 +17,7 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, ValidationErro
 from pydantic_core import ErrorType
 
 from harness.board.config import BoardSettings
+from harness.cognitive.prompts import build_messages, chronological_memory
 from harness.embodiment.board_contracts import BoardEntry, BoardEvidenceRequest, BoardReceipt, Identifier
 from harness.llm.client import parse_json_object
 from harness.compiler.compiler import command_emotion_context, command_emotion_deadline, emotion_enabled, render_emotion_guidance, resolve_command_emotion
@@ -213,17 +214,14 @@ async def prepare(host, command, *, diagnostic=None):
         if size <= budget:
             recent.insert(0, item)
             budget -= size
-    payload = {"trigger": request.trigger, "request_text": request.request_text,
-        "homeostatic_summary": request.homeostatic_summary, "shared_memory": context,
-        "body_read_entries": recent, "source_authority": "untrusted_attributed_records"}
+    payload = {"source_authority": "untrusted_attributed_records", "shared_memory": chronological_memory(context),
+        "body_read_entries": recent, "homeostatic_summary": request.homeostatic_summary,
+        "trigger": request.trigger, "request_text": request.request_text}
     emotion_text = ""
     if emotion_enabled(getattr(host.chat, "settings", None)):
         payload.pop("homeostatic_summary")
         emotion_text = render_emotion_guidance(emotion_guidance, homeostasis=request.homeostatic_summary)
-    messages = [{"role": "system", "content": _RULES + "\n当前完整人格：\n" + persona.model_dump_json()},
-                {"role": "user", "content": json.dumps(payload, ensure_ascii=False, separators=(",", ":"))}]
-    if emotion_text:
-        messages[0]["content"] += "\n" + emotion_text
+    messages = build_messages(persona=persona, rules=_RULES, payload=payload, emotion_text=emotion_text)
     diagnostic.stage = "deadline"
     remaining = (deadline - datetime.now(timezone.utc)).total_seconds()
     timeout = min(remaining, request.model_timeout_seconds,

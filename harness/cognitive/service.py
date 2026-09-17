@@ -205,16 +205,42 @@ class CognitiveServiceHost:
     async def health(self):
         health = await self.adapter.health()
         return health.model_copy(update={"detail": {**health.detail, "qq_memory": self.qq_memory.status(),
-            "daily_revision": self.daily_revision.status()}})
+            "daily_revision": self.daily_revision.status(),
+            "qq_turn_commands": ["PrepareQQTurn", "ResumeQQResponse"]}})
 
     async def get_snapshot(self):
-        return await self.adapter.get_snapshot()
+        from harness.qq.policy import QQLatencyOptions, effective_configuration
+        snapshot = await self.adapter.get_snapshot()
+        return snapshot.model_copy(update={"payload": {**snapshot.payload,
+            "qq_latency_policy": QQLatencyOptions.from_settings(self.chat.settings).model_dump(),
+            "effective_configuration": effective_configuration(self.chat.settings),
+            "qq_turn_commands": ["PrepareQQTurn", "ResumeQQResponse"]}})
+
+    async def prepare_qq_turn(self, command):
+        from harness.cognitive.qq_turn import run
+        return await run(self, command, resume=False)
+
+    async def resume_qq_response(self, command):
+        from harness.cognitive.qq_turn import run
+        return await run(self, command, resume=True)
 
     async def prepare_response(self, command):
         return await self.adapter.prepare_response(command)
 
     async def observe_emotion(self, command):
-        return await self.adapter.observe_emotion(command)
+        source = command.payload.get("source_payload") or {}
+        if command.payload.get("source_command_type") not in {"PrepareQQResponse", "PrepareQQTurn"}:
+            return await self.adapter.observe_emotion(command)
+        from harness.qq.telemetry import QQTurnTrace, qq_trace_scope
+        origin = source.get("trace") or {}
+        trace = QQTurnTrace(event_id=origin.get("event_id"))
+        if origin.get("trace_id"):
+            trace.trace_id = origin["trace_id"]
+        with qq_trace_scope(trace), trace.stage("emotion.observe"):
+            result = await self.adapter.observe_emotion(command)
+        if isinstance(result.result, dict):
+            return result.model_copy(update={"result": {**result.result, "qq_emotion_trace": trace.snapshot()}})
+        return result
 
     async def prepare_web_step(self, command):
         with trace_scope(correlation_id=command.correlation_id, event_id=command.event_id,
@@ -257,17 +283,21 @@ class CognitiveServiceHost:
     async def prepare_qq_response(self, command):
         """Prepare through the same lock/ledger; only QQ's body commits delivery."""
         with trace_scope(correlation_id=command.correlation_id, event_id=command.event_id,
-                         command_id=command.command_id, phase="qq_prepare", span_id=command.command_id):
+                         command_id=command.command_id, phase="qq_prepare", span_id=command.command_id,
+                         qq_trace_id=(command.payload.get("trace") or {}).get("trace_id")):
             return await self.adapter._run_command(lambda: self._prepare_qq_response(command))
 
     async def _prepare_qq_response(self, command):
         from harness.qq.decision import decide_qq_reply
         from harness.qq.shared import QQSharedPrepareRequest
-        from harness.qq.telemetry import QQDeadline, QQTurnTrace
+        from harness.qq.telemetry import QQDeadline, QQTurnTrace, qq_trace_scope
         from harness.runtime.qq_turns import _source
 
         adapter = self.adapter
+        trace = QQTurnTrace()
+        waiting = trace.clock()
         async with adapter._lock:
+            trace.record("cognitive.lock_wait", started_mono=waiting)
             replay = adapter._lookup_replay(command)
             if replay is not None:
                 await asyncio.to_thread(adapter._persist_state)
@@ -283,6 +313,8 @@ class CognitiveServiceHost:
                 qq_payload.pop("emotion_revision", None)
                 runtime_goal_context = qq_payload.pop("runtime_goal_context", None)
                 runtime_web_context = qq_payload.pop("runtime_web_context", None)
+                emotion_trace = qq_payload.pop("qq_emotion_trace", None)
+                frozen_policy = qq_payload.pop("qq_frozen_policy", None)
                 request = QQSharedPrepareRequest.model_validate(qq_payload)
                 if request.homeostatic_interoception is not None:
                     from harness.runtime.adapters import _validated_homeostatic_interoception
@@ -300,57 +332,74 @@ class CognitiveServiceHost:
                              - datetime.now(timezone.utc)).total_seconds()
                 deadline = QQDeadline.after(max(0, remaining))
                 deadline.check()
-                trace = QQTurnTrace(event_id=request.trace.event_id,
-                    first_seen_at=request.trace.first_seen_at,
-                    observation_sequence=request.trace.observation_sequence)
+                trace.event_id = request.trace.event_id
+                trace.first_seen_at = request.trace.first_seen_at
+                trace.observation_sequence = request.trace.observation_sequence
                 trace.trace_id = request.trace.trace_id
-                with trace.stage("shared_memory"):
-                    binding = await asyncio.to_thread(self.shared.qq_binding,
-                        group_id=request.group_id, member_id=request.trigger_member_id, query=request.query)
-                deadline.check()
-                values = request.model_dump(exclude={"trace", "deadline_at", "transport"})
-                # Keep validated DTOs for identity and state evidence.
-                values.update(verified_self_aliases=request.verified_self_aliases,
-                    idle_intent=request.idle_intent, homeostatic_interoception=request.homeostatic_interoception)
-                emotion_guidance = await adapter.emotion_guidance(command)
-                if emotion_guidance is not None:
-                    values["emotion_guidance"] = emotion_guidance
-                if runtime_goal_context is not None:
-                    values["goal_context"] = runtime_goal_context
-                if runtime_web_context is not None:
-                    values["runtime_web_context"] = runtime_web_context
-                state_summary = request.homeostatic_interoception
-                if state_summary is None and request.idle_intent is not None:
-                    state_summary = request.idle_intent.homeostatic_interoception
-                state_json = state_summary.model_dump(mode="json") if state_summary is not None else None
-                profile_ref = state_summary.profile_ref if state_summary is not None else None
-                profile_suffix = profile_ref.rsplit("@", 1)[-1] if profile_ref else ""
-                with diagnostic_scope(channel="qq", transport=request.transport,
-                    conversation_kind="private" if request.group_id.startswith("private:") else "group",
-                    homeostasis_revision=state_summary.snapshot_revision if state_summary is not None else None,
-                    profile_ref=profile_ref,
-                    profile_revision=int(profile_suffix) if profile_suffix.isdigit() else None,
-                    summary_hash=hashlib.sha256(json.dumps(state_json, ensure_ascii=False, sort_keys=True,
-                        separators=(",", ":")).encode("utf-8")).hexdigest() if state_json is not None else None,
-                    persona_hash=hashlib.sha256(json.dumps(binding.preset.persona.model_dump(mode="json"),
-                        ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()):
-                    decision = await asyncio.to_thread(decide_qq_reply,
-                        memory_db=self.shared.qq_settings.memory_db, **values,
-                        deadline=deadline, trace=trace, shared_owner=binding)
-                self.qq_memory.note_recall(decision)
-                adapter._cursor = max(adapter._cursor, command.receive_seq)
-                adapter._event_id = command.event_id
-                result = DomainCommandResult[dict](command_id=command.command_id,
-                    command_type=command.command_type, status="applied",
-                    request_hash=command.effective_request_hash(), committed_revision=adapter._revision,
-                    acknowledged_event_id=command.event_id, acknowledged_receive_seq=command.receive_seq,
-                    result={"decision": decision.model_dump(mode="json"), "trace": trace.snapshot()},
-                    completed_at=datetime.now(timezone.utc))
+                if emotion_trace is not None:
+                    trace.merge_prior_phase(emotion_trace)
+                from harness.qq.policy import QQLatencyOptions, settings_with_policy
+                policy = (QQLatencyOptions.model_validate(frozen_policy) if frozen_policy is not None else
+                    QQLatencyOptions.from_settings(self.chat.settings).for_conversation(
+                        group_id=request.group_id, self_member_id=request.self_member_id))
+                trace.bind_configuration(settings_with_policy(self.chat.settings, policy))
+                with qq_trace_scope(trace):
+                    with trace.stage("shared_memory"):
+                        binding = await asyncio.to_thread(self.shared.qq_binding,
+                            group_id=request.group_id, member_id=request.trigger_member_id, query=request.query)
+                    from dataclasses import replace
+                    binding = replace(binding, settings=settings_with_policy(binding.settings, policy))
+                    deadline.check()
+                    values = request.model_dump(exclude={"trace", "deadline_at", "transport",
+                        "request_id", "revision", "source_event_ids", "authority_anchor"})
+                    # Keep validated DTOs for identity and state evidence.
+                    values.update(verified_self_aliases=request.verified_self_aliases,
+                        idle_intent=request.idle_intent, homeostatic_interoception=request.homeostatic_interoception)
+                    emotion_guidance = await adapter.emotion_guidance(command)
+                    if emotion_guidance is not None:
+                        values["emotion_guidance"] = emotion_guidance
+                    if runtime_goal_context is not None:
+                        values["goal_context"] = runtime_goal_context
+                    if runtime_web_context is not None:
+                        values["runtime_web_context"] = runtime_web_context
+                    state_summary = request.homeostatic_interoception
+                    if state_summary is None and request.idle_intent is not None:
+                        state_summary = request.idle_intent.homeostatic_interoception
+                    state_json = state_summary.model_dump(mode="json") if state_summary is not None else None
+                    profile_ref = state_summary.profile_ref if state_summary is not None else None
+                    profile_suffix = profile_ref.rsplit("@", 1)[-1] if profile_ref else ""
+                    with diagnostic_scope(channel="qq", transport=request.transport,
+                        conversation_kind="private" if request.group_id.startswith("private:") else "group",
+                        homeostasis_revision=state_summary.snapshot_revision if state_summary is not None else None,
+                        profile_ref=profile_ref,
+                        profile_revision=int(profile_suffix) if profile_suffix.isdigit() else None,
+                        summary_hash=hashlib.sha256(json.dumps(state_json, ensure_ascii=False, sort_keys=True,
+                            separators=(",", ":")).encode("utf-8")).hexdigest() if state_json is not None else None,
+                        persona_hash=hashlib.sha256(json.dumps(binding.preset.persona.model_dump(mode="json"),
+                            ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()):
+                        decision = await asyncio.to_thread(decide_qq_reply,
+                            memory_db=self.shared.qq_settings.memory_db, **values,
+                            deadline=deadline, trace=trace, shared_owner=binding)
+                    self.qq_memory.note_recall(decision)
+                    adapter._cursor = max(adapter._cursor, command.receive_seq)
+                    adapter._event_id = command.event_id
+                    result = DomainCommandResult[dict](command_id=command.command_id,
+                        command_type=command.command_type, status="applied",
+                        request_hash=command.effective_request_hash(), committed_revision=adapter._revision,
+                        acknowledged_event_id=command.event_id, acknowledged_receive_seq=command.receive_seq,
+                        result={"decision": decision.model_dump(mode="json"), "trace": trace.snapshot()},
+                        completed_at=datetime.now(timezone.utc))
             except Exception as exc:
                 # No prompts, source text, tokens or paths in service failures.
                 result = adapter._failure(command, "qq_shared_prepare_failed:" + type(exc).__name__)
             adapter._remember(command, result)
-            await asyncio.to_thread(adapter._persist_state)
+            with qq_trace_scope(trace), trace.stage("persistence.command"):
+                await asyncio.to_thread(adapter._persist_state)
+            if isinstance(result.result, dict):
+                # Outcome is already durable. Completing diagnostics must not
+                # add another synchronous full-state commit to this request.
+                result = result.model_copy(update={"result": {**result.result, "trace": trace.snapshot()}})
+                adapter._ledger[(command.command_type, command.idempotency_key)] = result
             return result
 
     async def assess_autonomous(self, command):
@@ -674,6 +723,7 @@ class CognitiveServiceHost:
                 aux_model=body.get("aux_model"),
                 aux_api_key=body.get("aux_api_key"),
                 validator_enabled=body.get("validator_enabled"),
+                qq_latency=body.get("qq_latency"),
             )
             self.adapter.pipeline = self.chat.pipeline
         elif operation == "debug.relationship":

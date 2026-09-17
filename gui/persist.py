@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, ValidationError
 from gui.debug import TuningPatch, apply_tuning
 from gui.presets import DEFAULT_PRESET_ID
 from harness.config import Settings
+from harness.qq.policy import QQLatencyOptions
 from harness.files import replace_path
 
 Mode = Literal["demo", "live", "ollama"]
@@ -50,6 +51,7 @@ class GuiPersistedSettings(BaseModel):
     active_preset_id: str = DEFAULT_PRESET_ID
     open_preset_ids: list[str] = Field(default_factory=lambda: [DEFAULT_PRESET_ID])
     tuning: TuningPatch | None = None
+    qq_latency: QQLatencyOptions | None = None
 
 
 def atomic_write_json(path: Path, payload: dict[str, Any] | list[Any]) -> Path:
@@ -111,6 +113,7 @@ def snapshot_gui_settings(
         aux_model=settings.aux_llm_model,
         aux_api_key=settings.aux_llm_api_key,
         validator_enabled=settings.validator_enabled,
+        qq_latency=QQLatencyOptions.from_settings(settings),
         user_name=normalize_speaker_name(user_name, default=DEFAULT_USER_NAME),
         character_name=normalize_speaker_name(character_name),
         active_preset_id=active,
@@ -152,6 +155,15 @@ def persist_gui_settings(
 
 
 def apply_loaded_tuning(settings: Settings, persisted: GuiPersistedSettings) -> None:
+    if persisted.qq_latency is not None:
+        for name, value in persisted.qq_latency.model_dump().items():
+            setattr(settings, name, value)
+        settings.mark_configuration_source(QQLatencyOptions.model_fields, "persisted")
+    # These fields are passed through rebuild by both GUI and Cognitive startup.
+    aliases = {"base_url": "llm_base_url", "model": "llm_model", "aux_base_url": "aux_llm_base_url",
+               "aux_model": "aux_llm_model", "validator_enabled": "validator_enabled"}
+    settings.mark_configuration_source([target for key, target in aliases.items()
+                                       if key in persisted.model_fields_set], "persisted")
     if persisted.tuning is None:
         return
     try:

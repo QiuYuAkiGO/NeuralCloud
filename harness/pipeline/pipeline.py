@@ -20,6 +20,7 @@ from harness.core.inference import (
     ModelContext,
     ParsedInteraction,
     SessionTurn,
+    SituationActor,
     SituationState,
     SituationTrigger,
     StructuredInsight,
@@ -181,6 +182,74 @@ class InferencePipeline:
                     emotion_guidance=emotion_guidance,
                     prefix_messages=prefix_messages,
                 )
+            call.set_result(final)
+            return final
+
+    def prepare_qq_response(
+        self,
+        source: str,
+        *,
+        session_id: str,
+        context_segments: list[ContextSegment],
+        memory_evidence: MemoryEvidenceContext,
+        prefix_messages: list[dict[str, str]],
+        speaker: str = "operator",
+        now: datetime | None = None,
+        homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
+        emotion_guidance: Any = None,
+        character_snapshot=None,
+    ) -> FinalResponse:
+        """Realize an admitted QQ gate once, with the ordinary compiler/critic.
+
+        Gate judgement and scoped recall have already completed. Parsing the
+        fixed adapter instruction, judging its complexity, or retrieving it as
+        another utterance would add no new evidence. This entry never observes
+        emotion, mutates the session, continues, or repairs with another draft.
+        """
+        if not memory_evidence.audience.startswith("qq:") or not prefix_messages:
+            raise ValueError("QQ response requires scoped evidence and an admitted gate prefix")
+        started = time.perf_counter()
+        with self.memory.call_log.scope("prepare_qq_response", {"session_id": session_id}) as call:
+            with self.memory.suppress_maintenance():
+                event = self.gateway.ingest(source, session_id=session_id, speaker=speaker)
+                moment = now or event.timestamp
+                snapshot = character_snapshot if character_snapshot is not None else self._traced(
+                    "state_build", lambda: self.memory.get_state(now=moment))
+                situation = SituationState(
+                    trigger=SituationTrigger(type="qq_prepared_reply", ref=event.event_id),
+                    utterance=event.raw_text,
+                    parsed=ParsedInteraction(speech_act="qq_prepared_reply"),
+                    actor=SituationActor(
+                        persona_core_ref=snapshot.persona.persona_id if snapshot.persona else None,
+                        psych_state={"short": dict(snapshot.psych.short) if snapshot.psych else {}},
+                    ),
+                    snapshot=snapshot, relationship=snapshot.relationship, world=snapshot.world,
+                )
+                context = self._traced("compile", lambda: self.compiler.compile(
+                    situation, insights=[], session=[], additional_segments=context_segments,
+                    homeostatic_interoception=homeostatic_interoception, emotion_guidance=emotion_guidance,
+                    memory_evidence=memory_evidence, prefix_messages=prefix_messages,
+                ), extra={"situation_id": situation.situation_id, "path": "qq_direct"})
+                context = context.model_copy(update={"prefix_messages": list(prefix_messages)})
+                candidate, validation, revisions, usage = self._generate_validated(
+                    context, situation=situation, insights=[], path="fast",
+                    continuation_instruction=None, segment_index=0, max_revisions=0,
+                )
+                bodies, _ = split_protocol_segments(candidate.text)
+                accepted, _ = fresh_bodies(bodies, [])
+                response_id = new_id("response")
+                segments = self._commit_segments(accepted, session_id=session_id, response_id=response_id,
+                                                 now=moment, commit_session=False)
+                final = FinalResponse(
+                    response_id=response_id, text="\n\n".join(segments), path="fast", revisions=revisions,
+                    situation_id=situation.situation_id, context_id=context.context_id,
+                    event_id=event.event_id, insights=[], validation=validation, segments=segments,
+                    stopped_by="disabled", usage=usage,
+                    latency_ms=round((time.perf_counter() - started) * 1000, 3),
+                )
+                self._emit("final", final, {"event_id": event.event_id, "path": "qq_direct",
+                    "character_calls": usage.calls, "revisions": revisions, "segments": len(segments),
+                    "total_latency_ms": final.latency_ms, "latency_ms": 0.0})
             call.set_result(final)
             return final
 
@@ -643,6 +712,7 @@ class InferencePipeline:
         continuation_instruction: str | None,
         segment_index: int,
         spoken_segments: list[str] | None = None,
+        max_revisions: int | None = None,
     ) -> tuple[CandidateResponse, ValidationResult, int, TokenUsage]:
         usage = TokenUsage()
         spoken = list(spoken_segments or [])
@@ -721,7 +791,7 @@ class InferencePipeline:
             )
             if validation.verdict == "pass":
                 break
-            if revisions >= self.settings.max_revisions:
+            if revisions >= (self.settings.max_revisions if max_revisions is None else max_revisions):
                 if _HOMEOSTATIC_HARD_VIOLATIONS.intersection(validation.violations):
                     candidate = candidate.model_copy(update={"text": ""})
                 break

@@ -198,7 +198,20 @@ class MemoryEvidenceContext(BaseModel):
             try:
                 value = json.loads(segment.text)
             except (ValueError, TypeError):
-                visible = entry.text in segment.text
+                # QQ prefixes contain multiple complete JSON user messages.
+                # Decode every value, rejecting trailing non-JSON material,
+                # before checking exact evidence text (including escapes).
+                try:
+                    decoder = json.JSONDecoder()
+                    remaining = segment.text.lstrip()
+                    values = []
+                    while remaining:
+                        value, end = decoder.raw_decode(remaining)
+                        values.append(value)
+                        remaining = remaining[end:].lstrip()
+                    visible = bool(values) and any(_contains_evidence_text(item, entry.text) for item in values)
+                except (ValueError, TypeError):
+                    visible = entry.text in segment.text
             else:
                 visible = _contains_evidence_text(value, entry.text)
             if visible:
@@ -274,6 +287,13 @@ class TokenUsage(BaseModel):
     total_tokens: int = 0
     cache_hit_tokens: int = 0
     cache_miss_tokens: int = 0
+    # None is accepted from older records; validation turns it into an additive
+    # count. Legacy zero counters do not prove that a provider reported a miss.
+    cache_known_prompt_tokens: int | None = Field(default=None, ge=0)
+    cache_unknown_prompt_tokens: int | None = Field(default=None, ge=0)
+    cache_status: Literal["known", "unknown", "partial"] = "unknown"
+    prompt_tokens_source: Literal["api", "estimate", "mixed", "unknown"] | None = None
+    completion_tokens_source: Literal["api", "estimate", "mixed", "unknown"] | None = None
     calls: int = 0
     revision_calls: int = 0
     revision_tokens: int = 0
@@ -281,8 +301,26 @@ class TokenUsage(BaseModel):
 
     @model_validator(mode="after")
     def _fill_total(self) -> TokenUsage:
+        if self.prompt_tokens_source is None:
+            self.prompt_tokens_source = self.source if "prompt_tokens" in self.model_fields_set else "unknown"
+        if self.completion_tokens_source is None:
+            self.completion_tokens_source = self.source if "completion_tokens" in self.model_fields_set else "unknown"
         if self.total_tokens <= 0:
             self.total_tokens = self.prompt_tokens + self.completion_tokens
+        known = self.cache_known_prompt_tokens
+        if known is None:
+            known = max(0, self.cache_hit_tokens) + max(0, self.cache_miss_tokens)
+        # An inconsistent partition must not improve the reported hit rate.
+        if known > self.prompt_tokens:
+            known = 0
+        self.cache_known_prompt_tokens = known
+        self.cache_unknown_prompt_tokens = max(0, self.prompt_tokens - known)
+        if self.cache_unknown_prompt_tokens:
+            self.cache_status = "partial" if known else "unknown"
+        elif known or self.cache_status == "known":
+            self.cache_status = "known"
+        else:
+            self.cache_status = "unknown"
         return self
 
     def for_call(self, *, revision: int = 0) -> TokenUsage:
@@ -314,6 +352,10 @@ class TokenUsage(BaseModel):
             total_tokens=prompt + completion,
             cache_hit_tokens=self.cache_hit_tokens + other.cache_hit_tokens,
             cache_miss_tokens=self.cache_miss_tokens + other.cache_miss_tokens,
+            cache_known_prompt_tokens=(self.cache_known_prompt_tokens or 0) + (other.cache_known_prompt_tokens or 0),
+            cache_status="known" if self.cache_status == other.cache_status == "known" else "unknown",
+            prompt_tokens_source=(self.prompt_tokens_source if self.prompt_tokens_source == other.prompt_tokens_source else "mixed"),
+            completion_tokens_source=(self.completion_tokens_source if self.completion_tokens_source == other.completion_tokens_source else "mixed"),
             calls=self.calls + other.calls,
             revision_calls=self.revision_calls + other.revision_calls,
             revision_tokens=self.revision_tokens + other.revision_tokens,

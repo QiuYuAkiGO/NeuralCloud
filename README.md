@@ -8,6 +8,7 @@
 
 **文档**：
 
+- **中文角色回复人工评审**：[独立采样与匿名评分工具](eval/chinese_reply_review/README.md) — 七家 20 个模型、两个固定场景、每模型仅两次请求；38 条完整回复已准备，真实人工评分待提交。
 - **Qwen 情绪评估与演绎**：[实现与配置](docs/EMOTION_DIRECTOR.md) — 共享短期情绪、动态信号占比、两段辅助模型调用，统一聊天、QQ、留言板和语音表达；提供独立 shadow/on 配置。
 - **情绪表达与参数语义调研计划**：[诊断方案](docs/harness/16-emotional-expression-diagnostic-research-plan.md) — DeepSeek V4.1 Flash 实际输入审计、参数语义/强度投影/表达风格对照，以及后训练决策；当前为计划，未执行真实实验。
 - **QQ 协议接入**：[NapCat / OneBot 与图片理解](docs/QQ_DIRECT.md) — 按群名单直接读取、原图与动图识别、同一 Misty 认知和记忆、发送回执与桌面回退。

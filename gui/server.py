@@ -62,6 +62,7 @@ class ConfigRequest(BaseModel):
     aux_model: str | None = None
     aux_api_key: str | None = None
     validator_enabled: StrictBool | None = None
+    qq_latency: dict | None = None
     user_name: str | None = None
     character_name: str | None = None
 
@@ -314,6 +315,7 @@ def create_app(
                     aux_model=body.aux_model,
                     aux_api_key=body.aux_api_key,
                     validator_enabled=body.validator_enabled,
+                    qq_latency=body.qq_latency,
                 )
             except Exception as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from exc

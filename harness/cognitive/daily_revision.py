@@ -11,7 +11,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from gui.presets import atomic_write_json
-from harness.cognitive.qq_memory import snapshot_owner
+from harness.cognitive.qq_memory import foreground_pending, snapshot_owner, wait_foreground_idle
 from harness.memory.revision.config import DailyRevisionConfig, load_config
 from harness.memory.revision.queue import DailyRevisionQueue
 
@@ -163,7 +163,7 @@ class DailyRevisionWorker:
         return result
 
     def poke(self):
-        if self.stopping.is_set() or self.host.adapter._maintenance_paused:
+        if self.stopping.is_set() or self.host.adapter._maintenance_paused or foreground_pending(self.host):
             return
         if self._work_task is not None and not self._work_task.done():
             return
@@ -239,6 +239,8 @@ class DailyRevisionWorker:
                         self.host.adapter._daily_revision_publication_pending = False
                         self.host.adapter._qq_memory_publication_pending = False
                 self._recover_queue()
+            if foreground_pending(self.host):
+                return False
             job = await asyncio.to_thread(self.queue.claim, owner_id=self.host.shared.store.owner_id,
                                           preset_id=self.host.chat.active_preset_id)
             if job is None:
@@ -261,6 +263,8 @@ class DailyRevisionWorker:
                     return
                 memory = self.host.chat.memory
                 sources = [FrozenSource.model_validate(row) for row in job["sources"]]
+                if not await wait_foreground_idle(self.host, self.stopping):
+                    raise ValueError("daily_revision_maintenance_paused")
                 async with self.host.adapter._lock:
                     before = snapshot_owner(self.host)
                 context = revision_context(before, sources)
@@ -270,6 +274,8 @@ class DailyRevisionWorker:
                     await asyncio.to_thread(self.queue.rebase, run_id, job["basis"])
                     frozen = None
                 if frozen is None:
+                    if not await wait_foreground_idle(self.host, self.stopping):
+                        raise ValueError("daily_revision_maintenance_paused")
                     provider = self.provider or DailyRevisionProvider(self.config, self.queue)
                     try:
                         proposal = await asyncio.to_thread(provider.propose, run_id, sources, context)
@@ -280,6 +286,8 @@ class DailyRevisionWorker:
                 else:
                     proposal = RevisionProposal.model_validate(frozen)
                 if self.stopping.is_set() or self.host.adapter._maintenance_paused:
+                    raise ValueError("daily_revision_maintenance_paused")
+                if not await wait_foreground_idle(self.host, self.stopping):
                     raise ValueError("daily_revision_maintenance_paused")
                 async with self.host._control_lock:
                     async with self.host.adapter._lock:
@@ -340,7 +348,7 @@ class DailyRevisionWorker:
     async def _loop(self):
         while not self.stopping.is_set():
             try:
-                if not self.host.adapter._maintenance_paused:
+                if not self.host.adapter._maintenance_paused and not foreground_pending(self.host):
                     now = datetime.now(ZoneInfo(self.config.timezone))
                     if (self.config.enabled and self.config.configured
                             and now.strftime("%H:%M") >= self.config.schedule_time

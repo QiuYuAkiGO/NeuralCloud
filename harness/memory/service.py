@@ -10,6 +10,7 @@ import time
 from typing import Any, cast
 
 from harness.config import Settings, get_settings
+from harness.qq.telemetry import measure_stage
 from harness.core.exceptions import EvidenceRequiredError, PersonaLockedError
 from harness.core.models import (
     CharacterSnapshot,
@@ -270,8 +271,14 @@ class MemoryService:
         # The plan and the query embedding are independent; run them concurrently
         # so a live planner LLM and a remote embedding API overlap instead of
         # adding their round-trips.
-        fut_plan = self._retrieve_pool.submit(copy_context().run, self.planner.plan, query)
-        fut_embed = self._retrieve_pool.submit(copy_context().run, self.embeddings.embed_one, query.text)
+        def plan():
+            with measure_stage("memory.plan"):
+                return self.planner.plan(query)
+        def embed():
+            with measure_stage("memory.embedding"):
+                return self.embeddings.embed_one(query.text)
+        fut_plan = self._retrieve_pool.submit(copy_context().run, plan)
+        fut_embed = self._retrieve_pool.submit(copy_context().run, embed)
         return fut_plan.result(), fut_embed.result()
 
     def query(self, query: RetrievalQuery) -> list[ScoredMemory]:
@@ -284,7 +291,8 @@ class MemoryService:
             if query.relationship is None:
                 query = query.model_copy(update={"relationship": self.stores.relationship.get("user")})
             plan, query_embedding = self._plan_and_embed(query)
-            results = self.hybrid.search(query, plan, query_embedding=query_embedding)
+            with measure_stage("memory.ranking"):
+                results = self.hybrid.search(query, plan, query_embedding=query_embedding)
             self._submit_tier(lambda items=results, when=query.now: self._after_query(items, when))
             payload: dict[str, Any] = {
                 "text": query.text,
@@ -318,7 +326,8 @@ class MemoryService:
             if query.relationship is None:
                 query = query.model_copy(update={"relationship": self.stores.relationship.get("user")})
             plan, query_embedding = self._plan_and_embed(query)
-            results = self.hybrid.search(query, plan, query_embedding=query_embedding)
+            with measure_stage("memory.ranking"):
+                results = self.hybrid.search(query, plan, query_embedding=query_embedding)
             conflicts = self.conflicts.find(query, current_inference)
             self.tracer.record(
                 "retrieval",

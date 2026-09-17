@@ -29,6 +29,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, Validation
 
 from harness.llm.client import OpenAICompatClient
 from harness.qq.telemetry import QQDeadline, QQDeadlineExpired
+from harness.qq.direct_media import analysis_key, count, load_analysis, media_work, save_analysis, stage
 from harness.files import replace_path
 
 MAX_IMAGE_BYTES = 16 * 1024 * 1024
@@ -47,7 +48,7 @@ ImageError = Literal[
     "download_failed", "redirect_limit", "image_too_large", "image_pixel_limit",
     "image_frame_limit", "invalid_image", "unsupported_image", "invalid_base64",
     "bridge_image_failed", "storage_failed", "deadline_expired", "vision_failed",
-    "vision_invalid", "vision_unavailable",
+    "vision_invalid", "vision_unavailable", "vision_deferred",
 ]
 CallAPI = Callable[[str, dict[str, Any], float], Awaitable[dict[str, Any]]]
 _FORMATS = {"PNG": ("image/png", "png"), "JPEG": ("image/jpeg", "jpg"),
@@ -62,6 +63,7 @@ class DirectImageObservation(BaseModel):
     error: ImageError | None = None
     sha256: Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")] | None = None
     evidence_ref: str | None = None
+    analysis_ref: Annotated[str, StringConstraints(pattern=r"^qq-image-analysis:sha256:[0-9a-f]{64}$")] | None = None
     media_type: Literal["image/png", "image/jpeg", "image/webp", "image/gif"] | None = None
     size_bytes: int | None = Field(default=None, ge=0)
     width: int | None = Field(default=None, gt=0)
@@ -375,12 +377,36 @@ def _describe(llm: OpenAICompatClient, frames: list[bytes], deadline: QQDeadline
             private_client.close()
 
 
+def _processing_version():
+    return {"version": "qq-image-frames-v1", "formats": sorted(_FORMATS),
+            "max_pixels": MAX_IMAGE_PIXELS, "max_frames": MAX_ANIMATION_FRAMES,
+            "sample_frames": MAX_SAMPLE_FRAMES, "frame_edge": MAX_FRAME_EDGE, "frame_bytes": MAX_FRAME_BYTES}
+
+
+def _cached_observation(value, digest):
+    try:
+        result = DirectImageObservation.model_validate(value)
+        if (result.status == "described" and result.error is None and result.sha256 == digest
+                and result.evidence_ref == "qq-direct-image:sha256:" + digest and result.analysis_ref
+                and result.media_type in {value[0] for value in _FORMATS.values()}
+                and result.width is not None and result.height is not None and result.size_bytes is not None
+                and ((result.description or "").strip() or (result.ocr_text or "").strip())):
+            return result
+    except (ValueError, TypeError):
+        pass
+    return None
+
+
 async def load_and_describe_image(
     segment_data: dict[str, Any], *, call_api: CallAPI, cache_dir: Path,
     llm: OpenAICompatClient | None, deadline: QQDeadline,
     allowed_local_roots: tuple[Path, ...] = (),
     allowed_hosts: tuple[str, ...] = DEFAULT_QQ_MEDIA_HOSTS,
     http_client: httpx.AsyncClient | None = None,
+    trace=None,
+    cache_enabled=True,
+    priority=0,
+    defer_analysis: Callable[[], bool] | None = None,
 ) -> DirectImageObservation:
     """Load one attachment and return a description or an explicit unknown.
 
@@ -389,55 +415,122 @@ async def load_and_describe_image(
     (including an upper bound for NapCat's optional base64 response). Unknown
     results retain acquired image evidence and never fabricate OCR or content.
     The supplied QQ deadline covers fetching, decoding, caching and inference.
+    ``defer_analysis`` may skip a not-yet-started inference after retaining
+    pixels. It never overwrites a successful cache result or publishes unknown
+    as a successful analysis. The caller owns the reply-validity decision.
     """
     observation = DirectImageObservation()
-    owned_client = None
-    try:
-        async with asyncio.timeout(deadline.check()):
+    work = media_work()
+    def deferred():
+        if defer_analysis is None or not defer_analysis():
+            return None
+        count(trace, "image_analysis_deferred")
+        return observation.model_copy(deep=True, update={"status": "unknown", "error": "vision_deferred",
+            "description": None, "ocr_text": None, "analysis_ref": None,
+            "uncertainties": ["此消息的回复已被后续消息取代，识图已延后；原图证据已保留，尚未解读内容或文字。"]})
+    async def acquire():
+        owned_client = None
+        try:
             if not isinstance(segment_data, dict):
                 raise _ImageFailure("source_unavailable")
             client = http_client
             if client is None:
                 owned_client = client = httpx.AsyncClient(trust_env=False, follow_redirects=False)
-            data = await _acquire(segment_data, call_api=call_api, client=client,
-                roots=allowed_local_roots, hosts=allowed_hosts, deadline=deadline)
-            metadata, frames, extension = await asyncio.to_thread(_inspect, data, deadline)
+            with stage(trace, "image.acquire"):
+                data = await _acquire(segment_data, call_api=call_api, client=client,
+                    roots=allowed_local_roots, hosts=allowed_hosts, deadline=deadline)
             digest = hashlib.sha256(data).hexdigest()
-            observation = observation.model_copy(update={**metadata, "size_bytes": len(data), "sha256": digest})
-            await asyncio.to_thread(_store, data, cache_dir, digest, extension)
-            observation.evidence_ref = f"qq-direct-image:sha256:{digest}"
+            key = analysis_key(llm, digest, prompt=_PROMPT, processing=_processing_version()) if cache_enabled else None
+            with stage(trace, "image.cache_read"):
+                cached = _cached_observation(await asyncio.to_thread(load_analysis, cache_dir, key, digest), digest)
+            if cached is not None:
+                deadline.check()
+                # Re-acquired bytes establish this message's own media identity.
+                # Do not return a cached analysis if its pixel evidence vanished.
+                with stage(trace, "image.store"):
+                    suffix = next(extension for media, extension in _FORMATS.values() if media == cached.media_type)
+                    await asyncio.to_thread(_store, data, cache_dir, digest, suffix)
+                count(trace, "image_cache_hits")
+                return cached, None, key
+            count(trace, "image_cache_misses")
+            with stage(trace, "image.decode"):
+                metadata, frames, extension = await asyncio.to_thread(_inspect, data, deadline)
+            value = DirectImageObservation(**metadata, size_bytes=len(data), sha256=digest)
+            with stage(trace, "image.store"):
+                await asyncio.to_thread(_store, data, cache_dir, digest, extension)
+            value.evidence_ref = f"qq-direct-image:sha256:{digest}"
+            return value, frames, key
+        finally:
+            if owned_client is not None:
+                await owned_client.aclose()
+
+    try:
+        async with asyncio.timeout(deadline.check()):
+            observation, frames, key = await work.limited(work.acquisition, acquire, deadline, trace, "image.acquire_queue", priority=priority)
             deadline.check()
+            if frames is None:
+                return observation.model_copy(deep=True)
+            skipped = deferred()
+            if skipped is not None:
+                return skipped
             if llm is None:
                 raise _ImageFailure("vision_unavailable")
-            try:
-                result = await asyncio.to_thread(_describe, llm, frames, deadline)
-            except (QQDeadlineExpired, TimeoutError):
-                raise
-            except Exception:
-                raise _ImageFailure("vision_failed") from None
-            if (not isinstance(result.text, str) or len(result.text) > 20000
-                    or getattr(result, "has_tool_calls", False) or getattr(result, "has_refusal", False)
-                    or getattr(result, "finish_reason", None) in {"length", "content_filter"}):
-                raise _ImageFailure("vision_invalid")
-            try:
-                description = _Description.model_validate_json(result.text)
-            except (ValueError, ValidationError):
-                raise _ImageFailure("vision_invalid") from None
+            async def describe():
+                cached = _cached_observation(await asyncio.to_thread(load_analysis, cache_dir, key, observation.sha256), observation.sha256)
+                if cached is not None:
+                    count(trace, "image_cache_hits")
+                    return cached
+                # Recheck after waiting for the vision slot: new ingress may
+                # have invalidated this ambient reply during acquisition/queueing.
+                skipped = deferred()
+                if skipped is not None:
+                    return skipped
+                try:
+                    with stage(trace, "image.vision"):
+                        result = await asyncio.to_thread(_describe, llm, frames, deadline)
+                except (QQDeadlineExpired, TimeoutError):
+                    raise
+                except Exception:
+                    raise _ImageFailure("vision_failed") from None
+                if (not isinstance(result.text, str) or len(result.text) > 20000
+                        or getattr(result, "has_tool_calls", False) or getattr(result, "has_refusal", False)
+                        or getattr(result, "finish_reason", None) in {"length", "content_filter"}):
+                    raise _ImageFailure("vision_invalid")
+                try:
+                    description = _Description.model_validate_json(result.text)
+                except (ValueError, ValidationError):
+                    raise _ImageFailure("vision_invalid") from None
+                deadline.check()
+                value = observation.model_copy(deep=True, update=description.model_dump())
+                if not (description.description or "").strip() and not (description.ocr_text or "").strip():
+                    raise _ImageFailure("vision_invalid")
+                value.status = "described"
+                if value.animation_sampled:
+                    value.uncertainties.append("仅识别动画开头至多三帧，未完整观看动画。")
+                try:
+                    with stage(trace, "image.cache_write"):
+                        saved = await asyncio.to_thread(save_analysis, cache_dir, key, value.sha256, value.model_dump())
+                    persisted = _cached_observation(saved, value.sha256)
+                    if persisted is not None:
+                        value = persisted
+                except OSError:
+                    count(trace, "image_cache_write_failures")
+                return value
+            identity = (str(Path(cache_dir).absolute()), key or f"transient:{id(llm)}:{observation.sha256}")
+            async def infer():
+                return await work.limited(work.vision, describe, deadline, trace, "image.vision_queue", priority=priority)
+            # A caller-specific deferral must not become another message's
+            # shared result. Successful artifacts still deduplicate inference
+            # through the cache read inside the serial vision slot.
+            observation = (await work.single_flight(identity, infer, deadline, trace) if cache_enabled and defer_analysis is None
+                           else await infer()).model_copy(deep=True)
             deadline.check()
-            observation = observation.model_copy(update=description.model_dump())
-            if observation.animation_sampled:
-                observation.uncertainties.append("仅识别动画开头至多三帧，未完整观看动画。")
-            if (description.description or "").strip() or (description.ocr_text or "").strip():
-                observation.status = "described"
-            else:
-                observation.error = "vision_invalid"
     except (QQDeadlineExpired, TimeoutError):
+        observation.status = "unknown"
         observation.error = "deadline_expired"
     except _ImageFailure as exc:
+        observation.status = "unknown"
         observation.error = exc.code
-    finally:
-        if owned_client is not None:
-            await owned_client.aclose()
     if observation.status == "unknown":
         observation.description = None
         observation.ocr_text = None

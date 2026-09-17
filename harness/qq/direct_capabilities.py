@@ -174,7 +174,11 @@ class QQDirectCapabilityBridge:
             groups={observation.group_id} if conversation["kind"] == "group" else set(),
             private_peers={conversation["peer_id"]} if conversation["kind"] == "private" else set(),
             received_at=_time(row["received_at"]))
-        if (original is None or observation.model_dump(mode="json") != event.get("bound_observation")
+        try:
+            frozen_observation = type(observation).model_validate(event.get("bound_observation"))
+        except ValueError:
+            raise ValueError("direct_read_source_invalid") from None
+        if (original is None or observation != frozen_observation
                 or original["group_id"] != observation.group_id or original["self_member_id"] != row["self_id"]
                 or observation.member_id != row["member_id"] or observation.message_id != row["message_id"]
                 or observation.capture_item_id != row["event_id"] or observation.capture_id != row["event_id"]

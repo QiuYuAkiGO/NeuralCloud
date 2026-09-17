@@ -47,3 +47,8 @@ eval/reports/emotional_expression_diagnostics/private/
 /data/evaluations/misty-humanization-*/
 /data/evaluations/qq-brief-*/
 kimi-official-api-key.txt
+apiyi-api-key.txt
+remote-linux-server-login.txt
+
+# Local Chinese reply evaluation evidence, blind maps and human ratings.
+/data/evaluations/chinese-reply-review-*/

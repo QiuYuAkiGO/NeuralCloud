@@ -129,6 +129,7 @@ class QQImageAnalysis(_Model):
     image_index: int = Field(ge=1, le=8, strict=True)
     status: Literal["described", "unknown"]
     evidence_ref: Annotated[str, StringConstraints(pattern=r"^qq-direct-image:sha256:[0-9a-f]{64}$")] | None = None
+    analysis_ref: Annotated[str, StringConstraints(pattern=r"^qq-image-analysis:sha256:[0-9a-f]{64}$")] | None = None
     description: Annotated[str, StringConstraints(max_length=6000)] | None = None
     ocr_text: Annotated[str, StringConstraints(max_length=6000)] | None = None
     uncertainties: list[Annotated[str, StringConstraints(max_length=512)]] = Field(default_factory=list, max_length=16)
@@ -429,24 +430,27 @@ class QQVisualMemoryStore:
         incoming = QQVerifiedProfileInput.model_validate(incoming.model_dump())
         with closing(self._connect()) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
-            row = connection.execute(
-                "SELECT record_json FROM qq_visual_profiles WHERE group_id = ? AND member_id = ? AND capture_id = ?",
-                (incoming.group_id, incoming.member_id, incoming.capture_id),
-            ).fetchone()
-            if row is not None:
-                profile = self._decode(QQVerifiedProfile, row["record_json"])
-                if not self._same_capture_input(profile, incoming):
-                    raise QQVisualMemoryConflict("the profile capture already has different content or evidence")
-                return QQProfileWriteResult(created=False, profile=profile)
-            profile = QQVerifiedProfile(
-                **incoming.model_dump(), record_id=f"qq-profile:{uuid4().hex}", stored_at=datetime.now(timezone.utc)
-            )
-            connection.execute(
-                "INSERT INTO qq_visual_profiles VALUES (?, ?, ?, ?, ?, ?)",
-                (profile.record_id, profile.group_id, profile.member_id, profile.capture_id,
-                 profile.observed_at.isoformat(), profile.model_dump_json()),
-            )
-            return QQProfileWriteResult(created=True, profile=profile)
+            return self._write_profile(incoming, connection)
+
+    def _write_profile(self, incoming: QQVerifiedProfileInput, connection) -> QQProfileWriteResult:
+        row = connection.execute(
+            "SELECT record_json FROM qq_visual_profiles WHERE group_id = ? AND member_id = ? AND capture_id = ?",
+            (incoming.group_id, incoming.member_id, incoming.capture_id),
+        ).fetchone()
+        if row is not None:
+            profile = self._decode(QQVerifiedProfile, row["record_json"])
+            if not self._same_capture_input(profile, incoming):
+                raise QQVisualMemoryConflict("the profile capture already has different content or evidence")
+            return QQProfileWriteResult(created=False, profile=profile)
+        profile = QQVerifiedProfile(
+            **incoming.model_dump(), record_id=f"qq-profile:{uuid4().hex}", stored_at=datetime.now(timezone.utc)
+        )
+        connection.execute(
+            "INSERT INTO qq_visual_profiles VALUES (?, ?, ?, ?, ?, ?)",
+            (profile.record_id, profile.group_id, profile.member_id, profile.capture_id,
+             profile.observed_at.isoformat(), profile.model_dump_json()),
+        )
+        return QQProfileWriteResult(created=True, profile=profile)
 
     def record_observation(self, incoming: QQVisualObservationInput) -> QQVisualWriteResult:
         if incoming.author_attribution != "qq_ui_verified":
@@ -458,38 +462,59 @@ class QQVisualMemoryStore:
             raise ValueError("protocol collection requires protocol attribution")
         return self._record_observation(incoming)
 
+    def record_protocol_message(self, profile_input, observation_factory):
+        """Commit one message's fresh identity proof and observation together."""
+        profile_input = QQVerifiedProfileInput.model_validate(profile_input.model_dump())
+        if profile_input.verification != "qq_protocol_verified":
+            raise ValueError("protocol collection requires protocol verification")
+        with closing(self._connect()) as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            profile = self._write_profile(profile_input, connection)
+            incoming = observation_factory(profile.profile)
+            incoming = QQVisualObservationInput.model_validate(incoming.model_dump())
+            if (incoming.author_attribution != "qq_protocol_verified"
+                    or incoming.group_id != profile.profile.group_id
+                    or incoming.member_id != profile.profile.member_id
+                    or incoming.profile_record_id != profile.profile.record_id):
+                raise ValueError("protocol message requires its own exact profile")
+            observation = self._write_observation(incoming, connection)
+            return profile, observation
+
     def _record_observation(self, incoming: QQVisualObservationInput) -> QQVisualWriteResult:
         incoming = QQVisualObservationInput.model_validate(incoming.model_dump())
         with closing(self._connect()) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
-            row = connection.execute(
-                "SELECT record_json FROM qq_visual_observations WHERE group_id = ? AND capture_id = ? AND capture_item_id = ?",
-                (incoming.group_id, incoming.capture_id, incoming.capture_item_id),
-            ).fetchone()
-            if row is not None:
-                observation = self._decode(QQVisualObservation, row["record_json"])
-                if not self._same_capture_input(observation, incoming):
-                    raise QQVisualMemoryConflict("the capture item already has different content, attribution, or evidence")
-                return QQVisualWriteResult(created=False, observation=observation)
-            profile_row = connection.execute(
-                "SELECT record_json FROM qq_visual_profiles WHERE record_id = ? AND group_id = ? AND member_id = ?",
-                (incoming.profile_record_id, incoming.group_id, incoming.member_id),
-            ).fetchone()
-            if profile_row is None:
-                raise ValueError("observation requires a stored verified profile for this exact group and member")
-            profile = self._decode(QQVerifiedProfile, profile_row["record_json"])
-            if profile.verification != incoming.author_attribution:
-                raise ValueError("observation and profile verification transports must agree")
-            observation = QQVisualObservation(
-                **incoming.model_dump(), record_id=f"qq-visual:{uuid4().hex}", stored_at=datetime.now(timezone.utc)
-            )
-            connection.execute(
-                "INSERT INTO qq_visual_observations VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (observation.record_id, observation.group_id, observation.member_id,
-                 observation.capture_id, observation.capture_item_id, observation.profile_record_id,
-                 observation.observed_at.isoformat(), observation.model_dump_json()),
-            )
-            return QQVisualWriteResult(created=True, observation=observation)
+            return self._write_observation(incoming, connection)
+
+    def _write_observation(self, incoming: QQVisualObservationInput, connection) -> QQVisualWriteResult:
+        row = connection.execute(
+            "SELECT record_json FROM qq_visual_observations WHERE group_id = ? AND capture_id = ? AND capture_item_id = ?",
+            (incoming.group_id, incoming.capture_id, incoming.capture_item_id),
+        ).fetchone()
+        if row is not None:
+            observation = self._decode(QQVisualObservation, row["record_json"])
+            if not self._same_capture_input(observation, incoming):
+                raise QQVisualMemoryConflict("the capture item already has different content, attribution, or evidence")
+            return QQVisualWriteResult(created=False, observation=observation)
+        profile_row = connection.execute(
+            "SELECT record_json FROM qq_visual_profiles WHERE record_id = ? AND group_id = ? AND member_id = ?",
+            (incoming.profile_record_id, incoming.group_id, incoming.member_id),
+        ).fetchone()
+        if profile_row is None:
+            raise ValueError("observation requires a stored verified profile for this exact group and member")
+        profile = self._decode(QQVerifiedProfile, profile_row["record_json"])
+        if profile.verification != incoming.author_attribution:
+            raise ValueError("observation and profile verification transports must agree")
+        observation = QQVisualObservation(
+            **incoming.model_dump(), record_id=f"qq-visual:{uuid4().hex}", stored_at=datetime.now(timezone.utc)
+        )
+        connection.execute(
+            "INSERT INTO qq_visual_observations VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (observation.record_id, observation.group_id, observation.member_id,
+             observation.capture_id, observation.capture_item_id, observation.profile_record_id,
+             observation.observed_at.isoformat(), observation.model_dump_json()),
+        )
+        return QQVisualWriteResult(created=True, observation=observation)
 
     def reply_context(self, *, group_id: str, member_id: str, limit: int = 20) -> QQPersonContext:
         query = _ContextQuery(group_id=group_id, member_id=member_id, limit=limit)

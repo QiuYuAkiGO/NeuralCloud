@@ -6,8 +6,9 @@ from functools import lru_cache
 from typing import Literal
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, PrivateAttr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from harness.qq.policy import QQLatencyOptions
 
 SCHEMA_VERSION = "state-v1"
 PROMPT_VERSION = "homeostatic-interoception-v1"
@@ -27,8 +28,32 @@ DEFAULT_RETRIEVAL_WEIGHTS: dict[str, float] = {
 }
 
 
-class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="NC_", env_file=".env", extra="ignore")
+class Settings(BaseSettings, QQLatencyOptions):
+    model_config = SettingsConfigDict(env_prefix="NC_", env_file=".env", extra="ignore", frozen=False, strict=False)
+
+    _configuration_sources: dict[str, str] = PrivateAttr(default_factory=dict)
+
+    def __init__(self, **values):
+        import os
+        from dotenv import dotenv_values
+
+        super().__init__(**values)
+        env_file = values.get("_env_file", self.model_config.get("env_file"))
+        files = [env_file] if isinstance(env_file, (str, Path)) else (env_file or [])
+        dotenv_keys = {key.upper() for path in files for key in dotenv_values(path)}
+        environment_keys = {key.upper() for key in os.environ}
+        for name in type(self).model_fields:
+            key = "NC_" + name.upper()
+            self._configuration_sources[name] = (
+                "constructor" if name in values else "environment" if key in environment_keys
+                else "dotenv" if key in dotenv_keys else "default")
+
+    def mark_configuration_source(self, names, source: str) -> None:
+        if source not in {"persisted", "runtime", "constructor", "environment", "dotenv", "default",
+                          "frozen_request", "conversation_rollout"}:
+            raise ValueError("unknown configuration source")
+        # model_copy may share private dictionaries. Never alter prior snapshots.
+        self._configuration_sources = {**self._configuration_sources, **{name: source for name in names}}
 
     database_url: str = "postgresql+psycopg2://neuralcloud:neuralcloud@localhost:5432/neuralcloud"
     llm_base_url: str = "http://127.0.0.1:8080/v1"
@@ -74,6 +99,8 @@ class Settings(BaseSettings):
     trace_dir: Path = Path("traces")
     # One JSON file per successful top-level call under trace_dir/calls/YYYYMMDD/.
     call_log_enabled: bool = False
+    # Content-free physical HTTP request accounting is independent of call logs.
+    model_request_log_enabled: bool = True
     consolidation_threshold: float = 0.70
     initial_candidate_confidence: float = 0.15
     confidence_increment: float = 0.35

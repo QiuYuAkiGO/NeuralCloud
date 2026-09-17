@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+import hashlib
+import json
 import math
 from typing import Any, Literal
 from urllib.parse import urlsplit
@@ -42,9 +44,23 @@ class QQSharedPrepareRequest(BaseModel):
     homeostatic_interoception: HomeostaticInteroceptiveSummary | None = None
     deadline_at: AwareDatetime
     trace: QQSharedTraceOrigin
+    request_id: str | None = Field(default=None, pattern=r"^qq-reply-request:[0-9a-f]{32}$")
+    revision: int | None = Field(default=None, ge=1, strict=True)
+    source_event_ids: list[str] | None = Field(default=None, min_length=1, max_length=128)
+    authority_anchor: str | None = Field(default=None, pattern=r"^qq-watch-event:[0-9a-f]{32}$")
 
     @model_validator(mode="after")
     def source_scope(self):
+        batch = (self.request_id, self.revision, self.source_event_ids, self.authority_anchor)
+        if any(value is not None for value in batch):
+            import re
+            if (not all(value is not None for value in batch) or self.transport != "onebot"
+                    or self.idle_intent is not None or self.authority_anchor != self.trace.event_id
+                    or self.source_event_ids[0] != self.authority_anchor
+                    or len(set(self.source_event_ids)) != len(self.source_event_ids)
+                    or any(not isinstance(item, str) or re.fullmatch(r"qq-watch-event:[0-9a-f]{32}", item) is None
+                           for item in self.source_event_ids)):
+                raise ValueError("shared_qq_request_binding_invalid")
         scope = conversation_scope(self.group_id)
         if scope["kind"] == "private":
             if (self.transport != "onebot" or self.self_member_id != scope["self_member_id"]
@@ -93,7 +109,8 @@ class QQSharedCognitiveClient:
             observation_sequence=trace.observation_sequence)
         values = {key: kwargs[key] for key in (
             "group_id", "self_member_id", "trigger_member_id", "request", "query", "member_ids",
-            "verified_self_aliases", "idle_intent", "homeostatic_interoception", "transport") if key in kwargs}
+            "verified_self_aliases", "idle_intent", "homeostatic_interoception", "transport",
+            "request_id", "revision", "source_event_ids", "authority_anchor") if key in kwargs}
         # Wall deadline is an additional cross-service bound; the caller's
         # original monotonic deadline is checked both before and after RPC.
         deadline_at = min(datetime.now(timezone.utc) + timedelta(seconds=remaining),
@@ -166,7 +183,41 @@ def _import_remote_trace(trace: QQTurnTrace, remote: dict, *, started: float, en
         trace._name(name)
         if type(amount) is not int or amount < 0:
             raise SharedQQUnavailable("shared_cognitive_trace_invalid")
+    configuration = remote.get("effective_configuration")
+    if configuration is not None:
+        from harness.qq.policy import EFFECTIVE_FIELDS, QQLatencyOptions
+        try:
+            if (not isinstance(configuration, dict)
+                    or set(configuration) != {"schema_version", "version", "policy_version", "values"}
+                    or configuration["schema_version"] != "qq-effective-config-v1"
+                    or not isinstance(configuration["values"], dict)
+                    or set(configuration["values"]) != set(EFFECTIVE_FIELDS)):
+                raise ValueError
+            values = configuration["values"]
+            for name, entry in values.items():
+                scope_list = (isinstance(entry, dict) and name == "qq_latency_conversations"
+                    and isinstance(entry.get("value"), list) and len(entry["value"]) <= 128
+                    and all(isinstance(item, str) and len(item) <= 128 for item in entry["value"]))
+                if (not isinstance(entry, dict) or set(entry) != {"value", "source"}
+                        or entry["source"] not in {"constructor", "environment", "dotenv", "default", "persisted",
+                                                  "runtime", "frozen_request", "conversation_rollout"}
+                        or (type(entry["value"]) not in {type(None), bool, int, float, str} and not scope_list)
+                        or (isinstance(entry["value"], str) and len(entry["value"]) > 256)
+                        or (isinstance(entry["value"], float) and not math.isfinite(entry["value"]))):
+                    raise ValueError
+            policy = QQLatencyOptions.model_validate({name: values[name]["value"] for name in QQLatencyOptions.model_fields})
+            digest = hashlib.sha256(json.dumps(values, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest()
+            if configuration["version"] != "qq-config:" + digest or configuration["policy_version"] != policy.version:
+                raise ValueError
+            configuration = json.loads(json.dumps(configuration, allow_nan=False))
+        except (ValueError, TypeError, KeyError):
+            raise SharedQQUnavailable("shared_cognitive_trace_invalid") from None
     with trace._lock:
+        if configuration is not None:
+            if trace._effective_configuration is not None and trace._effective_configuration != configuration:
+                raise SharedQQUnavailable("shared_cognitive_trace_invalid")
+            if trace._effective_configuration is None:
+                trace._effective_configuration = configuration
         if len(set(trace._counters) | set(counters)) > 128:
             raise SharedQQUnavailable("shared_cognitive_trace_invalid")
         for name, amount in counters.items():

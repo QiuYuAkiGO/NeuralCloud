@@ -1,0 +1,253 @@
+{
+  "schema_version": 1,
+  "incident_day": "2026-09-16",
+  "timezone": "Asia/Shanghai",
+  "target": {
+    "event_id": "qq-watch-event:6f44f0a1e697342d04eb581fbc3b45e5",
+    "message_id": "2134735888",
+    "received_at": "2026-09-16T06:25:59.292410+00:00",
+    "state": "failed",
+    "decision_id": null,
+    "send_records": 0,
+    "protocol_read_ms": 5.635,
+    "shared_prepare_ms": 4.65,
+    "model_called": false,
+    "runtime_error": "runtime in FAULTED does not accept qq_turn"
+  },
+  "trigger": {
+    "event_id": "qq-watch-event:2650b8fd9b8dd90e41d232038bbe30ff",
+    "received_at": "2026-09-16T06:21:42.242538+00:00",
+    "protocol_queue_wait_ms": 58169,
+    "original_deadline_at": "2026-09-16T06:22:42.242538+00:00",
+    "direct_expired_recorded_at": "2026-09-16T06:22:42.247048+00:00",
+    "cognitive_error": "ValueError: direct_qq_source_not_pending",
+    "cognitive_rpc_http": 500,
+    "faulted_at": "2026-09-16T06:22:42.499244Z"
+  },
+  "release": {
+    "previous": "20260916-participation-v1",
+    "active": "20260916-qq-expiry-v1",
+    "archive_sha256": "1d489e5b18de3fcc5bf50167c4a283ab84793f8adae04d642f333c59b2854cd7",
+    "files": 352,
+    "changed_files": [
+      "harness/qq/direct_source.py",
+      "harness/runtime/adapters.py",
+      "harness/runtime/qq_turns.py",
+      "harness/runtime/supervisor.py"
+    ],
+    "baseline_manifest_matches_remote": true,
+    "cache_optimization_included": false
+  },
+  "backup": {
+    "files": 2879,
+    "ok": true,
+    "snapshot": "/var/backups/neuralcloud/incident-20260916-before-qq-expiry-v1",
+    "bytes": 2346968918,
+    "journals": {
+      "state/runtime/journal": {
+        "last_hash": "e7b78099499b8738dbbae31e6f253a3292965923a0862e599234a67ade6a4f72",
+        "records": 176275
+      }
+    },
+    "manifest_sha256": "1c97fe630e4ab5bb1dfe15317390f8cfa0aff54b1fbc583bd5ef1204b15a596a",
+    "sqlite_databases": 18
+  },
+  "activation": {
+    "seconds": 263.48,
+    "returncode": 0,
+    "result": {
+      "release": "20260916-qq-expiry-v1",
+      "previous_release": "20260916-participation-v1",
+      "services": [
+        "cognitive",
+        "homeostasis",
+        "runtime",
+        "gui",
+        "board",
+        "qq_direct"
+      ]
+    }
+  },
+  "validation": {
+    "staged_release_tests_passed": 233,
+    "test_seconds": 41.17,
+    "ruff": "passed",
+    "diff_check": "passed",
+    "concurrent_retry_review": "passed"
+  },
+  "operational_recovery": {
+    "running_since": "2026-09-16T06:45:03.092110Z",
+    "target_resent": false
+  },
+  "live_verification": {
+    "at": "2026-09-16T06:58:26.536287+00:00",
+    "release": {
+      "release_id": "20260916-qq-expiry-v1",
+      "verified_files": 352,
+      "configuration_valid": true,
+      "business_services_started": false
+    },
+    "services": {
+      "cognitive": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq-direct": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "runtime": {
+      "http": 200,
+      "seconds": 0.018,
+      "lifecycle": "RUNNING",
+      "queue": {
+        "size": 0,
+        "capacity": 1024,
+        "high_watermark": 819,
+        "by_priority": {},
+        "coalesced": 0,
+        "dropped": 0,
+        "rejected": 0
+      },
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-09-16T06:58:03.331442Z",
+        "last_journal_append_at": "2026-09-16T06:58:23.304779Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      }
+    },
+    "qq": {
+      "connected": true,
+      "automatic_send": true,
+      "state": "deciding",
+      "repository_root": "/opt/neuralcloud/releases/20260916-qq-expiry-v1",
+      "last_error_type": null,
+      "last_received_at": "2026-09-16T06:57:42.834304+00:00",
+      "last_delivery_at": "2026-09-16T06:57:00.235579+00:00",
+      "heartbeat_at": "2026-09-16T06:58:25.007285+00:00",
+      "uncertain_deliveries": 0
+    },
+    "run": {
+      "run_id": "qq-direct-run:794df23ac0b54c73be7a2ad24c56bb09",
+      "started_at": "2026-09-16T06:55:50.791665+00:00"
+    },
+    "target": {
+      "event_id": "qq-watch-event:6f44f0a1e697342d04eb581fbc3b45e5",
+      "state": "failed",
+      "decision_id": null,
+      "sends": 0
+    },
+    "new_events": [
+      {
+        "event_id": "qq-watch-event:4c5a6125e8ff140d5a5e4c09f7ea4532",
+        "received_at": "2026-09-16T06:57:42.834304+00:00",
+        "state": "preparing",
+        "decision_id": null
+      },
+      {
+        "event_id": "qq-watch-event:4e08f1fbe623406bdb876e0dfe1ec626",
+        "received_at": "2026-09-16T06:57:02.586805+00:00",
+        "state": "expired",
+        "decision_id": "qq-decision:e29a82b12f5143d693b4e38f198091c7"
+      },
+      {
+        "event_id": "qq-watch-event:c32216ffd2c6796f416f0800a0206d98",
+        "received_at": "2026-09-16T06:57:00.232926+00:00",
+        "state": "observed",
+        "decision_id": null
+      },
+      {
+        "event_id": "qq-watch-event:a91b77bf925a68775b6b5e325352492e",
+        "received_at": "2026-09-16T06:55:58.699699+00:00",
+        "state": "sent",
+        "decision_id": "qq-decision:4e5713ec885d48cb947c08b9d96254b6"
+      },
+      {
+        "event_id": "qq-watch-event:f07eecb9756674a7c613a66a32cdbb3c",
+        "received_at": "2026-09-16T06:55:56.653127+00:00",
+        "state": "failed",
+        "decision_id": "qq-decision:54f23a8ab6ab4acf97152d76ab09e7de"
+      }
+    ],
+    "new_sends": [
+      {
+        "send_id": "qq-direct-send:6ad42cb4abb2404b8f1d3bc2a36c3c22",
+        "event_id": "qq-watch-event:a91b77bf925a68775b6b5e325352492e",
+        "status": "sent",
+        "message_id": "292651745",
+        "receipt_id": "qq-segment-delivery:2ae9affe3b764c99816027947ed18664"
+      }
+    ]
+  },
+  "boundaries": {
+    "synthetic_qq_messages_sent": false,
+    "additional_paid_model_probes": false,
+    "end_to_end_new_reply_verified": false,
+    "end_to_end_error_notice_verified": true
+  },
+  "live_error_notice": {
+    "event_id": "qq-watch-event:a91b77bf925a68775b6b5e325352492e",
+    "state": "sent",
+    "decision_id": "qq-decision:4e5713ec885d48cb947c08b9d96254b6",
+    "outcome": "error_fallback",
+    "error_type": "deadline_expired",
+    "elapsed_ms": 61543.397,
+    "delivery_stage": {
+      "name": "protocol.delivery",
+      "outcome": "ok",
+      "error_type": null,
+      "start_offset_ms": 60937.876,
+      "end_offset_ms": 61543.349,
+      "duration_ms": 605.473
+    },
+    "send": {
+      "send_id": "qq-direct-send:6ad42cb4abb2404b8f1d3bc2a36c3c22",
+      "event_id": "qq-watch-event:a91b77bf925a68775b6b5e325352492e",
+      "status": "sent",
+      "message_id": "292651745",
+      "receipt_id": "qq-segment-delivery:2ae9affe3b764c99816027947ed18664"
+    }
+  }
+}

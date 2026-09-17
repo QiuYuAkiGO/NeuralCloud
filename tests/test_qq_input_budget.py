@@ -178,6 +178,7 @@ def test_fourfold_input_keeps_virtual_latency_calls_outputs_and_sixty_second_dea
 
 @pytest.mark.parametrize("private", [False, True], ids=["group", "private"])
 def test_input_and_recall_budget_change_reuses_warm_static_parse(setup, tmp_path, monkeypatch, private):
+    monkeypatch.setenv("NC_QQ_BODY_PIPELINE", "legacy")
     monkeypatch.setenv("NC_VALIDATOR_SAMPLE_RATE", "0")
     args = _observations(setup, monkeypatch, private=private, count=1, body_length=30)
     client = setup[1]

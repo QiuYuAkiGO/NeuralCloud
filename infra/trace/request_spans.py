@@ -8,6 +8,7 @@ record, so interrupted requests and late background completions stay visible.
 from __future__ import annotations
 
 import json
+import hashlib
 import logging
 import threading
 import time
@@ -28,6 +29,8 @@ _CONTEXT_FIELDS = {
     "correlation_id", "event_id", "command_id", "phase", "stage",
     "span_id", "parent_span_id", "model_role",
     "model_attempt", "model_budget_seconds",
+    "stable_prefix_message_count",
+    "qq_trace_id",
 }
 
 
@@ -78,30 +81,55 @@ def _append(path: Path, payload: dict[str, Any]) -> None:
         logger.warning("model request telemetry write failed (%s)", type(exc).__name__)
 
 
+def _prefix_metadata(messages: list[dict[str, Any]], count: Any) -> dict[str, Any]:
+    """Fingerprint an explicitly delimited prefix, never store message content.
+
+    This is a diagnostic identity, not a provider token count/cache prediction.
+    Generic clients only declare leading instruction messages as stable.
+    """
+    explicit = type(count) is int and 0 <= count <= len(messages)
+    if not explicit:
+        count = 0
+        for message in messages:
+            if message.get("role") not in {"system", "developer"}:
+                break
+            count += 1
+    serialized = json.dumps(messages[:count], ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    encoded = serialized.encode("utf-8")
+    return {"sha256": hashlib.sha256(encoded).hexdigest(), "message_count": count,
+            "characters": len(serialized), "utf8_bytes": len(encoded),
+            "basis": "caller" if explicit else "leading_instructions"}
+
+
 @contextmanager
-def model_request_span(settings: Settings, *, role: str) -> Iterator[dict[str, Any]]:
+def model_request_span(settings: Settings, *, role: str,
+                       messages: list[dict[str, Any]] | None = None) -> Iterator[dict[str, Any]]:
     """Yield mutable safe result fields; always append a terminal request row."""
     metadata = current_trace_context()
     span_id = new_span_id("model_request")
     started_at = datetime.now(UTC).isoformat()
     started = time.perf_counter()
     base = {
-        "schema_version": "model-request-span-v1",
+        "schema_version": "model-request-span-v2",
         **metadata,
         "span_id": span_id,
         "parent_span_id": metadata.get("span_id"),
         "role": metadata.get("model_role") or role,
         "model": settings.llm_model,
+        "request_model": settings.llm_model,
         "endpoint": safe_endpoint(settings.llm_base_url),
         "started_at": started_at,
         "attempt": metadata.get("model_attempt", 1),
         "retries": max(0, metadata.get("model_attempt", 1) - 1),
     }
+    if messages is not None:
+        base["stable_prefix"] = _prefix_metadata(messages, metadata.get("stable_prefix_message_count"))
     path = Path(settings.trace_dir) / "model_requests.jsonl"
-    enabled = settings.call_log_enabled
+    enabled = settings.model_request_log_enabled
     if enabled:
         _append(path, {**base, "record_type": "model_request_started", "status": "running"})
-    result: dict[str, Any] = {"http_status": None, "usage": None, "usage_source": "unavailable"}
+    result: dict[str, Any] = {"http_status": None, "usage": None, "usage_source": "unavailable",
+                              "response_model": None}
     status = "success"
     error = None
     try:

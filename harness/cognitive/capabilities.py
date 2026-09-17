@@ -17,6 +17,7 @@ from pydantic import TypeAdapter, ValidationError
 
 from harness.cognitive.action_planner import _INTENT_PROFILES
 from harness.cognitive.decision_parser import ExperimentalDecisionParser
+from harness.cognitive.prompts import OFFER_DEFINITION_RULE, build_messages, project_context_segments, split_offer_catalog
 from harness.contracts.capability_calls import (
     CHANNEL_CAPABILITIES, CapabilityChoice, CapabilityOffer, CapabilitySelectionRequest, PreparedCapabilityChoice,
 )
@@ -240,7 +241,7 @@ def _context(host: Any, command: Any, now: datetime) -> dict[str, Any]:
     recent = host.chat.pipeline.session_store.recent(host.chat.active_session_id)[-6:]
     return {
         "persona": persona.model_dump(mode="json"),
-        "shared_memory": [segment.model_dump(mode="json") for segment in segments],
+        "shared_memory": project_context_segments(segments),
         "recent_dialogue": [turn.model_dump(mode="json") for turn in recent],
     }
 
@@ -299,19 +300,18 @@ async def prepare(host: Any, command: Any) -> dict[str, Any]:
         ready = [offer for offer in ready if offer.valid_until > datetime.now(timezone.utc)]
         remaining()
     if ready:
-        payload = {"opportunity_id": request.opportunity_id, "homeostatic_summary": request.homeostatic_summary,
-            "shared_memory": context["shared_memory"], "recent_dialogue": context["recent_dialogue"],
-            "available_offers": [_visible_offer(offer) for offer in ready],
-            "choice_schema": CapabilityChoice.model_json_schema(), "criterion_schema": _CRITERIA.json_schema(),
-            "source_authority": "untrusted_attributed_records"}
-        messages = [{"role": "system", "content": _RULES + "\n当前完整人格：\n" + json.dumps(context["persona"], ensure_ascii=False)},
-            {"role": "user", "content": json.dumps(payload, ensure_ascii=False, separators=(",", ":"))}]
+        definitions, current_offers = split_offer_catalog([_visible_offer(offer) for offer in ready])
+        payload = {"shared_memory": context["shared_memory"], "recent_dialogue": context["recent_dialogue"],
+            "available_offers": current_offers, "homeostatic_summary": request.homeostatic_summary,
+            "opportunity_id": request.opportunity_id}
         emotion_text = ""
         if emotion_enabled(getattr(host.chat, "settings", None)):
             payload.pop("homeostatic_summary")
             emotion_text = render_emotion_guidance(emotion_guidance, homeostasis=request.homeostatic_summary)
-            messages[0]["content"] += "\n" + emotion_text
-            messages[1]["content"] = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        messages = build_messages(persona=context["persona"], rules=_RULES + "\n" + OFFER_DEFINITION_RULE,
+            fixed_payload={"choice_schema": CapabilityChoice.model_json_schema(), "criterion_schema": _CRITERIA.json_schema(),
+                           "available_offer_definitions": definitions, "source_authority": "untrusted_attributed_records"},
+            payload=payload, emotion_text=emotion_text)
         timeout = remaining()
         model_started = time.monotonic()
         with trace_scope(event_id=command.event_id, command_id=command.command_id,

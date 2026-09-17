@@ -381,12 +381,14 @@ do not instruct the character to announce that it does not remember.
         original = mapping.pop("original_evidence") if mapping is not None else None
         user = json.dumps(
             {
-                "text": candidate.text,
-                **({"memory_evidence": projected} if projected is not None else {}),
+                # Revisions can reuse this critic's stable input prefix. Keep
+                # its own admitted evidence and rules, never generation context.
                 "persona": identity,
+                **({"memory_evidence": projected} if projected is not None else {}),
                 "homeostatic_context": homeostatic_context,
                 **({"emotion_guidance": emotion_guidance} if emotion_guidance else {}),
                 "concrete_physical_evidence_available": concrete_physical_evidence_available,
+                "text": candidate.text,
             },
             ensure_ascii=False, separators=(",", ":"),
         )

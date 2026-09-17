@@ -14,6 +14,7 @@ WINDOW_BLOCK_SIZE = 32
 WINDOW_MIN_OBSERVATIONS = 64
 WINDOW_MAX_OBSERVATIONS = 128
 WINDOW_CANDIDATE_LIMIT = WINDOW_MAX_OBSERVATIONS + WINDOW_MIN_OBSERVATIONS
+CONTEXT_FORMAT = "qq-chronological-blocks-v2"
 
 
 def observation_sort_key(item: Any) -> tuple[str, str, str]:
@@ -84,7 +85,10 @@ def split_closed_open(observations: list, *, block_size: int = WINDOW_BLOCK_SIZE
 
 
 def split_model_payload(payload: dict) -> tuple[dict, dict]:
-    """Stable closed records vs per-turn fields, each independently canonicalized."""
+    """Legacy two-message layout, retained for historical diagnostic decoding.
+
+    Live requests and budgeting use model_payload_blocks instead.
+    """
     window = payload.get("conversation_window") or {}
     closed_ids = list(window.get("closed_observation_ids") or [])
     open_ids = list(window.get("open_observation_ids") or [])
@@ -134,15 +138,53 @@ def split_model_payload(payload: dict) -> tuple[dict, dict]:
     return base, turn
 
 
-def encode_model_payload(payload: dict) -> tuple[str, str]:
-    """Serialize the exact two user messages used for selection and inference."""
-    base, turn = split_model_payload(payload)
+def model_payload_blocks(payload: dict) -> list[dict]:
+    """Scope, append-only chronological record blocks, then fresh turn data.
+
+    A closed block contains only the admitted immutable observation snapshots.
+    Profiles stay in the final message, where each observation's existing
+    profile_record_id resolves to its original verified snapshot. New members,
+    fresh profiles, aliases and growing ID lists never rewrite a closed block.
+    No cache of evidence is used: a corrected/removed record changes the input.
+    """
+    turn = deepcopy(payload)
+    group = turn.setdefault("group_context", {"members": []})
+    window = payload.get("conversation_window") or {}
+    closed_ids = set(window.get("closed_observation_ids") or [])
+    size = window.get("block_size", WINDOW_BLOCK_SIZE)
+    if type(size) is not int or size <= 0:
+        raise ValueError("Invalid QQ history block size")
+    closed = []
+    for member in group.get("members", []):
+        observations = member.get("observations", [])
+        closed.extend(item for item in observations if item.get("record_id") in closed_ids)
+        member["observations"] = [item for item in observations if item.get("record_id") not in closed_ids]
+    closed.sort(key=observation_sort_key)
+    header = {"context_format": CONTEXT_FORMAT, "group_context": {"group_id": group.get("group_id")}}
+    for key in ("coverage", "verified_self_member_id", "conversation"):
+        if key in turn:
+            header[key] = turn.pop(key)
+    # Only the last user message carries the full closed/open ID manifest and
+    # mutable member structure. Do not put block counts or hashes in the header.
+    blocks = [{"closed_observations": closed[start:start + size]} for start in range(0, len(closed), size)]
+    return [header, *blocks, turn]
+
+
+def encode_model_payload(payload: dict, *, projection: str = "legacy") -> tuple[str, ...]:
+    """Serialize the ordered user messages shared by budgeting and inference."""
     options = {"sort_keys": True, "ensure_ascii": False, "separators": (",", ":")}
-    return json.dumps(base, **options), json.dumps(turn, **options)
+    blocks = model_payload_blocks(payload)
+    if projection == "compact":
+        from harness.qq.model_projection import compact_model_blocks
+
+        blocks = compact_model_blocks(blocks)
+    elif projection != "legacy":
+        raise ValueError("Unknown QQ model projection")
+    return tuple(json.dumps(block, **options) for block in blocks)
 
 
 def combined_user_payload(messages: list[dict]) -> dict:
-    """Rebuild the logical payload from split user messages. Tests only."""
+    """Rebuild logical payloads from current blocks or legacy splits. Tests only."""
     merged: dict[str, Any] = {}
     opens: list[dict] = []
     decoder = json.JSONDecoder()
@@ -165,7 +207,9 @@ def combined_user_payload(messages: list[dict]) -> dict:
             index = end
             if not isinstance(value, dict):
                 continue
-            opens.extend(item for item in (value.get("open_observations") or []) if isinstance(item, dict))
+            opens.extend(item for field in ("open_observations", "closed_observations")
+                         for item in (value.get(field) or []) if isinstance(item, dict))
+            value = {key: item for key, item in value.items() if key not in {"closed_observations", "context_format"}}
             if isinstance(merged.get("conversation_window"), dict) and isinstance(value.get("conversation_window"), dict):
                 window = {**merged["conversation_window"], **value["conversation_window"]}
                 merged.update({key: item for key, item in value.items() if key != "conversation_window"})
@@ -183,7 +227,8 @@ def combined_user_payload(messages: list[dict]) -> dict:
         for member in group.setdefault("members", []):
             member_id = str(member.get("member_id"))
             if member_id in by_member:
-                member["observations"] = [*member.get("observations", []), *by_member[member_id]]
+                member["observations"] = sorted([*member.get("observations", []), *by_member[member_id]],
+                                                key=observation_sort_key)
         merged.pop("open_observations", None)
     if isinstance(group, dict):
         if "retrieval" in merged:

@@ -85,7 +85,8 @@ def test_prepare_uses_owner_complete_persona_and_shared_memory_without_delivery(
             assert result.status == "applied", result.error
             decision = BoardDecision.model_validate(result.result["decision"])
             assert decision.action == "write" and result.result["timing"]["model_calls"] == 1
-            assert persona.model_dump_json() in llm.chat_calls[-1][0]["content"]
+            shown_persona = llm.chat_calls[-1][0]["content"].split("\n", 1)[1].split("\n\n", 1)[0]
+            assert json.loads(shown_persona) == persona.model_dump(mode="json")
             assert "SOURCE_ONLY_" in llm.chat_calls[-1][1]["content"]
             assert "SOURCE_ONLY_" not in llm.chat_calls[-1][0]["content"]
             assert decision.source_event_ids[0] == command.event_id

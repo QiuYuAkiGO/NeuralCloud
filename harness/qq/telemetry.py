@@ -6,6 +6,7 @@ time. JSONL contains identifiers and measurements, never prompts or replies.
 from __future__ import annotations
 
 from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
@@ -13,6 +14,7 @@ import math
 import os
 from pathlib import Path
 import re
+import sys
 import threading
 import time
 from typing import Callable, Iterator, Literal
@@ -26,11 +28,51 @@ _OUTCOMES = {"ok", "error", "expired", "cancelled", "skipped", "late_result"}
 _QQ_ERRORS = frozenset({"capability_unavailable", "required_capability_unavailable",
     "chat_context_changed", "active_scope_changed", "scope_not_allowed", "request_expired",
     "request_time_invalid", "provider_activation_changed", "provider_not_activated", "driver_operation_busy"})
+_DIRECT_ERRORS = frozenset({
+    "direct_owner_unavailable", "direct_group_read_only", "direct_delivery_unknown", "direct_newer_context",
+    "direct_frozen_plan_mismatch", "direct_send_budget_insufficient", "direct_decision_source_mismatch",
+    "onebot_disconnected", "onebot_request_timeout", "onebot_action_failed", "onebot_invalid_result",
+    "onebot_sent_group_unverified", "onebot_sent_private_unverified", "onebot_sent_private_scope_invalid",
+    "onebot_sent_message_mismatch",
+    "direct_request_revision_changed", "direct_request_binding_invalid",
+})
 _ERRORS = {"deadline_expired", "model_timeout", "model_http", "model_invalid", "model_error",
-           "storage_error", "cancelled", "late_result", "internal_error", "qq_transport_error"} | _QQ_ERRORS
+           "storage_error", "cancelled", "late_result", "internal_error", "qq_transport_error",
+           "shared_cognitive_unavailable"} | _QQ_ERRORS | _DIRECT_ERRORS
+_DIRECT_TERMINAL_REASONS = _ERRORS | {
+    "sent", "observed_history", "observed_own", "observed_read_only", "decision_wait",
+    "natural_wait", "guard_wait", "decision_replayed", "decision_not_sendable", "direct_cooldown",
+}
+_DIRECT_TERMINAL_STAGES = frozenset({
+    "protocol.read", "protocol.precheck", "protocol.shared_prepare", "protocol.decision", "protocol.delivery",
+})
 _NAME = re.compile(r"^[a-z][a-z0-9_.-]{0,63}$")
 _IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9:_.-]{0,159}$")
 _FLUSH_LOCK = threading.Lock()
+_ACTIVE_TRACE: ContextVar[QQTurnTrace | None] = ContextVar("qq_active_trace", default=None)
+
+
+def current_qq_trace():
+    return _ACTIVE_TRACE.get()
+
+
+@contextmanager
+def qq_trace_scope(trace):
+    token = _ACTIVE_TRACE.set(trace)
+    try:
+        yield trace
+    finally:
+        _ACTIVE_TRACE.reset(token)
+
+
+@contextmanager
+def measure_stage(name: str):
+    trace = current_qq_trace()
+    if trace is None:
+        yield
+    else:
+        with trace.stage(name):
+            yield
 
 
 class QQDeadlineExpired(TimeoutError):
@@ -89,6 +131,15 @@ class QQDeadline:
 def classify_error(error: BaseException) -> str:
     """Return a fixed category, never exception text, HTTP bodies or URLs."""
     from harness.embodiment.providers.qq import QQCommunicationError
+
+    # Non-Direct traces must not require the optional WebSocket transport.
+    # A real OneBotError (including subclasses) already has its module loaded.
+    onebot_error = getattr(sys.modules.get("harness.qq.onebot"), "OneBotError", None)
+    if onebot_error is not None and isinstance(error, onebot_error):
+        return error.code if type(error.code) is str and error.code in _DIRECT_ERRORS else "qq_transport_error"
+    shared_error = getattr(sys.modules.get("harness.qq.shared"), "SharedQQUnavailable", None)
+    if shared_error is not None and isinstance(error, shared_error):
+        return "shared_cognitive_unavailable"
     if isinstance(error, QQCommunicationError):
         # Only known port diagnostics are public telemetry. Callback details,
         # arbitrary exception text and future/unrecognized codes stay private.
@@ -102,6 +153,14 @@ def classify_error(error: BaseException) -> str:
     if isinstance(error, (ValueError, TypeError)):
         return "model_invalid"
     return "model_error"
+
+
+def direct_termination(reason: str, stage: str) -> dict[str, str]:
+    """Validate persisted Direct diagnostics without admitting exception text."""
+    if (type(reason) is not str or reason not in _DIRECT_TERMINAL_REASONS
+            or type(stage) is not str or stage not in _DIRECT_TERMINAL_STAGES):
+        raise ValueError("Direct termination diagnostics require fixed categories.")
+    return {"reason": reason, "stage": stage}
 
 
 class QQTurnTrace:
@@ -134,6 +193,9 @@ class QQTurnTrace:
         self._events: list[dict] = []
         self._counters: dict[str, int] = {}
         self._preparation_counters: dict[str, dict[str, int]] = {}
+        self._termination: dict[str, str] | None = None
+        self._effective_configuration: dict | None = None
+        self._conversation_key: str | None = None
         self._lock = threading.RLock()
 
     @staticmethod
@@ -155,6 +217,60 @@ class QQTurnTrace:
                 raise ValueError("A turn trace cannot change decision identity.")
             self.decision_id = value
 
+    def bind_conversation(self, *, group_id: str, self_member_id: str) -> str:
+        from harness.qq.conversation import QQ_NUMBER, conversation_scope
+        import hashlib
+        scope = conversation_scope(group_id)
+        if (not isinstance(self_member_id, str) or re.fullmatch(QQ_NUMBER, self_member_id) is None
+                or (scope["kind"] == "private" and scope["self_member_id"] != self_member_id)):
+            raise ValueError("Invalid trace conversation scope")
+        key = "qq-scope:" + hashlib.sha256((self_member_id + "\0" + group_id).encode()).hexdigest()
+        with self._lock:
+            if self._conversation_key is not None and self._conversation_key != key:
+                raise ValueError("A turn trace cannot change conversation identity")
+            self._conversation_key = key
+        return key
+
+    def bind_configuration(self, settings) -> dict:
+        from harness.qq.policy import effective_configuration
+
+        value = effective_configuration(settings)
+        with self._lock:
+            if self._effective_configuration is not None and self._effective_configuration != value:
+                raise ValueError("A turn cannot change its frozen configuration.")
+            self._effective_configuration = value
+        return json.loads(json.dumps(value))
+
+    def merge_prior_phase(self, prior: dict) -> None:
+        """Compose same-owner phases; identifiers and clock continuity are mandatory."""
+        if (prior.get("trace_id"), prior.get("event_id")) != (self.trace_id, self.event_id):
+            raise ValueError("QQ phase trace binding changed")
+        origin = _finite(prior["first_seen_mono"])
+        shift = (self.first_seen_mono - origin) * 1000
+        if shift < 0 or _finite(prior["elapsed_ms"]) > shift + 1:
+            raise ValueError("QQ phases do not share a valid owner clock")
+        events = prior.get("stages", [])
+        counters = prior.get("counters", {})
+        if len(events) > self.max_events or len(set(counters) | set(self._counters)) > 128:
+            raise ValueError("QQ phase measurements exceed bounds")
+        for event in events:
+            self._name(event["name"])
+            if (event["outcome"] not in _OUTCOMES or event.get("error_type") not in _ERRORS | {None}
+                    or not 0 <= _finite(event["start_offset_ms"]) <= _finite(event["end_offset_ms"]) <= shift + 1):
+                raise ValueError("Invalid QQ phase measurements")
+        with self._lock:
+            for name, amount in counters.items():
+                self.add_counter(name, amount)
+            current = [{**event, "start_offset_ms": event["start_offset_ms"] + shift,
+                        "end_offset_ms": event["end_offset_ms"] + shift} for event in self._events]
+            self._events = [*events, *current][:self.max_events]
+            self.first_seen_mono = origin
+
+    def record_termination(self, *, reason: str, stage: str) -> None:
+        value = direct_termination(reason, stage)
+        with self._lock:
+            self._termination = value
+
     def add_counter(self, name: str, amount: int = 1) -> None:
         self._name(name)
         if isinstance(amount, bool) or not isinstance(amount, int) or amount < 0:
@@ -165,7 +281,7 @@ class QQTurnTrace:
             self._counters[name] = self._counters.get(name, 0) + amount
 
     def add_cache_usage(self, stage: str, usage) -> None:
-        """Record provider prefix-cache counts; never prompt text."""
+        """Record additive usage/coverage counts; never prompt text."""
         self._name(f"{stage}_cache_hit_tokens")
         hit = getattr(usage, "cache_hit_tokens", 0) or 0
         miss = getattr(usage, "cache_miss_tokens", 0) or 0
@@ -173,6 +289,20 @@ class QQTurnTrace:
             return
         self.add_counter(f"{stage}_cache_hit_tokens", hit)
         self.add_counter(f"{stage}_cache_miss_tokens", miss)
+        for name in ("prompt_tokens", "completion_tokens", "cache_known_prompt_tokens", "cache_unknown_prompt_tokens"):
+            value = getattr(usage, name, 0) or 0
+            if type(value) is int and value >= 0:
+                self.add_counter(f"{stage}_{name}", value)
+        self.add_counter(f"{stage}_usage_calls", 1)
+        self.add_counter(f"{stage}_cache_known_calls", int(getattr(usage, "cache_status", "unknown") == "known"))
+        input_source = getattr(usage, "prompt_tokens_source", "unknown")
+        output_source = getattr(usage, "completion_tokens_source", "unknown")
+        self.add_counter(f"{stage}_input_api_calls", int(input_source == "api"))
+        self.add_counter(f"{stage}_output_api_calls", int(output_source == "api"))
+        self.add_counter(f"{stage}_api_usage_calls", int("api" in {input_source, output_source}))
+        for name, source in (("prompt_tokens", input_source), ("completion_tokens", output_source)):
+            value = getattr(usage, name, 0)
+            self.add_counter(f"{stage}_estimated_{name}", value if source == "estimate" and type(value) is int and value >= 0 else 0)
 
     def merge_preparation(self, source: QQTurnTrace) -> bool:
         """Import one shared preparation, retaining its identity and clock origin.
@@ -256,6 +386,12 @@ class QQTurnTrace:
                     "stages": [dict(event) for event in self._events], "counters": dict(self._counters)}
             if self._preparation_counters:
                 value["preparation_counters"] = {key: dict(counters) for key, counters in self._preparation_counters.items()}
+            if self._termination is not None:
+                value["termination"] = dict(self._termination)
+            if self._conversation_key is not None:
+                value["conversation_key"] = self._conversation_key
+            if self._effective_configuration is not None:
+                value["effective_configuration"] = json.loads(json.dumps(self._effective_configuration))
             if self.observation_sequence is not None:
                 value["observation_sequence"] = self.observation_sequence
             return value

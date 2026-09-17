@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import pytest
 
 from harness.contracts.envelope import DomainCommandResult
+from harness.core.error_notice import ERROR_FALLBACK_REPLY
 from harness.qq.decision import QQReplyDecision
 from harness.qq.shared import QQSharedPrepareRequest
 from harness.runtime import PassiveHomeostasisAdapter, RuntimeEventPriority, RuntimeEventType, RuntimeLifecycle
@@ -45,6 +46,14 @@ def _prepared(command):
     )
     return _domain_result(command, {"decision": decision.model_dump(mode="json"),
         "trace": {"trace_id": trace["trace_id"], "event_id": trace["event_id"]}})
+
+
+def _fallback(command):
+    prepared = _prepared(command)
+    decision = QQReplyDecision.model_validate({**prepared.result["decision"],
+        "action": "speak", "reply": ERROR_FALLBACK_REPLY, "reply_segments": [ERROR_FALLBACK_REPLY],
+        "decision_source": "expired", "outcome": "error_fallback", "error_type": "deadline_expired"})
+    return prepared.model_copy(update={"result": {**prepared.result, "decision": decision.model_dump(mode="json")}})
 
 
 @pytest.fixture
@@ -414,6 +423,113 @@ def test_non_qq_timeout_keeps_global_recovery(runtime, monkeypatch):
         assert result.status == "deferred" and runtime.lifecycle == RuntimeLifecycle.PAUSED
         assert runtime.queue.snapshot()[0].event_id == event.event_id
         assert runtime.watchdog._failures["cognitive"] == 1
+
+    asyncio.run(scenario())
+
+
+def test_late_error_notice_keeps_snapshot_validation_without_extending_model_deadline(runtime, monkeypatch):
+    async def scenario():
+        request = _request(seconds=10)
+        event = await _accept(runtime, request)
+        snapshot = runtime.cognitive.get_snapshot
+        calls = []
+
+        async def late(command):
+            assert command.deadline <= request.deadline_at
+            monkeypatch.setattr(module, "utc_now", lambda: request.deadline_at + timedelta(milliseconds=10))
+            return _fallback(command)
+
+        async def snapshot_rpc():
+            calls.append("snapshot")
+            await asyncio.sleep(.02)  # A normal RPC takes longer than 1 ms.
+            return await snapshot()
+
+        monkeypatch.setattr(runtime.cognitive, "prepare_qq_response", late)
+        monkeypatch.setattr(runtime.cognitive, "get_snapshot", snapshot_rpc)
+        result = await runtime.dispatch(event)
+        assert result.status == "completed" and result.detail["decision"]["outcome"] == "error_fallback"
+        assert calls == ["snapshot"] and runtime.lifecycle == RuntimeLifecycle.RUNNING
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("action", ["wait", "speak"])
+def test_late_ordinary_result_cannot_use_error_notice_snapshot_grace(runtime, monkeypatch, action):
+    async def scenario():
+        request = _request(seconds=10)
+        event = await _accept(runtime, request)
+
+        async def late(command):
+            prepared = _prepared(command)
+            if action == "speak":
+                prepared.result["decision"].update(action="speak", outcome="ready", reply="ordinary reply")
+            # The result was produced on time but reached Runtime too late.
+            prepared = prepared.model_copy(update={"completed_at": request.deadline_at - timedelta(milliseconds=1)})
+            monkeypatch.setattr(module, "utc_now", lambda: request.deadline_at + timedelta(milliseconds=10))
+            return prepared
+
+        async def forbidden():
+            pytest.fail("ordinary late reply received snapshot grace")
+
+        monkeypatch.setattr(runtime.cognitive, "prepare_qq_response", late)
+        monkeypatch.setattr(runtime.cognitive, "get_snapshot", forbidden)
+        _assert_expired(runtime, event, await runtime.dispatch(event))
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("replayed", [False, True])
+def test_error_notice_cannot_renew_grace_from_result_or_replay(runtime, monkeypatch, replayed):
+    async def scenario():
+        request = _request(seconds=10)
+        event = await _accept(runtime, request)
+
+        async def late(command):
+            offset = .01 if replayed else module.ERROR_FALLBACK_SEND_SECONDS + .01
+            monkeypatch.setattr(module, "utc_now", lambda: request.deadline_at + timedelta(seconds=offset))
+            result = _fallback(command)
+            if replayed:
+                result.result["decision"].update(replayed=True, new_decision=False)
+            return result
+
+        async def forbidden():
+            pytest.fail("expired or replayed notice renewed its grace")
+
+        monkeypatch.setattr(runtime.cognitive, "prepare_qq_response", late)
+        monkeypatch.setattr(runtime.cognitive, "get_snapshot", forbidden)
+        _assert_expired(runtime, event, await runtime.dispatch(event))
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("failure", ["scope", "trace", "snapshot"])
+def test_late_error_notice_preserves_scope_trace_and_snapshot_checks(runtime, monkeypatch, failure):
+    async def scenario():
+        request = _request(seconds=10)
+        event = await _accept(runtime, request)
+        snapshot = runtime.cognitive.get_snapshot
+        calls = []
+
+        async def late(command):
+            monkeypatch.setattr(module, "utc_now", lambda: request.deadline_at + timedelta(milliseconds=10))
+            result = _fallback(command)
+            if failure == "scope":
+                result.result["decision"]["group_id"] = "99999"
+            elif failure == "trace":
+                result.result["trace"]["event_id"] = "wrong-event"
+            else:
+                result = result.model_copy(update={"committed_revision": 99})
+            return result
+
+        async def snapshot_rpc():
+            calls.append("snapshot")
+            return await snapshot()
+
+        monkeypatch.setattr(runtime.cognitive, "prepare_qq_response", late)
+        monkeypatch.setattr(runtime.cognitive, "get_snapshot", snapshot_rpc)
+        result = await runtime.dispatch(event)
+        assert result.status == "deferred" and result.detail["error_type"] == "DomainCommandError"
+        assert calls == (["snapshot"] if failure == "snapshot" else [])
 
     asyncio.run(scenario())
 

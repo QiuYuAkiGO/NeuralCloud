@@ -11,7 +11,7 @@ import pytest
 
 from harness.qq.decision import QQReplyDecision
 from harness.qq.direct_config import DirectQQSettings
-from harness.qq.direct_source import validate_direct_source
+from harness.qq.direct_source import DirectQQSourceExpired, validate_direct_source
 from harness.qq.direct_store import DirectStore, canonical, normalize_message
 from harness.qq.memory import QQVerifiedProfileInput, QQVisualMemoryStore, QQVisualObservationInput, protocol_message_evidence_ref
 from harness.qq.shared import QQSharedPrepareRequest
@@ -99,6 +99,30 @@ def test_real_raw_hash_native_binding_and_runtime_branch_accept_same_protocol_au
     assert _source(direct.config, None, source.request) is None
 
 
+def test_legacy_image_without_optional_analysis_ref_keeps_exact_source_binding(direct):
+    source = direct.create()
+    legacy = source.observation.model_dump(mode="json")
+    for image in legacy["image_analysis"]:
+        image.pop("analysis_ref", None)
+    with closing(direct.memory._connect()) as db, db:
+        db.execute("UPDATE qq_visual_observations SET record_json=? WHERE record_id=?",
+                   (canonical(legacy), source.observation.record_id))
+    rewrite_event(direct, source.event["event_id"], bound_observation=legacy)
+    assert validate_direct_source(direct.config, source.request) is None
+    assert _source(direct.config, None, source.request) is None
+
+
+def test_nonnull_analysis_artifact_change_is_not_normalized_away(direct):
+    source = direct.create()
+    changed = source.observation.model_dump(mode="json")
+    changed["image_analysis"][0]["analysis_ref"] = "qq-image-analysis:sha256:" + "a" * 64
+    with closing(direct.memory._connect()) as db, db:
+        db.execute("UPDATE qq_visual_observations SET record_json=? WHERE record_id=?",
+                   (canonical(changed), source.observation.record_id))
+    with pytest.raises(ValueError, match="binding_invalid"):
+        validate_direct_source(direct.config, source.request)
+
+
 @pytest.mark.parametrize("field,value", [("group_id", GUEST), ("self_member_id", "999"),
     ("run_id", "missing"), ("member_id", "999"), ("message_id", "999"),
     ("received_at", "2020-01-01T00:00:00+00:00"), ("text", "篡改原文"),
@@ -141,6 +165,51 @@ def test_read_only_own_history_old_message_and_expired_turn_never_prepare(direct
     source = direct.create(**options)
     with pytest.raises(ValueError):
         validate_direct_source(direct.config, source.request)
+
+
+@pytest.mark.parametrize("state", ["bound", "expired"])
+def test_only_verified_elapsed_reply_window_has_typed_expiry(direct, state):
+    source = direct.create(received_at=direct.now - timedelta(seconds=61))
+    direct.store.update(source.event["event_id"], state=state)
+    with pytest.raises(DirectQQSourceExpired, match="direct_qq_source_expired"):
+        validate_direct_source(direct.config, source.request)
+    evidence_file = direct.store.evidence_dir / (source.evidence.rsplit("/", 1)[1] + ".json")
+    evidence_file.write_text("{}")
+    with pytest.raises(ValueError, match="direct_qq_evidence_changed") as error:
+        validate_direct_source(direct.config, source.request)
+    assert not isinstance(error.value, DirectQQSourceExpired)
+
+
+@pytest.mark.parametrize("state", ["ready", "failed", "partial", "sent", "cancelled"])
+def test_other_nonpending_states_remain_real_failures_after_deadline(direct, state):
+    source = direct.create(received_at=direct.now - timedelta(seconds=61))
+    direct.store.update(source.event["event_id"], state=state)
+    with pytest.raises(ValueError, match="direct_qq_source_not_pending") as error:
+        validate_direct_source(direct.config, source.request)
+    assert not isinstance(error.value, DirectQQSourceExpired)
+
+
+@pytest.mark.parametrize("binding", ["early_expired", "decision", "send"])
+def test_expired_state_without_the_unprepared_elapsed_binding_is_not_deadline(direct, binding):
+    source = direct.create(received_at=direct.now - timedelta(seconds=61) if binding != "early_expired" else direct.now)
+    if binding in {"decision", "send"}:
+        result = ready(direct, source)
+        if binding == "send":
+            direct.store.reserve(source.event, result, 0, result.reply_segments[0])
+            # Isolate the send-record guard from the independent decision guard.
+            with closing(direct.store.connect()) as db, db:
+                db.execute("UPDATE qq_direct_events SET decision_id=NULL WHERE event_id=?", (source.event["event_id"],))
+    direct.store.update(source.event["event_id"], state="expired")
+    with pytest.raises(ValueError, match="direct_qq_source_not_pending") as error:
+        validate_direct_source(direct.config, source.request)
+    assert not isinstance(error.value, DirectQQSourceExpired)
+
+
+def test_future_source_clock_is_not_typed_reply_expiry(direct):
+    source = direct.create(received_at=direct.now + timedelta(seconds=10))
+    with pytest.raises(ValueError, match="direct_qq_source_expired") as error:
+        validate_direct_source(direct.config, source.request)
+    assert not isinstance(error.value, DirectQQSourceExpired)
 
 
 @pytest.mark.parametrize("change", ["record_id", "group_id", "image_analysis", "profile"])

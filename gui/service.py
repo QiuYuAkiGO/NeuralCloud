@@ -181,6 +181,7 @@ class HarnessChatService:
         aux_model: str | None = None,
         aux_api_key: str | None = None,
         validator_enabled: bool | None = None,
+        qq_latency=None,
     ) -> None:
         if validator_enabled is not None and type(validator_enabled) is not bool:
             raise ValueError("validator_enabled must be a boolean")
@@ -215,7 +216,11 @@ class HarnessChatService:
             updates["aux_llm_api_key"] = aux_api_key
         if validator_enabled is not None:
             updates["validator_enabled"] = validator_enabled
+        if qq_latency is not None:
+            from harness.qq.policy import QQLatencyOptions
+            updates.update(QQLatencyOptions.model_validate(qq_latency).model_dump())
         self.settings = self.settings.model_copy(update=updates)
+        self.settings.mark_configuration_source(updates, "runtime")
 
         self._preload_generation += 1
         self.aux_preloaded = False
@@ -399,6 +404,7 @@ class HarnessChatService:
         }
 
     def snapshot_state(self, session_id: str | None = None) -> dict[str, Any]:
+        from harness.qq.policy import effective_configuration
         del session_id
         snap = self.memory.get_state()
         stores = self.memory.stores
@@ -408,6 +414,7 @@ class HarnessChatService:
         world = snap.world
         return {
             "mode": self.mode,
+            "effective_configuration": effective_configuration(self.settings),
             "inference_config": {
                 key: getattr(self.settings, key) for key in (
                     "context_token_budget", "session_window", "llm_timeout",

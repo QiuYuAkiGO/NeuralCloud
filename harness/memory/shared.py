@@ -23,6 +23,7 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstrai
 from harness.contracts.decisions import ActionOutcomeEvidence
 from harness.qq.memory import QQGroupContext, QQImageAnalysis, QQPersonContext, QQVerifiedProfile, QQVisualObservation
 from harness.qq.conversation import conversation_audience, conversation_scope, private_scope_id
+from harness.qq.telemetry import measure_stage
 
 
 NonBlank = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=2048, pattern=r"\S")]
@@ -370,6 +371,7 @@ class SharedMemoryStore:
                 source_id TEXT NOT NULL, source_sha256 TEXT NOT NULL, channel TEXT NOT NULL,
                 session_id TEXT NOT NULL, author_principal TEXT NOT NULL, record_json TEXT NOT NULL,
                 UNIQUE(owner_id, source_kind, source_id))""")
+            connection.execute("CREATE INDEX IF NOT EXISTS shared_memory_scope ON shared_memory_entries(owner_id,channel,session_id,source_kind,author_principal)")
             connection.execute("CREATE TABLE IF NOT EXISTS shared_memory_identity (singleton INTEGER PRIMARY KEY CHECK(singleton=1), preset_id TEXT NOT NULL)")
             # An unlabelled pre-upgrade database belongs to the historical Misty
             # preset. It must never be relabelled as another character's history.
@@ -663,6 +665,34 @@ class SharedMemoryStore:
                 shared_record_id=item.record_id, original_sha256=item.source.original_sha256,
                 original_row_sha256=item.source.original_row_sha256) for item in records), issues=tuple(issues))
 
+    def read_exact(self, scope: SharedReadScope, record_ids: list[str]) -> tuple[SharedMemoryRecord, ...]:
+        """Read only named records through the same immutable-source/scope guard."""
+        scope = SharedReadScope.model_validate_json(scope.model_dump_json())
+        if scope.owner_id != self.owner_id or len(record_ids) > 256 or len(set(record_ids)) != len(record_ids):
+            raise ValueError("invalid exact shared-memory read")
+        if any(not isinstance(item, str) or not item for item in record_ids):
+            raise ValueError("invalid exact shared-memory identifier")
+        records = []
+        if not record_ids or not self.path.is_file():
+            return ()
+        with closing(self._connect(write=False)) as connection, connection:
+            connection.execute("BEGIN")
+            for record_id in record_ids:
+                row = connection.execute("SELECT * FROM shared_memory_entries WHERE record_id=? AND owner_id=?",
+                                         (record_id, self.owner_id)).fetchone()
+                if row is None:
+                    continue
+                record = self._decode(row)
+                if (scope.audience not in record.visibility
+                        or scope.channels is not None and record.channel not in scope.channels
+                        or scope.session_ids is not None and record.session_id not in scope.session_ids
+                        or scope.principals is not None and record.author_principal not in scope.principals
+                        or scope.kinds is not None and record.kind not in scope.kinds):
+                    continue
+                records.append(record)
+        return tuple(records)
+
+    @measure_stage("memory.shared_query")
     def query(self, scope: SharedReadScope, *, text: str | None = None, limit: int = 20) -> SharedMemoryContext:
         scope = SharedReadScope.model_validate_json(scope.model_dump_json())
         if type(limit) is not int or not 1 <= limit <= 100:
@@ -688,7 +718,17 @@ class SharedMemoryStore:
             with closing(self._connect(write=False)) as connection, connection:
                 connection.execute("BEGIN")
                 exists = connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='shared_memory_entries'").fetchone()
-                rows = connection.execute("SELECT * FROM shared_memory_entries WHERE owner_id=?", (self.owner_id,)) if exists else ()
+                # Reject nonmatching indexed scope dimensions before decoding
+                # large immutable source JSON. Every admitted row still passes
+                # the original integrity and visibility checks below.
+                filters, parameters = ["owner_id=?"], [self.owner_id]
+                for column, values in (("channel", scope.channels), ("session_id", scope.session_ids),
+                                       ("author_principal", scope.principals), ("source_kind", scope.kinds)):
+                    if values is not None:
+                        filters.append(column + " IN (" + ",".join("?" for _ in values) + ")" if values else "0")
+                        parameters.extend(values)
+                sql = "SELECT * FROM shared_memory_entries WHERE " + " AND ".join(filters)
+                rows = connection.execute(sql, parameters) if exists else ()
                 for row in rows:
                     record = self._decode(row)
                     if (scope.audience not in record.visibility

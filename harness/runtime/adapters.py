@@ -6,6 +6,7 @@ import asyncio
 import inspect
 import json
 import os
+import threading
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Literal, Protocol, TypeVar
@@ -42,6 +43,8 @@ from harness.core.inference import ContextSegment, FinalResponse, InteroceptiveS
 from harness.core.models import EpisodicEvent, InteractionEvent
 from harness.homeostasis.models import HomeostaticInteroceptiveSummary
 from harness.pipeline.pipeline import InferencePipeline
+from harness.runtime.cognitive_store import CognitiveStateStore, DELETED, TrackedDict
+from harness.qq.telemetry import measure_stage
 from infra.trace.request_spans import trace_scope
 
 _CommandResult = TypeVar("_CommandResult")
@@ -264,12 +267,19 @@ class PipelineCognitiveAdapter:
             "session": 0,
             "maintenance": 0,
         }
-        self._ledger: dict[tuple[str, str], DomainCommandResult[Any]] = {}
-        self._request_hashes: dict[tuple[str, str], str] = {}
-        self._prepared: dict[str, _PreparedEntry] = {}
+        self._ledger: dict[tuple[str, str], DomainCommandResult[Any]] = TrackedDict()
+        self._request_hashes: dict[tuple[str, str], str] = TrackedDict()
+        self._prepared: dict[str, _PreparedEntry] = TrackedDict()
         self._research_manifest = None
         self._research_manifest_hash: str | None = None
-        self.research_traces: dict[str, dict[str, Any]] = {}
+        self.research_traces: dict[str, dict[str, Any]] = TrackedDict()
+        # Backend choice is fixed for this owner's lifetime. A restart performs
+        # the durable authority handoff when the compatibility flag changes.
+        self._incremental_enabled = bool(getattr(pipeline.settings, "cognitive_incremental_persistence_enabled", False))
+        self._state_store: CognitiveStateStore | None = None
+        self._persistence_lock = threading.RLock()
+        self._persisted_session_store = pipeline.session_store
+        self._persisted_session_keys: set[str] = set()
         self.research_tasks: set[asyncio.Task] = set()
         self.command_tasks: set[asyncio.Task] = set()
         self._closing = False
@@ -356,11 +366,36 @@ class PipelineCognitiveAdapter:
                     return self._failure(command, "emotion reservation request conflict", status="conflict")
                 self._request_hashes[request_key] = request_hash
                 await asyncio.to_thread(self._persist_state)
+                # Persisting the reservation can consume a short remaining QQ
+                # window. Do not invoke its source reader on an expired command.
+                rejected = self._preflight(command)
+                if rejected is not None:
+                    self._remember(command, rejected)
+                    await asyncio.to_thread(self._persist_state)
+                    return rejected
                 provider = self.emotion_input_provider or (lambda value: observation_input(self, value))
-                with trace_scope(event_id=command.event_id, command_id=command.command_id, phase="emotion_appraisal"):
+                origin = (command.payload.get("source_payload") or {}).get("trace") or {}
+                qq_trace = ({"qq_trace_id": origin["trace_id"]} if origin.get("trace_id")
+                            and command.payload.get("source_command_type") in {"PrepareQQResponse", "PrepareQQTurn"} else {})
+                with trace_scope(correlation_id=command.correlation_id, event_id=command.event_id,
+                                 command_id=command.command_id, phase="emotion_appraisal", **qq_trace):
                     observation = self.emotion_service.existing_input(command.payload["context_id"])
                     if observation is None:
-                        observation = await asyncio.to_thread(provider, command)
+                        from harness.qq.direct_source import DirectQQSourceExpired
+
+                        try:
+                            observation = await asyncio.to_thread(provider, command)
+                        except DirectQQSourceExpired:
+                            # Source expiry can race the preflight above. Only
+                            # that typed error, after our original command also
+                            # expired, is a deadline result; all other source or
+                            # persistence failures must remain visible failures.
+                            if not command.is_expired(now=_utc_now()):
+                                raise
+                            rejected = self._failure(command, "command deadline expired", status="rejected")
+                            self._remember(command, rejected)
+                            await asyncio.to_thread(self._persist_state)
+                            return rejected
                     frame = await asyncio.to_thread(self.emotion_service.observe, observation)
                 self._cursor = max(self._cursor, command.receive_seq)
                 self._event_id = command.event_id
@@ -384,7 +419,7 @@ class PipelineCognitiveAdapter:
         observation = self.emotion_service.existing_input(reference)
         if observation is None:
             raise ValueError("emotion_context_not_committed")
-        if command.command_type == "PrepareQQResponse":
+        if command.command_type in {"PrepareQQResponse", "PrepareQQTurn"}:
             from harness.qq.conversation import conversation_audience
             expected_scope = conversation_audience(command.payload["group_id"])
         elif command.command_type == "PrepareBoardEntry":
@@ -1116,6 +1151,10 @@ class PipelineCognitiveAdapter:
         if self._persist_memory is not None:
             self._persist_memory()
         self._persist_state()
+        if self._incremental_enabled and self._state_store is not None:
+            self._state_store.checkpoint(force=True)
+        if self._state_store is not None:
+            self._state_store.close()
         close = getattr(self.pipeline.memory, "close", None)
         if callable(close):
             close()
@@ -1316,8 +1355,77 @@ class PipelineCognitiveAdapter:
         if self.state_path is None:
             self._publish_snapshot()
             return
+        # Emotion callbacks already hold their RLock. Always acquire in that
+        # order so a concurrent checkpoint cannot invert the owner lock order.
+        with self.emotion_service.persistence_guard(), self._persistence_lock:
+            if self._incremental_enabled:
+                self._persist_incremental()
+            else:
+                self._persist_legacy_state()
+
+    def _persist_incremental(self) -> None:
+        assert self._state_store is not None
+        with measure_stage("persistence.project"):
+            changes, maps, versions, emotion_versions, session, session_versions, session_rows = self._incremental_changes()
+        self._state_store.commit(changes)
+        for name, values in maps.items():
+            values.acknowledge(versions[name])
+        self.emotion_service.acknowledge_persistence(emotion_versions)
+        session.acknowledge_persistence(session_versions)
+        for key, turns in session_rows.items():
+            if turns is None:
+                self._persisted_session_keys.discard(key)
+            else:
+                self._persisted_session_keys.add(key)
+        self._persisted_session_store = session
+        self._publish_snapshot()
+        self._state_store.checkpoint()
+
+    def _incremental_changes(self):
+        maps = {"request_hashes": self._request_hashes, "ledger": self._ledger,
+                "prepared": self._prepared, "research_traces": self.research_traces}
+        versions = {name: values.dirty_versions() for name, values in maps.items()}
+        changes = {"owner_meta": {"state": {
+            "revision": self._revision, "cursor": self._cursor, "event_id": self._event_id,
+            "component_revisions": self._component_revisions,
+            "research_manifest_hash": self._research_manifest_hash}}}
+        for name, values in maps.items():
+            rows = changes[name] = {}
+            for key in versions[name]:
+                encoded = f"{key[0]}\0{key[1]}" if name in {"request_hashes", "ledger"} else key
+                value = values.get(key, DELETED)
+                rows[encoded] = value.model_dump(mode="json") if isinstance(value, BaseModel) else value
+        emotion_versions, emotion_rows = self.emotion_service.persistence_changes()
+        changes.update(emotion_rows)
+        session = self.pipeline.session_store
+        session_versions, session_rows = session.persistence_changes()
+        if session is not self._persisted_session_store:
+            # GUI settings can replace the pipeline and its SessionStore. This
+            # rare replacement is a full session projection, never a hot save.
+            session_rows = {key: None for key in self._persisted_session_keys}
+            session_rows.update(session.snapshot())
+        changes["sessions"] = {key: DELETED if turns is None else [turn.model_dump(mode="json") for turn in turns]
+                               for key, turns in session_rows.items()}
+        return changes, maps, versions, emotion_versions, session, session_versions, session_rows
+
+    def _persist_legacy_state(self) -> None:
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
-        payload = {
+        with measure_stage("persistence.project"):
+            payload = self._legacy_state_payload()
+        temporary = self.state_path.with_name(f".{self.state_path.name}.{os.getpid()}.{os.urandom(3).hex()}.tmp")
+        with temporary.open("w", encoding="utf-8", newline="\n") as handle:
+            with measure_stage("persistence.serialize"):
+                json.dump(payload, handle, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            with measure_stage("persistence.fsync"):
+                handle.flush()
+                os.fsync(handle.fileno())
+        with measure_stage("persistence.replace"):
+            replace_path(temporary, self.state_path)
+        self._acknowledge_loaded_state()
+        self._publish_snapshot()
+
+    def _legacy_state_payload(self):
+        return {
             "revision": self._revision,
             "cursor": self._cursor,
             "event_id": self._event_id,
@@ -1335,38 +1443,53 @@ class PipelineCognitiveAdapter:
                 for key, turns in self.pipeline.session_store.snapshot().items()
             },
         }
-        temporary = self.state_path.with_name(f".{self.state_path.name}.{os.getpid()}.{os.urandom(3).hex()}.tmp")
-        with temporary.open("w", encoding="utf-8", newline="\n") as handle:
-            json.dump(payload, handle, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-            handle.flush()
-            os.fsync(handle.fileno())
-        replace_path(temporary, self.state_path)
-        self._publish_snapshot()
-
     def _load_state(self) -> None:
-        if self.state_path is None or not self.state_path.exists():
+        if self.state_path is None:
             return
-        payload = json.loads(self.state_path.read_text(encoding="utf-8"))
+        sidecar = self.state_path.with_suffix(self.state_path.suffix + ".sqlite3")
+        if self._incremental_enabled or sidecar.exists():
+            self._state_store = CognitiveStateStore(self.state_path)
+            payload = self._state_store.activate(enabled=self._incremental_enabled)
+        elif self.state_path.exists():
+            payload = json.loads(self.state_path.read_text(encoding="utf-8"))
+        else:
+            return
         self._revision = int(payload.get("revision", 0))
         self._cursor = int(payload.get("cursor", 0))
         self._event_id = payload.get("event_id")
         self._research_manifest_hash = payload.get("research_manifest_hash")
-        self.research_traces = dict(payload.get("research_traces") or {})
+        self.research_traces.update(payload.get("research_traces") or {})
         self.emotion_service.load(payload.get("emotion") or {})
         self._component_revisions.update(payload.get("component_revisions") or {})
         for encoded, request_hash in (payload.get("request_hashes") or {}).items():
             self._request_hashes[tuple(encoded.split("\0", 1))] = request_hash
         for encoded, result in (payload.get("ledger") or {}).items():
             self._ledger[tuple(encoded.split("\0", 1))] = DomainCommandResult[Any].model_validate(result)
-        self._prepared = {
+        self._prepared.update({
             key: _PreparedEntry.model_validate(value)
             for key, value in (payload.get("prepared") or {}).items()
-        }
+        })
         sessions = {
             key: [SessionTurn.model_validate(turn) for turn in turns]
             for key, turns in (payload.get("sessions") or {}).items()
         }
         self.pipeline.session_store.restore(sessions)
+        self._persisted_session_keys = set(sessions)
+        self._acknowledge_loaded_state()
+        # A smaller configured window normalizes restored sessions. Keep that
+        # change dirty so later increasing the window cannot resurrect turns
+        # that a successful save was expected to have discarded.
+        session = self.pipeline.session_store
+        for key, turns in sessions.items():
+            if len(turns) > session.window:
+                session.replace(key, session.recent(key))
+
+    def _acknowledge_loaded_state(self) -> None:
+        for values in (self._request_hashes, self._ledger, self._prepared, self.research_traces):
+            values.acknowledge(values.dirty_versions())
+        self.emotion_service.acknowledge_persistence(dict(self.emotion_service._persistence_dirty))
+        session = self.pipeline.session_store
+        session.acknowledge_persistence(session.persistence_changes()[0])
 
 
 class PassiveHomeostasisAdapter:

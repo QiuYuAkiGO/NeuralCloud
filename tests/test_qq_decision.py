@@ -102,7 +102,7 @@ def test_multimember_speak_uses_user_side_history_and_is_replayable(setup):
     assert result.automatic_send is False and result.new_decision is True
     assert set(result.source_record_ids) == {item.record_id for item in records}
     assert result.model == "synthetic-model" and result.persona_version
-    assert result.prompt_version == "qq-group-turn-taking-v18"
+    assert result.prompt_version == "qq-group-turn-taking-v20"
     assert result.usage.calls >= 2
     assert builds[0].call_log_enabled is False and builds[0].record_interaction is False
     all_messages = client.gate_messages + client.chat_calls
@@ -136,6 +136,7 @@ def test_persona_model_can_wait_even_when_a_member_triggers(setup, monkeypatch):
 
 @pytest.mark.parametrize("configured,expected", [(512, 8192), (12288, 12288), (32768, 16384)])
 def test_qq_helper_budget_reaches_persona_parser_without_mutating_loaded_settings(setup, monkeypatch, configured, expected):
+    monkeypatch.setenv("NC_QQ_BODY_PIPELINE", "legacy")
     _, client, builds, kwargs, _ = setup
     settings, preset = decision._load_configuration(kwargs["config_path"], kwargs["preset_path"])
     original = settings.model_copy(update={"llm_json_max_tokens": configured})
@@ -545,6 +546,7 @@ def test_static_cache_has_absolute_24h_ttl_and_at_most_eight_entries(setup, monk
 
 
 def test_new_qq_context_still_runs_fresh_speak_gate_and_persona_with_only_static_parse_cached(setup, monkeypatch):
+    monkeypatch.setenv("NC_QQ_BODY_PIPELINE", "legacy")
     store, client, _, kwargs, _ = setup
     calls = []
     original = client.complete_json

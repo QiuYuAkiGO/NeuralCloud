@@ -55,8 +55,9 @@ def build_qq_emotion_messages(
     as_of: datetime, trigger_event_id: str | None = None,
     trigger_member_id: str | None = None,
     protocol_state_db: Path | str | None = None,
+    required_event_ids: list[str] | None = None,
 ):
-    """Read 20 recent records; only the exact validated incoming trigger is new.
+    """Read 20 records, retaining every validated current request source.
 
     The caller must first validate Runtime's QQ source authority. Search results,
     distilled memory and unsent drafts are deliberately absent from this input.
@@ -77,10 +78,19 @@ def build_qq_emotion_messages(
         raise ValueError("qq_emotion_private_scope_mismatch")
     if trigger_event_id is not None and (not trigger_member_id or trigger_member_id == self_member_id):
         raise ValueError("qq_emotion_trigger_requires_external_author")
+    required_events = list(required_event_ids) if required_event_ids is not None else (
+        [trigger_event_id] if trigger_event_id is not None else [])
+    if ((required_event_ids is not None and trigger_event_id is not None and not required_events)
+            or any(not isinstance(item, str) or not item for item in required_events)
+            or (required_events and (trigger_event_id is None or required_events[0] != trigger_event_id
+                                    or len(set(required_events)) != len(required_events)))):
+        raise ValueError("qq_emotion_request_sources_invalid")
+    if len(required_events) > 20:
+        raise ValueError("qq_emotion_new_sources_exceed_window")
     audience = conversation_audience(group_id)
     cutoff = as_of - timedelta(minutes=30)
     messages = []
-    trigger = None
+    required_records = []
     with closing(_readonly(memory_db)) as db, (
         closing(_readonly(protocol_state_db)) if protocol_state_db is not None else nullcontext(None)
     ) as protocol_db:
@@ -90,20 +100,22 @@ def build_qq_emotion_messages(
             "ORDER BY observed_at DESC, rowid DESC LIMIT 80",
             (group_id, cutoff.isoformat(), (as_of + timedelta(seconds=5)).isoformat()),
         ).fetchall()
-        if trigger_event_id is not None:
+        for event_id in required_events:
             matches = db.execute(
                 "SELECT record_id, observed_at FROM qq_visual_observations "
-                "WHERE group_id=? AND capture_item_id=? AND member_id=?",
-                (group_id, trigger_event_id, trigger_member_id),
+                "WHERE group_id=? AND capture_item_id=?" + (" AND member_id=?" if event_id == trigger_event_id else ""),
+                (group_id, event_id, trigger_member_id) if event_id == trigger_event_id else (group_id, event_id),
             ).fetchall()
             if len(matches) != 1:
                 raise ValueError("qq_emotion_trigger_missing_or_ambiguous")
             trigger = _observation(db, group_id, matches[0]["record_id"])
-            if (trigger is None or trigger.member_id != trigger_member_id
-                    or trigger.capture_item_id != trigger_event_id
+            if (trigger is None or trigger.member_id == self_member_id
+                    or (event_id == trigger_event_id and trigger.member_id != trigger_member_id)
+                    or trigger.capture_item_id != event_id
                     or trigger.observed_at != datetime.fromisoformat(matches[0]["observed_at"])
                     or _protocol_message_time(protocol_db, trigger, self_member_id) > as_of):
                 raise ValueError("qq_emotion_trigger_invalid")
+            required_records.append(trigger.record_id)
             rows = [matches[0], *[row for row in rows if row["record_id"] != trigger.record_id]]
 
         receipts = [item for item in _receipts(db, group_id, cutoff)
@@ -118,7 +130,7 @@ def build_qq_emotion_messages(
             if observation is None or observation.observed_at != datetime.fromisoformat(row["observed_at"]):
                 raise ValueError("qq_emotion_observation_invalid")
             timestamp = _protocol_message_time(protocol_db, observation, self_member_id)
-            if timestamp > as_of or (timestamp < cutoff and (trigger is None or observation.record_id != trigger.record_id)):
+            if timestamp > as_of or (timestamp < cutoff and observation.record_id not in required_records):
                 continue
             # Protocol self observations are transport echoes. Only durable send
             # receipts represent this character's protocol output, including when
@@ -137,9 +149,11 @@ def build_qq_emotion_messages(
         ) for item in receipts)
 
     messages.sort(key=lambda item: (item.timestamp, item.source_id))
-    selected = messages[-20:]
-    if trigger is not None and trigger.record_id not in {item.source_id for item in selected}:
-        current = next(item for item in messages if item.source_id == trigger.record_id)
-        selected = [current, *selected[-19:]]
-        selected.sort(key=lambda item: (item.timestamp, item.source_id))
-    return audience, selected, [] if trigger is None else [trigger.record_id]
+    required = [item for item in messages if item.source_id in required_records]
+    if len(required) != len(required_records):
+        raise ValueError("qq_emotion_request_sources_missing")
+    history = [item for item in messages if item.source_id not in required_records]
+    available = 20 - len(required)
+    selected = [*required, *(history[-available:] if available else [])]
+    selected.sort(key=lambda item: (item.timestamp, item.source_id))
+    return audience, selected, required_records

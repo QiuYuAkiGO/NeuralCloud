@@ -100,7 +100,11 @@ def test_direct_decisions_keep_tool_data_and_use_only_visible_emotion(mode, rout
     assert payload["available_offers"][0]["offer_id"] == offer().offer_id
     assert "verified-shared-recall" in messages[1]["content"]
     assert ("homeostatic_summary" in payload) is (mode == "shadow")
-    assert (BRIEF in messages[0]["content"]) is (mode == "on")
+    system = "\n".join(item["content"] for item in messages if item["role"] == "system")
+    assert (BRIEF in system) is (mode == "on")
+    assert BRIEF not in messages[0]["content"]
+    if mode == "on":
+        assert messages[-1]["role"] == "system" and BRIEF in messages[-1]["content"]
     assert owner.guidance_calls == [request.command_id]
     assert "emotion_context_ref" not in payload and "emotion_revision" not in payload
 
@@ -152,7 +156,9 @@ def test_board_uses_prepared_emotion_and_preserves_shared_source_data(monkeypatc
     result = asyncio.run(board.prepare(owner, request))
     assert result["decision"]["text"] == "这句话让我很生气。"
     messages = owner.chat.llm.calls[0][0]
-    assert messages[0]["content"].count(BRIEF) == 1
+    assert sum(item["content"].count(BRIEF) for item in messages if item["role"] == "system") == 1
+    assert BRIEF not in messages[0]["content"]
+    assert messages[-1]["role"] == "system" and BRIEF in messages[-1]["content"]
     assert "homeostatic_summary" not in messages[1]["content"] and "verified-board-context" in messages[1]["content"]
 
 

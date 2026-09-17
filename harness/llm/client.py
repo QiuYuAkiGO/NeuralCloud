@@ -131,26 +131,57 @@ def _nonneg_int(value: Any) -> int:
     return value if type(value) is int and value >= 0 else 0
 
 
+def _optional_count(value: Any) -> int | None:
+    return value if type(value) is int and value >= 0 else None
+
+
 def usage_from_api_payload(raw: Any, messages: list[dict[str, Any]], text: str) -> TokenUsage:
     if isinstance(raw, dict):
-        prompt = _nonneg_int(raw.get("prompt_tokens"))
-        completion = _nonneg_int(raw.get("completion_tokens"))
+        prompt_value = _optional_count(raw.get("prompt_tokens"))
+        completion_value = _optional_count(raw.get("completion_tokens"))
+        completion = completion_value or 0
         total = _nonneg_int(raw.get("total_tokens"))
         details = raw.get("prompt_tokens_details") if isinstance(raw.get("prompt_tokens_details"), dict) else {}
-        hit = _nonneg_int(raw.get("prompt_cache_hit_tokens")) or _nonneg_int(details.get("cached_tokens"))
-        miss = _nonneg_int(raw.get("prompt_cache_miss_tokens"))
-        if miss == 0 and prompt and hit:
-            miss = max(0, prompt - hit)
-        if prompt or completion or total or hit or miss:
+        hit = _optional_count(raw.get("prompt_cache_hit_tokens"))
+        if hit is None:
+            hit = _optional_count(details.get("cached_tokens"))
+        miss = _optional_count(raw.get("prompt_cache_miss_tokens"))
+        if prompt_value is None and hit is not None and miss is not None:
+            prompt_value = hit + miss
+        if prompt_value is not None:
+            if hit is not None and miss is None and hit <= prompt_value:
+                miss = prompt_value - hit
+            elif miss is not None and hit is None and miss <= prompt_value:
+                hit = prompt_value - miss
+        known = (prompt_value is not None and hit is not None and miss is not None
+                 and hit + miss == prompt_value)
+        prompt = prompt_value or 0
+        if prompt_value is not None or completion_value is not None or total or hit is not None or miss is not None:
             return TokenUsage(
                 prompt_tokens=prompt,
                 completion_tokens=completion,
                 total_tokens=total,
-                cache_hit_tokens=hit,
-                cache_miss_tokens=miss,
+                cache_hit_tokens=(hit or 0) if known else 0,
+                cache_miss_tokens=(miss or 0) if known else 0,
+                cache_known_prompt_tokens=prompt if known else 0,
+                cache_status="known" if known else "unknown",
+                prompt_tokens_source="api" if prompt_value is not None else "unknown",
+                completion_tokens_source="api" if completion_value is not None else "unknown",
                 source="api",
             )
     return estimate_chat_usage(messages, text)
+
+
+def _record_provider_response(span: dict[str, Any], body: Any, messages: list[dict[str, Any]]) -> None:
+    """Retain returned usage even if response validation/deadline rejects it."""
+    if not isinstance(body, dict):
+        return
+    model = body.get("model")
+    if isinstance(model, str) and re.fullmatch(r"[A-Za-z0-9_.:/-]{1,200}", model):
+        span["response_model"] = model
+    if isinstance(body.get("usage"), dict):
+        usage = usage_from_api_payload(body["usage"], messages, "")
+        span.update(usage=usage.model_dump(mode="json"), usage_source=usage.source)
 
 
 def _chat_result(body: dict[str, Any], messages: list[dict[str, Any]]) -> ChatResult:
@@ -261,7 +292,7 @@ class OpenAICompatClient:
         if reasoning_effort is not None:
             payload["reasoning_effort"] = reasoning_effort
         headers = {"Authorization": f"Bearer {self.settings.llm_api_key}"}
-        with model_request_span(self.settings, role="main") as span:
+        with model_request_span(self.settings, role="main", messages=messages) as span:
             if diagnostic_observer(self._request_observer) is not None:
                 return self._complete_observed(payload, headers, request_options, messages, span)
             response = self._client.post(
@@ -270,10 +301,16 @@ class OpenAICompatClient:
                 headers=headers,
                 **request_options,
             )
-            remaining_model_seconds()
             span["http_status"] = response.status_code
+            try:
+                body = response.json()
+            except (ValueError, UnicodeError):
+                body = None
+            _record_provider_response(span, body, messages)
+            remaining_model_seconds()
             response.raise_for_status()
-            body = response.json()
+            if not isinstance(body, dict):
+                raise ValueError("llm_response_invalid_json_object")
             result = _chat_result(body, messages)
             span.update(usage=result.usage.model_dump(mode="json"), usage_source=result.usage.source,
                         **result.response_metadata())
@@ -307,6 +344,7 @@ class OpenAICompatClient:
                 body = response.json()
             except (ValueError, UnicodeError):
                 body = None
+            _record_provider_response(span, body, messages)
             emit_diagnostic({"record_type": "http_response_received", "request_id": request_id,
                 "http_status": response.status_code, "payload_verified": True, **actual,
                 "request_changed_after_prepare": actual["request_body_sha256"] != before["request_body_sha256"],

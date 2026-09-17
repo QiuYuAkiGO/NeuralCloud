@@ -219,6 +219,8 @@ def test_qq_prepare_survives_background_owner_revision_changes(case, monkeypatch
         expected_payload = case.request.model_dump(mode="json")
         trusted_summary = case.engine.snapshot.interoceptive_summary.model_dump(mode="json")
         expected_payload["homeostatic_interoception"] = trusted_summary
+        from harness.runtime.qq_pipeline import policy
+        expected_payload["qq_frozen_policy"] = policy(case.runtime, case.request).model_dump()
         assert command.payload == expected_payload
         assert command.version_vector.homeostasis_state == trusted_summary["snapshot_revision"]
         assert case.runtime._cognitive_snapshot.revision == 16 + background_commits
@@ -406,3 +408,145 @@ def test_local_owner_requires_explicit_development_and_normal_missing_service_fa
     with pytest.raises(PermissionError, match="development_mode_required"):
         QQHomeostaticDriver(**args, development_mode=True)
     assert not (tmp_path/"driver").exists()
+
+
+def test_ingress_carries_late_error_notice_through_runtime_and_snapshot(case, monkeypatch):
+    from harness.core.error_notice import ERROR_FALLBACK_REPLY
+    from harness.runtime import qq_turns, supervisor
+
+    async def run():
+        ingress = QQTurnIngress(case.control, case.config, watcher_path=case.watcher)
+        request = case.request.model_copy(update={"deadline_at": datetime.now(timezone.utc) + timedelta(seconds=1.2)})
+        original = case.cognitive.prepare_qq_response
+        snapshot = case.cognitive.get_snapshot
+        monkeypatch.setattr(qq_turns, "ERROR_FALLBACK_SEND_SECONDS", .5)
+        monkeypatch.setattr(supervisor, "ERROR_FALLBACK_SEND_SECONDS", .5)
+
+        async def late(command):
+            assert command.deadline <= request.deadline_at
+            result = await original(command)
+            await asyncio.sleep(max(0, (request.deadline_at - datetime.now(timezone.utc)).total_seconds()) + .025)
+            decision = QQReplyDecision.model_validate({**result.result["decision"], "action": "speak",
+                "reply": ERROR_FALLBACK_REPLY, "reply_segments": [ERROR_FALLBACK_REPLY],
+                "decision_source": "expired", "outcome": "error_fallback", "error_type": "deadline_expired"})
+            return result.model_copy(update={"result": {**result.result, "decision": decision.model_dump(mode="json")},
+                                             "completed_at": datetime.now(timezone.utc)})
+
+        async def slow_snapshot():
+            await asyncio.sleep(.02)
+            return await snapshot()
+
+        monkeypatch.setattr(case.cognitive, "prepare_qq_response", late)
+        monkeypatch.setattr(case.cognitive, "get_snapshot", slow_snapshot)
+        task = asyncio.create_task(ingress.prepare(request))
+        event = await case.runtime.queue.get(timeout=1)
+        result = await case.runtime.dispatch(event)
+        detail = await task
+        assert result.status == "completed" and detail["decision"]["reply"] == ERROR_FALLBACK_REPLY
+        assert detail["decision"]["outcome"] == "error_fallback" and ingress._waiters == {}
+        # A new request/replay cannot acquire another grace interval after TTL.
+        with pytest.raises(TimeoutError, match="qq_turn_expired"):
+            await ingress.prepare(request)
+        assert len(case.cognitive.commands) == 1
+
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("outcome", ["ready", "natural_wait", "forged_fallback", "wrong_scope", "replayed", "after_grace"])
+def test_ingress_late_completion_grace_is_bound_and_notice_only(case, monkeypatch, outcome):
+    from harness.core.error_notice import ERROR_FALLBACK_REPLY
+    from harness.runtime import qq_turns
+
+    async def run():
+        ingress = QQTurnIngress(case.control, case.config, watcher_path=case.watcher)
+        request = case.request
+        task = asyncio.create_task(ingress.prepare(request))
+        event = await case.runtime.queue.get(timeout=1)
+        command = SimpleNamespace(payload=request.model_dump(mode="json"), command_id="fixture-command",
+            command_type="PrepareQQResponse", effective_request_hash=lambda: "a" * 64, event_id=event.event_id, receive_seq=1)
+        result = await case.cognitive.prepare_qq_response(command)
+        raw = result.result["decision"]
+        raw.update(action="speak", reply=ERROR_FALLBACK_REPLY, reply_segments=[ERROR_FALLBACK_REPLY],
+                   outcome="error_fallback", decision_source="expired", error_type="deadline_expired")
+        if outcome == "ready":
+            raw.update(outcome="ready", decision_source="model", error_type=None, reply="ordinary", reply_segments=["ordinary"])
+        elif outcome == "natural_wait":
+            raw.update(action="wait", outcome="natural_wait", decision_source="model", error_type=None, reply=None, reply_segments=[])
+        elif outcome == "forged_fallback":
+            raw.update(reply="arbitrary late content", reply_segments=["arbitrary late content"])
+        elif outcome == "wrong_scope":
+            raw["group_id"] = "99999"
+        elif outcome == "replayed":
+            raw.update(replayed=True, new_decision=False)
+        offset = qq_turns.ERROR_FALLBACK_SEND_SECONDS + .01 if outcome == "after_grace" else .01
+
+        class Clock(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return request.deadline_at + timedelta(seconds=offset)
+
+        monkeypatch.setattr(qq_turns, "datetime", Clock)
+        await ingress._completed("event.completed", {"event_id": event.event_id, "status": "completed",
+            "decision_kind": "qq_prepare", "detail": result.result})
+        with pytest.raises((TimeoutError, ValueError)):
+            await task
+        assert ingress._waiters == {}
+
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("second_exit", ["timeout", "cancel"])
+def test_retry_subscription_cannot_remove_original_waiters_fallback_grace(case, monkeypatch, second_exit):
+    from harness.core.error_notice import ERROR_FALLBACK_REPLY
+    from harness.runtime import qq_turns
+
+    async def run():
+        ingress = QQTurnIngress(case.control, case.config, watcher_path=case.watcher)
+        monkeypatch.setattr(qq_turns, "ERROR_FALLBACK_SEND_SECONDS", .5)
+        request = case.request.model_copy(update={"deadline_at": datetime.now(timezone.utc) + timedelta(seconds=1.25)})
+        first = asyncio.create_task(ingress.prepare(request))
+        second = None
+        try:
+            event = await case.runtime.queue.get(timeout=1)
+            # A was admitted with >=1 second and has fallback grace. The exact
+            # same idempotent request B arrives with <1 second and has none.
+            await asyncio.sleep(max(0, (request.deadline_at - datetime.now(timezone.utc)).total_seconds() - .7))
+            assert 0 < (request.deadline_at - datetime.now(timezone.utc)).total_seconds() < 1
+            second = asyncio.create_task(ingress.prepare(request))
+
+            async def subscribed():
+                while len(ingress._waiters.get(event.event_id, ())) != 2:
+                    await asyncio.sleep(0)
+
+            await asyncio.wait_for(subscribed(), .5)
+            if second_exit == "cancel":
+                second.cancel()
+                with pytest.raises(asyncio.CancelledError):
+                    await second
+            else:
+                with pytest.raises(TimeoutError):
+                    await second
+            assert not first.done() and len(ingress._waiters[event.event_id]) == 1
+            await asyncio.sleep(max(0, (request.deadline_at - datetime.now(timezone.utc)).total_seconds()) + .025)
+            command = SimpleNamespace(payload=request.model_dump(mode="json"), command_id="fixture-command",
+                command_type="PrepareQQResponse", effective_request_hash=lambda: "a" * 64,
+                event_id=event.event_id, receive_seq=1)
+            result = await case.cognitive.prepare_qq_response(command)
+            result.result["decision"].update(action="speak", reply=ERROR_FALLBACK_REPLY,
+                reply_segments=[ERROR_FALLBACK_REPLY], outcome="error_fallback",
+                decision_source="expired", error_type="deadline_expired")
+            await ingress._completed("event.completed", {"event_id": event.event_id, "status": "completed",
+                "decision_kind": "qq_prepare", "detail": result.result})
+            detail = await asyncio.wait_for(first, .25)
+            assert detail["decision"]["outcome"] == "error_fallback"
+            assert ingress._waiters == {} and case.runtime.queue.empty()
+            accepted = [record for record in case.runtime.journal.records()
+                        if record.event_id == event.event_id and record.record_type == "event_accepted"]
+            assert len(accepted) == 1
+        finally:
+            for task in (first, second):
+                if task is not None and not task.done():
+                    task.cancel()
+            await asyncio.gather(*(task for task in (first, second) if task is not None), return_exceptions=True)
+
+    asyncio.run(run())

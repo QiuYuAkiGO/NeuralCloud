@@ -153,6 +153,7 @@ def test_qq_command_uses_durable_owner_ledger_without_local_delivery(tmp_path, m
             result = await host.prepare_qq_response(command)
             assert result.status == 'applied', result.error
             assert result.result['decision']['action'] == 'speak'
+            assert any(s['name'] == 'persistence.command' for s in result.result['trace']['stages'])
             assert sources and not builds and not client.closed
             replay = await host.prepare_qq_response(command)
             assert replay.status == 'idempotent_replay' and replay.result == result.result

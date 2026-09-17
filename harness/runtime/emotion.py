@@ -7,7 +7,7 @@ from harness.runtime.models import RuntimeEventType
 
 
 EXPRESSION_COMMANDS = frozenset({
-    "PrepareResponse", "AssessAutonomous", "PrepareQQResponse", "PrepareBoardEntry",
+    "PrepareResponse", "AssessAutonomous", "PrepareQQResponse", "PrepareQQTurn", "PrepareBoardEntry",
     "PrepareCapabilityCall", "PrepareGoalDecision",
 })
 
@@ -55,7 +55,7 @@ async def with_emotion_context(supervisor, event, envelope):
     source.pop("emotion_revision", None)
     if envelope.command_type == "PrepareResponse":
         source.setdefault("source_time", event.source_time)
-    if envelope.command_type == "PrepareQQResponse":
+    if envelope.command_type in {"PrepareQQResponse", "PrepareQQTurn"}:
         group = str(source["group_id"])
         scope = "qq:" + group if group.startswith("private:") else "qq:group:" + group
     elif envelope.command_type == "PrepareBoardEntry":
@@ -79,6 +79,8 @@ async def with_emotion_context(supervisor, event, envelope):
     result = observed.result or {}
     if result.get("emotion_context_ref") != context_id:
         raise ValueError("emotion observation context binding mismatch")
+    if envelope.command_type in {"PrepareQQResponse", "PrepareQQTurn"} and result.get("qq_emotion_trace") is not None:
+        source["qq_emotion_trace"] = result["qq_emotion_trace"]
     return envelope.model_copy(update={"request_hash": None, "payload": {**source,
         "emotion_context_ref": context_id, "emotion_revision": result["emotion_revision"]}})
 
@@ -124,7 +126,7 @@ def observation_input(adapter, command):
 
 def shared_observation_input(host, command):
     """QQ sources are re-read and verified inside the Cognitive owner."""
-    if command.payload.get("source_command_type") != "PrepareQQResponse":
+    if command.payload.get("source_command_type") not in {"PrepareQQResponse", "PrepareQQTurn"}:
         return observation_input(host.adapter, command)
     import os
     from pathlib import Path
@@ -134,7 +136,8 @@ def shared_observation_input(host, command):
     from harness.runtime.qq_turns import _source
 
     source = dict(command.payload["source_payload"])
-    for key in ("runtime_goal_context", "runtime_web_context", "emotion_context_ref", "emotion_revision"):
+    for key in ("runtime_goal_context", "runtime_web_context", "emotion_context_ref", "emotion_revision",
+                "qq_turn_runtime", "qq_frozen_policy", "qq_web_capabilities", "qq_emotion_trace"):
         source.pop(key, None)
     request = QQSharedPrepareRequest.model_validate(source)
     settings = host.shared.qq_settings
@@ -147,12 +150,19 @@ def shared_observation_input(host, command):
     protocol_state_db = None
     if request.transport == "onebot":
         from harness.qq.direct_config import DirectQQSettings
+        from harness.qq.reply_requests import validate_reply_request
 
         protocol_state_db = DirectQQSettings.read(Path(os.environ["NC_QQ_DIRECT_CONFIG"])).state_db
+        # The DTO only checks shape. Bind every supplement to the current
+        # request revision and immutable protocol evidence before treating it
+        # as new external stimulus. The original anchor is separately checked
+        # by _source above; this also rechecks revision after reading proofs.
+        validate_reply_request(protocol_state_db, request, memory_config=settings)
     scope, messages, new_ids = build_qq_emotion_messages(memory_db=settings.memory_db,
         group_id=request.group_id, self_member_id=request.self_member_id,
         as_of=command.issued_at, trigger_event_id=request.trace.event_id if request.idle_intent is None else None,
-        trigger_member_id=request.trigger_member_id, protocol_state_db=protocol_state_db)
+        trigger_member_id=request.trigger_member_id, protocol_state_db=protocol_state_db,
+        required_event_ids=request.source_event_ids)
     return EmotionInput(context_id=command.payload["context_id"], scope=scope, as_of=command.issued_at,
         persona=host.chat.memory.get_persona(), homeostasis=command.payload.get("homeostasis") or {},
         messages=messages, new_source_ids=new_ids, deadline_at=min(command.deadline, request.deadline_at))

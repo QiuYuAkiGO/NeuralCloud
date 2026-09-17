@@ -9,6 +9,7 @@ from harness.qq.context_window import (
     combined_user_payload, select_append_window, split_closed_open, split_model_payload,
 )
 from harness.qq.memory import QQVisualObservationInput
+from harness.qq.telemetry import QQTurnTrace
 from tests.test_qq_decision import NOW, add_member, isolated_static_parser_cache as isolated_static_parser_cache, setup as setup
 from tools.qq_cache_report import _load_traces, summarize_traces
 
@@ -40,6 +41,22 @@ def test_closed_open_split_keeps_remainder_in_open_block():
     assert closed[0]["record_id"] == "obs-000" and opened[-1]["record_id"] == "obs-039"
     empty_closed, only_open = split_closed_open(_items(8), block_size=32)
     assert empty_closed == [] and len(only_open) == 8
+
+
+def test_window_rebase_is_explicit_in_telemetry(setup):
+    store = setup[0]
+    for index in range(126):
+        add_member(store, "20001", text=f"历史{index}", capture=f"window-rebase-{index}",
+                   moment=NOW + timedelta(seconds=index + 1))
+    first = QQTurnTrace()
+    decision._apply_append_window(store.path, "10001",
+        store.group_context(group_id="10001", window_mode="chronological_append"), trace=first)
+    assert not first.snapshot()["counters"].get("context_window_prefix_rebuilds")
+    add_member(store, "20001", text="新观察", capture="window-rebase-last", moment=NOW + timedelta(seconds=200))
+    second = QQTurnTrace()
+    decision._apply_append_window(store.path, "10001",
+        store.group_context(group_id="10001", window_mode="chronological_append"), trace=second)
+    assert second.snapshot()["counters"]["context_window_prefix_rebuilds"] == 1
 
 
 def test_split_payload_puts_retrieval_and_open_records_in_turn_only():
@@ -128,7 +145,7 @@ def test_consecutive_group_turns_reuse_stable_prefix_and_persona_reuses_gate(set
     assert gate_two[0] == gate_one[0]
     assert gate_two[1] == gate_one[1]
     assert gate_two[2] != gate_one[2]
-    assert "用户资料分两段JSON" in gate_two[0]["content"]
+    assert "closed_observations历史块" in gate_two[0]["content"]
     assert "当前情绪演绎提示" not in gate_two[0]["content"]
 
 

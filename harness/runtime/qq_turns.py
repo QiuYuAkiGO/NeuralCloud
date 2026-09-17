@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 from contextlib import closing
 
+from harness.core.error_notice import ERROR_FALLBACK_SEND_SECONDS
 from harness.qq.feedback import _observation, _readonly
 from harness.qq.shared import QQSharedPrepareRequest
 from harness.qq.watch_ledger import WatchEvent
@@ -79,9 +80,19 @@ class QQTurnIngress:
 
     async def _completed(self, topic, value):
         if topic == "event.completed":
-            waiter = self._waiters.pop(value.get("event_id"), None)
-            if waiter is not None and not waiter.done():
-                waiter.set_result(value)
+            for waiter in self._waiters.pop(value.get("event_id"), ()):
+                if not waiter.done():
+                    waiter.set_result(value)
+
+    def _remove_waiter(self, event_id, waiter):
+        """A disconnected/timed-out subscriber cannot remove another caller."""
+        subscribers = self._waiters.get(event_id)
+        if subscribers is not None:
+            subscribers.discard(waiter)
+            if not subscribers:
+                self._waiters.pop(event_id, None)
+        if not waiter.done():
+            waiter.cancel()
 
     def _historical(self, event_id):
         indexed = getattr(self.control.supervisor, "qq_turn_history", None)
@@ -105,9 +116,32 @@ class QQTurnIngress:
         remaining = (request.deadline_at - now).total_seconds()
         if remaining <= 0 or request.trace.first_seen_at > now + timedelta(seconds=5):
             raise TimeoutError("qq_turn_expired")
-        # Every await, including source validation and queue contention, uses
-        # this one monotonic budget derived from the immutable wall deadline.
-        async with asyncio.timeout(remaining):
+        # Admission still expires at the original deadline. Only a waiter for
+        # an already admitted request may receive a verified error notice late.
+        loop = asyncio.get_running_loop()
+        original_deadline = loop.time() + remaining
+        grace = ERROR_FALLBACK_SEND_SECONDS if remaining >= 1 else 0
+        waiter = None
+        event_id = None
+        try:
+            async with asyncio.timeout_at(original_deadline):
+                waiter, event_id, replay = await self._admit(request)
+                if replay is not None:
+                    return self._result_in_window(replay, request, allow_grace=False,
+                                                  original_deadline=original_deadline, grace=0)
+            async with asyncio.timeout_at(original_deadline + grace):
+                value = await asyncio.shield(waiter)
+                return self._result_in_window(value, request, allow_grace=True,
+                                              original_deadline=original_deadline, grace=grace)
+        finally:
+            if waiter is not None:
+                self._remove_waiter(event_id, waiter)
+
+    async def _admit(self, request: QQSharedPrepareRequest):
+        """Validate the unchanged source and queue it within the original TTL."""
+        waiter = None
+        event_id = None
+        try:
             key = f"{request.group_id}:{request.self_member_id}:{request.trace.event_id}:{request.trace.trace_id}"
             event_id = "qq-turn:" + hashlib.sha256(key.encode()).hexdigest()
             payload = request.model_dump(mode="json")
@@ -121,12 +155,12 @@ class QQTurnIngress:
                         raise ValueError("qq_turn_request_conflict")
                     if completed is not None:
                         await asyncio.to_thread(_source, self.config, self.watcher_path, request, completed_replay=True)
-                        return self._result(completed)
+                        return None, event_id, completed
                 await asyncio.to_thread(_source, self.config, self.watcher_path, request)
-                waiter = self._waiters.get(event_id)
-                if waiter is None or waiter.done():
-                    waiter = asyncio.get_running_loop().create_future()
-                    self._waiters[event_id] = waiter
+                # Retries subscribe to the same event independently: their
+                # admission time, transport cancellation and grace may differ.
+                waiter = asyncio.get_running_loop().create_future()
+                self._waiters.setdefault(event_id, set()).add(waiter)
                 if prior is None:
                     event = await self.control.supervisor.submit_event(event_type=RuntimeEventType.QQ_TURN,
                         priority=RuntimeEventPriority.USER, source="qq_body", event_id=event_id,
@@ -134,11 +168,35 @@ class QQTurnIngress:
                         source_time=request.trace.first_seen_at, payload=payload)
                     if event is None:
                         raise ValueError("qq_turn_not_queued")
-            try:
-                return self._result(await asyncio.shield(waiter))
-            finally:
-                if self._waiters.get(event_id) is waiter:
-                    self._waiters.pop(event_id, None)
+            return waiter, event_id, None
+        except BaseException:
+            if waiter is not None:
+                self._remove_waiter(event_id, waiter)
+            raise
+
+    def _result_in_window(self, value, request, *, allow_grace, original_deadline, grace):
+        detail = self._result(value)
+        now = datetime.now(timezone.utc)
+        monotonic_now = asyncio.get_running_loop().time()
+        if now < request.deadline_at and monotonic_now < original_deadline:
+            return detail
+        if (not allow_grace or grace <= 0 or monotonic_now >= original_deadline + grace
+                or now >= request.deadline_at + timedelta(seconds=grace)):
+            raise TimeoutError("qq_turn_expired")
+        # Do not trust an outcome string to extend any ordinary reply. Reuse
+        # the reply contract and scope/trace bindings enforced by Runtime.
+        from harness.qq.decision import QQReplyDecision
+
+        decision = QQReplyDecision.model_validate(detail["decision"])
+        trace = detail["trace"]
+        if (decision.outcome != "error_fallback" or decision.replayed or not decision.new_decision):
+            raise TimeoutError("qq_turn_expired")
+        if ((decision.group_id, decision.self_member_id, decision.trace_id) !=
+                (request.group_id, request.self_member_id, request.trace.trace_id)
+                or not isinstance(trace, dict) or trace.get("trace_id") != request.trace.trace_id
+                or trace.get("event_id") != request.trace.event_id):
+            raise ValueError("qq_turn_result_binding_invalid")
+        return detail
 
     @staticmethod
     def _result(value):

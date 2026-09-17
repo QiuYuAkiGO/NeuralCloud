@@ -73,17 +73,27 @@ def test_read_and_search_return_exact_retained_source_without_send_or_new_captur
     assert not direct.store.counts()["sends"]
 
 
-def test_search_can_find_image_interpretation_but_keeps_it_separate_from_author_text(direct, bridge):
+@pytest.mark.parametrize("artifact", ["absent", "same", "changed"])
+def test_search_can_find_image_interpretation_but_keeps_it_separate_from_author_text(direct, bridge, artifact):
     source = direct.create()
     ref = "qq-direct-image:sha256:" + "c" * 64
     value = source.observation.model_dump(mode="json")
     value["evidence"].append(ref)
     value["image_analysis"] = [{"authority": "model_inference", "image_index": 1, "status": "described",
         "evidence_ref": ref, "description": "绿色小猫图案", "ocr_text": "HELLO", "uncertainties": [], "error": None}]
+    if artifact != "absent":
+        value["image_analysis"][0]["analysis_ref"] = "qq-image-analysis:sha256:" + "a" * 64
     with closing(direct.memory._connect()) as db, db:
         db.execute("UPDATE qq_visual_observations SET record_json=? WHERE record_id=?", (canonical(value), source.observation.record_id))
-    fixtures.rewrite_event(direct, source.event["event_id"], bound_observation=value)
+    bound = json.loads(canonical(value))
+    if artifact == "changed":
+        bound["image_analysis"][0]["analysis_ref"] = "qq-image-analysis:sha256:" + "b" * 64
+    fixtures.rewrite_event(direct, source.event["event_id"], bound_observation=bound)
     instance, _ = bridge
+    if artifact == "changed":
+        with pytest.raises(ValueError, match="direct_read_source_invalid"):
+            instance.enqueue(dispatch(instance, arguments={"query": "绿色小猫", "limit": 1}))
+        return
     result = instance.enqueue(dispatch(instance, arguments={"query": "绿色小猫", "limit": 1}))
     retained = result["receipt"]["messages"][0]["observation"]
     assert "绿色小猫" not in retained["text"] and retained["image_analysis"][0]["authority"] == "model_inference"

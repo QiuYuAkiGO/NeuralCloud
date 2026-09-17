@@ -18,6 +18,7 @@ from harness.memory.shared import SharedActionOutcome, SharedLocalEvent, SharedM
 from harness.compiler.compiler import ContextCompiler, estimate_tokens
 from harness.embodiment.qq_contracts import QQReadResult, QQScope
 from harness.qq.roster import configured_groups
+from harness.qq.telemetry import measure_stage
 from harness.qq.conversation import conversation_audience, conversation_scope
 
 OPERATOR_QQ_MEMBER_ID = "2285027817"
@@ -169,6 +170,7 @@ class CognitiveSharedMemory:
             raise ValueError("shared_store_preset_mismatch")
         self._stores[preset_id] = value
 
+    @measure_stage("memory.import_qq")
     def sync_qq(self):
         if self.qq_settings is None or self.store.preset_id != "misty":
             return
@@ -189,6 +191,7 @@ class CognitiveSharedMemory:
             raise ValueError("shared_qq_memory_import_failed")
         self._source_stamp = stamp
 
+    @measure_stage("memory.import_local")
     def sync_local(self):
         """Project real committed session turns; original presets remain intact."""
         # Start the live-capture guarantee even on days with no action/message.
@@ -196,22 +199,20 @@ class CognitiveSharedMemory:
         self.store.mark_archive_started("local_chat")
         self.store.mark_archive_started("action_outcome")
         count = 0
-        for session_id, turns in self.host.chat.pipeline.session_store.snapshot().items():
-            if session_id != self.host.chat.active_session_id:
+        session_id = self.host.chat.active_session_id
+        for turn in self.host.chat.pipeline.session_store.recent(session_id):
+            if not turn.event_id or turn.timestamp is None or not turn.text.strip():
+                # Older source entries lacking time/identity remain in the
+                # original store; do not invent an observed historical time.
                 continue
-            for turn in turns:
-                if not turn.event_id or turn.timestamp is None or not turn.text.strip():
-                    # Older source entries lacking time/identity remain in the
-                    # original store; do not invent an observed historical time.
-                    continue
-                role = "assistant" if turn.role == "character" else "user"
-                value = self.store.record_local(SharedLocalEvent(
-                    event_id=f"{turn.event_id}.{role}", session_id=session_id,
-                    author_principal="character:misty" if role == "assistant" else "local:main",
-                    role=role, text=turn.text, occurred_at=turn.timestamp,
-                    display_name=turn.speaker,
-                    evidence_refs=(f"local-chat:{session_id}:{turn.event_id}:{role}",)))
-                count += int(value.created)
+            role = "assistant" if turn.role == "character" else "user"
+            value = self.store.record_local(SharedLocalEvent(
+                event_id=f"{turn.event_id}.{role}", session_id=session_id,
+                author_principal="character:misty" if role == "assistant" else "local:main",
+                role=role, text=turn.text, occurred_at=turn.timestamp,
+                display_name=turn.speaker,
+                evidence_refs=(f"local-chat:{session_id}:{turn.event_id}:{role}",)))
+            count += int(value.created)
         return count
 
     def archive_local(self, *, event_id: str, session_id: str, role: str, text: str,
@@ -416,6 +417,7 @@ class CognitiveSharedMemory:
         segment.memory_evidence = MemoryEvidenceContext.bind(audience="local:main", entries=entries, segment=segment)
         return [segment]
 
+    @measure_stage("memory.prepare")
     def qq_binding(self, *, group_id, member_id=None, query=None):
         conversation = conversation_scope(group_id)
         private = conversation["kind"] == "private"

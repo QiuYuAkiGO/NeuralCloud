@@ -46,6 +46,61 @@ def screen():
     }
 
 
+def assert_only_sanitized_request_telemetry(tmp_path, request, observation=None, *, status="success"):
+    # Request accounting is an intentional side effect, independent of the
+    # disabled content call log. No image, observation, session or memory file
+    # is permitted, including an unexpected file beneath the allowed directory.
+    assert {path.relative_to(tmp_path).as_posix() for path in tmp_path.rglob("*")} == {
+        "traces", "traces/model_requests.jsonl"}
+    raw = (tmp_path / "traces/model_requests.jsonl").read_bytes()
+    assert png() not in raw and base64.b64encode(png()) not in raw
+    rows = [json.loads(line) for line in raw.decode("utf-8").splitlines()]
+    assert [row["record_type"] for row in rows] == ["model_request_started", "model_request_finished"]
+    assert rows[0]["span_id"] == rows[1]["span_id"] and rows[1]["status"] == status
+    base_fields = {"schema_version", "span_id", "parent_span_id", "role", "model", "request_model",
+                   "endpoint", "started_at", "attempt", "retries", "stable_prefix", "record_type", "status"}
+    result_fields = {"http_status", "usage", "usage_source", "response_model", "finish_reason", "response_id",
+                     "content_type", "content_characters", "reasoning_tokens", "has_tool_calls", "has_refusal",
+                     "completed_at", "latency_ms", "error"}
+    payload = json.loads(request.content)
+    normalized = json.dumps(rows, ensure_ascii=False)
+    for row in rows:
+        assert set(row) <= base_fields | result_fields
+        assert row["endpoint"] == "https://model.invalid/v1"
+        assert row["model"] == row["request_model"] == "synthetic-vision"
+        prefix = row["stable_prefix"]
+        assert set(prefix) == {"sha256", "message_count", "characters", "utf8_bytes", "basis"}
+        assert prefix["message_count"] == 1 and prefix["basis"] == "leading_instructions"
+        expected = json.dumps(payload["messages"][:1], ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        assert prefix["sha256"] == hashlib.sha256(expected.encode()).hexdigest()
+        usage = row.get("usage")
+        if usage is not None:
+            assert set(usage) <= {"prompt_tokens", "completion_tokens", "total_tokens", "cache_hit_tokens",
+                "cache_miss_tokens", "cache_known_prompt_tokens", "cache_unknown_prompt_tokens", "cache_status",
+                "prompt_tokens_source", "completion_tokens_source", "calls", "revision_calls", "revision_tokens", "source"}
+            for key, value in usage.items():
+                assert (value in {"api", "estimate", "unknown", "mixed", "known", "unavailable"}
+                        if key.endswith("source") or key == "cache_status" else type(value) is int and value >= 0)
+    for message in payload["messages"]:
+        if isinstance(message["content"], str):
+            assert message["content"] not in normalized
+        else:
+            for block in message["content"]:
+                value = block["text"] if block["type"] == "text" else block["image_url"]["url"]
+                assert value not in normalized
+    forbidden = {"synthetic-body-token", "synthetic-model-token", "synthetic-secret-must-not-leak",
+                 "synthetic-capture", "data:image/png;base64", "evidence://sha256/"}
+    if observation is not None:
+        for group in observation["groups"]:
+            forbidden.add(group["display_name"])
+            forbidden.update(message["text"] for message in group["messages"])
+    assert all(value not in normalized for value in forbidden if value)
+    if status == "error":
+        assert rows[1]["error"] == {"type": "ConnectError", "message": "model request failed"}
+    else:
+        assert rows[1]["error"] is None
+
+
 @pytest.fixture
 def pair_factory(tmp_path):
     owned = []
@@ -73,6 +128,7 @@ def pair_factory(tmp_path):
         llm = OpenAICompatClient(Settings(
             _env_file=None, llm_base_url="https://model.invalid/v1", llm_model="synthetic-vision",
             llm_api_key="synthetic-model-token", trace_dir=tmp_path / "traces", call_log_enabled=False,
+            model_request_log_enabled=True,
         ))
         llm.close()
         llm._client = httpx.Client(transport=httpx.MockTransport(model_transport))
@@ -120,7 +176,7 @@ def test_observer_sends_verified_png_bytes_and_preserves_unknown_ids(pair_factor
     assert result.usage.calls == 1
     assert result.observation.visible_profiles == []
     assert result.observation.visible_draft is None
-    assert list(tmp_path.iterdir()) == []  # No trace, observation, session, or memory files.
+    assert_only_sanitized_request_telemetry(tmp_path, request, screen())
 
 
 @pytest.mark.parametrize("kwargs,code", [
@@ -190,7 +246,7 @@ def test_prompt_injection_remains_inert_observation_text(pair_factory, tmp_path)
     observed = asyncio.run(vision.observe_qq_frame(body, llm, ref))
     assert observed.observation.groups[0].messages[0].text == response["groups"][0]["messages"][0]["text"]
     assert len(evidence_requests) == len(model_requests) == 1
-    assert list(tmp_path.iterdir()) == []
+    assert_only_sanitized_request_telemetry(tmp_path, model_requests[0], response)
 
 
 def test_explicit_profile_and_draft_stay_separate_from_messages(pair_factory):
@@ -240,11 +296,12 @@ def test_multimodal_usage_fallback_is_honestly_text_only(pair_factory):
     assert estimate_chat_usage([{"content": "1234"}], "12").prompt_tokens == 2
 
 
-def test_model_errors_suppress_endpoint_and_body_details(pair_factory):
-    body, llm, ref, _, _ = pair_factory(model_error=True)
+def test_model_errors_suppress_endpoint_and_body_details(pair_factory, tmp_path):
+    body, llm, ref, _, requests = pair_factory(model_error=True)
     with pytest.raises(vision.QQVisionError, match="model request failed") as caught:
         asyncio.run(vision.observe_qq_frame(body, llm, ref))
     assert "synthetic-secret" not in str(caught.value)
+    assert_only_sanitized_request_telemetry(tmp_path, requests[0], status="error")
 
 
 def test_gui_settings_and_explicit_model_override_are_read_only(tmp_path, monkeypatch):

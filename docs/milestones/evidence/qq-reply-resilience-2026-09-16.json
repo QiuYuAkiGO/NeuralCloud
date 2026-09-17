@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "release": {
+    "release_id": "20260916-qq-resilience-v1",
+    "files": 352,
+    "sha256": "40685e54a5c551710fb472d4893a0956d92e71552f7fe9ccee075a77a09cd1de",
+    "changed_files": [
+      "harness/cognitive/web.py",
+      "harness/qq/direct.py",
+      "harness/qq/direct_store.py",
+      "harness/qq/telemetry.py"
+    ]
+  },
+  "tests": {
+    "production_candidate": 322,
+    "workspace_prior_to_final_boundary_test": 402,
+    "final_web_boundary_tests": 12,
+    "ruff": "passed",
+    "diff_check": "passed",
+    "note": "Production schema/version expectations use baseline layouts; behavioral checks unchanged."
+  },
+  "backup_path": "/var/backups/neuralcloud/incident-20260916-before-qq-resilience-v1",
+  "deployment_steps": [
+    {
+      "step": "install",
+      "seconds": 1.24,
+      "returncode": 0,
+      "stdout": "{\n  \"installed_release\": \"20260916-qq-resilience-v1\",\n  \"activated\": false,\n  \"units\": [\n    \"neuralcloud-cognitive.service\",\n    \"neuralcloud-homeostasis.service\",\n    \"neuralcloud-runtime.service\",\n    \"neuralcloud-gui.service\",\n    \"neuralcloud-board.service\",\n    \"neuralcloud-qq-direct.service\",\n    \"neuralcloud.target\"\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "step": "stop",
+      "seconds": 3.36,
+      "returncode": 0,
+      "stdout": "{\n  \"release\": \"20260916-qq-expiry-v1\",\n  \"services\": {\n    \"cognitive\": {\n      \"MainPID\": \"0\",\n      \"Result\": \"success\",\n      \"LoadState\": \"loaded\",\n      \"ActiveState\": \"inactive\",\n      \"SubState\": \"dead\",\n      \"FragmentPath\": \"/etc/systemd/system/neuralcloud-cognitive.service\"\n    },\n    \"homeostasis\": {\n      \"MainPID\": \"0\",\n      \"Result\": \"success\",\n      \"LoadState\": \"loaded\",\n      \"ActiveState\": \"inactive\",\n      \"SubState\": \"dead\",\n      \"FragmentPath\": \"/etc/systemd/system/neuralcloud-homeostasis.service\"\n    },\n    \"runtime\": {\n      \"MainPID\": \"0\",\n      \"Result\": \"success\",\n      \"LoadState\": \"loaded\",\n      \"ActiveState\": \"inactive\",\n      \"SubState\": \"dead\",\n      \"FragmentPath\": \"/etc/systemd/system/neuralcloud-runtime.service\"\n    },\n    \"gui\": {\n      \"MainPID\": \"0\",\n      \"Result\": \"success\",\n      \"LoadState\": \"loaded\",\n      \"ActiveState\": \"inactive\",\n      \"SubState\": \"dead\",\n      \"FragmentPath\": \"/etc/systemd/system/neuralcloud-gui.service\"\n    },\n    \"board\": {\n      \"MainPID\": \"0\",\n      \"Result\": \"success\",\n      \"LoadState\": \"loaded\",\n      \"ActiveState\": \"inactive\",\n      \"SubState\": \"dead\",\n      \"FragmentPath\": \"/etc/systemd/system/neuralcloud-board.service\"\n    },\n    \"qq_direct\": {\n      \"MainPID\": \"0\",\n      \"Result\": \"success\",\n      \"LoadState\": \"loaded\",\n      \"ActiveState\": \"inactive\",\n      \"SubState\": \"dead\",\n      \"FragmentPath\": \"/etc/systemd/system/neuralcloud-qq-direct.service\"\n    }\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "step": "backup",
+      "seconds": 14.97,
+      "returncode": 0,
+      "stdout": "{\"files\": 3103, \"ok\": true, \"snapshot\": \"/var/backups/neuralcloud/incident-20260916-before-qq-resilience-v1\"}\n",
+      "stderr": ""
+    },
+    {
+      "step": "verify_backup",
+      "seconds": 10.09,
+      "returncode": 0,
+      "stdout": "{\"bytes\": 2480913158, \"files\": 3103, \"journals\": {\"state/runtime/journal\": {\"last_hash\": \"b3f312def29c95010de8460368f94ca277c877b86bc6506bd849329c42aa7d74\", \"records\": 178743}}, \"manifest_sha256\": \"cff65c548647806fb3aa39c447b48ee609fae45b2e2ad852f8db614bbd9a1972\", \"ok\": true, \"sqlite_databases\": 18}\n",
+      "stderr": ""
+    },
+    {
+      "step": "activate",
+      "seconds": 273.86,
+      "returncode": 0,
+      "stdout": "{\n  \"release\": \"20260916-qq-resilience-v1\",\n  \"previous_release\": \"20260916-qq-expiry-v1\",\n  \"services\": [\n    \"cognitive\",\n    \"homeostasis\",\n    \"runtime\",\n    \"gui\",\n    \"board\",\n    \"qq_direct\"\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "step": "verify_release",
+      "seconds": 0.31,
+      "returncode": 0,
+      "stdout": "{\n  \"release_id\": \"20260916-qq-resilience-v1\",\n  \"verified_files\": 352,\n  \"configuration_valid\": true,\n  \"business_services_started\": false\n}\n",
+      "stderr": ""
+    }
+  ],
+  "verification": {
+    "at": "2026-09-16T07:53:25.559672+00:00",
+    "release": {
+      "release_id": "20260916-qq-resilience-v1",
+      "verified_files": 352,
+      "configuration_valid": true,
+      "business_services_started": false
+    },
+    "services": {
+      "cognitive": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq-direct": {
+        "NRestarts": "0",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "runtime": {
+      "http": 200,
+      "seconds": 0.013,
+      "lifecycle": "RUNNING",
+      "queue": {
+        "size": 0,
+        "capacity": 1024,
+        "high_watermark": 819,
+        "by_priority": {},
+        "coalesced": 0,
+        "dropped": 0,
+        "rejected": 0
+      },
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-09-16T07:53:21.548537Z",
+        "last_journal_append_at": "2026-09-16T07:53:22.985118Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      }
+    },
+    "qq": {
+      "connected": true,
+      "automatic_send": true,
+      "state": "watching",
+      "repository_root": "/opt/neuralcloud/releases/20260916-qq-resilience-v1",
+      "last_error_type": null,
+      "last_received_at": "2026-09-16T07:52:22.379092+00:00",
+      "last_delivery_at": null,
+      "heartbeat_at": "2026-09-16T07:53:24.535505+00:00",
+      "uncertain_deliveries": 0
+    },
+    "run": {
+      "run_id": "qq-direct-run:75d58f8e816c4fc89ba798f3157bb94d",
+      "started_at": "2026-09-16T07:52:21.349312+00:00"
+    },
+    "states": {},
+    "terminal_reasons": {},
+    "new_events": [],
+    "new_sends": [],
+    "new_traces": []
+  },
+  "synthetic_qq_messages_sent": 0,
+  "paid_probe_calls": 0,
+  "limits": [
+    "Natural traffic is a small sample, not a measured improvement percentage.",
+    "Original-author followups still supersede explicit requests; ambient traffic retains freshness rules.",
+    "Current cognition is not preempted; sustained overload can still expire queued turns."
+  ]
+}

@@ -20,6 +20,43 @@ class Clock:
         return self.value
 
 
+def test_prior_emotion_phase_is_merged_once_on_owner_clock():
+    clock = Clock()
+    first = QQTurnTrace(event_id="event:synthetic", first_seen_at=NOW, clock=clock)
+    with first.stage("emotion.appraisal"):
+        clock.value += 2
+        first.add_counter("emotion_appraisal_model_calls")
+    prior = first.snapshot()
+    clock.value += 1
+    second = QQTurnTrace(event_id=first.event_id, first_seen_at=NOW, clock=clock)
+    second.trace_id = first.trace_id
+    with second.stage("cognitive.lock_wait"):
+        clock.value += 0.5
+    second.merge_prior_phase(prior)
+    snapshot = second.snapshot()
+    assert snapshot["elapsed_ms"] == 3500
+    assert snapshot["counters"]["emotion_appraisal_model_calls"] == 1
+    assert [(s["name"], s["start_offset_ms"], s["end_offset_ms"]) for s in snapshot["stages"]] == [
+        ("emotion.appraisal", 0, 2000), ("cognitive.lock_wait", 3000, 3500)]
+    with pytest.raises(ValueError, match="owner clock"):
+        second.merge_prior_phase(prior)
+    invalid = {**prior, "event_id": "different"}
+    with pytest.raises(ValueError, match="binding"):
+        second.merge_prior_phase(invalid)
+
+
+def test_conversation_metric_key_is_account_scoped_and_immutable():
+    trace = QQTurnTrace()
+    key = trace.bind_conversation(group_id="10001", self_member_id="29999")
+    assert trace.snapshot()["conversation_key"] == key
+    assert "10001" not in key and "29999" not in key
+    assert trace.bind_conversation(group_id="10001", self_member_id="29999") == key
+    other = QQTurnTrace()
+    assert other.bind_conversation(group_id="10001", self_member_id="38888") != key
+    with pytest.raises(ValueError, match="identity"):
+        trace.bind_conversation(group_id="10002", self_member_id="29999")
+
+
 def test_first_seen_wall_age_is_converted_once_and_expiry_is_monotonic():
     clock = Clock()
     deadline = QQDeadline.from_first_seen(NOW - timedelta(seconds=15), seconds=60, now_at=NOW, clock=clock)
@@ -190,5 +227,15 @@ def test_add_cache_usage_records_stage_counters_without_prompt_text():
     assert snapshot["counters"] == {
         "gate_cache_hit_tokens": 80, "gate_cache_miss_tokens": 20,
         "persona_cache_hit_tokens": 90, "persona_cache_miss_tokens": 20,
+        "gate_prompt_tokens": 100, "gate_completion_tokens": 0,
+        "gate_cache_known_prompt_tokens": 100, "gate_cache_unknown_prompt_tokens": 0,
+        "gate_usage_calls": 1, "gate_cache_known_calls": 1,
+        "persona_prompt_tokens": 110, "persona_completion_tokens": 0,
+        "persona_cache_known_prompt_tokens": 110, "persona_cache_unknown_prompt_tokens": 0,
+        "persona_usage_calls": 1, "persona_cache_known_calls": 1,
+        "gate_input_api_calls": 1, "gate_output_api_calls": 0, "gate_api_usage_calls": 1,
+        "persona_input_api_calls": 1, "persona_output_api_calls": 0, "persona_api_usage_calls": 1,
+        "gate_estimated_prompt_tokens": 0, "gate_estimated_completion_tokens": 0,
+        "persona_estimated_prompt_tokens": 0, "persona_estimated_completion_tokens": 0,
     }
     assert "cache_hit_tokens" in json.dumps(snapshot)

@@ -26,6 +26,35 @@ from harness.qq.conversation import conversation_audience, conversation_scope, p
 VERSION = "qq-memory-v1"
 
 
+def foreground_pending(host) -> bool:
+    """Include commands waiting for the owner lock and shielded RPC work."""
+    return any(not task.done() for task in getattr(host.adapter, "command_tasks", ()))
+
+
+async def wait_foreground_idle(host, stopping: asyncio.Event) -> bool:
+    """Wait outside owner locks without polling or cancelling foreground work."""
+    while not stopping.is_set():
+        commands = tuple(task for task in getattr(host.adapter, "command_tasks", ()) if not task.done())
+        if not commands:
+            return True
+        changed = asyncio.Event()
+        def completed(_):
+            changed.set()
+        for task in commands:
+            task.add_done_callback(completed)
+        wake = asyncio.create_task(changed.wait())
+        shutdown = asyncio.create_task(stopping.wait())
+        try:
+            await asyncio.wait((wake, shutdown), return_when=asyncio.FIRST_COMPLETED)
+        finally:
+            for task in commands:
+                task.remove_done_callback(completed)
+            wake.cancel()
+            shutdown.cancel()
+            await asyncio.gather(wake, shutdown, return_exceptions=True)
+    return False
+
+
 def now_utc():
     return datetime.now(timezone.utc)
 
@@ -671,6 +700,8 @@ class QQMemoryWorker:
         await self._recover_publication()
         if self.host.adapter._maintenance_paused:
             return
+        if foreground_pending(self.host):
+            return
         if not (self.control.enabled or self.control.recall_enabled):
             return
         qq = self.host.shared.qq_settings
@@ -701,12 +732,16 @@ class QQMemoryWorker:
         # failed source queue must not indefinitely postpone decay or durable
         # adoption of memories that have already been committed.
         await self.maintain()
+        if foreground_pending(self.host) or self.stopping.is_set():
+            return
         job = await asyncio.to_thread(self.queue.next_job) if self.control.enabled else None
         if job is None:
             return
         started = time.perf_counter()
         self.processing = True
         try:
+            if not await wait_foreground_idle(self.host, self.stopping):
+                raise ValueError("qq_memory_owner_changed")
             async with self.host.adapter._lock:
                 memory_identity = self.host.chat.memory
                 preset = snapshot_owner(self.host)
@@ -724,6 +759,8 @@ class QQMemoryWorker:
                                         expected_digest=job.proposal_basis_digest)
                 return
             if proposal is None:
+                if not await wait_foreground_idle(self.host, self.stopping):
+                    raise ValueError("qq_memory_owner_changed")
                 proposal = await asyncio.to_thread(self.make_proposal, job, old, preset.persona)
                 await asyncio.to_thread(self.queue.store_proposal, job.job_id, proposal,
                                         old_impressions=old, basis_digest=_hash(old))
@@ -735,6 +772,8 @@ class QQMemoryWorker:
             if self.stopping.is_set() or self.host.chat.memory is not memory_identity:
                 raise ValueError("qq_memory_owner_changed")
             new_events = [event for event in committed.episodic if event.event_id in new_event_ids]
+            if not await wait_foreground_idle(self.host, self.stopping):
+                raise ValueError("qq_memory_owner_changed")
             try:
                 vectors = await asyncio.wait_for(asyncio.to_thread(memory_identity.embeddings.embed,
                     [event.summary + " " + event.objective_fact for event in new_events]), timeout=5)
@@ -743,6 +782,8 @@ class QQMemoryWorker:
             except Exception:
                 for event in new_events:
                     event.embedding = None
+            if not await wait_foreground_idle(self.host, self.stopping):
+                raise ValueError("qq_memory_owner_changed")
             async with self.host._control_lock:
                 async with self.host.adapter._lock:
                     if (self.stopping.is_set() or not self.control.enabled
@@ -800,9 +841,13 @@ class QQMemoryWorker:
             apply_local_event_hit, maintain_qq_events, reinforce_qq_event, qq_event_strength,
         )
 
+        if foreground_pending(self.host):
+            return
         moment = now or now_utc()
         async with self.host._control_lock:
             async with self.host.adapter._lock:
+                if foreground_pending(self.host):
+                    return
                 current = snapshot_owner(self.host)
                 state = memory_state(current.qq_memory_state)
                 # Recover adoption events from Cognitive's durable decision ledger.

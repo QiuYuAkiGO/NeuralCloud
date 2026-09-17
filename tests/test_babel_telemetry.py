@@ -107,7 +107,10 @@ def test_usage_estimation_and_disabled_recording(tmp_path):
         assert rows(tmp_path)[-1]["usage_source"] == "estimate"
         client.settings.call_log_enabled = False
         client.complete_chat_result([{"role": "user", "content": "hi"}])
-        assert len(rows(tmp_path)) == 2
+        assert len(rows(tmp_path)) == 4
+        client.settings.model_request_log_enabled = False
+        client.complete_chat_result([{"role": "user", "content": "hi"}])
+        assert len(rows(tmp_path)) == 4
     finally:
         client.close()
 

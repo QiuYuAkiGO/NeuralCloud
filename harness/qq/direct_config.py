@@ -4,10 +4,11 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Literal
 
 from harness.files import replace_path
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, model_validator
 
 from harness.qq.memory import QQID
 from harness.qq.onebot import validate_endpoint
@@ -45,6 +46,17 @@ class DirectQQSettings(BaseModel):
     allowed_local_image_roots: list[Path] = Field(default_factory=list, max_length=8)
     history_count: int = Field(default=20, ge=1, le=50)
     history_poll_seconds: int = Field(default=300, ge=60, le=3600)
+    qq_reply_scheduler: Literal["legacy", "shadow", "coalesced"] = "shadow"
+    qq_media_cache_enabled: StrictBool = False
+    qq_media_parallel_enabled: StrictBool = False
+    qq_image_mode: Literal["all", "one", "off"] = "all"
+    qq_latency_conversations: list[str] | None = Field(default=None, max_length=128)
+
+    @field_validator("qq_latency_conversations")
+    @classmethod
+    def latency_conversations(cls, value):
+        from harness.qq.policy import QQLatencyOptions
+        return QQLatencyOptions.validate_conversations(value)
 
     @model_validator(mode="after")
     def binding(self):

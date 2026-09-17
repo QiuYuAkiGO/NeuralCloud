@@ -3290,6 +3290,8 @@ class RuntimeSupervisor:
 
     async def _dispatch_qq_turn(self, event: RuntimeEvent, process_seq: int) -> EventDispatchResult:
         from harness.qq.shared import QQSharedPrepareRequest
+        from harness.runtime.qq_pipeline import QQTurnRejected
+        from harness.runtime.qq_web import QQWebBindingError
 
         request = QQSharedPrepareRequest.model_validate(event.payload)
         remaining = (request.deadline_at - utc_now()).total_seconds()
@@ -3304,8 +3306,13 @@ class RuntimeSupervisor:
                     result = await self._prepare_qq_turn(event, process_seq, request)
                 if utc_now() < request.deadline_at or (
                     result.status == "completed" and _qq_error_fallback_payload(result.detail)
+                    and utc_now() < request.deadline_at + timedelta(seconds=grace)
                 ):
                     return result
+            except (QQTurnRejected, QQWebBindingError):
+                return EventDispatchResult(event_id=event.event_id, receive_seq=event.receive_seq,
+                    process_seq=process_seq, status="ignored", decision_kind="qq_prepare",
+                    detail={"error_type": "qq_turn_rejected"})
             except (TimeoutError, LateDomainResultError):
                 # A shorter RPC timeout or an early domain failure still uses
                 # ordinary Runtime recovery. Only this turn's expiry is local.
@@ -3330,6 +3337,44 @@ class RuntimeSupervisor:
         return utc_now() >= request.deadline_at
 
     async def _prepare_qq_turn(self, event: RuntimeEvent, process_seq: int, request) -> EventDispatchResult:
+        from harness.runtime.qq_pipeline import policy, prepare
+        self._sync_command_index()
+        new_key = f"cognitive:qq-prepare-turn:{event.event_id}"
+        legacy_key = f"cognitive:qq:{event.event_id}"
+        use_new = new_key in self._command_intent_seqs or (
+            legacy_key not in self._command_intent_seqs and policy(self, request).qq_web_policy != "legacy")
+        result = (await prepare(self, event, request) if use_new
+                  else await self._prepare_qq_legacy_command(event, request))
+        # This is preparation only. Neither the local chat delivery backend nor
+        # Homeostasis/CommitInteraction is invoked for a QQ preparation event.
+        if not isinstance(result.result, dict) or set(result.result) != {"decision", "trace"}:
+            raise DomainCommandError("shared QQ cognitive result is invalid")
+        from harness.qq.decision import QQReplyDecision
+
+        decision = QQReplyDecision.model_validate(result.result["decision"])
+        trace = result.result["trace"]
+        if ((decision.group_id, decision.self_member_id, decision.trace_id) !=
+                (request.group_id, request.self_member_id, request.trace.trace_id)
+                or not isinstance(trace, dict) or trace.get("trace_id") != request.trace.trace_id
+                or trace.get("event_id") != request.trace.event_id):
+            raise DomainCommandError("shared QQ cognitive result binding is invalid")
+        # The model keeps the original command deadline. Only final validation
+        # of an already prepared, bound error notice may use its fixed grace.
+        snapshot_deadline = request.deadline_at
+        if decision.outcome == "error_fallback" and decision.new_decision and not decision.replayed:
+            snapshot_deadline += timedelta(seconds=ERROR_FALLBACK_SEND_SECONDS)
+        snapshot_remaining = (snapshot_deadline - utc_now()).total_seconds()
+        if snapshot_remaining <= 0:
+            raise TimeoutError("qq_turn_expired")
+        current = await asyncio.wait_for(self.cognitive.get_snapshot(), timeout=snapshot_remaining)
+        self._validate_snapshot(current, "cognitive")
+        if current.revision < max(self._cognitive_snapshot.revision, result.committed_revision or 0):
+            raise DomainCommandError("shared QQ cognitive snapshot regressed")
+        self._cognitive_snapshot = current
+        return EventDispatchResult(event_id=event.event_id, receive_seq=event.receive_seq,
+            process_seq=process_seq, status="completed", decision_kind="qq_prepare", detail=result.result)
+
+    async def _prepare_qq_legacy_command(self, event, request):
         method = getattr(self.cognitive, "prepare_qq_response", None)
         if method is None:
             raise DomainCommandError("shared cognitive QQ preparation is unavailable")
@@ -3351,6 +3396,8 @@ class RuntimeSupervisor:
             # Ordinary body-supplied state is replaced, not trusted. Clearing
             # it in off/shadow also prevents indirect user-JSON influence.
             payload["homeostatic_interoception"] = summary
+            from harness.runtime.qq_pipeline import policy
+            payload["qq_frozen_policy"] = policy(self, request).model_dump()
             from harness.runtime.web_dialogue import prepare_web_context
             web_context, _ = await prepare_web_context(self, event, channel="qq", deadline=request.deadline_at)
             if web_context is not None:
@@ -3367,27 +3414,7 @@ class RuntimeSupervisor:
         self._journal_homeostatic_route(event=event, command_id=envelope.command_id,
             target="qq_response", summary=envelope.payload.get("homeostatic_interoception"))
         result = await self._invoke_domain(service="cognitive", envelope=envelope, method=method, event=event)
-        current = await asyncio.wait_for(self.cognitive.get_snapshot(), timeout=max(0.001,
-            (request.deadline_at - utc_now()).total_seconds()))
-        self._validate_snapshot(current, "cognitive")
-        if current.revision < max(self._cognitive_snapshot.revision, result.committed_revision or 0):
-            raise DomainCommandError("shared QQ cognitive snapshot regressed")
-        self._cognitive_snapshot = current
-        # This is preparation only. Neither the local chat delivery backend nor
-        # Homeostasis/CommitInteraction is invoked for a QQ preparation event.
-        if not isinstance(result.result, dict) or set(result.result) != {"decision", "trace"}:
-            raise DomainCommandError("shared QQ cognitive result is invalid")
-        from harness.qq.decision import QQReplyDecision
-
-        decision = QQReplyDecision.model_validate(result.result["decision"])
-        trace = result.result["trace"]
-        if ((decision.group_id, decision.self_member_id, decision.trace_id) !=
-                (request.group_id, request.self_member_id, request.trace.trace_id)
-                or not isinstance(trace, dict) or trace.get("trace_id") != request.trace.trace_id
-                or trace.get("event_id") != request.trace.event_id):
-            raise DomainCommandError("shared QQ cognitive result binding is invalid")
-        return EventDispatchResult(event_id=event.event_id, receive_seq=event.receive_seq,
-            process_seq=process_seq, status="completed", decision_kind="qq_prepare", detail=result.result)
+        return result
 
     async def _invoke_domain(
         self,
@@ -3434,6 +3461,9 @@ class RuntimeSupervisor:
             data={"service": service, "result": result.model_dump(mode="json")},
         )
         if event.event_type == RuntimeEventType.QQ_TURN and result.status not in {"applied", "idempotent_replay"}:
+            if service == "cognitive" and envelope.command_type in {"PrepareQQTurn", "ResumeQQResponse"}:
+                from harness.runtime.qq_pipeline import QQTurnRejected
+                raise QQTurnRejected("qq_turn_rejected")
             # A late failed/conflicting result still reports a real domain
             # failure. Only the owner's explicit deadline results can become
             # turn expiry, including a result completed on time but received
@@ -3481,6 +3511,9 @@ class RuntimeSupervisor:
             asyncio.wait_for(self.homeostasis.get_snapshot(), timeout=self.command_timeout_seconds),
         )
         self._validate_snapshot(self._cognitive_snapshot, "cognitive")
+        from harness.runtime.qq_pipeline import policy, validate_commands
+        if policy(self).qq_web_policy != "legacy":
+            validate_commands(self)
         self._validate_snapshot(self._homeostasis_snapshot, "homeostasis")
         self._validate_homeostasis_contract(self._homeostasis_snapshot)
         snapshot_watchdog = self._homeostasis_watchdog_reasons(
@@ -4553,7 +4586,7 @@ class RuntimeSupervisor:
                 continue
             envelope = DomainCommandEnvelope[dict[str, Any]].model_validate(envelope_data)
             if service == "cognitive" and envelope.command_type in {
-                "PrepareQQResponse", "ObserveEmotion", "PrepareWebStep",
+                "PrepareQQResponse", "PrepareQQTurn", "ResumeQQResponse", "ObserveEmotion", "PrepareWebStep",
             }:
                 source, _ = self.qq_turn_history(envelope.event_id)
                 if source is not None and self._qq_turn_expired(source):
@@ -4564,6 +4597,12 @@ class RuntimeSupervisor:
                         command_id=envelope.command_id, idempotency_key=envelope.idempotency_key,
                         data={"service": service, "error_type": "qq_turn_expired"})
                     continue
+            if envelope.command_type in {"PrepareQQTurn", "ResumeQQResponse"}:
+                # No renewed TTL and no uncertain inference replay on restart.
+                self._append_journal("domain_command_expired", command_id=envelope.command_id,
+                    idempotency_key=envelope.idempotency_key,
+                    data={"service": service, "error_type": "qq_turn_interrupted"})
+                continue
             envelope = self._renew_command_window(envelope)
             method = self._command_method(service, envelope.command_type)
             if method is None:
@@ -4694,6 +4733,8 @@ class RuntimeSupervisor:
             return getattr(self.cognitive, "prepare_capability_call", None)
         if (service, command_type) == ("cognitive", "PrepareQQResponse"):
             return getattr(self.cognitive, "prepare_qq_response", None)
+        if service == "cognitive" and command_type in {"PrepareQQTurn", "ResumeQQResponse"}:
+            return getattr(self.cognitive, "prepare_qq_turn" if command_type == "PrepareQQTurn" else "resume_qq_response", None)
         if service == "cognitive" and command_type in {"PrepareBoardEntry", "CommitBoardEntry"}:
             return getattr(self.cognitive, "prepare_board_entry" if command_type == "PrepareBoardEntry" else "commit_board_entry", None)
         if service == "cognitive" and command_type in {"PrepareDiaryEntry", "CommitDiaryEntry"}:

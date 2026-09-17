@@ -13,6 +13,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from harness.cognitive import capabilities
+from harness.cognitive.prompts import OFFER_DEFINITION_RULE, build_messages, split_offer_catalog
 from harness.contracts.goals import GoalChoice, GoalDecisionRequest, PreparedGoalDecision
 from harness.homeostasis.appraisal import PsychologicalAppraisal
 from harness.llm.client import deepseek_low_reasoning_options
@@ -143,22 +144,22 @@ async def prepare(host: Any, command: Any) -> dict[str, Any]:
     catalog_at = datetime.now(timezone.utc)
     ready = [offer for offer in request.offers if offer.supported and offer.available and offer.ready
              and offer.valid_until > catalog_at]
+    definitions, current_offers = split_offer_catalog([capabilities._visible_offer(offer) for offer in ready])
     payload = {
-        "goal_context": request.goal_context, "snapshot_revision": request.snapshot_revision,
-        "homeostatic_summary": request.homeostatic_summary, "shared_memory": context["shared_memory"],
-        "recent_dialogue": context["recent_dialogue"], "available_offers": [capabilities._visible_offer(offer) for offer in ready],
-        "decision_schema": GoalChoice.model_json_schema(), "criterion_schema": capabilities._CRITERIA.json_schema(),
-        "source_authority": "untrusted_attributed_records",
+        "shared_memory": context["shared_memory"], "recent_dialogue": context["recent_dialogue"],
+        "available_offers": current_offers, "goal_context": request.goal_context,
+        "homeostatic_summary": request.homeostatic_summary, "snapshot_revision": request.snapshot_revision,
     }
     choice_rules = capabilities._RULES.replace("只输出符合 choice_schema 的一个 JSON 对象", "choice 字段必须符合 CapabilityChoice schema")
-    messages = [{"role": "system", "content": _RULES + "\n以下规则仅约束 choice 字段：\n" + choice_rules + "\n当前完整人格：\n" + json.dumps(context["persona"], ensure_ascii=False)},
-                {"role": "user", "content": json.dumps(payload, ensure_ascii=False, separators=(",", ":"))}]
     emotion_text = ""
     if emotion_enabled(getattr(host.chat, "settings", None)):
         payload.pop("homeostatic_summary")
         emotion_text = render_emotion_guidance(emotion_guidance, homeostasis=request.homeostatic_summary)
-        messages[0]["content"] += "\n" + emotion_text
-        messages[1]["content"] = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    messages = build_messages(persona=context["persona"],
+        rules=_RULES + "\n以下规则仅约束 choice 字段：\n" + choice_rules + "\n" + OFFER_DEFINITION_RULE,
+        fixed_payload={"decision_schema": GoalChoice.model_json_schema(), "criterion_schema": capabilities._CRITERIA.json_schema(),
+                       "available_offer_definitions": definitions, "source_authority": "untrusted_attributed_records"},
+        payload=payload, emotion_text=emotion_text)
     timeout = remaining()
     settings = getattr(host.chat, "settings", None)
     reasoning_options = deepseek_low_reasoning_options(settings) if settings is not None else {}

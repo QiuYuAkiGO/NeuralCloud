@@ -90,6 +90,12 @@ class HttpCognitiveClient(_HttpDomainClient):
     async def prepare_qq_response(self, command: DomainCommandEnvelope[dict[str, Any]]) -> DomainCommandResult[dict[str, Any]]:
         return DomainCommandResult[dict[str, Any]].model_validate((await self.command(command)).model_dump(mode="json"))
 
+    async def prepare_qq_turn(self, command: DomainCommandEnvelope[dict[str, Any]]) -> DomainCommandResult[dict[str, Any]]:
+        return DomainCommandResult[dict[str, Any]].model_validate((await self.command(command)).model_dump(mode="json"))
+
+    async def resume_qq_response(self, command: DomainCommandEnvelope[dict[str, Any]]) -> DomainCommandResult[dict[str, Any]]:
+        return DomainCommandResult[dict[str, Any]].model_validate((await self.command(command)).model_dump(mode="json"))
+
     async def prepare_board_entry(self, command: DomainCommandEnvelope[dict[str, Any]]) -> DomainCommandResult[dict[str, Any]]:
         return DomainCommandResult[dict[str, Any]].model_validate((await self.command(command)).model_dump(mode="json"))
 
@@ -237,6 +243,8 @@ def create_domain_service_app(service: Any, *, service_token: str, service_name:
             "AssessAutonomous": getattr(service, "assess_autonomous", None),
             "PrepareResponse": getattr(service, "prepare_response", None),
             "PrepareQQResponse": getattr(service, "prepare_qq_response", None),
+            "PrepareQQTurn": getattr(service, "prepare_qq_turn", None),
+            "ResumeQQResponse": getattr(service, "resume_qq_response", None),
             "PrepareBoardEntry": getattr(service, "prepare_board_entry", None),
             "PrepareCapabilityCall": getattr(service, "prepare_capability_call", None),
             "PrepareWebStep": getattr(service, "prepare_web_step", None),

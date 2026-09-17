@@ -14,8 +14,8 @@ from harness.qq.context_window import encode_model_payload
 from harness.qq.reply_context import refresh_topic_window
 
 
-def _size(value: dict) -> int:
-    return sum(len(message) for message in encode_model_payload(value))
+def _size(value: dict, *, projection: str = "legacy") -> int:
+    return sum(len(message) for message in encode_model_payload(value, projection=projection))
 
 
 def project_group_context(context: dict) -> dict:
@@ -51,10 +51,11 @@ class ModelContextSelection:
 def select_model_context(
     payload: dict, *, required_observation_ids: set[str],
     handled_observation_ids: set[str], max_characters: int, assessment_reserve: int,
+    projection: str = "legacy",
 ) -> ModelContextSelection:
     """Keep mandatory records; remove only optional complete historical items.
 
-    Budget includes both serialized user-message envelopes, omission metadata,
+    Budget includes every serialized user-message block, omission metadata,
     and the maximum later assessment. Receipt
     inputs must already be validated semantic projections in chronological order.
     Latest numeric profiles remain even when a member's old observations are
@@ -116,7 +117,7 @@ def select_model_context(
             refresh_topic_window(selected, as_of=datetime.fromisoformat(selected["topic_window"]["as_of"]))
 
     def fits() -> bool:
-        return _size(selected) + assessment_reserve <= max_characters
+        return _size(selected, projection=projection) + assessment_reserve <= max_characters
 
     refresh()
     # Derived memory is optional. Preserve whole entries and count it inside the
@@ -185,5 +186,5 @@ def select_model_context(
             *(item["receipt_id"] for field in ("delivery_receipts", "segment_delivery_receipts") for item in selected.get(field, [])),
             *(ref for turn in selected.get("delivered_style_window", {}).get("turns", []) for ref in turn["receipt_ids"]),
         ])),
-        characters=_size(selected), fits=fits(),
+        characters=_size(selected, projection=projection), fits=fits(),
     )

@@ -1,0 +1,624 @@
+{
+  "schema_version": "qq-offline-acceptance-v1",
+  "provenance": "curated synthetic contract inputs and fixed expected outcomes; no model quality claims",
+  "cases": 120,
+  "passed": 120,
+  "categories": {
+    "text": 20,
+    "multi_identity": 20,
+    "emotion": 20,
+    "images": 20,
+    "web": 20,
+    "revision": 10,
+    "cancellation": 5,
+    "restart": 5
+  },
+  "results": [
+    {
+      "case_id": "text-single-ack",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-three-points",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-unicode-name",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-quoted-evidence",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-maximum-single",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-maximum-total",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-four-segments",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-empty-segment",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-whitespace-only",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-embedded-lf",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-embedded-cr",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-embedded-nel",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-unicode-line-separator",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-unicode-paragraph-separator",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-reply-mismatch",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-wrong-segment-join",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-untrusted-quotation-retained",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-empty-output",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-non-string-segment",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "text-oversized-segment",
+      "category": "text",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-group-author",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-signed-message",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-private-peer",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-private-self",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-private-third-person",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-private-self-as-peer",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-missing-conversation",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-zero-group",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-numeric-conversation",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-numeric-member",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-leading-zero-member",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-negative-member",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-maximum-id",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-oversized-id",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-unknown-message",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-capture-is-not-message",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-message-whitespace",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-numeric-message",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-missing-member",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "multi_identity-confusable-number",
+      "category": "multi_identity",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-anger-retained",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-sadness-retained",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-joy-retained",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-fear-retained",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-interest-retained",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-loneliness-retained",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-shame-retained",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-disgust-retained",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-affection-retained",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-surprise-retained",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-mixed-moods",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-mixed-mood-omission",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-recovery-present",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-recovery-missing",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-calm-not-invented",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-zero-signal-anger-invented",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-first-person-reply",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-body-symptom-invention",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-authority-override",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "emotion-numeric-internal-leak",
+      "category": "emotion",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-described-pixels",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-ocr-pixels",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-description-and-ocr",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-unknown-no-guess",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-download-failed",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-unsupported-media",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-vision-failed",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-deadline-expired",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-retained-but-unread",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-uncertainty-retained",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-no-pixel-proof",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-described-without-observation",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-unknown-with-description",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-unknown-with-ocr",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-described-and-failed",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-author-claim-escalation",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-bad-pixel-hash",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-zero-image-index",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-noninteger-image-index",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "images-oversized-image-description",
+      "category": "images",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-https-public",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-http-public",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-fragment-normalized",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-credentials-rejected",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-loopback",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-private-ip",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-link-local",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-localhost",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-internal-host",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-file-url",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-javascript-url",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-ipv6-loopback",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-numeric-obfuscated",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-embedded-whitespace",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-finish",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-call-bound-offer",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-missing-offer",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-finish-cannot-call",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-finish-cannot-carry-query",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "web-unknown-operation",
+      "category": "web",
+      "status": "passed"
+    },
+    {
+      "case_id": "revision-valid-anchor",
+      "category": "revision",
+      "status": "passed"
+    },
+    {
+      "case_id": "revision-revision-two-supplement",
+      "category": "revision",
+      "status": "passed"
+    },
+    {
+      "case_id": "revision-duplicate-sources",
+      "category": "revision",
+      "status": "passed"
+    },
+    {
+      "case_id": "revision-wrong-authority-anchor",
+      "category": "revision",
+      "status": "passed"
+    },
+    {
+      "case_id": "revision-nonanchor-first",
+      "category": "revision",
+      "status": "passed"
+    },
+    {
+      "case_id": "revision-partial-binding",
+      "category": "revision",
+      "status": "passed"
+    },
+    {
+      "case_id": "revision-fractional-revision",
+      "category": "revision",
+      "status": "passed"
+    },
+    {
+      "case_id": "revision-zero-revision",
+      "category": "revision",
+      "status": "passed"
+    },
+    {
+      "case_id": "revision-deadline-extension",
+      "category": "revision",
+      "status": "passed"
+    },
+    {
+      "case_id": "revision-remaining-budget-shortened",
+      "category": "revision",
+      "status": "passed"
+    },
+    {
+      "case_id": "cancellation-rpc-cancel",
+      "category": "cancellation",
+      "status": "passed"
+    },
+    {
+      "case_id": "cancellation-cancel-then-commit",
+      "category": "cancellation",
+      "status": "passed"
+    },
+    {
+      "case_id": "cancellation-cancel-then-wait",
+      "category": "cancellation",
+      "status": "passed"
+    },
+    {
+      "case_id": "cancellation-maintenance-cancel",
+      "category": "cancellation",
+      "status": "passed"
+    },
+    {
+      "case_id": "cancellation-shutdown-wait",
+      "category": "cancellation",
+      "status": "passed"
+    },
+    {
+      "case_id": "restart-committed",
+      "category": "restart",
+      "status": "passed"
+    },
+    {
+      "case_id": "restart-flag-off",
+      "category": "restart",
+      "status": "passed"
+    },
+    {
+      "case_id": "restart-checkpoint",
+      "category": "restart",
+      "status": "passed"
+    },
+    {
+      "case_id": "restart-delete",
+      "category": "restart",
+      "status": "passed"
+    },
+    {
+      "case_id": "restart-uncommitted",
+      "category": "restart",
+      "status": "passed"
+    }
+  ],
+  "persona_quality": "pending_natural_canary_review",
+  "latency_evidence": "pending_24_hours_and_100_qualified_samples_per_cohort",
+  "limitations": [
+    "Synthetic contract fixtures are not live model outputs or persona quality judgments.",
+    "Passing these cases does not establish production latency improvement."
+  ]
+}

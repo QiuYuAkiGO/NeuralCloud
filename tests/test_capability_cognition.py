@@ -257,8 +257,10 @@ def test_desktop_model_receives_registry_schema_and_produces_goal():
     owner = host(FakeLLM(output))
     result = run(owner, command([item]))
     payload = json.loads(owner.chat.llm.calls[0][0][1]["content"])
-    assert "app_id" in payload["available_offers"][0]["input_schema"]["properties"]
-    assert payload["available_offers"][0]["criterion_kinds"] == ["process", "window"]
+    definition = next(value for value in payload["available_offer_definitions"]
+                      if value["definition_id"] == payload["available_offers"][0]["definition_id"])
+    assert "app_id" in definition["input_schema"]["properties"]
+    assert definition["criterion_kinds"] == ["process", "window"]
     assert result["decision"]["choice"]["arguments"] == {"app_id": "scratchpad"}
 
 

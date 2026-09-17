@@ -71,8 +71,12 @@ def render_emotion_guidance(guidance: Any = None, *, homeostasis: Any = None) ->
     if not text:
         text = (render_homeostatic_interoception(summary) if summary is not None else
                 "当前没有可靠的新情绪提示，沿用通常的表达习惯，不凭空制造强烈感受或原因。")
-    return ("当前情绪演绎提示：" + text + "\n" + PERSONA_EXPRESSION_DEFAULTS
-            + "只自然演绎，不复述提示、权重、内部指标或形成机制；不能把不明原因归咎于当前对象。")
+    # Keep the shared expression rules before the changing brief. This only
+    # changes the layout of this trusted segment; admission, priority and the
+    # current emotion snapshot remain unchanged.
+    return (PERSONA_EXPRESSION_DEFAULTS
+            + "只自然演绎，不复述提示、权重、内部指标或形成机制；不能把不明原因归咎于当前对象。"
+            + "\n当前情绪演绎提示：" + text)
 
 
 def command_emotion_context(host: Any, payload: dict[str, Any]) -> tuple[dict[str, Any], Any]:

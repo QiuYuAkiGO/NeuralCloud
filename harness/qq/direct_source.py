@@ -16,6 +16,10 @@ from harness.qq.conversation import conversation_scope
 from harness.qq.memory import QQVerifiedProfile, QQVisualObservation
 
 
+class DirectQQSourceExpired(ValueError):
+    """A verified protocol source lost its original reply window."""
+
+
 def validate_direct_source(config, request, *, completed_replay=False):
     path = os.environ.get("NC_QQ_DIRECT_CONFIG")
     if not path:
@@ -55,13 +59,19 @@ def validate_direct_source(config, request, *, completed_replay=False):
             or first_seen != request.trace.first_seen_at
             or not first_seen < request.deadline_at <= first_seen + timedelta(seconds=60)):
         raise ValueError("direct_qq_source_binding_invalid")
-    if not completed_replay and (row["state"] not in {"bound", "preparing"} or row["decision_id"] is not None or sent):
-        raise ValueError("direct_qq_source_not_pending")
     moment = datetime.now(timezone.utc)
+    if not completed_replay and (row["state"] not in {"bound", "preparing"} or row["decision_id"] is not None or sent):
+        # Direct may mark the same bound event expired before this source read
+        # finishes. It is still never sendable. Verify all original evidence
+        # below before reporting that one narrow state race as deadline expiry.
+        expired_unprepared = (row["state"] == "expired" and row["decision_id"] is None
+                              and sent is None and request.deadline_at <= moment)
+        if not expired_unprepared:
+            raise ValueError("direct_qq_source_not_pending")
     message_time = datetime.fromisoformat(value["message_time"])
     if not -5 <= (first_seen - message_time).total_seconds() <= 60:
         raise ValueError("direct_qq_message_stale")
-    if not completed_replay and (request.deadline_at <= moment or first_seen > moment + timedelta(seconds=5)):
+    if not completed_replay and first_seen > moment + timedelta(seconds=5):
         raise ValueError("direct_qq_source_expired")
     ref = value["event_evidence_ref"]
     if not isinstance(ref, str) or re.fullmatch(r"qq-protocol://sha256/[0-9a-f]{64}", ref) is None:
@@ -103,7 +113,7 @@ def validate_direct_source(config, request, *, completed_replay=False):
             or observation.capture_item_id != record["capture_item_id"] or observation.observed_at != message_time
             or observation.observed_at != datetime.fromisoformat(record["observed_at"])
             or ref not in observation.attribution_evidence
-            or observation.model_dump(mode="json") != value.get("bound_observation")):
+            or observation.model_dump(mode="json") != QQVisualObservation.model_validate(value.get("bound_observation")).model_dump(mode="json")):
         raise ValueError("direct_qq_observation_binding_invalid")
     if (profile.verification != "qq_protocol_verified" or profile.group_id != request.group_id
             or profile.member_id != request.trigger_member_id or profile.record_id != observation.profile_record_id
@@ -113,3 +123,8 @@ def validate_direct_source(config, request, *, completed_replay=False):
         raise ValueError("direct_qq_observation_profile_invalid")
     if [item.image_index for item in observation.image_analysis] != list(range(1, len(original["images"]) + 1)):
         raise ValueError("direct_qq_image_binding_invalid")
+    # Classify only a verified source's elapsed reply window as ordinary expiry.
+    # Scope, hash, binding and future-clock errors retain their real failures,
+    # including when validation itself finishes after the reply deadline.
+    if not completed_replay and request.deadline_at <= datetime.now(timezone.utc):
+        raise DirectQQSourceExpired("direct_qq_source_expired")
