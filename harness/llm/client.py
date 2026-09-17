@@ -77,6 +77,7 @@ class LLMClient(Protocol):
         timeout_seconds: float | None = None,
         response_format: dict[str, Any] | None = None,
         reasoning_effort: str | None = None,
+        thinking: dict[str, str] | None = None,
     ) -> ChatResult: ...
 
 
@@ -266,6 +267,7 @@ class OpenAICompatClient:
         timeout_seconds: float | None = None,
         response_format: dict[str, Any] | None = None,
         reasoning_effort: str | None = None,
+        thinking: dict[str, str] | None = None,
     ) -> ChatResult:
         if stream:
             raise NotImplementedError("streaming is reserved for a later milestone")
@@ -291,6 +293,8 @@ class OpenAICompatClient:
             payload["response_format"] = response_format
         if reasoning_effort is not None:
             payload["reasoning_effort"] = reasoning_effort
+        if thinking is not None:
+            payload["thinking"] = thinking
         headers = {"Authorization": f"Bearer {self.settings.llm_api_key}"}
         with model_request_span(self.settings, role="main", messages=messages) as span:
             if diagnostic_observer(self._request_observer) is not None:
@@ -524,6 +528,7 @@ class RoutingLLMClient:
         timeout_seconds: float | None = None,
         response_format: dict[str, Any] | None = None,
         reasoning_effort: str | None = None,
+        thinking: dict[str, str] | None = None,
     ) -> ChatResult:
         with trace_scope(model_role="main"):
             options = {} if timeout_seconds is None else {"timeout_seconds": timeout_seconds}
@@ -531,6 +536,8 @@ class RoutingLLMClient:
                 options["response_format"] = response_format
             if reasoning_effort is not None:
                 options["reasoning_effort"] = reasoning_effort
+            if thinking is not None:
+                options["thinking"] = thinking
             return self._main.complete_chat_result(
                 messages,
                 temperature=temperature,
@@ -765,13 +772,15 @@ class MockLLM:
         timeout_seconds: float | None = None,
         response_format: dict[str, Any] | None = None,
         reasoning_effort: str | None = None,
+        thinking: dict[str, str] | None = None,
     ) -> ChatResult:
         if stream:
             raise NotImplementedError("streaming is reserved for a later milestone")
         self.chat_calls.append(messages)
         self.chat_call_options.append({"temperature": temperature, "stream": stream,
             "max_tokens": max_tokens, "timeout_seconds": timeout_seconds, "response_format": response_format,
-            **({"reasoning_effort": reasoning_effort} if reasoning_effort is not None else {})})
+            **({"reasoning_effort": reasoning_effort} if reasoning_effort is not None else {}),
+            **({"thinking": thinking} if thinking is not None else {})})
         blob = "\n".join(message.get("content", "") for message in messages)
         for key, value in self.chat_routes.items():
             if key in blob:

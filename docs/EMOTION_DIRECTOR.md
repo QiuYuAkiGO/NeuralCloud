@@ -1,5 +1,19 @@
 # Qwen 情绪评估与演绎
 
+## 2026-09-17 独立 DeepSeek 情绪通道
+
+`Settings.emotion_llm_config`（环境变量 `NC_EMOTION_LLM_CONFIG`）可指定独立 JSON 配置文件：
+
+```json
+{"model":"deepseek-v4-flash","api_key_file":"/etc/neuralcloud/emotion-deepseek.key"}
+```
+
+密钥文件必须是绝对路径，内容为单独一行密钥；配置文件与密钥均应由服务账户持有、权限 0600。Linux 在 `deploy.json.bindings` 中设置该配置路径。只将情绪评估和情绪指导路由到官方 `https://api.deepseek.com`，主模型与其他辅助任务沿用原配置。未设置时保留原有辅助模型路由。
+
+情绪调用关闭 thinking，使用 JSON object 模式，将 schema 放入系统提示，继续由现有情绪类型及语义校验验证结果。原有阶段超时、整轮剩余预算和降级逻辑继续生效。独立通道允许与主模型使用相同模型名和不同密钥。
+
+真实服务器合成输入验证：评估 1.13 秒、指导 1.23 秒，两阶段状态均为 model；100 项专项测试通过。已发布 `20260917-emotion-deepseek-v1`，六个业务服务均为 active/running。上线后前四次真实情绪调用全部成功，约 1.14–1.34 秒；长期稳定性仍待观察。单次探针不代表长期延迟或质量验收。
+
 当前状态：工程接线与独立 Linux 模型部署已完成，候选配置尚未通过发布验收。真实探针仍有旧刺激重复归因的风险，需结合上下文校准；独立盲评和 QQ 在线端到端延迟尚未完成。
 
 ## 工作方式

@@ -1,0 +1,23 @@
+{
+  "date": "2026-09-17",
+  "change": "Restore pre-participation group gate prefix from v17 while retaining current correctness fixes",
+  "new_release": "20260917-participation-conservative-v1",
+  "preserved_previous_release": "20260917-emotion-deepseek-v1",
+  "historical_rule_source": "20260916-context-v1",
+  "group_prompt_version": "qq-group-turn-taking-v22-conservative",
+  "changed_release_files": [
+    "harness/qq/decision.py"
+  ],
+  "retained": {
+    "emotion_provider": "DeepSeek dedicated key",
+    "disabled_group": "1060979317",
+    "direct_cooldown_seconds": 10,
+    "ambient_cooldown_seconds": 60
+  },
+  "backup_directory": "/var/backups/neuralcloud/participation-variants-20260917",
+  "tests_passed": 111,
+  "activation": "verified",
+  "services": "all six active/running",
+  "verified_files": 368,
+  "backup_archives": 2
+}

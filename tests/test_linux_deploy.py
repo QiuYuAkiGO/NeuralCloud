@@ -138,13 +138,17 @@ def test_tokens_are_private_distinct_and_injected_by_role(tmp_path, monkeypatch)
     b.chmod(0o600)
     assert read_token(a) == "a" * 48
     cfg = DeploymentConfig(config_file=tmp_path / "config.json", bindings={
-        "NC_CONTROL_TOKEN_FILE": str(a), "NC_SERVICE_TOKEN_FILE": str(b)}, development=True, mode="demo")
+        "NC_CONTROL_TOKEN_FILE": str(a), "NC_SERVICE_TOKEN_FILE": str(b),
+        "NC_BOARD_CONFIG": str(tmp_path / "board.json")}, development=True, mode="demo")
     env = service_environment(cfg, "runtime", release=tmp_path)
     assert env["NC_CONTROL_TOKEN"] == "a" * 48 and env["NC_SERVICE_TOKEN"] == "b" * 48
     assert env["NC_CONTROL_MODE"] == "development_debug" and env["NC_ISOLATED_DEVELOPMENT"] == "1"
     assert env["NC_RUNTIME_HOST"] == "127.0.0.1"
     gui = service_environment(cfg, "gui", release=tmp_path)
     assert "NC_SERVICE_TOKEN" not in gui
+    assert "NC_BOARD_CONFIG" not in gui
+    assert service_environment(cfg, "cognitive", release=tmp_path)["NC_BOARD_CONFIG"] == env["NC_BOARD_CONFIG"]
+    assert "NC_BOARD_CONFIG" not in service_environment(cfg, "homeostasis", release=tmp_path)
     b.write_text("a" * 48)
     with pytest.raises(DeployError, match="differ"):
         service_environment(cfg, "runtime", release=tmp_path)

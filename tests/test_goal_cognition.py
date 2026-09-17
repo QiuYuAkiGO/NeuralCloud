@@ -240,12 +240,13 @@ def test_snapshot_cannot_replace_independent_completion_evidence():
         run(output, goal_command([], active=True))
 
 
-def test_goal_uses_low_reasoning_only_for_supported_endpoint():
+def test_goal_disables_thinking_only_for_supported_endpoint():
     from harness.config import Settings
     owner = host(FakeLLM(start_choice()))
     owner.chat.settings = Settings(llm_base_url="https://api.deepseek.com", llm_model="deepseek-v4-flash")
     asyncio.run(goals.prepare(owner, goal_command()))
-    assert owner.chat.llm.calls[0][1]["reasoning_effort"] == "low"
+    assert owner.chat.llm.calls[0][1]["thinking"] == {"type": "disabled"}
+    assert "reasoning_effort" not in owner.chat.llm.calls[0][1]
     assert owner.chat.llm.calls[0][1]["max_tokens"] == 4096
 
 

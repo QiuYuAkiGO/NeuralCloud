@@ -1,0 +1,77 @@
+{
+  "date": "2026-09-17",
+  "release": "20260917-board-diary-repair-v3",
+  "archive_sha256": "0e05c3005ec4ca8d51d6b854291607c1efd364d9520e15215a6dd97a8d02d1e3",
+  "tests": {
+    "passed": 170,
+    "skipped": 1,
+    "ruff": "passed"
+  },
+  "goal_context_bytes": {
+    "before": 205234,
+    "after": 45434,
+    "schema_limit": 128000,
+    "actual_failed_request_validated": true
+  },
+  "diary": {
+    "invitation_time": "2026-09-17T12:05:57+08:00",
+    "entry_id": "diary-entry:016d8bbb6c6e7a6c0f5d4e41268b8663139f4954",
+    "status": "committed",
+    "new_entries": 1,
+    "characters": 240,
+    "body_hash_verified": true,
+    "autonomous_enabled": true,
+    "window": "21:00-02:00",
+    "timezone": "Asia/Shanghai",
+    "max_entries_per_day": 1,
+    "elapsed_ms": 6673.05,
+    "model_calls": 1
+  },
+  "preserved": {
+    "qq_1060979317_observe": false,
+    "qq_1060979317_send": false,
+    "conservative_participation": true,
+    "dedicated_emotion_deepseek": true,
+    "historical_records": true
+  },
+  "board": {
+    "entry_id": "board-entry:d9b1d06c55c5b9acf99ddcd483856b9569763c6c",
+    "status": "committed",
+    "new_entries": 1,
+    "characters": 111,
+    "body_hash_verified": true,
+    "elapsed_ms": 10640.512,
+    "model_calls": 1,
+    "confirmed_at": "2026-09-17T12:16:48+08:00"
+  },
+  "services": {
+    "cognitive": "active",
+    "homeostasis": "active",
+    "runtime": "active",
+    "gui": "active",
+    "board": "active",
+    "qq-direct": "active"
+  },
+  "autonomous_goal": {
+    "post_fix_request_and_cas_passed": true,
+    "first_live_attempt": "goal_decision_expired",
+    "upstream_error": "ReadTimeout",
+    "model_budget_seconds": 19.073593074,
+    "historical_no_progress_block_resumed_via_api": true,
+    "second_live_attempt": "goal_output_truncated",
+    "reasoning_tokens": 4096,
+    "content_characters": 0,
+    "fix": "Disable thinking per goal JSON call on supported official DeepSeek endpoint; preserve ordinary chat setting",
+    "final_verification": "Offline regression and per-call payload isolation passed; live retry deferred by foreground messages (user_interrupted), not yet observed",
+    "final_scheduler_status": "waiting",
+    "final_blocked_reason": "user_interrupted"
+  },
+  "additional_tests": {
+    "goal_and_llm_suite_passed": 122,
+    "per_call_thinking_isolation_test_passed": true,
+    "response_contract_suite_passed": 38,
+    "ruff": "passed"
+  },
+  "release_verified_files": 368,
+  "configuration_valid": true
+}

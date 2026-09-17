@@ -20,6 +20,14 @@ def _when(value):
     return datetime.fromisoformat(value) if value else None
 
 
+def _episode_context(episode):
+    """Project bounded recent outcomes, keeping the complete durable ledger."""
+    if episode is None:
+        return None
+    return {key: (value[-16:] if key == "results" else value)
+            for key, value in episode.items() if key != "seen_calls"}
+
+
 def _refs(value):
     """Only known receipt/evidence fields, never arbitrary model text."""
     found = []
@@ -260,7 +268,7 @@ class GoalController:
             offers=[o.model_dump(mode="json") for o in offers], goal_binding=binding,
             goal_request={"snapshot_revision": snapshot.revision, "goal_context": {
                 "episode_id": episode_id, "standing_goal": self.store.get("goal", STANDING_ID), "requested_goal": goal,
-                "active_episode": episode, "known_evidence_refs": refs, "appraisal_evidence_refs": appraisal_refs,
+                "active_episode": _episode_context(episode), "known_evidence_refs": refs, "appraisal_evidence_refs": appraisal_refs,
                 "outcomes": (episode or {}).get("results", [])[-16:],
                 "budget": self.budget(), "snapshot": state_snapshot}})
         # Reserve rate budget before accepting an event, including failed attempts.

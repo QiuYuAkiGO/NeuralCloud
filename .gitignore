@@ -49,6 +49,7 @@ eval/reports/emotional_expression_diagnostics/private/
 kimi-official-api-key.txt
 apiyi-api-key.txt
 remote-linux-server-login.txt
+Deepseek-api-key-affect.txt
 
 # Local Chinese reply evaluation evidence, blind maps and human ratings.
 /data/evaluations/chinese-reply-review-*/

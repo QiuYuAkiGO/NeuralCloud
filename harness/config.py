@@ -76,6 +76,7 @@ class Settings(BaseSettings, QQLatencyOptions):
     aux_llm_num_ctx: int = 8192
     # The frozen runtime manifest selects the rollout mode for shared owners.
     emotion_mode: Literal["off", "shadow", "on"] = "off"
+    emotion_llm_config: Path | None = None
     emotion_half_life_seconds: float = Field(default=600.0, gt=0)
     emotion_window_seconds: float = Field(default=1800.0, gt=0)
     emotion_window_messages: int = Field(default=20, ge=1, le=100)

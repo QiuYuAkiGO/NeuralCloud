@@ -57,6 +57,18 @@ def test_json_mode_is_per_call_preserves_thinking_and_records_safe_finish_metada
         assert secret not in trace_text
 
 
+def test_thinking_override_is_per_call_and_does_not_change_later_chat(tmp_path):
+    captured = []
+    client = _client(tmp_path, {"choices": [{"message": {"content": "{}"}}]}, captured)
+    try:
+        client.complete_chat_result([], thinking={"type": "disabled"})
+        client.complete_chat_result([])
+    finally:
+        client.close()
+    assert captured[0]["thinking"] == {"type": "disabled"}
+    assert captured[1]["thinking"] == {"type": "enabled"}
+
+
 @pytest.mark.parametrize("content,kind", [(None, "null"), ([], "array"), ({"text": "PRIVATE"}, "object"),
                                          (123, "invalid"), ("a reply", "text")])
 def test_content_types_are_preserved_without_stringifying_objects(tmp_path, content, kind):

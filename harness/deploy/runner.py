@@ -69,8 +69,11 @@ def service_environment(cfg: DeploymentConfig, service: str, *, release: Path | 
         values["NC_CONTROL_TOKEN"] = control
     if cfg.public_origin and service == "gui":
         values["NC_PUBLIC_ORIGIN"] = cfg.public_origin
-    # Provider configuration belongs to Runtime only, never the GUI or domains.
-    for name in ("NC_BOARD_CONFIG", "NC_VOICE_CONFIG", "NC_WEB_CONFIG", "NC_MISTYAI_TOKEN_FILE"):
+    # Cognitive validates prepared board scope and receipts against this binding;
+    # Runtime alone performs the board effect through its provider.
+    if service not in {"runtime", "cognitive"}:
+        values.pop("NC_BOARD_CONFIG", None)
+    for name in ("NC_VOICE_CONFIG", "NC_WEB_CONFIG", "NC_MISTYAI_TOKEN_FILE"):
         if service != "runtime":
             values.pop(name, None)
     if service != "cognitive":

@@ -92,9 +92,25 @@ async def attach_emotion_context(supervisor, event, envelope):
     result = observed.result or {}
     if result.get("emotion_context_ref") != context_id:
         raise ValueError("emotion observation context binding mismatch")
+    # Other channels can commit after the Runtime cached its last snapshot.
+    # Build the new preparation against the state actually read after the
+    # observation, while retaining CAS and the original homeostasis/deadline.
+    from harness.runtime.capabilities import before_deadline
+    snapshot = await before_deadline(supervisor.cognitive.get_snapshot(), envelope.deadline)
+    supervisor._validate_snapshot(snapshot, "cognitive")
+    if snapshot.revision < supervisor._cognitive_snapshot.revision:
+        raise ValueError("emotion_cognitive_revision_regressed")
+    supervisor._cognitive_snapshot = snapshot
+    updates = {"request_hash": None}
+    if envelope.expected_revision is not None:
+        updates["expected_revision"] = snapshot.revision
+    if envelope.version_vector is not None:
+        updates["version_vector"] = envelope.version_vector.model_copy(update={
+            key: value for key, value in supervisor.version_vector.model_dump().items()
+            if key.startswith("cognitive_")})
     if envelope.command_type in {"PrepareQQResponse", "PrepareQQTurn"} and result.get("qq_emotion_trace") is not None:
         source["qq_emotion_trace"] = result["qq_emotion_trace"]
-    return envelope.model_copy(update={"request_hash": None, "payload": {**source,
+    return envelope.model_copy(update={**updates, "payload": {**source,
         "emotion_context_ref": context_id, "emotion_revision": result["emotion_revision"]}})
 
 

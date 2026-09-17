@@ -164,6 +164,8 @@ def _fallback_code(exc: Exception) -> str:
 class EmotionService:
     def __init__(self, settings, llm, persist: Callable[[], None] | None = None):
         self.settings, self.llm, self.persist = settings, llm, persist
+        from harness.emotion.endpoint import build_emotion_client
+        self._emotion_client = build_emotion_client(settings)
         self._state = _State()
         self._lock = threading.RLock()
         self._persistence_version = 0
@@ -331,6 +333,8 @@ class EmotionService:
         return max(0.0, timeout)
 
     def _distinct_aux(self) -> bool:
+        if self._emotion_client is not None:
+            return True
         if getattr(self.llm, "aux_distinct", False) is not True:
             return False
         try:
@@ -384,7 +388,7 @@ class EmotionService:
                                              payload=payload, diagnostics=diagnostics)
         output: queue.Queue = queue.Queue(maxsize=1)
         context = copy_context()
-        llm = self.llm
+        llm = self._emotion_client or self.llm
         sink = diagnostic_observer()
 
         def checked_sink(event):

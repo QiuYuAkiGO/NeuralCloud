@@ -1,0 +1,61 @@
+{
+  "release_id": "20260917-emotion-deepseek-v1",
+  "base_release": "20260916-image-parse-v1",
+  "endpoint": "https://api.deepseek.com",
+  "model": "deepseek-v4-flash",
+  "stages": [
+    "emotion_appraisal",
+    "emotion_guidance"
+  ],
+  "thinking": "disabled",
+  "credential_storage": "private server file, dedicated key, no key in evidence",
+  "unit_tests": {
+    "passed": 100
+  },
+  "server_probe": {
+    "appraisal_status": "model",
+    "guidance_status": "model",
+    "appraisal_seconds": 1.1314,
+    "guidance_seconds": 1.2255
+  },
+  "activation": "verified",
+  "limitations": [
+    "Single synthetic probe does not establish long-term latency or quality",
+    "QQ queue and stage-budget issues are separate from this provider change"
+  ],
+  "services": {
+    "cognitive": "active/running",
+    "homeostasis": "active/running",
+    "runtime": "active/running",
+    "gui": "active/running",
+    "board": "active/running",
+    "qq_direct": "active/running"
+  },
+  "release_verified_files": 368,
+  "live_requests": [
+    {
+      "phase": "emotion_appraisal",
+      "status": "success",
+      "latency_ms": 1172.233
+    },
+    {
+      "phase": "emotion_guidance",
+      "status": "success",
+      "latency_ms": 1154.139
+    },
+    {
+      "phase": "emotion_appraisal",
+      "status": "success",
+      "latency_ms": 1138.325
+    },
+    {
+      "phase": "emotion_guidance",
+      "status": "success",
+      "latency_ms": 1340.563
+    }
+  ],
+  "rollback": {
+    "release": "20260916-image-parse-v1",
+    "configuration_backup": "/etc/neuralcloud/deploy.pre-emotion-20260917.json"
+  }
+}

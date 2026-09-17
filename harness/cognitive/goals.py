@@ -162,7 +162,10 @@ async def prepare(host: Any, command: Any) -> dict[str, Any]:
         payload=payload, emotion_text=emotion_text)
     timeout = remaining()
     settings = getattr(host.chat, "settings", None)
-    reasoning_options = deepseek_low_reasoning_options(settings) if settings is not None else {}
+    # This bounded JSON decision must reserve its output budget for the result.
+    # Thinking otherwise consumed all 4096 tokens before producing any JSON.
+    reasoning_options = ({"thinking": {"type": "disabled"}}
+                         if settings is not None and deepseek_low_reasoning_options(settings) else {})
     model_started = time.monotonic()
     with trace_scope(event_id=command.event_id, command_id=command.command_id,
                      phase="goal_decision", model_attempt=1, model_budget_seconds=timeout):

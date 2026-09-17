@@ -141,8 +141,8 @@ class DiaryController:
         if self.supervisor.lifecycle != RuntimeLifecycle.RUNNING or self.active_entry:
             return
         controller = getattr(self.supervisor, "capabilities", None)
-        if getattr(getattr(self.supervisor, "goals", None), "enabled", False):
-            return
+        # Goals currently dispatch board/QQ/web, not diary. Only the diary
+        # owner setting may suppress this independent, day-limited scheduler.
         if _diary_owner(controller) != "legacy":
             return
         now = self._local_now()
