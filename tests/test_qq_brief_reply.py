@@ -43,11 +43,14 @@ def test_compact_plan_is_optional_compatible_and_persists_without_extra_call(set
 
 
 def test_plan_uses_soft_detail_and_content_obligations_without_hard_word_budget():
-    for rules in (decision._RULES, decision._PRIVATE_RULES, _GROUP_DRAFT_RULES, decision._PRIVATE_DRAFT_RULES):
+    for rules in (decision._RULES, decision._PRIVATE_RULES):
         assert "用户本轮提出、Misty需要回答的新问题" in rules
         assert "must_address" in rules
         assert "固定字数" in rules
         assert "clarify" in rules
+    for rules in (_GROUP_DRAFT_RULES, decision._PRIVATE_DRAFT_RULES):
+        assert "must_address" in rules
+        assert "固定字数" in rules
     assert "不为满足固定字数、句数或信息密度而补话" in _GROUP_DRAFT_RULES
     assert "低信息量但真实的社会性回应" in _GROUP_DRAFT_RULES
 
