@@ -281,7 +281,6 @@ class QQReplyPlan(_StrictModel):
         return self
 
 
-class _GateDecision
 class _GateDecision(_StrictModel):
     action: Literal["speak", "wait"]
     reason: str = Field(min_length=1, max_length=512)

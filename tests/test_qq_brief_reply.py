@@ -53,15 +53,14 @@ def test_plan_uses_soft_detail_and_content_obligations_without_hard_word_budget(
 
 
 def test_group_and_private_gates_distinguish_condition_restoration_stance_clarification_and_pure_mentions():
-def test_group_and_private_gates_distinguish_condition_restoration_stance_clarification_and_pure_mentions():
     # Semantic behavior is checked by the live trajectory evaluation. This
     # contract ensures both gate entrypoints receive the distinctions it needs.
     for rules in (decision._RULES, decision._PRIVATE_RULES):
         assert "撤销、反转或恢复此前条件都算新的实质增量" in rules
-        assert "即使最初问题已经回答，也应按恢复后的条件直接给本轮答案" in rules
+        assert "不能仅因初题出现过而wait" in rules
         assert "‘到底’‘别绕圈’‘所以你的答案是什么’" in rules
         assert "没有理解、误解或需要澄清立场" in rules
-        assert "没有新问题、没有条件变化、也没有澄清需求的相同点名或调侃" in rules
+        assert "没有新问题、没有条件变化、也没有澄清需求的纯重复才优先wait" in rules
 
 
 def test_missing_detail_plan_names_the_gap_without_scripting_the_sentence():
@@ -100,7 +99,6 @@ def test_humanization_rules_preserve_substance_without_requiring_information_den
     assert "不要输出JSON对象" in decision._STATIC_PRIVATE_INSTRUCTION
 
 
-def test_soft_style_violations_are_observed_without_rewrite_or_silence(setup):
 def test_soft_style_violations_are_observed_without_rewrite_or_silence(setup):
     _, client, _, kwargs, _ = setup
     text = "嗯……这让我很感动，也有些不好意思，谢谢你。" + "这段解释稍微长一点。" * 10
