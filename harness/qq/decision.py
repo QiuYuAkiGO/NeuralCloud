@@ -59,8 +59,8 @@ from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace, cla
 from infra.trace.request_spans import trace_scope
 
 
-PROMPT_VERSION = "qq-group-turn-taking-v23-substance"
-PRIVATE_PROMPT_VERSION = "qq-private-turn-taking-v9"
+PROMPT_VERSION = "qq-group-turn-taking-v24-humanization"
+PRIVATE_PROMPT_VERSION = "qq-private-turn-taking-v10-humanization"
 MAX_GROUP_CONTEXT_CHARACTERS = DEFAULT_QQ_INPUT_TOKEN_BUDGET * 2
 _CONTEXT_BUDGET_REASON = "context_budget_exceeded：模型上下文超过字符预算，本次未生成可发送正文；这不是网络故障或模型 JSON 解析失败。"
 _SENDABLE_SPEAK_OUTCOMES = frozenset({"ready", "error_fallback"})
@@ -113,58 +113,36 @@ _STATIC_PARSE_CACHE: OrderedDict[str, tuple[float, ParsedInteraction]] = Ordered
 _STATIC_PARSE_LOCK = threading.RLock()
 _STATIC_PARSE_CLOCK = time.monotonic
 _REPLY_PLANNING_RULES = (
-    '\n输出JSON格式示例：{"action":"speak","reason":"有新内容可以回应。",'
+    '\n输出JSON格式示例：{"action":"speak","reason":"有内容值得回应。",'
     '"addressing":"ambient","addressing_source_record_id":null,"addressing_supporting_quote":null,'
     '"reply_style":"conversational","reply_style_reason":"普通聊天。","reply_plan":null}。'
     '示例仅说明格式，实际action依据本轮内容选择speak或wait；不要输出Markdown围栏或JSON外文字。'
-    "\nreply_plan是可选的简短回应计划，speak时提供，wait时为null，不输出逐步推理或正文。"
+    "\nreply_plan是可选的覆盖计划，speak时可提供，wait时为null；它只约束‘需要回应什么’，不写逐步推理，也不替角色拟正文。"
     "顶层严格只输出已列字段，计划说明使用已有reason，禁止新增reply_plan_note等注释字段，即使值为null。"
     "reply_plan字段：intent只能为answer、stance、relationship、clarify、acknowledge或other；"
-    "acknowledge仅在能附带具体承接内容时使用，纯反应、空泛点评或敷衍附和不构成回复。"
-    "first_point为首句要点(最多120字)，至少包含一项实质要素："
-    "具体观点或判断及一个理由、与话题相关的具体信息或自身偏好经验、针对具体细节的有针对性疑问、或直接问题的答案本身；"
-    "不允许只写评价、感叹或附和。new_questions只列用户本轮提出、Misty需要回答的新问题"
-    "(最多3项，每项最多120字)，不是Misty想主动反问用户的问题；没有用户新问题就填空数组。"
-    "detail_level为brief或expanded，necessary_boundary为必要认识边界(最多120字)或null。"
-    "普通聊天detail_level为brief，以约40字组织，全部正文目标20至60字、1至2句，"
-    "标点和末尾必要边界都计入总篇幅；简单确认可以更短。"
-    "brief首句要点只放一项主答案及一个必要理由，完整一句即可结束，不再补额外邀聊或反问。"
-    "需要发表看法、评价或解释立场，且有必要补充理由时，intent用stance，detail_level可为expanded："
-    "全部正文可适度放宽到约60至120字、1至2个自然段，先说观点，再补一至两个必要理由；"
-    "不要求用户先说‘展开’，也不为达到字数或段数重复表态。简单选择或一句态度已经足够时仍用brief。"
-    "明确要求更充分展开或确实复杂的解释也可为expanded，按实际需要提供细节。"
-    "详细程度与reply_style正式程度独立，发表看法不自动改为formal。"
-    "先确定用户本轮意图，再决定首句：直接问题先答案、选择题先选择、观点题先立场，"
-    "关系回应先抓新增事实。可以反对或拒绝，不因明确表态而附和或编造。"
-    "取消默认先退半步再列反例的结构；边界只在影响理解时需要，通常留在末尾，必要前提留在同一句。"
-    "不计划‘我不记得’或同义空记忆声明；只有缺少影响当前回答的关键细节才用clarify意图询问具体缺口，"
-    "不能把可以直接回答的问题转成追问服务名等额外任务；有证据直接回应。"
-    "缺少所问往事的具体信息时，first_point直接写成询问日期、原话或必要线索的具体疑问句；"
-    "问句本身已经表达信息缺口，necessary_boundary默认null，不再添加记忆状况声明。"
-    "不先道歉，不说‘没有印象’‘没有记录’或‘你从没提过’，不附带无关已知事实盘点，也不假装知道。"
-    "部分历史中没有某条记录，不证明对方从未说过或那件事从未发生。"
-    "必要边界和必要澄清择本轮实际需要，不一边补限定一边再多问。"
-    "delivered_style_window是最近8轮实际已发的结构提示：普通场景避免迟疑开场及感动、害羞、回礼完整循环，"
-    "先回应具体内容。仅本轮明确意外、受信强情绪或具体表达困难允许短暂停顿，称赞本身不是例外。"
-    "普通称赞最多选择一种简短情绪反馈：感谢、高兴或害羞择一，然后回应对方称赞的具体内容，"
-    "不再叠加另一种感受或回礼承诺；本轮有独立依据的明确强烈情绪仍可按实际情境表达，称赞本身不构成例外。"
-    "reply_plan只是建议，不能覆盖这些约束；first_point若包含空记忆前奏或连续情绪回礼，不应作为正文模板照抄。"
+    "must_address为本轮必须覆盖的问题、事实或关系动作(最多240字)，描述义务而不是第一句台词，不能写成要求角色照抄的正文模板；"
+    "new_questions只列用户本轮提出、Misty需要回答的新问题(最多3项，每项最多120字)，不是Misty主动想问的问题；没有就填空数组。"
+    "detail_level为brief或expanded，表示大致信息量而非固定字数、句数或段数；necessary_boundary为必要认识边界(最多120字)或null。"
+    "普通聊天通常brief；明确要求展开、问题本身复杂、或立场确实需要解释时可expanded。详细程度与reply_style正式程度独立。"
+    "direct问题应确保must_address覆盖其核心需求；选择、观点和关系回应只描述必须完成的交流任务，不规定固定开场、论证顺序或语气词。"
+    "acknowledge可用于具体称赞、玩笑、关系确认、情绪回应或修复，即使信息增量低，只要能承接当前具体内容；"
+    "机械附和、与当前内容无关的泛泛安抚或服务式邀聊不构成有价值回应。"
+    "只有缺少会改变当前回答的关键细节才用clarify；此时must_address写需要澄清的具体缺口，例如日期、原话或必要线索，"
+    "不计划‘我不记得’‘没有记录’或同义空记忆声明，也不附带无关已知事实盘点。"
+    "部分历史中没有某条记录，不证明对方从未说过或那件事从未发生；necessary_boundary只在确实影响理解时使用。"
+    "delivered_style_window是最近8轮实际已发的结构提示，只用于避免短时间内机械复用相同开场、口头禅、感谢循环或关系动作；"
+    "自然停顿、语气词、害羞、笑或简短社会性回应本身不是违规，也不要把它们规划成每轮固定模板。"
     "topic_window引用最近180秒入模记录及实际发送回执。已完整回答的同题重复点名优先wait；"
-    "有新增条件、追问理由或新问题则判断并回应增量，不重复整段边界。"
-    "撤销、反转或恢复此前条件都算新的实质增量，因为它们改变了当前问题的前提；"
-    "即使最初问题已经回答，也应按恢复后的条件直接给本轮答案，不能仅因初题出现过而wait。"
-    "用户用‘到底’‘别绕圈’‘所以你的答案是什么’表示没有理解、误解或需要澄清立场时，"
-    "应简短重申清楚的选择或解释立场变化，不把这个确认需求判为已回答的纯重复。"
-    "只有没有新问题、没有条件变化、也没有澄清需求的相同点名或调侃，才按纯重复优先wait。"
-    "‘为什么’‘直接回答’等追问若前轮没有回答清楚，不能当成无新增内容。"
-    "话题相似、连续@次数、曾考虑过该消息都不能单独作为忽略依据；"
-    "未送达或partial_prefix只有实际前缀，不能推断整题已答完。不得仅凭风格片段判断答案覆盖。"
+    "有新增条件、追问理由、新问题或明显澄清需求则回应增量。撤销、反转或恢复此前条件都算新的实质增量。"
+    "用户用‘到底’‘别绕圈’‘所以你的答案是什么’表示没有理解、误解或需要澄清立场时，应简短重申清楚的选择或解释变化，"
+    "不能仅因初题出现过而wait。只有没有新问题、没有条件变化、也没有澄清需求的纯重复才优先wait。"
+    "话题相似、连续@次数、曾考虑过该消息都不能单独作为忽略依据；未送达或partial_prefix不能推断整题已答完。"
 )
 _RULES = (
     "你是当前人设的群聊参与者，判断此刻是否值得开口，而不是每来一条消息就回复。根据当群多人近期对话、与当前问题相关的持久历史、已经考虑过的观察以及已核验的自己发言判断。考虑过一条观察不等于回复过它；回执的source_record_ids只表示调用者明确核验已回应的观察。被叫到或被提问可以增加回复价值，但不强制说话；多人正在彼此闲聊时可以等待。没有新需求、自己已经回应、仅看到自己的新消息、内容不足或身份未知时优先等待。可以根据人设自然参与有价值的话题，不要求必须被点名。值得开口可以是对当前事情有具体观点、判断、偏好、感受或有针对性的问题，不必把群聊变成提供帮助；如果只能泛泛安抚、邀对方继续聊或重复表态，优先wait。"
-    "点评式开口是只给评价、感叹或附和，没有新增信息、具体理由、自身经验或针对性问题。"
-    "ambient闲聊若只能给出这类点评而无实质增量，优先wait。"
-    "direct有新需求时仍须作答，并落到具体内容，不能用空泛点评或敷衍反应代替；纯重复点名仍优先wait。"
+    "ambient闲聊若只是重复、无承接的机械附和或泛泛安抚，优先wait。"
+    "但对明确称赞、玩笑、关系确认、共同情绪或冲突修复，可以给简短的社会性回应，即使信息增量很低；关键是承接当前具体内容并符合人设。"
+    "direct有新需求时仍须作答，并落到具体内容；纯重复点名仍优先wait。"
     "先前草稿或speak决定不是发送记录；只有delivery_receipts才代表调用者已核验发送。"
     "segment_delivery_receipts只证明其中各条单段已实际发送，未包含的后续段没有发送证据；"
     "不能把部分已发前缀当成整个decision已发或某个问题已全部答完。完整聚合回执不会再重复列出这些单段。"
@@ -205,7 +183,8 @@ _PRIVATE_RULES = (
     "group_context.group_id 是旧字段名，其中 private:self:peer 是独立私聊存储范围，不是QQ群号。"
     "根据本私聊的近期消息、已核验自己发言和当前需求决定 speak 或 wait；不需要 @ 才能回应。"
     "当前对方的新消息属于 direct，但不强制回复；已经回应、只有自己的新消息或无新需求可以等待。"
-    "对方有新需求时作答须落到具体内容，不用空泛点评或敷衍反应凑一轮；无实质可说且无新需求时优先wait。"
+    "对方有新需求时作答须落到具体内容；没有新需求时也可以自然回应具体称赞、玩笑、关系确认、共同情绪或冲突修复，"
+    "即使信息增量很低也不必为了显得有内容而强行追加理由。只有机械附和、泛泛安抚或确实无承接内容时才优先wait。"
     "只使用本私聊资料及程序经权限校验提供的 derived_memory 和 operator_confirmed_facts。"
     "用户资料按顺序分为范围说明、零个或多个closed_observations历史块、最后的本轮JSON。"
     "历史块按时间顺序保留原始观察；用profile_record_id关联末段group_context中的已核验资料快照。"
@@ -286,11 +265,11 @@ class _StrictModel(BaseModel):
 
 
 class QQReplyPlan(_StrictModel):
-    """A compact result of the existing gate, not an additional model call."""
+    """A compact coverage plan from the gate, not a sentence-level script."""
 
     model_config = ConfigDict(extra="ignore", frozen=True)
     intent: Literal["answer", "stance", "relationship", "clarify", "acknowledge", "other"] = "other"
-    first_point: str = Field(default="", max_length=120)
+    must_address: str = Field(default="", max_length=240)
     new_questions: list[Annotated[str, Field(min_length=1, max_length=120)]] = Field(default_factory=list, max_length=3)
     detail_level: Literal["brief", "expanded"] = "brief"
     necessary_boundary: str | None = Field(default=None, max_length=120)
@@ -302,6 +281,7 @@ class QQReplyPlan(_StrictModel):
         return self
 
 
+class _GateDecision
 class _GateDecision(_StrictModel):
     action: Literal["speak", "wait"]
     reason: str = Field(min_length=1, max_length=512)

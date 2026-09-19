@@ -25,7 +25,7 @@ from tests.test_validator_projection import SEMANTIC_FIELDS, _restore
 
 def test_compact_plan_is_optional_compatible_and_persists_without_extra_call(setup):
     _, client, _, kwargs, _ = setup
-    reply_plan = {"intent": "stance", "first_point": "赞成先修复事实判断", "new_questions": ["先做哪件事？"],
+    reply_plan = {"intent": "stance", "must_address": "赞成先修复事实判断", "new_questions": ["先做哪件事？"],
                   "detail_level": "brief", "necessary_boundary": None}
     client.choice = json.dumps({"action": "speak", "reason": "直接回答选择", "reply_plan": reply_plan})
     client.chat_routes = {"": "我选先修复事实判断，回复短一点也得先说对。"}
@@ -42,14 +42,17 @@ def test_compact_plan_is_optional_compatible_and_persists_without_extra_call(set
     assert loaded.reply_plan is None and loaded.style_diagnostics == {}
 
 
-def test_brief_plan_questions_are_incoming_questions_and_boundary_counts_in_total_length():
+def test_plan_uses_soft_detail_and_content_obligations_without_hard_word_budget():
     for rules in (decision._RULES, decision._PRIVATE_RULES, _GROUP_DRAFT_RULES, decision._PRIVATE_DRAFT_RULES):
         assert "用户本轮提出、Misty需要回答的新问题" in rules
-        assert "约40字" in rules and "20至60字" in rules
-        assert "标点和末尾必要边界都计入总篇幅" in rules
-        assert "一项主答案及一个必要理由" in rules and "clarify意图" in rules
+        assert "must_address" in rules
+        assert "固定字数" in rules
+        assert "clarify" in rules
+    assert "不为满足固定字数、句数或信息密度而补话" in _GROUP_DRAFT_RULES
+    assert "低信息量但真实的社会性回应" in _GROUP_DRAFT_RULES
 
 
+def test_group_and_private_gates_distinguish_condition_restoration_stance_clarification_and_pure_mentions():
 def test_group_and_private_gates_distinguish_condition_restoration_stance_clarification_and_pure_mentions():
     # Semantic behavior is checked by the live trajectory evaluation. This
     # contract ensures both gate entrypoints receive the distinctions it needs.
@@ -61,57 +64,43 @@ def test_group_and_private_gates_distinguish_condition_restoration_stance_clarif
         assert "没有新问题、没有条件变化、也没有澄清需求的相同点名或调侃" in rules
 
 
-def test_missing_detail_plan_asks_the_concrete_gap_without_inventory_or_unrelated_fact():
+def test_missing_detail_plan_names_the_gap_without_scripting_the_sentence():
     for rules in (decision._RULES, decision._PRIVATE_RULES):
-        assert "first_point直接写成询问日期、原话或必要线索的具体疑问句" in rules
-        assert "问句本身已经表达信息缺口，necessary_boundary默认null" in rules
-        assert "不附带无关已知事实盘点，也不假装知道" in rules
-    assert decision.PROMPT_VERSION == "qq-group-turn-taking-v23-substance"
-    assert decision.PRIVATE_PROMPT_VERSION == "qq-private-turn-taking-v9"
+        assert "must_address写需要澄清的具体缺口" in rules
+        assert "日期、原话或必要线索" in rules
+        assert "不计划‘我不记得’‘没有记录’" in rules
+    assert decision.PROMPT_VERSION == "qq-group-turn-taking-v24-humanization"
+    assert decision.PRIVATE_PROMPT_VERSION == "qq-private-turn-taking-v10-humanization"
 
 
-def test_both_generation_stages_use_concrete_gap_and_single_praise_feedback_contract():
-    # Both stages need this: a valid advisory plan must not reintroduce the
-    # rejected preamble or reaction loop when the character writes the body.
+def test_both_generation_stages_keep_memory_guards_but_allow_natural_social_response():
     for rules in (decision._RULES, decision._PRIVATE_RULES, _GROUP_DRAFT_RULES, decision._PRIVATE_DRAFT_RULES):
-        assert "询问日期、原话或必要线索的具体疑问句" in rules
-        assert "不先道歉，不说‘没有印象’‘没有记录’或‘你从没提过’" in rules
-        assert "不证明对方从未说过或那件事从未发生" in rules
-        assert "普通称赞最多选择一种简短情绪反馈：感谢、高兴或害羞择一" in rules
-        assert "不再叠加另一种感受或回礼承诺" in rules
-        assert "本轮有独立依据的明确强烈情绪仍可按实际情境表达" in rules
-        assert "reply_plan只是建议，不能覆盖这些约束" in rules
-        assert "不应作为正文模板照抄" in rules
+        assert "日期、原话或必要线索" in rules
+        assert "不证明对方从未说过或" in rules
+        assert "称赞" in rules
+    assert "低信息量但真实的社会性回应" in _GROUP_DRAFT_RULES
+    assert "自然停顿、语气词、害羞、笑或简短社会性回应本身不是违规" in decision._RULES
     for rules in (decision._RULES, decision._PRIVATE_RULES):
         assert "顶层严格只输出已列字段" in rules
         assert "禁止新增reply_plan_note等注释字段，即使值为null" in rules
 
 
-def test_substance_rules_keep_conservative_prefix_and_reach_both_stages():
+def test_humanization_rules_preserve_substance_without_requiring_information_density_every_turn():
     assert decision._RULES.startswith(
         "你是当前人设的群聊参与者，判断此刻是否值得开口，而不是每来一条消息就回复。")
-    assert "如果只能泛泛安抚、邀对方继续聊或重复表态，优先wait。" in decision._RULES
-    assert "点评式开口是只给评价、感叹或附和" in decision._RULES
-    assert "ambient闲聊若只能给出这类点评而无实质增量，优先wait。" in decision._RULES
-    assert "direct有新需求时仍须作答" in decision._RULES
-    assert "自主开口同样需要具体内容" in decision._IDLE_RULES
-    assert "不用空泛点评或敷衍反应凑一轮" in decision._PRIVATE_RULES
-    for rules in (decision._RULES, decision._PRIVATE_RULES, _GROUP_DRAFT_RULES, decision._PRIVATE_DRAFT_RULES):
-        assert "评价、感叹或附和" in rules
-        assert "空泛点评或敷衍" in rules
-        assert "20至60字" in rules
-    assert "言之有物不增加篇幅" in _GROUP_DRAFT_RULES
-    assert "言之有物不增加篇幅" in decision._PRIVATE_DRAFT_RULES
-    assert "赞同或反对须落到对方话中的具体细节" in _GROUP_DRAFT_RULES
-    assert "acknowledge仅在能附带具体承接内容时使用" in decision._RULES
-    assert "acknowledge仅在能附带具体承接内容时使用" in decision._PRIVATE_RULES
-    assert "不要输出JSON对象" in _GROUP_DRAFT_RULES
-    assert "不要输出JSON对象" in decision._PRIVATE_DRAFT_RULES
+    assert "机械附和或泛泛安抚，优先wait" in decision._RULES
+    assert "称赞、玩笑、关系确认、共同情绪或冲突修复" in decision._RULES
+    assert "即使信息增量很低" in decision._RULES
+    assert "即使信息增量很低也不必为了显得有内容而强行追加理由" in decision._PRIVATE_RULES
+    assert "低信息量但真实的社会性回应" in _GROUP_DRAFT_RULES
+    assert "不为满足固定字数、句数或信息密度而补话" in _GROUP_DRAFT_RULES
+    assert "自然语气词、停顿、自我修正和不完整句可以偶尔出现" in _GROUP_DRAFT_RULES
     assert "不要复述action、reply_plan、reply_style、addressing等决策字段" in _GROUP_DRAFT_RULES
     assert "不要输出JSON对象" in decision._STATIC_PERSONA_INSTRUCTION
     assert "不要输出JSON对象" in decision._STATIC_PRIVATE_INSTRUCTION
 
 
+def test_soft_style_violations_are_observed_without_rewrite_or_silence(setup):
 def test_soft_style_violations_are_observed_without_rewrite_or_silence(setup):
     _, client, _, kwargs, _ = setup
     text = "嗯……这让我很感动，也有些不好意思，谢谢你。" + "这段解释稍微长一点。" * 10
@@ -127,7 +116,7 @@ def test_soft_style_violations_are_observed_without_rewrite_or_silence(setup):
 def test_expanded_detail_remains_conversational_and_does_not_count_as_brief_failure(setup):
     _, client, _, kwargs, _ = setup
     client.choice = json.dumps({"action": "speak", "reason": "请求展开",
-        "reply_plan": {"intent": "answer", "first_point": "解释三个步骤", "detail_level": "expanded"}})
+        "reply_plan": {"intent": "answer", "must_address": "解释三个步骤", "detail_level": "expanded"}})
     client.chat_routes = {"": "先看实际发出的内容。" * 10}
     result = decision.decide_qq_reply(**kwargs)
     assert result.reply_style == "conversational"
@@ -136,7 +125,7 @@ def test_expanded_detail_remains_conversational_and_does_not_count_as_brief_fail
 
 
 @pytest.mark.parametrize("changes", [{"intent": "ignore_everyone"}, {"new_questions": ["x" * 121]},
-                                     {"new_questions": ["a"] * 4}, {"first_point": "x" * 121}])
+                                     {"new_questions": ["a"] * 4}, {"must_address": "x" * 241}])
 def test_plan_schema_is_bounded(changes):
     with pytest.raises(ValidationError):
         decision.QQReplyPlan.model_validate(changes)
@@ -146,7 +135,7 @@ def test_nested_assessment_reserve_covers_maximum_escaped_plan():
     worst = decision._GateDecision(action="speak", reason="\x00" * 512,
         addressing_source_record_id="\x00" * 160, addressing_supporting_quote="\x00" * 1000,
         reply_style_reason="\x00" * 256,
-        reply_plan=decision.QQReplyPlan(first_point="\x00" * 120,
+        reply_plan=decision.QQReplyPlan(must_address="\x00" * 240,
             new_questions=["\x00" * 120] * 3, necessary_boundary="\x00" * 120))
     assert len(decision._canonical({"assessment": worst.model_dump()})) - 1 <= decision._assessment_reserve()
 
@@ -433,7 +422,7 @@ def test_receipt_memory_evidence_retains_self_author_and_delivered_time(setup):
 def test_live_acknowledge_plan_with_extra_null_field_does_not_discard_valid_gate(setup):
     _, client, _, kwargs, _ = setup
     client.choice = json.dumps({"action": "speak", "reason": "回应维护消息。", "reply_plan": {
-        "intent": "acknowledge", "first_point": "日志按天归档方便找问题", "new_questions": [],
+        "intent": "acknowledge", "must_address": "日志按天归档方便找问题", "new_questions": [],
         "detail_level": "brief", "necessary_boundary": None, "reply_style_reason": None}})
     result = decision.decide_qq_reply(**kwargs)
     assert result.outcome == "ready" and result.reply_plan.intent == "acknowledge"
@@ -470,7 +459,7 @@ def _leaked_gate_json() -> str:
         "addressing": "direct",
         "reply_plan": {
             "intent": "answer",
-            "first_point": "说明当前运行正常。",
+            "must_address": "说明当前运行正常。",
             "new_questions": [],
             "detail_level": "brief",
             "necessary_boundary": None,
@@ -504,7 +493,7 @@ def test_gate_shaped_json_body_fails_closed_without_salvage(setup):
     assert result.reply_segments == [decision.ERROR_FALLBACK_REPLY]
     assert result.decision_source == "model_invalid"
     assert leaked not in result.reply
-    assert "first_point" not in result.reply
+    assert "must_address" not in result.reply
     assert trace.snapshot()["counters"]["gate_json_body_rejected"] == 1
     assert len(client.gate_messages) == len(client.chat_calls) == 1
 
