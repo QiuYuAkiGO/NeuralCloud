@@ -178,7 +178,7 @@ def test_gate_json_body_is_rejected_before_sentence_split(setup, monkeypatch):
     leaked = json.dumps({
         "action": "speak",
         "reason": "当前有人直接点名并请求查看状态，需要给出具体回应。",
-        "reply_plan": {"intent": "answer", "first_point": "说明当前运行正常。",
+        "reply_plan": {"intent": "answer", "must_address": "说明当前运行正常。",
                        "new_questions": [], "detail_level": "brief", "necessary_boundary": None},
     }, ensure_ascii=False)
     monkeypatch.setattr(decision, "_prepare_group_speech", lambda **kw: SimpleNamespace(
