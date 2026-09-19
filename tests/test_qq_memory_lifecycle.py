@@ -106,7 +106,7 @@ def test_live_failed_window_cannot_starve_decay_or_adoption_and_delayed_counter_
         worker.make_proposal = fail_model
         try:
             await worker.tick()
-            assert worker.queue.get_job(retry.job_id).status == "retry"
+            assert worker.queue.get_job(retry.job_id).status == ("retry" if backoff else "skipped")
             persisted = host.chat.library.load("misty")
             maintained = {event.event_id: event for event in persisted.episodic}
             assert maintained[events[0].event_id].tier == "short"

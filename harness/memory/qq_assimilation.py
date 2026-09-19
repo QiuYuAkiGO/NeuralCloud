@@ -24,6 +24,11 @@ from harness.qq.conversation import QQConversationID, conversation_audience, con
 
 
 PROCESSING_VERSION = "qq-memory-v1"
+DEFAULT_MAX_ATTEMPTS = 8
+UNRECOVERABLE_JOB_ERRORS = frozenset({
+    "ValueError", "ValidationError", "TypeError", "KeyError",
+    "qq_proposal_invalid", "SharedMemoryStorageError", "invalid_frozen_job",
+})
 QQID = Annotated[str, StringConstraints(strict=True, pattern=r"^[1-9][0-9]{0,19}$")]
 MemberRef = Annotated[str, StringConstraints(strict=True, pattern=r"^qq:member:[1-9][0-9]{0,19}$")]
 Text = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=4000, pattern=r"\S")]
@@ -45,6 +50,10 @@ def _now(value: datetime | None = None) -> datetime:
     if current.tzinfo is None or current.utcoffset() is None:
         raise ValueError("a timezone-aware clock is required")
     return current.astimezone(timezone.utc)
+
+
+def _status_code(reason: str) -> str:
+    return reason if re.fullmatch(r"[A-Za-z][A-Za-z0-9_.:-]{0,79}", reason) else "processing_failed"
 
 
 def _normal(value: str) -> str:
@@ -496,7 +505,8 @@ class QQAssimilationQueue:
     def __init__(self, path: Path | str, *, owner_id: str, preset_id: str, self_id: str,
                  allowed_group_ids: Sequence[str], processing_version: str = PROCESSING_VERSION,
                  idle_seconds: float = 30, max_seconds: float = 120, max_messages: int = 32,
-                 allowed_private_peer_ids: Sequence[str] = ()):
+                 allowed_private_peer_ids: Sequence[str] = (),
+                 max_attempts: int = DEFAULT_MAX_ATTEMPTS):
         from pydantic import TypeAdapter
 
         self.path = Path(path)
@@ -511,9 +521,12 @@ class QQAssimilationQueue:
         self.processing_version = TypeAdapter(Reference).validate_python(processing_version)
         if not 1 <= idle_seconds <= max_seconds <= 3600 or type(max_messages) is not int or not 1 <= max_messages <= 32:
             raise ValueError("window requires 1 <= idle_seconds <= max_seconds <= 3600 and 1..32 messages")
+        if type(max_attempts) is not int or not 1 <= max_attempts <= 32:
+            raise ValueError("max_attempts must be an integer in 1..32")
         self.idle_seconds = float(idle_seconds)
         self.max_seconds = float(max_seconds)
         self.max_messages = max_messages
+        self.max_attempts = max_attempts
 
     @property
     def _scope(self) -> tuple[str, str, str, str]:
@@ -700,26 +713,43 @@ class QQAssimilationQueue:
                 return None
             return self._decode_job(row)
 
+    def _should_skip(self, *, attempts: int, error_code: str | None) -> bool:
+        return attempts >= self.max_attempts or error_code in UNRECOVERABLE_JOB_ERRORS
+
+    def _mark_skipped(self, connection, job_id: str, error_code: str, current: datetime) -> None:
+        connection.execute("UPDATE qq_memory_jobs SET status='skipped',error_code=?,next_attempt_at=NULL,updated_at=? "
+                           "WHERE job_id=? AND status NOT IN ('applied','skipped')",
+                           (error_code, current.isoformat(), job_id))
+
     def next_job(self, *, now: datetime | None = None) -> QQMemoryJob | None:
         if not self.path.exists() or not self.allowed_conversation_ids:
             return None
         current = _now(now)
         with closing(self._connect(write=True)) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
-            row = connection.execute("SELECT job.* FROM qq_memory_jobs job WHERE job.owner_id=? AND job.preset_id=? AND job.processing_version=? "
-                                     "AND job.self_id=? AND job.status IN ('pending','retry') AND (job.next_attempt_at IS NULL OR job.next_attempt_at<=?) "
-                                     f"AND job.group_id IN ({','.join('?' for _ in self.allowed_conversation_ids)}) "
-                                     "AND NOT EXISTS (SELECT 1 FROM qq_memory_jobs earlier WHERE earlier.owner_id=job.owner_id "
-                                     "AND earlier.preset_id=job.preset_id AND earlier.processing_version=job.processing_version "
-                                     "AND earlier.self_id=job.self_id AND earlier.group_id=job.group_id "
-                                     "AND earlier.rowid<job.rowid AND earlier.status NOT IN ('applied','skipped')) "
-                                     "ORDER BY job.created_at, job.rowid LIMIT 1", (*self._scope, current.isoformat(), *self.allowed_conversation_ids)).fetchone()
-            if row is None:
-                return None
-            job = self._decode_job(row)
-            connection.execute("UPDATE qq_memory_jobs SET status='preparing',attempts=attempts+1,updated_at=? WHERE job_id=?",
-                               (current.isoformat(), job.job_id))
-            return job.model_copy(update={"status": "preparing", "attempts": job.attempts + 1})
+            while True:
+                row = connection.execute("SELECT job.* FROM qq_memory_jobs job WHERE job.owner_id=? AND job.preset_id=? AND job.processing_version=? "
+                                         "AND job.self_id=? AND job.status IN ('pending','retry') AND (job.next_attempt_at IS NULL OR job.next_attempt_at<=?) "
+                                         f"AND job.group_id IN ({','.join('?' for _ in self.allowed_conversation_ids)}) "
+                                         "AND NOT EXISTS (SELECT 1 FROM qq_memory_jobs earlier WHERE earlier.owner_id=job.owner_id "
+                                         "AND earlier.preset_id=job.preset_id AND earlier.processing_version=job.processing_version "
+                                         "AND earlier.self_id=job.self_id AND earlier.group_id=job.group_id "
+                                         "AND earlier.rowid<job.rowid AND earlier.status NOT IN ('applied','skipped')) "
+                                         "ORDER BY job.created_at, job.rowid LIMIT 1",
+                                         (*self._scope, current.isoformat(), *self.allowed_conversation_ids)).fetchone()
+                if row is None:
+                    return None
+                try:
+                    job = self._decode_job(row)
+                except SharedMemoryStorageError:
+                    self._mark_skipped(connection, row["job_id"], "invalid_frozen_job", current)
+                    continue
+                if self._should_skip(attempts=job.attempts, error_code=job.error_code):
+                    self._mark_skipped(connection, job.job_id, job.error_code or "attempt_limit", current)
+                    continue
+                connection.execute("UPDATE qq_memory_jobs SET status='preparing',attempts=attempts+1,updated_at=? WHERE job_id=?",
+                                   (current.isoformat(), job.job_id))
+                return job.model_copy(update={"status": "preparing", "attempts": job.attempts + 1})
 
     def store_proposal(self, job_id: str, proposal: QQMemoryProposal | Mapping[str, Any], *,
                        basis_digest: str | None = None,
@@ -779,6 +809,22 @@ class QQAssimilationQueue:
                                (_now().isoformat(), job_id))
         return self.get_job(job_id)
 
+    def skip(self, job_id: str, reason: str, *, now: datetime | None = None) -> QQMemoryJob | None:
+        current = _now(now)
+        code = _status_code(reason)
+        with closing(self._connect(write=True)) as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute("SELECT status FROM qq_memory_jobs WHERE job_id=? AND owner_id=? AND preset_id=? "
+                                     "AND processing_version=? AND self_id=?", (job_id, *self._scope)).fetchone()
+            if row is None:
+                raise KeyError(job_id)
+            if row["status"] not in {"applied", "skipped"}:
+                self._mark_skipped(connection, job_id, code, current)
+        try:
+            return self.get_job(job_id)
+        except SharedMemoryStorageError:
+            return None
+
     def fail(self, job_id: str, reason: str, *, now: datetime | None = None) -> QQMemoryJob:
         job = self.get_job(job_id)
         if job is None:
@@ -788,7 +834,12 @@ class QQAssimilationQueue:
         current = _now(now)
         # Error text may contain raw model or source content; persist only an
         # operational code, never exception messages into public status fields.
-        code = reason if re.fullmatch(r"[A-Za-z][A-Za-z0-9_.:-]{0,79}", reason) else "processing_failed"
+        code = _status_code(reason)
+        if self._should_skip(attempts=job.attempts, error_code=code):
+            skipped = self.skip(job_id, code, now=current)
+            if skipped is None:
+                raise SharedMemoryStorageError("persisted QQ cleaning job is invalid")
+            return skipped
         retry_at = current + timedelta(seconds=min(300, 5 * (2 ** min(job.attempts, 6))))
         with closing(self._connect(write=True)) as connection, connection:
             connection.execute("UPDATE qq_memory_jobs SET status='retry',error_code=?,next_attempt_at=?,updated_at=? "

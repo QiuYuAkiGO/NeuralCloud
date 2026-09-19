@@ -534,3 +534,64 @@ def test_persona_is_separate_from_immutable_evidence_in_model_input(setup):
             return proposal(job).model_dump(mode="json")
 
     assert QQMemoryProposer(Model()).propose(job, persona={"name": "Misty", "values": ["认真"]}).episodes[0].insight is None
+
+
+def test_unrecoverable_head_is_skipped_and_same_group_continues(setup):
+    store, queue = setup
+    add_message(store, "first", seconds=0)
+    add_message(store, "later", seconds=40, message_id="2")
+    jobs = queue.enqueue(now=NOW + timedelta(seconds=90), backfill=True)
+    first = queue.next_job(now=NOW + timedelta(seconds=90))
+    assert first.job_id == jobs[0].job_id
+    failed = queue.fail(first.job_id, "ValueError", now=NOW + timedelta(seconds=90))
+    assert failed.status == "skipped" and failed.error_code == "ValueError"
+    later = queue.next_job(now=NOW + timedelta(seconds=90))
+    assert later.job_id == jobs[1].job_id and later.group_id == "100"
+
+
+def test_transient_http_retries_then_skips_after_attempt_limit(setup):
+    store, _ = setup
+    add_message(store, "first", seconds=0)
+    add_message(store, "later", seconds=40, message_id="2")
+    add_message(store, "elsewhere", group="101", seconds=50)
+    queue = QQAssimilationQueue(store.path, owner_id="misty", preset_id="active", self_id="999",
+                                allowed_group_ids=("100", "101"), max_attempts=2)
+    jobs = queue.enqueue(now=NOW + timedelta(seconds=90), backfill=True)
+    first = queue.next_job(now=NOW + timedelta(seconds=90))
+    assert first.job_id == jobs[0].job_id
+    retried = queue.fail(first.job_id, "HTTPStatusError", now=NOW + timedelta(seconds=90))
+    assert retried.status == "retry" and retried.error_code == "HTTPStatusError"
+    elsewhere = queue.next_job(now=NOW + timedelta(seconds=91))
+    assert elsewhere.group_id == "101"
+    queue.ack(elsewhere.job_id, [elsewhere.job_id])
+    assert queue.next_job(now=NOW + timedelta(seconds=91)) is None
+    second = queue.next_job(now=NOW + timedelta(seconds=100))
+    assert second.job_id == first.job_id
+    skipped = queue.fail(second.job_id, "HTTPStatusError", now=NOW + timedelta(seconds=100))
+    assert skipped.status == "skipped" and skipped.error_code == "HTTPStatusError"
+    later = queue.next_job(now=NOW + timedelta(seconds=100))
+    assert later.job_id == jobs[1].job_id
+
+
+def test_invalid_frozen_head_is_dead_lettered_without_blocking_the_group(setup):
+    store, queue = setup
+    add_message(store, "first", seconds=0)
+    add_message(store, "later", seconds=40, message_id="2")
+    jobs = queue.enqueue(now=NOW + timedelta(seconds=90), backfill=True)
+    with sqlite3.connect(store.path) as connection:
+        raw = proposal(jobs[0]).model_dump(mode="json")
+        raw["episodes"][0]["source_ids"] = ["shared-memory:forged"]
+        connection.execute("UPDATE qq_memory_jobs SET proposal_json=? WHERE job_id=?",
+                           (json.dumps(raw), jobs[0].job_id))
+    later = queue.next_job(now=NOW + timedelta(seconds=90))
+    assert later.job_id == jobs[1].job_id
+    assert queue.status()["skipped"] == 1
+    queue.ack(later.job_id, [later.job_id])
+    with pytest.raises(SharedMemoryStorageError):
+        queue.get_job(jobs[0].job_id)
+    recovered = QQAssimilationQueue(store.path, owner_id="misty", preset_id="active", self_id="999",
+                                    allowed_group_ids=("100", "101"))
+    assert recovered.recover([later.job_id]) == 0
+    with sqlite3.connect(store.path) as connection:
+        assert connection.execute("SELECT status FROM qq_memory_jobs WHERE job_id=?",
+                                  (jobs[0].job_id,)).fetchone()[0] == "skipped"
