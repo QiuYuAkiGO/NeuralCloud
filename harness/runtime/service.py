@@ -308,6 +308,7 @@ def _create_owned_app(manifest, state_dir):
         resource_sampler=ResourceSampler(state_dir=state_dir),
     )
     report_settings = DailyReportSettings.from_environment()
+    supervisor._monitor_recovery = monitor.recovery_status
     supervisor.daily_report = DailyReportController(
         DailyReportBuilder(
             monitor=monitor_store,
