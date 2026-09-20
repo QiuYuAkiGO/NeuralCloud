@@ -17,6 +17,16 @@ if TYPE_CHECKING:
     from harness.runtime.supervisor import RuntimeSupervisor
 
 
+class _RestoredRoots:
+    def __init__(self, index, boundary):
+        self.index, self.boundary = index, boundary
+        self.interrupted = set()
+
+    def __contains__(self, key):
+        sequence = self.index.get(key)
+        return key in self.interrupted or sequence is not None and sequence <= self.boundary
+
+
 class BasicTerminalRuntime:
     def __init__(self, supervisor: RuntimeSupervisor) -> None:
         self.runtime = supervisor
@@ -24,21 +34,18 @@ class BasicTerminalRuntime:
         self.tasks: dict[str, dict[str, Any]] = {}
         self.contexts: dict[str, dict[str, Any]] = {}
         self.restored_roots: set[str] = set()
-        for record in supervisor.journal.iter_records():
-            if record.record_type == "basic_terminal_task":
-                task = record.data.get("task") or {}
-                task_id = task.get("task_id")
-                if task_id:
-                    self.restored_roots.add(task_id)
-                    if task.get("status") == "working":
-                        self.tasks[task_id] = task
-                    else:
-                        self.tasks.pop(task_id, None)
-
     def recover(self) -> None:
+        # The shared projection is initialized under the Runtime instance lock.
+        store = self.runtime.recovery
+        self.restored_roots = _RestoredRoots(store.mapping("terminal_tasks"), store.projector.cursor)
+        for seq in list(store.mapping("terminal_active").values()):
+            task = store.read(seq).data["task"]
+            self.tasks[task["task_id"]] = task
+
         # Called only after Runtime has acquired the exclusive instance lock.
         # Reconcile submitted actions normally, but never retype a command on boot.
         for task in list(self.tasks.values()):
+            self.restored_roots.interrupted.add(task["task_id"])
             self._save({**task, "status": "interrupted", "reason": "runtime restarted"})
 
     def stop_reason(self, event: RuntimeEvent, *, require_active: bool = False) -> str | None:

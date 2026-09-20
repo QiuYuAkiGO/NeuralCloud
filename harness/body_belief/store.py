@@ -42,6 +42,18 @@ class BodyBeliefStore:
     def close(self):
         self.db.close()
 
+    def recovery_cursor(self, identity: str):
+        with self._lock:
+            row = self.db.execute("SELECT data FROM metadata WHERE key=?", ('runtime:'+identity,)).fetchone()
+            try:
+                return json.loads(row[0]) if row else None
+            except (ValueError, TypeError):
+                return None
+
+    def set_recovery_cursor(self, identity: str, token: dict) -> None:
+        with self._lock, self.db:
+            self.db.execute("INSERT OR REPLACE INTO metadata VALUES (?,?)", ('runtime:'+identity, json.dumps(token)))
+
     def experiences(self) -> tuple[BodyExperienceEpisode, ...]:
         with self._lock:
             return tuple(BodyExperienceEpisode.model_validate_json(row[0]) for row in

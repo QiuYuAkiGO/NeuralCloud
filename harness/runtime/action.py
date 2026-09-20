@@ -108,6 +108,7 @@ class ActionCoordinator:
         self._actions: dict[str, ActionExecution] = {}
         self._current_action_id: str | None = None
         self._revision = 0
+        self.history_lookup = None
 
     @property
     def revision(self) -> int:
@@ -118,12 +119,19 @@ class ActionCoordinator:
         return self._actions.get(self._current_action_id) if self._current_action_id else None
 
     def get(self, action_id: str) -> ActionExecution | None:
-        return self._actions.get(action_id)
+        current = self._actions.get(action_id)
+        if current is None and self.history_lookup is not None:
+            historical = self.history_lookup(action_id=action_id)
+            # Unreconciled work is deliberately invisible during watchdog
+            # recovery deferral. Only completed history can be loaded lazily.
+            if historical is not None and historical.terminal and historical.state != ActionExecutionState.UNKNOWN:
+                return historical
+        return current
 
     def pending(self) -> list[ActionExecution]:
         return [action for action in self._actions.values() if not action.terminal]
 
-    def restore(self, action: ActionExecution) -> None:
+    def restore(self, action: ActionExecution, *, advance_revision: bool = True) -> None:
         """Restore the latest journaled action state before reconciliation."""
 
         self._actions[action.action_id] = action
@@ -131,7 +139,8 @@ class ActionCoordinator:
             if self._current_action_id not in {None, action.action_id}:
                 raise RuntimeError("journal contains multiple foreground actions")
             self._current_action_id = action.action_id
-        self._revision += 1
+        if advance_revision:
+            self._revision += 1
 
     def set_revision_floor(self, revision: int) -> None:
         if revision < 0:
@@ -152,6 +161,8 @@ class ActionCoordinator:
                 (action for action in self._actions.values() if action.idempotency_key == idempotency_key),
                 None,
             )
+            if existing is None and self.history_lookup is not None:
+                existing = self.history_lookup(idempotency_key=idempotency_key)
             if existing is not None:
                 return existing
             requires_approval = bool(proposal.required_approvals) or risk_class in {
@@ -432,7 +443,7 @@ class ActionCoordinator:
         return self._replace(action, state=ActionExecutionState.RUNNING)
 
     def _require(self, action_id: str) -> ActionExecution:
-        action = self._actions.get(action_id)
+        action = self.get(action_id)
         if action is None:
             raise KeyError(action_id)
         return action

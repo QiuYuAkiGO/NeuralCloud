@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
+import json
 from datetime import datetime
 from pathlib import Path
 from threading import RLock
@@ -86,6 +87,18 @@ class OpaqueInteroceptionStore:
     def close(self) -> None:
         with self._lock:
             self._db.close()
+
+    def recovery_cursor(self, identity: str):
+        with self._lock:
+            row = self._db.execute("SELECT value FROM opaque_meta WHERE key=?", ('runtime:'+identity,)).fetchone()
+            try:
+                return json.loads(row[0]) if row else None
+            except (ValueError, TypeError):
+                return None
+
+    def set_recovery_cursor(self, identity: str, token: dict) -> None:
+        with self._lock, self._db:
+            self._db.execute("INSERT OR REPLACE INTO opaque_meta VALUES (?,?)", ('runtime:'+identity, json.dumps(token)))
 
     def __enter__(self) -> Self:
         return self

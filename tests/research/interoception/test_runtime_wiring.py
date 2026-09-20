@@ -150,6 +150,15 @@ def test_same_body_revision_restarts_with_identical_sample_and_deduplicates(tmp_
 
 async def crash_without_checkpoint(runtime):
     """Release test resources while preserving only the already durable journal."""
+    if runtime._recovery_task is not None:
+        runtime._recovery_task.cancel()
+        try:
+            await runtime._recovery_task
+        except asyncio.CancelledError:
+            pass
+    if runtime._audit is not None:
+        await runtime._audit.close()
+    runtime.recovery.close()
     await runtime.cognitive.close()
     await runtime.homeostasis.close()
     if runtime._opaque_store is not None:

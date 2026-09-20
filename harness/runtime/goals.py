@@ -466,14 +466,27 @@ class GoalController:
         if not self.enabled or not self._episodes():
             return
         from harness.contracts.envelope import DomainCommandEnvelope, DomainCommandResult
-        commands = {}
-        for record in self.supervisor.journal.iter_records():
+        recovery = self.supervisor.recovery
+        identity = recovery.projector.state.get("journal_genesis", "empty")
+        checkpoint = self.store.get("runtime_recovery", identity)
+        after = recovery.validated_cursor(checkpoint)
+        boundary = recovery.projector.cursor
+        if after >= boundary:
+            return
+        for record in recovery.records("domain_command_result", "domain_command_late_result", after=after):
+            if record.record_seq > boundary:
+                break
             if record.data.get("service") != "homeostasis":
                 continue
-            if record.record_type == "domain_command_intent":
-                commands[record.command_id] = DomainCommandEnvelope.model_validate(record.data["envelope"])
-            elif record.record_type in {"domain_command_result", "domain_command_late_result"} and record.command_id in commands:
-                self.record_homeostasis(commands[record.command_id], DomainCommandResult.model_validate(record.data["result"]))
+            with recovery.lock:
+                row = recovery.db.execute("SELECT intent FROM commands WHERE id=?", (record.command_id,)).fetchone()
+            if row and row[0]:
+                intent = recovery.read(row[0])
+                self.record_homeostasis(DomainCommandEnvelope.model_validate(intent.data["envelope"]),
+                                        DomainCommandResult.model_validate(record.data["result"]))
+        # This cursor is in the module's own database: losing/restoring that
+        # database also loses/restores its cursor. Effects above are idempotent.
+        self.store.put("runtime_recovery", identity, recovery.cursor_token(boundary))
 
     def qq_context(self, request):
         """Only a bounded typed projection may enter group-visible cognition."""
