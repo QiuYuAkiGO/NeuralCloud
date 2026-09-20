@@ -268,3 +268,12 @@ def test_snapshot_revision_and_bounded_goal_context_are_validated_before_model()
     payload["goal_context"]["outcomes"] = ["x"] * 65
     with pytest.raises(ValueError):
         GoalDecisionRequest.model_validate(payload)
+
+
+def test_oversized_goal_context_is_rejected_before_model_with_specific_code():
+    payload = deepcopy(goal_command().payload)
+    payload["goal_context"]["padding"] = "x" * 130_000
+    owner = host(FakeLLM(start_choice()))
+    with pytest.raises(goals.GoalDecisionError, match="goal_context_too_large"):
+        asyncio.run(goals.prepare(owner, goal_command().model_copy(update={"payload": payload})))
+    assert owner.chat.llm.calls == []

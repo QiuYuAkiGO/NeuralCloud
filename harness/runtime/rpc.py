@@ -57,16 +57,55 @@ class _HttpDomainClient:
         if self._owns_client:
             await self.client.aclose()
 
+    def _rpc_failure(
+        self,
+        method: str,
+        path: str,
+        exc: BaseException,
+        response: httpx.Response | None = None,
+    ) -> DomainRpcError:
+        name = type(exc).__name__
+        message = str(exc).strip()
+        parts = [name] if not message else [f"{name}: {message}"]
+        if response is not None:
+            parts.append(f"status={response.status_code}")
+            body = " ".join((response.text or "").split())
+            if body:
+                parts.append(body[:240])
+        return DomainRpcError(
+            f"{self.service_name} RPC {method} {path} failed: {'; '.join(parts)}"
+        )
+
     async def _request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
-        try:
-            response = await self.client.request(method, path, **kwargs)
-            response.raise_for_status()
-            payload = response.json()
-        except (httpx.HTTPError, ValueError) as exc:
-            raise DomainRpcError(f"{self.service_name} RPC {method} {path} failed: {exc}") from exc
-        if not isinstance(payload, dict):
-            raise DomainRpcError(f"{self.service_name} RPC returned a non-object payload")
-        return payload
+        # Transport blips (dead keep-alive, empty body) are retried once.
+        # HTTP status errors are application outcomes and are not retried.
+        last_response: httpx.Response | None = None
+        for attempt in range(2):
+            try:
+                response = await self.client.request(method, path, **kwargs)
+                last_response = response
+                response.raise_for_status()
+                decoded = response.json()
+            except httpx.HTTPStatusError as exc:
+                raise self._rpc_failure(method, path, exc, exc.response) from exc
+            except (httpx.RequestError, ValueError) as exc:
+                last_response = getattr(exc, "response", None) or last_response
+                if attempt == 0:
+                    continue
+                raise self._rpc_failure(method, path, exc, last_response) from exc
+            else:
+                payload = decoded if isinstance(decoded, dict) else None
+                if payload is None:
+                    raise DomainRpcError(
+                        f"{self.service_name} RPC returned a non-object payload"
+                    )
+                return payload
+        raise self._rpc_failure(
+            method,
+            path,
+            RuntimeError("domain RPC retry loop exited without a result"),
+            last_response,
+        )
 
 
 class HttpCognitiveClient(_HttpDomainClient):

@@ -20,12 +20,33 @@ def _when(value):
     return datetime.fromisoformat(value) if value else None
 
 
+_OUTCOME_CONTEXT_FIELDS = ("call_id", "status", "evidence_refs", "at", "channel", "error_code", "step_id")
+
+
+def _outcome_projection(row):
+    """Keep status and evidence refs; drop receipt bodies from the model context."""
+    if not isinstance(row, dict):
+        return row
+    return {key: row[key] for key in _OUTCOME_CONTEXT_FIELDS if key in row}
+
+
 def _episode_context(episode):
     """Project bounded recent outcomes, keeping the complete durable ledger."""
     if episode is None:
         return None
-    return {key: (value[-16:] if key == "results" else value)
-            for key, value in episode.items() if key != "seen_calls"}
+    projected = {}
+    for key, value in episode.items():
+        if key in {"seen_calls", "baseline", "last_evaluation"}:
+            continue
+        if key == "results":
+            projected[key] = [_outcome_projection(item) for item in (value or [])[-16:]]
+        elif key == "appraisals":
+            projected[key] = list(value or [])[-8:]
+        elif key == "predictions":
+            projected[key] = list(value or [])[-8:]
+        else:
+            projected[key] = value
+    return projected
 
 
 def _refs(value):
@@ -236,7 +257,7 @@ class GoalController:
                 episode.update(status="waiting", blocked_reason="budget", next_review_at=available_at.isoformat())
                 self._save("episode", episode)
             return
-        offers = await cap.catalog(web_scope="goal:" + goal["id"]) if getattr(self.supervisor, "web", None) else await cap.catalog()
+        offers = await cap.catalog(context_scope="goal:" + goal["id"])
         # Keep existing expression cooldowns without delaying a desktop plan's
         # independent next step by a full autonomous-opportunity interval.
         cooldown = set()
@@ -269,7 +290,7 @@ class GoalController:
             goal_request={"snapshot_revision": snapshot.revision, "goal_context": {
                 "episode_id": episode_id, "standing_goal": self.store.get("goal", STANDING_ID), "requested_goal": goal,
                 "active_episode": _episode_context(episode), "known_evidence_refs": refs, "appraisal_evidence_refs": appraisal_refs,
-                "outcomes": (episode or {}).get("results", [])[-16:],
+                "outcomes": [_outcome_projection(item) for item in (episode or {}).get("results", [])[-16:]],
                 "budget": self.budget(), "snapshot": state_snapshot}})
         # Reserve rate budget before accepting an event, including failed attempts.
         with self.store.objects.atomic():

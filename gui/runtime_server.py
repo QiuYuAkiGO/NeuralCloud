@@ -217,9 +217,17 @@ def create_app(*, runtime_url: str | None = None, control_token: str | None = No
     async def report_page() -> FileResponse:
         return FileResponse(STATIC_DIR / "report.html")
 
+    @app.get("/selfcheck")
+    async def selfcheck_page() -> FileResponse:
+        return FileResponse(STATIC_DIR / "selfcheck.html")
+
     @app.get("/web")
     async def web_page() -> FileResponse:
         return FileResponse(STATIC_DIR / "web.html")
+
+    @app.get("/server")
+    async def server_page() -> FileResponse:
+        return FileResponse(STATIC_DIR / "server.html")
 
     def require_web_origin(request: Request) -> None:
         origin = request.headers.get("origin")
@@ -249,6 +257,15 @@ def create_app(*, runtime_url: str | None = None, control_token: str | None = No
     @app.get("/api/report/days")
     async def report_days(request: Request):
         return await gateway(request).request("GET", "/v1/report/days")
+
+    @app.get("/api/selfcheck")
+    async def selfcheck_read(request: Request):
+        return await gateway(request).request("GET", "/v1/selfcheck")
+
+    @app.post("/api/selfcheck/run")
+    async def selfcheck_run(request: Request):
+        require_web_origin(request)
+        return await gateway(request).request("POST", "/v1/selfcheck:run")
 
     @app.post("/api/report/finalize")
     async def report_finalize(request: Request):
@@ -283,6 +300,42 @@ def create_app(*, runtime_url: str | None = None, control_token: str | None = No
     @app.get("/api/web/status")
     async def web_status(request: Request):
         return await gateway(request).request("GET", "/v1/web/status")
+
+    @app.get("/api/server/config")
+    async def server_config_read(request: Request):
+        return await gateway(request).request("GET", "/v1/server/config")
+
+    @app.put("/api/server/config")
+    async def server_config_save(request: Request):
+        require_web_origin(request)
+        return await gateway(request).request("PUT", "/v1/server/config", json=await _json_body(request))
+
+    @app.post("/api/server/test")
+    async def server_connection_test(request: Request):
+        require_web_origin(request)
+        return await gateway(request).request("POST", "/v1/server/test", json=await _json_body(request))
+
+    @app.post("/api/server/keys/generate")
+    async def server_key_generate(request: Request):
+        require_web_origin(request)
+        return await gateway(request).request("POST", "/v1/server/keys:generate")
+
+    @app.get("/api/server/status")
+    async def server_status(request: Request):
+        return await gateway(request).request("GET", "/v1/server/status")
+
+    @app.get("/api/server/commands")
+    async def server_commands(request: Request):
+        return await gateway(request).request("GET", "/v1/server/commands", params=dict(request.query_params))
+
+    @app.post("/api/server/commands/{command_id}/{operation}")
+    async def server_command_operate(command_id: str, operation: str, request: Request):
+        require_web_origin(request)
+        if operation not in {"approve", "reject"}:
+            raise HTTPException(status_code=404, detail="unknown server command operation")
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}", command_id):
+            raise HTTPException(status_code=422, detail="invalid server command identity")
+        return await gateway(request).request("POST", f"/v1/server/commands/{command_id}/{operation}", json={})
 
     @app.get("/api/goals")
     async def goals_read(request: Request):

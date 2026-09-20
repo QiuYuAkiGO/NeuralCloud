@@ -159,9 +159,11 @@ def create_control_app(
     app.include_router(board_router)
     from harness.runtime.diary import add_diary_routes
     from harness.runtime.daily_report import add_report_routes
+    from harness.runtime.self_check import add_self_check_routes
     diary_router = APIRouter(dependencies=[Depends(authenticate)])
     add_diary_routes(diary_router, control.supervisor, authorize=control.authorize)
     add_report_routes(diary_router, control.supervisor, authorize=control.authorize)
+    add_self_check_routes(diary_router, control.supervisor, authorize=control.authorize)
     app.include_router(diary_router)
     from harness.runtime.voice import add_voice_routes
     voice_router = APIRouter(dependencies=[Depends(authenticate)])
@@ -171,6 +173,10 @@ def create_control_app(
     web_router = APIRouter(dependencies=[Depends(authenticate)])
     add_web_routes(web_router, control.supervisor)
     app.include_router(web_router)
+    from harness.runtime.server_routes import add_server_routes
+    server_router = APIRouter(dependencies=[Depends(authenticate)])
+    add_server_routes(server_router, control.supervisor)
+    app.include_router(server_router)
 
     @app.get("/v1/capabilities", dependencies=[Depends(authenticate)])
     async def capabilities() -> dict[str, Any]:

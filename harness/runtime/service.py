@@ -113,6 +113,9 @@ def _create_owned_app(manifest, state_dir):
     # must come from the same immutable startup bundle.
     web_store = WebConfigStore(state_dir)
     manifest = web_store.apply_manifest(manifest)
+    from harness.runtime.server_config import ServerConfigStore
+    server_store = ServerConfigStore(state_dir)
+    manifest = server_store.apply_manifest(manifest)
     cognitive_url = os.environ.get("NC_COGNITIVE_URL", "http://127.0.0.1:8771")
     homeostasis_url = os.environ.get("NC_HOMEOSTASIS_URL", "http://127.0.0.1:8772")
     service_token = require_service_token(os.environ.get("NC_SERVICE_TOKEN"), name="NC_SERVICE_TOKEN", control_mode=manifest.control_mode)
@@ -237,6 +240,32 @@ def _create_owned_app(manifest, state_dir):
     supervisor.web_config_store = web_store
     supervisor.web = WebController(supervisor, web_settings, state_dir, provider=web_provider,
         config_store=web_store, test_provider_factory=web_test_provider)
+    from harness.runtime.server import ServerController
+    from harness.embodiment.providers.server import SSHServerProvider
+    server_settings = server_store.load_settings()
+
+    def server_test_provider(settings, key):
+        return SSHServerProvider(EmbodimentCondition(mode="observe", body_instance_id=settings.body_instance_id,
+            capability_requirements=[CapabilityRequirement(capability=c, required=False) for c in ("server.observe.v1", "server.execute.v1")]),
+            host=settings.host, port=settings.port, username=settings.username, host_key=settings.host_key,
+            private_key=key, body_instance_id=settings.body_instance_id,
+            connect_timeout_seconds=settings.connect_timeout_seconds,
+            default_timeout_seconds=settings.default_timeout_seconds)
+
+    server_provider = None
+    if server_settings is not None and manifest.server_access.enabled:
+        server_key = server_store.load_private_key()
+        if server_key and server_settings.host_key:
+            server_provider = SSHServerProvider(EmbodimentCondition(mode="observe", body_instance_id=server_settings.body_instance_id,
+                capability_requirements=manifest.server_access.capability_requirements),
+                host=server_settings.host, port=server_settings.port, username=server_settings.username,
+                host_key=server_settings.host_key, private_key=server_key,
+                body_instance_id=server_settings.body_instance_id,
+                connect_timeout_seconds=server_settings.connect_timeout_seconds,
+                default_timeout_seconds=server_settings.default_timeout_seconds)
+    supervisor.server_config_store = server_store
+    supervisor.server = ServerController(supervisor, server_settings, state_dir, provider=server_provider,
+        config_store=server_store, test_provider_factory=server_test_provider)
     if perception_backend is not None:
         supervisor.attach_perception_guard(
             PerceptionGuard(
@@ -295,6 +324,10 @@ def _create_owned_app(manifest, state_dir):
         DailyReportStore(state_dir / "reports", retention_days=report_settings.retention_days),
         report_settings,
     )
+    from harness.runtime.self_check import SelfCheckController, SelfCheckSettings
+    supervisor.self_check = SelfCheckController(
+        supervisor, state_dir, SelfCheckSettings.from_environment(),
+    )
     control.event_stream.add_listener(monitor.enqueue)
     profile_store = ProfileRevisionStore(
         profile_dir=Path(os.environ.get("NC_PROFILE_REVISION_DIR", str(ROOT / "data" / "homeostasis" / "profiles"))),
@@ -322,6 +355,8 @@ def _create_owned_app(manifest, state_dir):
             bridge.cancel()
             with suppress(asyncio.CancelledError):
                 await bridge
+        if getattr(supervisor, "self_check", None) is not None:
+            await supervisor.self_check.close()
         await supervisor.stop(reason="runtime service shutdown")
         if supervisor.board is not None:
             await supervisor.board.close()
@@ -330,6 +365,8 @@ def _create_owned_app(manifest, state_dir):
         if supervisor.voice is not None:
             await supervisor.voice.close()
         await supervisor.web.close()
+        if getattr(supervisor, "server", None) is not None:
+            await supervisor.server.close()
         if embodiment_client is not None:
             await embodiment_client.close()
         task = getattr(app.state, "runtime_task", None)

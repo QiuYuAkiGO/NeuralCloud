@@ -84,6 +84,7 @@ from harness.runtime.models import (
 )
 from harness.runtime.perception import PauseObservationBuffer, PerceptionGuard
 from harness.runtime.queue import PriorityEventQueue, QueueCapacityError, QueueClosedError
+from harness.runtime.rpc import DomainRpcError
 from harness.runtime.scheduler import RealTimeScheduler
 from harness.runtime.watchdog import RuntimeWatchdog
 
@@ -881,7 +882,16 @@ class RuntimeSupervisor:
                 data={"error": error_detail, "error_type": type(exc).__name__},
             )
             retryable = isinstance(exc, (DomainCommandError, TimeoutError, ConnectionError))
-            if retryable:
+            heartbeat_rpc = (
+                event.event_type == RuntimeEventType.HEARTBEAT
+                and isinstance(exc, DomainRpcError)
+            )
+            if heartbeat_rpc:
+                # A single transport blip on the 5s heartbeat must not freeze
+                # chat/QQ until an operator resume. Three consecutive Homeostasis
+                # failures still pause via the dependency watchdog.
+                await self.check_watchdog()
+            elif retryable:
                 if self.lifecycle == RuntimeLifecycle.RUNNING:
                     try:
                         await self.pause(reason=f"critical domain failure: {error_detail}")
@@ -913,7 +923,7 @@ class RuntimeSupervisor:
                 event_id=event.event_id,
                 receive_seq=event.receive_seq,
                 process_seq=process_seq,
-                status="deferred" if retryable else "failed",
+                status="deferred" if retryable and not heartbeat_rpc else "failed",
                 detail={"error": error_detail, "error_type": type(exc).__name__},
             )
         self._append_journal(
@@ -1601,6 +1611,9 @@ class RuntimeSupervisor:
             await self.check_watchdog()
             if self._basic_terminal is not None and self.lifecycle == RuntimeLifecycle.RUNNING:
                 await self._basic_terminal.expire_pending_approvals()
+            server = getattr(self, "server", None)
+            if server is not None and self.lifecycle == RuntimeLifecycle.RUNNING:
+                await server.expire_pending_approvals()
             board = getattr(self, "board", None)
             if board is not None:
                 await board.heartbeat()
@@ -1614,6 +1627,15 @@ class RuntimeSupervisor:
                 except Exception as exc:
                     self._append_journal(
                         "daily_report_failed",
+                        data={"error_type": type(exc).__name__},
+                    )
+            self_check = getattr(self, "self_check", None)
+            if self_check is not None:
+                try:
+                    await self_check.heartbeat()
+                except Exception as exc:
+                    self._append_journal(
+                        "self_check_failed",
                         data={"error_type": type(exc).__name__},
                     )
             await self.capabilities.heartbeat()

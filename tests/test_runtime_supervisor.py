@@ -30,6 +30,7 @@ from harness.runtime import (
     ControlPermission,
     ControlPlane,
     DomainCommandError,
+    DomainRpcError,
     DomainSnapshot,
     JournalCorruptionError,
     PassiveHomeostasisAdapter,
@@ -2951,6 +2952,122 @@ def test_domain_timeout_requeues_event_even_when_recovery_pause_fails(tmp_path) 
         assert "pause_failed" in record_types
         assert "event_requeued" in record_types
         cognitive.pipeline.memory.close()
+
+    asyncio.run(scenario())
+
+
+class _RpcFailingHomeostasis(PassiveHomeostasisAdapter):
+    async def apply_heartbeat(self, command):
+        raise DomainRpcError("homeostasis RPC POST /v1/commands/ApplyHeartbeat failed:")
+
+    async def apply_event(self, command):
+        raise DomainRpcError("homeostasis RPC POST /v1/commands/ApplyEvent failed: ConnectError")
+
+
+def test_heartbeat_domain_rpc_error_stays_running(tmp_path) -> None:
+    _, _, cognitive = _pipeline_adapter(tmp_path)
+    supervisor = RuntimeSupervisor(
+        manifest=_manifest(),
+        cognitive=cognitive,
+        homeostasis=_RpcFailingHomeostasis(),
+        state_dir=tmp_path / "runtime-heartbeat-rpc",
+    )
+
+    async def scenario() -> None:
+        await supervisor.boot_and_recover()
+        heartbeat = await supervisor.submit_event(
+            event_type=RuntimeEventType.HEARTBEAT,
+            priority=RuntimeEventPriority.HEARTBEAT,
+            source="scheduler",
+            payload={},
+        )
+        assert heartbeat is not None
+        queued = await supervisor.queue.get(timeout=0)
+        assert queued is not None
+        result = await supervisor.dispatch(queued)
+
+        assert result.status == "failed"
+        assert result.detail["error_type"] == "DomainRpcError"
+        assert supervisor.lifecycle == RuntimeLifecycle.RUNNING
+        assert await supervisor.queue.get(timeout=0) is None
+        assert supervisor.status().health.homeostasis_healthy is False
+        record_types = [record.record_type for record in supervisor.journal.records()]
+        assert "processing_failed" in record_types
+        assert "event_requeued" not in record_types
+        assert "lifecycle_transition" in record_types
+        paused = [
+            record
+            for record in supervisor.journal.records()
+            if record.record_type == "lifecycle_transition"
+            and (record.data or {}).get("current") == "PAUSED"
+        ]
+        assert paused == []
+        await supervisor.stop(reason="test complete")
+
+    asyncio.run(scenario())
+
+
+def test_user_message_domain_rpc_error_still_pauses(tmp_path) -> None:
+    _, _, cognitive = _pipeline_adapter(tmp_path)
+    supervisor = RuntimeSupervisor(
+        manifest=_manifest(),
+        cognitive=cognitive,
+        homeostasis=_RpcFailingHomeostasis(),
+        state_dir=tmp_path / "runtime-user-rpc",
+    )
+
+    async def scenario() -> None:
+        await supervisor.boot_and_recover()
+        accepted = await supervisor.submit_user_message("still pause me", session_id="sess_1")
+        assert accepted is not None
+        event = await supervisor.queue.get(timeout=0)
+        assert event is not None
+        result = await supervisor.dispatch(event)
+
+        assert result.status == "deferred"
+        assert supervisor.lifecycle == RuntimeLifecycle.PAUSED
+        assert "critical domain failure" in supervisor.lifecycle_reason
+        replay = await supervisor.queue.get(timeout=0)
+        assert replay is not None
+        assert replay.event_id == event.event_id
+        await supervisor.stop(reason="test complete")
+
+    asyncio.run(scenario())
+
+
+def test_repeated_heartbeat_rpc_failures_still_watchdog_pause(tmp_path) -> None:
+    _, _, cognitive = _pipeline_adapter(tmp_path)
+    supervisor = RuntimeSupervisor(
+        manifest=_manifest(),
+        cognitive=cognitive,
+        homeostasis=_RpcFailingHomeostasis(),
+        state_dir=tmp_path / "runtime-heartbeat-rpc-watchdog",
+    )
+
+    async def scenario() -> None:
+        await supervisor.boot_and_recover()
+        for _ in range(3):
+            heartbeat = await supervisor.submit_event(
+                event_type=RuntimeEventType.HEARTBEAT,
+                priority=RuntimeEventPriority.HEARTBEAT,
+                source="scheduler",
+                payload={},
+            )
+            assert heartbeat is not None
+            queued = await supervisor.queue.get(timeout=0)
+            assert queued is not None
+            assert queued.event_type == RuntimeEventType.HEARTBEAT
+            result = await supervisor.dispatch(queued)
+            assert result.status == "failed"
+            assert supervisor.lifecycle == RuntimeLifecycle.RUNNING
+
+        watchdog_event = await supervisor.queue.get(timeout=0)
+        assert watchdog_event is not None
+        assert watchdog_event.event_type == RuntimeEventType.WATCHDOG
+        await supervisor.dispatch(watchdog_event)
+        assert supervisor.lifecycle == RuntimeLifecycle.PAUSED
+        assert "critical dependency repeatedly failed" in supervisor.lifecycle_reason
+        await supervisor.stop(reason="test complete")
 
     asyncio.run(scenario())
 

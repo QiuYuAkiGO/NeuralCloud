@@ -19,6 +19,7 @@
       </label>
       <button type="button" id="refresh" class="button secondary">刷新</button>
       <button type="button" id="finalize" class="button secondary">归档该日</button>
+      <a class="button secondary" href="/selfcheck">自检</a>
       <a class="button secondary" href="/ops">运维</a>
       <a class="button secondary" href="/">返回对话</a>
     </div>
@@ -32,7 +33,9 @@
       </div>
       <span id="finalized" class="status-chip muted">未归档</span>
     </section>
-    <div id="cards" class="report-grid"></div>
+    <div id="day-chips" class="day-chips" hidden></div>
+    <div id="summary" class="metric-grid"></div>
+    <div id="dashboard" class="report-dashboard"></div>
     <section class="panel">
       <header><h2>日记</h2></header>
       <p id="diary-status">正在读取日记状态…</p>
@@ -41,6 +44,10 @@
         <button type="button" id="diary-pause" class="button secondary">暂停</button>
       </div>
     </section>
+    <details class="panel raw-panel">
+      <summary>原始 JSON</summary>
+      <pre id="raw-json" class="raw-json">尚未加载</pre>
+    </details>
   </main>
   <div id="toast" class="toast" hidden></div>
   <script src="/static/report.js"></script>

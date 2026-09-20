@@ -126,13 +126,34 @@ class WebAccessCondition(BaseModel):
         return self
 
 
+class ServerAccessCondition(BaseModel):
+    """Explicit, frozen authorization for the optional remote Linux server body."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    enabled: bool = False
+    capability_requirements: list[CapabilityRequirement] = Field(default_factory=lambda: [
+        CapabilityRequirement(capability="server.observe.v1", required=False),
+        CapabilityRequirement(capability="server.execute.v1", required=False),
+    ])
+    approval_timeout_seconds: int = Field(default=1800, ge=60, le=86400)
+    sudo_requires_approval: bool = False
+
+    @model_validator(mode="after")
+    def validate_server_capabilities(self):
+        names = [item.capability for item in self.capability_requirements]
+        if len(names) != len(set(names)) or set(names) - {"server.observe.v1", "server.execute.v1"}:
+            raise ValueError("invalid_server_capability_requirements")
+        return self
+
+
 class AutonomousCapabilitiesCondition(BaseModel):
     """Opt-in shared capability scheduling, independent of autonomous chat."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     enabled: bool = False
-    owners: dict[Literal["board", "qq", "desktop", "voice", "web", "diary"], Literal["legacy", "shared", "off"]] = Field(
+    owners: dict[Literal["board", "qq", "desktop", "voice", "web", "diary", "server"], Literal["legacy", "shared", "off"]] = Field(
         default_factory=lambda: {"board": "legacy", "qq": "legacy", "desktop": "off", "diary": "legacy"})
     allowed_capabilities: tuple[str, ...] = ()
     qq_send_enabled: bool = False
@@ -151,6 +172,7 @@ class ExperimentManifest(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     web_access: WebAccessCondition = Field(default_factory=WebAccessCondition)
+    server_access: ServerAccessCondition = Field(default_factory=ServerAccessCondition)
 
     experiment_id: str = Field(min_length=1, max_length=128)
     revision: int = Field(ge=1)
@@ -267,6 +289,8 @@ class ExperimentManifest(BaseModel):
             payload.pop("emotion_mode")
         if self.web_access == WebAccessCondition():
             payload.pop("web_access")
+        if self.server_access == ServerAccessCondition():
+            payload.pop("server_access")
         if self.autonomous_chat_enabled:
             payload.pop("autonomous_chat_enabled")
         if self.command_timeout_seconds == 30.0:
@@ -317,7 +341,7 @@ class ExperimentManifest(BaseModel):
         # Pydantic's default copy bypasses validators; preserve it only for legacy callers.
         if self.grounded_agency is None and (update or {}).get("grounded_agency") is None:
             if (self.basic_terminal.enabled or self.goal_regulation.enabled
-                    or set(update or {}) & {"basic_terminal", "autonomous_capabilities", "goal_regulation"}):
+                    or set(update or {}) & {"basic_terminal", "autonomous_capabilities", "goal_regulation", "server_access"}):
                 return type(self).model_validate({**self.model_dump(mode="json"), **(update or {})})
             return super().model_copy(update=update, deep=deep)
         candidate = type(self).model_validate({**self.model_dump(mode="json"), **(update or {})})
