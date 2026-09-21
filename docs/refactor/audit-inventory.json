@@ -1,0 +1,826 @@
+{
+  "schema": "neuralcloud-refactor-audit-v1",
+  "repository": "QiuYuAkiGO/NeuralCloud",
+  "source_branch": "codex/grounded-agency",
+  "source_commit": "835d902ed5601137b504524400cff7c64aeafbab",
+  "source_tree": "a123abc214bcdc1f44684bd6b3eb65f5251b1fe2",
+  "target_branch": "codex/grounded-agency-rebuild-plan",
+  "audit_date": "2026-09-22",
+  "timezone": "Asia/Shanghai",
+  "method": "Fixed-commit GitHub API tree and selected file reads; static analysis and repository historical evidence; independent domain and plan review.",
+  "full_recursive_tree_truncated": false,
+  "tree_entries": 4838,
+  "python_source_files": 307,
+  "python_test_files": 361,
+  "read_file_count": 131,
+  "limits": {
+    "complete_git_checkout": false,
+    "live_server_access": false,
+    "effective_production_config_read": false,
+    "project_tests_run": false,
+    "performance_benchmark_run": false,
+    "model_calls_made": false,
+    "qq_messages_sent": false,
+    "implementation_or_deployment_performed": false
+  },
+  "hash_note": "git_blob_sha identifies exact remote source. Local reads may normalize CRLF/LF or append a newline; local_text_sha256 identifies the analyzed scratch copy. No production state or private configuration was retrieved.",
+  "files_read": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "git_blob_sha": "fb215a130b7180d3ea77f9ffdf8f4b6d6e25f138",
+      "remote_bytes": 5207,
+      "local_text_sha256": "f3adcd760d4ae313b4d759f5cfb31714bad0a28fc3e51c9edbc08ec0324010d0"
+    },
+    {
+      "path": "README.md",
+      "git_blob_sha": "c9f0eebbaebe4933be5c818cbcaa3fe8d0c2a2d2",
+      "remote_bytes": 24986,
+      "local_text_sha256": "f1ebf0ecea4ae9200c98a4b912c03bca210b5ac24117c7409fc153bccc9a7620"
+    },
+    {
+      "path": "deploy/linux.example.json",
+      "git_blob_sha": "c74e1a63195a8398800e285b586a232f2c3d7a18",
+      "remote_bytes": 1440,
+      "local_text_sha256": "44f856bf568a046585e942655a58de8fcf1e7470ae8d71f4a41f2c678816a170"
+    },
+    {
+      "path": "docs/LINUX_DEPLOYMENT.md",
+      "git_blob_sha": "a2904e4e2033c49d54db68ea20c76c85a03e90a1",
+      "remote_bytes": 27471,
+      "local_text_sha256": "f7b2649cd01839f44d4a72b5da87caebaff1ccb9ab6ef931e23035e1bbfc50ef"
+    },
+    {
+      "path": "docs/LINUX_INSTANCE_20260915.md",
+      "git_blob_sha": "1b70584be28650a99b0805424b153df3325eeed6",
+      "remote_bytes": 3434,
+      "local_text_sha256": "3bae88bf56a43d3b02ceae62567a625e45e94c6ee057476d5a672b24921a465c"
+    },
+    {
+      "path": "docs/LINUX_NAPCAT.md",
+      "git_blob_sha": "46a46eb4752c07e2996df292aa0ebec2cd984afe",
+      "remote_bytes": 7523,
+      "local_text_sha256": "4f95897015f2eacc420ea8194289a50f1573cfefd534c556f95d0ce306d3c291"
+    },
+    {
+      "path": "docs/QQ_DIRECT.md",
+      "git_blob_sha": "bd3c49fdda628e1a2fc3d0a021146a6ac4898efe",
+      "remote_bytes": 16708,
+      "local_text_sha256": "a537363072ca828db449ff5ae2c6fbda2c15e63a49c159fcd3b09d938f912546"
+    },
+    {
+      "path": "docs/SHARED_MIND.md",
+      "git_blob_sha": "9ba5afc637c7e45cc86648841b94f11b970131c5",
+      "remote_bytes": 5027,
+      "local_text_sha256": "9cfe552ab6c98e3baa5da31a24768a8b3a32f302842b2f2f88552ad0e131fd2f"
+    },
+    {
+      "path": "docs/harness/20-runtime-journal-recovery.md",
+      "git_blob_sha": "a5df27ab2d5ace6af84f3021ba168d6a9311867a",
+      "remote_bytes": 7702,
+      "local_text_sha256": "e1899f93844f9a63f1cf10771f997150319830e3a7e5497766995de8aa35ecda"
+    },
+    {
+      "path": "docs/harness/evidence/journal-recovery-benchmark-2026-09-20.json",
+      "git_blob_sha": "be59fd91febc0cc5ed61a7369fec2515b1290932",
+      "remote_bytes": 4053,
+      "local_text_sha256": "2fce1c07ea62329e6b2a9b5a5b6fdcf20e8f700c3d4e8e6a4fc3865d50676ca2"
+    },
+    {
+      "path": "docs/milestones/evidence/emotion-deepseek-2026-09-17.json",
+      "git_blob_sha": "7d236225ae27e13bc2a853ae3a62141b443bd340",
+      "remote_bytes": 1587,
+      "local_text_sha256": "d32e0fb972f1d407962256412966fc2a213b2b860fdf41d07164b3c9f8c0105f"
+    },
+    {
+      "path": "docs/milestones/evidence/qq-direct-deployment-2026-09-14.json",
+      "git_blob_sha": "a962f2c0a6aadc775b77897c73d343e1e4b982ce",
+      "remote_bytes": 2558,
+      "local_text_sha256": "caa4b7a902023abcdfa7d62d2cc1994ec88d0b457085a0723e4cbc4c8d9401cd"
+    },
+    {
+      "path": "docs/milestones/evidence/qq-expression-configuration-audit-2026-09-14.json",
+      "git_blob_sha": "7842814fcd387f4a014a1402c0714a4e406fbaa7",
+      "remote_bytes": 2048,
+      "local_text_sha256": "cd1c1ce5efcc6224eb1b743af5eb2b6a105dcfe1faee71fc4d2839cd909c0f2d"
+    },
+    {
+      "path": "docs/milestones/evidence/qq-memory-assimilation-2026-09-14.json",
+      "git_blob_sha": "64de8800f1cfb6e4423a1811e40ec98b8e338631",
+      "remote_bytes": 2873,
+      "local_text_sha256": "9a0443c41b5f732930a889dd287263ea6d07dac0ec619e64274b42558fed0912"
+    },
+    {
+      "path": "docs/milestones/evidence/qq-participation-rollback-2026-09-17.json",
+      "git_blob_sha": "9537c35e3280f8cb90b6338154f16d2469aea58e",
+      "remote_bytes": 840,
+      "local_text_sha256": "6279d87b9ba335d97d11cc7731ff7b041f6ebf98e2333147530363a3a19b0624"
+    },
+    {
+      "path": "docs/milestones/evidence/qq-private-deployment-2026-09-14.json",
+      "git_blob_sha": "4833755d02ff08ce11f803e11b7cccb540c62696",
+      "remote_bytes": 2558,
+      "local_text_sha256": "ca40db9b322ee84ece609039c0154e991e7b4b717f41e1ee3f04d227931ce58a"
+    },
+    {
+      "path": "docs/milestones/evidence/qq-validator-off-2026-09-15.json",
+      "git_blob_sha": "8eecd76ab8fa2c19e381409ac18b9354b1d94a28",
+      "remote_bytes": 3058,
+      "local_text_sha256": "85b4c75e196c5500df16a10192593eeb371bad9f4fcd8c3e3eaeaa17afb2416f"
+    },
+    {
+      "path": "docs/milestones/evidence/qq-web-preparation-off-2026-09-15.json",
+      "git_blob_sha": "e81a89e6a205f7e0ee0994bb4668b52f45731335",
+      "remote_bytes": 1504,
+      "local_text_sha256": "81887a7f53301d03cf2b841d45057614f04d80a626ba8bbaa51d29f3ab8fa53d"
+    },
+    {
+      "path": "docs/milestones/linux-response-recovery-2026-09-16.md",
+      "git_blob_sha": "d31707f4602b1cb9b48f0ab435aa46f24ff0455a",
+      "remote_bytes": 4051,
+      "local_text_sha256": "8d07cf07700ca2be0b2fd960b579f2a4ffc55fa654cbc6d6b31d7dace10e24eb"
+    },
+    {
+      "path": "docs/milestones/qq-reply-resilience-2026-09-16.md",
+      "git_blob_sha": "0bf26975720ebc571c60f87d4ae27fa71bf886a7",
+      "remote_bytes": 4780,
+      "local_text_sha256": "379c545f3c84ef5ee1a16390c07be7c8cdc25ba3f1124341eab4980eeb1d5cd0"
+    },
+    {
+      "path": "docs/qq-latency-rollout.md",
+      "git_blob_sha": "f325e59f5c68890a52637f04de5d7c77ac70675e",
+      "remote_bytes": 19436,
+      "local_text_sha256": "64d9bd8512331ba6899719e9a1fd2c5d6b741a0d5e8d57ac617f44b0a780357c"
+    },
+    {
+      "path": "docs/qq-reply-followup-20260916.md",
+      "git_blob_sha": "c27ac89700f8fa60a355c202ba94207319ae8acb",
+      "remote_bytes": 10447,
+      "local_text_sha256": "6b7234c86e178549e438b92ea03fdbe2ae2ad3dac1f29d66a59219c075446f2e"
+    },
+    {
+      "path": "docs/research/grounded-agency/09-connectome-dynamics-feasibility-plan.md",
+      "git_blob_sha": "5ee431feea038d1e85e1495df6a7c6e7a6f11582",
+      "remote_bytes": 39408,
+      "local_text_sha256": "dc1df7d44ef3313798067b2ed4f1579f6f799d6f98cb1c68f62e6357e5366f3f"
+    },
+    {
+      "path": "docs/research/grounded-agency/README.md",
+      "git_blob_sha": "6a1d406ed2527b20831b4dee14c7ab50e38f65a2",
+      "remote_bytes": 7679,
+      "local_text_sha256": "b1e8d570c2b9989e309140956ac45fd66ee92af14da1a29fc89ed6b234328900"
+    },
+    {
+      "path": "harness/cognitive/daily_revision.py",
+      "git_blob_sha": "fab0bc4a2901a7a377fca439e1fd2fba1205ac22",
+      "remote_bytes": 20437,
+      "local_text_sha256": "2533dffe696edd4426bb80e08f234f73468d3ae758d965f1d25318e729f3448c"
+    },
+    {
+      "path": "harness/cognitive/grounded_agency.py",
+      "git_blob_sha": "2a8bebb9948bf66ba061835191b751ba3c60eceb",
+      "remote_bytes": 7458,
+      "local_text_sha256": "0a058c0935bb249aad7647768ad3442b0fbf2cabfbdf2a5d143256977c719223"
+    },
+    {
+      "path": "harness/cognitive/qq_memory.py",
+      "git_blob_sha": "8b6ded0881b8c499a5afc6f0a9578af197d30aea",
+      "remote_bytes": 52945,
+      "local_text_sha256": "c3e03aaeb0b03549fc9ed59989f410457989e8192e9798b7134a44bae6ea5072"
+    },
+    {
+      "path": "harness/cognitive/qq_turn.py",
+      "git_blob_sha": "62cee1c5f8e5fd8c581982919ff97089ed4c0677",
+      "remote_bytes": 13038,
+      "local_text_sha256": "96c301ea024c52ebc1565cf875be4cc2025261fb8d56a59daa0fe5d98ce61fde"
+    },
+    {
+      "path": "harness/cognitive/service.py",
+      "git_blob_sha": "0f44ba620b25b2d6cf4049a6cdfa820b6ef1c88e",
+      "remote_bytes": 46168,
+      "local_text_sha256": "462c39423201801078f4464380b8a536b51b5727a9903997146dd9e8dfd988e5"
+    },
+    {
+      "path": "harness/cognitive/shared_memory.py",
+      "git_blob_sha": "3c38c377d387255f6851f76aee8d51d9d4921a8a",
+      "remote_bytes": 29167,
+      "local_text_sha256": "6f4b0883b80e54efb0d3c0a7cbb1956f22f44673ac0c385e0a4140c7c0e3e46d"
+    },
+    {
+      "path": "harness/compiler/compiler.py",
+      "git_blob_sha": "9bc7fe56bc630df1c1d950c5f8a5f933c374dc59",
+      "remote_bytes": 34276,
+      "local_text_sha256": "ec84de1c4c13c8617a0fcee30626b4ac3bc5b94734d5da5c34c18964274fca04"
+    },
+    {
+      "path": "harness/config.py",
+      "git_blob_sha": "1aa7310a47049247040b810b265854004cbef7c7",
+      "remote_bytes": 9063,
+      "local_text_sha256": "9d495ecb51ad812b871e0be44b4d196b47a40bd73453314e42475981bef53c91"
+    },
+    {
+      "path": "harness/core/inference.py",
+      "git_blob_sha": "9a880676887b2153f8b90cc8083ce5b953c3c652",
+      "remote_bytes": 16708,
+      "local_text_sha256": "9081c614371b7d7bb49dbc13cc1db8b4c4c9ba9ce8a63cc2ebdf3f1ea00da340"
+    },
+    {
+      "path": "harness/core/models.py",
+      "git_blob_sha": "e8c022ebe0ed5ae034706ee3bc0d0a55072717d5",
+      "remote_bytes": 13133,
+      "local_text_sha256": "0875d80ca104b0fdd35d9f453f81eec1de8d5826c46f9e28417295f30e37f8b5"
+    },
+    {
+      "path": "harness/deploy/backup_job.py",
+      "git_blob_sha": "75bee2e9817d8caa9e095f4d014b69a8ba8af856",
+      "remote_bytes": 16175,
+      "local_text_sha256": "1a3aebb3139d0535d5862e4dcef5ef3e836c304f5ed56b3f5dfdcd9564731a61"
+    },
+    {
+      "path": "harness/deploy/config.py",
+      "git_blob_sha": "0f71040ca9e87bf88a3b7781e26327083d9f5cb9",
+      "remote_bytes": 9691,
+      "local_text_sha256": "275c7146cd87796bd81990ec323bdae1c258d1ce02ab9fbeeb495c913ebb9947"
+    },
+    {
+      "path": "harness/deploy/snapshot.py",
+      "git_blob_sha": "6cd9b75a3ad665d1e193f2eac949c51661c3d529",
+      "remote_bytes": 36890,
+      "local_text_sha256": "70e98d946932d942f947868fd5e8245f8bc0891390dd8ecec9889f61ec44d9f1"
+    },
+    {
+      "path": "harness/deploy/systemd.py",
+      "git_blob_sha": "b13324dccc8529ce979b0b93c6cf2c29100adb1e",
+      "remote_bytes": 19116,
+      "local_text_sha256": "394dba4f1876b8a9e742095443529f112c3ba733623cd8646a406217682bc308"
+    },
+    {
+      "path": "harness/emotion/semantics.py",
+      "git_blob_sha": "689af8da3c50019c3aa8998c11d7295bc1c34902",
+      "remote_bytes": 16732,
+      "local_text_sha256": "0b963e1493e8892854937bdea2fa12b13c9f0c265a46fc7da13692bc92891c44"
+    },
+    {
+      "path": "harness/emotion/service.py",
+      "git_blob_sha": "552c2635a7bf4dfb91e736e50727b2e02bfce518",
+      "remote_bytes": 43066,
+      "local_text_sha256": "a21540ce477eed89cac064c2e95c21b6479563e8f464a2a3ceff24e2208cef66"
+    },
+    {
+      "path": "harness/homeostasis/engine.py",
+      "git_blob_sha": "d013ad9d9eba935aaf2006beced2f69465497181",
+      "remote_bytes": 66250,
+      "local_text_sha256": "e19ef537fac029074c79975fa29fd69bee0becf68442ec2b37107ae85109ccc0"
+    },
+    {
+      "path": "harness/homeostasis/ledger.py",
+      "git_blob_sha": "d3dcc56958ee5848e4aaccb27fac59f9fd4d6a20",
+      "remote_bytes": 30489,
+      "local_text_sha256": "12876192be920c13d2982c3d053ec1a4f841e5e1e24c9c51510d70833a89f734"
+    },
+    {
+      "path": "harness/homeostasis/models.py",
+      "git_blob_sha": "c5ca78e01761a43409795b3f8acd1d4d89ef803e",
+      "remote_bytes": 29948,
+      "local_text_sha256": "5da5c6458fba87c3a8c97a3bcbfc80f97b1d5549a1e6c329f4d40c1869f82905"
+    },
+    {
+      "path": "harness/homeostasis/service.py",
+      "git_blob_sha": "dbcde063d483f38a7c1299018f15b08488f322b4",
+      "remote_bytes": 2396,
+      "local_text_sha256": "a4764c8b84f092ef0f20445e87a125392c9713e3983fc3cbbd70321b4765743f"
+    },
+    {
+      "path": "harness/llm/client.py",
+      "git_blob_sha": "3c8315177406d23704322ef974c0f0343f989f4f",
+      "remote_bytes": 35004,
+      "local_text_sha256": "fbf40b602fae6fbf9f8700ca83ee3b0e9d21c2e9ba664522f9c71b059f5f6cbd"
+    },
+    {
+      "path": "harness/llm/deadline.py",
+      "git_blob_sha": "c42db17f737cf0e6b11bf7b3e0e363cc583006be",
+      "remote_bytes": 1323,
+      "local_text_sha256": "4b63eb54616da2c30870d842a60eed4a1f44ef7c876f15afd37d4349fc1bc243"
+    },
+    {
+      "path": "harness/llm/embeddings.py",
+      "git_blob_sha": "3ff28820df434b89d7c2838c0a9d688632eaf146",
+      "remote_bytes": 8477,
+      "local_text_sha256": "031296d476ac7e16370e53c4daffb15bc5f6a05ec2ca9310d0c49dc8ff1e17e5"
+    },
+    {
+      "path": "harness/memory/qq_assimilation.py",
+      "git_blob_sha": "34212227015bbba26273ccd360ad643a1eed605d",
+      "remote_bytes": 57574,
+      "local_text_sha256": "e706e85a7db36ffb96e422e997e9982c63362d741adfbbb21a7e5490264eb98c"
+    },
+    {
+      "path": "harness/memory/retrieval/hybrid.py",
+      "git_blob_sha": "e45edd8a1a5e9eb329ab1bc135524315ecf84685",
+      "remote_bytes": 4683,
+      "local_text_sha256": "4a0969d53a4fbde8079552921c713b78c4585d99a5925db10a04a4ae3962fafa"
+    },
+    {
+      "path": "harness/memory/retrieval/signals.py",
+      "git_blob_sha": "44564322afc7be47e79b08f963000030b1d2562a",
+      "remote_bytes": 8261,
+      "local_text_sha256": "aa8593176a7ce32b76222b0927a11447865d415d1c8e8b52e2bb3da6884f3716"
+    },
+    {
+      "path": "harness/memory/revision/config.py",
+      "git_blob_sha": "dfd189ff3ba319c3568102875c67342ee8c343c4",
+      "remote_bytes": 4928,
+      "local_text_sha256": "f6fe26b9803bc0a0ddec95eb181cafe99915dc816705ccb5a62719593ce2ee6e"
+    },
+    {
+      "path": "harness/memory/revision/queue.py",
+      "git_blob_sha": "5541dbad0745cfd398494060052e22fcdfae565e",
+      "remote_bytes": 19207,
+      "local_text_sha256": "626d70c392bcc5eabb70dcd33cedca708d39f93be3fdc30ba4c9057b6794a9d8"
+    },
+    {
+      "path": "harness/memory/revision/reducer.py",
+      "git_blob_sha": "95d6972e0982ab285f0a9dcc915146bbb2c210fd",
+      "remote_bytes": 30576,
+      "local_text_sha256": "a043d89e7f3c2c2b54dcf9a470b70a785cfb9cd1ddaa527ab3644df44bb50e25"
+    },
+    {
+      "path": "harness/memory/service.py",
+      "git_blob_sha": "5397d4395bb06e0773ee5b867dc85f03c3d0720e",
+      "remote_bytes": 25252,
+      "local_text_sha256": "9d4e178fd827a07bd835f9ad07395536f9774f393fe88f5b0f8542ec689f63e9"
+    },
+    {
+      "path": "harness/memory/shared.py",
+      "git_blob_sha": "c850b40e36c50cc66e96e39051af74465644488b",
+      "remote_bytes": 47130,
+      "local_text_sha256": "619b5b366ab7211b6f7a52cff3325831b62bec8744270240d94a8afb81778421"
+    },
+    {
+      "path": "harness/memory/store/postgres.py",
+      "git_blob_sha": "1d4402593fe3995c8f88f2b3ff0ce3b925229508",
+      "remote_bytes": 27480,
+      "local_text_sha256": "efce21240844e45f7d2a2b9e5febc2af54b8f441dd4d6c421807ec01492ce7f8"
+    },
+    {
+      "path": "harness/memory/store/schema.py",
+      "git_blob_sha": "95c23e9242cb1634cb95f4acade4d039077aa7f8",
+      "remote_bytes": 15641,
+      "local_text_sha256": "613acf38d870371615b35577d56a724bed0f5cb2130e506c51fc1e644aebc3d2"
+    },
+    {
+      "path": "harness/memory/writer/pipeline.py",
+      "git_blob_sha": "ebf17a44f7e70a629a331bd33ca8b17e1102c672",
+      "remote_bytes": 12322,
+      "local_text_sha256": "efea2be4ce350b3b2ef87e18e1b3bcda1b5fd08edfd8c74b878239b9c1324bf8"
+    },
+    {
+      "path": "harness/pipeline/gateway.py",
+      "git_blob_sha": "f4fef161829d879162391c185adbb6ab132690a4",
+      "remote_bytes": 1060,
+      "local_text_sha256": "da346ee6189f2aadb986b7a2e0cfa5567c19a519f94cfcf5d040c7a389bd91d9"
+    },
+    {
+      "path": "harness/pipeline/parser.py",
+      "git_blob_sha": "42fa581c26ca07a5253321c7758c79e471649775",
+      "remote_bytes": 6055,
+      "local_text_sha256": "720e11004464bbed04c3db4238698024a8cf0c4fd05b59a7135d46a2a5aa4ae3"
+    },
+    {
+      "path": "harness/pipeline/pipeline.py",
+      "git_blob_sha": "87ee7e4722db5d40673ef6aea7e1f029c39ab129",
+      "remote_bytes": 40159,
+      "local_text_sha256": "50ff0bf67c525793d7e7fdd947c01e1cea703e1948e94a71bc521dd690ecac10"
+    },
+    {
+      "path": "harness/pipeline/state_builder.py",
+      "git_blob_sha": "c6af325417a1f90198378b5adb6440057351fd96",
+      "remote_bytes": 3347,
+      "local_text_sha256": "e58b6e71f420ea3c0ccb3e6e512578b4533a42f1d9df099a1e009d54b14688b3"
+    },
+    {
+      "path": "harness/qq/context_budget.py",
+      "git_blob_sha": "ff64b9d45978bfd74adeb4ffd6b37d77e306c124",
+      "remote_bytes": 9910,
+      "local_text_sha256": "1f4ece2c2f7aec730f9cdea7c3a6766019a0b7f808bfbbcd59fdcfaf7d4966f0"
+    },
+    {
+      "path": "harness/qq/conversation.py",
+      "git_blob_sha": "ed25457a1e59a0bb71b6e44723abe8a326f92cfe",
+      "remote_bytes": 1629,
+      "local_text_sha256": "343d836de57f7abedcbec7798ca2a8a5d289b564fdbaa645c76d2b943f1fcdc3"
+    },
+    {
+      "path": "harness/qq/decision.py",
+      "git_blob_sha": "c4b4acfe75266c273ff2131c474096e7f3da7b78",
+      "remote_bytes": 128735,
+      "local_text_sha256": "a23bcc8e0051a21e8a85591c3208d64f85a535a218d2fa279cb13e2bed247377"
+    },
+    {
+      "path": "harness/qq/direct.py",
+      "git_blob_sha": "b5005e4c36e7f37fd1b2501df9708b93dd10c285",
+      "remote_bytes": 59719,
+      "local_text_sha256": "5dcd99c5977133b8350eff44905e9e4ec94a09fcea3637be0b95166f1175aefe"
+    },
+    {
+      "path": "harness/qq/direct_capabilities.py",
+      "git_blob_sha": "18c395a728ce5ce18a8d68748e783fa0e9fa7e14",
+      "remote_bytes": 18632,
+      "local_text_sha256": "d4d051f01898649ced717bdcd929a21a2b9acbbfea7b006ed4812b8e7a322ed1"
+    },
+    {
+      "path": "harness/qq/direct_config.py",
+      "git_blob_sha": "4ac8eb83a2d2e148d66df13fc7af84d95cee27e9",
+      "remote_bytes": 4316,
+      "local_text_sha256": "5a860d52c62037d96f2daf1340dda3ad576d04f2dd53214f983f0e857e728818"
+    },
+    {
+      "path": "harness/qq/direct_images.py",
+      "git_blob_sha": "6dddb878aa768b5180c397f4a740d683239fe3d9",
+      "remote_bytes": 29091,
+      "local_text_sha256": "acab66607d10704f2789cdba973d54afbee96de96ab2c30a42f118ef787fbd78"
+    },
+    {
+      "path": "harness/qq/direct_media.py",
+      "git_blob_sha": "27c68a24e6553c2edc0306c6b17eecd3fa573aa0",
+      "remote_bytes": 8122,
+      "local_text_sha256": "0ed304e79ddd7e9a938d7c060e9e4eb1c9cfa25373c75ea703273b6887d6f761"
+    },
+    {
+      "path": "harness/qq/direct_source.py",
+      "git_blob_sha": "827e99604c4787fb54faad44da64a0f9d2cfd24f",
+      "remote_bytes": 8889,
+      "local_text_sha256": "bf50d72c65d7a9bccfc864d4d9cb9c6a38370ba34dfa17e37d2bac226138ca64"
+    },
+    {
+      "path": "harness/qq/direct_store.py",
+      "git_blob_sha": "83ff7b1602db04d8abe46d846d3ba65257c1de32",
+      "remote_bytes": 35145,
+      "local_text_sha256": "24088096052789364be1140895f522c49774d256fb10dab60630e5cb875ac5b5"
+    },
+    {
+      "path": "harness/qq/maintenance.py",
+      "git_blob_sha": "b68c0f09a789cdaf5cb5c7e3284654aa2c6fc5c9",
+      "remote_bytes": 5204,
+      "local_text_sha256": "6659059fd989c0ccc1d29efd533cb138e78db8f6078504ab934a5636bf2b3968"
+    },
+    {
+      "path": "harness/qq/memory.py",
+      "git_blob_sha": "bf91008e4165d36d77f2d45219ba84cfd7574ce2",
+      "remote_bytes": 43805,
+      "local_text_sha256": "090dad9e93ef80c8f20636428810adb4ebcde82b3ae2456dfe3331ac79694e47"
+    },
+    {
+      "path": "harness/qq/memory_evidence.py",
+      "git_blob_sha": "7c167a68c110d132fcb07e48d4821769b4bc3a4e",
+      "remote_bytes": 8710,
+      "local_text_sha256": "3741103aff012ca436d000b92a8ddce65b375907be5e384cfffbb25427232aa3"
+    },
+    {
+      "path": "harness/qq/onebot.py",
+      "git_blob_sha": "909b74f0fd6f3b1a5fa76b9a78a3f64518279814",
+      "remote_bytes": 6291,
+      "local_text_sha256": "8e2ec215d7a2857d05702476c2032d6cca27b16d946ba1fd3082bbc5ba7f5677"
+    },
+    {
+      "path": "harness/qq/policy.py",
+      "git_blob_sha": "887624f1a5f35690863312ef2e1228daec0fdc85",
+      "remote_bytes": 5638,
+      "local_text_sha256": "651eaf8a0949b3f66791ed2cc4c4ccabec4010bb0415a419146cba515c32539a"
+    },
+    {
+      "path": "harness/qq/prepared_turn.py",
+      "git_blob_sha": "973b28c458dd03711995bf99732e6a034acd4ea2",
+      "remote_bytes": 19670,
+      "local_text_sha256": "e86c3cacd29c72ebf41bab8650a67e50e77e1318ff16f83aa8334f281284e2e5"
+    },
+    {
+      "path": "harness/qq/reply_requests.py",
+      "git_blob_sha": "50625e232e7fb3f02b4933e730f04f25fd351455",
+      "remote_bytes": 17995,
+      "local_text_sha256": "c13aef10e68de8604c89a43e9d390289c521f7a8fdfa5a45d4c07a07fd5cc3df"
+    },
+    {
+      "path": "harness/qq/segment_delivery.py",
+      "git_blob_sha": "193bf9639a8ffb3692bf3e53541c1ea772949ad1",
+      "remote_bytes": 21387,
+      "local_text_sha256": "f5621b7523f3a9a2bb1415227fe20e4c6bf54729df798a84e34dcb71c1d1a94f"
+    },
+    {
+      "path": "harness/qq/segment_ledger.py",
+      "git_blob_sha": "09013611d8d7989d583c04f545772ea98e0a89c7",
+      "remote_bytes": 28158,
+      "local_text_sha256": "034922a054a5823883e2e2e3db7077fb823721a9bb709774fe27020528daad82"
+    },
+    {
+      "path": "harness/qq/session.py",
+      "git_blob_sha": "d69d0eca5d1cd759e1e37a0417bad3796854104d",
+      "remote_bytes": 22334,
+      "local_text_sha256": "e1a3dd84f7cb946ad81e0f0d7a319a7ec62a799be934dc4545c736c94a733199"
+    },
+    {
+      "path": "harness/qq/shared.py",
+      "git_blob_sha": "6fb878ea969220f102ddffb0236cf61818cf1fbc",
+      "remote_bytes": 13564,
+      "local_text_sha256": "90cc380e93d200fb5ef6fa52a6c76cca5f598fdae037c1c846ee2663e3280178"
+    },
+    {
+      "path": "harness/qq/telemetry.py",
+      "git_blob_sha": "3cccff2b9ef9e9f5c97e64253ee5012f7a1a684d",
+      "remote_bytes": 21277,
+      "local_text_sha256": "6e375b080bcaf13e30a61cab288ce2a98c30abe853cb6101727ad48b81aec2f4"
+    },
+    {
+      "path": "harness/qq/turn_checkpoints.py",
+      "git_blob_sha": "0062f2391e5291204ff2e6ba6da3003f8cebd65b",
+      "remote_bytes": 10477,
+      "local_text_sha256": "708731a9de2502c1ed2a83adb22f49038c7472d1d6191c93d67c5677d327fb40"
+    },
+    {
+      "path": "harness/qq/watch_ledger.py",
+      "git_blob_sha": "8ced17c2307e0f95c3665993e8cd6d76183af44c",
+      "remote_bytes": 88720,
+      "local_text_sha256": "47dcfd453cbf0da71ae7167ac52dabc54fc22b5cdf48180d7598aea0eee8fdd2"
+    },
+    {
+      "path": "harness/router/gate.py",
+      "git_blob_sha": "49c3168a285e37a7f58ee2feb06580f1ce906099",
+      "remote_bytes": 10882,
+      "local_text_sha256": "ab359dad1f14238872144528f4770002845d896315eb17ab0f567359c31fce0f"
+    },
+    {
+      "path": "harness/runtime/adapters.py",
+      "git_blob_sha": "b3bea3f9137ad9021f0065e7e7c26ff5e1ee150f",
+      "remote_bytes": 91437,
+      "local_text_sha256": "99466c1a3ca6478b90ec3574f0a888ca87f4f2e768796ff393c8b42dff709545"
+    },
+    {
+      "path": "harness/runtime/affect.py",
+      "git_blob_sha": "52ada0893c9b57ffac931a2ca2d438298eb83f9a",
+      "remote_bytes": 9658,
+      "local_text_sha256": "c24ef0aab6b3a83a78908128bc7fc4fb77abc2bccc2fc44a89c9b42215190527"
+    },
+    {
+      "path": "harness/runtime/checkpoint.py",
+      "git_blob_sha": "480ffd0393818f2763f1039df6f32bdfecfa5fad",
+      "remote_bytes": 2869,
+      "local_text_sha256": "6916ce24c6081a5529334f1d7247afe8c111fe8b18de587e3a19b7e362d1f960"
+    },
+    {
+      "path": "harness/runtime/cognitive_store.py",
+      "git_blob_sha": "b8fe01e846d5b938ac92c403239a02194036d030",
+      "remote_bytes": 11309,
+      "local_text_sha256": "26b0e93d4d961e717f2c912d06c710f172b9e2fa04ea0551077394501d464d49"
+    },
+    {
+      "path": "harness/runtime/control.py",
+      "git_blob_sha": "467754820f5afda1d11b974aeccd3a18391434ce",
+      "remote_bytes": 27810,
+      "local_text_sha256": "0630bf02437e264f2c785ffe484255d3efb24da3301862aa5d6de534e82b392f"
+    },
+    {
+      "path": "harness/runtime/emotion.py",
+      "git_blob_sha": "6e016077c73a036e0d47037c9301dcb2f86d455f",
+      "remote_bytes": 14100,
+      "local_text_sha256": "667175986abd2a92c4509258962a91f35ec9b2a9d16b1b43628830f4243a9d6c"
+    },
+    {
+      "path": "harness/runtime/journal.py",
+      "git_blob_sha": "e2011f6dcfe877da667ae931da049d2788754e9c",
+      "remote_bytes": 21187,
+      "local_text_sha256": "8a8998722345d93d0cc0c8b61605331115c6bd2c092dcf211258377c2b8dbd9f"
+    },
+    {
+      "path": "harness/runtime/locking.py",
+      "git_blob_sha": "328ab6c9391faa7b6b0f0380ee0c23fdff48f993",
+      "remote_bytes": 4324,
+      "local_text_sha256": "25c5a94076b1b863891e06e6b9d18a3cb7668671bcce5a8d78d98014fa1f9db3"
+    },
+    {
+      "path": "harness/runtime/models.py",
+      "git_blob_sha": "ceee254fde2e7ea0bec38d61646b591c6738ca87",
+      "remote_bytes": 12946,
+      "local_text_sha256": "237a0bdbfb465aa1b84e5b0b00fddde9e14d25c522458bc2f013a37f2948b044"
+    },
+    {
+      "path": "harness/runtime/ownership.py",
+      "git_blob_sha": "266035894aa69fa0a7465fffa4a17977c21d12ec",
+      "remote_bytes": 7318,
+      "local_text_sha256": "7602864a0725f572fe03449eebad6ebd7269c9766d2473c9dc5ce1dad3506a4f"
+    },
+    {
+      "path": "harness/runtime/qq_capabilities.py",
+      "git_blob_sha": "7c35bc5d783e978390c1bd12ba32b35a3319ac1c",
+      "remote_bytes": 24335,
+      "local_text_sha256": "10223c21faeff3b20c9fa55e9cc8c941a82d97018f030451fc8e913ef9f9a5a8"
+    },
+    {
+      "path": "harness/runtime/qq_homeostasis.py",
+      "git_blob_sha": "0683c9235b756ec3b401fd065e6ebd55321ec852",
+      "remote_bytes": 8878,
+      "local_text_sha256": "b8561fcded6ae34bae024a5789d75626f469b35994c8c56e9f958357d82e1b49"
+    },
+    {
+      "path": "harness/runtime/qq_pipeline.py",
+      "git_blob_sha": "9f10a002d2081ae2483b606dc0c44332f1194a4e",
+      "remote_bytes": 6984,
+      "local_text_sha256": "f4532cdb79a5319fe4275f4e44dbc0d6ddc1ea092af498c45aa21f346b2a4e37"
+    },
+    {
+      "path": "harness/runtime/qq_sources.py",
+      "git_blob_sha": "996640e056bc787eb44e4ba819b11b8c5e04fe30",
+      "remote_bytes": 5044,
+      "local_text_sha256": "d9d69adce2cd116ecc03d33510962cf3e028b5a885a0f499d25c3e2f3ac44390"
+    },
+    {
+      "path": "harness/runtime/qq_turns.py",
+      "git_blob_sha": "c315d933429a615ea72b725daa62984b9f882a0b",
+      "remote_bytes": 12676,
+      "local_text_sha256": "56176b68fa27891a59466951b993be41bc55494d8603d363b3229e994260c21b"
+    },
+    {
+      "path": "harness/runtime/queue.py",
+      "git_blob_sha": "60fd804017b42f431c16b4ee6263ab2b8800a21c",
+      "remote_bytes": 8606,
+      "local_text_sha256": "27fff6b7c3a55a71e5511e081d053c8e5d43614499e4533bcaa90cf0753e2513"
+    },
+    {
+      "path": "harness/runtime/recovery.py",
+      "git_blob_sha": "35781fdb3c6f73ad865bd8d2920d7ce021c431d4",
+      "remote_bytes": 34695,
+      "local_text_sha256": "cd05783465df650dd3e15eecbcefd975d7dc28f47d0ca97773900250772517b2"
+    },
+    {
+      "path": "harness/runtime/research_memory.py",
+      "git_blob_sha": "0a764dd2f7cfc748ed935a5c3880872e9554b1e7",
+      "remote_bytes": 2600,
+      "local_text_sha256": "f095e2a5b0ba55fef7d1f9c3af0afd381c4fcada3e727da111180cb611e0c2c6"
+    },
+    {
+      "path": "harness/runtime/rpc.py",
+      "git_blob_sha": "8a4488cb3161467a710b81882ccebd59ba83e1ce",
+      "remote_bytes": 17572,
+      "local_text_sha256": "e122a17b2fde8c292f18c1ba8adf1c0fe35b90949654406c4303b4dd55f02980"
+    },
+    {
+      "path": "harness/runtime/scheduler.py",
+      "git_blob_sha": "c3c22535a38d834f798eab69083821cc37249073",
+      "remote_bytes": 1940,
+      "local_text_sha256": "c5d1b40bd4dc615adc20c30ad9a586abe225c3f056797aef7cb137ad0a4f5d89"
+    },
+    {
+      "path": "harness/runtime/service.py",
+      "git_blob_sha": "06f90720f8e333f92a31efbf8be0a2598e62006f",
+      "remote_bytes": 19824,
+      "local_text_sha256": "d9429e1b0c585824bdcdd4340780228f30ad4849e61f349e2f392245e6c26766"
+    },
+    {
+      "path": "harness/runtime/supervisor.py",
+      "git_blob_sha": "e526d59fd6047ffcebbc5d634db789ad1995c055",
+      "remote_bytes": 235322,
+      "local_text_sha256": "b28cb6e6c0706f1d3f7fe0705cbca1e027153f2c011c5fdfc6b62d582d15d52e"
+    },
+    {
+      "path": "harness/runtime/watchdog.py",
+      "git_blob_sha": "bcd61815fd1a2cec263e7b2063ed67165e137393",
+      "remote_bytes": 4208,
+      "local_text_sha256": "ee2d2d7c5c5a00c10bfbd144f1a3f2a428f7d62d76467007eb579ca85b190b52"
+    },
+    {
+      "path": "harness/subagents/interpreter.py",
+      "git_blob_sha": "4bae38ba2a36121a98d8f7e3ccc8047966b534c7",
+      "remote_bytes": 5426,
+      "local_text_sha256": "faf18c31644787081c00c8b1f825496133d04e7d76716c13e39dbb805a057533"
+    },
+    {
+      "path": "infra/trace/request_spans.py",
+      "git_blob_sha": "73a37b05cc5656f9c3bf4b68da94ee44f35e4e7e",
+      "remote_bytes": 5786,
+      "local_text_sha256": "c79aa21814df34ff00c6d7a880ef353b449757c5a2cfba79b7211cbe3676c3a8"
+    },
+    {
+      "path": "presets/runtime/grounded-mistyai-v1.json",
+      "git_blob_sha": "41b9f3578f2133f3974d0d1eb21ee2ea94f2d982",
+      "remote_bytes": 1931,
+      "local_text_sha256": "c182bccdb5e475ee0a5c1e02b96a3ce5c7af9b598af520ab763aa0b86266b97b"
+    },
+    {
+      "path": "presets/runtime/shared-misty-emotion-on-v1.json",
+      "git_blob_sha": "e506a6792f8062194854f91ff5847218a7b0f92b",
+      "remote_bytes": 2104,
+      "local_text_sha256": "717c9f6a9f185f154d0367199d0449688a63fdf076b7df6755d2b8f9966123d0"
+    },
+    {
+      "path": "presets/runtime/shared-misty-server-v1.json",
+      "git_blob_sha": "aa1b955da9742836f2f89e422ca16fd19af665ea",
+      "remote_bytes": 2385,
+      "local_text_sha256": "aa9b1c8bba77fc6f7acf6d04c95af9b23caec3549d5a841483e676c8a68d770a"
+    },
+    {
+      "path": "presets/runtime/shared-misty-v1.json",
+      "git_blob_sha": "7473a78edf68da8ee05fc517a912d4e56b94463d",
+      "remote_bytes": 1593,
+      "local_text_sha256": "067efb972c232105d53e2baa3c5d0d9285975e66a37b5cfaf14cdc24e9ac18ba"
+    },
+    {
+      "path": "pyproject.toml",
+      "git_blob_sha": "169523393ae6cc87b467ef9f392d3aad5864b513",
+      "remote_bytes": 1741,
+      "local_text_sha256": "953b1a2231224d66daeec451a658d53b776b65e7c730104f624874a6f93a454f"
+    },
+    {
+      "path": "tests/test_cognitive_foreground_priority.py",
+      "git_blob_sha": "4549059a452fdc9f86e8b1d8f2fd4440e175d102",
+      "remote_bytes": 4659,
+      "local_text_sha256": "317970162b80ffef7d5fd2572ac36f2eff0340b0fd81d492fdb7a4ac9d2f7ca5"
+    },
+    {
+      "path": "tests/test_qq_direct_actor.py",
+      "git_blob_sha": "22c595f26e39b2c87f1e54c7065e3c3e59c1f44c",
+      "remote_bytes": 45331,
+      "local_text_sha256": "177c457db1b5a9909226c3e6433032b08e70b1a551fca2cbf299f4398005b9cb"
+    },
+    {
+      "path": "tests/test_qq_direct_scheduling.py",
+      "git_blob_sha": "014e7aa565632ce857f47301493000ab521013fd",
+      "remote_bytes": 3768,
+      "local_text_sha256": "46c89c9f92e26bb22becbc35b23e688e9b28a8fb602decc8bbf984aca5faa190"
+    },
+    {
+      "path": "tests/test_qq_direct_scope_rollout.py",
+      "git_blob_sha": "701a88fc0bbb29599b885ef68d8d204a4c8d2d7a",
+      "remote_bytes": 7798,
+      "local_text_sha256": "14020962be21e6af950ebb338f11f54a8a6bb6e3caf27b9431e00c2a0d7289bc"
+    },
+    {
+      "path": "tests/test_qq_direct_termination.py",
+      "git_blob_sha": "da90a78f582696063ab8b0306bac848d960fff88",
+      "remote_bytes": 8047,
+      "local_text_sha256": "b86841f5f815123550833210c8756c179e0b18469940ac6e988dc8dca26739de"
+    },
+    {
+      "path": "tests/test_qq_private_actor.py",
+      "git_blob_sha": "df2c00a7d67a901a306a6b996cd5c5003bfdb5f5",
+      "remote_bytes": 8691,
+      "local_text_sha256": "98ecf6ab49f12ac0e1c6255b7f39ccba4026ba8cdaa02dc24c6099b068bbaa7d"
+    },
+    {
+      "path": "tests/test_qq_process_crash_recovery.py",
+      "git_blob_sha": "6d86d21c4c836f7a4d4a91bcaad1ef27df7280d8",
+      "remote_bytes": 11573,
+      "local_text_sha256": "ed2b6ea2c454df64cdcb89028b05988733c617581ef1637e62cb543cc60b5b65"
+    },
+    {
+      "path": "tests/test_qq_recovery_contract_gaps.py",
+      "git_blob_sha": "91efa2d85cf3cbe73b351bbcf20a92dcb5dac863",
+      "remote_bytes": 5922,
+      "local_text_sha256": "7caec17c58d221b9f2d75f2c8a6ab424fc1a0755f6f7d0d64c0f641069168725"
+    },
+    {
+      "path": "tests/test_qq_reply_requests.py",
+      "git_blob_sha": "f366b41a6e842940311c4f4924b411ebf419c4f2",
+      "remote_bytes": 13360,
+      "local_text_sha256": "e8ba470f72c420a940abbcf008f6cb28a16890c28d0af0ef4a4dcb5485b9baa3"
+    },
+    {
+      "path": "tests/test_qq_request_revision_delivery.py",
+      "git_blob_sha": "1ce1c6235d41ab06b5ba100e2511e4eba37fbf53",
+      "remote_bytes": 11416,
+      "local_text_sha256": "29e8486ce4cd99801a6ba8ca1103243dbd59196123cada4208be1c9de3ef85dd"
+    },
+    {
+      "path": "tests/test_runtime_journal_bounded.py",
+      "git_blob_sha": "961bbf6c7a18310109d5088625d4ecc50725508d",
+      "remote_bytes": 9193,
+      "local_text_sha256": "71eed20433bdef64ee5f42f21e8d119ca8f62aed15cb286c3eece07ac514437a"
+    },
+    {
+      "path": "tests/test_runtime_lock_process_probe.py",
+      "git_blob_sha": "94e894b028b155dac9b6798dfaa4956ebb6c5dfd",
+      "remote_bytes": 5900,
+      "local_text_sha256": "7039f9ad1f920dc024b43bdac0cd40fb55d456f7ad81564fb3bfd16b6d449dd1"
+    },
+    {
+      "path": "tests/test_runtime_monitor_recovery.py",
+      "git_blob_sha": "7936999136a8b57551fecb2be359479a4837b431",
+      "remote_bytes": 2725,
+      "local_text_sha256": "3034afa45a532a54ab4605848c1c470378fe86cdf21eb0a1cfd782650163cb40"
+    },
+    {
+      "path": "tests/test_runtime_recovery.py",
+      "git_blob_sha": "de03b92bd3c92486a06402ccdbeca59e40271f37",
+      "remote_bytes": 16702,
+      "local_text_sha256": "c3e27804b135be9512c620a1dd671177d82f020c88608c28af5c33e6c77876f7"
+    }
+  ],
+  "external_primary_references": [
+    "https://docs.python.org/3.12/library/asyncio-task.html#task-cancellation",
+    "https://docs.python.org/3.12/library/concurrent.futures.html#concurrent.futures.Future.cancel",
+    "https://sqlite.org/wal.html",
+    "https://sqlite.org/backup.html"
+  ],
+  "deliverables": [
+    "docs/refactor/README.md",
+    "docs/refactor/grounded-agency-rebuild-plan.md",
+    "docs/refactor/audit-inventory.json"
+  ]
+}
