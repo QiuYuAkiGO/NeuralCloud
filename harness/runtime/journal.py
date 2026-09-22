@@ -92,6 +92,8 @@ class RuntimeJournal:
         max_segment_bytes: int = 64 * 1024 * 1024,
         recent_record_limit: int = 512,
         index_stride: int = 128,
+        recovery_store=None,
+        recovery_mode: str = "strict",
     ) -> None:
         raw_path = Path(path)
         self._directory_mode = not bool(raw_path.suffix)
@@ -121,7 +123,25 @@ class RuntimeJournal:
         self._degraded = False
         self.last_append_at: datetime | None = None
         self.truncated_tail_bytes = 0
-        self._recover()
+        self.recovery_store = recovery_store
+        self.recovered_records = 0
+        if recovery_store is not None:
+            recovery_store.journal = self
+        anchor = None
+        if recovery_store is not None and recovery_mode == "fast" and recovery_store.anchor:
+            try:
+                anchor = self._validate_anchor(recovery_store.anchor)
+            except (OSError, ValueError, KeyError, TypeError, JournalCorruptionError) as exc:
+                recovery_store.fallback_reason = f"invalid recovery anchor: {exc}"
+        if anchor is None:
+            if recovery_store is not None:
+                if recovery_mode == "fast" and not recovery_store.fallback_reason:
+                    recovery_store.fallback_reason = "no compatible recovery anchor"
+                recovery_store.reset()
+            self._recover()
+        else:
+            recovery_store.mode = "fast"
+            self._recover(anchor=anchor)
 
     @property
     def degraded(self) -> bool:
@@ -194,7 +214,16 @@ class RuntimeJournal:
     def _read_disk_page(self, first: int, last: int) -> list[RuntimeJournalRecord]:
         if first > last:
             return []
-        anchor = self._index[bisect_right(self._index_seqs, first) - 1]
+        slot = bisect_right(self._index_seqs, first) - 1
+        if slot >= 0:
+            anchor = self._index[slot]
+        elif self.recovery_store is not None:
+            row = self.recovery_store.locate(first)
+            if row is None:
+                raise JournalCorruptionError(f"missing seek anchor for {first}")
+            anchor = _RecordLocation(row[0], Path(row[1]), row[2], row[3])
+        else:
+            raise JournalCorruptionError(f"missing seek anchor for {first}")
         path_index = self._path_positions[anchor.path]
         offset = anchor.offset
         sequence = anchor.record_seq
@@ -324,7 +353,7 @@ class RuntimeJournal:
             except OSError:
                 pass
             raise
-        self._index_record(record, self.path, start_size)
+        self._index_record(record, self.path, start_size, start_size + len(line.encode("utf-8")))
 
     def _repair_failed_append(self) -> None:
         if self._pending_truncation is None:
@@ -337,14 +366,18 @@ class RuntimeJournal:
                 os.fsync(handle.fileno())
         self._pending_truncation = None
 
-    def _index_record(self, record: RuntimeJournalRecord, path: Path, offset: int) -> None:
+    def _index_record(self, record: RuntimeJournalRecord, path: Path, offset: int, end: int | None = None) -> None:
         if path not in self._path_positions:
             self._path_positions[path] = len(self._paths)
             self._paths.append(path)
-        if offset == 0 or (record.record_seq - 1) % self._index_stride == 0:
+        if self.recovery_store is None and (offset == 0 or (record.record_seq - 1) % self._index_stride == 0):
             self._index.append(_RecordLocation(record.record_seq, path, offset, record.prev_hash))
             self._index_seqs.append(record.record_seq)
         self._disk_last_record_seq = record.record_seq
+        if self.recovery_store is not None:
+            # Compute the actual byte boundary (canonical appends and recovered
+            # noncanonical JSON lines can have different encoded lengths).
+            self.recovery_store.observe(record, path, offset, end)
 
     def _rotate_if_needed(self, incoming_bytes: int) -> None:
         if not self._directory_mode or not self.path.exists():
@@ -363,15 +396,48 @@ class RuntimeJournal:
             return [self.path] if self.path.exists() else []
         return sorted(self._journal_dir.glob("runtime-*.jsonl"))
 
-    def _recover(self) -> None:
+    def _validate_anchor(self, anchor):
+        paths = self._segment_paths()
+        path = Path(anchor['path'])
+        if path not in paths or anchor['seq'] != self.recovery_store.projector.cursor:
+            raise ValueError("anchor is not in this journal")
+        with paths[0].open('rb') as handle:
+            genesis = self._decode_record(handle.readline(), paths[0], 0)
+            self._verify_record(genesis, 1, '')
+        if genesis.checksum != self.recovery_store.projector.state.get('journal_genesis'):
+            raise ValueError("journal identity changed")
+        with path.open('rb') as handle:
+            handle.seek(anchor['offset'])
+            record = self._decode_record(handle.readline(), path, anchor['offset'])
+            if handle.tell() != anchor['end'] or record.record_seq != anchor['seq']:
+                raise ValueError("anchor position changed")
+            if record.checksum != anchor['checksum'] or not record.verify_checksum():
+                raise ValueError("anchor checksum changed")
+        return anchor, record
+
+    def _recover(self, *, anchor=None) -> None:
         paths = self._segment_paths()
         if not paths:
             self.path.touch()
             return
         previous_hash = ""
+        start_index, start_offset = 0, 0
+        if anchor is not None:
+            saved, record = anchor
+            start_index = paths.index(Path(saved['path']))
+            start_offset = saved['end']
+            previous_hash = record.checksum
+            self._disk_last_record_seq = record.record_seq
+            self._records.append(record)
+            self._paths = list(paths)
+            self._path_positions = {path: i for i, path in enumerate(paths)}
         for path_index, segment_path in enumerate(paths):
+            if path_index < start_index:
+                continue
             self.path = segment_path
             with segment_path.open("rb") as handle:
+                if path_index == start_index:
+                    handle.seek(start_offset)
                 while True:
                     offset = handle.tell()
                     chunk = handle.readline()
@@ -388,7 +454,8 @@ class RuntimeJournal:
                     record = self._decode_record(chunk, segment_path, offset)
                     self._verify_record(record, self._disk_last_record_seq + 1, previous_hash)
                     self._records.append(record)
-                    self._index_record(record, segment_path, offset)
+                    self._index_record(record, segment_path, offset, handle.tell())
+                    self.recovered_records += 1
                     previous_hash = record.checksum
         self.path = paths[-1]
         if self._records:

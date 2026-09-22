@@ -100,6 +100,25 @@ def test_daily_report_aggregates_uptime_paths_tokens_and_diary(tmp_path) -> None
     diary.close()
 
 
+def test_daily_report_goal_prepare_failures_use_error_code_not_unknown_channel(tmp_path) -> None:
+    store = MonitorStore(tmp_path / "monitor.sqlite3")
+    start, _ = day_bounds(DAY, "Asia/Shanghai")
+    _insert_sample(store, start + timedelta(hours=1), "RUNNING")
+    calls = SimpleNamespace(all=lambda: [{
+        "created_at": (start + timedelta(hours=2)).isoformat(),
+        "status": "error",
+        "error_code": "goal_context_too_large",
+        "goal_binding": {"goal_id": "psychological-balance"},
+    }])
+    builder = DailyReportBuilder(
+        monitor=store, state_dir=tmp_path, settings=DailyReportSettings(),
+        capabilities=SimpleNamespace(calls=calls),
+    )
+    report = asyncio.run(builder.build(DAY, finalized=False))
+    assert report["intent"]["capabilities"]["by_channel"]["goal"] == {"goal_context_too_large": 1}
+    store.close()
+
+
 def test_daily_report_heartbeat_does_not_wait_for_slow_report_and_deduplicates(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr("harness.runtime.daily_report.utc_now", lambda: datetime(2026, 9, 16, 1, tzinfo=UTC))
 

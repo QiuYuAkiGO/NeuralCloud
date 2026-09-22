@@ -74,22 +74,10 @@ class QQFactIngress:
         self._accepted: dict[str, RuntimeEvent] | None = None
 
     def _restore(self):
-        if self._accepted is not None:
-            return
-        restored = {}
-        for record in self.supervisor.journal.iter_records():
-            if record.record_type != "event_accepted":
-                continue
-            raw = record.data.get("event") or {}
-            if raw.get("event_type") != RuntimeEventType.QQ_FACT:
-                continue
-            event = RuntimeEvent.model_validate(raw)
-            fact = QQHomeostaticFact.model_validate(event.payload["qq_fact"])
-            old = restored.get(fact.fact_key)
-            if old is not None and QQHomeostaticFact.model_validate(old.payload["qq_fact"]).fact_hash != fact.fact_hash:
-                raise ValueError("qq_fact_journal_conflict")
-            restored[fact.fact_key] = event
-        self._accepted = restored
+        # The shared recovery projection owns historical fact identities.
+        self.supervisor.recovery.sync()
+        if self._accepted is None:
+            self._accepted = {}
 
     async def submit(self, fact: QQHomeostaticFact):
         if fact.group_id not in self.config.allowed_group_ids:
@@ -105,7 +93,9 @@ class QQFactIngress:
             await asyncio.to_thread(_validate_evidence, self.config, fact, datetime.now(timezone.utc))
             self._restore()
             assert self._accepted is not None
-            old = self._accepted.get(fact.fact_key)
+            store = self.supervisor.recovery
+            indexed = store.mapping("qq_facts").get(fact.fact_key)
+            old = RuntimeEvent.model_validate(store.read(indexed[0]).data["event"]) if indexed else None
             if old is not None:
                 if QQHomeostaticFact.model_validate(old.payload["qq_fact"]).fact_hash != fact.fact_hash:
                     raise ValueError("qq_fact_conflict")
@@ -124,7 +114,7 @@ class QQFactIngress:
             if event is None:
                 self._accepted = None
                 raise ValueError("qq_fact_not_queued")
-            self._accepted[fact.fact_key] = event
+            self._accepted.clear()
             return base | {"status": "queued", "event_id": event.event_id, "receive_seq": event.receive_seq}
 
 

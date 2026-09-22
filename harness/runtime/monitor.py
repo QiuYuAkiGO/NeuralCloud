@@ -340,6 +340,7 @@ class MonitorStore:
         source: str | None = None,
         source_ref: str | None = None,
         project: bool = True,
+        journal_cursor: dict | None = None,
     ) -> MonitorEvent | None:
         clean = sanitize_payload(payload)
         if not isinstance(clean, dict):
@@ -382,6 +383,9 @@ class MonitorStore:
                         "SELECT correlation_id FROM monitor_runs WHERE run_id=?", (str(run_id),),
                     ).fetchone()
                     correlation_id = (row["correlation_id"] if row else None) or run_id
+                if journal_cursor is not None:
+                    self._connection.execute("INSERT OR REPLACE INTO monitor_meta VALUES ('journal_cursor',?)",
+                                             (json.dumps(journal_cursor),))
                 cursor = self._connection.execute(
                     """
                     INSERT OR IGNORE INTO monitor_events(
@@ -402,6 +406,8 @@ class MonitorStore:
                     ),
                 )
                 if cursor.rowcount == 0:
+                    self._connection.commit()
+                    self.last_error = None
                     return None
                 seq = int(cursor.lastrowid)
                 if project:
@@ -421,10 +427,14 @@ class MonitorStore:
                 payload=clean,
             )
         except sqlite3.Error as exc:
+            with self._lock:
+                self._connection.rollback()
             self.last_error = str(exc)
+            if journal_cursor is not None:
+                raise
             return None
 
-    def append_journal(self, record: RuntimeJournalRecord) -> MonitorEvent | None:
+    def append_journal(self, record: RuntimeJournalRecord, *, journal_cursor: dict | None = None) -> MonitorEvent | None:
         payload = record.model_dump(mode="json")
         payload["integrity"] = {
             "checksum_valid": record.verify_checksum(),
@@ -437,7 +447,20 @@ class MonitorStore:
             observed_at=record.recorded_at,
             source="journal",
             source_ref=f"journal:{record.runtime_instance_id}:{record.record_seq}",
+            journal_cursor=journal_cursor,
         )
+
+    def journal_cursor(self):
+        with self._lock:
+            row = self._connection.execute("SELECT value FROM monitor_meta WHERE key='journal_cursor'").fetchone()
+        try:
+            return json.loads(row[0]) if row else None
+        except (ValueError, TypeError):
+            return None
+
+    def advance_journal_cursor(self, cursor):
+        with self._lock, self._connection:
+            self._connection.execute("INSERT OR REPLACE INTO monitor_meta VALUES ('journal_cursor',?)", (json.dumps(cursor),))
 
     def append_call_log(self, path: Path, payload: dict[str, Any]) -> None:
         if str(payload.get("kind") or "") not in {"respond", "prepare_response", "prepare_autonomous_response"}:
@@ -1078,6 +1101,9 @@ class MonitorRecorder:
         self.subscribers: set[asyncio.Queue[dict[str, Any]]] = set()
         self._tasks: list[asyncio.Task[None]] = []
         self._last_journal_seq = 0
+        self._journal_identity = None
+        self._ingest_lock = asyncio.Lock()
+        self.backfill_state = "pending"
 
     def enqueue(self, topic: str, payload: dict[str, Any]) -> None:
         try:
@@ -1086,16 +1112,29 @@ class MonitorRecorder:
             self.store.ingest_dropped += 1
 
     async def start(self) -> None:
-        try:
-            await asyncio.to_thread(self._backfill)
-        except Exception as exc:
-            self.store.last_error = f"monitor backfill failed: {exc}"
         self._tasks = [
             asyncio.create_task(self._consume(), name="monitor-event-projector"),
             asyncio.create_task(self._poll_journal(), name="monitor-journal-projector"),
             asyncio.create_task(self._sample(), name="monitor-runtime-sampler"),
             asyncio.create_task(self._cleanup(), name="monitor-retention"),
+            asyncio.create_task(self._backfill_traces(), name="monitor-trace-backfill"),
         ]
+
+    async def _backfill_traces(self):
+        try:
+            work = asyncio.create_task(asyncio.to_thread(self._backfill))
+            try:
+                await asyncio.shield(work)
+            except asyncio.CancelledError:
+                with suppress(Exception):
+                    await work
+                raise
+        except Exception as exc:
+            self.store.last_error = f"monitor trace backfill failed: {exc}"
+
+    def recovery_status(self):
+        return {"backfill_state": self.backfill_state, "cursor": self._last_journal_seq,
+                "lag": max(0, self.journal.last_record_seq-self._last_journal_seq)}
 
     async def close(self) -> None:
         await self.flush()
@@ -1131,21 +1170,47 @@ class MonitorRecorder:
 
     async def _poll_journal(self) -> None:
         while True:
-            await self._ingest_journal_once()
+            try:
+                await self._ingest_journal_once()
+            except Exception as exc:
+                self.backfill_state = "error"
+                self.store.last_error = f"monitor journal backfill failed: {exc}"
             await asyncio.sleep(0.5)
 
     async def _ingest_journal_once(self) -> None:
-        while True:
-            records = await asyncio.to_thread(self.journal.records_after, self._last_journal_seq, limit=500)
-            if not records:
-                return
-            for record in records:
-                event = await asyncio.to_thread(self.store.append_journal, record)
-                self._last_journal_seq = max(self._last_journal_seq, record.record_seq)
-                if event is not None:
-                    self._publish(event.model_dump(mode="json"))
-            if len(records) < 500:
-                return
+        async with self._ingest_lock:
+            if self._journal_identity is None:
+                first = await asyncio.to_thread(self.journal.records_after, 0, limit=1)
+                if not first:
+                    return
+                self._journal_identity = first[0].checksum
+                saved = await asyncio.to_thread(self.store.journal_cursor)
+                if isinstance(saved, dict) and saved.get("identity") == self._journal_identity:
+                    seq = saved.get("seq", 0)
+                    if isinstance(seq, int) and 0 < seq <= self.journal.last_record_seq:
+                        anchor = await asyncio.to_thread(self.journal.records_after, seq-1, limit=1)
+                        if anchor[0].checksum == saved.get("checksum"):
+                            self._last_journal_seq = seq
+            boundary = self.journal.last_record_seq
+            cutoff = utc_now() - timedelta(days=self.store.retention_days)
+            self.backfill_state = "running"
+            while self._last_journal_seq < boundary:
+                records = await asyncio.to_thread(self.journal.records_after, self._last_journal_seq,
+                                                 limit=min(500, boundary-self._last_journal_seq))
+                if not records:
+                    break
+                for record in records:
+                    checkpoint = dict(identity=self._journal_identity, seq=record.record_seq, checksum=record.checksum)
+                    if record.recorded_at >= cutoff:
+                        event = await asyncio.to_thread(self.store.append_journal, record, journal_cursor=checkpoint)
+                    else:
+                        await asyncio.to_thread(self.store.advance_journal_cursor, checkpoint)
+                        event = None
+                    self._last_journal_seq = record.record_seq
+                    if event is not None:
+                        self._publish(event.model_dump(mode="json"))
+                await asyncio.sleep(0)
+            self.backfill_state = "complete"
 
     async def _sample(self) -> None:
         while True:
@@ -1173,10 +1238,6 @@ class MonitorRecorder:
 
     def _backfill(self) -> None:
         cutoff = utc_now() - timedelta(days=self.store.retention_days)
-        for record in self.journal.iter_records():
-            self._last_journal_seq = max(self._last_journal_seq, record.record_seq)
-            if record.recorded_at >= cutoff:
-                self.store.append_journal(record)
         calls_dir = self.trace_dir / "calls"
         if calls_dir.exists():
             for path in sorted(calls_dir.rglob("*.json")):

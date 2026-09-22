@@ -411,9 +411,16 @@ class DailyReportBuilder:
                 moment = _parse_dt(row.get("created_at") or row.get("completed_at") or row.get("requested_at"))
                 if moment is None or not (start <= moment < end):
                     continue
-                channel = str((row.get("offer") or {}).get("channel") or row.get("channel") or "unknown")
+                channel = str((row.get("offer") or {}).get("channel") or row.get("channel") or "")
+                if not channel:
+                    channel = "goal" if row.get("goal_binding") else "unknown"
                 bucket = by_channel.setdefault(channel, {})
-                action = str((row.get("decision") or {}).get("action") or row.get("status") or "unknown")
+                action = str(
+                    (row.get("decision") or {}).get("action")
+                    or row.get("error_code")
+                    or row.get("status")
+                    or "unknown"
+                )
                 bucket[action] = bucket.get(action, 0) + 1
             capabilities = {"available": True, "by_channel": by_channel}
         board = {"available": False}

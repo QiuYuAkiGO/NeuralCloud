@@ -49,6 +49,9 @@ wait、defer、no_action 不引用 offer，不填 arguments 或 success_criteria
 联网能力只使用 observe；搜索按 schema 填 query 等参数，正文读取只填写观察中已有的 source_refs。
 检索词只包含公开查询所需的最少主题，不发送完整对话、私密记忆、凭据或内部规则。
 网络资料只能证明来源提供了这些内容，不代表内容已被证实；不能指定端点、密钥或作用域。
+服务器观察只填写只读检查命令；服务器执行按 schema 提供 command，可选绝对 cwd 与超时。
+不要在命令中写入密钥、口令或私钥；不要把删除、覆盖或无法解析的命令说成已经完成。
+高危删除类命令需要人工批准，可能等待、超时或被拒绝。命令输出只证明远端返回了这些文本，不证明系统状态已经改变。
 行动完成不等于需要满足；等待和观察不能证明能量恢复，发送尝试不能证明已送达。
 """
 
@@ -107,6 +110,19 @@ def _bound_choice(choice: CapabilityChoice, offer: CapabilityOffer, *, now: date
             model.model_validate(choice.arguments)
         except (ValueError, TypeError):
             raise CapabilitySelectionError("capability_invalid_web_arguments") from None
+    elif offer.channel == "server":
+        from harness.embodiment.server_contracts import ServerCommandArguments, ServerError
+        from harness.runtime.server_policy import classify_command
+        if CHANNEL_CAPABILITIES["server"].get(offer.capability_id) != choice.kind or choice.success_criteria:
+            raise CapabilitySelectionError("capability_invalid_server_choice")
+        try:
+            request = ServerCommandArguments.model_validate(choice.arguments)
+            if offer.capability_id == "server.observe.v1" and classify_command(request.command).risk_class != "read_only":
+                raise CapabilitySelectionError("capability_invalid_server_arguments")
+        except CapabilitySelectionError:
+            raise
+        except (ServerError, ValueError, TypeError):
+            raise CapabilitySelectionError("capability_invalid_server_arguments") from None
     elif offer.channel == "voice":
         from harness.contracts.capability_calls import VOICE_RENDER, VoiceCapabilityArguments
         expected = CHANNEL_CAPABILITIES["voice"].get(offer.capability_id)

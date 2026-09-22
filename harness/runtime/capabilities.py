@@ -37,7 +37,47 @@ _GOAL_RUNTIME_ERRORS = {
     "goal criterion evidence belongs to a different step": "goal_criterion_step_evidence_mismatch",
     "goal appraisal binding mismatch": "goal_appraisal_binding_mismatch",
 }
-GOAL_RUNTIME_ERROR_CODES = frozenset((*_GOAL_RUNTIME_ERRORS.values(), "goal_runtime_error"))
+_GOAL_PREPARE_ERROR_CODES = frozenset({
+    "goal_context_too_large",
+    "goal_revision_conflict",
+    "goal_invalid_request",
+    "goal_decision_expired",
+    "goal_prepare_failed",
+    "goal_invalid_schema",
+    "goal_model_call_failed",
+    "goal_deadline_unbounded",
+    "goal_output_too_large",
+    "goal_empty_content",
+    "goal_invalid_json",
+    "goal_episode_already_active",
+    "goal_episode_unavailable",
+    "goal_autonomous_requires_psychological_target",
+    "goal_unknown_evidence",
+    "goal_unknown_offer",
+    "goal_output_truncated",
+})
+GOAL_RUNTIME_ERROR_CODES = frozenset((
+    *_GOAL_RUNTIME_ERRORS.values(), *_GOAL_PREPARE_ERROR_CODES, "goal_runtime_error",
+))
+
+
+def goal_error_code(exc: BaseException) -> str:
+    """Map a goal-prepare failure onto an allowlisted diagnostic, never exception text."""
+    text = str(exc)
+    mapped = _GOAL_RUNTIME_ERRORS.get(text)
+    if mapped:
+        return mapped
+    if "expected revision" in text:
+        return "goal_revision_conflict"
+    for marker in ("returned failed: ", "returned rejected: ", "returned conflict: "):
+        if marker in text:
+            code = text.rsplit(marker, 1)[-1].strip()
+            if code in GOAL_RUNTIME_ERROR_CODES:
+                return code
+            if "expected revision" in code:
+                return "goal_revision_conflict"
+            break
+    return "goal_runtime_error"
 
 
 def digest(value):
@@ -142,12 +182,12 @@ class CapabilityController:
             return "superseded"
         return None
 
-    async def catalog(self, *, executing_action_id=None, deadline=None, web_scope=None):
+    async def catalog(self, *, executing_action_id=None, deadline=None, context_scope=None):
         # Refresh and observation share the caller's original end-to-end limit.
         limit = deadline or utc_now() + timedelta(seconds=18)
-        return await before_deadline(self._catalog(executing_action_id=executing_action_id, web_scope=web_scope), limit)
+        return await before_deadline(self._catalog(executing_action_id=executing_action_id, context_scope=context_scope), limit)
 
-    async def _catalog(self, *, executing_action_id=None, web_scope=None):
+    async def _catalog(self, *, executing_action_id=None, context_scope=None):
         from harness.contracts.capability_calls import CapabilityOffer
         from harness.embodiment.board_contracts import BoardReadRequest
         from harness.cognitive.action_planner import _INTENT_PROFILES
@@ -156,10 +196,17 @@ class CapabilityController:
         web = getattr(sup, "web", None)
         if web is not None and self.owner("web") == "shared":
             try:
-                offers.extend(offer for offer in await web.catalog(web_scope or "autonomous")
+                offers.extend(offer for offer in await web.catalog(context_scope or "autonomous")
                               if offer.capability_id in allowed)
             except Exception as exc:
                 self.last_error = "web:" + type(exc).__name__
+        server = getattr(sup, "server", None)
+        if server is not None and self.owner("server") == "shared":
+            try:
+                offers.extend(offer for offer in await server.catalog(context_scope or "autonomous")
+                              if offer.capability_id in allowed)
+            except Exception as exc:
+                self.last_error = "server:" + type(exc).__name__
         board = getattr(sup, "board", None)
         if board is not None and self.owner("board") == "shared":
             try:
@@ -300,6 +347,11 @@ class CapabilityController:
                 try:
                     self._finish(row, "selecting")
                     is_goal = bool(row.get("goal_binding"))
+                    if is_goal:
+                        snapshot = await before_deadline(
+                            self.supervisor.cognitive.get_snapshot(), datetime.fromisoformat(row["deadline_at"]))
+                        self.supervisor._validate_snapshot(snapshot, "cognitive")
+                        self.supervisor._cognitive_snapshot = snapshot
                     envelope = self.supervisor._make_command(event, command_type="PrepareGoalDecision" if is_goal else "PrepareCapabilityCall",
                         idempotency_key="capability-select:" + row["opportunity_id"], expected_revision=self.supervisor._cognitive_snapshot.revision,
                         payload={"opportunity_id":row["opportunity_id"], "generation":row["generation"],
@@ -329,7 +381,7 @@ class CapabilityController:
                         offer = next(CapabilityOffer.model_validate(item) for item in row["offers"] if item["offer_id"] == selected.choice.offer_id)
                         row["offer"] = offer.model_dump(mode="json")
                         fresh = await self.catalog(deadline=datetime.fromisoformat(row["deadline_at"]),
-                            web_scope=offer.scope.get("context_id") if offer.channel == "web" else None)
+                            context_scope=(offer.scope.get("context_id") if offer.channel in {"web", "server"} else None))
                         current = next((item for item in fresh if item.offer_id == offer.offer_id
                             and item.ready and item.available and item.supported and item.valid_until > utc_now()), None)
                         if current is None or self.binding(current) != self.binding(offer) or self.invalid_reason(row):
@@ -349,6 +401,8 @@ class CapabilityController:
                             await self.dispatch_voice(row, selected, current)
                         elif offer.channel == "web":
                             await self.dispatch_web(row, selected, current)
+                        elif offer.channel == "server":
+                            await self.dispatch_server(row, selected, current)
                         else:
                             prepared = PreparedResponse.model_validate(result.result["prepared_response"])
                             row.update(prepared_response=prepared.model_dump(mode="json"), channel="desktop", status="dispatching")
@@ -362,7 +416,7 @@ class CapabilityController:
                 except Exception as exc:
                     diagnostic = {"error_type": type(exc).__name__}
                     if row.get("goal_binding"):
-                        diagnostic["error_code"] = _GOAL_RUNTIME_ERRORS.get(str(exc), "goal_runtime_error")
+                        diagnostic["error_code"] = goal_error_code(exc)
                     self._finish(row, "uncertain" if row.get("status") in {"dispatching", "pending"} else "error", **diagnostic)
                     self.last_error = type(exc).__name__
                 finally:
@@ -391,6 +445,48 @@ class CapabilityController:
                     "effect": "external_information_only", "evidence_refs": result.evidence_refs, "observation": context})
         except Exception as exc:
             self._finish(row, "error", error_type=exc.code if isinstance(exc, WebError) else "web_dispatch_failed")
+
+    async def dispatch_server(self, row, selected, offer):
+        from harness.embodiment.server_contracts import ServerError
+        server = self.supervisor.server
+        identity = "autonomous:" + row["opportunity_id"]
+        row.update(channel="server", status="dispatching", server_call_id=identity)
+        self.calls.put(row)
+        try:
+            result = await server.execute(identity, offer, selected.choice.arguments,
+                deadline=datetime.fromisoformat(row["deadline_at"]), autonomous=True,
+                generation=row["generation"],
+                guard=lambda: self._server_guard(row))
+            if result.status == "pending_approval":
+                self._finish(row, "pending", server_call_id=identity,
+                    channel_result={"status": "pending_approval", "command_id": identity,
+                        "risk_class": result.risk_class, "effect": "remote_command_pending_approval"})
+                return
+            self._finish(row, "completed", evidence_refs=result.evidence_refs,
+                channel_result={"status": "completed", "command_id": identity,
+                    "effect": "remote_command_output", "evidence_refs": result.evidence_refs,
+                    "observation": result.observation or {}})
+        except Exception as exc:
+            self._finish(row, "error", error_type=exc.code if isinstance(exc, ServerError) else "server_dispatch_failed")
+
+    def _server_guard(self, row):
+        # Pending high-risk approvals outlive the original opportunity deadline.
+        command = None
+        server = getattr(self.supervisor, "server", None)
+        if server is not None:
+            command = server.calls.command(row.get("server_call_id", ""))
+        if command and command["status"] == "pending_approval":
+            goals = getattr(self.supervisor, "goals", None)
+            if goals is not None and row.get("goal_binding") and goals.invalid_reason(row):
+                return "superseded"
+            self.generation = self.calls.configure(digest(self.settings.model_dump(mode="json")))
+            if row["generation"] != self.generation or not self.settings.enabled:
+                return "superseded"
+            offer = row.get("offer")
+            if offer and (self.owner(offer["channel"]) != "shared" or offer["capability_id"] not in self.settings.allowed_capabilities):
+                return "superseded"
+            return None
+        return self.invalid_reason(row)
 
     async def dispatch_board(self, row, selected, offer):
         from harness.embodiment.board_contracts import BoardReadRequest
@@ -501,6 +597,29 @@ class CapabilityController:
                             "observation": web.context(call["scope"], failures=result.failures)})
                 else:
                     self._finish(row, "error", error_type="web_result_uncertain")
+            elif row.get("channel") == "server":
+                server = getattr(self.supervisor, "server", None)
+                call = server.calls.command(row.get("server_call_id", "")) if server else None
+                if call and call["status"] == "pending_approval":
+                    if utc_now() >= server.approval_deadline(call) or self._server_guard(row):
+                        server.calls.finish(call["id"], status="cancelled", error="server_approval_expired", decided=True)
+                        self._finish(row, "cancelled", error_type="server_approval_expired")
+                elif call and call["status"] == "completed":
+                    from harness.embodiment.server_contracts import ServerCommandResult
+                    result = ServerCommandResult.model_validate_json(call["result"])
+                    self._finish(row, "completed", evidence_refs=result.evidence_refs,
+                        channel_result={"status": "completed", "command_id": call["id"],
+                            "effect": "remote_command_output", "evidence_refs": result.evidence_refs,
+                            "observation": result.observation or {}})
+                elif call and call["status"] == "rejected":
+                    self._finish(row, "rejected", error_type=call.get("error") or "server_command_rejected")
+                elif call and call["status"] == "cancelled":
+                    self._finish(row, "cancelled", error_type=call.get("error") or "server_approval_expired")
+                elif call and call["status"] in {"failed", "uncertain"}:
+                    self._finish(row, "uncertain" if call["status"] == "uncertain" else "error",
+                        error_type=call.get("error") or "server_result_uncertain")
+                else:
+                    self._finish(row, "uncertain", error_type="server_result_uncertain")
             elif row.get("channel") == "voice":
                 voice = getattr(self.supervisor, "voice", None)
                 if voice is None or row.get("offer", {}).get("scope") != voice.settings.scope.model_dump(mode="json"):
@@ -615,12 +734,14 @@ class CapabilityController:
     async def snapshot(self):
         voice = getattr(self.supervisor, "voice", None)
         web = getattr(self.supervisor, "web", None)
+        server = getattr(self.supervisor, "server", None)
         return {"enabled":self.settings.enabled, "owners":self.settings.owners, "generation":self.generation,
             "qq_send_enabled":self.settings.qq_send_enabled, "last_error":self.last_error,
             "bodies": {"voice": await voice.status() if voice is not None else {"enabled": False, "body": None},
-                       "web": await web.status() if web is not None else {"enabled": False, "body": None}},
+                       "web": await web.status() if web is not None else {"enabled": False, "body": None},
+                       "server": await server.status() if server is not None else {"enabled": False, "body": None}},
             "calls":[{key:value for key,value in row.items() if key not in {"offers", "offer", "decision", "prepared_response", "homeostatic_summary"}
-                      and not (row.get("channel") == "web" and key == "channel_result")}
+                      and not (row.get("channel") in {"web", "server"} and key == "channel_result")}
                 for row in self.calls.all()[:30]],
             "catalog":[item.model_dump(mode="json", exclude={"observation"}) for item in await self.catalog()]}
 

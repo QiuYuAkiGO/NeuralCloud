@@ -20,12 +20,33 @@ def _when(value):
     return datetime.fromisoformat(value) if value else None
 
 
+_OUTCOME_CONTEXT_FIELDS = ("call_id", "status", "evidence_refs", "at", "channel", "error_code", "step_id")
+
+
+def _outcome_projection(row):
+    """Keep status and evidence refs; drop receipt bodies from the model context."""
+    if not isinstance(row, dict):
+        return row
+    return {key: row[key] for key in _OUTCOME_CONTEXT_FIELDS if key in row}
+
+
 def _episode_context(episode):
     """Project bounded recent outcomes, keeping the complete durable ledger."""
     if episode is None:
         return None
-    return {key: (value[-16:] if key == "results" else value)
-            for key, value in episode.items() if key != "seen_calls"}
+    projected = {}
+    for key, value in episode.items():
+        if key in {"seen_calls", "baseline", "last_evaluation"}:
+            continue
+        if key == "results":
+            projected[key] = [_outcome_projection(item) for item in (value or [])[-16:]]
+        elif key == "appraisals":
+            projected[key] = list(value or [])[-8:]
+        elif key == "predictions":
+            projected[key] = list(value or [])[-8:]
+        else:
+            projected[key] = value
+    return projected
 
 
 def _refs(value):
@@ -236,7 +257,7 @@ class GoalController:
                 episode.update(status="waiting", blocked_reason="budget", next_review_at=available_at.isoformat())
                 self._save("episode", episode)
             return
-        offers = await cap.catalog(web_scope="goal:" + goal["id"]) if getattr(self.supervisor, "web", None) else await cap.catalog()
+        offers = await cap.catalog(context_scope="goal:" + goal["id"])
         # Keep existing expression cooldowns without delaying a desktop plan's
         # independent next step by a full autonomous-opportunity interval.
         cooldown = set()
@@ -269,7 +290,7 @@ class GoalController:
             goal_request={"snapshot_revision": snapshot.revision, "goal_context": {
                 "episode_id": episode_id, "standing_goal": self.store.get("goal", STANDING_ID), "requested_goal": goal,
                 "active_episode": _episode_context(episode), "known_evidence_refs": refs, "appraisal_evidence_refs": appraisal_refs,
-                "outcomes": (episode or {}).get("results", [])[-16:],
+                "outcomes": [_outcome_projection(item) for item in (episode or {}).get("results", [])[-16:]],
                 "budget": self.budget(), "snapshot": state_snapshot}})
         # Reserve rate budget before accepting an event, including failed attempts.
         with self.store.objects.atomic():
@@ -445,14 +466,27 @@ class GoalController:
         if not self.enabled or not self._episodes():
             return
         from harness.contracts.envelope import DomainCommandEnvelope, DomainCommandResult
-        commands = {}
-        for record in self.supervisor.journal.iter_records():
+        recovery = self.supervisor.recovery
+        identity = recovery.projector.state.get("journal_genesis", "empty")
+        checkpoint = self.store.get("runtime_recovery", identity)
+        after = recovery.validated_cursor(checkpoint)
+        boundary = recovery.projector.cursor
+        if after >= boundary:
+            return
+        for record in recovery.records("domain_command_result", "domain_command_late_result", after=after):
+            if record.record_seq > boundary:
+                break
             if record.data.get("service") != "homeostasis":
                 continue
-            if record.record_type == "domain_command_intent":
-                commands[record.command_id] = DomainCommandEnvelope.model_validate(record.data["envelope"])
-            elif record.record_type in {"domain_command_result", "domain_command_late_result"} and record.command_id in commands:
-                self.record_homeostasis(commands[record.command_id], DomainCommandResult.model_validate(record.data["result"]))
+            with recovery.lock:
+                row = recovery.db.execute("SELECT intent FROM commands WHERE id=?", (record.command_id,)).fetchone()
+            if row and row[0]:
+                intent = recovery.read(row[0])
+                self.record_homeostasis(DomainCommandEnvelope.model_validate(intent.data["envelope"]),
+                                        DomainCommandResult.model_validate(record.data["result"]))
+        # This cursor is in the module's own database: losing/restoring that
+        # database also loses/restores its cursor. Effects above are idempotent.
+        self.store.put("runtime_recovery", identity, recovery.cursor_token(boundary))
 
     def qq_context(self, request):
         """Only a bounded typed projection may enter group-visible cognition."""

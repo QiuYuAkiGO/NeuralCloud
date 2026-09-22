@@ -1,0 +1,153 @@
+{
+  "cache_condition": "OS cache not flushed; warm filesystem cache",
+  "scope": "journal open + projection restore + pending queries; excludes service RPC and background audit",
+  "results": [
+    {
+      "records": 10000,
+      "bytes": 7385210,
+      "strict": {
+        "seconds": 0.2979107999999542,
+        "replayed_records": 10000,
+        "pending": 0,
+        "retained_records": 512,
+        "mode": "strict"
+      },
+      "fast": [
+        {
+          "seconds": 0.023182400007499382,
+          "replayed_records": 1000,
+          "pending": 0,
+          "retained_records": 512,
+          "mode": "fast"
+        },
+        {
+          "seconds": 0.01938699997845106,
+          "replayed_records": 1000,
+          "pending": 0,
+          "retained_records": 512,
+          "mode": "fast"
+        },
+        {
+          "seconds": 0.01892470000893809,
+          "replayed_records": 1000,
+          "pending": 0,
+          "retained_records": 512,
+          "mode": "fast"
+        },
+        {
+          "seconds": 0.019765500008361414,
+          "replayed_records": 1000,
+          "pending": 0,
+          "retained_records": 512,
+          "mode": "fast"
+        },
+        {
+          "seconds": 0.019206900004064664,
+          "replayed_records": 1000,
+          "pending": 0,
+          "retained_records": 512,
+          "mode": "fast"
+        }
+      ],
+      "fast_median_seconds": 0.01938699997845106
+    },
+    {
+      "records": 100000,
+      "bytes": 69598711,
+      "strict": {
+        "seconds": 2.49108909998904,
+        "replayed_records": 100000,
+        "pending": 0,
+        "retained_records": 512,
+        "mode": "strict"
+      },
+      "fast": [
+        {
+          "seconds": 0.020738499995786697,
+          "replayed_records": 1000,
+          "pending": 0,
+          "retained_records": 512,
+          "mode": "fast"
+        },
+        {
+          "seconds": 0.020461999985855073,
+          "replayed_records": 1000,
+          "pending": 0,
+          "retained_records": 512,
+          "mode": "fast"
+        },
+        {
+          "seconds": 0.02001230002497323,
+          "replayed_records": 1000,
+          "pending": 0,
+          "retained_records": 512,
+          "mode": "fast"
+        },
+        {
+          "seconds": 0.019428700004937127,
+          "replayed_records": 1000,
+          "pending": 0,
+          "retained_records": 512,
+          "mode": "fast"
+        },
+        {
+          "seconds": 0.01934389999951236,
+          "replayed_records": 1000,
+          "pending": 0,
+          "retained_records": 512,
+          "mode": "fast"
+        }
+      ],
+      "fast_median_seconds": 0.02001230002497323
+    },
+    {
+      "records": 1000000,
+      "bytes": 693524712,
+      "strict": {
+        "seconds": 24.7647117000015,
+        "replayed_records": 1000000,
+        "pending": 0,
+        "retained_records": 512,
+        "mode": "strict"
+      },
+      "fast": [
+        {
+          "seconds": 0.021974100003717467,
+          "replayed_records": 1000,
+          "pending": 0,
+          "retained_records": 512,
+          "mode": "fast"
+        },
+        {
+          "seconds": 0.02006969999638386,
+          "replayed_records": 1000,
+          "pending": 0,
+          "retained_records": 512,
+          "mode": "fast"
+        },
+        {
+          "seconds": 0.019371499976841733,
+          "replayed_records": 1000,
+          "pending": 0,
+          "retained_records": 512,
+          "mode": "fast"
+        },
+        {
+          "seconds": 0.03051240000058897,
+          "replayed_records": 1000,
+          "pending": 0,
+          "retained_records": 512,
+          "mode": "fast"
+        },
+        {
+          "seconds": 0.01965650002239272,
+          "replayed_records": 1000,
+          "pending": 0,
+          "retained_records": 512,
+          "mode": "fast"
+        }
+      ],
+      "fast_median_seconds": 0.02006969999638386
+    }
+  ]
+}

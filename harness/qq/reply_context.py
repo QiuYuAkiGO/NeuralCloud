@@ -25,8 +25,8 @@ def style_diagnostics(text: str, *, detail_level: str = "brief", segments: int =
     sentences = len([part for part in re.split(r"[。！？!?]+", text) if part.strip()])
     return {
         "characters": len(text), "sentences": sentences, "segments": segments,
-        "brief_length_exceeded": detail_level == "brief" and len(text) > 60,
-        "brief_sentence_count_exceeded": detail_level == "brief" and sentences > 2,
+        "brief_length_exceeded": detail_level == "brief" and len(text) > 120,
+        "brief_sentence_count_exceeded": detail_level == "brief" and sentences > 3,
         "brief_segment_count_exceeded": detail_level == "brief" and segments > 2,
         "hesitant_opening": bool(_HESITATION.search(text.lstrip())),
         "memory_disclaimer": bool(_MEMORY_DISCLAIMER.search(text)),

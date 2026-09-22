@@ -23,11 +23,14 @@ VOICE_PROFILES = "expression.voice.profiles.v1"
 VOICE_RENDER = "expression.voice.render.v1"
 WEB_SEARCH = "web.search.v1"
 WEB_READ = "web.read.v1"
+SERVER_OBSERVE = "server.observe.v1"
+SERVER_EXECUTE = "server.execute.v1"
 CHANNEL_CAPABILITIES = {
     "board": {BOARD_READ: "observe", BOARD_EXPRESS: "act"},
     "qq": {QQ_READ: "observe", QQ_EXPRESS: "act"},
     "voice": {VOICE_PROFILES: "observe", VOICE_RENDER: "act"},
     "web": {WEB_SEARCH: "observe", WEB_READ: "observe"},
+    "server": {SERVER_OBSERVE: "observe", SERVER_EXECUTE: "act"},
 }
 
 
@@ -56,7 +59,7 @@ class VoiceCapabilityArguments(_Strict):
 
 class CapabilityOffer(_Strict):
     offer_id: Identifier
-    channel: Literal["board", "qq", "desktop", "voice", "web"]
+    channel: Literal["board", "qq", "desktop", "voice", "web", "server"]
     capability_id: Identifier
     provider_id: Identifier
     body_instance_id: Identifier
@@ -144,5 +147,5 @@ __all__ = [
     "BOARD_READ", "BOARD_EXPRESS", "QQ_READ", "QQ_EXPRESS", "VOICE_PROFILES", "VOICE_RENDER", "CHANNEL_CAPABILITIES",
     "CapabilityOffer", "CapabilitySelectionRequest", "CapabilityChoice", "PreparedCapabilityChoice",
     "VoiceCapabilityArguments",
-    "WEB_SEARCH", "WEB_READ",
+    "WEB_SEARCH", "WEB_READ", "SERVER_OBSERVE", "SERVER_EXECUTE",
 ]

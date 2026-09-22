@@ -7,7 +7,9 @@ import hashlib
 import inspect
 import json
 import os
-from collections.abc import Awaitable, Callable, Iterable
+import logging
+import time
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
@@ -84,6 +86,7 @@ from harness.runtime.models import (
 )
 from harness.runtime.perception import PauseObservationBuffer, PerceptionGuard
 from harness.runtime.queue import PriorityEventQueue, QueueCapacityError, QueueClosedError
+from harness.runtime.rpc import DomainRpcError
 from harness.runtime.scheduler import RealTimeScheduler
 from harness.runtime.watchdog import RuntimeWatchdog
 
@@ -345,12 +348,15 @@ class RuntimeSupervisor:
                     self.state_dir / "entity-memory.sqlite3", social,
                     session_id=manifest.experiment_id,
                 )
-        self.journal = journal or RuntimeJournal(
-            self.state_dir / "journal",
-            runtime_instance_id=self.runtime_instance_id,
-            character_id=character_id,
-            manifest_revision=manifest.revision,
-        )
+        self._journal = journal
+        self._recovery_store = None
+        self._recovery_task = None
+        self._recovery_wakeup = asyncio.Event()
+        self._audit = None
+        self._recovery_timing = {}
+        self._recovery_mode = os.environ.get("NC_RUNTIME_RECOVERY_MODE", "strict")
+        if self._recovery_mode not in {"strict", "fast"}:
+            raise ValueError("NC_RUNTIME_RECOVERY_MODE must be strict or fast")
         # Seek metadata only: command payloads remain in the journal's bounded
         # tail/on disk. New idempotency keys must not scan all historical data.
         self._command_intent_seqs: dict[str, int] = {}
@@ -359,7 +365,6 @@ class RuntimeSupervisor:
         self._qq_turn_event_seqs: dict[str, int] = {}
         self._qq_turn_completed_seqs: dict[str, int] = {}
         self._command_index_cursor = 0
-        self._sync_command_index()
         self.checkpoint_store = checkpoint_store or CheckpointStore(self.state_dir / "checkpoint.json")
         self.queue = queue or PriorityEventQueue()
         self.scheduler = scheduler or RealTimeScheduler(manifest.heartbeat_seconds)
@@ -405,7 +410,7 @@ class RuntimeSupervisor:
         self._last_user_session_id: str | None = None
         self._last_user_channel = "chat"
         self._last_runtime_time: datetime | None = None
-        self._journal_writable = not self.journal.degraded
+        self._journal_writable = journal is None or not journal.degraded
         self._degraded_reasons: list[str] = []
         self._agency_state = AgencyState.AVAILABLE
         self._body_episode_id: str | None = None
@@ -480,6 +485,101 @@ class RuntimeSupervisor:
             return reason is None, reason
 
         self.action_coordinator.execution_guard = capability_execution_guard
+        if journal is not None:
+            self._open_recovery()
+
+    @property
+    def journal(self):
+        if self._recovery_store is None:
+            self._open_recovery()
+        return self._journal
+
+    @property
+    def recovery(self):
+        if self._recovery_store is None:
+            self._open_recovery()
+        self._recovery_store.sync()
+        return self._recovery_store
+
+    def _open_recovery(self):
+        from harness.runtime.recovery import RecoveryStore
+
+        started = time.perf_counter()
+        supplied = self._journal is not None
+        if not supplied:
+            self.instance_lock.acquire()
+        store = RecoveryStore(":memory:" if supplied else self.state_dir / "recovery.sqlite3",
+                              identity={"character": self.character_id, "manifest": self.manifest.content_hash()},
+                              legacy_checkpoint=self.checkpoint_store.load())
+        self._recovery_store = store
+        try:
+            if supplied:
+                store.journal = self._journal
+                store.reset()
+                store.sync()
+            else:
+                self._journal = RuntimeJournal(
+                    self.state_dir / "journal", runtime_instance_id=self.runtime_instance_id,
+                    character_id=self.character_id, manifest_revision=self.manifest.revision,
+                    recovery_store=store, recovery_mode=self._recovery_mode,
+                )
+            for attr, namespace in (
+                ('_command_intent_seqs','command_intents'), ('_prepare_intent_seqs','prepare_intents'),
+                ('_command_result_seqs','command_results'), ('_qq_turn_event_seqs','qq_events'),
+                ('_qq_turn_completed_seqs','qq_completed'),
+            ):
+                setattr(self, attr, store.mapping(namespace, tuples=namespace == 'prepare_intents'))
+            self._command_index_cursor = store.projector.cursor
+            self.action_coordinator.history_lookup = store.historical_action
+            self._recovery_timing['journal_open_seconds'] = time.perf_counter() - started
+        except Exception:
+            store.close()
+            self._recovery_store = None
+            if not supplied:
+                self.instance_lock.release()
+            raise
+
+    async def _maintain_recovery(self):
+        while True:
+            try:
+                await asyncio.wait_for(self._recovery_wakeup.wait(), timeout=30)
+            except TimeoutError:
+                pass
+            self._recovery_wakeup.clear()
+            store = self._recovery_store
+            if store.projector.cursor > store.committed_seq:
+                try:
+                    self.goals.recover_contributions()
+                    if self.lifecycle in {RuntimeLifecycle.RUNNING, RuntimeLifecycle.PAUSED}:
+                        await self._restore_research_memory(pause=False)
+                    work = asyncio.create_task(asyncio.to_thread(store.commit))
+                    try:
+                        await asyncio.shield(work)
+                    except asyncio.CancelledError:
+                        try:
+                            await work
+                        except Exception:
+                            pass
+                        raise
+                except Exception as exc:
+                    store.error = str(exc)
+                    logging.getLogger(__name__).exception("recovery cache commit failed")
+
+    def recovery_status(self):
+        if self._recovery_store is None:
+            return {"mode": "not_opened"}
+        return self._recovery_store.status() | {
+            "timings": dict(self._recovery_timing), "replayed_records": self.journal.recovered_records,
+            "audit": self._audit.status() if self._audit is not None else {"state": "not_started"},
+            "monitor": self._monitor_recovery() if hasattr(self, '_monitor_recovery') else None,
+        }
+
+    async def _time_recovery(self, name, operation):
+        started = time.perf_counter()
+        try:
+            return await operation
+        finally:
+            self._recovery_timing[name] = self._recovery_timing.get(name, 0) + time.perf_counter() - started
 
     @property
     def version_vector(self) -> VersionVector:
@@ -681,6 +781,7 @@ class RuntimeSupervisor:
     async def boot_and_recover(self) -> None:
         if self._booted:
             return
+        boot_started = time.perf_counter()
         try:
             self.instance_lock.acquire()
         except InstanceLockError as exc:
@@ -697,18 +798,22 @@ class RuntimeSupervisor:
             )
             raise
         try:
+            phase_started = time.perf_counter()
             previous_lifecycle = self._restore_runtime_indexes()
+            self._recovery_timing['runtime_indexes_seconds'] = time.perf_counter() - phase_started
+            phase_started = time.perf_counter()
             if self._basic_terminal is not None:
                 self._basic_terminal.recover()
             self.goals.recover_contributions()
             await self._restore_research_memory()
+            self._recovery_timing['module_recovery_seconds'] = time.perf_counter() - phase_started
             await self._transition(RuntimeLifecycle.RECOVERING, reason="boot recovery started")
             if self.journal.truncated_tail_bytes:
                 self._append_journal(
                     "journal_tail_truncated",
                     data={"bytes": self.journal.truncated_tail_bytes},
                 )
-            homeostasis_watchdog = await self._check_services()
+            homeostasis_watchdog = await self._time_recovery("service_checks_seconds", self._check_services())
             if homeostasis_watchdog:
                 await self._defer_reconciliation_for_homeostasis_watchdog(
                     homeostasis_watchdog,
@@ -721,30 +826,30 @@ class RuntimeSupervisor:
             )
             unresolved_action = False
             if not homeostasis_watchdog:
-                await self._reconcile_incomplete_commands(services=frozenset({"homeostasis"}))
-                homeostasis_watchdog = await self._check_services()
+                await self._time_recovery("homeostasis_reconcile_seconds", self._reconcile_incomplete_commands(services=frozenset({"homeostasis"})))
+                homeostasis_watchdog = await self._time_recovery("service_checks_seconds", self._check_services())
                 if homeostasis_watchdog:
                     await self._defer_reconciliation_for_homeostasis_watchdog(
                         homeostasis_watchdog,
                         phase="boot_after_homeostasis_reconciliation",
                     )
             if not homeostasis_watchdog:
-                await self._reconcile_incomplete_commands(services=frozenset({"cognitive"}))
-                homeostasis_watchdog = await self._check_services()
+                await self._time_recovery("cognitive_reconcile_seconds", self._reconcile_incomplete_commands(services=frozenset({"cognitive"})))
+                homeostasis_watchdog = await self._time_recovery("service_checks_seconds", self._check_services())
                 if homeostasis_watchdog:
                     await self._defer_reconciliation_for_homeostasis_watchdog(
                         homeostasis_watchdog,
                         phase="boot_after_cognitive_reconciliation",
                     )
                 else:
-                    unresolved_action = await self._restore_and_reconcile_actions()
-                    homeostasis_watchdog = await self._check_services()
+                    unresolved_action = await self._time_recovery("action_reconcile_seconds", self._restore_and_reconcile_actions())
+                    homeostasis_watchdog = await self._time_recovery("service_checks_seconds", self._check_services())
                     if homeostasis_watchdog:
                         await self._defer_reconciliation_for_homeostasis_watchdog(
                             homeostasis_watchdog,
                             phase="boot_after_action_reconciliation",
                         )
-            await self._restore_pending_events()
+            await self._time_recovery("pending_events_seconds", self._restore_pending_events())
             if self.journal.last_record_seq:
                 now = utc_now()
                 previous_time = self._last_runtime_time or next(self.journal.iter_records(reverse=True)).recorded_at
@@ -801,9 +906,31 @@ class RuntimeSupervisor:
             if self.body_monitor is not None:
                 await self.body_monitor.start()
             self._booted = True
+            self._recovery_timing['boot_seconds'] = time.perf_counter() - boot_started
+            self._recovery_task = asyncio.create_task(self._maintain_recovery(), name="runtime-recovery-cache")
+            self._recovery_wakeup.set()
+            # Diagnostic failures (including invalid audit settings) must never
+            # enter the Runtime control/error path.
+            try:
+                from harness.runtime.journal_audit import JournalAudit
+                self._audit = JournalAudit(
+                    self.journal, self.state_dir / "journal-audit.json",
+                    bytes_per_second=float(os.environ.get('NC_JOURNAL_AUDIT_BYTES_PER_SECOND', 16*1024*1024)),
+                    duty_cycle=float(os.environ.get('NC_JOURNAL_AUDIT_DUTY_CYCLE', .1)),
+                )
+                self._audit.start(delay=0 if self.recovery.mode == 'fast' else self._audit.interval)
+            except Exception:
+                logging.getLogger(__name__).exception("journal audit could not start")
         except Exception as exc:
             if self.lifecycle not in {RuntimeLifecycle.FAULTED, RuntimeLifecycle.PAUSED}:
-                await self._transition(RuntimeLifecycle.FAULTED, reason=f"recovery failed: {exc}")
+                if self._journal is None:
+                    # Opening the authoritative journal itself failed. Do not
+                    # reopen it merely to record that failure.
+                    self.lifecycle = RuntimeLifecycle.FAULTED
+                    self.lifecycle_since = utc_now()
+                    self.lifecycle_reason = f"recovery failed: {exc}"
+                else:
+                    await self._transition(RuntimeLifecycle.FAULTED, reason=f"recovery failed: {exc}")
             if not self._research_workers_pending():
                 self.instance_lock.release()
             raise
@@ -881,7 +1008,16 @@ class RuntimeSupervisor:
                 data={"error": error_detail, "error_type": type(exc).__name__},
             )
             retryable = isinstance(exc, (DomainCommandError, TimeoutError, ConnectionError))
-            if retryable:
+            heartbeat_rpc = (
+                event.event_type == RuntimeEventType.HEARTBEAT
+                and isinstance(exc, DomainRpcError)
+            )
+            if heartbeat_rpc:
+                # A single transport blip on the 5s heartbeat must not freeze
+                # chat/QQ until an operator resume. Three consecutive Homeostasis
+                # failures still pause via the dependency watchdog.
+                await self.check_watchdog()
+            elif retryable:
                 if self.lifecycle == RuntimeLifecycle.RUNNING:
                     try:
                         await self.pause(reason=f"critical domain failure: {error_detail}")
@@ -913,7 +1049,7 @@ class RuntimeSupervisor:
                 event_id=event.event_id,
                 receive_seq=event.receive_seq,
                 process_seq=process_seq,
-                status="deferred" if retryable else "failed",
+                status="deferred" if retryable and not heartbeat_rpc else "failed",
                 detail={"error": error_detail, "error_type": type(exc).__name__},
             )
         self._append_journal(
@@ -1027,9 +1163,10 @@ class RuntimeSupervisor:
             # a summary or the current wall clock cannot replace those samples.
             first = self.pause_observations.first_receive_seq
             last = self.pause_observations.last_receive_seq
-            pending_body = [RuntimeEvent.model_validate(record.data["event"]) for record in self.journal.iter_records()
-                            if record.record_type == "event_accepted" and record.data.get("event", {}).get("event_type") == "body_state"
-                            and first <= record.data["event"]["receive_seq"] <= last]
+            store = self.recovery
+            pending_body = [RuntimeEvent.model_validate(store.read(row[0]).data["event"])
+                            for row in store.rows("SELECT seq FROM events WHERE type='body_state' AND receive_seq BETWEEN ? AND ? ORDER BY seq",
+                                                  (first, last))]
             for body_event in pending_body:
                 await self._handle_grounded_body(body_event, self._process_seq)
         embodiment_status = self.embodiment.status()
@@ -1156,6 +1293,11 @@ class RuntimeSupervisor:
             if self._opaque_store is not None:
                 self._opaque_store.close()
             await self._transition(RuntimeLifecycle.STOPPED, reason=reason, durable=True)
+            try:
+                self.recovery.commit()
+            except Exception as exc:
+                self.recovery.error = str(exc)
+                logging.getLogger(__name__).exception("final recovery checkpoint failed")
             await self.queue.close()
             self.capabilities.close()
             self.goals.close()
@@ -1168,6 +1310,15 @@ class RuntimeSupervisor:
                 self.lifecycle_reason = f"graceful stop failed: {exc}"
             raise
         finally:
+            if self._audit is not None:
+                await self._audit.close()
+            if self._recovery_task is not None:
+                self._recovery_task.cancel()
+                try:
+                    await self._recovery_task
+                except asyncio.CancelledError:
+                    pass
+                self._recovery_task = None
             if not self._research_workers_pending():
                 self.instance_lock.release()
 
@@ -1213,6 +1364,11 @@ class RuntimeSupervisor:
             ),
         )
         self.checkpoint_store.write(checkpoint)
+        try:
+            self.recovery.commit()
+        except Exception as exc:
+            self.recovery.error = str(exc)
+            logging.getLogger(__name__).exception("recovery checkpoint failed")
         self._append_journal(
             "checkpoint_written",
             data={
@@ -1324,6 +1480,7 @@ class RuntimeSupervisor:
             embodiment=embodiment_status,
             agency_state=self._agency_state,
             affect=self.affect.status(),
+            recovery=self.recovery_status(),
         )
 
     async def check_watchdog(self) -> None:
@@ -1601,6 +1758,9 @@ class RuntimeSupervisor:
             await self.check_watchdog()
             if self._basic_terminal is not None and self.lifecycle == RuntimeLifecycle.RUNNING:
                 await self._basic_terminal.expire_pending_approvals()
+            server = getattr(self, "server", None)
+            if server is not None and self.lifecycle == RuntimeLifecycle.RUNNING:
+                await server.expire_pending_approvals()
             board = getattr(self, "board", None)
             if board is not None:
                 await board.heartbeat()
@@ -1614,6 +1774,15 @@ class RuntimeSupervisor:
                 except Exception as exc:
                     self._append_journal(
                         "daily_report_failed",
+                        data={"error_type": type(exc).__name__},
+                    )
+            self_check = getattr(self, "self_check", None)
+            if self_check is not None:
+                try:
+                    await self_check.heartbeat()
+                except Exception as exc:
+                    self._append_journal(
+                        "self_check_failed",
                         data={"error_type": type(exc).__name__},
                     )
             await self.capabilities.heartbeat()
@@ -1903,7 +2072,9 @@ class RuntimeSupervisor:
                 envelope=envelope.model_dump(mode="json"),
                 observation_hash=content_hash(envelope.observation),
             )
-        self._append_journal("grounded_body_observed", event=event, process_seq=process_seq, data=trace)
+        recorded_body = self._append_journal("grounded_body_observed", event=event, process_seq=process_seq, data=trace)
+        if recorded_body is not None and self._opaque_store is not None:
+            self._opaque_store.set_recovery_cursor(self.recovery.projector.state['journal_genesis'], self.recovery.cursor_token(recorded_body.record_seq))
         # Publish the new runtime state only after all validation and sensor
         # persistence succeeds. Rejected revisions cannot poison a later call.
         self._install_grounded_body(snapshot)
@@ -1963,40 +2134,32 @@ class RuntimeSupervisor:
                 captured_at=snapshot.captured_at, evidence_refs=[f"body-state:{snapshot.revision}"],
             )
 
-    def _restore_grounded_body(self, records: Iterable[RuntimeJournalRecord]) -> None:
-        """Rebuild body authority and a missing sensor cache from the durable journal."""
+    def _restore_grounded_body(self) -> None:
+        """Restore authority from the projection; rebuild missing sensor history."""
         if self.manifest.grounded_agency is None:
             return
-        previous = None
-        terminal_state = None
-        episode_id = None
-        for record in records:
-            if record.record_type == "agency_reset":
-                terminal_state = AgencyState.AVAILABLE
-            if record.record_type != "grounded_body_observed":
-                continue
-            if record.data.get("manifest_hash") != self.manifest.content_hash():
-                raise RuntimeStateError("grounded body journal manifest drift")
-            raw = record.data["body_state"]
-            model = LegacyBodyStateSnapshot if raw.get("schema_version") == "body-state-v1" else EmbodimentBodyStateSnapshot
-            snapshot = model.model_validate(raw)
-            self._assert_grounded_snapshot_progress(snapshot, previous)
-            episode_id = getattr(snapshot, "episode_id", None) or episode_id
-            if self._opaque_store is not None:
-                envelope = self._opaque_store.ingest(
-                    snapshot, episode_id=episode_id, sensor_value=record.data.get("sensor_intervention_value"),
-                )
+        store = self.recovery
+        state = store.projector.state
+        identity = state.get("journal_genesis", "empty")
+        if self._opaque_store is not None:
+            after = store.validated_cursor(self._opaque_store.recovery_cursor(identity))
+            for record in store.records("grounded_body_observed", after=after):
+                raw = record.data["body_state"]
+                model = LegacyBodyStateSnapshot if raw.get("schema_version") == "body-state-v1" else EmbodimentBodyStateSnapshot
+                snapshot = model.model_validate(raw)
+                envelope = self._opaque_store.ingest(snapshot, episode_id=getattr(snapshot, "episode_id", None),
+                    sensor_value=record.data.get("sensor_intervention_value"))
                 if envelope.model_dump(mode="json") != record.data.get("envelope"):
                     raise RuntimeStateError("grounded sensor replay does not match its recorded envelope")
-            previous = snapshot
-            if snapshot.energy.terminal:
-                terminal_state = AgencyState.TERMINAL
-                self._terminal_body_revision = snapshot.revision
-                self._terminal_episode_id = episode_id
-        if previous is not None:
-            self._install_grounded_body(previous)
-        if terminal_state is not None:
-            self._agency_state = terminal_state
+                self._opaque_store.set_recovery_cursor(identity, store.cursor_token(record.record_seq))
+        raw = state.get("grounded_body")
+        if raw:
+            model = LegacyBodyStateSnapshot if raw.get("schema_version") == "body-state-v1" else EmbodimentBodyStateSnapshot
+            self._install_grounded_body(model.model_validate(raw))
+        if state.get("grounded_terminal_state"):
+            self._agency_state = AgencyState(state["grounded_terminal_state"])
+            self._terminal_body_revision = state.get("grounded_terminal_revision")
+            self._terminal_episode_id = state.get("grounded_terminal_episode")
         if self._agency_state == AgencyState.TERMINAL:
             self.embodiment.set_terminal("restored terminal body state")
 
@@ -2141,8 +2304,9 @@ class RuntimeSupervisor:
         if self._research_memory is None:
             return
         try:
-            saved = next((record.data for record in self.journal.iter_records()
-                          if record.record_type == "body_experience_outcome" and record.event_id == event.event_id), None)
+            store = self.recovery
+            sequence = store.mapping("research_outcomes").get(event.event_id)
+            saved = store.read(sequence).data if sequence else None
             if saved is None:
                 saved = {"decision_id": event.event_id, "evidence": evidence,
                          "completed_at": self._research_clock().isoformat(), "success": success, "verified": verified,
@@ -2173,14 +2337,19 @@ class RuntimeSupervisor:
         if not await self.affect.drain(self.maintenance_drain_seconds):
             raise RuntimeStateError("affect appraisal did not drain")
 
-    async def _restore_research_memory(self) -> None:
+    async def _restore_research_memory(self, *, pause: bool = True) -> None:
         bridge = self._research_memory
         if bridge is None:
             return
         from harness.research.interoception.contracts import OpaqueInteroceptiveObservation
 
-        await bridge.service.pause()
-        for record in self.journal.iter_records():
+        if pause:
+            await bridge.service.pause()
+        store = self.recovery
+        module = bridge.service.store
+        identity = store.projector.state.get("journal_genesis", "empty")
+        after = store.validated_cursor(module.recovery_cursor(identity))
+        for record in store.records("body_experience_outcome", "body_memory_observed", after=after):
             if record.record_type == "body_experience_outcome":
                 data = record.data
                 bridge.complete(
@@ -2191,6 +2360,8 @@ class RuntimeSupervisor:
             elif record.record_type == "body_memory_observed":
                 await bridge.observe(tuple(OpaqueInteroceptiveObservation.model_validate(item)
                                            for item in record.data["observations"]))
+
+            module.set_recovery_cursor(identity, store.cursor_token(record.record_seq))
 
     async def _social_research_context(self, event: RuntimeEvent):
         service = self._social_world_service
@@ -3211,44 +3382,10 @@ class RuntimeSupervisor:
         )
 
     def _sync_command_index(self) -> None:
-        """Rebuild at startup or catch up only newly appended journal pages.
-
-        The catch-up also covers emergency-buffer appends whose write raised,
-        and direct journal appends used by recovery tools and test fixtures.
-        """
-        boundary = self.journal.last_record_seq
-        while self._command_index_cursor < boundary:
-            records = self.journal.records_after(
-                self._command_index_cursor,
-                limit=min(500, boundary - self._command_index_cursor),
-            )
-            if not records:
-                raise RuntimeStateError("command journal index is missing its next record")
-            for record in records:
-                if record.record_seq != self._command_index_cursor + 1:
-                    raise RuntimeStateError("command journal index sequence is not contiguous")
-                if record.record_type == "domain_command_intent":
-                    envelope = record.data.get("envelope")
-                    if record.idempotency_key is not None and envelope:
-                        self._command_intent_seqs[record.idempotency_key] = record.record_seq
-                    if (
-                        record.event_id is not None
-                        and record.data.get("service") == "cognitive"
-                        and isinstance(envelope, dict)
-                        and envelope.get("command_type") == "PrepareResponse"
-                    ):
-                        _, count = self._prepare_intent_seqs.get(record.event_id, (0, 0))
-                        self._prepare_intent_seqs[record.event_id] = (record.record_seq, count + 1)
-                elif record.record_type in {"domain_command_result", "domain_command_late_result"}:
-                    self._command_result_seqs[record.command_id] = record.record_seq
-                elif record.record_type == "event_accepted" and record.event_id is not None:
-                    event = record.data.get("event", {})
-                    if event.get("event_type") == RuntimeEventType.QQ_TURN.value:
-                        self._qq_turn_event_seqs[record.event_id] = record.record_seq
-                        self._qq_turn_completed_seqs.pop(record.event_id, None)
-                elif record.record_type == "processing_completed" and record.event_id in self._qq_turn_event_seqs:
-                    self._qq_turn_completed_seqs[record.event_id] = record.record_seq
-                self._command_index_cursor = record.record_seq
+        store = self.recovery
+        self._command_index_cursor = store.projector.cursor
+        if store.persistent and store.projector.cursor - store.committed_seq >= 1000:
+            self._recovery_wakeup.set()
 
     def qq_turn_history(self, event_id: str):
         """Seek an exact QQ turn; new identities never scan historical payloads."""
@@ -4331,6 +4468,8 @@ class RuntimeSupervisor:
         idempotency_key: str | None = None,
         data: dict[str, Any] | None = None,
     ) -> RuntimeJournalRecord | None:
+        if data is not None and isinstance(data.get('action'), dict):
+            data = {**data, '_runtime_action_revision': self.action_coordinator.revision}
         try:
             record = self.journal.append(
                 record_type,
@@ -4423,179 +4562,67 @@ class RuntimeSupervisor:
         return lambda event: event.event_type in CONTROL_EVENT_TYPES
 
     def _restore_runtime_indexes(self) -> RuntimeLifecycle | None:
-        previous_lifecycle: RuntimeLifecycle | None = None
-        journaled_goals: set[str] = set()
-        for record in self.journal.iter_records():
-            if record.receive_seq:
-                self._receive_seq = max(self._receive_seq, record.receive_seq)
-            if record.process_seq:
-                self._process_seq = max(self._process_seq, record.process_seq)
-            if record.record_type == "lifecycle_transition":
-                value = record.data.get("current")
-                if value:
-                    previous_lifecycle = RuntimeLifecycle(value)
-            if record.record_type == "event_accepted":
-                payload = record.data.get("event")
-                if payload:
-                    accepted = RuntimeEvent.model_validate(payload)
-                    if accepted.event_type == RuntimeEventType.USER_MESSAGE:
-                        self._remember_user_event(accepted)
-                        self._pending_user_ingress_event_ids.add(accepted.event_id)
-            if record.record_type == "homeostatic_interoception_observed":
-                salience = record.data.get("homeostatic_salience")
-                signature = record.data.get("homeostatic_episode_signature")
-                if isinstance(salience, str):
-                    self._homeostatic_salience = salience
-                if isinstance(signature, str) and signature:
-                    self._homeostatic_episode_signature = signature
-            if record.record_type in {
-                "homeostatic_marked_trigger_scheduled",
-                "homeostatic_marked_trigger_reused",
-                "homeostatic_marked_expression_opportunity",
-            }:
-                signature = record.data.get("homeostatic_episode_signature")
-                if isinstance(signature, str) and signature:
-                    self._homeostatic_marked_attempts[signature] = record.recorded_at
-            if record.record_type == "autonomous_expression_cancelled":
-                cancelled_event_id = record.data.get("cancelled_event_id")
-                if isinstance(cancelled_event_id, str) and cancelled_event_id:
-                    self._cancelled_autonomous_event_ids.add(cancelled_event_id)
-            elif (
-                record.record_type == "processing_completed"
-                and record.event_id
-                and record.data.get("status") in {"completed", "ignored"}
-            ):
-                self._cancelled_autonomous_event_ids.discard(record.event_id)
-                self._pending_user_ingress_event_ids.discard(record.event_id)
-            if record.record_type == "homeostasis_continuation_deferred" and record.event_id:
-                revision = record.data.get("homeostasis_revision")
-                if isinstance(revision, int):
-                    self._homeostasis_continuations[record.event_id] = revision
-            elif record.record_type == "homeostasis_continuation_consumed" and record.event_id:
-                self._homeostasis_continuations.pop(record.event_id, None)
-            if record.record_type == "action_proposed":
-                goal_id = (record.data.get("action") or {}).get("goal_id")
-                if goal_id:
-                    journaled_goals.add(str(goal_id))
-            if record.record_type == "body_state_observed":
-                self._body_episode_id = record.data.get("episode_id")
-                revision = record.data.get("body_revision")
-                self._body_revision = int(revision) if revision is not None else None
-                captured = record.data.get("captured_at")
-                if captured:
-                    self._body_captured_at = datetime.fromisoformat(
-                        str(captured).replace("Z", "+00:00")
-                    )
-                interoception = record.data.get("interoception")
-                if interoception:
-                    model = (
-                        CognitiveInteroceptiveState
-                        if "resource_label" in interoception
-                        else EmbodimentInteroceptiveState
-                    )
-                    self._interoception = model.model_validate(interoception)
-            elif record.record_type == "agency_terminal":
-                self._agency_state = AgencyState.TERMINAL
-                self._terminal_body_revision = self._body_revision
-                self._terminal_episode_id = self._body_episode_id
-            elif record.record_type == "agency_reset":
-                self._agency_state = AgencyState.AVAILABLE
-            elif record.record_type == "body_monitor_degraded" and self._agency_state != AgencyState.TERMINAL:
-                self._agency_state = AgencyState.DEGRADED
-            elif (
-                record.record_type == "body_state_applied"
-                and not bool(record.data.get("terminal"))
-                and self._agency_state != AgencyState.TERMINAL
-            ):
-                self._agency_state = AgencyState.AVAILABLE
-            self._last_runtime_time = record.recorded_at
-        self._goal_revision = max(self._goal_revision, len(journaled_goals))
+        store = self.recovery
+        state = store.projector.state
+        self._receive_seq = max(self._receive_seq, state.get("receive_seq", 0))
+        self._process_seq = max(self._process_seq, state.get("process_seq", 0))
+        self._goal_revision = max(self._goal_revision, state.get('goal_count', 0), state.get('goal_floor', 0))
+        self.action_coordinator.set_revision_floor(state.get('action_floor', 0))
+        self._agency_state = AgencyState(state.get("agency_state", AgencyState.AVAILABLE))
+        for field in ("body_episode_id", "body_revision", "terminal_episode_id", "terminal_body_revision"):
+            setattr(self, "_" + field, state.get(field))
+        for field in ("body_captured_at", "last_runtime_time"):
+            value = state.get(field)
+            setattr(self, "_" + field, datetime.fromisoformat(value) if value else None)
+        raw = state.get("interoception")
+        if raw:
+            model = CognitiveInteroceptiveState if "resource_label" in raw else EmbodimentInteroceptiveState
+            self._interoception = model.model_validate(raw)
+        if state.get("last_user_event"):
+            self._remember_user_event(RuntimeEvent.model_validate(state["last_user_event"]))
+        self._last_user_session_id = state.get("last_user_session_id", self._last_user_session_id)
+        self._last_user_channel = state.get("last_user_channel", self._last_user_channel)
+        self._homeostatic_salience = state.get("homeostatic_salience")
+        self._homeostatic_episode_signature = state.get("homeostatic_episode_signature")
+        self._homeostatic_marked_attempts = {
+            key: datetime.fromisoformat(value) for key,value in store.mapping("marked_attempts").items()
+        }
+        self._cancelled_autonomous_event_ids = set(store.mapping("cancelled"))
+        self._homeostasis_continuations = dict(store.mapping("continuations"))
+        self._pending_user_ingress_event_ids = {
+            row[0] for row in store.rows("SELECT id FROM events WHERE pending=1 AND type=?", (RuntimeEventType.USER_MESSAGE.value,))
+        }
+        # v1 has incomplete state. Only monotonic floors survive an older cut;
+        # mutable body/agency fields are already reconstructed from all facts.
         checkpoint = self.checkpoint_store.load()
-        if (
-            checkpoint
-            and checkpoint.character_id == self.character_id
-            and checkpoint.manifest_revision == self.manifest.revision
-            and checkpoint.journal_record_seq <= self.journal.last_record_seq
-        ):
-            self._receive_seq = max(self._receive_seq, checkpoint.receive_seq)
-            self._process_seq = max(self._process_seq, checkpoint.process_seq)
-            self._goal_revision = max(self._goal_revision, checkpoint.version_vector.runtime_goal)
-            self.action_coordinator.set_revision_floor(checkpoint.version_vector.runtime_action)
-            self._agency_state = checkpoint.agency_state
-            self._body_episode_id = checkpoint.body_episode_id
-            self._body_revision = checkpoint.body_revision
-            self._body_captured_at = checkpoint.body_captured_at
-            if checkpoint.interoceptive_state is not None:
-                state = checkpoint.interoceptive_state
-                model = (
-                    CognitiveInteroceptiveState
-                    if "resource_label" in state
-                    else EmbodimentInteroceptiveState
-                )
-                self._interoception = model.model_validate(state)
-            if checkpoint.agency_state == AgencyState.TERMINAL:
-                self._terminal_episode_id = checkpoint.body_episode_id
-                self._terminal_body_revision = checkpoint.body_revision
-        self._restore_grounded_body(self.journal.iter_records())
+        if checkpoint and checkpoint.character_id == self.character_id and checkpoint.manifest_revision == self.manifest.revision:
+            sequence = checkpoint.journal_record_seq
+            if sequence <= self.journal.last_record_seq:
+                anchor_hash = self.journal.records_after(sequence-1, limit=1)[0].checksum if sequence else ""
+                if anchor_hash == checkpoint.journal_hash:
+                    self._receive_seq = max(self._receive_seq, checkpoint.receive_seq)
+                    self._process_seq = max(self._process_seq, checkpoint.process_seq)
+                    self._goal_revision = max(self._goal_revision, checkpoint.version_vector.runtime_goal)
+                    self.action_coordinator.set_revision_floor(checkpoint.version_vector.runtime_action)
+        if self.manifest.grounded_agency is not None:
+            self._restore_grounded_body()
+        from harness.runtime.recovery import JournalValueMap
         if self._agency_service is not None:
-            for record in self.journal.iter_records():
-                if record.record_type == "persistent_goal_decision_bound":
-                    self._agency_decision_bindings[record.data["decision_id"]] = {
-                        "goal_id": record.data["goal_id"], "step_id": record.data["step_id"],
-                    }
+            self._agency_decision_bindings = JournalValueMap(store, "agency_bindings", lambda record: {
+                "goal_id": record.data["goal_id"], "step_id": record.data["step_id"],
+            })
         if self._research_memory is not None:
-            for record in self.journal.iter_records():
-                if record.record_type == "grounded_decision" and record.event_id:
-                    self._research_memory.remember(record.event_id, record.data)
-        return previous_lifecycle
+            self._research_memory.decisions = JournalValueMap(store, "research_decisions")
+        value = state.get("lifecycle")
+        return RuntimeLifecycle(value) if value else None
 
     async def _restore_pending_events(self) -> None:
         self._needs_refill = False
-        accepted: dict[str, RuntimeEvent] = {}
-        completed: set[str] = set()
-        completed_ranges: list[tuple[str, str, int, int]] = []
-        started: dict[str, RuntimeJournalRecord] = {}
-        for record in self.journal.iter_records():
-            if record.record_type == "event_accepted":
-                payload = record.data.get("event")
-                if payload:
-                    event = RuntimeEvent.model_validate(payload)
-                    accepted[event.event_id] = event
-            elif record.record_type == "processing_started" and record.event_id:
-                started[record.event_id] = record
-            elif record.record_type == "event_dropped" and record.event_id:
-                completed.add(record.event_id)
-                sequence_range = record.data.get("sequence_range") or [record.receive_seq, record.receive_seq]
-                completed_ranges.append(
-                    (
-                        str(record.data.get("event_type") or ""),
-                        str(record.data.get("source") or ""),
-                        int(sequence_range[0] or 0),
-                        int(sequence_range[1] or 0),
-                    )
-                )
-            elif record.record_type == "processing_completed" and record.event_id:
-                if record.data.get("status") in {"completed", "ignored"}:
-                    completed.add(record.event_id)
-                    start = started.get(record.event_id)
-                    if start is not None:
-                        completed_ranges.append(
-                            (
-                                str(start.data.get("event_type") or ""),
-                                str(start.data.get("source") or ""),
-                                int(start.data.get("first_receive_seq") or start.receive_seq or 0),
-                                int(start.data.get("last_receive_seq") or start.receive_seq or 0),
-                            )
-                        )
         queued_ids = {queued.event_id for queued in self.queue.snapshot()}
-        for event_id, event in sorted(accepted.items(), key=lambda item: item[1].receive_seq):
-            covered = any(
-                event.event_type.value == event_type
-                and event.source == source
-                and first <= event.receive_seq <= last
-                for event_type, source, first, last in completed_ranges
-            )
-            if event_id in completed or event_id in queued_ids or covered:
+        for record in self.recovery.pending_events():
+            event = RuntimeEvent.model_validate(record.data["event"])
+            event_id = event.event_id
+            if event_id in queued_ids:
                 self._pending_user_ingress_event_ids.discard(event_id)
                 continue
             if event.event_type in CONTROL_EVENT_TYPES or event.event_type == RuntimeEventType.HEARTBEAT:
@@ -4615,16 +4642,7 @@ class RuntimeSupervisor:
         *,
         services: frozenset[str] | None = None,
     ) -> None:
-        intents: dict[str, RuntimeJournalRecord] = {}
-        results: set[str] = set()
-        for record in self.journal.iter_records():
-            if record.record_type == "domain_command_intent" and record.command_id:
-                intents[record.command_id] = record
-            elif record.record_type in {"domain_command_result", "domain_command_late_result", "domain_command_expired"} and record.command_id:
-                results.add(record.command_id)
-        for command_id, record in intents.items():
-            if command_id in results:
-                continue
+        for record in self.recovery.pending_commands():
             envelope_data = record.data.get("envelope")
             service = record.data.get("service")
             if not envelope_data or service not in {"cognitive", "homeostasis"}:
@@ -4670,74 +4688,31 @@ class RuntimeSupervisor:
                 self._reconciliation_backlog += 1
 
     def _find_delivery_result(self, prepare_id: str) -> tuple[DeliveryResult | None, bool]:
-        intent = False
-        for record in self.journal.iter_records():
-            if record.data.get("prepare_id") != prepare_id:
-                continue
-            if record.record_type == "reply_delivery_intent":
-                intent = True
-            elif record.record_type == "reply_delivery":
-                payload = record.data.get("result")
-                if payload:
-                    return DeliveryResult.model_validate(payload), False
-        return None, intent
+        store = self.recovery
+        seq = store.mapping("deliveries").get(prepare_id)
+        if seq:
+            return DeliveryResult.model_validate(store.read(seq).data["result"]), False
+        return None, prepare_id in store.mapping("delivery_intents")
 
     async def _restore_and_reconcile_actions(self) -> bool:
-        accepted: dict[str, RuntimeEvent] = {}
-        latest: dict[str, ActionExecution] = {}
-        prepared: dict[str, PreparedResponse] = {}
-        execution_intents: set[str] = set()
-        interaction_committed: set[str] = set()
-        for record in self.journal.iter_records():
-            if record.record_type == "event_accepted":
-                event_payload = record.data.get("event")
-                if event_payload:
-                    event = RuntimeEvent.model_validate(event_payload)
-                    accepted[event.event_id] = event
-            action_payload = record.data.get("action")
-            if isinstance(action_payload, dict):
-                action = ActionExecution.model_validate(action_payload)
-                latest[action.action_id] = action
-                prepared_payload = record.data.get("prepared")
-                if prepared_payload:
-                    prepared[action.action_id] = PreparedResponse.model_validate(prepared_payload)
-            if record.record_type == "action_execution_intent" and isinstance(
-                action_payload, dict
-            ):
-                execution_intents.add(action.action_id)
-            if record.record_type == "action_interaction_committed":
-                action_id = record.data.get("action_id")
-                if action_id:
-                    interaction_committed.add(str(action_id))
-
+        store = self.recovery
         unresolved = False
-        for action_id, action in latest.items():
-            if action_id in execution_intents and not action.terminal:
-                action = action.model_copy(
-                    update={"state": ActionExecutionState.RUNNING, "updated_at": utc_now()}
-                )
-            self.action_coordinator.restore(action)
-            proposed_event_id: str | None = next(
-                (
-                    record.event_id
-                    for record in self.journal.iter_records(reverse=True)
-                    if record.record_type == "action_proposed"
-                    and record.event_id is not None
-                    and (record.data.get("action") or {}).get("action_id") == action_id
-                ),
-                None,
-            )
-            proposed_event: RuntimeEvent | None = (
-                accepted.get(proposed_event_id) if proposed_event_id is not None else None
-            )
-            if (
-                proposed_event is not None
-                and action_id in prepared
-                and action_id not in interaction_committed
-            ):
+        for action_id, latest_seq, proposal_seq, prepared_seq, executed, committed in store.action_rows():
+            action = ActionExecution.model_validate(store.read(latest_seq).data["action"])
+            if executed and not action.terminal:
+                action = action.model_copy(update={"state": ActionExecutionState.RUNNING, "updated_at": utc_now()})
+            self.action_coordinator.restore(action, advance_revision=False)
+            proposed_event = None
+            proposal = store.read(proposal_seq)
+            if proposal is not None and proposal.event_id:
+                with store.lock:
+                    row = store.db.execute("SELECT seq FROM events WHERE id=?", (proposal.event_id,)).fetchone()
+                if row:
+                    proposed_event = RuntimeEvent.model_validate(store.read(row[0]).data["event"])
+            if proposed_event is not None and prepared_seq and not committed:
                 self._action_context[action_id] = {
                     "event": proposed_event,
-                    "prepared": prepared[action_id],
+                    "prepared": PreparedResponse.model_validate(store.read(prepared_seq).data["prepared"]),
                 }
 
             if action.state in {ActionExecutionState.RUNNING, ActionExecutionState.VERIFYING}:

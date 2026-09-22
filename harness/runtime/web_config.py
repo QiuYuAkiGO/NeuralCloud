@@ -150,6 +150,12 @@ def _read_json(path: Path) -> dict:
     return value
 
 
+check_path = _check_path
+private_directory = _private_directory
+write_private = _write_private
+read_json = _read_json
+
+
 def _key(value) -> str:
     if not isinstance(value, str):
         raise WebConfigurationError("web_api_key_invalid")

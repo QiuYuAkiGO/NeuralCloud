@@ -357,6 +357,7 @@ class RuntimeStatus(BaseModel):
     embodiment: EmbodimentStatus | None = None
     agency_state: AgencyState = AgencyState.AVAILABLE
     affect: list[CapabilityDescriptor] = Field(default_factory=list)
+    recovery: dict[str, Any] | None = None
 
 
 class EventDispatchResult(BaseModel):

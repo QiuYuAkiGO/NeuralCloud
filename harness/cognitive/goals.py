@@ -120,6 +120,13 @@ async def prepare(host: Any, command: Any) -> dict[str, Any]:
     try:
         request_payload, _ = command_emotion_context(host, command.payload)
         request = GoalDecisionRequest.model_validate(request_payload)
+    except ValidationError as exc:
+        for error in exc.errors(include_url=False, include_context=True, include_input=False):
+            inner = str((error.get("ctx") or {}).get("error") or "")
+            message = str(error.get("msg") or "")
+            if "goal_context_too_large" in inner or "goal_context_too_large" in message:
+                raise GoalDecisionError("goal_context_too_large") from None
+        raise GoalDecisionError("goal_invalid_request") from None
     except (TypeError, ValueError, RecursionError):
         raise GoalDecisionError("goal_invalid_request") from None
     if request.deadline_at > command.issued_at + timedelta(seconds=60):

@@ -399,6 +399,10 @@ def test_restart_does_not_replay_expired_qq_preparations(runtime, monkeypatch, c
             data={"service": "cognitive", "envelope": envelope.model_dump(mode="json")})
         _assert_expired(runtime, event, await runtime.dispatch(event))
         # Rebuild from the durable journal, as during a new Runtime's recovery.
+        # Opening a writable journal now owns the instance lock even before
+        # boot. Simulate process exit before opening the replacement writer.
+        runtime.recovery.close()
+        runtime.instance_lock.release()
         restored = module.RuntimeSupervisor(manifest=_manifest(), cognitive=runtime.cognitive,
             homeostasis=runtime.homeostasis, state_dir=runtime.state_dir)
 

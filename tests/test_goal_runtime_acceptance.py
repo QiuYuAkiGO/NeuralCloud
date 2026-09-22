@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from copy import deepcopy
 from datetime import UTC, datetime, timedelta
+import json
 import time
 from types import SimpleNamespace
 
@@ -12,10 +13,13 @@ import pytest
 
 from harness.cognitive.capabilities import catalog_hash
 from harness.contracts.capability_calls import CapabilityOffer
-from harness.contracts.goals import PreparedGoalDecision
+from harness.contracts.goals import GoalDecisionRequest, PreparedGoalDecision
 from harness.regulation.store import PSYCHOLOGICAL_DIMENSIONS, STANDING_ID
-from harness.runtime.goals import GoalController, deviation
+from harness.runtime.capabilities import goal_error_code
+from harness.runtime.goals import GoalController, _episode_context, _outcome_projection, deviation
 from harness.runtime.models import RuntimeEventPriority, RuntimeEventType
+from harness.runtime.supervisor import DomainCommandError
+from tests.test_capability_cognition import command as capability_command
 from tests.test_goal_runtime import GOAL_CRITERION, drain_effects, goal_rig, next_goal_event, submit
 from tests.test_goal_runtime_review import controller
 
@@ -144,6 +148,58 @@ def test_goal_desktop_final_guard_rechecks_offer_after_foreground_wait(tmp_path,
     asyncio.run(scenario())
 
 
+@pytest.mark.parametrize("exc,expected", [
+    (ValueError("necessary goal steps are unfinished"), "goal_complete_steps_unfinished"),
+    (DomainCommandError("cognitive PrepareGoalDecision returned failed: goal_context_too_large"),
+     "goal_context_too_large"),
+    (DomainCommandError("cognitive PrepareGoalDecision returned conflict: expected revision 14, current 21"),
+     "goal_revision_conflict"),
+    (DomainCommandError("cognitive PrepareGoalDecision returned failed: private-model-prose"),
+     "goal_runtime_error"),
+])
+def test_goal_error_code_maps_domain_failures_without_leaking_text(exc, expected):
+    assert goal_error_code(exc) == expected
+    assert "private-model-prose" not in goal_error_code(
+        DomainCommandError("cognitive PrepareGoalDecision returned failed: private-model-prose"))
+
+
+def test_episode_context_omits_receipt_blobs_and_stays_under_goal_limit():
+    episode = {
+        "id": "episode:1", "episode_id": "episode:1", "status": "active",
+        "seen_calls": [f"call:{i}" for i in range(40)],
+        "baseline": {"trace": "B" * 8000},
+        "last_evaluation": {"prose": "E" * 8000},
+        "results": [
+            {"call_id": f"call:{i}", "status": "error", "evidence_refs": [f"receipt:{i}"],
+             "receipt": {"body": "R" * 4000}, "channel_result": {"page": "P" * 4000},
+             "outcome": {"observation": "O" * 4000}}
+            for i in range(80)
+        ],
+        "steps": [{"status": "planned", "completion_criteria": ["A verified expression receipt exists"]}],
+        "success_criteria": ["A verified expression receipt exists"],
+        "appraisals": [{"id": f"a{i}", "evidence_refs": [f"fact:{i}"]} for i in range(20)],
+        "predictions": [{"purpose": "keep going"} for _ in range(20)],
+    }
+    projected = _episode_context(episode)
+    assert projected["episode_id"] == "episode:1"
+    assert "seen_calls" not in projected and "baseline" not in projected and "last_evaluation" not in projected
+    assert len(projected["results"]) == 16
+    assert len(projected["appraisals"]) == 8 and len(projected["predictions"]) == 8
+    assert all(set(item) <= {"call_id", "status", "evidence_refs", "at", "channel", "error_code", "step_id"}
+               for item in projected["results"])
+    assert "receipt" in episode["results"][0]
+    payload = capability_command().payload
+    payload.update(snapshot_revision=4, homeostatic_summary={"snapshot_revision": 4}, goal_context={
+        "episode_id": "episode:1", "active_episode": projected,
+        "outcomes": [_outcome_projection(item) for item in episode["results"][-16:]],
+        "known_evidence_refs": ["receipt:1"], "requested_goal": {"origin": "maintenance"},
+    })
+    GoalDecisionRequest.model_validate(payload)
+    assert len(json.dumps(payload["goal_context"]).encode()) < 128_000
+    fat = {"active_episode": episode, "outcomes": episode["results"]}
+    assert len(json.dumps(fat).encode()) > 128_000
+
+
 @pytest.mark.parametrize("message,expected_code", [
     ("necessary goal steps are unfinished", "goal_complete_steps_unfinished"),
     ("goal completion criterion lacks independent outcome evidence", "goal_complete_outcome_evidence_required"),
@@ -170,7 +226,46 @@ def test_goal_runtime_failure_records_only_allowlisted_diagnostic_codes(tmp_path
     asyncio.run(scenario())
 
 
-@pytest.mark.parametrize("code", ["goal_complete_steps_unfinished", "goal_runtime_error", "private-model-prose"])
+def test_goal_prepare_domain_conflict_records_revision_code(tmp_path, monkeypatch):
+    async def scenario():
+        async with goal_rig(tmp_path, monkeypatch) as (supervisor, _, _, _, _, requests, _):
+            await submit(supervisor)
+            event = await next_goal_event(supervisor)
+
+            async def conflict(*args, **kwargs):
+                raise DomainCommandError(
+                    "cognitive PrepareGoalDecision returned conflict: expected revision 1, current 2")
+
+            monkeypatch.setattr(supervisor, "_invoke_domain", conflict)
+            result = await supervisor.dispatch(event)
+            row = supervisor.capabilities.calls.get(event.payload["opportunity_id"])
+            assert result.status == "failed" and row["status"] == "error"
+            assert row["error_code"] == result.detail["error_code"] == "goal_revision_conflict"
+            assert "expected revision" not in str(row) and "expected revision" not in str(result.detail)
+            assert requests.count(("POST", "/v1/board/append")) == 0
+
+    asyncio.run(scenario())
+
+
+def test_stale_cached_cognitive_revision_is_refreshed_before_goal_prepare(tmp_path, monkeypatch):
+    async def scenario():
+        async with goal_rig(tmp_path, monkeypatch) as (supervisor, _, _, model, _, requests, _):
+            await submit(supervisor)
+            event = await next_goal_event(supervisor)
+            supervisor._cognitive_snapshot = supervisor._cognitive_snapshot.model_copy(update={"revision": 0})
+            result = await supervisor.dispatch(event)
+            assert result.status == "completed", result.detail
+            row = supervisor.capabilities.calls.get(event.payload["opportunity_id"])
+            assert row.get("error_code") is None and row["status"] in {"committed", "completed", "pending", "wait", "no_action", "defer"}
+            assert model.goal_inputs
+            assert requests.count(("POST", "/v1/board/append")) >= 0
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("code", [
+    "goal_complete_steps_unfinished", "goal_runtime_error", "goal_context_too_large", "private-model-prose",
+])
 def test_goal_progress_projects_only_allowlisted_runtime_error_codes(tmp_path, code):
     goals, supervisor, _ = controller(tmp_path)
     try:

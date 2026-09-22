@@ -8,6 +8,7 @@ from typing import Protocol
 
 from harness.embodiment.capabilities import EmbodimentStatus, ProviderCapabilities, ProviderHealth
 from harness.embodiment.web_contracts import WebResult, WebSearchArguments
+from harness.embodiment.server_contracts import ServerCommandArguments, ServerCommandResult
 from harness.embodiment.contracts import BodyStateSnapshot, PerceptionSnapshot
 from harness.embodiment.qq_contracts import (
     QQCommunicationStatus, QQDeliveryResult, QQReadRequest, QQReadResult,
@@ -55,6 +56,16 @@ class WebInformationPort(Protocol):
     async def search(self, request: WebSearchArguments) -> WebResult: ...
 
     async def read(self, urls: list[str]) -> WebResult: ...
+
+    async def close(self) -> None: ...
+
+
+class ServerExecutionPort(Protocol):
+    """Negotiated remote command execution; Runtime owns classification and receipts."""
+
+    async def status(self) -> EmbodimentStatus: ...
+
+    async def run(self, request: ServerCommandArguments, *, deadline: datetime | None = None) -> ServerCommandResult: ...
 
     async def close(self) -> None: ...
 
