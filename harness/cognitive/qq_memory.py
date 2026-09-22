@@ -819,13 +819,10 @@ class QQMemoryWorker:
     def make_proposal(self, job, old, persona):
         if self.proposer is not None:
             return self.proposer.propose(job, old_impressions=old, persona=persona)
-        from harness.llm.client import build_llm_client
+        from harness.llm.client import build_llm_client, qq_memory_proposal_settings
         from harness.llm.deadline import model_deadline
         from harness.memory.qq_assimilation import QQMemoryProposer, qq_reasoning_options
-        settings = self.host.chat.settings.model_copy(update={
-            "llm_timeout": self.host.chat.settings.qq_memory_model_timeout_seconds,
-            "llm_json_max_tokens": 8192, "aux_llm_preload": False,
-            "record_interaction": False, "call_log_enabled": False})
+        settings = qq_memory_proposal_settings(self.host.chat.settings)
         llm = build_llm_client(settings)
         try:
             with model_deadline(now_utc() + timedelta(seconds=settings.qq_memory_model_timeout_seconds)):

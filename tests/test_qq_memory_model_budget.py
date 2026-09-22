@@ -189,3 +189,113 @@ def test_outer_model_deadline_is_not_restarted_by_proposer(setup, monkeypatch):
         assert 0 < calls[0]["timeout"]["read"] <= 2
     finally:
         client.close()
+
+
+def test_qq_reasoning_options_follow_primary_not_loopback_aux(monkeypatch):
+    monkeypatch.setenv("NC_ISOLATED_DEVELOPMENT", "1")
+    monkeypatch.setenv("NC_CONTROL_MODE", "development_debug")
+    from harness.memory.qq_assimilation import qq_reasoning_options
+
+    settings = Settings(
+        llm_base_url="https://api.deepseek.com", llm_model="deepseek-v4-flash",
+        aux_llm_base_url="http://127.0.0.1:11435/v1", aux_llm_model="qwen3:4b-instruct-2507-q4_K_M",
+        aux_llm_api_key="not-needed")
+    assert qq_reasoning_options(settings) == {"reasoning_effort": "low"}
+    local_only = Settings(llm_base_url="http://127.0.0.1:11435/v1", llm_model="qwen3:4b-instruct-2507-q4_K_M")
+    assert qq_reasoning_options(local_only) == {}
+
+
+def test_routed_proposer_posts_to_primary_not_loopback_aux(setup, monkeypatch):
+    monkeypatch.setenv("NC_ISOLATED_DEVELOPMENT", "1")
+    monkeypatch.setenv("NC_CONTROL_MODE", "development_debug")
+    from harness.llm.client import build_llm_client
+    from harness.memory.qq_assimilation import qq_reasoning_options
+
+    job = make_job(setup)
+    original_client = httpx.Client
+    seen = []
+
+    def handle(request):
+        seen.append(str(request.url))
+        return httpx.Response(200, json=_body(proposal(job).model_dump_json()))
+
+    monkeypatch.setattr("harness.llm.client.httpx.Client", lambda **kwargs: original_client(
+        transport=httpx.MockTransport(handle), **kwargs))
+    settings = Settings(
+        llm_base_url="https://api.deepseek.com", llm_model="deepseek-v4-flash", llm_api_key="test-main",
+        aux_llm_base_url="http://127.0.0.1:11435/v1", aux_llm_model="qwen3:4b-instruct-2507-q4_K_M",
+        aux_llm_api_key="not-needed")
+    llm = build_llm_client(settings)
+    try:
+        QQMemoryProposer(llm, reasoning_options=qq_reasoning_options(settings)).propose(job)
+    finally:
+        llm.close()
+    assert seen
+    assert all("11435" not in url for url in seen)
+    assert any("api.deepseek.com" in url for url in seen)
+
+
+def test_foreground_client_posts_to_apiyi_when_configured(monkeypatch):
+    monkeypatch.setenv("NC_ISOLATED_DEVELOPMENT", "1")
+    monkeypatch.setenv("NC_CONTROL_MODE", "development_debug")
+    from harness.llm.client import build_llm_client
+
+    original_client = httpx.Client
+    seen = []
+
+    def handle(request):
+        seen.append(str(request.url))
+        return httpx.Response(200, json=_body("ok"))
+
+    monkeypatch.setattr("harness.llm.client.httpx.Client", lambda **kwargs: original_client(
+        transport=httpx.MockTransport(handle), **kwargs))
+    settings = Settings(
+        llm_base_url="https://api.apiyi.com/v1", llm_model="claude-sonnet-4-5-20250929",
+        llm_api_key="test-claude",
+        qq_memory_llm_base_url="https://api.deepseek.com", qq_memory_llm_model="deepseek-v4-flash",
+        qq_memory_llm_api_key="test-memory",
+        aux_llm_base_url="http://127.0.0.1:11435/v1", aux_llm_model="qwen3:4b-instruct-2507-q4_K_M")
+    llm = build_llm_client(settings)
+    try:
+        llm.complete_chat_result([{"role": "user", "content": "hi"}], temperature=0.1, max_tokens=8)
+    finally:
+        llm.close()
+    assert seen
+    assert any("api.apiyi.com" in url for url in seen)
+    assert all("11435" not in url for url in seen)
+    assert all("api.deepseek.com" not in url for url in seen)
+
+
+def test_memory_proposal_keeps_dedicated_deepseek_when_foreground_is_claude(setup, monkeypatch):
+    monkeypatch.setenv("NC_ISOLATED_DEVELOPMENT", "1")
+    monkeypatch.setenv("NC_CONTROL_MODE", "development_debug")
+    from harness.llm.client import build_llm_client, qq_memory_proposal_settings
+    from harness.memory.qq_assimilation import qq_reasoning_options
+
+    job = make_job(setup)
+    original_client = httpx.Client
+    seen = []
+
+    def handle(request):
+        seen.append(str(request.url))
+        return httpx.Response(200, json=_body(proposal(job).model_dump_json()))
+
+    monkeypatch.setattr("harness.llm.client.httpx.Client", lambda **kwargs: original_client(
+        transport=httpx.MockTransport(handle), **kwargs))
+    settings = Settings(
+        llm_base_url="https://api.apiyi.com/v1", llm_model="claude-sonnet-4-5-20250929",
+        llm_api_key="test-claude",
+        qq_memory_llm_base_url="https://api.deepseek.com", qq_memory_llm_model="deepseek-v4-flash",
+        qq_memory_llm_api_key="test-memory")
+    proposal_settings = qq_memory_proposal_settings(settings)
+    assert proposal_settings.llm_model == "deepseek-v4-flash"
+    assert "api.deepseek.com" in proposal_settings.llm_base_url
+    assert settings.llm_model == "claude-sonnet-4-5-20250929"
+    llm = build_llm_client(proposal_settings)
+    try:
+        QQMemoryProposer(llm, reasoning_options=qq_reasoning_options(proposal_settings)).propose(job)
+    finally:
+        llm.close()
+    assert seen
+    assert any("api.deepseek.com" in url for url in seen)
+    assert all("api.apiyi.com" not in url for url in seen)

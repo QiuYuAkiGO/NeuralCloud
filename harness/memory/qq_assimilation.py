@@ -417,10 +417,15 @@ class QQMemoryProposer:
                 raise QQNonThinkingProposalInvalid(str(exc)) from exc
             raise
 
+    def _proposal_client(self):
+        # RoutingLLMClient already sends complete_chat* to the character-model
+        # endpoint. Memory proposals must use that path, not _aux (local Ollama).
+        return getattr(self.llm, "_main", self.llm)
+
     def _generate(self, payload):
         from harness.llm.client import OpenAICompatClient, parse_json_object
 
-        client = getattr(self.llm, "_aux", self.llm)
+        client = self._proposal_client()
         if self.reasoning_options or isinstance(client, OpenAICompatClient):
             messages = [{"role": "system", "content": _SYSTEM}, {"role": "user", "content": _json(payload)}]
             options = {"response_format": {"type": "json_object"}} if self.reasoning_options else {}
@@ -493,10 +498,7 @@ class QQMemoryProposer:
 
 def qq_reasoning_options(settings):
     from harness.llm.client import deepseek_low_reasoning_options
-    effective = settings.model_copy(update={
-        "llm_model": settings.aux_llm_model or settings.llm_model,
-        "llm_base_url": settings.aux_llm_base_url or settings.llm_base_url})
-    return deepseek_low_reasoning_options(effective)
+    return deepseek_low_reasoning_options(settings)
 
 
 class QQAssimilationQueue:

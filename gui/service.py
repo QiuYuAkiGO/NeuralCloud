@@ -37,6 +37,7 @@ from harness.llm.client import (
     preload_aux_model,
     probe_endpoint,
     resolve_aux_endpoint,
+    resolve_qq_memory_endpoint,
 )
 from harness.llm.embeddings import build_embedding_client, describe_embedding
 from harness.memory.service import MemoryService, build_inmemory_service
@@ -432,6 +433,7 @@ class HarnessChatService:
                 "reachable": self.llm_reachable,
                 "api_key_configured": _api_key_configured(self.settings),
                 "aux": self._aux_payload(),
+                "qq_memory": self._qq_memory_llm_payload(),
                 "embedding": dict(self.embedding_info),
             },
             "persona": persona.model_dump(mode="json") if persona else None,
@@ -464,6 +466,10 @@ class HarnessChatService:
             "preloaded": self.aux_preloaded,
             "active": self.aux_active,
         }
+
+    def _qq_memory_llm_payload(self) -> dict[str, Any]:
+        base_url, model, _ = resolve_qq_memory_endpoint(self.settings)
+        return {"base_url": base_url, "model": model}
 
     def status(self, session_id: str | None = None) -> dict[str, Any]:
         payload = self.snapshot_state(session_id)

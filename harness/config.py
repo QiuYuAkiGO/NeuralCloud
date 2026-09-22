@@ -135,6 +135,11 @@ class Settings(BaseSettings, QQLatencyOptions):
     qq_memory_window_max_seconds: float = Field(default=120.0, gt=0)
     qq_memory_window_max_messages: int = Field(default=32, ge=1)
     qq_memory_model_timeout_seconds: float = Field(default=45.0, gt=0)
+    # Optional dedicated endpoint for QQ memory proposals. Unset fields fall
+    # back to llm_* so a character-model switch does not silently move cleaning.
+    qq_memory_llm_base_url: str | None = None
+    qq_memory_llm_model: str | None = None
+    qq_memory_llm_api_key: str | None = None
     qq_memory_recall_max_items: int = Field(default=8, ge=1)
     qq_memory_recall_max_characters: int = Field(default=DEFAULT_QQ_MEMORY_RECALL_CHARACTERS, ge=1)
     # QQ's whole-record input uses the compiler's two-characters/token estimate.

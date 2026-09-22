@@ -45,6 +45,9 @@ class GuiPersistedSettings(BaseModel):
     aux_base_url: str | None = None
     aux_model: str | None = None
     aux_api_key: str | None = None
+    qq_memory_base_url: str | None = None
+    qq_memory_model: str | None = None
+    qq_memory_api_key: str | None = None
     validator_enabled: bool = True
     user_name: str = DEFAULT_USER_NAME
     character_name: str = ""
@@ -112,6 +115,9 @@ def snapshot_gui_settings(
         aux_base_url=settings.aux_llm_base_url,
         aux_model=settings.aux_llm_model,
         aux_api_key=settings.aux_llm_api_key,
+        qq_memory_base_url=settings.qq_memory_llm_base_url,
+        qq_memory_model=settings.qq_memory_llm_model,
+        qq_memory_api_key=settings.qq_memory_llm_api_key,
         validator_enabled=settings.validator_enabled,
         qq_latency=QQLatencyOptions.from_settings(settings),
         user_name=normalize_speaker_name(user_name, default=DEFAULT_USER_NAME),
@@ -161,7 +167,13 @@ def apply_loaded_tuning(settings: Settings, persisted: GuiPersistedSettings) -> 
         settings.mark_configuration_source(QQLatencyOptions.model_fields, "persisted")
     # These fields are passed through rebuild by both GUI and Cognitive startup.
     aliases = {"base_url": "llm_base_url", "model": "llm_model", "aux_base_url": "aux_llm_base_url",
-               "aux_model": "aux_llm_model", "validator_enabled": "validator_enabled"}
+               "aux_model": "aux_llm_model", "validator_enabled": "validator_enabled",
+               "qq_memory_base_url": "qq_memory_llm_base_url", "qq_memory_model": "qq_memory_llm_model"}
+    memory_aliases = {"qq_memory_base_url": "qq_memory_llm_base_url",
+                      "qq_memory_model": "qq_memory_llm_model", "qq_memory_api_key": "qq_memory_llm_api_key"}
+    for key, target in memory_aliases.items():
+        if key in persisted.model_fields_set:
+            setattr(settings, target, getattr(persisted, key))
     settings.mark_configuration_source([target for key, target in aliases.items()
                                        if key in persisted.model_fields_set], "persisted")
     if persisted.tuning is None:

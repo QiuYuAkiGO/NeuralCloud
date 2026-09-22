@@ -197,11 +197,12 @@ def _freeze(source_db, preset_path, output, self_id, groups, settings, now, priv
 
 
 def _make_proposal(job, old, persona, settings):
-    from harness.llm.client import build_llm_client
+    from harness.llm.client import build_llm_client, qq_memory_proposal_settings
     from harness.llm.deadline import model_deadline
     if settings.model_version == "mock":
         raise ValueError("qq_backfill_requires_configured_live_model")
-    llm = build_llm_client(settings.model_copy(update={"llm_timeout": settings.qq_memory_model_timeout_seconds}))
+    settings = qq_memory_proposal_settings(settings)
+    llm = build_llm_client(settings)
     try:
         with model_deadline(_now() + timedelta(seconds=settings.qq_memory_model_timeout_seconds)):
             return QQMemoryProposer(llm, timeout_seconds=settings.qq_memory_model_timeout_seconds,
