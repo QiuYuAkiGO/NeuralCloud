@@ -475,6 +475,9 @@ def test_gui_settings_file_roundtrip(tmp_path) -> None:
             aux_base_url="http://127.0.0.1:11434/v1",
             aux_model="qwen3:4b-instruct",
             aux_api_key="sk-aux",
+            qq_memory_base_url="https://api.deepseek.com",
+            qq_memory_model="deepseek-v4-flash",
+            qq_memory_api_key="sk-memory",
         ),
         path,
     )
@@ -486,6 +489,9 @@ def test_gui_settings_file_roundtrip(tmp_path) -> None:
     assert loaded.aux_base_url == "http://127.0.0.1:11434/v1"
     assert loaded.aux_model == "qwen3:4b-instruct"
     assert loaded.aux_api_key == "sk-aux"
+    assert loaded.qq_memory_base_url == "https://api.deepseek.com"
+    assert loaded.qq_memory_model == "deepseek-v4-flash"
+    assert loaded.qq_memory_api_key == "sk-memory"
     assert loaded.user_name == "用户"
     assert loaded.character_name == ""
     assert loaded.active_preset_id == DEFAULT_PRESET_ID

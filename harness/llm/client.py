@@ -422,6 +422,29 @@ def aux_model_distinct(settings: Settings) -> bool:
     return (aux_url.rstrip("/"), aux_model) != (settings.llm_base_url.rstrip("/"), settings.llm_model)
 
 
+def resolve_qq_memory_endpoint(settings: Settings) -> tuple[str, str, str]:
+    """Resolve (base_url, model, api_key) for QQ memory proposals.
+
+    Explicit qq_memory_llm_* keeps cleaning on that authorized backend when the
+    character-model endpoint changes. Unset fields fall back to llm_*.
+    """
+    base_url = (settings.qq_memory_llm_base_url or "").strip() or settings.llm_base_url
+    model = (settings.qq_memory_llm_model or "").strip() or settings.llm_model
+    api_key = (settings.qq_memory_llm_api_key or "").strip() or settings.llm_api_key
+    return base_url, model, api_key
+
+
+def qq_memory_proposal_settings(settings: Settings) -> Settings:
+    """Settings for QQ memory proposals: dedicated endpoint, then character model."""
+    base_url, model, api_key = resolve_qq_memory_endpoint(settings)
+    return settings.model_copy(update={
+        "llm_base_url": base_url, "llm_model": model, "llm_api_key": api_key,
+        "llm_timeout": settings.qq_memory_model_timeout_seconds,
+        "llm_json_max_tokens": 8192, "aux_llm_preload": False,
+        "record_interaction": False, "call_log_enabled": False,
+    })
+
+
 def keep_alive_value(raw: str | None) -> str | int:
     text = (raw or "").strip()
     if not text:
