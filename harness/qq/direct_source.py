@@ -25,6 +25,9 @@ def validate_direct_source(config, request, *, completed_replay=False):
     if not path:
         raise ValueError("direct_qq_not_configured")
     settings = DirectQQSettings.read(Path(path))
+    if request.idle_intent is not None and request.idle_intent.origin == "production":
+        from harness.qq.direct_contacts import validate_shared
+        return validate_shared(settings, config, request, completed_replay=completed_replay)
     groups = {group.group_id for group in settings.group_roster if group.observe}
     send_groups = {group.group_id for group in settings.group_roster if group.send}
     peers = {contact.peer_id for contact in settings.private_contacts if contact.observe}

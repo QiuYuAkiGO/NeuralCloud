@@ -228,6 +228,8 @@ class DirectStore:
                     db.execute(f"ALTER TABLE qq_direct_events ADD COLUMN {column} TEXT")
             from harness.qq.reply_requests import initialize
             initialize(db)
+            from harness.qq.direct_contacts import initialize as initialize_contacts
+            initialize_contacts(db)
         from harness.qq.reply_requests import ReplyRequests
         self.reply_requests = ReplyRequests(self)
 

@@ -130,7 +130,7 @@ _TRANSITIONS: dict[RuntimeLifecycle, frozenset[RuntimeLifecycle]] = {
 }
 
 _HOMEOSTATIC_COGNITIVE_RESERVED_PAYLOAD_KEYS = frozenset(
-    {"homeostatic_interoception", "homeostatic_profile_ref", "interoception",
+    {"production_context", "homeostatic_interoception", "homeostatic_profile_ref", "interoception",
      "opaque_interoception", "grounded_manifest_hash", "provider_intents", "research_context", "basic_terminal",
      "web_context", "runtime_web_context", "runtime_web_deadline_at", "offers",
      "emotion_context_ref", "emotion_revision"}
@@ -154,6 +154,8 @@ class RuntimeIngress:
         correlation_id: str | None = None,
         idempotency_key: str | None = None,
     ) -> RuntimeEvent | None:
+        if payload and "production_context" in payload:
+            raise ValueError("production_context is reserved for trusted Runtime commands")
         event_kind = RuntimeEventType(event_type)
         if not self.supervisor.accepts_event(event_kind):
             raise RuntimeStateError(
@@ -182,6 +184,8 @@ class RuntimeIngress:
             event=event,
             data={"event": event.model_dump(mode="json")},
         )
+        if self.supervisor.production_runtime is not None:
+            self.supervisor.production_runtime.observe(event)
         if event.event_type == RuntimeEventType.USER_MESSAGE:
             # Make user preemption effective as soon as the ingress record is
             # durable.  Publishing and queue insertion both await, so deferring
@@ -283,6 +287,10 @@ class RuntimeSupervisor:
         self.runtime_instance_id = runtime_instance_id or new_id("runtime")
         self.state_dir = Path(state_dir)
         self.state_dir.mkdir(parents=True, exist_ok=True)
+        self.production_runtime = None
+        if manifest.production is not None:
+            from harness.production.runtime import ProductionRuntime
+            self.production_runtime = ProductionRuntime(self)
         self._grounded_binding = manifest.bind_condition() if manifest.grounded_agency else None
         self._opaque_store = None
         self._grounded_body = None
@@ -644,6 +652,8 @@ class RuntimeSupervisor:
         self,
         status: EmbodimentStatus | None = None,
     ) -> bool:
+        if self.production_runtime is not None:
+            return False
         effective = status or self.embodiment.status()
         return (
             self.manifest.embodiment.required_for_runtime
@@ -664,7 +674,8 @@ class RuntimeSupervisor:
         return True
 
     async def submit_event(self, **kwargs: Any) -> RuntimeEvent | None:
-        if kwargs.get("event_type") == RuntimeEventType.IDLE and not self.manifest.autonomous_chat_enabled:
+        if (self.production_runtime is None and kwargs.get("event_type") == RuntimeEventType.IDLE
+                and not self.manifest.autonomous_chat_enabled):
             return None
         try:
             event = await self.ingress.accept(**kwargs)
@@ -939,6 +950,9 @@ class RuntimeSupervisor:
         await self.boot_and_recover()
         self._run_task = asyncio.current_task()
         try:
+            if self.production_runtime is not None:
+                await self.production_runtime.run()
+                return
             while self.lifecycle != RuntimeLifecycle.STOPPED:
                 predicate = self._dispatch_predicate()
                 timeout = self.scheduler.seconds_until_deadline() if self.lifecycle == RuntimeLifecycle.RUNNING else None
@@ -996,7 +1010,8 @@ class RuntimeSupervisor:
                     detail={"lifecycle": self.lifecycle.value},
                 )
             else:
-                if event.event_type == RuntimeEventType.USER_MESSAGE and self.action_coordinator.current:
+                if (self.production_runtime is None and event.event_type == RuntimeEventType.USER_MESSAGE
+                        and self.action_coordinator.current):
                     await self.action_coordinator.request_preemption(reason="user message preemption")
                 result = await self._dispatch_domain_event(event, process_seq)
         except Exception as exc:
@@ -1074,6 +1089,8 @@ class RuntimeSupervisor:
             raise RuntimeStateError(f"cannot pause from {self.lifecycle}")
         await self._transition(RuntimeLifecycle.PAUSING, reason=reason)
         self.scheduler.suspend()
+        if self.production_runtime is not None:
+            await self.production_runtime.cancel_jobs()
         self.pause_observations.begin(utc_now())
         try:
             try:
@@ -1255,6 +1272,8 @@ class RuntimeSupervisor:
             raise RuntimeStateError(f"cannot stop from {self.lifecycle}")
         await self._transition(RuntimeLifecycle.STOPPING, reason=reason)
         self.scheduler.suspend()
+        if self.production_runtime is not None:
+            await self.production_runtime.cancel_jobs()
         if self._perception_guard is not None:
             await self._perception_guard.stop()
         if self._body_state_guard is not None:
@@ -1464,6 +1483,7 @@ class RuntimeSupervisor:
             ),
         )
         return RuntimeStatus(
+            production=self.production_runtime.status() if self.production_runtime is not None else None,
             character_id=self.character_id,
             runtime_instance_id=self.runtime_instance_id,
             manifest_revision=self.manifest.revision,
@@ -1512,6 +1532,8 @@ class RuntimeSupervisor:
         return recovered
 
     async def _dispatch_control(self, event: RuntimeEvent, process_seq: int) -> EventDispatchResult:
+        if self.production_runtime is not None and event.event_type == RuntimeEventType.AGENCY_TERMINAL:
+            return await self.production_runtime.dispatch(event, process_seq)
         if (
             event.event_type == RuntimeEventType.AGENCY_TERMINAL
             and event.payload.get("schema_version") == "body-state-v1"
@@ -1560,6 +1582,12 @@ class RuntimeSupervisor:
     async def _dispatch_domain_event(
         self, event: RuntimeEvent, process_seq: int
     ) -> EventDispatchResult:
+        if self.production_runtime is not None and event.event_type in {
+            RuntimeEventType.USER_MESSAGE, RuntimeEventType.IDLE, RuntimeEventType.BODY_STATE,
+            RuntimeEventType.HEARTBEAT, RuntimeEventType.PERCEPTION, RuntimeEventType.ENVIRONMENT_CHANGE,
+            RuntimeEventType.GOAL_RECONSIDERATION, RuntimeEventType.QQ_FACT, RuntimeEventType.DIAGNOSTIC,
+        }:
+            return await self.production_runtime.dispatch(event, process_seq)
         if event.event_type == RuntimeEventType.CAPABILITY_OPPORTUNITY:
             return await self.capabilities.dispatch(event, process_seq)
         if event.event_type == RuntimeEventType.BOARD_REFLECTION:
@@ -2764,6 +2792,8 @@ class RuntimeSupervisor:
                 )
             if delivery is None:
                 async with self._foreground_lock:
+                    if self.production_runtime is not None and self.lifecycle != RuntimeLifecycle.RUNNING:
+                        return {"prepare_id": prepared.prepare_id, "reason": "production_result_fenced", "effective_decision_kind": "no_action"}
                     # User ingress does not take this lock, but it can only run at
                     # an await boundary.  Keeping this final check, durable intent,
                     # and invocation start in one synchronous critical section
@@ -2995,6 +3025,13 @@ class RuntimeSupervisor:
         *,
         event: RuntimeEvent | None,
     ) -> ActionExecution:
+        if self.production_runtime is not None:
+            context = await self.production_runtime.context("owner", autonomous=True)
+            if context["restricted_dialogue"] or self.lifecycle != RuntimeLifecycle.RUNNING:
+                rejected = await self.action_coordinator.reject(action.action_id, reason="production body or lifecycle restricted")
+                self._append_journal("action_blocked", event=event, data={"action": rejected.model_dump(mode="json")})
+                await self._submit_action_result(rejected)
+                return rejected
         action_context = self._action_context.get(action.action_id)
         source_decision = action_context["prepared"].decision if action_context else None
         capability_stop = await self.capabilities.validate_action(action)
@@ -3227,7 +3264,7 @@ class RuntimeSupervisor:
         # ACTION_RESULT (when one exists).
         await self._commit_prepared(original_event, prepared, evidence)
         ga = self.manifest.grounded_agency
-        if original_event.event_type != RuntimeEventType.CAPABILITY_OPPORTUNITY and (
+        if self.production_runtime is None and original_event.event_type != RuntimeEventType.CAPABILITY_OPPORTUNITY and (
             ga is None or ga.action_selection == "engineered_argmin"
         ):
             outcome_command = self._make_command(
@@ -3265,6 +3302,14 @@ class RuntimeSupervisor:
             data={"action_id": action.action_id, "prepare_id": prepared.prepare_id},
         )
         self._action_context.pop(action.action_id, None)
+        production_goal_id = (self.production_runtime.store.state("action-goal:" + prepared.decision.goal_id, prepared.decision.goal_id)
+                              if self.production_runtime is not None else prepared.decision.goal_id)
+        if self.production_runtime is not None and self.production_runtime.store.goal(production_goal_id):
+            self.production_runtime.store.record_goal_outcome(
+                production_goal_id, evidence_id=action.idempotency_key,
+                progress=action.state == ActionExecutionState.SUCCEEDED,
+                completed=action.state == ActionExecutionState.SUCCEEDED and production_goal_id == prepared.decision.goal_id,
+            )
         if original_event.event_type == RuntimeEventType.CAPABILITY_OPPORTUNITY:
             await self.capabilities.reconcile()
         if self._basic_terminal is not None:
@@ -3312,7 +3357,7 @@ class RuntimeSupervisor:
             event,
             command_type="CommitInteraction",
             idempotency_key=f"cognitive:commit:{prepared.prepare_id}",
-            expected_revision=self._cognitive_snapshot.revision,
+            expected_revision=None if self.production_runtime is not None else self._cognitive_snapshot.revision,
             payload={"prepare_id": prepared.prepare_id, "evidence": evidence.model_dump(mode="json")},
         )
         result = await self._invoke_domain(
@@ -3321,7 +3366,9 @@ class RuntimeSupervisor:
             method=self.cognitive.commit_interaction,
             event=event,
         )
-        self._cognitive_snapshot = await self.cognitive.get_snapshot()
+        current = await self.cognitive.get_snapshot()
+        if self.production_runtime is None or current.revision >= self._cognitive_snapshot.revision:
+            self._cognitive_snapshot = current
         return result
 
     def _prepare_idempotency_key(self, event: RuntimeEvent) -> str:
@@ -3356,6 +3403,15 @@ class RuntimeSupervisor:
         payload: dict[str, Any],
         expected_revision: int | None,
     ) -> DomainCommandEnvelope[dict[str, Any]]:
+        if self.production_runtime is not None and command_type in {
+            "PrepareBoardEntry", "CommitBoardEntry", "PrepareDiaryEntry", "CommitDiaryEntry", "PrepareWebStep",
+        }:
+            payload = {**payload, "production_context": self.production_runtime.context_snapshot(
+                payload.get("scope") or payload.get("session_id") or event.source,
+                autonomous=event.source not in {"user", "board_owner_request", "diary_owner_request"})}
+            payload.pop("homeostatic_summary", None)
+            payload.pop("homeostatic_interoception", None)
+            expected_revision = None
         self._sync_command_index()
         intent_seq = self._command_intent_seqs.get(idempotency_key)
         if intent_seq is not None:
@@ -3455,10 +3511,10 @@ class RuntimeSupervisor:
                 ):
                     self._submit_affect_after_qq(event, request, result)
                     return result
-            except (QQTurnRejected, QQWebBindingError):
+            except (QQTurnRejected, QQWebBindingError) as exc:
                 return EventDispatchResult(event_id=event.event_id, receive_seq=event.receive_seq,
                     process_seq=process_seq, status="ignored", decision_kind="qq_prepare",
-                    detail={"error_type": "qq_turn_rejected"})
+                    detail={"error_type": "qq_turn_rejected", **getattr(exc, "failure_detail", {})})
             except (TimeoutError, LateDomainResultError):
                 # A shorter RPC timeout or an early domain failure still uses
                 # ordinary Runtime recovery. Only this turn's expiry is local.
@@ -3483,11 +3539,11 @@ class RuntimeSupervisor:
         return utc_now() >= request.deadline_at
 
     async def _prepare_qq_turn(self, event: RuntimeEvent, process_seq: int, request) -> EventDispatchResult:
-        from harness.runtime.qq_pipeline import policy, prepare
+        from harness.runtime.qq_pipeline import completion_deadline, policy, prepare, QQTurnRejected
         self._sync_command_index()
         new_key = f"cognitive:qq-prepare-turn:{event.event_id}"
         legacy_key = f"cognitive:qq:{event.event_id}"
-        use_new = new_key in self._command_intent_seqs or (
+        use_new = self.production_runtime is not None or new_key in self._command_intent_seqs or (
             legacy_key not in self._command_intent_seqs and policy(self, request).qq_web_policy != "legacy")
         result = (await prepare(self, event, request) if use_new
                   else await self._prepare_qq_legacy_command(event, request))
@@ -3508,15 +3564,37 @@ class RuntimeSupervisor:
         # of an already prepared, bound error notice may use its fixed grace.
         snapshot_deadline = request.deadline_at
         if decision.outcome == "error_fallback" and decision.new_decision and not decision.replayed:
-            snapshot_deadline += timedelta(seconds=ERROR_FALLBACK_SEND_SECONDS)
+            # QQReplyDecision has verified the fixed notice text. Only an
+            # already prepared, bound notice retains the existing send grace;
+            # neither model work nor a replay receives any new time.
+            snapshot_deadline = (completion_deadline(self, event, request, fixed_notice=True)
+                if self.production_runtime is not None else
+                snapshot_deadline + timedelta(seconds=ERROR_FALLBACK_SEND_SECONDS))
+        elif self.production_runtime is not None:
+            snapshot_deadline = completion_deadline(self, event, request)
         snapshot_remaining = (snapshot_deadline - utc_now()).total_seconds()
         if snapshot_remaining <= 0:
+            if self.production_runtime is not None:
+                raise QQTurnRejected("qq_turn_stage_deadline", failure_category="timeout",
+                                     error_code="qq_stage_deadline_exhausted")
             raise TimeoutError("qq_turn_expired")
-        current = await asyncio.wait_for(self.cognitive.get_snapshot(), timeout=snapshot_remaining)
+        try:
+            current = await asyncio.wait_for(self.cognitive.get_snapshot(), timeout=snapshot_remaining)
+        except TimeoutError as exc:
+            if self.production_runtime is not None and utc_now() >= snapshot_deadline:
+                raise QQTurnRejected("qq_turn_stage_deadline", failure_category="timeout",
+                                     error_code="qq_stage_deadline_exhausted") from exc
+            raise
+        if self.production_runtime is not None and utc_now() >= snapshot_deadline:
+            raise QQTurnRejected("qq_turn_stage_deadline", failure_category="timeout",
+                                 error_code="qq_stage_deadline_exhausted")
         self._validate_snapshot(current, "cognitive")
-        if current.revision < max(self._cognitive_snapshot.revision, result.committed_revision or 0):
+        required_revision = (result.committed_revision or 0) if self.production_runtime is not None else max(
+            self._cognitive_snapshot.revision, result.committed_revision or 0)
+        if current.revision < required_revision:
             raise DomainCommandError("shared QQ cognitive snapshot regressed")
-        self._cognitive_snapshot = current
+        if current.revision >= self._cognitive_snapshot.revision:
+            self._cognitive_snapshot = current
         return EventDispatchResult(event_id=event.event_id, receive_seq=event.receive_seq,
             process_seq=process_seq, status="completed", decision_kind="qq_prepare", detail=result.result)
 
@@ -3583,6 +3661,18 @@ class RuntimeSupervisor:
         event: RuntimeEvent,
         degrade_on_failure: bool = True,
     ) -> DomainCommandResult[Any]:
+        from harness.qq.production_deadline import is_production_qq_command, stage_deadline
+        production_qq = service == "cognitive" and is_production_qq_command(envelope)
+        if production_qq:
+            from harness.runtime.qq_pipeline import QQTurnRejected
+            envelope = envelope.model_copy(update={"deadline": min(envelope.deadline, stage_deadline(envelope))})
+
+            def exhausted():
+                return QQTurnRejected("qq_turn_stage_deadline", failure_category="timeout",
+                                      error_code="qq_stage_deadline_exhausted")
+
+            if utc_now() >= envelope.deadline:
+                raise exhausted()
         if service == "cognitive":
             from harness.runtime.emotion import with_emotion_context
 
@@ -3595,14 +3685,21 @@ class RuntimeSupervisor:
             data={"service": service, "envelope": envelope.model_dump(mode="json")},
         )
         timeout = max(0.001, (envelope.deadline - utc_now()).total_seconds())
-        if event.event_type == RuntimeEventType.QQ_TURN and timeout >= 1:
+        if production_qq and utc_now() >= envelope.deadline:
+            raise exhausted()
+        if event.event_type == RuntimeEventType.QQ_TURN and not production_qq and timeout >= 1:
             timeout += ERROR_FALLBACK_SEND_SECONDS
         try:
             result = await asyncio.wait_for(method(envelope), timeout=timeout)
-            if not self._qq_turn_expired(event):
+            if not self._qq_turn_expired(event) and not (production_qq and utc_now() >= envelope.deadline):
                 self.watchdog.record_success(service)
                 self._degraded_reasons = [reason for reason in self._degraded_reasons if reason != service]
         except Exception as exc:
+            if production_qq and isinstance(exc, TimeoutError) and utc_now() >= envelope.deadline:
+                # Exhausting this stage is terminal for this reply, while the
+                # remaining window stays available for delivery/control. It
+                # must not mark Cognitive unhealthy or requeue fresh work.
+                raise exhausted() from exc
             # Losing a QQ reply window is not evidence that a dependency is
             # unhealthy. Preserve earlier failures rather than clearing them.
             if degrade_on_failure and not (isinstance(exc, TimeoutError) and self._qq_turn_expired(event)):
@@ -3619,11 +3716,14 @@ class RuntimeSupervisor:
             idempotency_key=envelope.idempotency_key,
             data={"service": service, "result": result.model_dump(mode="json")},
         )
+        if production_qq and late:
+            raise exhausted()
         if (event.event_type == RuntimeEventType.QQ_TURN and envelope.command_type != "AppraiseAffect"
                 and result.status not in {"applied", "idempotent_replay"}):
             if service == "cognitive" and envelope.command_type in {"PrepareQQTurn", "ResumeQQResponse"}:
                 from harness.runtime.qq_pipeline import QQTurnRejected
-                raise QQTurnRejected("qq_turn_rejected")
+                from harness.qq.failures import safe_failure_detail
+                raise QQTurnRejected("qq_turn_rejected", **safe_failure_detail(result.result))
             # A late failed/conflicting result still reports a real domain
             # failure. Only the owner's explicit deadline results can become
             # turn expiry, including a result completed on time but received
@@ -3700,10 +3800,13 @@ class RuntimeSupervisor:
         if policy(self).qq_web_policy != "legacy":
             validate_commands(self)
         self._validate_snapshot(self._homeostasis_snapshot, "homeostasis")
-        self._validate_homeostasis_contract(self._homeostasis_snapshot)
+        if self.production_runtime is None:
+            self._validate_homeostasis_contract(self._homeostasis_snapshot)
         snapshot_watchdog = self._homeostasis_watchdog_reasons(
             self._homeostasis_snapshot.payload
         )
+        if self.production_runtime is not None:
+            snapshot_watchdog = health_watchdog = ()
         if snapshot_watchdog != health_watchdog:
             raise DomainCommandError(
                 "homeostasis health/snapshot watchdog state is inconsistent"
@@ -4089,6 +4192,8 @@ class RuntimeSupervisor:
         )
 
     def _response_homeostatic_interoception(self) -> dict[str, Any] | None:
+        if self.production_runtime is not None:
+            return None
         if self.manifest.homeostatic_expression.mode not in {"responses", "full"}:
             return None
         return self._validated_homeostatic_interoception(required=True)
@@ -4368,6 +4473,8 @@ class RuntimeSupervisor:
         reason: str,
         event: RuntimeEvent,
     ) -> None:
+        if self.production_runtime is not None:
+            return
         for queued in self.queue.snapshot():
             if queued.event_type != RuntimeEventType.IDLE:
                 continue
@@ -4428,7 +4535,7 @@ class RuntimeSupervisor:
             event: RuntimeEvent = context["event"]
             if cognitive.acknowledged_receive_seq < event.receive_seq:
                 return False, self.version_vector, "cognitive service has not acknowledged event"
-            if homeostasis.acknowledged_receive_seq < event.receive_seq:
+            if self.production_runtime is None and homeostasis.acknowledged_receive_seq < event.receive_seq:
                 return False, self.version_vector, "homeostasis service has not acknowledged event"
         self._cognitive_snapshot = cognitive
         self._homeostasis_snapshot = homeostasis
@@ -4522,6 +4629,10 @@ class RuntimeSupervisor:
         return min(self._last_user_receive_seq, event.receive_seq)
 
     def _autonomous_ineligible(self, event: RuntimeEvent) -> str | None:
+        if self.production_runtime is not None:
+            if self.lifecycle != RuntimeLifecycle.RUNNING:
+                return "production runtime is not running"
+            return None
         if not self.manifest.autonomous_chat_enabled:
             return "autonomous chat is disabled"
         if event.event_id in self._cancelled_autonomous_event_ids:
@@ -4619,6 +4730,8 @@ class RuntimeSupervisor:
     async def _restore_pending_events(self) -> None:
         self._needs_refill = False
         queued_ids = {queued.event_id for queued in self.queue.snapshot()}
+        if self.production_runtime is not None:
+            queued_ids.update(event.event_id for event in self.production_runtime.tasks.values())
         for record in self.recovery.pending_events():
             event = RuntimeEvent.model_validate(record.data["event"])
             event_id = event.event_id
@@ -4650,6 +4763,8 @@ class RuntimeSupervisor:
                 continue
             if services is not None and service not in services:
                 continue
+            if self.production_runtime is not None and service == "homeostasis":
+                raise RuntimeStateError("production migration requires settling legacy Homeostasis commands before activation")
             envelope = DomainCommandEnvelope[dict[str, Any]].model_validate(envelope_data)
             if service == "cognitive" and envelope.command_type in {
                 "PrepareQQResponse", "PrepareQQTurn", "ResumeQQResponse", "ObserveEmotion", "PrepareWebStep",

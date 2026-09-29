@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import asyncio
+from contextlib import nullcontext
 from datetime import datetime, timezone
 import hashlib
 import json
 
 from harness.contracts.envelope import DomainCommandResult
+from harness.qq.failures import failure_detail
 from harness.qq.policy import QQLatencyOptions, settings_with_policy
 from harness.qq.shared import QQSharedPrepareRequest
 from harness.qq.telemetry import QQDeadline, QQTurnTrace, qq_trace_scope
@@ -16,7 +18,7 @@ from infra.trace.request_spans import trace_scope
 
 _INTERNAL = {"emotion_context_ref", "emotion_revision", "runtime_goal_context", "runtime_web_context",
              "qq_turn_runtime", "qq_frozen_policy", "qq_web_capabilities", "prepare_id", "snapshot_hash",
-             "turn_binding", "qq_emotion_trace"}
+             "turn_binding", "qq_emotion_trace", "production_context"}
 
 
 def _hash(value):
@@ -55,12 +57,55 @@ def _resume_owner(host, request):
         ScopedQQMemoryView(host.chat.memory, group_id=request.group_id, member_id=request.trigger_member_id), {}, ())
 
 
+def _production_checkpoint_fence(host, command, payload, *, runtime=True):
+    """Cached domain results cannot bypass current source or control authority."""
+    from harness.cognitive.production import validate_runtime_fence
+    from harness.qq.prepared_evidence import validate_used_sources
+    from harness.qq.turn_checkpoints import QQTurnCheckpointStore, QQTurnStateError
+    request = _request(command.payload)
+    source = verified_qq_source(request, host.shared.qq_settings)
+    store = host.shared.production_store
+    # Autonomous opportunities are validated typed intents, not utterances.
+    # Their recalled evidence and orientation are still fenced below.
+    current_refs = []
+    if request.idle_intent is None:
+        source_id = store.ingest_qq(source["source"], memory_db=host.shared.qq_settings.memory_db)
+        current_refs.append({"record_id": source_id, "revision": 0})
+    current = {"version": "qq-used-sources-v2", "group_id": request.group_id,
+        "owner_id": store.owner_id, "preset_id": host.chat.active_preset_id,
+        "shared": [], "derived": [], "production": current_refs}
+    validate_used_sources(host, current)
+    prepare_id = payload.get("prepare_id") or command.payload.get("prepare_id")
+    if not prepare_id:
+        raise QQTurnStateError("qq_turn_not_found")
+    checkpoint = QQTurnCheckpointStore(host.shared.qq_settings.memory_db).load(prepare_id)
+    binding = _binding(command, request, source)
+    if checkpoint["binding"] != binding:
+        raise QQTurnStateError("qq_turn_request_changed")
+    snapshot = checkpoint.get("snapshot") or {}
+    manifest = snapshot.get("used_sources") or checkpoint.get("used_sources")
+    if manifest is not None:
+        validate_used_sources(host, manifest)
+    if runtime:
+        validate_runtime_fence(host.adapter, command.payload["production_context"])
+
+
 async def run(host, command, *, resume: bool):
     phase = "qq_resume" if resume else "qq_prepare_turn"
     with trace_scope(correlation_id=command.correlation_id, event_id=command.event_id,
                      command_id=command.command_id, phase=phase, span_id=command.command_id,
                      qq_trace_id=(command.payload.get("trace") or {}).get("trace_id")):
-        return await host.adapter._run_command(lambda: _run_locked(host, command, resume=resume))
+        from harness.production.metering import production_call_scope
+        context = command.payload.get("production_context")
+        if context is not None:
+            host.chat.settings.production_memory_enabled = True
+            await host.recover_production_memory()
+        async def operation():
+            with production_call_scope(context, command_id=command.command_id,
+                    autonomous=bool((context or {}).get("autonomous", False)),
+                    meter=getattr(host.adapter, "production_meter", None)):
+                return await _run_locked(host, command, resume=resume)
+        return await host.adapter._run_command(operation)
 
 
 async def _run_locked(host, command, *, resume):
@@ -70,16 +115,29 @@ async def _run_locked(host, command, *, resume):
     # Start measuring before contention, independent of another process's monotonic epoch.
     trace = QQTurnTrace()
     waiting = trace.clock()
-    async with adapter._lock:
+    production = command.payload.get("production_context") is not None
+    operation_lock = (adapter._production_session_locks.setdefault("qq:" + str(command.payload.get("group_id")), asyncio.Lock())
+                      if production else adapter._lock)
+    async with operation_lock:
         trace.record("cognitive.lock_wait", started_mono=waiting)
-        replay = adapter._lookup_replay(command)
+        async with adapter._lock if production else nullcontext():
+            replay = adapter._lookup_replay(command)
+            if replay is not None and not production:
+                return replay
+            rejected = adapter._preflight(command)
+            if rejected is not None:
+                adapter._remember(command, rejected)
+                await asyncio.to_thread(adapter._persist_state)
+                return rejected
+            frozen_persona = _hash(host.chat.memory.get_persona().model_dump(mode="json")) if production else None
+            frozen_preset = host.chat.active_preset_id
         if replay is not None:
+            if replay.status in {"applied", "idempotent_replay"} and isinstance(replay.result, dict):
+                try:
+                    await asyncio.to_thread(_production_checkpoint_fence, host, command, replay.result)
+                except ValueError:
+                    return adapter._failure(command, "qq_turn_used_source_changed", status="rejected")
             return replay
-        rejected = adapter._preflight(command)
-        if rejected is not None:
-            adapter._remember(command, rejected)
-            await asyncio.to_thread(adapter._persist_state)
-            return rejected
         with qq_trace_scope(trace):
             try:
                 expected = "ResumeQQResponse" if resume else "PrepareQQTurn"
@@ -100,7 +158,7 @@ async def _run_locked(host, command, *, resume):
                 with trace.stage("source.verify"):
                     source = await asyncio.to_thread(verified_qq_source, request, host.shared.qq_settings)
                 binding = _binding(command, request, source)
-                def validate_current_request():
+                def validate_current_request(*, runtime=True):
                     from harness.qq.turn_checkpoints import QQTurnStateError
                     try:
                         current = verified_qq_source(request, host.shared.qq_settings)
@@ -108,10 +166,21 @@ async def _run_locked(host, command, *, resume):
                         raise QQTurnStateError("qq_turn_request_changed") from exc
                     if current["digest"] != binding["source_digest"]:
                         raise QQTurnStateError("qq_turn_request_changed")
+                    if production and (host.chat.active_preset_id != frozen_preset or
+                            _hash(host.chat.memory.get_persona().model_dump(mode="json")) != frozen_persona):
+                        raise QQTurnStateError("qq_turn_configuration_changed")
+                    if production and runtime:
+                        from harness.cognitive.production import validate_runtime_fence
+                        try:
+                            validate_runtime_fence(adapter, command.payload["production_context"])
+                        except Exception as exc:
+                            raise QQTurnStateError("qq_turn_cancelled") from exc
                 from harness.compiler.compiler import command_emotion_deadline
                 remaining = (command_emotion_deadline(host, command, request.deadline_at)
                              - datetime.now(timezone.utc)).total_seconds()
-                deadline = QQDeadline.after(max(0, remaining))
+                from harness.qq.production_deadline import downstream_reserve
+                deadline = QQDeadline.after(max(0, remaining),
+                    downstream_reserved_seconds=downstream_reserve(command) if production else 0.0)
                 deadline.check()
                 if resume:
                     if command.payload.get("turn_binding") != binding:
@@ -133,6 +202,8 @@ async def _run_locked(host, command, *, resume):
                     previous = await asyncio.to_thread(get_qq_turn_preparation,
                         memory_db=host.shared.qq_settings.memory_db, turn_binding=binding)
                     if previous is not None:
+                        if production:
+                            await asyncio.to_thread(_production_checkpoint_fence, host, command, previous)
                         prepared = previous
                     else:
                         with trace.stage("shared_memory"):
@@ -143,8 +214,19 @@ async def _run_locked(host, command, *, resume):
                         owner = replace(owner, settings=settings_with_policy(owner.settings, frozen))
                         deadline.check()
                         await asyncio.to_thread(validate_current_request)
-                        with trace.stage("emotion.guidance"):
-                            guidance = await adapter.emotion_guidance(command)
+                        if production:
+                            from harness.cognitive.production import appraise_qq
+                            from harness.production.metering import _scope
+                            current = _scope.get()
+                            current.context = await appraise_qq(host, command, request, source, owner)
+                            # This experience may have corrected a recalled belief.
+                            owner = await asyncio.to_thread(host.shared.qq_binding, group_id=request.group_id,
+                                member_id=request.trigger_member_id, query=request.query)
+                            owner = replace(owner, settings=settings_with_policy(owner.settings, frozen))
+                            guidance = None
+                        else:
+                            with trace.stage("emotion.guidance"):
+                                guidance = await adapter.emotion_guidance(command)
                         values = request.model_dump(exclude={"trace", "deadline_at", "transport",
                             "request_id", "revision", "source_event_ids", "authority_anchor"})
                         values.update(verified_self_aliases=request.verified_self_aliases,
@@ -156,7 +238,8 @@ async def _run_locked(host, command, *, resume):
                             values["goal_context"] = QQGoalContext.model_validate(goal)
                         prepared = await asyncio.to_thread(prepare_qq_turn,
                             memory_db=host.shared.qq_settings.memory_db, **values,
-                            _request_source_event_ids=(getattr(request, "source_event_ids", None) or [request.trace.event_id]),
+                            _request_source_event_ids=(None if request.idle_intent is not None else
+                                (getattr(request, "source_event_ids", None) or [request.trace.event_id])),
                             _request_authority_record_id=(source["source"]["record_id"]
                                 if request.request_id is not None else None),
                             _reply_reference_record_ids=source.get("reply_reference_record_ids", []),
@@ -168,8 +251,6 @@ async def _run_locked(host, command, *, resume):
                     if prepared["kind"] == "completed":
                         from harness.qq.decision import QQReplyDecision
                         host.qq_memory.note_recall(QQReplyDecision.model_validate(prepared["decision"]))
-                adapter._cursor = max(adapter._cursor, command.receive_seq)
-                adapter._event_id = command.event_id
                 result = DomainCommandResult[dict](command_id=command.command_id, command_type=command.command_type,
                     status="applied", request_hash=command.effective_request_hash(), committed_revision=adapter._revision,
                     acknowledged_event_id=command.event_id, acknowledged_receive_seq=command.receive_seq,
@@ -185,10 +266,29 @@ async def _run_locked(host, command, *, resume):
                     "qq_turn_resume_binding_changed",
                     "qq_turn_request_changed",
                 } else "qq_turn_rejected:" + type(exc).__name__
-                result = adapter._failure(command, code, status="rejected")
-            adapter._remember(command, result)
-            with trace.stage("persistence.command"):
-                await asyncio.to_thread(adapter._persist_state)
+                result = adapter._failure(command, code, status="rejected").model_copy(
+                    update={"result": failure_detail(exc)})
+            if production and result.status == "applied":
+                try:
+                    await asyncio.to_thread(validate_current_request)
+                    await asyncio.to_thread(_production_checkpoint_fence, host, command, result.result)
+                except ValueError:
+                    result = adapter._failure(command, "qq_turn_request_changed", status="rejected")
+            async with adapter._lock if production else nullcontext():
+                if production and result.status == "applied":
+                    try:
+                        validate_current_request(runtime=False)
+                        _production_checkpoint_fence(host, command, result.result, runtime=False)
+                        rejected = adapter._preflight(command)
+                        if rejected is not None:
+                            result = rejected
+                    except ValueError:
+                        result = adapter._failure(command, "qq_turn_request_changed", status="rejected")
+                adapter._cursor = max(adapter._cursor, command.receive_seq)
+                adapter._event_id = command.event_id
+                adapter._remember(command, result)
+                with trace.stage("persistence.command"):
+                    await asyncio.to_thread(adapter._persist_state)
             if isinstance(result.result, dict):
                 # The durable command keeps its original outcome; add completed
                 # persistence timing only to the returned diagnostic snapshot.

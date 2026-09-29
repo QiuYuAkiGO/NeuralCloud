@@ -105,6 +105,7 @@ class CapabilityChoice(_Strict):
     arguments: dict[str, Any] = Field(default_factory=dict, repr=False)
     success_criteria: list[dict[str, Any]] = Field(default_factory=list, max_length=16, repr=False)
     reason: str | None = Field(default=None, max_length=256, repr=False)
+    production_goal_id: Identifier | None = None
 
     @model_validator(mode="after")
     def _choice(self) -> CapabilityChoice:

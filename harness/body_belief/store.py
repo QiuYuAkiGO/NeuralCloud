@@ -34,6 +34,7 @@ class BodyBeliefStore:
                 self.db.execute("CREATE TABLE IF NOT EXISTS audit (digest TEXT PRIMARY KEY, data TEXT NOT NULL)")
                 self.db.execute("CREATE TABLE IF NOT EXISTS pending (id TEXT PRIMARY KEY, data TEXT NOT NULL)")
                 self.db.execute("CREATE TABLE IF NOT EXISTS appraisal_work (id TEXT PRIMARY KEY)")
+                self.db.execute("CREATE TABLE IF NOT EXISTS appraisal_retry (id TEXT PRIMARY KEY, attempts INTEGER NOT NULL, retry_at REAL NOT NULL, error_type TEXT NOT NULL)")
             self._validate_snapshot(self.snapshot())
         except BaseException:
             self.db.close()

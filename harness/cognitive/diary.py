@@ -167,7 +167,9 @@ async def prepare(host, command, *, diagnostic=None):
     if request.deadline_at > command.issued_at + timedelta(seconds=60):
         raise ValueError("diary_prepare_deadline_unbounded")
     deadline = command_emotion_deadline(host, command, request.deadline_at)
-    emotion_guidance = await resolve_command_emotion(host, command)
+    from harness.production.metering import current_production_context
+    production = current_production_context()
+    emotion_guidance = None if production else await resolve_command_emotion(host, command)
     diagnostic.stage = "shared_memory"
     context = await asyncio.to_thread(host.shared.diary_context, query=request.request_text)
     diagnostic.stage = "context"
@@ -176,7 +178,9 @@ async def prepare(host, command, *, diagnostic=None):
         "homeostatic_summary": request.homeostatic_summary, "trigger": request.trigger,
         "request_text": request.request_text, "day": request.day}
     emotion_text = ""
-    if emotion_enabled(getattr(host.chat, "settings", None)):
+    if production:
+        payload.pop("homeostatic_summary")
+    elif emotion_enabled(getattr(host.chat, "settings", None)):
         payload.pop("homeostatic_summary")
         emotion_text = render_emotion_guidance(emotion_guidance, homeostasis=request.homeostatic_summary)
     messages = build_messages(persona=persona, rules=_RULES, payload=payload, emotion_text=emotion_text)
@@ -231,6 +235,8 @@ async def prepare(host, command, *, diagnostic=None):
     if now >= deadline or model_ms > timeout * 1000:
         raise TimeoutError("diary_model_deadline_exceeded")
     diagnostic.stage = "candidate"
+    if production and not host.shared.validate_production_context(context, audience="local:main"):
+        raise ValueError("production_memory_superseded")
     if emotion_text and expression.action == "write":
         validate_emotion_expression(expression.text, persona=persona, guidance=emotion_text)
     decision = DiaryDecision(**expression.model_dump(), entry_id=request.entry_id,
@@ -257,6 +263,13 @@ async def commit(host, command, *, diagnostic=None):
         source_event_id=request.source_event_id, homeostatic_summary=request.homeostatic_summary,
     )
     diagnostic.stage = "memory_commit"
-    stored = await asyncio.to_thread(host.shared.commit_diary_entry, original)
+    from harness.production.metering import current_production_context
+    from harness.cognitive.production import digest
+    from contextlib import nullcontext
+    production = current_production_context()
+    async with host.adapter._lock if production else nullcontext():
+        if production and production.get("cognitive_signature") != digest((host.chat.active_preset_id, host.chat.memory.get_persona().model_dump(mode="json"))):
+            raise ValueError("production_snapshot_superseded")
+        stored = await asyncio.to_thread(host.shared.commit_diary_entry, original)
     return {"entry_id": request.entry_id, "decision_id": request.decision_id,
             "shared_record_id": stored.record.record_id, "memory_created": stored.created}

@@ -74,7 +74,7 @@ def test_gate_formal_choice_is_preserved_as_data_under_fixed_style_rules(setup):
     system = "\n".join(item["content"] for call in client.gate_messages + client.chat_calls for item in call if item["role"] == "system")
     user = "\n".join(item["content"] for call in client.gate_messages + client.chat_calls for item in call if item["role"] == "user")
     assert "默认简短口语" in system
-    assert "不主动写长篇分析" in user
+    assert "不因有历史资料就写长篇报告" in system
     assert "STYLE_REASON_DATA" in user and "STYLE_REASON_DATA" not in system
     assert "FORMAL_REQUEST_DATA" in user and "FORMAL_REQUEST_DATA" not in system
 
@@ -203,7 +203,7 @@ def test_conversational_sentences_are_sent_as_separate_bubbles_without_periods(s
     assert result.reply == "今天天气不错\n\n你去哪了\n\n我也在附近"
     assert trace.snapshot()["counters"]["sentence_segmentation"] == 1
     assert "按句号拆成独立消息" in draft._GROUP_DRAFT_RULES
-    assert "不按句号拆条，句号保留" in draft._GROUP_DRAFT_RULES
+    assert "问号、感叹号留在该句中，不按它们拆条" in draft._GROUP_DRAFT_RULES
 
 
 def test_formal_single_line_breaks_keep_punctuation(setup, monkeypatch):

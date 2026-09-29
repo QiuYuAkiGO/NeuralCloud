@@ -140,6 +140,7 @@ class Settings(BaseSettings, QQLatencyOptions):
     qq_memory_llm_base_url: str | None = None
     qq_memory_llm_model: str | None = None
     qq_memory_llm_api_key: str | None = None
+    production_memory_enabled: bool = False
     qq_memory_recall_max_items: int = Field(default=8, ge=1)
     qq_memory_recall_max_characters: int = Field(default=DEFAULT_QQ_MEMORY_RECALL_CHARACTERS, ge=1)
     # QQ's whole-record input uses the compiler's two-characters/token estimate.

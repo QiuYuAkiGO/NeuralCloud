@@ -369,6 +369,7 @@ class QQMemoryProposer:
     def propose(self, job: QQMemoryJob, *, old_impressions: Sequence[Mapping[str, Any]] = (),
                 persona: Any = None) -> QQMemoryProposal:
         from harness.llm.deadline import model_deadline
+        from harness.production.maintenance import ProductionMaintenanceDeferred
 
         self._budget_fallback_used = False
         self._resume_budget_recovery = job.error_code in {
@@ -412,6 +413,8 @@ class QQMemoryProposer:
         try:
             with model_deadline(_now() + timedelta(seconds=self.timeout_seconds)):
                 return self._propose_validated(job, payload, old)
+        except ProductionMaintenanceDeferred:
+            raise
         except ValueError as exc:
             if self._resume_budget_recovery or self._budget_fallback_used:
                 raise QQNonThinkingProposalInvalid(str(exc)) from exc
@@ -848,6 +851,16 @@ class QQAssimilationQueue:
                                "WHERE job_id=? AND status NOT IN ('applied','skipped')",
                                (code, retry_at.isoformat(), current.isoformat(), job_id))
         return self.get_job(job_id)
+
+    def defer(self, job_id: str, reason: str, *, retry_after_seconds=30, now: datetime | None = None) -> bool:
+        """Preserve sources/proposals and refund exactly the current claim."""
+        current = _now(now)
+        with closing(self._connect(write=True)) as connection, connection:
+            return bool(connection.execute("UPDATE qq_memory_jobs SET status='retry',attempts=MAX(0,attempts-1),"
+                "error_code=?,next_attempt_at=?,updated_at=? WHERE job_id=? AND owner_id=? AND preset_id=? "
+                "AND processing_version=? AND self_id=? AND status='preparing'",
+                (_status_code(reason), (current + timedelta(seconds=retry_after_seconds)).isoformat(),
+                 current.isoformat(), job_id, *self._scope)).rowcount)
 
     def recover(self, receipt_job_ids: Sequence[str] = ()) -> int:
         """Call once when this cognitive owner starts, never on each poll."""

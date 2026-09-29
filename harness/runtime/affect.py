@@ -37,7 +37,8 @@ class AffectWorker:
     def enabled(self) -> bool:
         manifest = self.supervisor.manifest
         return (getattr(manifest, "emotion_mode", "off") != "off"
-                and getattr(manifest, "grounded_agency", None) is None)
+                and getattr(manifest, "grounded_agency", None) is None
+                and getattr(manifest, "production", None) is None)
 
     def status(self) -> list[CapabilityDescriptor]:
         if not self.enabled:

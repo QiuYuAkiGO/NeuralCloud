@@ -24,6 +24,12 @@ class NativeDisplay(NativeModel):
 
 
 class NativeExtensionCapabilities(NativeModel):
+    production_rest_v1: bool = False
+    cognitive_usage_v1: bool = False
+    physiology_implementation: str | None = None
+    social_observation_v1: bool = False
+    resource_station_v1: bool = False
+    terminal_recovery_stations: list[str] = Field(default_factory=list)
     body_state_v1: bool = False
     virtual_resource_ledger: bool = False
     social_observation_v1: bool = False
@@ -44,6 +50,7 @@ class NativeCapabilities(NativeModel):
 
 
 class NativeHealth(NativeModel):
+    exhausted: bool = False
     schema_version: Literal["body-contract-v1"]
     body_instance_id: str
     status: Literal["healthy", "degraded", "unavailable"]
@@ -201,13 +208,24 @@ class NativeBodyState(NativeModel):
     schema_version: Literal["body-state-v1"]
     body_instance_id: str
     episode_id: str
-    revision: int = Field(ge=1)
+    revision: int = Field(ge=0)
     captured_at: AwareDatetime
     energy: NativeEnergyState
     thermal: NativeThermalState | None = None
     compute: NativeComputeState | None = None
     integrity: NativeIntegrityState | None = None
     evidence_refs: list[str] = Field(min_length=1)
+    sample_sequence: int | None = Field(default=None, ge=1)
+    ledger_revision: int | None = Field(default=None, ge=0)
+    resting: bool = False
+    exhausted: bool = False
+    physiology_mode: Literal["experiment", "production_v1"] = "experiment"
+
+    @model_validator(mode="after")
+    def ledger_binding(self):
+        if self.ledger_revision is not None and self.ledger_revision != self.revision:
+            raise ValueError("body ledger revision mismatch")
+        return self
 
 
 class NativeBodyStateCaptureResponse(NativeModel):
@@ -216,10 +234,11 @@ class NativeBodyStateCaptureResponse(NativeModel):
     body_state: NativeBodyState
     body_instance_id: str
     episode_id: str
-    revision: int = Field(ge=1)
+    revision: int = Field(ge=0)
     captured_at: AwareDatetime
     energy: NativeEnergyState
     evidence_refs: list[str] = Field(min_length=1)
+    sample_sequence: int | None = Field(default=None, ge=1)
 
     @model_validator(mode="after")
     def projections_must_match_body_state(self) -> NativeBodyStateCaptureResponse:
@@ -230,10 +249,51 @@ class NativeBodyStateCaptureResponse(NativeModel):
             or self.revision != expected.revision
             or self.captured_at != expected.captured_at
             or self.energy != expected.energy
+            or self.sample_sequence != expected.sample_sequence
             or self.evidence_refs != expected.evidence_refs
         ):
             raise ValueError("body-state compatibility projections do not match body_state")
         return self
+
+
+class NativeRestStatus(NativeModel):
+    schema_version: Literal["body-rest-status-v1"] = "body-rest-status-v1"
+    body_instance_id: str
+    episode_id: str
+    resting: bool
+    ledger_revision: int = Field(ge=0)
+    evidence_refs: list[str] = Field(min_length=1)
+    body_state: NativeBodyState
+
+    @model_validator(mode="after")
+    def snapshot_binding(self):
+        body = self.body_state
+        if (
+            self.body_instance_id != body.body_instance_id
+            or self.episode_id != body.episode_id
+            or self.resting != body.resting
+            or self.ledger_revision != body.revision
+        ):
+            raise ValueError("rest receipt is not bound to its body state")
+        return self
+
+
+class NativeRestReceipt(NativeRestStatus):
+    schema_version: Literal["body-rest-receipt-v1"] = "body-rest-receipt-v1"
+    command_id: str
+
+
+class NativeUsageReceipt(NativeModel):
+    schema_version: Literal["cognitive-usage-receipt-v1"] = "cognitive-usage-receipt-v1"
+    inference_id: str
+    cost_id: str
+    units: float = Field(ge=0, allow_inf_nan=False)
+    ledger_revision: int = Field(ge=1)
+    evidence_refs: list[str] = Field(min_length=2)
+    body_instance_id: str
+    episode_id: str
+    source: Literal["cognition", "delivery", "tool"]
+    metering: Literal["tokens", "call", "operation"]
 
 
 class NativeErrorDetail(NativeModel):

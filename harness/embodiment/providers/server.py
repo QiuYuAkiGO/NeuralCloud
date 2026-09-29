@@ -73,6 +73,7 @@ def parse_host_key(value: str) -> tuple[str, Any]:
 
 
 class SSHServerProvider:
+    supports_dispatch_hook = True
     def __init__(self, condition: EmbodimentCondition, *, host: str, port: int, username: str,
                  host_key: str, private_key: str, body_instance_id: str,
                  connect_timeout_seconds: float = 10, default_timeout_seconds: float = 60,
@@ -236,7 +237,7 @@ class SSHServerProvider:
         return self._redact(text), truncated
 
     async def run(self, request: ServerCommandArguments, *, deadline: datetime | None = None,
-                  capability: str = SERVER_EXECUTE) -> ServerCommandResult:
+                  capability: str = SERVER_EXECUTE, before_dispatch=None) -> ServerCommandResult:
         try:
             request = ServerCommandArguments.model_validate(request)
         except (TypeError, ValueError):
@@ -252,10 +253,14 @@ class SSHServerProvider:
         async with self._call_lock:
             try:
                 if self._transport is not None:
+                    if before_dispatch is not None:
+                        before_dispatch()
                     exit_status, raw_stdout, raw_stderr = await asyncio.wait_for(
                         self._transport.execute(remote, timeout=timeout), timeout=timeout)
                 else:
                     conn = await self._connection()
+                    if before_dispatch is not None:
+                        before_dispatch()
                     result = await conn.run(
                         remote, check=False, timeout=timeout, request_pty=False,
                         env={"LANG": "C.UTF-8", "LC_ALL": "C.UTF-8"})

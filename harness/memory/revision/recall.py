@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime, timezone
 
 from harness.core.inference import ContextSegment, MemoryEvidenceContext, MemoryEvidenceEntry
 from harness.core.models import MemoryScope
@@ -22,7 +23,7 @@ def _tokens(text):
 
 def select_daily_recall(memory, *, audience: str, query: str | None = None,
                         owner_id="misty", conversation_id=None, max_items=6,
-                        max_characters=6000, subjects=()) -> dict:
+                        max_characters=6000, subjects=(), now=None) -> dict:
     """Only live daily effects with traceable sources in the same trusted scope.
 
     A destination QQ conversation must supply its exact conversation_id. Local
@@ -54,6 +55,7 @@ def select_daily_recall(memory, *, audience: str, query: str | None = None,
     impression_ids = {identifier for kind, identifier, _ in objects if kind == "impressions"}
     terms, preferred = _tokens(query or ""), set(subjects)
     ranked = []
+    moment = now or datetime.now(timezone.utc)
     for collection, identifier, raw in objects:
         try:
             scope = MemoryScope.model_validate(raw.get("scope"))
@@ -66,6 +68,10 @@ def select_daily_recall(memory, *, audience: str, query: str | None = None,
         if metadata.get("status") in {"superseded", "retracted", "dropped", "invalidated"}:
             continue
         if raw.get("status") in {"dormant", "forgotten", "dropped"}:
+            continue
+        if collection == "episodic" and (raw.get("tier") == "forgotten" or (
+                raw.get("tier") == "short" and raw.get("expire_at")
+                and datetime.fromisoformat(raw["expire_at"]) <= moment)):
             continue
         if collection == "candidates" and (raw.get("source") in impression_ids or raw.get("status") == "consolidated"):
             continue

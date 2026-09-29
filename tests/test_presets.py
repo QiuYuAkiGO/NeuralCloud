@@ -35,11 +35,11 @@ def test_misty_digitalbody_is_the_default_builtin() -> None:
     preset = load_builtin(DEFAULT_PRESET_ID)
     assert DEFAULT_PRESET_ID == "misty"
     assert preset.preset_id == "misty"
-    assert preset.name == "小雾 · MistyDigitalBody v0.2.1"
+    assert preset.name == "小雾 · MistyDigitalBody v0.2.2"
     assert preset.persona.identity.name == "小雾"
     assert preset.persona.identity.core_traits == ["温柔", "慢热", "容易害羞", "情绪细腻"]
-    assert "回应言之有物：每句都带具体内容、真实感受或针对性疑问，不写空泛点评或敷衍附和；依然保持简短。" in preset.persona.identity.speech_style
-    assert preset.persona.version == "misty-digitalbody-0.2.1"
+    assert "说话轻柔、自然、偏口语；通常先回应眼前最具体的内容，再决定要不要多说。" in preset.persona.identity.speech_style
+    assert preset.persona.version == "misty-digitalbody-0.2.2"
     assert preset.persona.identity.profile is not None
     assert preset.persona.identity.profile.age == 19
     assert preset.persona.identity.profile.birthday == "5月20日"

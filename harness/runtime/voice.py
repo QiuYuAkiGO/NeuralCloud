@@ -96,6 +96,8 @@ class VoiceController:
 
     async def render(self, payload, *, before_mutation=None):
         from harness.embodiment.voice_contracts import VoiceRenderRequest
+        production = getattr(self.supervisor, "production_runtime", None)
+        effect_epoch = production.epoch if production is not None else None
         try:
             request = VoiceRenderRequest.model_validate(payload)
         except (ValidationError, TypeError, ValueError):
@@ -121,6 +123,8 @@ class VoiceController:
             # Recheck after acquiring the lock, immediately before mutation.
             if self.supervisor.lifecycle != RuntimeLifecycle.RUNNING:
                 raise VoiceRuntimeError("runtime_not_running")
+            if production is not None:
+                await production.begin_tool_operation("voice", request.idempotency_key, VOICE_RENDER)
             record = {"idempotency_key": request.idempotency_key, "request_hash": request_hash,
                 "scope": scope, "status": "dispatching"}
             self._save(record)
@@ -131,21 +135,53 @@ class VoiceController:
                 self._require_running()
                 if before_mutation is not None:
                     before_mutation()
+                if production is not None:
+                    if production.epoch != effect_epoch or production.context_snapshot("owner")["restricted_dialogue"]:
+                        raise VoiceRuntimeError("production_body_restricted")
+                    production.mark_tool_dispatched("voice", request.idempotency_key)
                 mutation_started = True
 
             try:
                 job = await self._bounded(self.provider.render(request, before_mutation=guard_mutation))
                 record.update(status="accepted", job_id=job.job_id, input_sha256=job.input_sha256)
                 self._save(record)
+                self._account_job(job)
                 return job
             except BaseException as exc:
                 record.update(status="uncertain" if mutation_started else "not_dispatched", error_code=_error_code(exc))
                 self._save(record)
+                if production is not None:
+                    if mutation_started:
+                        production.finish_tool_operation("voice", request.idempotency_key, outcome="unknown")
+                    else:
+                        production.cancel_tool_operation("voice", request.idempotency_key)
                 raise
+
+    def _account_job(self, job):
+        production = getattr(self.supervisor, "production_runtime", None)
+        if production is None:
+            return
+        scope = self.settings.scope.model_dump(mode="json")
+        for row in self.db.execute("SELECT record_json FROM attempts"):
+            record = json.loads(row[0])
+            if record.get("job_id") != job.job_id or record.get("scope") != scope:
+                continue
+            identity = record["idempotency_key"]
+            if production.tool_accounting.get("voice", identity) is None:
+                continue  # An older render has no production dispatch fact.
+            refs = ["voice-job:" + job.job_id]
+            if job.result is not None:
+                refs.extend(("voice-asset:sha256:" + job.result.asset.audio_digest,
+                    "voice-manifest:sha256:" + job.result.asset.manifest_digest))
+            production.finish_tool_operation("voice", identity,
+                outcome="completed" if job.state == "succeeded" else
+                    "failed" if job.state in {"failed", "cancelled"} else "unknown", evidence_refs=refs)
 
     async def job(self, job_id):
         await self._ensure_ready(VOICE_JOBS)
-        return await self._bounded(self.provider.job(job_id))
+        job = await self._bounded(self.provider.job(job_id))
+        self._account_job(job)
+        return job
 
     async def cancel(self, job_id):
         if self.supervisor.lifecycle != RuntimeLifecycle.RUNNING:
@@ -153,7 +189,9 @@ class VoiceController:
         await self._ensure_ready(VOICE_JOBS, mutate=True)
         if self.supervisor.lifecycle != RuntimeLifecycle.RUNNING:
             raise VoiceRuntimeError("runtime_not_running")
-        return await self._bounded(self.provider.cancel(job_id, before_mutation=self._require_running))
+        job = await self._bounded(self.provider.cancel(job_id, before_mutation=self._require_running))
+        self._account_job(job)
+        return job
 
     async def asset(self, digest):
         await self._ensure_ready(VOICE_ASSETS)

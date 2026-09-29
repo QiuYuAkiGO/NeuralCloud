@@ -9,18 +9,38 @@ from typing import Protocol
 from harness.embodiment.capabilities import EmbodimentStatus, ProviderCapabilities, ProviderHealth
 from harness.embodiment.web_contracts import WebResult, WebSearchArguments
 from harness.embodiment.server_contracts import ServerCommandArguments, ServerCommandResult
-from harness.embodiment.contracts import BodyStateSnapshot, PerceptionSnapshot
+from harness.embodiment.contracts import (
+    BodyStateSnapshot,
+    PerceptionSnapshot,
+    BodyRestCommand,
+    BodyRestReceipt,
+    BodyRestStatus,
+    CognitiveUsage,
+    CognitiveUsageReceipt,
+)
 from harness.embodiment.qq_contracts import (
-    QQCommunicationStatus, QQDeliveryResult, QQReadRequest, QQReadResult,
-    QQReconcileRequest, QQSendRequest,
+    QQCommunicationStatus,
+    QQDeliveryResult,
+    QQReadRequest,
+    QQReadResult,
+    QQReconcileRequest,
+    QQSendRequest,
 )
 from harness.runtime.models import ActionBackendResult, ActionExecution
 from harness.embodiment.board_contracts import (
-    BoardAppendRequest, BoardReadRequest, BoardReadResult, BoardReceipt,
-    BoardReconcileRequest, BoardReconcileResult, BoardStatus,
+    BoardAppendRequest,
+    BoardReadRequest,
+    BoardReadResult,
+    BoardReceipt,
+    BoardReconcileRequest,
+    BoardReconcileResult,
+    BoardStatus,
 )
 from harness.embodiment.voice_contracts import (
-    VoiceJob, VoiceProfile, VoiceRenderRequest, VoiceStatus,
+    VoiceJob,
+    VoiceProfile,
+    VoiceRenderRequest,
+    VoiceStatus,
 )
 
 
@@ -40,6 +60,16 @@ class PerceptionBackend(Protocol):
 
 class BodyStateProvider(Protocol):
     async def snapshot(self) -> BodyStateSnapshot: ...
+
+
+class ProductionBodyPort(BodyStateProvider, Protocol):
+    async def start_rest(self, request: BodyRestCommand) -> BodyRestReceipt: ...
+
+    async def end_rest(self, request: BodyRestCommand) -> BodyRestReceipt: ...
+
+    async def rest_status(self) -> BodyRestStatus: ...
+
+    async def record_usage(self, request: CognitiveUsage) -> CognitiveUsageReceipt: ...
 
 
 class CapabilityProvider(Protocol):
@@ -65,7 +95,9 @@ class ServerExecutionPort(Protocol):
 
     async def status(self) -> EmbodimentStatus: ...
 
-    async def run(self, request: ServerCommandArguments, *, deadline: datetime | None = None) -> ServerCommandResult: ...
+    async def run(
+        self, request: ServerCommandArguments, *, deadline: datetime | None = None
+    ) -> ServerCommandResult: ...
 
     async def close(self) -> None: ...
 
@@ -105,7 +137,9 @@ class VoiceAssetPort(Protocol):
 
     async def profile(self) -> VoiceProfile: ...
 
-    async def render(self, request: VoiceRenderRequest, *, before_mutation: Callable[[], None] | None = None) -> VoiceJob: ...
+    async def render(
+        self, request: VoiceRenderRequest, *, before_mutation: Callable[[], None] | None = None
+    ) -> VoiceJob: ...
 
     async def job(self, job_id: str) -> VoiceJob: ...
 

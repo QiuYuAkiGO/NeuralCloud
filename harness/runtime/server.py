@@ -228,7 +228,11 @@ class ServerController:
                                        risk_class=previous["risk_class"])
         if previous["status"] != "completed":
             raise ServerError(previous["error"] or "server_result_uncertain")
-        return ServerCommandResult.model_validate_json(previous["result"])
+        result = ServerCommandResult.model_validate_json(previous["result"])
+        production = getattr(self.supervisor, "production_runtime", None)
+        if production is not None and production.tool_accounting.get("server", previous["id"]):
+            production.finish_tool_operation("server", previous["id"], outcome="completed", evidence_refs=result.evidence_refs)
+        return result
 
     def _classify(self, command):
         extra, forbidden, sudo = self._policy()
@@ -277,10 +281,25 @@ class ServerController:
             return await self._run_reserved(identity, request, capability, classification.risk_class, deadline, guard)
 
     async def _run_reserved(self, identity, request, capability, risk_class, deadline, guard):
+        production = getattr(self.supervisor, "production_runtime", None)
+        if production is not None:
+            await production.begin_tool_operation("server", identity, capability)
+            if utc_now() >= deadline or guard and guard():
+                production.cancel_tool_operation("server", identity)
+                self.calls.finish(identity, status="cancelled", error="server_call_superseded")
+                raise ServerError("server_call_superseded")
         try:
             timeout = min(request.timeout_seconds, (deadline - utc_now()).total_seconds())
+            def before_dispatch():
+                if utc_now() >= deadline or guard and guard():
+                    raise ServerError("server_call_superseded")
+                if production is not None:
+                    production.mark_tool_dispatched("server", identity)
+            options = {"before_dispatch": before_dispatch} if getattr(self.provider, "supports_dispatch_hook", False) else {}
             async with asyncio.timeout(max(0.1, timeout)):
-                result = await self.provider.run(request, deadline=deadline, capability=capability)
+                if not options:
+                    before_dispatch()
+                result = await self.provider.run(request, deadline=deadline, capability=capability, **options)
             if utc_now() >= deadline or not self._permitted(capability, True) and not self._permitted(capability, False):
                 raise ServerError("server_late_result")
             if guard and guard():
@@ -297,9 +316,15 @@ class ServerController:
             code = exc.code if isinstance(exc, ServerError) else "server_timeout" if isinstance(exc, TimeoutError) else "server_request_failed"
             self.calls.finish(identity, status="uncertain" if isinstance(exc, (TimeoutError, asyncio.CancelledError)) else "failed",
                               error=code, decided=True, started=True)
+            if production is not None:
+                production.finish_tool_operation("server", identity,
+                    outcome="unknown" if isinstance(exc, (TimeoutError, asyncio.CancelledError)) or code in {
+                        "server_command_timeout", "server_network_error", "server_late_result"} else "failed")
             if isinstance(exc, asyncio.CancelledError):
                 raise
             raise ServerError(code) from None
+        if production is not None:
+            production.finish_tool_operation("server", identity, outcome="completed", evidence_refs=normalized.evidence_refs)
         self._journal(identity, capability, normalized)
         return normalized
 

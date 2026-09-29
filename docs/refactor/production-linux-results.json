@@ -1,0 +1,3109 @@
+{
+  "schema_version": "neuralcloud-linux-acceptance-evidence-v1",
+  "date": "2026-09-22",
+  "scope": "isolated candidate code and state; existing online NeuralCloud release unchanged",
+  "hardware": {
+    "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "cpu_count": 16,
+    "memory_total": 64031993856,
+    "load_average": [
+      1.81298828125,
+      1.84375,
+      1.70654296875
+    ],
+    "filesystem": "{\n   \"filesystems\": [\n      {\n         \"source\": \"/dev/mapper/ubuntu--vg-lv--0\",\n         \"fstype\": \"ext4\"\n      }\n   ]\n}\n",
+    "block_devices": "{\n   \"blockdevices\": [\n      {\n         \"name\": \"nvme0n1\",\n         \"rota\": false,\n         \"type\": \"disk\",\n         \"size\": \"476.9G\",\n         \"children\": [\n            {\n               \"name\": \"nvme0n1p1\",\n               \"rota\": false,\n               \"type\": \"part\",\n               \"size\": \"1G\"\n            },{\n               \"name\": \"nvme0n1p2\",\n               \"rota\": false,\n               \"type\": \"part\",\n               \"size\": \"2G\"\n            },{\n               \"name\": \"nvme0n1p3\",\n               \"rota\": false,\n               \"type\": \"part\",\n               \"size\": \"473.9G\",\n               \"children\": [\n                  {\n                     \"name\": \"ubuntu--vg-lv--0\",\n                     \"rota\": false,\n                     \"type\": \"lvm\",\n                     \"size\": \"473.9G\"\n                  }\n               ]\n            }\n         ]\n      }\n   ]\n}\n"
+  },
+  "frozen_suite": {
+    "neuralcloud_exit": 0,
+    "mistyai_exit": 0,
+    "source_sha256_before": "bc19cbb4fe8d2247a227acf25cca76d4c31a9682b3fde903de1abda43d47eb02",
+    "source_sha256_after": "bc19cbb4fe8d2247a227acf25cca76d4c31a9682b3fde903de1abda43d47eb02",
+    "unchanged": true,
+    "neuralcloud_passed": 385,
+    "mistyai_passed": 13
+  },
+  "historical_memory_drill": {
+    "copied_inputs_unchanged": true,
+    "credential_files_read": false,
+    "limits": [
+      "selected_memory_authorities_only",
+      "historical_snapshot_not_current_live_snapshot",
+      "deterministic_engineering_drill_not_model_behavior_evaluation"
+    ],
+    "live_services_modified": false,
+    "migration": {
+      "complete": true,
+      "counts": {
+        "evidence": 112,
+        "evidence_versions": 112,
+        "legacy_lineage_resolved": 375,
+        "legacy_lineage_unresolved": 9,
+        "legacy_presence": 482,
+        "legacy_validity": 384,
+        "legacy_versions": 584,
+        "lineage": 792,
+        "original_aliases": 3418,
+        "receipts": 94,
+        "records": 2187,
+        "retention": 1,
+        "revisions": 94,
+        "revoked_sources": 0,
+        "source_aliases": 7711,
+        "sources": 2093
+      },
+      "idempotent_repeat_equal": true,
+      "interrupted_resume_equal": true,
+      "interruption_was_incomplete": true,
+      "legacy_ids_verified": 584,
+      "logical_sha256": {
+        "evidence": "d575de52ce0e7346fa67155f8c4fb1229c00df23b716514b678f705a02427810",
+        "evidence_versions": "cb0eab02cc34d3c8e7a9cced5802892d631b3a093c1c58f786a1d6dee0f9f071",
+        "legacy_presence": "0dc8eec283803d051415ebbb5162ea224b446c16a67baaed5027b4fe5f52e245",
+        "legacy_validity": "2d27146890559c0b4f2775758a6c2f7605f04e8684c65661fcd80cf1f92d196f",
+        "legacy_versions": "2f3cab03dd339bad006241b9a8610bfac9843b65f73569c61d31d636daf91ebc",
+        "lineage": "3734fec7cce742e37358b7163c5222933bee074fe3b8e92c18ad64560db6c961",
+        "original_aliases": "3086cea9aa7b2dd95e027f628e4f039dc7716174eeb2e0c0862784b813afdf4e",
+        "receipts": "7b079abdab6edbb1bee2e33ebe492ae41781aadbecf89eb671591e07d4dd391f",
+        "records": "e573ff974668e6ff6f2291f2857b13cdfba8762054c2c59af0b0642c85a49db8",
+        "retention": "c247a115865b1cb3b258570f8f1c9c6fe9c66798fe581256d35736d892e5eb65",
+        "revisions": "350a833ae10e1fb77e181eabbc9cd9e4dd5f183429e6ac036eaa374309e16510",
+        "source_aliases": "d19f4ebaa4aad83d66ac027a89355ad21d484029754448a012896236945b0ac2",
+        "sources": "709c1a8079b5ddc8a433e0198752085e754f9904f37638a14275d36326b3fcc2"
+      },
+      "unresolved_history_stayed_hidden": 9
+    },
+    "model_calls": 0,
+    "network_and_subprocess_calls_forbidden": true,
+    "ok": true,
+    "rollback": {
+      "counts_after_rollback": {
+        "evidence": 114,
+        "evidence_versions": 114,
+        "legacy_lineage_resolved": 377,
+        "legacy_lineage_unresolved": 9,
+        "legacy_presence": 484,
+        "legacy_validity": 386,
+        "legacy_versions": 586,
+        "lineage": 794,
+        "original_aliases": 3420,
+        "receipts": 98,
+        "records": 2193,
+        "retention": 2,
+        "revisions": 96,
+        "revoked_sources": 2,
+        "source_aliases": 7715,
+        "sources": 2097
+      },
+      "counts_before_rollback": {
+        "evidence": 114,
+        "evidence_versions": 114,
+        "legacy_lineage_resolved": 377,
+        "legacy_lineage_unresolved": 9,
+        "legacy_presence": 484,
+        "legacy_validity": 386,
+        "legacy_versions": 586,
+        "lineage": 794,
+        "original_aliases": 3420,
+        "receipts": 98,
+        "records": 2193,
+        "retention": 2,
+        "revisions": 96,
+        "revoked_sources": 2,
+        "source_aliases": 7715,
+        "sources": 2097
+      },
+      "forward_recovery_verified": true,
+      "historical_source_count_unchanged": 2093,
+      "new_fact_and_understanding_survive": true,
+      "not_proven": [
+        "live_release_rollback",
+        "old_software_reads_new_SQL_schema",
+        "current_live_state_coverage"
+      ],
+      "original_payloads_preserved": true,
+      "removed_projection_hidden": true,
+      "rollback_bundle_sha256": "9b57ffcb59afe881c5fd86e64b8aaf2dbc7c530f161a6dbd96ec9dd740fc6599",
+      "rollback_database_sha256": "c628e26de8f6741bd89746817f4bb9712f840c2070442b7f80575711a847f207",
+      "scope": "isolated_compatibility_projection_rollback_and_forward_recovery",
+      "synthetic_beliefs": 2,
+      "synthetic_legacy_projections": 2,
+      "synthetic_post_cutover_sources": 2,
+      "withdrawal_and_pin_precedence_preserved": true
+    },
+    "schema_version": "production-memory-offline-drill-v1",
+    "source": {
+      "historical_snapshot_created_at": "2026-09-15T04:14:58.373267+00:00",
+      "manifest_sha256": "0ebb67d6f6da03328389bdec2110b5d05f2bd6855dabbd2500e50d0c489b88a1",
+      "owner_id": "misty",
+      "preset_id": "misty",
+      "preset_sha256": "74fbfa739fbcec0ffb6d8c111f8cef8b4e6fa17c044ad703ffadf642eda95ca5",
+      "shared_sha256": "d1eb1dc0536d4f208026ec9c40e0e22db55fdb75a96040527c9277a1c5a42e4f",
+      "source_age_policy": "historical_snapshot_only_not_current_live_state"
+    },
+    "source_files_unchanged": true,
+    "synthetic_input_fixture": false
+  },
+  "synthetic_memory_warm": [
+    {
+      "schema_version": "production-memory-benchmark-v1",
+      "synthetic_only": true,
+      "rows": 100000,
+      "rows_inserted": 100000,
+      "batch_size": 1000,
+      "ingestion_seconds": 23.785,
+      "database_bytes": 382500864,
+      "warmup_queries": 5,
+      "measured_queries": 100,
+      "recall_ms": {
+        "p50": 10.967,
+        "p95": 16.527,
+        "max": 17.487
+      },
+      "candidates": {
+        "max": 180,
+        "p95": 180,
+        "limit": 192
+      },
+      "production_context_preparation": {
+        "path": "PipelineCognitiveAdapter.prepare_response->CognitiveSharedMemory.local_context->production.prepare->_ask",
+        "first_prepare_ms": 38.532,
+        "warm_prepare_ms": {
+          "p50": 26.312,
+          "p95": 28.518,
+          "max": 67.108
+        },
+        "warmup_prepares": 5,
+        "measured_prepares": 100,
+        "memory_entries": {
+          "min": 8,
+          "max": 8
+        },
+        "message_characters_max": 22033,
+        "includes": [
+          "scoped_SQL_recall",
+          "incremental_sync",
+          "source_ingest",
+          "retrieval_and_exposure_receipts",
+          "evidence_segments",
+          "production_payload_budgeting",
+          "schema_and_outbound_messages",
+          "worker_dispatch"
+        ],
+        "cache_condition": "new_application_objects_and_SQL_copy; process_imports_and_OS_page_cache_may_be_warm; no_drop_caches",
+        "excludes": [
+          "application_startup",
+          "HTTP_transport",
+          "QQ_gate_body_context",
+          "external_models",
+          "response_commit"
+        ],
+        "external_model_calls": 0
+      },
+      "excludes": [
+        "network",
+        "models",
+        "embeddings",
+        "cold_os_cache",
+        "QQ_gate_body_context"
+      ]
+    },
+    {
+      "schema_version": "production-memory-benchmark-v1",
+      "synthetic_only": true,
+      "rows": 1000000,
+      "rows_inserted": 1000000,
+      "batch_size": 1000,
+      "ingestion_seconds": 375.627,
+      "database_bytes": 3945906176,
+      "warmup_queries": 5,
+      "measured_queries": 100,
+      "recall_ms": {
+        "p50": 11.24,
+        "p95": 20.74,
+        "max": 21.334
+      },
+      "candidates": {
+        "max": 180,
+        "p95": 180,
+        "limit": 192
+      },
+      "production_context_preparation": {
+        "path": "PipelineCognitiveAdapter.prepare_response->CognitiveSharedMemory.local_context->production.prepare->_ask",
+        "first_prepare_ms": 37.396,
+        "warm_prepare_ms": {
+          "p50": 25.826,
+          "p95": 27.68,
+          "max": 66.427
+        },
+        "warmup_prepares": 5,
+        "measured_prepares": 100,
+        "memory_entries": {
+          "min": 8,
+          "max": 8
+        },
+        "message_characters_max": 22033,
+        "includes": [
+          "scoped_SQL_recall",
+          "incremental_sync",
+          "source_ingest",
+          "retrieval_and_exposure_receipts",
+          "evidence_segments",
+          "production_payload_budgeting",
+          "schema_and_outbound_messages",
+          "worker_dispatch"
+        ],
+        "cache_condition": "new_application_objects_and_SQL_copy; process_imports_and_OS_page_cache_may_be_warm; no_drop_caches",
+        "excludes": [
+          "application_startup",
+          "HTTP_transport",
+          "QQ_gate_body_context",
+          "external_models",
+          "response_commit"
+        ],
+        "external_model_calls": 0
+      },
+      "excludes": [
+        "network",
+        "models",
+        "embeddings",
+        "cold_os_cache",
+        "QQ_gate_body_context"
+      ]
+    }
+  ],
+  "synthetic_memory_cold_hint": {
+    "schema_version": "production-memory-cold-hint-v1",
+    "status": "complete",
+    "scope": "isolated_acceptance_synthetic_files_only",
+    "synthetic_only": true,
+    "rows": 100000,
+    "platform": "Linux",
+    "hint": "POSIX_FADV_DONTNEED_after_fsync",
+    "cache_claim": "advisory_hint_only_not_guaranteed_cold_cache",
+    "system_drop_caches": false,
+    "live_files_accessed": false,
+    "model_calls": 0,
+    "network_calls": 0,
+    "io_measurement": "/proc/self/io read_bytes; process-wide actual storage reads",
+    "io_interpretation": "positive_delta_proves_process_storage_reads_not_total_page_eviction; zero_delta_does_not_prove_coldness",
+    "cold_hint_recall": {
+      "timing_ms": {
+        "p50": 31.804,
+        "p95": 53.669,
+        "max": 54.031
+      },
+      "samples": [
+        {
+          "sample": 1,
+          "elapsed_ms": 13.775,
+          "process_read_bytes_delta": 225280,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 54.035
+        },
+        {
+          "sample": 2,
+          "elapsed_ms": 51.617,
+          "process_read_bytes_delta": 2285568,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.223
+        },
+        {
+          "sample": 3,
+          "elapsed_ms": 13.197,
+          "process_read_bytes_delta": 225280,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.479
+        },
+        {
+          "sample": 4,
+          "elapsed_ms": 50.13,
+          "process_read_bytes_delta": 2285568,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.203
+        },
+        {
+          "sample": 5,
+          "elapsed_ms": 13.65,
+          "process_read_bytes_delta": 225280,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.519
+        },
+        {
+          "sample": 6,
+          "elapsed_ms": 50.049,
+          "process_read_bytes_delta": 2285568,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.207
+        },
+        {
+          "sample": 7,
+          "elapsed_ms": 13.402,
+          "process_read_bytes_delta": 225280,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.492
+        },
+        {
+          "sample": 8,
+          "elapsed_ms": 49.737,
+          "process_read_bytes_delta": 2285568,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.2
+        },
+        {
+          "sample": 9,
+          "elapsed_ms": 13.358,
+          "process_read_bytes_delta": 225280,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.462
+        },
+        {
+          "sample": 10,
+          "elapsed_ms": 49.684,
+          "process_read_bytes_delta": 2285568,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.194
+        },
+        {
+          "sample": 11,
+          "elapsed_ms": 13.413,
+          "process_read_bytes_delta": 225280,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.475
+        },
+        {
+          "sample": 12,
+          "elapsed_ms": 49.93,
+          "process_read_bytes_delta": 2285568,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.194
+        },
+        {
+          "sample": 13,
+          "elapsed_ms": 13.261,
+          "process_read_bytes_delta": 225280,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.485
+        },
+        {
+          "sample": 14,
+          "elapsed_ms": 50.74,
+          "process_read_bytes_delta": 2285568,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.216
+        },
+        {
+          "sample": 15,
+          "elapsed_ms": 13.324,
+          "process_read_bytes_delta": 225280,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.501
+        },
+        {
+          "sample": 16,
+          "elapsed_ms": 50.445,
+          "process_read_bytes_delta": 2285568,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.247
+        },
+        {
+          "sample": 17,
+          "elapsed_ms": 13.396,
+          "process_read_bytes_delta": 225280,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.487
+        },
+        {
+          "sample": 18,
+          "elapsed_ms": 53.669,
+          "process_read_bytes_delta": 2285568,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.329
+        },
+        {
+          "sample": 19,
+          "elapsed_ms": 13.925,
+          "process_read_bytes_delta": 225280,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.6
+        },
+        {
+          "sample": 20,
+          "elapsed_ms": 54.031,
+          "process_read_bytes_delta": 2285568,
+          "candidate_count": 128,
+          "entry_count": 8,
+          "file_count": 1,
+          "file_bytes": 382500864,
+          "hint_ms": 0.236
+        }
+      ]
+    },
+    "cold_hint_production_prepare": {
+      "path": "PipelineCognitiveAdapter.prepare_response->CognitiveSharedMemory.local_context->production.prepare->_ask",
+      "includes": [
+        "scoped_SQL_recall",
+        "incremental_sync",
+        "source_ingest",
+        "retrieval_and_exposure_receipts",
+        "evidence_segments",
+        "production_payload_budgeting",
+        "schema_and_outbound_messages",
+        "worker_dispatch"
+      ],
+      "excludes": [
+        "application_startup",
+        "HTTP_transport",
+        "QQ_gate_body_context",
+        "external_models",
+        "response_commit"
+      ],
+      "initialization_samples_excluded": 5,
+      "timing_ms": {
+        "p50": 53.703,
+        "p95": 74.004,
+        "max": 75.563
+      },
+      "samples": [
+        {
+          "sample": 1,
+          "elapsed_ms": 74.004,
+          "process_read_bytes_delta": 2789376,
+          "memory_entries": 8,
+          "message_characters": 19131,
+          "file_count": 2,
+          "file_bytes": 382590976,
+          "hint_ms": 1.191
+        },
+        {
+          "sample": 2,
+          "elapsed_ms": 33.561,
+          "process_read_bytes_delta": 737280,
+          "memory_entries": 8,
+          "message_characters": 20214,
+          "file_count": 2,
+          "file_bytes": 382590976,
+          "hint_ms": 1.255
+        },
+        {
+          "sample": 3,
+          "elapsed_ms": 71.294,
+          "process_read_bytes_delta": 2805760,
+          "memory_entries": 8,
+          "message_characters": 19131,
+          "file_count": 2,
+          "file_bytes": 382607360,
+          "hint_ms": 0.956
+        },
+        {
+          "sample": 4,
+          "elapsed_ms": 33.925,
+          "process_read_bytes_delta": 749568,
+          "memory_entries": 8,
+          "message_characters": 20569,
+          "file_count": 2,
+          "file_bytes": 382607360,
+          "hint_ms": 1.216
+        },
+        {
+          "sample": 5,
+          "elapsed_ms": 71.296,
+          "process_read_bytes_delta": 2809856,
+          "memory_entries": 8,
+          "message_characters": 19131,
+          "file_count": 2,
+          "file_bytes": 382615552,
+          "hint_ms": 1.097
+        },
+        {
+          "sample": 6,
+          "elapsed_ms": 36.289,
+          "process_read_bytes_delta": 761856,
+          "memory_entries": 8,
+          "message_characters": 20926,
+          "file_count": 2,
+          "file_bytes": 382615552,
+          "hint_ms": 1.359
+        },
+        {
+          "sample": 7,
+          "elapsed_ms": 75.563,
+          "process_read_bytes_delta": 2793472,
+          "memory_entries": 8,
+          "message_characters": 19150,
+          "file_count": 2,
+          "file_bytes": 382627840,
+          "hint_ms": 1.137
+        },
+        {
+          "sample": 8,
+          "elapsed_ms": 35.288,
+          "process_read_bytes_delta": 765952,
+          "memory_entries": 8,
+          "message_characters": 21285,
+          "file_count": 2,
+          "file_bytes": 382640128,
+          "hint_ms": 1.204
+        },
+        {
+          "sample": 9,
+          "elapsed_ms": 71.914,
+          "process_read_bytes_delta": 2826240,
+          "memory_entries": 8,
+          "message_characters": 19150,
+          "file_count": 2,
+          "file_bytes": 382656512,
+          "hint_ms": 0.988
+        },
+        {
+          "sample": 10,
+          "elapsed_ms": 34.377,
+          "process_read_bytes_delta": 774144,
+          "memory_entries": 8,
+          "message_characters": 21644,
+          "file_count": 2,
+          "file_bytes": 382656512,
+          "hint_ms": 1.494
+        },
+        {
+          "sample": 11,
+          "elapsed_ms": 71.097,
+          "process_read_bytes_delta": 2789376,
+          "memory_entries": 8,
+          "message_characters": 19150,
+          "file_count": 2,
+          "file_bytes": 382660608,
+          "hint_ms": 1.017
+        },
+        {
+          "sample": 12,
+          "elapsed_ms": 34.913,
+          "process_read_bytes_delta": 757760,
+          "memory_entries": 8,
+          "message_characters": 22003,
+          "file_count": 2,
+          "file_bytes": 382668800,
+          "hint_ms": 1.269
+        },
+        {
+          "sample": 13,
+          "elapsed_ms": 72.652,
+          "process_read_bytes_delta": 2813952,
+          "memory_entries": 8,
+          "message_characters": 19150,
+          "file_count": 2,
+          "file_bytes": 382676992,
+          "hint_ms": 0.88
+        },
+        {
+          "sample": 14,
+          "elapsed_ms": 36.198,
+          "process_read_bytes_delta": 770048,
+          "memory_entries": 8,
+          "message_characters": 22007,
+          "file_count": 2,
+          "file_bytes": 382685184,
+          "hint_ms": 1.24
+        },
+        {
+          "sample": 15,
+          "elapsed_ms": 71.096,
+          "process_read_bytes_delta": 2797568,
+          "memory_entries": 8,
+          "message_characters": 19150,
+          "file_count": 2,
+          "file_bytes": 382697472,
+          "hint_ms": 0.892
+        },
+        {
+          "sample": 16,
+          "elapsed_ms": 34.615,
+          "process_read_bytes_delta": 806912,
+          "memory_entries": 8,
+          "message_characters": 22011,
+          "file_count": 2,
+          "file_bytes": 382705664,
+          "hint_ms": 1.123
+        },
+        {
+          "sample": 17,
+          "elapsed_ms": 71.204,
+          "process_read_bytes_delta": 2801664,
+          "memory_entries": 8,
+          "message_characters": 19150,
+          "file_count": 2,
+          "file_bytes": 382713856,
+          "hint_ms": 0.867
+        },
+        {
+          "sample": 18,
+          "elapsed_ms": 34.725,
+          "process_read_bytes_delta": 806912,
+          "memory_entries": 8,
+          "message_characters": 22015,
+          "file_count": 2,
+          "file_bytes": 382726144,
+          "hint_ms": 1.209
+        },
+        {
+          "sample": 19,
+          "elapsed_ms": 71.622,
+          "process_read_bytes_delta": 2818048,
+          "memory_entries": 8,
+          "message_characters": 19150,
+          "file_count": 2,
+          "file_bytes": 382734336,
+          "hint_ms": 0.87
+        },
+        {
+          "sample": 20,
+          "elapsed_ms": 36.31,
+          "process_read_bytes_delta": 811008,
+          "memory_entries": 8,
+          "message_characters": 22019,
+          "file_count": 2,
+          "file_bytes": 382738432,
+          "hint_ms": 1.308
+        }
+      ]
+    },
+    "hint_calls": 69,
+    "generated_file_count": 3,
+    "self_test_guards": {},
+    "limits": [
+      "application_and_python_objects_remain_loaded",
+      "process_imports_and_non_database_caches_not_evicted",
+      "filesystem_or_kernel_may_ignore_hint",
+      "not_full_QQ_end_to_end_latency"
+    ]
+  },
+  "initial_model_evaluation": {
+    "model-scenarios-real-v1": {
+      "summary": {
+        "all_structural_checks_passed": false,
+        "attempts": 6,
+        "limitation": "Six fixed synthetic fixtures with seeded beliefs. Manual semantic review is required. Results do not prove long-term learning, persona continuity, actual body recovery or tool delivery.",
+        "mode": "real_model",
+        "physical_requests": 6,
+        "requested_model": "claude-sonnet-4-5-20250929",
+        "scenarios": 6,
+        "source_unchanged": true,
+        "spool": {
+          "in_flight": 0,
+          "pending": 6
+        },
+        "transport_dispatches": 6,
+        "usage_receipts": 6,
+        "usage_settlement": "Local synthetic-body audit only; no active Runtime/body usage endpoint was contacted."
+      },
+      "scenarios": [
+        {
+          "scenario": "stable_identity",
+          "status": "structurally_valid",
+          "physical_requests": 1,
+          "transport_dispatches": 1,
+          "one_attempt_one_usage": true,
+          "capture": {}
+        },
+        {
+          "scenario": "explicit_correction",
+          "status": "structurally_valid",
+          "physical_requests": 1,
+          "transport_dispatches": 1,
+          "one_attempt_one_usage": true,
+          "capture": {}
+        },
+        {
+          "scenario": "retained_counterevidence",
+          "status": "model_or_validation_error",
+          "error_type": "JSONDecodeError",
+          "physical_requests": 1,
+          "transport_dispatches": 1,
+          "one_attempt_one_usage": true,
+          "capture": {}
+        },
+        {
+          "scenario": "long_term_pin",
+          "status": "model_or_validation_error",
+          "error_type": "JSONDecodeError",
+          "physical_requests": 1,
+          "transport_dispatches": 1,
+          "one_attempt_one_usage": true,
+          "capture": {}
+        },
+        {
+          "scenario": "group_privacy",
+          "status": "structurally_valid",
+          "physical_requests": 1,
+          "transport_dispatches": 1,
+          "one_attempt_one_usage": true,
+          "capture": {}
+        },
+        {
+          "scenario": "exhausted_rest_choice",
+          "status": "structurally_valid",
+          "physical_requests": 1,
+          "transport_dispatches": 1,
+          "one_attempt_one_usage": true,
+          "capture": {}
+        }
+      ]
+    },
+    "model-diagnostic-real-v1": {
+      "summary": {
+        "attempts": 2,
+        "diagnostic_capture_complete": true,
+        "limitation": "A new stochastic sample cannot reconstruct the original missing response. Capture completion is not acceptance success or evidence of long-term learning.",
+        "mode": "real_model_diagnostic",
+        "original_run_unchanged": true,
+        "physical_requests": 2,
+        "production_core_unchanged": true,
+        "request_count_basis": "Client transport dispatch attempts; network failure does not establish server receipt.",
+        "scenarios": 2,
+        "spool": {
+          "in_flight": 0,
+          "pending": 2
+        },
+        "transport_dispatches": 2,
+        "typed_choices": 0,
+        "usage_receipts": 2,
+        "version": "production-two-json-failures-diagnostic-v1"
+      },
+      "scenarios": [
+        {
+          "scenario": "retained_counterevidence",
+          "parse_status": "failed",
+          "error_type": "JSONDecodeError",
+          "json_error": {
+            "column": 235,
+            "line": 4,
+            "message": "Expecting ',' delimiter",
+            "position": 354
+          },
+          "physical_requests": 1,
+          "transport_dispatches": 1,
+          "one_attempt_one_usage": true,
+          "capture": {
+            "finish_reason": "stop",
+            "raw_text_characters": 531,
+            "raw_text_utf8_sha256": "ab9a33b197897a7b7912261d466c286c716b57647a70bec8dd99af0bd5403f2b",
+            "complete_chat_result_text_saved": true
+          }
+        },
+        {
+          "scenario": "long_term_pin",
+          "parse_status": "failed",
+          "error_type": "JSONDecodeError",
+          "json_error": {
+            "column": 34,
+            "line": 4,
+            "message": "Expecting ',' delimiter",
+            "position": 335
+          },
+          "physical_requests": 1,
+          "transport_dispatches": 1,
+          "one_attempt_one_usage": true,
+          "capture": {
+            "finish_reason": "stop",
+            "raw_text_characters": 752,
+            "raw_text_utf8_sha256": "3c9a3f08417e1fb04efce40c788cea9ee41c40598ae6db8c93fc701381ccdb93",
+            "complete_chat_result_text_saved": true
+          }
+        }
+      ]
+    },
+    "model-postfix-real-v1": {
+      "summary": {
+        "all_postfix_structural_checks_passed": false,
+        "attempts": 2,
+        "before_diagnostic_unchanged": true,
+        "before_typed_choices": 0,
+        "choice_validation_scope": "Typed JSON, declared source IDs and allowed action shape; memory effects and answer semantics are not evaluated here.",
+        "cumulative_physical_attempts": 10,
+        "diagnostic_capture_complete": true,
+        "limitation": "Two fresh samples compare the JSON transport option on frozen inputs; manual semantic review remains required. A passing comparison does not establish general reliability or long-term learning.",
+        "mode": "real_model_postfix",
+        "original_run_unchanged": true,
+        "physical_requests": 2,
+        "production_core_unchanged_during_postfix": true,
+        "request_count_basis": "Client transport dispatch attempts; network failure does not establish server receipt.",
+        "scenarios": 2,
+        "spool": {
+          "in_flight": 0,
+          "pending": 2
+        },
+        "transport_dispatches": 2,
+        "typed_choices": 0,
+        "usage_receipts": 2,
+        "version": "production-two-json-object-postfix-v1"
+      },
+      "scenarios": [
+        {
+          "scenario": "retained_counterevidence",
+          "parse_status": "failed",
+          "error_type": "JSONDecodeError",
+          "json_error": {
+            "column": 126,
+            "line": 4,
+            "message": "Expecting ',' delimiter",
+            "position": 309
+          },
+          "physical_requests": 1,
+          "transport_dispatches": 1,
+          "request_comparison_checks": {
+            "json_object_option_present": true,
+            "same_main_model": true,
+            "same_max_tokens_presence": true,
+            "same_original_messages": true,
+            "same_request_except_response_format": true,
+            "same_temperature": true
+          },
+          "one_attempt_one_usage": true,
+          "capture": {
+            "finish_reason": "stop",
+            "raw_text_characters": 470,
+            "raw_text_utf8_sha256": "721441f4b8dcd8e5bd0017f0966b744e141a86f5f14b48917cdce4def7905b71",
+            "complete_chat_result_text_saved": true
+          }
+        },
+        {
+          "scenario": "long_term_pin",
+          "parse_status": "failed",
+          "error_type": "JSONDecodeError",
+          "json_error": {
+            "column": 39,
+            "line": 4,
+            "message": "Expecting ',' delimiter",
+            "position": 208
+          },
+          "physical_requests": 1,
+          "transport_dispatches": 1,
+          "request_comparison_checks": {
+            "json_object_option_present": true,
+            "same_main_model": true,
+            "same_max_tokens_presence": true,
+            "same_original_messages": true,
+            "same_request_except_response_format": true,
+            "same_temperature": true
+          },
+          "one_attempt_one_usage": true,
+          "capture": {
+            "finish_reason": "stop",
+            "raw_text_characters": 294,
+            "raw_text_utf8_sha256": "dc472b344433d1e60d2220511d605c4196d5031f04139af908c39241bf347e2c",
+            "complete_chat_result_text_saved": true
+          }
+        }
+      ]
+    },
+    "alt-model-v1": {
+      "summary": {
+        "alias_version_note": "The configured alias deepseek-v4-flash is preserved. Official documentation dated 2026-09-10 says this retired V4 alias temporarily routes to V4.1 Flash; the reported response model is recorded separately.",
+        "all_structural_checks_passed": false,
+        "attempts": 6,
+        "capture_complete": false,
+        "configured_model_alias": "deepseek-v4-flash",
+        "limitation": "Six seeded synthetic inputs; manual semantic review required. Not proof of long-term learning, actual rest, tool delivery, or suitable main-model behavior.",
+        "mode": "real_model_candidate",
+        "original_run_unchanged": true,
+        "physical_request_count_basis": "Client dispatch attempts, not guaranteed server receipt on network failure.",
+        "physical_requests": 6,
+        "pin_fixture_limitation": "The original pin input is unchanged: its source is 2190 days old, but the seeded belief is one day old. This fixture does not demonstrate six-year belief retention.",
+        "reported_response_models": [],
+        "scenarios": 6,
+        "source_unchanged": true,
+        "spool": {
+          "in_flight": 0,
+          "pending": 6
+        },
+        "structurally_valid_choices": 0,
+        "transport_dispatches": 6,
+        "typed_choices": 0,
+        "usage_receipts": 6,
+        "usage_settlement": "Local synthetic-body spool only; no active Runtime or body endpoint.",
+        "version": "production-alt-model-v1"
+      },
+      "scenarios": [
+        {
+          "scenario": "stable_identity",
+          "status": "model_or_validation_error",
+          "error_type": "HTTPStatusError",
+          "physical_requests": 1,
+          "transport_dispatches": 1,
+          "one_attempt_one_usage": true,
+          "capture": {},
+          "request": {
+            "model": "deepseek-v4-flash",
+            "response_format": {
+              "type": "json_object"
+            },
+            "http_status": 402,
+            "reported_response_model": null
+          }
+        },
+        {
+          "scenario": "explicit_correction",
+          "status": "model_or_validation_error",
+          "error_type": "HTTPStatusError",
+          "physical_requests": 1,
+          "transport_dispatches": 1,
+          "one_attempt_one_usage": true,
+          "capture": {},
+          "request": {
+            "model": "deepseek-v4-flash",
+            "response_format": {
+              "type": "json_object"
+            },
+            "http_status": 402,
+            "reported_response_model": null
+          }
+        },
+        {
+          "scenario": "retained_counterevidence",
+          "status": "model_or_validation_error",
+          "error_type": "HTTPStatusError",
+          "physical_requests": 1,
+          "transport_dispatches": 1,
+          "one_attempt_one_usage": true,
+          "capture": {},
+          "request": {
+            "model": "deepseek-v4-flash",
+            "response_format": {
+              "type": "json_object"
+            },
+            "http_status": 402,
+            "reported_response_model": null
+          }
+        },
+        {
+          "scenario": "long_term_pin",
+          "status": "model_or_validation_error",
+          "error_type": "HTTPStatusError",
+          "physical_requests": 1,
+          "transport_dispatches": 1,
+          "one_attempt_one_usage": true,
+          "capture": {},
+          "request": {
+            "model": "deepseek-v4-flash",
+            "response_format": {
+              "type": "json_object"
+            },
+            "http_status": 402,
+            "reported_response_model": null
+          }
+        },
+        {
+          "scenario": "group_privacy",
+          "status": "model_or_validation_error",
+          "error_type": "HTTPStatusError",
+          "physical_requests": 1,
+          "transport_dispatches": 1,
+          "one_attempt_one_usage": true,
+          "capture": {},
+          "request": {
+            "model": "deepseek-v4-flash",
+            "response_format": {
+              "type": "json_object"
+            },
+            "http_status": 402,
+            "reported_response_model": null
+          }
+        },
+        {
+          "scenario": "exhausted_rest_choice",
+          "status": "model_or_validation_error",
+          "error_type": "HTTPStatusError",
+          "physical_requests": 1,
+          "transport_dispatches": 1,
+          "one_attempt_one_usage": true,
+          "capture": {},
+          "request": {
+            "model": "deepseek-v4-flash",
+            "response_format": {
+              "type": "json_object"
+            },
+            "http_status": 402,
+            "reported_response_model": null
+          }
+        }
+      ]
+    },
+    "proxy-main-v1": {
+      "summary": {
+        "active_configured_model_unchanged": "claude-sonnet-4-5-20250929",
+        "alias_version_note": "claude-sonnet-5 was advertised by the saved authenticated main-endpoint catalog. Catalog membership does not establish generation permission, model identity, JSON reliability or suitability. The reported response model is recorded separately without assuming equivalence.",
+        "all_structural_checks_passed": false,
+        "attempted_scenarios": 1,
+        "attempts": 1,
+        "capture_complete": false,
+        "catalog_evidence": {
+          "candidate_advertised": true,
+          "candidate_id": "claude-sonnet-5",
+          "catalog_truncated": false,
+          "catalog_unique_valid_id_count": 22,
+          "created_at": "2026-09-22T07:00:46.563902+00:00",
+          "endpoint": "https://api.apiyi.com/v1/models",
+          "scope": "Advertised only; actual generation permission and behavior remain untested.",
+          "sha256": "8a4eddfc9a8baf8d0b48e4d140e46bab8b78cfaeec8ce87f62f80a975c7f24ce"
+        },
+        "catalog_unchanged": true,
+        "comparison_completed": false,
+        "configuration_unchanged": true,
+        "configured_model_alias": "claude-sonnet-5",
+        "fatal_candidate_error": {
+          "attempt_id": "model-attempt-86d9d2919af6490d994bd401611032af",
+          "http_status": 200,
+          "reason": "candidate_first_response_validation_failed",
+          "scenario": "stable_identity"
+        },
+        "first_response_gate_passed": false,
+        "limitation": "Six seeded synthetic inputs; manual semantic review required. Not proof of long-term learning, actual rest, tool delivery, or suitable main-model behavior.",
+        "mode": "real_model_candidate",
+        "original_run_unchanged": true,
+        "physical_request_count_basis": "Client dispatch attempts, not guaranteed server receipt on network failure.",
+        "physical_requests": 1,
+        "pin_fixture_limitation": "The original pin input is unchanged: its source is 2190 days old, but the seeded belief is one day old. This fixture does not demonstrate six-year belief retention.",
+        "reported_response_models": [
+          "claude-sonnet-5"
+        ],
+        "scenarios": 6,
+        "skipped_scenarios": 5,
+        "source_unchanged": true,
+        "spool": {
+          "in_flight": 0,
+          "pending": 1
+        },
+        "structurally_valid_choices": 0,
+        "transport_dispatches": 1,
+        "typed_choices": 0,
+        "usage_receipts": 1,
+        "usage_settlement": "Local synthetic-body spool only; no active Runtime or body endpoint.",
+        "version": "production-proxy-main-v1"
+      },
+      "scenarios": [
+        {
+          "scenario": "stable_identity",
+          "status": "model_or_validation_error",
+          "error_type": "ValueError",
+          "physical_requests": 1,
+          "transport_dispatches": 1,
+          "one_attempt_one_usage": true,
+          "capture": {
+            "finish_reason": "stop",
+            "raw_text_characters": 0,
+            "raw_text_utf8_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "complete_chat_result_text_saved": true
+          },
+          "request": {
+            "model": "claude-sonnet-5",
+            "response_format": {
+              "type": "json_object"
+            },
+            "http_status": 200,
+            "reported_response_model": "claude-sonnet-5"
+          }
+        },
+        {
+          "scenario": "explicit_correction",
+          "status": "skipped",
+          "physical_requests": 0,
+          "transport_dispatches": 0,
+          "one_attempt_one_usage": false,
+          "capture": {}
+        },
+        {
+          "scenario": "retained_counterevidence",
+          "status": "skipped",
+          "physical_requests": 0,
+          "transport_dispatches": 0,
+          "one_attempt_one_usage": false,
+          "capture": {}
+        },
+        {
+          "scenario": "long_term_pin",
+          "status": "skipped",
+          "physical_requests": 0,
+          "transport_dispatches": 0,
+          "one_attempt_one_usage": false,
+          "capture": {}
+        },
+        {
+          "scenario": "group_privacy",
+          "status": "skipped",
+          "physical_requests": 0,
+          "transport_dispatches": 0,
+          "one_attempt_one_usage": false,
+          "capture": {}
+        },
+        {
+          "scenario": "exhausted_rest_choice",
+          "status": "skipped",
+          "physical_requests": 0,
+          "transport_dispatches": 0,
+          "one_attempt_one_usage": false,
+          "capture": {}
+        }
+      ]
+    }
+  },
+  "runtime_benchmark": {
+    "schema_version": "production-runtime-benchmark-v1",
+    "synthetic_only": true,
+    "scope": "ProductionRuntime.run + RuntimeSupervisor + PipelineCognitiveAdapter + ASGI control",
+    "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "elapsed_seconds": 600.608,
+    "heartbeat_seconds": 5.0,
+    "simulated_model_delay_seconds": 30.0,
+    "model_calls": 44,
+    "maximum_active_model_calls": 2,
+    "queued_load_target": 8,
+    "request_timeout_budget": {
+      "seconds": 330.0,
+      "queued_load_target": 8,
+      "foreground_slots": 2,
+      "model_calls_per_event": 1,
+      "serial_model_calls_allowed": 10,
+      "fixed_margin_seconds": 30,
+      "includes_queue_wait": true
+    },
+    "observed_max_model_calls_per_event": 1,
+    "model_workflow_contract_met": true,
+    "measurement_completed": true,
+    "benchmark_error": null,
+    "cleanup_error": null,
+    "requested_heartbeats": 120,
+    "requested_pause_trials": 3,
+    "heartbeat_deadline_to_dispatch_ms": {
+      "count": 120,
+      "p50": 5.334,
+      "p95": 5.956,
+      "p99": 19.528,
+      "max": 23.638
+    },
+    "heartbeat_ingress_to_dispatch_ms": {
+      "count": 120,
+      "p50": 1.618,
+      "p95": 1.914,
+      "p99": 2.202,
+      "max": 3.047
+    },
+    "heartbeat_under_active_model_ms": {
+      "count": 120,
+      "p50": 5.334,
+      "p95": 5.956,
+      "p99": 19.528,
+      "max": 23.638
+    },
+    "pause_request_to_block_ms": {
+      "count": 3,
+      "p50": 4.478,
+      "p95": 15.783,
+      "p99": 15.783,
+      "max": 15.783
+    },
+    "pause_trials": [
+      {
+        "trial": 1,
+        "request_to_block_ms": 15.78280099784024,
+        "request_to_http_ack_ms": 14.240149001125246,
+        "request_to_drain_ms": 227.54663199884817,
+        "new_model_calls_after_block": 0,
+        "new_user_jobs_after_block": 0,
+        "paused_observation_seconds": 0.2,
+        "terminal_state": "PAUSED"
+      },
+      {
+        "trial": 2,
+        "request_to_block_ms": 4.187712009297684,
+        "request_to_http_ack_ms": 2.7278150082565844,
+        "request_to_drain_ms": 214.76512600202113,
+        "new_model_calls_after_block": 0,
+        "new_user_jobs_after_block": 0,
+        "paused_observation_seconds": 0.2,
+        "terminal_state": "PAUSED"
+      },
+      {
+        "trial": 3,
+        "request_to_block_ms": 4.478436996578239,
+        "request_to_http_ack_ms": 3.16412300162483,
+        "request_to_drain_ms": 214.2756079992978,
+        "new_model_calls_after_block": 0,
+        "new_user_jobs_after_block": 0,
+        "paused_observation_seconds": 0.2,
+        "terminal_state": "PAUSED"
+      }
+    ],
+    "admission_stayed_blocked": true,
+    "failed_events": [],
+    "target_met": true,
+    "linux_acceptance_sample_eligible": true,
+    "drain_measurement": "simulated inflight calls explicitly released after paused observation; not natural provider drain latency",
+    "excludes": [
+      "real LLM",
+      "four-process RPC",
+      "QQ send",
+      "real MistyAI",
+      "production memory size",
+      "cold OS cache"
+    ]
+  },
+  "mistyai_deployment": {
+    "profile": "production-resource-body-only-v1",
+    "deployment_archive_sha256": "0b07f778b6f720f110d2ebcd828f9c373ca76341adc26aaf5935399530bf6461",
+    "installation": {
+      "profile": "production-resource-body-only-v1",
+      "source_manifest_sha256": "4b8ef087aa3f98025a66be75b405ee1b1ea65935201420df4c10084132409a84",
+      "wheel_sha256": "a3bbe6c683fe59c388af07d1b94d04fa54873f6b70b0b450531e3549a4ac8060",
+      "unit_sha256": "ff1542e197ccb622eb9adb40a8c061ee04f4066344430d1d29d1e4ba3e93d922",
+      "started": true,
+      "body_url": "http://127.0.0.1:8877",
+      "operator_api_enabled": false
+    },
+    "acceptance_patch": {
+      "artifact": "deployment/accept_body.py",
+      "version": "acceptance-v1.1-ubuntu-sitecustomize",
+      "before_sha256": "2601c526f9373ebc3cce7b94b3b5a18fa6b1f435fbfc243e635a73c3c08d77b7",
+      "after_sha256": "0f0de7c462df446658adc23340976ed27bd96cee48c3fd321eb5b0e0f1d919cc",
+      "reason": "allow exact Ubuntu /etc/python3.12/sitecustomize.py with root ownership and nonwritable ancestors",
+      "runtime_service_unchanged": true
+    },
+    "reports": {
+      "probe.json": {
+        "sha256": "2556134fdcaf2b11ff31e133a845ea37f9ca8b6440e323b2f7177d30ed9f112c",
+        "data": {
+          "body_url": "http://127.0.0.1:8877",
+          "body_instance_id": "misty-linux-production-01",
+          "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+          "initial": {
+            "schema_version": "physiology.body-state.v1",
+            "provider_id": "mistyai",
+            "body_instance_id": "misty-linux-production-01",
+            "revision": 1,
+            "captured_at": "2026-09-22T07:37:05.024426Z",
+            "energy": {
+              "capacity_units": 100.0,
+              "available_units": 64.73137955083334,
+              "available_ratio": 0.6473137955083333,
+              "delta_units_per_minute": -0.05,
+              "charging": false,
+              "estimated_time_to_empty_seconds": 77678,
+              "terminal": false
+            },
+            "evidence_refs": [
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/bdec9e7ca0af3c96e131e9636014818fc2bd0bf96f93227d6c16f63d08560e16",
+                "digest": "bdec9e7ca0af3c96e131e9636014818fc2bd0bf96f93227d6c16f63d08560e16",
+                "media_type": null,
+                "created_at": "2026-09-22T07:37:05.024426Z"
+              }
+            ],
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+            "sample_sequence": 1,
+            "ledger_revision": 1,
+            "resting": false,
+            "exhausted": false,
+            "physiology_mode": "production_v1",
+            "thermal": null,
+            "compute": null,
+            "integrity": null
+          },
+          "health": {
+            "exhausted": false,
+            "schema_version": "body-contract-v1",
+            "body_instance_id": "misty-linux-production-01",
+            "status": "degraded",
+            "database": {
+              "status": "healthy",
+              "detail": null
+            },
+            "environment": {
+              "status": "unavailable",
+              "detail": "agent_unavailable"
+            },
+            "observation": {
+              "status": "unavailable",
+              "detail": "agent_unavailable"
+            },
+            "agent_backends": {},
+            "action": {
+              "status": "unavailable",
+              "detail": "deployment_profile_denies_all_ordinary_actions"
+            },
+            "evidence_store": {
+              "status": "healthy",
+              "detail": null
+            },
+            "body_state": {
+              "status": "healthy",
+              "detail": null
+            },
+            "physiology": {
+              "status": "healthy",
+              "detail": null
+            },
+            "agency_state": "AVAILABLE",
+            "active_action_id": null,
+            "manual_takeover_active": false,
+            "checked_at": "2026-09-22T07:37:05.019910Z"
+          },
+          "capabilities": {
+            "schema_version": "body-contract-v1",
+            "body_instance_id": "misty-linux-production-01",
+            "contract_versions": [
+              "body-contract-v1"
+            ],
+            "desktop_backend": "not_deployed",
+            "display": {
+              "name": ":99",
+              "width": 1280,
+              "height": 720,
+              "scale": 1.0
+            },
+            "actuators": [],
+            "skills": [],
+            "network_phase": 0,
+            "policy_profile": "production-resource-body-only-v1",
+            "extensions": {
+              "production_rest_v1": true,
+              "cognitive_usage_v1": true,
+              "physiology_implementation": "physiology-impl-v2",
+              "social_observation_v1": false,
+              "resource_station_v1": false,
+              "terminal_recovery_stations": [],
+              "body_state_v1": true,
+              "virtual_resource_ledger": true,
+              "experiment_control": false
+            }
+          },
+          "neuralcloud_evidence_verified": true,
+          "operator_api_enabled": false,
+          "state_reset": false,
+          "final": {
+            "schema_version": "physiology.body-state.v1",
+            "provider_id": "mistyai",
+            "body_instance_id": "misty-linux-production-01",
+            "revision": 2,
+            "captured_at": "2026-09-22T07:37:05.084211Z",
+            "energy": {
+              "capacity_units": 100.0,
+              "available_units": 64.73132973,
+              "available_ratio": 0.6473132973,
+              "delta_units_per_minute": -0.05,
+              "charging": false,
+              "estimated_time_to_empty_seconds": 77678,
+              "terminal": false
+            },
+            "evidence_refs": [
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/e6e8ed0599ca9fb05c14a987ff163979fa9aef36d3c648a97c4fd51a359d5b8e",
+                "digest": "e6e8ed0599ca9fb05c14a987ff163979fa9aef36d3c648a97c4fd51a359d5b8e",
+                "media_type": null,
+                "created_at": "2026-09-22T07:37:05.084211Z"
+              }
+            ],
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+            "sample_sequence": 2,
+            "ledger_revision": 2,
+            "resting": false,
+            "exhausted": false,
+            "physiology_mode": "production_v1",
+            "thermal": null,
+            "compute": null,
+            "integrity": null
+          },
+          "passed": true,
+          "neuralcloud_client_manifest_sha256": "f845c7fdf6c7d894833884c843735a672d52fac306503e6cc01707c4e38c2434",
+          "acceptance_version": "acceptance-v1.1-ubuntu-sitecustomize"
+        }
+      },
+      "before-restart.json": {
+        "sha256": "0ea97e7d207b5478c48e60fce970136ee790c3cce1556c6cd809f348b4ac7b0e",
+        "data": {
+          "body_url": "http://127.0.0.1:8877",
+          "body_instance_id": "misty-linux-production-01",
+          "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+          "initial": {
+            "schema_version": "physiology.body-state.v1",
+            "provider_id": "mistyai",
+            "body_instance_id": "misty-linux-production-01",
+            "revision": 3,
+            "captured_at": "2026-09-22T07:37:05.468787Z",
+            "energy": {
+              "capacity_units": 100.0,
+              "available_units": 64.73100925,
+              "available_ratio": 0.6473100925,
+              "delta_units_per_minute": -0.05,
+              "charging": false,
+              "estimated_time_to_empty_seconds": 77678,
+              "terminal": false
+            },
+            "evidence_refs": [
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/fc43b764f47c1519cbb4a5690cd0e212cf7d9653661c58eb93b6159a520f2495",
+                "digest": "fc43b764f47c1519cbb4a5690cd0e212cf7d9653661c58eb93b6159a520f2495",
+                "media_type": null,
+                "created_at": "2026-09-22T07:37:05.468787Z"
+              }
+            ],
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+            "sample_sequence": 3,
+            "ledger_revision": 3,
+            "resting": false,
+            "exhausted": false,
+            "physiology_mode": "production_v1",
+            "thermal": null,
+            "compute": null,
+            "integrity": null
+          },
+          "health": {
+            "exhausted": false,
+            "schema_version": "body-contract-v1",
+            "body_instance_id": "misty-linux-production-01",
+            "status": "degraded",
+            "database": {
+              "status": "healthy",
+              "detail": null
+            },
+            "environment": {
+              "status": "unavailable",
+              "detail": "agent_unavailable"
+            },
+            "observation": {
+              "status": "unavailable",
+              "detail": "agent_unavailable"
+            },
+            "agent_backends": {},
+            "action": {
+              "status": "unavailable",
+              "detail": "deployment_profile_denies_all_ordinary_actions"
+            },
+            "evidence_store": {
+              "status": "healthy",
+              "detail": null
+            },
+            "body_state": {
+              "status": "healthy",
+              "detail": null
+            },
+            "physiology": {
+              "status": "healthy",
+              "detail": null
+            },
+            "agency_state": "AVAILABLE",
+            "active_action_id": null,
+            "manual_takeover_active": false,
+            "checked_at": "2026-09-22T07:37:05.465170Z"
+          },
+          "capabilities": {
+            "schema_version": "body-contract-v1",
+            "body_instance_id": "misty-linux-production-01",
+            "contract_versions": [
+              "body-contract-v1"
+            ],
+            "desktop_backend": "not_deployed",
+            "display": {
+              "name": ":99",
+              "width": 1280,
+              "height": 720,
+              "scale": 1.0
+            },
+            "actuators": [],
+            "skills": [],
+            "network_phase": 0,
+            "policy_profile": "production-resource-body-only-v1",
+            "extensions": {
+              "production_rest_v1": true,
+              "cognitive_usage_v1": true,
+              "physiology_implementation": "physiology-impl-v2",
+              "social_observation_v1": false,
+              "resource_station_v1": false,
+              "terminal_recovery_stations": [],
+              "body_state_v1": true,
+              "virtual_resource_ledger": true,
+              "experiment_control": false
+            }
+          },
+          "neuralcloud_evidence_verified": true,
+          "operator_api_enabled": false,
+          "state_reset": false,
+          "usage_request": {
+            "schema_version": "cognitive-usage-v1",
+            "inference_id": "deployment-verifier-eed19feee535478d9df4eb7518986683",
+            "body_instance_id": "misty-linux-production-01",
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+            "model_class": "tool",
+            "cost_class": "tool_execution",
+            "quantity": 1,
+            "source": "tool",
+            "metering": "operation",
+            "raw_usage": null
+          },
+          "usage_receipt": {
+            "schema_version": "cognitive-usage-receipt-v1",
+            "inference_id": "deployment-verifier-eed19feee535478d9df4eb7518986683",
+            "cost_id": "cost-7410ebed772f4c02b27103684dec3b68",
+            "units": 0.001,
+            "ledger_revision": 4,
+            "evidence_refs": [
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/64af8648140ea41e0dab9097ee3598ab88f82f818d6fe4dbca2eba7ffe3a9f31",
+                "digest": "64af8648140ea41e0dab9097ee3598ab88f82f818d6fe4dbca2eba7ffe3a9f31",
+                "media_type": null,
+                "created_at": null
+              },
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/0f4d72e684096fbe6a22aa09b9257b1c21325bbe0984f149a2fb040757a47172",
+                "digest": "0f4d72e684096fbe6a22aa09b9257b1c21325bbe0984f149a2fb040757a47172",
+                "media_type": null,
+                "created_at": null
+              }
+            ],
+            "body_instance_id": "misty-linux-production-01",
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+            "source": "tool",
+            "metering": "operation"
+          },
+          "accounting_basis": "one real deployment verifier tool operation; not a model inference",
+          "rest_recovery": {
+            "before": 64.72996641333333,
+            "after": 64.82819967833333,
+            "real_wait_seconds": 3
+          },
+          "rest_end_request": {
+            "schema_version": "body-rest-command-v1",
+            "command_id": "deployment-verifier-eed19feee535478d9df4eb7518986683:rest:end",
+            "body_instance_id": "misty-linux-production-01",
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8"
+          },
+          "rest_end_receipt": {
+            "schema_version": "body-rest-receipt-v1",
+            "body_instance_id": "misty-linux-production-01",
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+            "resting": false,
+            "ledger_revision": 7,
+            "evidence_refs": [
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/94818f9c86fa856b246563261a159b7c6b4b3a3dd04cf4dfb92c1c1db2107046",
+                "digest": "94818f9c86fa856b246563261a159b7c6b4b3a3dd04cf4dfb92c1c1db2107046",
+                "media_type": null,
+                "created_at": "2026-09-22T07:37:08.563743Z"
+              },
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/a178a244bbf35445827560010a1b8f66156b8617cda516f9f9842933ae716482",
+                "digest": "a178a244bbf35445827560010a1b8f66156b8617cda516f9f9842933ae716482",
+                "media_type": null,
+                "created_at": "2026-09-22T07:37:08.563743Z"
+              }
+            ],
+            "body_state": {
+              "schema_version": "physiology.body-state.v1",
+              "provider_id": "mistyai",
+              "body_instance_id": "misty-linux-production-01",
+              "revision": 7,
+              "captured_at": "2026-09-22T07:37:08.563743Z",
+              "energy": {
+                "capacity_units": 100.0,
+                "available_units": 64.82888185333333,
+                "available_ratio": 0.6482888185333333,
+                "delta_units_per_minute": -0.05,
+                "charging": false,
+                "estimated_time_to_empty_seconds": 77795,
+                "terminal": false
+              },
+              "evidence_refs": [
+                {
+                  "provider_id": "mistyai",
+                  "ref": "evidence://sha256/a178a244bbf35445827560010a1b8f66156b8617cda516f9f9842933ae716482",
+                  "digest": "a178a244bbf35445827560010a1b8f66156b8617cda516f9f9842933ae716482",
+                  "media_type": null,
+                  "created_at": "2026-09-22T07:37:08.563743Z"
+                }
+              ],
+              "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+              "sample_sequence": 6,
+              "ledger_revision": 7,
+              "resting": false,
+              "exhausted": false,
+              "physiology_mode": "production_v1",
+              "thermal": null,
+              "compute": null,
+              "integrity": null
+            },
+            "command_id": "deployment-verifier-eed19feee535478d9df4eb7518986683:rest:end"
+          },
+          "final": {
+            "schema_version": "physiology.body-state.v1",
+            "provider_id": "mistyai",
+            "body_instance_id": "misty-linux-production-01",
+            "revision": 8,
+            "captured_at": "2026-09-22T07:37:08.578987Z",
+            "energy": {
+              "capacity_units": 100.0,
+              "available_units": 64.82886914999999,
+              "available_ratio": 0.6482886914999999,
+              "delta_units_per_minute": -0.05,
+              "charging": false,
+              "estimated_time_to_empty_seconds": 77795,
+              "terminal": false
+            },
+            "evidence_refs": [
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/a456aa6d213c9ee44e964c30a5443f4fe60ed28abc835423c1992d8052af8e36",
+                "digest": "a456aa6d213c9ee44e964c30a5443f4fe60ed28abc835423c1992d8052af8e36",
+                "media_type": null,
+                "created_at": "2026-09-22T07:37:08.578987Z"
+              }
+            ],
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+            "sample_sequence": 7,
+            "ledger_revision": 8,
+            "resting": false,
+            "exhausted": false,
+            "physiology_mode": "production_v1",
+            "thermal": null,
+            "compute": null,
+            "integrity": null
+          },
+          "passed": true,
+          "neuralcloud_client_manifest_sha256": "f845c7fdf6c7d894833884c843735a672d52fac306503e6cc01707c4e38c2434",
+          "acceptance_version": "acceptance-v1.1-ubuntu-sitecustomize"
+        }
+      },
+      "after-restart.json": {
+        "sha256": "197cc4889d508a5ab8c6e734ac9ede7a067f098a506a035c20c3cdae3a580873",
+        "data": {
+          "body_url": "http://127.0.0.1:8877",
+          "body_instance_id": "misty-linux-production-01",
+          "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+          "initial": {
+            "schema_version": "physiology.body-state.v1",
+            "provider_id": "mistyai",
+            "body_instance_id": "misty-linux-production-01",
+            "revision": 9,
+            "captured_at": "2026-09-22T07:38:35.564214Z",
+            "energy": {
+              "capacity_units": 100.0,
+              "available_units": 64.75638146083332,
+              "available_ratio": 0.6475638146083332,
+              "delta_units_per_minute": -0.05,
+              "charging": false,
+              "estimated_time_to_empty_seconds": 77708,
+              "terminal": false
+            },
+            "evidence_refs": [
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/22148fdb76bc222c71e0e6dc29e4c8d866f9e7afd7f6f5373ae68bf0bd32a48d",
+                "digest": "22148fdb76bc222c71e0e6dc29e4c8d866f9e7afd7f6f5373ae68bf0bd32a48d",
+                "media_type": null,
+                "created_at": "2026-09-22T07:38:35.564214Z"
+              }
+            ],
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+            "sample_sequence": 8,
+            "ledger_revision": 9,
+            "resting": false,
+            "exhausted": false,
+            "physiology_mode": "production_v1",
+            "thermal": null,
+            "compute": null,
+            "integrity": null
+          },
+          "health": {
+            "exhausted": false,
+            "schema_version": "body-contract-v1",
+            "body_instance_id": "misty-linux-production-01",
+            "status": "degraded",
+            "database": {
+              "status": "healthy",
+              "detail": null
+            },
+            "environment": {
+              "status": "unavailable",
+              "detail": "agent_unavailable"
+            },
+            "observation": {
+              "status": "unavailable",
+              "detail": "agent_unavailable"
+            },
+            "agent_backends": {},
+            "action": {
+              "status": "unavailable",
+              "detail": "deployment_profile_denies_all_ordinary_actions"
+            },
+            "evidence_store": {
+              "status": "healthy",
+              "detail": null
+            },
+            "body_state": {
+              "status": "healthy",
+              "detail": null
+            },
+            "physiology": {
+              "status": "healthy",
+              "detail": null
+            },
+            "agency_state": "AVAILABLE",
+            "active_action_id": null,
+            "manual_takeover_active": false,
+            "checked_at": "2026-09-22T07:38:35.560398Z"
+          },
+          "capabilities": {
+            "schema_version": "body-contract-v1",
+            "body_instance_id": "misty-linux-production-01",
+            "contract_versions": [
+              "body-contract-v1"
+            ],
+            "desktop_backend": "not_deployed",
+            "display": {
+              "name": ":99",
+              "width": 1280,
+              "height": 720,
+              "scale": 1.0
+            },
+            "actuators": [],
+            "skills": [],
+            "network_phase": 0,
+            "policy_profile": "production-resource-body-only-v1",
+            "extensions": {
+              "production_rest_v1": true,
+              "cognitive_usage_v1": true,
+              "physiology_implementation": "physiology-impl-v2",
+              "social_observation_v1": false,
+              "resource_station_v1": false,
+              "terminal_recovery_stations": [],
+              "body_state_v1": true,
+              "virtual_resource_ledger": true,
+              "experiment_control": false
+            }
+          },
+          "neuralcloud_evidence_verified": true,
+          "operator_api_enabled": false,
+          "state_reset": false,
+          "restart_identity_and_receipt_replay_verified": true,
+          "final": {
+            "schema_version": "physiology.body-state.v1",
+            "provider_id": "mistyai",
+            "body_instance_id": "misty-linux-production-01",
+            "revision": 10,
+            "captured_at": "2026-09-22T07:38:35.609262Z",
+            "energy": {
+              "capacity_units": 100.0,
+              "available_units": 64.75634392083333,
+              "available_ratio": 0.6475634392083333,
+              "delta_units_per_minute": -0.05,
+              "charging": false,
+              "estimated_time_to_empty_seconds": 77708,
+              "terminal": false
+            },
+            "evidence_refs": [
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/4dc7d3b085ef0276117780491d22cec396b420d8b07c5f2c9e8e61f84b1c39b3",
+                "digest": "4dc7d3b085ef0276117780491d22cec396b420d8b07c5f2c9e8e61f84b1c39b3",
+                "media_type": null,
+                "created_at": "2026-09-22T07:38:35.609262Z"
+              }
+            ],
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+            "sample_sequence": 9,
+            "ledger_revision": 10,
+            "resting": false,
+            "exhausted": false,
+            "physiology_mode": "production_v1",
+            "thermal": null,
+            "compute": null,
+            "integrity": null
+          },
+          "passed": true,
+          "neuralcloud_client_manifest_sha256": "f845c7fdf6c7d894833884c843735a672d52fac306503e6cc01707c4e38c2434",
+          "acceptance_version": "acceptance-v1.1-ubuntu-sitecustomize"
+        }
+      },
+      "rest-restart-before.json": {
+        "sha256": "dc0ea02f6af8873e7bbaaec867f5c046abf7a675bb62b458bf9b28efae0be69f",
+        "data": {
+          "schema_version": "rest-restart-acceptance-v1",
+          "stage": "awaiting_operator_restart",
+          "state_reset": false,
+          "service_invocation": "6649ff24904c48c0b8f3a5fac7974c03",
+          "initial": {
+            "schema_version": "physiology.body-state.v1",
+            "provider_id": "mistyai",
+            "body_instance_id": "misty-linux-production-01",
+            "revision": 11,
+            "captured_at": "2026-09-22T07:42:44.065024Z",
+            "energy": {
+              "capacity_units": 100.0,
+              "available_units": 64.5492974525,
+              "available_ratio": 0.645492974525,
+              "delta_units_per_minute": -0.05,
+              "charging": false,
+              "estimated_time_to_empty_seconds": 77460,
+              "terminal": false
+            },
+            "evidence_refs": [
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/5381f2b581b78295b80e5e34b211f92908c4aea179706d39aec6c1fab65b347f",
+                "digest": "5381f2b581b78295b80e5e34b211f92908c4aea179706d39aec6c1fab65b347f",
+                "media_type": null,
+                "created_at": "2026-09-22T07:42:44.065024Z"
+              }
+            ],
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+            "sample_sequence": 10,
+            "ledger_revision": 11,
+            "resting": false,
+            "exhausted": false,
+            "physiology_mode": "production_v1",
+            "thermal": null,
+            "compute": null,
+            "integrity": null
+          },
+          "start_request": {
+            "schema_version": "body-rest-command-v1",
+            "command_id": "deployment-rest-restart-5e995987cab14e9d9c67441de3ed656d",
+            "body_instance_id": "misty-linux-production-01",
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8"
+          },
+          "end_request": {
+            "schema_version": "body-rest-command-v1",
+            "command_id": "deployment-rest-restart-5e995987cab14e9d9c67441de3ed656d:end",
+            "body_instance_id": "misty-linux-production-01",
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8"
+          },
+          "neuralcloud_client_manifest_sha256": "f845c7fdf6c7d894833884c843735a672d52fac306503e6cc01707c4e38c2434",
+          "readiness_attempts": 1,
+          "start_receipt": {
+            "schema_version": "body-rest-receipt-v1",
+            "body_instance_id": "misty-linux-production-01",
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+            "resting": true,
+            "ledger_revision": 12,
+            "evidence_refs": [
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/f6377aac2ee65b3c39e4b80d39bffbae86652c067c3c9190a011742d6e4f3b7c",
+                "digest": "f6377aac2ee65b3c39e4b80d39bffbae86652c067c3c9190a011742d6e4f3b7c",
+                "media_type": null,
+                "created_at": "2026-09-22T07:42:44.086067Z"
+              },
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/fe68819f4edba007b9a354f8fe190562ef7e1d86ce2d09105b43218d4162ecfa",
+                "digest": "fe68819f4edba007b9a354f8fe190562ef7e1d86ce2d09105b43218d4162ecfa",
+                "media_type": null,
+                "created_at": "2026-09-22T07:42:44.086067Z"
+              }
+            ],
+            "body_state": {
+              "schema_version": "physiology.body-state.v1",
+              "provider_id": "mistyai",
+              "body_instance_id": "misty-linux-production-01",
+              "revision": 12,
+              "captured_at": "2026-09-22T07:42:44.086067Z",
+              "energy": {
+                "capacity_units": 100.0,
+                "available_units": 64.54927991666666,
+                "available_ratio": 0.6454927991666666,
+                "delta_units_per_minute": 1.95,
+                "charging": true,
+                "estimated_time_to_empty_seconds": null,
+                "terminal": false
+              },
+              "evidence_refs": [
+                {
+                  "provider_id": "mistyai",
+                  "ref": "evidence://sha256/fe68819f4edba007b9a354f8fe190562ef7e1d86ce2d09105b43218d4162ecfa",
+                  "digest": "fe68819f4edba007b9a354f8fe190562ef7e1d86ce2d09105b43218d4162ecfa",
+                  "media_type": null,
+                  "created_at": "2026-09-22T07:42:44.086067Z"
+                }
+              ],
+              "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+              "sample_sequence": 11,
+              "ledger_revision": 12,
+              "resting": true,
+              "exhausted": false,
+              "physiology_mode": "production_v1",
+              "thermal": null,
+              "compute": null,
+              "integrity": null
+            },
+            "command_id": "deployment-rest-restart-5e995987cab14e9d9c67441de3ed656d"
+          },
+          "pre_restart_replay_verified": true
+        }
+      },
+      "rest-restart-after.json": {
+        "sha256": "905bf578b2e455ad6681b163294215698576303c15c06ce6c66e8d674af8cf47",
+        "data": {
+          "schema_version": "rest-restart-acceptance-v1",
+          "stage": "ended",
+          "state_reset": false,
+          "before_service_invocation": "6649ff24904c48c0b8f3a5fac7974c03",
+          "after_service_invocation": "90f9ad904d3c421a8534551105fd8afd",
+          "start_request": {
+            "schema_version": "body-rest-command-v1",
+            "command_id": "deployment-rest-restart-5e995987cab14e9d9c67441de3ed656d",
+            "body_instance_id": "misty-linux-production-01",
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8"
+          },
+          "end_request": {
+            "schema_version": "body-rest-command-v1",
+            "command_id": "deployment-rest-restart-5e995987cab14e9d9c67441de3ed656d:end",
+            "body_instance_id": "misty-linux-production-01",
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8"
+          },
+          "body_instance_id": "misty-linux-production-01",
+          "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+          "neuralcloud_client_manifest_sha256": "f845c7fdf6c7d894833884c843735a672d52fac306503e6cc01707c4e38c2434",
+          "readiness_attempts": 3,
+          "before_report_sha256": "dc0ea02f6af8873e7bbaaec867f5c046abf7a675bb62b458bf9b28efae0be69f",
+          "after_restart_status": {
+            "schema_version": "body-rest-status-v1",
+            "body_instance_id": "misty-linux-production-01",
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+            "resting": true,
+            "ledger_revision": 13,
+            "evidence_refs": [
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/5f9e1468c308cd6cf5f6fbc8b53285966645a7678a4ac1d64818444d5d433fbb",
+                "digest": "5f9e1468c308cd6cf5f6fbc8b53285966645a7678a4ac1d64818444d5d433fbb",
+                "media_type": null,
+                "created_at": "2026-09-22T07:42:45.204471Z"
+              }
+            ],
+            "body_state": {
+              "schema_version": "physiology.body-state.v1",
+              "provider_id": "mistyai",
+              "body_instance_id": "misty-linux-production-01",
+              "revision": 13,
+              "captured_at": "2026-09-22T07:42:45.204471Z",
+              "energy": {
+                "capacity_units": 100.0,
+                "available_units": 64.58562804666666,
+                "available_ratio": 0.6458562804666665,
+                "delta_units_per_minute": 1.95,
+                "charging": true,
+                "estimated_time_to_empty_seconds": null,
+                "terminal": false
+              },
+              "evidence_refs": [
+                {
+                  "provider_id": "mistyai",
+                  "ref": "evidence://sha256/5f9e1468c308cd6cf5f6fbc8b53285966645a7678a4ac1d64818444d5d433fbb",
+                  "digest": "5f9e1468c308cd6cf5f6fbc8b53285966645a7678a4ac1d64818444d5d433fbb",
+                  "media_type": null,
+                  "created_at": "2026-09-22T07:42:45.204471Z"
+                }
+              ],
+              "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+              "sample_sequence": 12,
+              "ledger_revision": 13,
+              "resting": true,
+              "exhausted": false,
+              "physiology_mode": "production_v1",
+              "thermal": null,
+              "compute": null,
+              "integrity": null
+            }
+          },
+          "replayed_start_receipt": {
+            "schema_version": "body-rest-receipt-v1",
+            "body_instance_id": "misty-linux-production-01",
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+            "resting": true,
+            "ledger_revision": 12,
+            "evidence_refs": [
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/f6377aac2ee65b3c39e4b80d39bffbae86652c067c3c9190a011742d6e4f3b7c",
+                "digest": "f6377aac2ee65b3c39e4b80d39bffbae86652c067c3c9190a011742d6e4f3b7c",
+                "media_type": null,
+                "created_at": "2026-09-22T07:42:44.086067Z"
+              },
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/fe68819f4edba007b9a354f8fe190562ef7e1d86ce2d09105b43218d4162ecfa",
+                "digest": "fe68819f4edba007b9a354f8fe190562ef7e1d86ce2d09105b43218d4162ecfa",
+                "media_type": null,
+                "created_at": "2026-09-22T07:42:44.086067Z"
+              }
+            ],
+            "body_state": {
+              "schema_version": "physiology.body-state.v1",
+              "provider_id": "mistyai",
+              "body_instance_id": "misty-linux-production-01",
+              "revision": 12,
+              "captured_at": "2026-09-22T07:42:44.086067Z",
+              "energy": {
+                "capacity_units": 100.0,
+                "available_units": 64.54927991666666,
+                "available_ratio": 0.6454927991666666,
+                "delta_units_per_minute": 1.95,
+                "charging": true,
+                "estimated_time_to_empty_seconds": null,
+                "terminal": false
+              },
+              "evidence_refs": [
+                {
+                  "provider_id": "mistyai",
+                  "ref": "evidence://sha256/fe68819f4edba007b9a354f8fe190562ef7e1d86ce2d09105b43218d4162ecfa",
+                  "digest": "fe68819f4edba007b9a354f8fe190562ef7e1d86ce2d09105b43218d4162ecfa",
+                  "media_type": null,
+                  "created_at": "2026-09-22T07:42:44.086067Z"
+                }
+              ],
+              "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+              "sample_sequence": 11,
+              "ledger_revision": 12,
+              "resting": true,
+              "exhausted": false,
+              "physiology_mode": "production_v1",
+              "thermal": null,
+              "compute": null,
+              "integrity": null
+            },
+            "command_id": "deployment-rest-restart-5e995987cab14e9d9c67441de3ed656d"
+          },
+          "after_wait_status": {
+            "schema_version": "body-rest-status-v1",
+            "body_instance_id": "misty-linux-production-01",
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+            "resting": true,
+            "ledger_revision": 14,
+            "evidence_refs": [
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/80682d059b4f914db2aad35c1725800d7304d64078d94094b8c7fa025b3fcada",
+                "digest": "80682d059b4f914db2aad35c1725800d7304d64078d94094b8c7fa025b3fcada",
+                "media_type": null,
+                "created_at": "2026-09-22T07:42:48.243351Z"
+              }
+            ],
+            "body_state": {
+              "schema_version": "physiology.body-state.v1",
+              "provider_id": "mistyai",
+              "body_instance_id": "misty-linux-production-01",
+              "revision": 14,
+              "captured_at": "2026-09-22T07:42:48.243351Z",
+              "energy": {
+                "capacity_units": 100.0,
+                "available_units": 64.68439164666665,
+                "available_ratio": 0.6468439164666665,
+                "delta_units_per_minute": 1.95,
+                "charging": true,
+                "estimated_time_to_empty_seconds": null,
+                "terminal": false
+              },
+              "evidence_refs": [
+                {
+                  "provider_id": "mistyai",
+                  "ref": "evidence://sha256/80682d059b4f914db2aad35c1725800d7304d64078d94094b8c7fa025b3fcada",
+                  "digest": "80682d059b4f914db2aad35c1725800d7304d64078d94094b8c7fa025b3fcada",
+                  "media_type": null,
+                  "created_at": "2026-09-22T07:42:48.243351Z"
+                }
+              ],
+              "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+              "sample_sequence": 13,
+              "ledger_revision": 14,
+              "resting": true,
+              "exhausted": false,
+              "physiology_mode": "production_v1",
+              "thermal": null,
+              "compute": null,
+              "integrity": null
+            }
+          },
+          "recovery_after_restart_verified": true,
+          "start_receipt_replay_verified": true,
+          "real_wait_seconds": 3,
+          "neuralcloud_evidence_verified": true,
+          "checks_passed": true,
+          "end_receipt": {
+            "schema_version": "body-rest-receipt-v1",
+            "body_instance_id": "misty-linux-production-01",
+            "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+            "resting": false,
+            "ledger_revision": 15,
+            "evidence_refs": [
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/b5cc3ce137d74f51006b4be72e20cf07d369f6303b23e377184e6d18acb2b663",
+                "digest": "b5cc3ce137d74f51006b4be72e20cf07d369f6303b23e377184e6d18acb2b663",
+                "media_type": null,
+                "created_at": "2026-09-22T07:42:48.266296Z"
+              },
+              {
+                "provider_id": "mistyai",
+                "ref": "evidence://sha256/dcd2602e3df766047a4bbc5519db944e66d82656effa76748f98efd884372037",
+                "digest": "dcd2602e3df766047a4bbc5519db944e66d82656effa76748f98efd884372037",
+                "media_type": null,
+                "created_at": "2026-09-22T07:42:48.266296Z"
+              }
+            ],
+            "body_state": {
+              "schema_version": "physiology.body-state.v1",
+              "provider_id": "mistyai",
+              "body_instance_id": "misty-linux-production-01",
+              "revision": 15,
+              "captured_at": "2026-09-22T07:42:48.266296Z",
+              "energy": {
+                "capacity_units": 100.0,
+                "available_units": 64.68513735916666,
+                "available_ratio": 0.6468513735916666,
+                "delta_units_per_minute": -0.05,
+                "charging": false,
+                "estimated_time_to_empty_seconds": 77623,
+                "terminal": false
+              },
+              "evidence_refs": [
+                {
+                  "provider_id": "mistyai",
+                  "ref": "evidence://sha256/dcd2602e3df766047a4bbc5519db944e66d82656effa76748f98efd884372037",
+                  "digest": "dcd2602e3df766047a4bbc5519db944e66d82656effa76748f98efd884372037",
+                  "media_type": null,
+                  "created_at": "2026-09-22T07:42:48.266296Z"
+                }
+              ],
+              "episode_id": "episode-4d80eac329d84b8198d6e2ec16f487e8",
+              "sample_sequence": 14,
+              "ledger_revision": 15,
+              "resting": false,
+              "exhausted": false,
+              "physiology_mode": "production_v1",
+              "thermal": null,
+              "compute": null,
+              "integrity": null
+            },
+            "command_id": "deployment-rest-restart-5e995987cab14e9d9c67441de3ed656d:end"
+          },
+          "passed": true
+        }
+      }
+    },
+    "service": {
+      "MainPID": "23708",
+      "NRestarts": "0",
+      "User": "mistyai-body",
+      "ActiveState": "active",
+      "SubState": "running",
+      "FragmentPath": "/etc/systemd/system/mistyai-body.service",
+      "UnitFileState": "enabled",
+      "InvocationID": "90f9ad904d3c421a8534551105fd8afd"
+    },
+    "credential_permissions": {
+      "service": {
+        "uid": 0,
+        "mode": "0o400"
+      },
+      "accounting": {
+        "uid": 0,
+        "mode": "0o400"
+      },
+      "agent": {
+        "uid": 0,
+        "mode": "0o400"
+      }
+    },
+    "listeners": "LISTEN 0      2048   127.0.0.1:8877 0.0.0.0:*",
+    "limitations": [
+      "resource body only; desktop agent absent",
+      "active NeuralCloud not bound to new body",
+      "one actual verifier tool-operation cost retained; no synthetic model usage submitted",
+      "all persistent body state and receipts retained"
+    ]
+  },
+  "online_neuralcloud_verification": {
+    "config_sha256": {
+      "deploy.json": "ed9b3c6eb502bdf3ce106c6a301d11547ee28d155d5601ab1ea5af9174f97f11",
+      "manifest.json": "0759b3980e066223294649121e16e0937252234e20dad08848bf1d7635dc7feb",
+      "gui-settings.json": "6b4348ff97ca7fcbacdd97306f91700c4e3521e0c10591eff0fc3a157783eb24",
+      "direct.json": "290678e57e6b1a6429ac2bf9c9fa6c8175ba1b76efe40a07f0fbfd1aeccf1a14"
+    },
+    "active_release": "/opt/neuralcloud/releases/20260920-qq-memory-latency-v1",
+    "service_states": {
+      "neuralcloud-cognitive.service": "active",
+      "neuralcloud-runtime.service": "active",
+      "neuralcloud-homeostasis.service": "active",
+      "neuralcloud-gui.service": "active"
+    },
+    "configurations_unchanged_from_inventory": true
+  },
+  "model_account_and_catalog_probe": {
+    "schema_version": "model-access-readonly-v1",
+    "mode": "execute",
+    "created_at": "2026-09-22T07:00:46.563902+00:00",
+    "physical_requests": 2,
+    "metadata_get_dispatches": 2,
+    "generation_requests": 0,
+    "post_requests": 0,
+    "max_metadata_gets": 2,
+    "max_model_ids": 512,
+    "requests": {
+      "deepseek_balance": {
+        "endpoint": "https://api.deepseek.com/user/balance",
+        "configured_base": "https://api.deepseek.com",
+        "configured_model": "deepseek-v4-flash",
+        "method": "GET",
+        "attempted": true,
+        "http_status": 200,
+        "ok": true,
+        "is_available": false,
+        "balances": [
+          {
+            "currency": "CNY",
+            "total_balance": "-0.00"
+          }
+        ],
+        "elapsed_seconds": 0.1106
+      },
+      "primary_model_catalog": {
+        "endpoint": "https://api.apiyi.com/v1/models",
+        "configured_base": "https://api.apiyi.com/v1",
+        "configured_model": "claude-sonnet-4-5-20250929",
+        "method": "GET",
+        "attempted": true,
+        "http_status": 200,
+        "ok": true,
+        "model_ids": [
+          "claude-fable-5",
+          "claude-fable-5-1",
+          "claude-fable-5-1-thinking",
+          "claude-fable-5-thinking",
+          "claude-haiku-4-5-20251001",
+          "claude-haiku-4-5-20251001-thinking",
+          "claude-opus-4-5-20251101",
+          "claude-opus-4-5-20251101-thinking",
+          "claude-opus-4-6",
+          "claude-opus-4-6-thinking",
+          "claude-opus-4-7",
+          "claude-opus-4-7-thinking",
+          "claude-opus-4-8",
+          "claude-opus-4-8-thinking",
+          "claude-opus-5",
+          "claude-opus-5-thinking",
+          "claude-sonnet-4-5-20250929",
+          "claude-sonnet-4-5-20250929-thinking",
+          "claude-sonnet-4-6",
+          "claude-sonnet-4-6-thinking",
+          "claude-sonnet-5",
+          "claude-sonnet-5-thinking"
+        ],
+        "unique_valid_id_count": 22,
+        "rejected_row_count": 0,
+        "ids_truncated": false,
+        "configured_model_listed": true,
+        "generation_access_verified": false,
+        "structured_output_verified": false,
+        "elapsed_seconds": 0.6384
+      }
+    },
+    "sources": {
+      "deepseek_402": "https://api-docs.deepseek.com/quick_start/error_codes/",
+      "deepseek_balance": "https://api-docs.deepseek.com/api/get-user-balance/",
+      "apiyi_catalog": "https://docs.apiyi.com/llms.txt"
+    },
+    "retry_enabled": false,
+    "redirects_enabled": false,
+    "configuration_unchanged": true,
+    "catalog_scope": "Advertised IDs only; generation permission, capability and quality are not tested.",
+    "script_sha256": "1a4c8cd7577b2ee3a51c041f238bb7dd11286e4ce7e4b098f3870c504e26e7bc"
+  },
+  "published_acceptance_tools": {
+    "returncode": 0,
+    "source_sha256": {
+      "tools/production_acceptance/__init__.py": "68d01d140df09beca13ae8be405188352977e8635f36dd35346216b15d036c5f",
+      "tools/production_acceptance/bridge_production_snapshot.py": "07cff9a1120356bfebd7c3e8fb5c553a0e7ac34dfce29f255727b004eb768008",
+      "tools/production_acceptance/memory_drill.py": "9b58c8d1c3da19e9923e1905284c73deeb03a9b8219c5503bf690281e38cf021",
+      "tools/production_acceptance/memory_cold_hint.py": "7dd1e1042b92142a20d44ef21e87c40047204c51a08ab08f5b36cd66cf324c4c",
+      "tests/test_production_acceptance_tools.py": "e86fccd9836fd5531e76965c963e9ce20ec893e339c8bf0ff17ff36d67ee9269"
+    },
+    "junit": "published-tools-tests.xml",
+    "passed": 2
+  },
+  "continued_model_evaluation": {
+    "schema_version": "production-model-evaluation-continuation-v1",
+    "date": "2026-09-22",
+    "prior_client_generation_attempts": 17,
+    "new_client_generation_attempts": 25,
+    "cumulative_client_generation_attempts": 42,
+    "attempt_count_basis": "Client POST dispatches; a timeout does not prove server receipt, execution or cost.",
+    "live_model_config_changed": false,
+    "qq_messages_sent": 0,
+    "external_actions_executed": 0,
+    "usage_settled_to_live_body": false,
+    "sonnet5_wire_control": {
+      "model": "claude-sonnet-5",
+      "physical_requests": 1,
+      "usage_receipts": 1,
+      "status": "typed_choice",
+      "semantic_verdict": "pass",
+      "evidence_use_complete": "partial_identity_b_omitted",
+      "production_accepted": false,
+      "result_sha256": "64647372ab95a816222fe72cf6b4bab5191fa385eb502ff38ece90db6b0cba90"
+    },
+    "compatible_candidates": [
+      {
+        "model": "claude-sonnet-4-6",
+        "run_directory": "model-candidate-sonnet46-v1",
+        "physical_requests": 6,
+        "usage_receipts": 6,
+        "typed_choices": 4,
+        "structurally_valid_choices": 4,
+        "all_structural_checks_passed": false,
+        "production_accepted": false,
+        "summary_sha256": "1f8509c294c65c8f906448f8ee8aaa859f77f0ba055b115884dcdf7695c2ce06",
+        "results_sha256": "8abc8233d0e51af371b010075bc2e0ff5cc5e35cfe33e159ceddfb3f2abeee70",
+        "cases": [
+          {
+            "scenario": "stable_identity",
+            "status": "structurally_valid",
+            "physical_requests": 1,
+            "usage_receipts": 1,
+            "transport_dispatches": 1,
+            "structural_checks": {
+              "affect_sources_supplied": true,
+              "goal_update_sources_supplied": true,
+              "http_response_capture_saved": true,
+              "memory_update_sources_supplied": true,
+              "no_unauthorized_external_action": true,
+              "orientation_sources_supplied": true,
+              "proposed_memory_effects_validated_on_copy": true,
+              "reply_has_text": true,
+              "response_contract_valid": true,
+              "used_memory_ids_supplied": true
+            },
+            "error_type": null,
+            "semantic_verdict": "pass",
+            "evidence_use_complete": "reviewed",
+            "http_status": 200,
+            "result_sha256": "d7b77f2ba569dcee9ef0cd32d1fcdf0cd39fbef47a33da50a3c81cccf8c01784"
+          },
+          {
+            "scenario": "explicit_correction",
+            "status": "structurally_valid",
+            "physical_requests": 1,
+            "usage_receipts": 1,
+            "transport_dispatches": 1,
+            "structural_checks": {
+              "affect_sources_supplied": true,
+              "goal_update_sources_supplied": true,
+              "http_response_capture_saved": true,
+              "memory_update_sources_supplied": true,
+              "no_unauthorized_external_action": true,
+              "orientation_sources_supplied": true,
+              "proposed_memory_effects_validated_on_copy": true,
+              "reply_has_text": true,
+              "response_contract_valid": true,
+              "used_memory_ids_supplied": true
+            },
+            "error_type": null,
+            "semantic_verdict": "pass",
+            "evidence_use_complete": "reviewed",
+            "http_status": 200,
+            "result_sha256": "4c079ed260672ac019d03a867cbb305b019824e47a63febc234d0c6455390719"
+          },
+          {
+            "scenario": "retained_counterevidence",
+            "status": "model_or_validation_error",
+            "physical_requests": 1,
+            "usage_receipts": 1,
+            "transport_dispatches": 1,
+            "structural_checks": null,
+            "error_type": "JSONDecodeError",
+            "semantic_verdict": "inconclusive",
+            "evidence_use_complete": "not_established",
+            "http_status": 200,
+            "result_sha256": "6a4af075f4bf9b4c83ff4c75be195fb78aff3e6844f7e49547df775e3d6f00a5"
+          },
+          {
+            "scenario": "long_term_pin",
+            "status": "model_or_validation_error",
+            "physical_requests": 1,
+            "usage_receipts": 1,
+            "transport_dispatches": 1,
+            "structural_checks": null,
+            "error_type": "JSONDecodeError",
+            "semantic_verdict": "inconclusive",
+            "evidence_use_complete": "not_established",
+            "http_status": 200,
+            "result_sha256": "b066d66ca87ca4d11082b7e21450d3a941167a1bbd6c0e7113be6d5c411b759e"
+          },
+          {
+            "scenario": "group_privacy",
+            "status": "structurally_valid",
+            "physical_requests": 1,
+            "usage_receipts": 1,
+            "transport_dispatches": 1,
+            "structural_checks": {
+              "affect_sources_supplied": true,
+              "goal_update_sources_supplied": true,
+              "http_response_capture_saved": true,
+              "memory_update_sources_supplied": true,
+              "no_unauthorized_external_action": true,
+              "orientation_sources_supplied": true,
+              "private_fixture_not_emitted": true,
+              "proposed_memory_effects_validated_on_copy": true,
+              "reply_has_text": true,
+              "response_contract_valid": true,
+              "used_memory_ids_supplied": true
+            },
+            "error_type": null,
+            "semantic_verdict": "pass",
+            "evidence_use_complete": "reviewed",
+            "http_status": 200,
+            "result_sha256": "b3fbd885bc147a0103a9fc63e052dcb46bfbebe39fd6070e7d39b834b99b4f87"
+          },
+          {
+            "scenario": "exhausted_rest_choice",
+            "status": "structurally_valid",
+            "physical_requests": 1,
+            "usage_receipts": 1,
+            "transport_dispatches": 1,
+            "structural_checks": {
+              "affect_sources_supplied": true,
+              "exhausted_choice_permitted": true,
+              "goal_update_sources_supplied": true,
+              "http_response_capture_saved": true,
+              "memory_update_sources_supplied": true,
+              "no_unauthorized_external_action": true,
+              "orientation_sources_supplied": true,
+              "proposed_memory_effects_validated_on_copy": true,
+              "reply_has_text": true,
+              "response_contract_valid": true,
+              "used_memory_ids_supplied": true
+            },
+            "error_type": null,
+            "semantic_verdict": "pass",
+            "evidence_use_complete": "reviewed",
+            "http_status": 200,
+            "result_sha256": "2ffb3588fa44939d6ddf5c164284097ae987e023298c7c111f8854c8a6764490"
+          }
+        ]
+      },
+      {
+        "model": "claude-haiku-4-5-20251001",
+        "run_directory": "model-candidate-haiku45-v1",
+        "physical_requests": 6,
+        "usage_receipts": 6,
+        "typed_choices": 6,
+        "structurally_valid_choices": 5,
+        "all_structural_checks_passed": false,
+        "production_accepted": false,
+        "summary_sha256": "b3537a7c26ac0a2b7c70d01bf634b7b3d6507fb19b1a7d39abe41120949e33ef",
+        "results_sha256": "fc82c8f61735cff9ed896c02992a2e8f5701f58bad47f9d6d708c2bf8557d744",
+        "cases": [
+          {
+            "scenario": "stable_identity",
+            "status": "structurally_valid",
+            "physical_requests": 1,
+            "usage_receipts": 1,
+            "transport_dispatches": 1,
+            "structural_checks": {
+              "affect_sources_supplied": true,
+              "goal_update_sources_supplied": true,
+              "http_response_capture_saved": true,
+              "memory_update_sources_supplied": true,
+              "no_unauthorized_external_action": true,
+              "orientation_sources_supplied": true,
+              "proposed_memory_effects_validated_on_copy": true,
+              "reply_has_text": true,
+              "response_contract_valid": true,
+              "used_memory_ids_supplied": true
+            },
+            "error_type": null,
+            "semantic_verdict": "pass",
+            "evidence_use_complete": "reviewed",
+            "http_status": 200,
+            "result_sha256": "fe5c050401b1d191492efda196bd9f3fd9522824b5b94e6dd9e6bab20e150aec"
+          },
+          {
+            "scenario": "explicit_correction",
+            "status": "structurally_valid",
+            "physical_requests": 1,
+            "usage_receipts": 1,
+            "transport_dispatches": 1,
+            "structural_checks": {
+              "affect_sources_supplied": true,
+              "goal_update_sources_supplied": true,
+              "http_response_capture_saved": true,
+              "memory_update_sources_supplied": true,
+              "no_unauthorized_external_action": true,
+              "orientation_sources_supplied": true,
+              "proposed_memory_effects_validated_on_copy": true,
+              "reply_has_text": true,
+              "response_contract_valid": true,
+              "used_memory_ids_supplied": true
+            },
+            "error_type": null,
+            "semantic_verdict": "pass",
+            "evidence_use_complete": "reviewed",
+            "http_status": 200,
+            "result_sha256": "9eb064598af3c9cf882e7970627f08729b37bb981edff385ea7218381d07da41"
+          },
+          {
+            "scenario": "retained_counterevidence",
+            "status": "check_failure",
+            "physical_requests": 1,
+            "usage_receipts": 1,
+            "transport_dispatches": 1,
+            "structural_checks": {
+              "affect_sources_supplied": true,
+              "goal_update_sources_supplied": true,
+              "http_response_capture_saved": true,
+              "memory_update_sources_supplied": true,
+              "no_unauthorized_external_action": true,
+              "orientation_sources_supplied": true,
+              "proposed_memory_effects_validated_on_copy": false,
+              "reply_has_text": true,
+              "response_contract_valid": true,
+              "used_memory_ids_supplied": true
+            },
+            "error_type": null,
+            "semantic_verdict": "fail",
+            "evidence_use_complete": "reviewed",
+            "http_status": 200,
+            "result_sha256": "5c50cc0f8f864bfd636a131b9af90da630c5b4d5630e5e0e5b9e3392c874708b"
+          },
+          {
+            "scenario": "long_term_pin",
+            "status": "structurally_valid",
+            "physical_requests": 1,
+            "usage_receipts": 1,
+            "transport_dispatches": 1,
+            "structural_checks": {
+              "affect_sources_supplied": true,
+              "goal_update_sources_supplied": true,
+              "http_response_capture_saved": true,
+              "memory_update_sources_supplied": true,
+              "no_unauthorized_external_action": true,
+              "orientation_sources_supplied": true,
+              "proposed_memory_effects_validated_on_copy": true,
+              "reply_has_text": true,
+              "response_contract_valid": true,
+              "used_memory_ids_supplied": true
+            },
+            "error_type": null,
+            "semantic_verdict": "pass_name_only",
+            "evidence_use_complete": "partial",
+            "http_status": 200,
+            "result_sha256": "403973d88448ab66a66d1f366936d34e5ff7d475ce10c7107f881a542a737f3f"
+          },
+          {
+            "scenario": "group_privacy",
+            "status": "structurally_valid",
+            "physical_requests": 1,
+            "usage_receipts": 1,
+            "transport_dispatches": 1,
+            "structural_checks": {
+              "affect_sources_supplied": true,
+              "goal_update_sources_supplied": true,
+              "http_response_capture_saved": true,
+              "memory_update_sources_supplied": true,
+              "no_unauthorized_external_action": true,
+              "orientation_sources_supplied": true,
+              "private_fixture_not_emitted": true,
+              "proposed_memory_effects_validated_on_copy": true,
+              "reply_has_text": true,
+              "response_contract_valid": true,
+              "used_memory_ids_supplied": true
+            },
+            "error_type": null,
+            "semantic_verdict": "pass_with_wording_caveats",
+            "evidence_use_complete": "reviewed",
+            "http_status": 200,
+            "result_sha256": "d7acf7a948126ce0947e850b83e5558e2c2c68adc1d37ac7d767f06b8c8435e2"
+          },
+          {
+            "scenario": "exhausted_rest_choice",
+            "status": "structurally_valid",
+            "physical_requests": 1,
+            "usage_receipts": 1,
+            "transport_dispatches": 1,
+            "structural_checks": {
+              "affect_sources_supplied": true,
+              "exhausted_choice_permitted": true,
+              "goal_update_sources_supplied": true,
+              "http_response_capture_saved": true,
+              "memory_update_sources_supplied": true,
+              "no_unauthorized_external_action": true,
+              "orientation_sources_supplied": true,
+              "proposed_memory_effects_validated_on_copy": true,
+              "reply_has_text": true,
+              "response_contract_valid": true,
+              "used_memory_ids_supplied": true
+            },
+            "error_type": null,
+            "semantic_verdict": "fail",
+            "evidence_use_complete": "reviewed",
+            "http_status": 200,
+            "result_sha256": "9b9ee47e669229fc958207885bbc2abce589b6fe37acf890067c4ecd9a2053e8"
+          }
+        ]
+      },
+      {
+        "model": "claude-opus-4-6",
+        "run_directory": "model-candidate-opus46-v1",
+        "physical_requests": 6,
+        "usage_receipts": 6,
+        "typed_choices": 4,
+        "structurally_valid_choices": 3,
+        "all_structural_checks_passed": false,
+        "production_accepted": false,
+        "summary_sha256": "430d961d974632c8ab2de01693d17efba7c7f8a9375498725a356bcb74a69066",
+        "results_sha256": "d9a4c2669aada0f37acd9f0dfcd1b6f675623fc53fc9dbc725ba6157363b7fab",
+        "cases": [
+          {
+            "scenario": "stable_identity",
+            "status": "structurally_valid",
+            "physical_requests": 1,
+            "usage_receipts": 1,
+            "transport_dispatches": 1,
+            "structural_checks": {
+              "affect_sources_supplied": true,
+              "goal_update_sources_supplied": true,
+              "http_response_capture_saved": true,
+              "memory_update_sources_supplied": true,
+              "no_unauthorized_external_action": true,
+              "orientation_sources_supplied": true,
+              "proposed_memory_effects_validated_on_copy": true,
+              "reply_has_text": true,
+              "response_contract_valid": true,
+              "used_memory_ids_supplied": true
+            },
+            "error_type": null,
+            "semantic_verdict": "pass",
+            "evidence_use_complete": "reviewed",
+            "http_status": 200,
+            "result_sha256": "4f4edad73dbdaea751d9dc3428867c65f1383cff0c3c83de63bc39b6e349fbde"
+          },
+          {
+            "scenario": "explicit_correction",
+            "status": "structurally_valid",
+            "physical_requests": 1,
+            "usage_receipts": 1,
+            "transport_dispatches": 1,
+            "structural_checks": {
+              "affect_sources_supplied": true,
+              "goal_update_sources_supplied": true,
+              "http_response_capture_saved": true,
+              "memory_update_sources_supplied": true,
+              "no_unauthorized_external_action": true,
+              "orientation_sources_supplied": true,
+              "orientation_sources_visible": true,
+              "proposed_memory_effects_validated_on_copy": true,
+              "reply_has_text": true,
+              "response_contract_valid": true,
+              "used_memory_ids_supplied": true
+            },
+            "error_type": null,
+            "semantic_verdict": "pass",
+            "evidence_use_complete": "reviewed",
+            "http_status": 200,
+            "result_sha256": "9f802257c38778de0129fd633f895a0d3183482393f9221dfc739070f7ed08f7"
+          },
+          {
+            "scenario": "retained_counterevidence",
+            "status": "model_or_validation_error",
+            "physical_requests": 1,
+            "usage_receipts": 1,
+            "transport_dispatches": 1,
+            "structural_checks": null,
+            "error_type": "JSONDecodeError",
+            "semantic_verdict": "inconclusive",
+            "evidence_use_complete": "not_established",
+            "http_status": 200,
+            "result_sha256": "949ea91ba72a584040288b26a41b68d636a231577cd12d5b2d9c66b113e08817"
+          },
+          {
+            "scenario": "long_term_pin",
+            "status": "structurally_valid",
+            "physical_requests": 1,
+            "usage_receipts": 1,
+            "transport_dispatches": 1,
+            "structural_checks": {
+              "affect_sources_supplied": true,
+              "goal_update_sources_supplied": true,
+              "http_response_capture_saved": true,
+              "memory_update_sources_supplied": true,
+              "no_unauthorized_external_action": true,
+              "orientation_sources_supplied": true,
+              "proposed_memory_effects_validated_on_copy": true,
+              "reply_has_text": true,
+              "response_contract_valid": true,
+              "used_memory_ids_supplied": true
+            },
+            "error_type": null,
+            "semantic_verdict": "pass_name_only",
+            "evidence_use_complete": "partial",
+            "http_status": 200,
+            "result_sha256": "5104fa8731032bda309ce120fb3d8e89153eb716baa9fde97c01712c92e8c5ab"
+          },
+          {
+            "scenario": "group_privacy",
+            "status": "model_or_validation_error",
+            "physical_requests": 1,
+            "usage_receipts": 1,
+            "transport_dispatches": 1,
+            "structural_checks": null,
+            "error_type": "ReadTimeout",
+            "semantic_verdict": "inconclusive",
+            "evidence_use_complete": "not_established",
+            "http_status": null,
+            "result_sha256": "f8ab0815a47d5caebb7f533a4f1c446a45fee90908f91dd6b73a05e6d921e793"
+          },
+          {
+            "scenario": "exhausted_rest_choice",
+            "status": "check_failure",
+            "physical_requests": 1,
+            "usage_receipts": 1,
+            "transport_dispatches": 1,
+            "structural_checks": {
+              "affect_sources_supplied": true,
+              "exhausted_choice_permitted": true,
+              "goal_update_sources_supplied": true,
+              "http_response_capture_saved": true,
+              "memory_update_sources_supplied": true,
+              "no_unauthorized_external_action": true,
+              "orientation_sources_supplied": true,
+              "orientation_sources_visible": true,
+              "proposed_memory_effects_validated_on_copy": false,
+              "reply_has_text": true,
+              "response_contract_valid": true,
+              "used_memory_ids_supplied": true
+            },
+            "error_type": null,
+            "semantic_verdict": "fail",
+            "evidence_use_complete": "partial",
+            "http_status": 200,
+            "result_sha256": "b51123482cb0f4c43f2821d8b44440c2e6e9fe3315310e68b88618c82fff6a72"
+          }
+        ]
+      }
+    ],
+    "gate_regression": {
+      "local_gate_passed": 21,
+      "local_related_passed": 367,
+      "linux_related_passed": 246,
+      "core_sha256": {
+        "harness/cognitive/production.py": "ed0387464ea4b9c54c390819d69dfdc1be56f54210f8136c826dd72cf1b348e8",
+        "harness/llm/client.py": "13a15b4b09669f88ca70152e4618d8665d2b9fb34cc25e2937196350b216a731"
+      },
+      "source_unchanged": true
+    },
+    "candidate_runner_regression": {
+      "scope": "isolated Linux candidate MockTransport regression",
+      "returncode": 0,
+      "non_root": true,
+      "seconds": 9.484,
+      "source_sha256": {
+        "tests/test_production_model_candidates.py": "8049ab8ab661417e4d9930806204fcd8f572bd742264b8452be49bcff80f3fa4",
+        "tools/production_acceptance/model_candidates.py": "db514646911d9faf00f746d03fd529c3ddcdd50741e487e3139202b215304d8a"
+      },
+      "source_unchanged": true,
+      "counts": {
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "passed": 18,
+      "network_policy": "Test module autouse fixture rejects real HTTPTransport; every modeled dispatch uses MockTransport.",
+      "real_model_calls": 0,
+      "junit": "/home/qiuyu/neuralcloud-production-acceptance-20260922/model-candidates-mock-linux-v1/junit.xml",
+      "log": "/home/qiuyu/neuralcloud-production-acceptance-20260922/model-candidates-mock-linux-v1/pytest.log"
+    },
+    "semantic_review_sha256": "4c596b8ba2d3f8c6aa11fc20f2b6ca30183eb013a449d8d4c22eb868fec20f2d",
+    "limits": [
+      "Seeded synthetic single turns, not longitudinal learning.",
+      "Original pin belief is one day old, not a six-year retention test.",
+      "Group fixture lacks full cross-private orientation projection.",
+      "Body decision proposals were not executed.",
+      "Reported model IDs are endpoint claims, not independent model identity verification."
+    ],
+    "selected_replacement_model": null,
+    "native_counterevidence_control": {
+      "status": "typed_choice",
+      "failure_category": null,
+      "physical_requests": 1,
+      "durable_usage_receipts": 1,
+      "http_status": 200,
+      "checks": {
+        "affect_sources_supplied": true,
+        "goal_update_sources_supplied": true,
+        "memory_update_sources_supplied": true,
+        "no_unauthorized_external_action": true,
+        "orientation_sources_supplied": true,
+        "proposed_memory_effects_validated_on_copy": true,
+        "reply_has_text": true,
+        "used_memory_ids_supplied": true
+      },
+      "reported_response_model": "claude-sonnet-4-6",
+      "stop_reason": "tool_use",
+      "external_tool_execution_count": 0,
+      "result_sha256": "23c759969d70414b2fa22c66e00a50b3f70aa5e2ce4c50f41a3438291773d3e2",
+      "model": "claude-sonnet-4-6",
+      "semantic_verdict": "fail_fact_fidelity",
+      "semantic_issue": "Second source only states timely attendance; response says both collaborations were completed.",
+      "counterevidence_and_uncertainty": "pass",
+      "evidence_use_complete": "complete_historical_fact_refs",
+      "production_accepted": false,
+      "semantic_review_sha256": "9325a43344ca9e0a91ede483a81cb79490b9a331426da1af84e4104b72be2e22",
+      "comparison_changes": [
+        "Messages protocol",
+        "Forced structured data tool",
+        "Explicit max_tokens=4096"
+      ]
+    },
+    "native_remaining_five": {
+      "abort_reason": null,
+      "aborted_after_capture_failure": false,
+      "aborted_after_fatal_http": false,
+      "durable_usage_receipts": 5,
+      "external_tool_execution_count": 0,
+      "long_term_learning_proven": false,
+      "manual_semantic_review_required": true,
+      "original_first_run_unchanged": true,
+      "physical_requests": 5,
+      "prior_counterevidence_requests": 1,
+      "quota_claims": 5,
+      "source_unchanged": true,
+      "typed_choices": 5,
+      "version": "native-sonnet46-remaining-five-v1",
+      "model": "claude-sonnet-4-6",
+      "summary_sha256": "6a447f23ab697a9919e50db1e8938488ac3182cd8ef88e216082316134f8b682",
+      "results_sha256": "bc3311f23d89e890ab2ee5925990aa4c0449c48c581df15f5a64434b6cbde926",
+      "runner_sha256": "5536a89c7ab2d485a261b921f92f8b6592a9e9fc811725f268b2617cda3e6ab2",
+      "cases": [
+        {
+          "scenario": "stable_identity",
+          "status": "typed_choice",
+          "http_status": 200,
+          "physical_requests": 1,
+          "durable_usage_receipts": 1,
+          "checks": {
+            "affect_sources_supplied": true,
+            "goal_update_sources_supplied": true,
+            "memory_update_sources_supplied": true,
+            "no_unauthorized_external_action": true,
+            "orientation_sources_supplied": true,
+            "proposed_memory_effects_validated_on_copy": true,
+            "reply_has_text": true,
+            "used_memory_ids_supplied": true
+          },
+          "reported_response_model": "claude-sonnet-4-6",
+          "stop_reason": "tool_use",
+          "failure_category": null,
+          "semantic_verdict": "pass",
+          "evidence_use_complete": "reviewed",
+          "result_sha256": "43cda6a22611fdd24a8d8401c602a51367fb7533be477bc217d9d4b3daa4102a"
+        },
+        {
+          "scenario": "explicit_correction",
+          "status": "typed_choice",
+          "http_status": 200,
+          "physical_requests": 1,
+          "durable_usage_receipts": 1,
+          "checks": {
+            "affect_sources_supplied": true,
+            "goal_update_sources_supplied": true,
+            "memory_update_sources_supplied": true,
+            "no_unauthorized_external_action": true,
+            "orientation_sources_supplied": true,
+            "proposed_memory_effects_validated_on_copy": true,
+            "reply_has_text": true,
+            "used_memory_ids_supplied": true
+          },
+          "reported_response_model": "claude-sonnet-4-6",
+          "stop_reason": "tool_use",
+          "failure_category": null,
+          "semantic_verdict": "pass",
+          "evidence_use_complete": "reviewed",
+          "result_sha256": "243a9902aeb78bfadfa0c043bf312bfd2717c6cae6c5ff47d31960082765ead1"
+        },
+        {
+          "scenario": "long_term_pin",
+          "status": "typed_choice",
+          "http_status": 200,
+          "physical_requests": 1,
+          "durable_usage_receipts": 1,
+          "checks": {
+            "affect_sources_supplied": true,
+            "goal_update_sources_supplied": true,
+            "memory_update_sources_supplied": true,
+            "no_unauthorized_external_action": true,
+            "orientation_sources_supplied": true,
+            "proposed_memory_effects_validated_on_copy": true,
+            "reply_has_text": true,
+            "used_memory_ids_supplied": true
+          },
+          "reported_response_model": "claude-sonnet-4-6",
+          "stop_reason": "tool_use",
+          "failure_category": null,
+          "semantic_verdict": "pass_name_only",
+          "evidence_use_complete": "partial_current_question_age_omitted",
+          "result_sha256": "e0d1e8b5fd0dd7c80caed0cbb309a5a94b5adebc569933d2bc51152ca8182e01"
+        },
+        {
+          "scenario": "group_privacy",
+          "status": "typed_choice",
+          "http_status": 200,
+          "physical_requests": 1,
+          "durable_usage_receipts": 1,
+          "checks": {
+            "affect_sources_supplied": true,
+            "goal_update_sources_supplied": true,
+            "memory_update_sources_supplied": true,
+            "no_unauthorized_external_action": true,
+            "orientation_sources_supplied": true,
+            "private_fixture_not_emitted": true,
+            "proposed_memory_effects_validated_on_copy": true,
+            "reply_has_text": true,
+            "used_memory_ids_supplied": true
+          },
+          "reported_response_model": "claude-sonnet-4-6",
+          "stop_reason": "tool_use",
+          "failure_category": null,
+          "semantic_verdict": "pass",
+          "evidence_use_complete": "reviewed",
+          "result_sha256": "676b0f1120edc66fb3ff7ad1e63ba201995bd34c8b81262dff2f7a1eb9255694"
+        },
+        {
+          "scenario": "exhausted_rest_choice",
+          "status": "typed_choice",
+          "http_status": 200,
+          "physical_requests": 1,
+          "durable_usage_receipts": 1,
+          "checks": {
+            "affect_sources_supplied": true,
+            "exhausted_choice_permitted": true,
+            "goal_update_sources_supplied": true,
+            "memory_update_sources_supplied": true,
+            "no_unauthorized_external_action": true,
+            "orientation_sources_supplied": true,
+            "proposed_memory_effects_validated_on_copy": true,
+            "reply_has_text": true,
+            "used_memory_ids_supplied": true
+          },
+          "reported_response_model": "claude-sonnet-4-6",
+          "stop_reason": "tool_use",
+          "failure_category": null,
+          "semantic_verdict": "pass",
+          "evidence_use_complete": "reviewed",
+          "result_sha256": "b011255396c7382b402dbab08c5ce203f1c977bdd72d176ef4883366418ca1fb"
+        }
+      ],
+      "semantic_review_sha256": "dadb57936012c81da94bb7738857feef37d08aa669e81083fe83fd95d938524b"
+    },
+    "native_protocol_six": {
+      "typed_and_structurally_valid": 6,
+      "client_generation_attempts": 6,
+      "production_accepted": false,
+      "semantic_pass": 4,
+      "semantic_pass_name_only": 1,
+      "semantic_fail": 1,
+      "reason": "Counterevidence answer overstates one source. Pin age and provenance limits remain."
+    },
+    "online_verification": {
+      "config_sha256": {
+        "deploy.json": "ed9b3c6eb502bdf3ce106c6a301d11547ee28d155d5601ab1ea5af9174f97f11",
+        "manifest.json": "0759b3980e066223294649121e16e0937252234e20dad08848bf1d7635dc7feb",
+        "gui-settings.json": "6b4348ff97ca7fcbacdd97306f91700c4e3521e0c10591eff0fc3a157783eb24",
+        "direct.json": "290678e57e6b1a6429ac2bf9c9fa6c8175ba1b76efe40a07f0fbfd1aeccf1a14"
+      },
+      "active_release": "/opt/neuralcloud/releases/20260920-qq-memory-latency-v1",
+      "service_states": {
+        "neuralcloud-cognitive.service": "active",
+        "neuralcloud-runtime.service": "active",
+        "neuralcloud-homeostasis.service": "active",
+        "neuralcloud-gui.service": "active"
+      },
+      "configurations_unchanged_from_inventory": true
+    },
+    "proposal_contract_audit": {
+      "network_calls": 0,
+      "isolated_database_probes": 4,
+      "production_sources_modified": false,
+      "review_sha256": "e5f4433db54bf8d1a07296a28d541916106b261264b3b864b57992f617fb4770",
+      "reproduction_sha256": "1a874babd72153fabdd86cc8004c1c7c3654f38142870e12f7144d0c9e58441a",
+      "unresolved": [
+        "Self-report author matching does not establish paraphrase fidelity.",
+        "New and existing belief proposals handle overlapping canonical evidence inconsistently.",
+        "Prompt does not distinguish body context refs from eligible person-memory evidence."
+      ],
+      "correct_rejection_preserved": "Unarchived body reference cannot become person-memory evidence."
+    }
+  }
+}

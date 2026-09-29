@@ -1,0 +1,429 @@
+{
+  "$defs": {
+    "BodyRestCommand": {
+      "additionalProperties": false,
+      "properties": {
+        "body_instance_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Body Instance Id",
+          "type": "string"
+        },
+        "command_id": {
+          "maxLength": 240,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Command Id",
+          "type": "string"
+        },
+        "episode_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Episode Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "body-rest-command-v1",
+          "default": "body-rest-command-v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command_id",
+        "body_instance_id",
+        "episode_id"
+      ],
+      "title": "BodyRestCommand",
+      "type": "object"
+    },
+    "BodyRestReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "body_instance_id": {
+          "title": "Body Instance Id",
+          "type": "string"
+        },
+        "body_state": {
+          "$ref": "#/$defs/BodyStateSnapshot"
+        },
+        "command_id": {
+          "title": "Command Id",
+          "type": "string"
+        },
+        "episode_id": {
+          "title": "Episode Id",
+          "type": "string"
+        },
+        "evidence_refs": {
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1,
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "ledger_revision": {
+          "minimum": 0,
+          "title": "Ledger Revision",
+          "type": "integer"
+        },
+        "resting": {
+          "title": "Resting",
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": "body-rest-receipt-v1",
+          "default": "body-rest-receipt-v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "body_instance_id",
+        "episode_id",
+        "resting",
+        "ledger_revision",
+        "evidence_refs",
+        "body_state",
+        "command_id"
+      ],
+      "title": "BodyRestReceipt",
+      "type": "object"
+    },
+    "BodyRestStatus": {
+      "additionalProperties": false,
+      "properties": {
+        "body_instance_id": {
+          "title": "Body Instance Id",
+          "type": "string"
+        },
+        "body_state": {
+          "$ref": "#/$defs/BodyStateSnapshot"
+        },
+        "episode_id": {
+          "title": "Episode Id",
+          "type": "string"
+        },
+        "evidence_refs": {
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1,
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "ledger_revision": {
+          "minimum": 0,
+          "title": "Ledger Revision",
+          "type": "integer"
+        },
+        "resting": {
+          "title": "Resting",
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": "body-rest-status-v1",
+          "default": "body-rest-status-v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "body_instance_id",
+        "episode_id",
+        "resting",
+        "ledger_revision",
+        "evidence_refs",
+        "body_state"
+      ],
+      "title": "BodyRestStatus",
+      "type": "object"
+    },
+    "BodyStateSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "body_instance_id": {
+          "title": "Body Instance Id",
+          "type": "string"
+        },
+        "captured_at": {
+          "format": "date-time",
+          "title": "Captured At",
+          "type": "string"
+        },
+        "compute": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Compute"
+        },
+        "energy": {
+          "$ref": "#/$defs/EnergyState"
+        },
+        "episode_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Episode Id"
+        },
+        "evidence_refs": {
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 1,
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "exhausted": {
+          "default": false,
+          "title": "Exhausted",
+          "type": "boolean"
+        },
+        "integrity": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Integrity"
+        },
+        "ledger_revision": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ledger Revision"
+        },
+        "physiology_mode": {
+          "default": "experiment",
+          "enum": [
+            "experiment",
+            "production_v1"
+          ],
+          "title": "Physiology Mode",
+          "type": "string"
+        },
+        "provider_id": {
+          "title": "Provider Id",
+          "type": "string"
+        },
+        "resting": {
+          "default": false,
+          "title": "Resting",
+          "type": "boolean"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "sample_sequence": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sample Sequence"
+        },
+        "schema_version": {
+          "const": "physiology.body-state.v1",
+          "default": "physiology.body-state.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "thermal": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Thermal"
+        }
+      },
+      "required": [
+        "provider_id",
+        "body_instance_id",
+        "revision",
+        "captured_at",
+        "energy",
+        "evidence_refs"
+      ],
+      "title": "BodyStateSnapshot",
+      "type": "object"
+    },
+    "EnergyState": {
+      "additionalProperties": false,
+      "properties": {
+        "available_ratio": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Available Ratio",
+          "type": "number"
+        },
+        "available_units": {
+          "minimum": 0,
+          "title": "Available Units",
+          "type": "number"
+        },
+        "capacity_units": {
+          "exclusiveMinimum": 0,
+          "title": "Capacity Units",
+          "type": "number"
+        },
+        "charging": {
+          "default": false,
+          "title": "Charging",
+          "type": "boolean"
+        },
+        "delta_units_per_minute": {
+          "title": "Delta Units Per Minute",
+          "type": "number"
+        },
+        "estimated_time_to_empty_seconds": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Estimated Time To Empty Seconds"
+        },
+        "terminal": {
+          "default": false,
+          "title": "Terminal",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "capacity_units",
+        "available_units",
+        "available_ratio",
+        "delta_units_per_minute"
+      ],
+      "title": "EnergyState",
+      "type": "object"
+    },
+    "EvidenceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "created_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created At"
+        },
+        "digest": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Digest"
+        },
+        "media_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Media Type"
+        },
+        "provider_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Provider Id",
+          "type": "string"
+        },
+        "ref": {
+          "minLength": 1,
+          "title": "Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "provider_id",
+        "ref"
+      ],
+      "title": "EvidenceRef",
+      "type": "object"
+    }
+  },
+  "anyOf": [
+    {
+      "$ref": "#/$defs/BodyRestCommand"
+    },
+    {
+      "$ref": "#/$defs/BodyRestReceipt"
+    },
+    {
+      "$ref": "#/$defs/BodyRestStatus"
+    }
+  ]
+}

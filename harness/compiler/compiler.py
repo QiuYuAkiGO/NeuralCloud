@@ -46,6 +46,9 @@ PERSONA_EXPRESSION_DEFAULTS = (
 
 
 def emotion_enabled(settings: Any) -> bool:
+    from harness.production.metering import current_production_context
+    if current_production_context() is not None:
+        return False
     return getattr(settings, "emotion_mode", "off") == "on"
 
 
@@ -84,6 +87,7 @@ def command_emotion_context(host: Any, payload: dict[str, Any]) -> tuple[dict[st
     request = dict(payload)
     reference = request.pop("emotion_context_ref", None)
     request.pop("emotion_revision", None)
+    request.pop("production_context", None)
     return request, reference
 
 
@@ -234,6 +238,16 @@ class ContextCompiler:
         memory_evidence: MemoryEvidenceContext | None = None,
         prefix_messages: list[dict[str, str]] | None = None,
     ) -> ModelContext:
+        from harness.production.metering import current_production_context
+        if current_production_context() is not None:
+            homeostatic_interoception, emotion_guidance = None, None
+            situation = situation.model_copy(update={
+                "relationship": None, "interoception": None,
+                "actor": situation.actor.model_copy(update={"psych_state": {}}),
+                "snapshot": situation.snapshot.model_copy(update={"psych": None, "relationship": None}) if situation.snapshot else None,
+            })
+            additional_segments = [item for item in additional_segments or []
+                if item.kind not in {"emotion_guidance", "homeostatic_interoception", "psych", "relationship"}]
         insights = insights or []
         session = session or []
         additional_segments = additional_segments or []

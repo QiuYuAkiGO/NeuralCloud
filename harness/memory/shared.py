@@ -227,6 +227,7 @@ class SharedMigrationReport(_Frozen):
     issues: tuple[SharedMigrationIssue, ...]
     source_readonly: Literal[True] = True
     partial_import: Literal[False] = False
+    has_more: bool = False
 
 
 class SharedMemoryContext(_Frozen):
@@ -431,7 +432,7 @@ class SharedMemoryStore:
         except (ValueError, TypeError, KeyError) as exc:
             raise SharedMemoryStorageError("persisted shared memory binding is invalid") from exc
 
-    def _write(self, records: list[SharedMemoryRecord]) -> tuple[SharedWriteResult, ...]:
+    def _write(self, records: list[SharedMemoryRecord], *, cursors=()) -> tuple[SharedWriteResult, ...]:
         results = []
         with closing(self._connect(write=True)) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
@@ -450,6 +451,9 @@ class SharedMemoryStore:
                                         record.source.original_sha256, record.channel, record.session_id, record.author_principal, record.model_dump_json()))
                     self._index_source(connection, record)
                     results.append(SharedWriteResult(created=True, record=record))
+            for stream, table, cursor in cursors:
+                connection.execute("""INSERT INTO shared_memory_import_cursors VALUES(?,?,?)
+                    ON CONFLICT(stream,source_table) DO UPDATE SET cursor=MAX(cursor,excluded.cursor)""", (stream, table, cursor))
         return tuple(results)
 
     def record_local(self, event: SharedLocalEvent) -> SharedWriteResult:
@@ -508,6 +512,25 @@ class SharedMemoryStore:
         exhausted = len(rows) <= limit
         return SharedSourcePage(records=tuple(records), next_cursor=window.watermark if exhausted else selected[-1]["source_sequence"], exhausted=exhausted)
 
+    def read_after(self, *, cursor: int = 0, limit: int = 256) -> SharedSourcePage:
+        """Read an insertion-ordered page without rescanning an entire archive."""
+        if type(cursor) is not int or cursor < 0 or type(limit) is not int or not 1 <= limit <= 1000:
+            raise ValueError("invalid incremental source cursor or limit")
+        if not self.path.is_file():
+            return SharedSourcePage(records=(), next_cursor=cursor, exhausted=True)
+        with closing(self._connect(write=False)) as connection:
+            exists = connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='shared_memory_source_index'").fetchone()
+            if not exists:
+                # Old archives need explicit initialization; do not hide missing history.
+                raise SharedMemoryStorageError("incremental source index requires migration")
+            rows = connection.execute("""SELECT e.*,i.sequence AS source_sequence FROM shared_memory_source_index i
+                JOIN shared_memory_entries e ON e.record_id=i.record_id
+                WHERE i.owner_id=? AND i.preset_id=? AND i.sequence>? ORDER BY i.sequence LIMIT ?""",
+                (self.owner_id, self.preset_id, cursor, limit + 1)).fetchall()
+        selected = rows[:limit]
+        return SharedSourcePage(records=tuple(self._decode(row) for row in selected),
+            next_cursor=selected[-1]["source_sequence"] if selected else cursor, exhausted=len(rows) <= limit)
+
     def import_board_entry(self, entry) -> SharedWriteResult:
         """Project a body-read verified receipt; callers must verify its source first."""
         from harness.embodiment.board_contracts import BoardEntry
@@ -560,7 +583,8 @@ class SharedMemoryStore:
 
     def import_qq_database(self, path: Path | str, *, allowed_group_ids: tuple[str, ...] | list[str],
                            self_member_id: str,
-                           allowed_private_peer_ids: tuple[str, ...] | list[str] = ()) -> SharedMigrationReport:
+                           allowed_private_peer_ids: tuple[str, ...] | list[str] = (),
+                           incremental: bool = False, batch_size: int = 256) -> SharedMigrationReport:
         """Mirror ALL selected historical originals, not a recent query window.
 
         The source is one read-only SQLite snapshot. Invalid selected rows abort
@@ -581,6 +605,8 @@ class SharedMemoryStore:
                 or not allowed_group_ids and not allowed_private_peer_ids):
             raise ValueError("explicit numeric group or private peer scopes are required")
         source_path = Path(path)
+        if type(batch_size) is not int or not 1 <= batch_size <= 1000:
+            raise ValueError("invalid QQ ingestion batch size")
         if source_path.absolute() == self.path.absolute() or (source_path.exists() and self.path.exists() and source_path.samefile(self.path)):
             raise ValueError("the mirror must not write into the original QQ database")
         kinds = {"qq_visual_profiles": "qq_profile", "qq_visual_observations": "qq_observation",
@@ -589,6 +615,13 @@ class SharedMemoryStore:
         counts = {kind: 0 for kind in kinds.values()}
         allowed = {*allowed_group_ids,
                    *(private_scope_id(self_member_id, peer) for peer in allowed_private_peer_ids)}
+        stream = _hash(_json([str(source_path.absolute()), sorted(allowed), self_member_id]))
+        cursors, next_cursors, has_more = {}, [], False
+        if incremental:
+            with closing(self._connect(write=True)) as target:
+                target.execute("CREATE TABLE IF NOT EXISTS shared_memory_import_cursors (stream TEXT, source_table TEXT, cursor INTEGER, PRIMARY KEY(stream,source_table))")
+                target.commit()
+                cursors = dict(target.execute("SELECT source_table,cursor FROM shared_memory_import_cursors WHERE stream=?", (stream,)))
         try:
             if not source_path.is_file() or source_path.is_symlink():
                 raise ValueError("original database is unavailable")
@@ -603,7 +636,16 @@ class SharedMemoryStore:
                 for table, kind in kinds.items():
                     if table not in tables:
                         continue
-                    for row in connection.execute(f"SELECT * FROM {table}"):
+                    if incremental:
+                        batch = connection.execute(f"SELECT rowid AS source_cursor,* FROM {table} WHERE rowid>? ORDER BY rowid LIMIT ?",
+                            (cursors.get(table, 0), batch_size + 1)).fetchall()
+                        has_more = has_more or len(batch) > batch_size
+                        rows = batch[:batch_size]
+                        if rows:
+                            next_cursors.append((stream, table, rows[-1]["source_cursor"]))
+                    else:
+                        rows = connection.execute(f"SELECT * FROM {table}")
+                    for row in rows:
                         source_id = row["record_id" if kind in {"qq_profile", "qq_observation"} else "receipt_id"]
                         if row["group_id"] not in allowed:
                             excluded += 1
@@ -622,6 +664,13 @@ class SharedMemoryStore:
                                     row["record_id"], row["group_id"], row["member_id"], row["profile_record_id"], row["capture_id"], row["capture_item_id"], datetime.fromisoformat(row["observed_at"])):
                                     raise ValueError("observation index mismatch")
                                 profile = profiles.get(item.profile_record_id)
+                                if profile is None and incremental:
+                                    profile_row = connection.execute("SELECT * FROM qq_visual_profiles WHERE record_id=?", (item.profile_record_id,)).fetchone()
+                                    if profile_row is not None:
+                                        profile = QQVerifiedProfile.model_validate_json(profile_row["record_json"])
+                                        if (profile.record_id, profile.group_id, profile.member_id, profile.capture_id, profile.observed_at) != (
+                                                profile_row["record_id"], profile_row["group_id"], profile_row["member_id"], profile_row["capture_id"], datetime.fromisoformat(profile_row["observed_at"])):
+                                            raise ValueError("profile index mismatch")
                                 if (profile is None or (profile.group_id, profile.member_id) != (item.group_id, item.member_id)
                                         or profile.verification != item.author_attribution):
                                     raise ValueError("observation profile mismatch")
@@ -651,9 +700,9 @@ class SharedMemoryStore:
         except (sqlite3.Error, OSError, ValueError, TypeError, KeyError, IndexError):
             issues.append(SharedMigrationIssue(kind="database", code="invalid_database"))
         writes = ()
-        if not issues and records:
+        if not issues and (records or next_cursors):
             try:
-                writes = self._write(records)
+                writes = self._write(records, cursors=next_cursors)
             except SharedMemoryConflict:
                 issues.append(SharedMigrationIssue(kind="database", code="source_conflict"))
             except (sqlite3.Error, OSError, SharedMemoryStorageError):
@@ -663,7 +712,7 @@ class SharedMemoryStore:
             excluded_count=excluded, counts_by_kind=counts,
             sources=tuple(SharedMigrationSource(kind=item.kind, original_record_id=item.source.original_record_id,
                 shared_record_id=item.record_id, original_sha256=item.source.original_sha256,
-                original_row_sha256=item.source.original_row_sha256) for item in records), issues=tuple(issues))
+                original_row_sha256=item.source.original_row_sha256) for item in records), issues=tuple(issues), has_more=has_more)
 
     def read_exact(self, scope: SharedReadScope, record_ids: list[str]) -> tuple[SharedMemoryRecord, ...]:
         """Read only named records through the same immutable-source/scope guard."""

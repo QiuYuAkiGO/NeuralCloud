@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from harness.embodiment.capabilities import CapabilityRequirement
 from harness.regulation.config import RegulationConfig
+from harness.production.config import ProductionConfig
 from harness.research.grounded_agency.manifest import GroundedAgencyBinding, GroundedAgencyCondition
 
 ControlMode = Literal["development_debug", "study_runtime"]
@@ -211,9 +212,19 @@ class ExperimentManifest(BaseModel):
     autonomous_capabilities: AutonomousCapabilitiesCondition = Field(default_factory=AutonomousCapabilitiesCondition)
     goal_regulation: RegulationConfig = Field(default_factory=RegulationConfig)
     grounded_agency: GroundedAgencyCondition | None = None
+    production: ProductionConfig | None = None
 
     @model_validator(mode="after")
     def _validate_study_authority(self) -> ExperimentManifest:
+        if self.production is not None:
+            if self.grounded_agency is not None:
+                raise ValueError("production and historical research require separate manifests")
+            if self.homeostatic_expression.mode != "off" or self.goal_regulation.enabled:
+                raise ValueError("production forbids legacy semantic drives and goal regulation")
+            if self.basic_terminal.enabled:
+                raise ValueError("production requires capability actions instead of legacy terminal regulation")
+            if self.condition == "argmin_efe":
+                raise ValueError("production decisions must be model owned")
         if self.goal_regulation.enabled:
             if self.grounded_agency is not None:
                 raise ValueError("production goal regulation and grounded research require separate manifests")
@@ -307,6 +318,8 @@ class ExperimentManifest(BaseModel):
             for optional in ("runtime", "agency", "open_social", "body_belief_profile"):
                 if getattr(self.grounded_agency, optional) is None:
                     payload["grounded_agency"].pop(optional)
+        if self.production is None:
+            payload.pop("production", None)
         return json.dumps(
             payload,
             ensure_ascii=False,
@@ -338,6 +351,8 @@ class ExperimentManifest(BaseModel):
         return candidate
 
     def model_copy(self, *, update: Mapping[str, Any] | None = None, deep: bool = False) -> ExperimentManifest:
+        if self.production is not None or "production" in (update or {}):
+            return type(self).model_validate({**self.model_dump(mode="json"), **(update or {})})
         # Pydantic's default copy bypasses validators; preserve it only for legacy callers.
         if self.grounded_agency is None and (update or {}).get("grounded_agency") is None:
             if (self.basic_terminal.enabled or self.goal_regulation.enabled

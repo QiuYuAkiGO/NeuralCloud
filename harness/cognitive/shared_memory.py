@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from contextlib import closing
 from datetime import datetime, timedelta, timezone
 import json
+from uuid import uuid4
 import hashlib
 import os
 from pathlib import Path
@@ -44,7 +45,7 @@ class SharedMemoryCompiler(ContextCompiler):
     def compile(self, situation, **kwargs):
         extra = kwargs.get("additional_segments") or []
         shared = [segment for segment in extra if segment.kind == "user"
-                  and segment.why in {"verified_shared_channel_memory", "daily_revision_memory"} and segment.source_ids]
+                  and segment.why in {"verified_shared_channel_memory", "daily_revision_memory", "production_memory"} and segment.source_ids]
         if not shared:
             return super().compile(situation, **kwargs)
         required = sum(estimate_tokens(segment.text) for segment in extra)
@@ -140,6 +141,7 @@ class SharedQQBinding:
     context: dict
     source_ids: tuple[str, ...]
     derived_memory: dict | None = None
+    production_store: Any | None = None
 
 
 class CognitiveSharedMemory:
@@ -150,6 +152,54 @@ class CognitiveSharedMemory:
         self.qq_settings = qq_settings
         self.last_import = None
         self._source_stamp = None
+        self._production_stores = {}
+
+    @property
+    def production_enabled(self):
+        settings = getattr(getattr(self.host, "chat", None), "settings", None)
+        return bool(getattr(settings, "production_memory_enabled", False))
+
+    @property
+    def production_store(self):
+        from harness.memory.production import ProductionMemoryStore
+        shared = self.store
+        key = (shared.owner_id, shared.preset_id)
+        if key not in self._production_stores:
+            self._production_stores[key] = ProductionMemoryStore(
+                shared.path.with_name(shared.path.stem + ".production.sqlite3"),
+                owner_id=shared.owner_id, preset_id=shared.preset_id)
+        return self._production_stores[key]
+
+    def sync_production(self, preset=None):
+        """Bounded source ingestion plus optional background legacy publication."""
+        if not self.production_enabled:
+            return
+        page = self.production_store.sync_shared(self.store)
+        if preset is not None:
+            # Background publication must not depend on how far foreground
+            # catch-up has advanced. Fetch only the ledger's explicit sources.
+            identifiers = list(preset.daily_revision_state.get("sources", {}))
+            scope = SharedReadScope(owner_id=self.store.owner_id, audience="local:main")
+            for offset in range(0, len(identifiers), 256):
+                records = self.store.read_exact(scope, identifiers[offset:offset + 256])
+                self.production_store.ingest(self.production_store.from_shared(record) for record in records)
+            self.production_store.import_legacy(preset)
+        return page
+
+    def apply_production_updates(self, updates, *, event_id, audience, subject_id,
+                                 source_records=(), now=None):
+        if not self.production_enabled:
+            return False
+        store = self.production_store
+        store.ingest([store.from_shared(record) for record in source_records])
+        return store.apply_updates(updates, event_id=event_id, audience=audience,
+                                   subject_id=subject_id, now=now)
+
+    def validate_production_context(self, context, *, audience, now=None):
+        if not self.production_enabled:
+            return True
+        references = context.get("entries", ()) if isinstance(context, dict) else context
+        return self.production_store.validate_references(references, audience=audience, now=now)
 
     @property
     def store(self):
@@ -185,11 +235,13 @@ class CognitiveSharedMemory:
             return
         result = self.store.import_qq_database(path,
             allowed_group_ids=self.qq_settings.allowed_group_ids,
-            self_member_id=self.qq_settings.self_member_id, allowed_private_peer_ids=private_peers)
+            self_member_id=self.qq_settings.self_member_id, allowed_private_peer_ids=private_peers,
+            incremental=self.production_enabled)
         self.last_import = result
         if not result.success:
             raise ValueError("shared_qq_memory_import_failed")
-        self._source_stamp = stamp
+        if not result.has_more:
+            self._source_stamp = stamp
 
     @measure_stage("memory.import_local")
     def sync_local(self):
@@ -247,6 +299,30 @@ class CognitiveSharedMemory:
 
     def local_context(self, event):
         self.sync_qq()
+        if self.production_enabled:
+            self.sync_local()
+            self.sync_production()
+            payload = self.production_store.recall(audience="local:main", query=event.raw_text,
+                limit=self.host.chat.settings.qq_memory_recall_max_items,
+                max_characters=self.host.chat.settings.qq_memory_recall_max_characters, event_id=event.event_id)
+            # Explicit operator confirmations are ingested into the same SQL
+            # authority. A legacy side-read would bypass source tombstones.
+            segments = []
+            if payload:
+                segment = ContextSegment(kind="user", why="production_memory",
+                    text=json.dumps({"derived_memory": payload}, ensure_ascii=False, separators=(",", ":")),
+                    source_ids=[row["record_id"] for row in payload["entries"]])
+                entries = [MemoryEvidenceEntry(source_id=row["record_id"],
+                    text=row.get("current_impression") or row.get("summary", ""), audience="local:main",
+                    source_channel=row.get("source_channel"), source_conversation_id=row.get("source_conversation_id"),
+                    observed_at=row.get("occurred_at"), source_refs=row.get("source_refs", []),
+                    status="provisional" if row.get("kind") == "person" else "retained_fact", kind="derived_memory")
+                    for row in payload["entries"]]
+                segment.memory_evidence = MemoryEvidenceContext.bind(audience="local:main", entries=entries, segment=segment)
+                if event.channel == "chat" and event.speaker != "character":
+                    segment.memory_evidence = segment.memory_evidence.model_copy(update={"current_speaker_id": "local:main"})
+                segments.append(segment)
+            return segments
         # Internal capability/goal selection borrows this facade too. Only an
         # actual local chat request may retrieve private QQ conversation text.
         channels = ("qq_group", "qq_private", "private_board") if event.channel == "chat" else ("qq_group", "private_board")
@@ -427,6 +503,24 @@ class CognitiveSharedMemory:
             raise ValueError("qq_private_scope_not_authorized")
         self.sync_qq()
         self.sync_local()
+        if self.production_enabled:
+            self.sync_production()
+            preset = self.host.chat.library.load(self.host.chat.active_preset_id)
+            preset = preset.model_copy(update={"persona": self.host.chat.memory.get_persona()})
+            settings = self.host.chat.settings.model_copy(update={"record_interaction": False,
+                "call_log_enabled": False, "continuation_enabled": False, "max_reply_segments": 3,
+                "aux_llm_preload": False})
+            authorized = private or (self.qq_settings is not None and group_id in self.qq_settings.allowed_group_ids)
+            derived = self.production_store.recall(audience=conversation_audience(group_id), query=query,
+                subject_ids=(f"qq:member:{member_id}",) if member_id else (),
+                limit=settings.qq_memory_recall_max_items,
+                max_characters=settings.qq_memory_recall_max_characters,
+                event_id="qq-binding:" + uuid4().hex) if authorized else {}
+            return SharedQQBinding(settings, preset, self.host.chat.llm,
+                ScopedQQMemoryView(self.host.chat.memory, group_id=group_id, member_id=member_id),
+                {"schema_version": "production-memory-v1", "entries": [],
+                 "coverage": "scoped_memory_in_derived_context"}, (), derived,
+                production_store=self.production_store)
         # QQ's own verified context retains its existing selection and ledger
         # semantics. Only separately authorized cross-channel records augment it.
         context = self.store.query(SharedReadScope(audience=conversation_audience(group_id),
@@ -484,6 +578,10 @@ class CognitiveSharedMemory:
         """The owner's private board borrows its authorized shared recall."""
         self.sync_qq()
         self.sync_local()
+        if self.production_enabled:
+            self.sync_production()
+            return self.production_store.recall(audience="local:main", query=query, limit=16, max_characters=10000,
+                                                event_id="board-recall:" + uuid4().hex)
         scope = SharedReadScope(audience="local:main", channels=("local_chat", "qq_group", "private_board"),
             kinds=("local_incoming", "local_outgoing",
             "qq_observation", "qq_delivery", "qq_segment_delivery", "board_entry"))
@@ -496,6 +594,10 @@ class CognitiveSharedMemory:
         """Private diary recall stays on local-visible originals, including prior diary."""
         self.sync_qq()
         self.sync_local()
+        if self.production_enabled:
+            self.sync_production()
+            return self.production_store.recall(audience="local:main", query=query, limit=16, max_characters=10000,
+                                                event_id="diary-recall:" + uuid4().hex)
         scope = SharedReadScope(
             audience="local:main",
             channels=("local_chat", "qq_group", "qq_private", "private_board", "private_diary"),
@@ -509,12 +611,22 @@ class CognitiveSharedMemory:
 
     def commit_board_entry(self, entry):
         """Only Cognitive's independently verified body read enters this facade."""
-        return self.store.import_board_entry(entry)
+        result = self.store.import_board_entry(entry)
+        if self.production_enabled:
+            self.sync_production()
+        return result
 
     def commit_diary_entry(self, entry):
-        return self.store.import_diary_entry(entry)
+        result = self.store.import_diary_entry(entry)
+        if self.production_enabled:
+            self.sync_production()
+        return result
 
     def ui(self):
+        if self.production_enabled:
+            return {"shared_mind": {"owner_id": self.production_store.owner_id, "mode": "production",
+                                    "memory_records": None},
+                    "production_memory": self.production_store.operator_snapshot()}
         context = self.store.query(SharedReadScope(audience="local:main"), limit=50)
         payload = context.model_payload(max_bytes=32000)
         return {"shared_mind": {"owner_id": "misty", "mode": "shared",

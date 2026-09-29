@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
+import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -94,12 +95,12 @@ def test_condition_drift_rejected_at_open(tmp_path: Path):
 
 
 def test_wire_contract_episode_and_evidence_stay_private(tmp_path: Path):
-    source = body(1).model_dump(mode="json")
-    source.pop("provider_id")
-    source["schema_version"] = "body-state-v1"
-    source["episode_id"] = "wire-a"
-    source["energy"].pop("estimated_time_to_empty_seconds")
-    source["evidence_refs"] = ["evidence://sha256/" + "e" * 64]
+    # This frozen research wire contract is independent of the extensible
+    # production provider DTO; never construct it from the latter's dump.
+    source = {"schema_version": "body-state-v1", "body_instance_id": "body-1", "episode_id": "wire-a",
+        "revision": 1, "captured_at": (NOW + timedelta(seconds=1)).isoformat(),
+        "energy": {"capacity_units": 100, "available_units": 50, "available_ratio": .5,
+            "delta_units_per_minute": 0}, "evidence_refs": ["evidence://sha256/" + "e" * 64]}
     wire = WireBodyState.model_validate(source)
     with OpaqueInteroceptionStore(tmp_path / "journal", condition()) as store:
         envelope = store.ingest(wire)
@@ -111,6 +112,30 @@ def test_wire_contract_episode_and_evidence_stay_private(tmp_path: Path):
             assert name not in visible
         with pytest.raises(ValueError, match="contradicts"):
             store.ingest(wire, episode_id="other")
+
+
+def test_pre_extension_provider_journal_replays_without_rewriting_truth_hash(tmp_path):
+    from harness.research.grounded_agency.hashes import content_hash
+
+    path = tmp_path / "legacy.sqlite"
+    legacy = body(1).model_dump(mode="json", include={
+        "schema_version", "provider_id", "body_instance_id", "revision", "captured_at", "energy", "evidence_refs"})
+    old_hash = content_hash(legacy)
+    with OpaqueInteroceptionStore(path, condition()) as store:
+        envelope = store.ingest(BodyStateSnapshot.model_validate(legacy), episode_id="a")
+    # Simulate the exact journal emitted before the provider added production
+    # fields: only its old source hash differs; transform/evidence stay intact.
+    saved = envelope.model_dump(mode="json")
+    saved["truth_ref"]["truth_hash"] = old_hash
+    with sqlite3.connect(path) as db:
+        db.execute("UPDATE opaque_samples SET envelope_json=?", (json.dumps(saved),))
+    with OpaqueInteroceptionStore(path, condition()) as store:
+        replay = store.ingest(BodyStateSnapshot.model_validate(legacy), episode_id="a")
+        assert replay.truth_ref.truth_hash == old_hash and len(store.envelopes()) == 1
+        with pytest.raises(ValueError, match="conflicting truth"):
+            store.ingest(BodyStateSnapshot.model_validate({**legacy, "resting": True}), episode_id="a")
+        with pytest.raises(ValueError, match="conflicting truth"):
+            store.ingest(body(1, value=.4), episode_id="a")
 
 
 def test_persisted_mapping_tampering_fails_replay(tmp_path: Path):

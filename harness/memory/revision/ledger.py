@@ -326,5 +326,7 @@ def install_revision(host, preset):
     host.adapter._qq_memory_publication_pending = True
     host.adapter._daily_revision_publication_pending = True
     host.adapter._persist_state()
+    if getattr(getattr(host, "shared", None), "production_enabled", False):
+        host.shared.sync_production(preset)
     host.adapter._qq_memory_publication_pending = False
     host.adapter._daily_revision_publication_pending = False

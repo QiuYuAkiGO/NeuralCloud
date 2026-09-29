@@ -200,7 +200,9 @@ async def prepare(host, command, *, diagnostic=None):
     if request.deadline_at > command.issued_at + timedelta(seconds=60):
         raise ValueError("board_prepare_deadline_unbounded")
     deadline = command_emotion_deadline(host, command, request.deadline_at)
-    emotion_guidance = await resolve_command_emotion(host, command)
+    from harness.production.metering import current_production_context
+    production = current_production_context()
+    emotion_guidance = None if production else await resolve_command_emotion(host, command)
     diagnostic.stage = "shared_memory"
     context = await asyncio.to_thread(host.shared.board_context, query=request.request_text)
     # Complete persona is borrowed from the one live owner, never a fresh preset.
@@ -218,7 +220,9 @@ async def prepare(host, command, *, diagnostic=None):
         "body_read_entries": recent, "homeostatic_summary": request.homeostatic_summary,
         "trigger": request.trigger, "request_text": request.request_text}
     emotion_text = ""
-    if emotion_enabled(getattr(host.chat, "settings", None)):
+    if production:
+        payload.pop("homeostatic_summary")
+    elif emotion_enabled(getattr(host.chat, "settings", None)):
         payload.pop("homeostatic_summary")
         emotion_text = render_emotion_guidance(emotion_guidance, homeostasis=request.homeostatic_summary)
     messages = build_messages(persona=persona, rules=_RULES, payload=payload, emotion_text=emotion_text)
@@ -277,6 +281,8 @@ async def prepare(host, command, *, diagnostic=None):
     if now >= deadline or model_ms > timeout * 1000:
         raise TimeoutError("board_model_deadline_exceeded")
     diagnostic.stage = "candidate"
+    if production and not host.shared.validate_production_context(context, audience="local:main"):
+        raise ValueError("production_memory_superseded")
     if emotion_text and expression.action == "write":
         validate_emotion_expression(expression.title + "\n" + expression.text,
                                    persona=persona, guidance=emotion_text)
@@ -338,9 +344,16 @@ async def commit(host, command, *, diagnostic=None):
         if datetime.now(timezone.utc) >= deadline:
             raise TimeoutError("board_commit_expired")
         return host.shared.commit_board_entry(entry)
-    stored = await asyncio.to_thread(_commit_before_deadline)
+    from harness.production.metering import current_production_context
+    from harness.cognitive.production import digest
+    from contextlib import nullcontext
+    production = current_production_context()
+    async with host.adapter._lock if production else nullcontext():
+        if production and production.get("cognitive_signature") != digest((host.chat.active_preset_id, host.chat.memory.get_persona().model_dump(mode="json"))):
+            raise ValueError("production_snapshot_superseded")
+        stored = await asyncio.to_thread(_commit_before_deadline)
     service = getattr(host.adapter, "emotion_service", None)
-    if service is not None and service.enabled:
+    if service is not None and service.enabled and not production:
         from harness.emotion import EmotionMessage
 
         diagnostic.stage = "emotion_delivery"

@@ -155,16 +155,37 @@ class CapabilityController:
         incoming = incoming or (kind == "qq_turn" and not payload.get("idle_intent"))
         if incoming:
             self.last_activity = time.monotonic()
-            self.activity_revision += 1
+            if getattr(self.supervisor, "production_runtime", None) is None:
+                self.activity_revision += 1
 
     def _finish(self, row, status, **values):
         row.update(status=status, **values)
         if status in TERMINAL:
             row["completed_at"] = utc_now().isoformat()
         self.calls.put(row)
+        self._record_production_outcome(row)
         return row
 
+    def _record_production_outcome(self, row):
+        production = getattr(self.supervisor, "production_runtime", None)
+        status = row["status"]
+        if production is not None and row.get("production_goal_id") and status in TERMINAL:
+            channel = row.get("channel_result") or {}
+            receipt = row.get("receipt") or {}
+            refs = row.get("evidence_refs") or channel.get("evidence_refs") or receipt.get("evidence_refs") or []
+            production.store.record_goal_outcome(row["production_goal_id"],
+                evidence_id="capability-result:" + row["opportunity_id"],
+                progress=status in {"completed", "committed"} and bool(refs),
+                result={"status": status, "channel": row.get("channel"), "effect": channel.get("effect"), "evidence_refs": refs})
+
     def invalid_reason(self, row):
+        production = getattr(self.supervisor, "production_runtime", None)
+        if production is not None and row.get("production_context"):
+            body = production._body or {}
+            if (not production._body_available() or body.get("exhausted") or body.get("resting")
+                    or body.get("energy", {}).get("terminal")):
+                production.store.put_state("last_reason", "production_body_restricted")
+                return "rejected"
         goals = getattr(self.supervisor, "goals", None)
         if goals is not None and row.get("goal_binding") and goals.invalid_reason(row):
             return "superseded"
@@ -287,7 +308,45 @@ class CapabilityController:
                 self.last_error = "desktop:" + type(exc).__name__
         return offers
 
+    async def production_heartbeat(self):
+        """Model-owned opportunities with durable cost limits, no semantic reward trigger."""
+        production = self.supervisor.production_runtime
+        await self.reconcile()
+        if not self.settings.enabled or self.active or self.supervisor.lifecycle != RuntimeLifecycle.RUNNING:
+            return
+        context = await production.context("owner", autonomous=True)
+        if context["restricted_dialogue"] or not context["budget"]["remaining"] or not production.config.autonomous_enabled:
+            return
+        now = utc_now()
+        last = production.store.state("last_capability_opportunity_at")
+        if last and (now - datetime.fromisoformat(last)).total_seconds() < production.config.autonomous_review_seconds:
+            return
+        if any(row["status"] not in TERMINAL for row in self.calls.all()):
+            return
+        offers = [offer for offer in await self.catalog() if offer.supported and offer.available and offer.ready and offer.valid_until > now]
+        if not offers:
+            return
+        identity = "capability:" + uuid4().hex
+        row = dict(opportunity_id=identity, event_id="capability-event:" + uuid4().hex, status="queued",
+            created_at=now.isoformat(), deadline_at=(now + timedelta(seconds=self.settings.deadline_seconds)).isoformat(),
+            generation=self.generation, runtime_instance_id=self.supervisor.runtime_instance_id,
+            activity_revision=self.activity_revision, homeostatic_summary={},
+            production_context=context, offers=[offer.model_dump(mode="json") for offer in offers])
+        self.calls.put(row)
+        try:
+            event = await self.supervisor.submit_event(event_type=RuntimeEventType.CAPABILITY_OPPORTUNITY,
+                priority=RuntimeEventPriority.IDLE, source="production_capability", event_id=row["event_id"],
+                payload={"opportunity_id": identity}, idempotency_key=identity)
+            if event is None:
+                raise ValueError("capability_queue_rejected")
+            production.store.put_state("last_capability_opportunity_at", now.isoformat())
+        except Exception:
+            self._finish(row, "error", error_type="queue_rejected")
+            raise
+
     async def heartbeat(self):
+        if getattr(self.supervisor, "production_runtime", None) is not None:
+            return await self.production_heartbeat()
         current = self.calls.configure(digest(self.settings.model_dump(mode="json")))
         self.generation = current
         await self.reconcile()
@@ -353,16 +412,18 @@ class CapabilityController:
                         self.supervisor._validate_snapshot(snapshot, "cognitive")
                         self.supervisor._cognitive_snapshot = snapshot
                     envelope = self.supervisor._make_command(event, command_type="PrepareGoalDecision" if is_goal else "PrepareCapabilityCall",
-                        idempotency_key="capability-select:" + row["opportunity_id"], expected_revision=self.supervisor._cognitive_snapshot.revision,
+                        idempotency_key="capability-select:" + row["opportunity_id"], expected_revision=None if row.get("production_context") else self.supervisor._cognitive_snapshot.revision,
                         payload={"opportunity_id":row["opportunity_id"], "generation":row["generation"],
                             "deadline_at":row["deadline_at"], "homeostatic_summary":row["homeostatic_summary"], "offers":row["offers"],
-                            **row.get("goal_request", {})})
+                            **row.get("goal_request", {}),
+                            **({"production_context": row["production_context"]} if "production_context" in row else {})})
                     envelope = envelope.model_copy(update={"deadline":min(envelope.deadline, datetime.fromisoformat(row["deadline_at"]))})
                     result = await before_deadline(self.supervisor._invoke_domain(service="cognitive", envelope=envelope,
                         method=self.supervisor.cognitive.prepare_goal_decision if is_goal else self.supervisor.cognitive.prepare_capability_call, event=event), envelope.deadline)
                     snapshot = await before_deadline(self.supervisor.cognitive.get_snapshot(), datetime.fromisoformat(row["deadline_at"]))
                     self.supervisor._validate_snapshot(snapshot, "cognitive")
-                    self.supervisor._cognitive_snapshot = snapshot
+                    if snapshot.revision >= self.supervisor._cognitive_snapshot.revision:
+                        self.supervisor._cognitive_snapshot = snapshot
                     selected = PreparedCapabilityChoice.model_validate(result.result["prepared_capability_choice" if is_goal else "decision"])
                     from harness.cognitive.capabilities import catalog_hash
                     if selected.catalog_hash != catalog_hash([CapabilityOffer.model_validate(item) for item in row["offers"]]):
@@ -370,6 +431,14 @@ class CapabilityController:
                     if selected.opportunity_id != row["opportunity_id"] or selected.deadline_at > datetime.fromisoformat(row["deadline_at"]):
                         raise ValueError("capability_decision_binding_invalid")
                     row.update(decision=selected.model_dump(mode="json"), timing=result.result.get("timing", {}))
+                    production = getattr(self.supervisor, "production_runtime", None)
+                    goal_id = selected.choice.production_goal_id
+                    if goal_id is not None:
+                        context = row.get("production_context") or {}
+                        goal = production.store.goal(goal_id, audience=context.get("scope")) if production and context else None
+                        if goal is None or goal["status"] != "active":
+                            raise ValueError("production_capability_goal_invalid")
+                        row["production_goal_id"] = goal_id
                     invalid = self.invalid_reason(row)
                     if not invalid and is_goal:
                         await self.supervisor.goals.accept(row, result, event)
@@ -492,12 +561,39 @@ class CapabilityController:
         from harness.embodiment.board_contracts import BoardReadRequest
         board, now = self.supervisor.board, utc_now()
         if offer.capability_id == "expression.board.read.v1":
-            result = await board.provider.read(BoardReadRequest(scope=board.settings.scope, requested_at=now,
-                deadline=datetime.fromisoformat(row["deadline_at"]), limit=8, latest=True))
+            production = getattr(self.supervisor, "production_runtime", None)
+            operation_id = row["opportunity_id"]
+            effect_epoch = production.epoch if production is not None else None
+            dispatched = False
+            def pre_effect_guard():
+                nonlocal dispatched
+                allowed = not self.invalid_reason(row) and offer.valid_until > utc_now()
+                if production is not None:
+                    allowed = allowed and production.epoch == effect_epoch and not production.context_snapshot("owner")["restricted_dialogue"]
+                    if allowed:
+                        production.mark_tool_dispatched("board", operation_id)
+                dispatched = allowed
+                return allowed
+            request = BoardReadRequest(scope=board.settings.scope, requested_at=now,
+                deadline=datetime.fromisoformat(row["deadline_at"]), limit=8, latest=True)
+            if production is not None:
+                await production.begin_tool_operation("board", operation_id, offer.capability_id)
+            try:
+                result = await board.provider.read(request, **({"pre_effect_guard": pre_effect_guard} if production is not None else {}))
+            except BaseException:
+                if production is not None:
+                    if dispatched:
+                        production.finish_tool_operation("board", operation_id, outcome="unknown")
+                    else:
+                        production.cancel_tool_operation("board", operation_id)
+                raise
             observation = result.model_dump(mode="json")
             # A bounded authenticated read is itself an observation, including an
             # empty board. Persist its content-addressed response, not just entries.
             reference = "capability-observation:" + digest(observation)
+            if production is not None:
+                production.finish_tool_operation("board", operation_id, outcome="completed",
+                    evidence_refs=[reference, *[entry.receipt.evidence_ref for entry in result.entries]])
             self._finish(row, "completed", channel="board", outcome={"observation": observation},
                 evidence_refs=[reference, *[entry.receipt.evidence_ref for entry in result.entries]])
             return
@@ -565,6 +661,7 @@ class CapabilityController:
     async def reconcile(self):
         for row in self.calls.all():
             if row["status"] in TERMINAL:
+                self._record_production_outcome(row)
                 continue
             if row["status"] in {"queued", "selecting"}:
                 if row["runtime_instance_id"] != self.supervisor.runtime_instance_id or self.invalid_reason(row):
@@ -640,6 +737,9 @@ class CapabilityController:
                     self._finish(row, "uncertain", voice_job_id=identity, error_type="voice_job_unavailable")
             elif row.get("channel") == "qq":
                 bridge = getattr(self.supervisor, "qq_capability_bridge", None)
+                if (row.get("production_context") and self.invalid_reason(row) and bridge is not None
+                        and callable(getattr(bridge, "revoke_contacts", None))):
+                    bridge.revoke_contacts(row["opportunity_id"])
                 result = bridge.result(row["opportunity_id"]) if bridge else None
                 if result:
                     status = result.get("status", "pending")

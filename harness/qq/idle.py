@@ -8,6 +8,7 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validato
 
 from harness.homeostasis.models import HomeostaticInteroceptiveSummary
 from harness.qq.memory import QQID
+from harness.qq.conversation import QQConversationID
 
 
 class QQIdleIntent(BaseModel):
@@ -15,14 +16,15 @@ class QQIdleIntent(BaseModel):
 
     schema_version: Literal["qq-idle-intent-v1"] = "qq-idle-intent-v1"
     intent_id: str = Field(min_length=1, max_length=160, strict=True)
-    group_id: QQID
+    group_id: QQConversationID
+    origin: Literal["homeostasis", "production"] = "homeostasis"
     self_member_id: QQID
     run_id: str = Field(min_length=1, max_length=160, strict=True)
     created_at: AwareDatetime
     deadline_at: AwareDatetime
     episode_signature: str = Field(min_length=1, max_length=96, strict=True)
     homeostasis_revision: int = Field(ge=0, strict=True)
-    homeostatic_interoception: HomeostaticInteroceptiveSummary
+    homeostatic_interoception: HomeostaticInteroceptiveSummary | None = None
     context_signature: str = Field(min_length=1, max_length=2048, strict=True)
     body_instance_id: str = Field(min_length=1, max_length=128, strict=True)
     environment_revision: int = Field(ge=1, strict=True)
@@ -42,6 +44,8 @@ class QQIdleIntent(BaseModel):
     @field_validator("homeostatic_interoception", mode="before")
     @classmethod
     def validate_full_summary(cls, value):
+        if value is None:
+            return None
         if isinstance(value, HomeostaticInteroceptiveSummary):
             value = value.model_dump(mode="python")
         return HomeostaticInteroceptiveSummary.model_validate(value)
@@ -54,7 +58,11 @@ class QQIdleIntent(BaseModel):
             raise ValueError("shared opportunity binding must be complete")
         if not 0 < (self.deadline_at - self.created_at).total_seconds() <= 60:
             raise ValueError("idle lifetime must be positive and at most sixty seconds")
-        if (self.homeostasis_revision != summary.snapshot_revision
+        if self.origin == "production":
+            if summary is not None or self.opportunity_ref is None:
+                raise ValueError("production idle requires an opportunity without semantic homeostasis")
+            return self
+        if summary is None or (self.homeostasis_revision != summary.snapshot_revision
                 or self.episode_signature != summary.episode_signature):
             raise ValueError("idle summary revision and episode must match")
         return self

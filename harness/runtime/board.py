@@ -234,6 +234,8 @@ class BoardController:
         if row["status"] in {"committed", "wait", "expired", "superseded", "paused", "error", "queue_failed"}:
             return self._result(event, process_seq, row)
         self.active_entry = row["entry_id"]
+        production = getattr(self.supervisor, "production_runtime", None)
+        effect_epoch = production.epoch if production is not None else None
         outcome = row["status"]
         recover = row["status"] in {"append_started", "uncertain", "written_pending_memory"}
         if recover:
@@ -298,14 +300,34 @@ class BoardController:
                 append = BoardAppendRequest(scope=self.settings.scope, entry_id=row["entry_id"],
                     decision_id=decision["decision_id"], text=decision["text"], title=decision.get("title", ""),
                     source_event_ids=tuple(decision.get("source_event_ids", [])), requested_at=utc_now(), deadline=deadline)
+                if production is not None:
+                    await production.begin_tool_operation("board", row["entry_id"], "expression.board.append.v1")
                 row["status"] = "append_started"
                 self.turns.put(row)  # durable before the external write
+                dispatched = False
                 try:
                     def pre_effect_guard():
-                        return (not self.turns.paused and self.supervisor.lifecycle == RuntimeLifecycle.RUNNING
+                        nonlocal dispatched
+                        allowed = (not self.turns.paused and self.supervisor.lifecycle == RuntimeLifecycle.RUNNING
                             and self.activity_revision == activity and not self._autonomous_invalid(row))
+                        if production is not None:
+                            allowed = allowed and production.epoch == effect_epoch and not production.context_snapshot("owner")["restricted_dialogue"]
+                            if allowed:
+                                production.mark_tool_dispatched("board", row["entry_id"])
+                        dispatched = allowed
+                        return allowed
                     receipt = await self.provider.append(append, pre_effect_guard=pre_effect_guard)
-                except Exception as exc:
+                except BaseException as exc:
+                    if production is not None:
+                        if dispatched:
+                            outcome = "failed" if getattr(exc, "code", None) in {
+                                "scope_not_allowed", "board_authentication_failed", "board_idempotency_conflict",
+                            } else "unknown"
+                            production.finish_tool_operation("board", row["entry_id"], outcome=outcome)
+                        else:
+                            production.cancel_tool_operation("board", row["entry_id"])
+                    if not isinstance(exc, Exception):
+                        raise
                     if getattr(exc, "code", None) == "board_pre_effect_cancelled":
                         return self._finish(event, process_seq, row, "superseded")
                     if getattr(exc, "code", None) in {
@@ -319,6 +341,8 @@ class BoardController:
                     receipt = await self._reconcile(row)  # Never append a second time.
             else:
                 receipt = await self._reconcile(row)
+            if production is not None and production.tool_accounting.get("board", row["entry_id"]) is not None:
+                production.finish_tool_operation("board", row["entry_id"], outcome="completed", evidence_refs=[receipt.evidence_ref])
             row.update(status="written_pending_memory", receipt=receipt.model_dump(mode="json"))
             self.turns.put(row)
             await self._command(event, "CommitBoardEntry", {"entry_id": row["entry_id"],

@@ -113,3 +113,69 @@ def test_daily_used_object_run_sources_and_permission_are_rechecked(service, tmp
         service.stores.semantic.update(fact.model_copy(update={"revision_metadata": {"status": "retracted"}}))
     with pytest.raises(QQTurnStateError, match="used_source_changed"):
         validate_used_sources(host, frozen)
+
+
+@pytest.mark.parametrize("change", ["source_retraction", "revision", "authorization", "preset", "disabled"])
+def test_production_used_sources_freeze_exact_revision_and_scope(service, tmp_path, monkeypatch, change):
+    from harness.memory.production import Experience, BeliefRevision, ProductionMemoryStore
+    host = _host(service, tmp_path)
+    store = ProductionMemoryStore(tmp_path / "production.sqlite3")
+    host.shared.production_enabled = True
+    host.shared.production_store = store
+    host.shared.qq_settings.allowed_group_ids = ["10001"]
+    store.ingest([Experience(record_id="source:1", author_id="qq:member:20001", text="我喜欢茶",
+        occurred_at=NOW, scope=SCOPE, source_refs=("raw:1",), independent_key="raw:1")])
+    belief = BeliefRevision(record_id="belief:1", subject_id="qq:member:20001", topic="饮品",
+        statement="对方说喜欢茶", kind="self_report", revision=1, supporting_ids=("source:1",), valid_from=NOW)
+    store.revise(belief, event_id="interpret:1")
+    payload = _payload()
+    payload["derived_memory"] = store.recall(audience="qq:group:10001", query="茶")
+    frozen = capture_used_sources(host, payload)
+    assert frozen["version"] == "qq-used-sources-v2" and frozen["production"]
+    monkeypatch.setattr(store, "recall", lambda **kwargs: pytest.fail("commit guard performed recall"))
+    validate_used_sources(host, frozen)
+    store.record_use("exposure:1", ["belief:1"], audience="qq:group:10001")
+    validate_used_sources(host, frozen)
+    if change == "source_retraction":
+        store.retract_source("source:1", event_id="retract:1", reason="撤销")
+    elif change == "revision":
+        store.revise(belief.model_copy(update={"revision": 2, "statement": "改成更具体的饮品偏好"}), event_id="interpret:2")
+    elif change == "authorization":
+        host.shared.qq_settings.allowed_group_ids = []
+    elif change == "preset":
+        host.chat.active_preset_id = "other"
+    else:
+        host.shared.production_enabled = False
+    with pytest.raises(QQTurnStateError, match="used_source_changed"):
+        validate_used_sources(host, frozen)
+
+
+@pytest.mark.parametrize("change", ["retract", "reinterpret"])
+def test_private_orientation_is_frozen_without_exposing_its_evidence(service, tmp_path, change):
+    from harness.memory.production import Experience, ProductionMemoryStore
+    from harness.memory.orientation import OrientationStore
+    from harness.production.metering import production_call_scope
+    host = _host(service, tmp_path)
+    store = ProductionMemoryStore(tmp_path / "production.sqlite3")
+    host.shared.production_enabled = True
+    host.shared.production_store = store
+    host.shared.qq_settings.allowed_group_ids = ["10001"]
+    audience = "qq:private:29999:20001"
+    store.ingest([Experience(record_id="private", author_id="qq:member:20001", text="私聊具体原文",
+        occurred_at=NOW, scope=MemoryScope(channel="qq_private", conversation_id=audience,
+        visibility=["local:main", audience]), source_refs=("private-raw",), independent_key="private")])
+    orientations = OrientationStore(store)
+    value = {"direction": "repair", "reason": "私密解释", "source_refs": ["private"]}
+    orientations.revise(value, subject_id="qq:member:20001", audience=audience, event_id="orientation:1")
+    with production_call_scope({"schema_version": "production-context-v1", "configuration": {},
+            "interpersonal_orientation": orientations.projection("qq:member:20001")}, command_id="turn", meter=object()):
+        frozen = capture_used_sources(host, _payload())
+    assert "私聊具体原文" not in str(frozen) and "私密解释" not in str(frozen)
+    validate_used_sources(host, frozen)
+    if change == "retract":
+        store.retract_source("private", event_id="retract-private", reason="撤回")
+    else:
+        orientations.revise({**value, "direction": "neutrality"}, subject_id="qq:member:20001", audience=audience,
+                            event_id="orientation:2")
+    with pytest.raises(QQTurnStateError, match="used_source_changed"):
+        validate_used_sources(host, frozen)

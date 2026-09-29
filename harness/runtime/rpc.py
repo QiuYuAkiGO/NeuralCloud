@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 import httpx
@@ -10,6 +11,7 @@ from harness.contracts.decisions import AutonomousAssessment, PreparedResponse
 from harness.contracts.envelope import DomainCommandEnvelope, DomainCommandResult, VersionVector
 from harness.runtime.adapters import DomainSnapshot, ServiceHealth
 from harness.homeostasis.models import QQFactLookup, QQFactStatus
+from harness.runtime.models import utc_now
 
 
 class DomainRpcError(ConnectionError):
@@ -46,10 +48,18 @@ class _HttpDomainClient:
     async def command(
         self, envelope: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[Any]:
+        from harness.qq.production_deadline import is_production_qq_command, stage_deadline
+        # Only production QQ uses its original staged window. Other RPCs keep
+        # their configured transport timeout and retry behavior unchanged.
+        request_deadline = (min(envelope.deadline, stage_deadline(envelope))
+            if self.service_name == "cognitive" and is_production_qq_command(envelope) else None)
+        if request_deadline is not None:
+            envelope = envelope.model_copy(update={"deadline": request_deadline})
         payload = await self._request(
             "POST",
             f"/v1/commands/{envelope.command_type}",
             json=envelope.model_dump(mode="json"),
+            request_deadline=request_deadline,
         )
         return DomainCommandResult[Any].model_validate(payload)
 
@@ -76,13 +86,23 @@ class _HttpDomainClient:
             f"{self.service_name} RPC {method} {path} failed: {'; '.join(parts)}"
         )
 
-    async def _request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
+    async def _request(self, method: str, path: str, *, request_deadline=None, **kwargs: Any) -> dict[str, Any]:
         # Transport blips (dead keep-alive, empty body) are retried once.
         # HTTP status errors are application outcomes and are not retried.
         last_response: httpx.Response | None = None
         for attempt in range(2):
+            remaining = None if request_deadline is None else (request_deadline - utc_now()).total_seconds()
+            if remaining is not None:
+                if remaining <= 0:
+                    raise TimeoutError("qq_stage_deadline_exhausted")
+                kwargs["timeout"] = remaining
             try:
-                response = await self.client.request(method, path, **kwargs)
+                if remaining is None:
+                    response = await self.client.request(method, path, **kwargs)
+                else:
+                    # httpx's timeout is per I/O phase; the outer wait enforces
+                    # one total command window, including transport retries.
+                    response = await asyncio.wait_for(self.client.request(method, path, **kwargs), timeout=remaining)
                 last_response = response
                 response.raise_for_status()
                 decoded = response.json()

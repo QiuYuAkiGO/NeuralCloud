@@ -218,6 +218,16 @@ class DailyRevisionQueue:
                 ("retry" if retry else "failed", safe_error,
                  (datetime.now(UTC) + timedelta(seconds=delay)).isoformat() if retry else None, _now(), run_id))
 
+    def defer(self, run_id: str, reason: str, *, retry_after_seconds=30) -> bool:
+        """Release one claim without treating a resource constraint as failure."""
+        safe = reason if reason.replace("_", "").isalnum() and len(reason) <= 128 else "maintenance_deferred"
+        with self._connection(write=True) as db:
+            return bool(db.execute("""UPDATE daily_revision_jobs SET status='retry',attempts=MAX(0,attempts-1),
+                last_error=?,lease_until=NULL,next_attempt_at=?,updated_at=?
+                WHERE run_id=? AND status='running' AND tombstoned=0""",
+                (safe, (datetime.fromisoformat(_now()) + timedelta(seconds=retry_after_seconds)).isoformat(),
+                 _now(), run_id)).rowcount)
+
     def retry(self, run_id: str) -> bool:
         with self._connection(write=True) as db:
             return bool(db.execute("""UPDATE daily_revision_jobs SET status='pending',attempts=0,
@@ -286,6 +296,12 @@ class DailyRevisionQueue:
                 (request_hash,run_id,day,reserved_tokens,created_at,updated_at) VALUES(?,?,?,?,?,?)""",
                 (request_hash, run_id, day, tokens, _now(), _now()))
             return True
+
+    def cancel_untransmitted_reservation(self, request_hash: str) -> None:
+        """Release a local reservation only when the transport was never entered."""
+        with self._connection(write=True) as db:
+            db.execute("""DELETE FROM daily_revision_usage
+                WHERE request_hash=? AND status='reserved' AND actual_tokens IS NULL""", (request_hash,))
 
     def account(self, request_hash: str, usage: dict | None, status="completed") -> None:
         actual = None

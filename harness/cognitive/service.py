@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from contextlib import nullcontext
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -44,6 +45,10 @@ from infra.trace.diagnostics import diagnostic_scope
 ROOT = Path(__file__).resolve().parents[2]
 HOST = os.environ.get("NC_COGNITIVE_HOST", "127.0.0.1")
 PORT = int(os.environ.get("NC_COGNITIVE_PORT", "8771"))
+
+
+class ProductionMemoryRecoveryError(RuntimeError):
+    """A saved owner snapshot remains authoritative and can be retried."""
 
 
 class CognitiveEventObserver:
@@ -180,12 +185,21 @@ class CognitiveServiceHost:
                 self.chat.settings.prompt_version = manifest.prompt_version
             if manifest.grounded_agency is not None:
                 self.adapter.bind_research_manifest(manifest)
+            if manifest.production is not None:
+                from harness.cognitive.production import activate_host
+                activate_host(self)
+            else:
+                # Explicit research configuration wins over a retained GUI or
+                # environment switch from a previous production session.
+                self.chat.settings.production_memory_enabled = False
         self.adapter._publish_snapshot()
         if self._emotion_mode == "on" and self.chat.mode != "demo":
             from harness.llm.client import aux_model_distinct
             if not aux_model_distinct(self.chat.settings):
                 raise ValueError("emotion_mode=on requires a distinct configured Qwen auxiliary endpoint")
         self._control_lock = asyncio.Lock()
+        self._production_memory_ready = None
+        self._production_memory_recovery_error = None
         from harness.cognitive.qq_memory import QQMemoryWorker
         self.qq_memory = QQMemoryWorker(self, control_path=state_path.parent / "qq-memory.control.json")
         from harness.cognitive.daily_revision import DailyRevisionWorker
@@ -206,6 +220,7 @@ class CognitiveServiceHost:
         health = await self.adapter.health()
         return health.model_copy(update={"detail": {**health.detail, "qq_memory": self.qq_memory.status(),
             "daily_revision": self.daily_revision.status(),
+            "production_memory_recovery": self.production_memory_recovery_status(),
             "qq_turn_commands": ["PrepareQQTurn", "ResumeQQResponse"]}})
 
     async def get_snapshot(self):
@@ -225,6 +240,10 @@ class CognitiveServiceHost:
         return await run(self, command, resume=True)
 
     async def prepare_response(self, command):
+        if command.payload.get("production_context") is not None:
+            from harness.cognitive.production import activate_host
+            activate_host(self)
+            await self.recover_production_memory()
         return await self.adapter.prepare_response(command)
 
     async def observe_emotion(self, command):
@@ -428,6 +447,17 @@ class CognitiveServiceHost:
             return await self.adapter._run_command(lambda: self._capability_command(command, goal_decision=True))
 
     async def _capability_command(self, command, *, goal_decision=False):
+        from harness.production.metering import production_call_scope
+        context = command.payload.get("production_context")
+        if context is not None:
+            from harness.cognitive.production import activate_host
+            activate_host(self)
+            await self.recover_production_memory()
+        with production_call_scope(context, command_id=command.command_id, autonomous=True,
+                                   meter=getattr(self.adapter, "production_meter", None)):
+            return await self._capability_command_impl(command, goal_decision=goal_decision)
+
+    async def _capability_command_impl(self, command, *, goal_decision=False):
         from harness.cognitive import capabilities
         from harness.contracts.capability_calls import CapabilitySelectionRequest, PreparedCapabilityChoice
         from harness.contracts.decisions import PreparedResponse
@@ -436,7 +466,10 @@ class CognitiveServiceHost:
         from harness.runtime.adapters import _PreparedEntry
 
         adapter = self.adapter
-        async with adapter._lock:
+        production = command.payload.get("production_context") is not None
+        operation_lock = (adapter._production_session_locks.setdefault("capability", asyncio.Lock())
+                          if command.payload.get("production_context") is not None else adapter._lock)
+        async with operation_lock:
             replay = adapter._lookup_replay(command)
             if replay is not None:
                 await asyncio.to_thread(adapter._persist_state)
@@ -447,11 +480,13 @@ class CognitiveServiceHost:
                 await asyncio.to_thread(adapter._persist_state)
                 return rejected
             try:
+                from harness.cognitive.production import digest
+                signature = digest((self.chat.active_preset_id, self.chat.memory.get_persona().model_dump(mode="json")))
                 expected_type = "PrepareGoalDecision" if goal_decision else "PrepareCapabilityCall"
                 if command.command_type != expected_type:
                     raise capabilities.CapabilitySelectionError("capability_command_type_mismatch")
                 request_payload = {key: value for key, value in command.payload.items()
-                    if key not in {"emotion_context_ref", "emotion_revision"}}
+                    if key not in {"emotion_context_ref", "emotion_revision", "production_context"}}
                 if goal_decision:
                     from harness.cognitive import goals
                     from harness.contracts.goals import GoalDecisionRequest, PreparedGoalDecision
@@ -462,6 +497,14 @@ class CognitiveServiceHost:
                     payload = await capabilities.prepare(self, command)
                     selected = PreparedCapabilityChoice.model_validate(payload["decision"])
                     request = CapabilitySelectionRequest.model_validate(request_payload)
+                if production:
+                    from harness.cognitive.production import validate_runtime_fence
+                    await asyncio.to_thread(validate_runtime_fence, adapter, command.payload["production_context"])
+                if production and signature != digest((self.chat.active_preset_id, self.chat.memory.get_persona().model_dump(mode="json"))):
+                    raise capabilities.CapabilitySelectionError("production_snapshot_superseded")
+                rejected = adapter._preflight(command)
+                if rejected is not None:
+                    return rejected
                 offer = next((item for item in request.offers if item.offer_id == selected.choice.offer_id), None)
                 if offer is not None and offer.channel == "desktop":
                     goal = capabilities.compile_desktop_choice(selected.choice, offer,
@@ -481,7 +524,8 @@ class CognitiveServiceHost:
                     final = FinalResponse(response_id="response:" + selected.decision_id, text="", path="fast",
                         situation_id=request.opportunity_id, event_id=command.event_id)
                     adapter._prepared[prepared.prepare_id] = _PreparedEntry(
-                        event=event, final=final, prepared=prepared, capability=True)
+                        event=event, final=final, prepared=prepared, capability=True,
+                        production=production, production_autonomous=production)
                     payload["prepared_response"] = prepared.model_dump(mode="json")
                 adapter._cursor = max(adapter._cursor, command.receive_seq)
                 adapter._event_id = command.event_id
@@ -495,8 +539,9 @@ class CognitiveServiceHost:
                     ("goal_decision_expired" if goal_decision else "capability_selection_expired") if isinstance(exc, TimeoutError) else
                     ("goal_prepare_failed" if goal_decision else "capability_prepare_failed"))
                 result = adapter._failure(command, error)
-            adapter._remember(command, result)
-            await asyncio.to_thread(adapter._persist_state)
+            async with adapter._lock if production else nullcontext():
+                adapter._remember(command, result)
+                await asyncio.to_thread(adapter._persist_state)
             return result
 
     async def prepare_board_entry(self, command):
@@ -521,6 +566,10 @@ class CognitiveServiceHost:
 
     async def _board_command(self, command, *, commit):
         from harness.cognitive import board
+
+        if command.payload.get("production_context") is not None:
+            return await self._production_channel_command(command, commit=commit, channel="board",
+                module=board, diagnostic=board.BoardDiagnostics())
 
         adapter = self.adapter
         diagnostic = board.BoardDiagnostics()
@@ -559,6 +608,10 @@ class CognitiveServiceHost:
     async def _diary_command(self, command, *, commit):
         from harness.cognitive import diary
 
+        if command.payload.get("production_context") is not None:
+            return await self._production_channel_command(command, commit=commit, channel="diary",
+                module=diary, diagnostic=diary.DiaryDiagnostics())
+
         adapter = self.adapter
         diagnostic = diary.DiaryDiagnostics()
         async with adapter._lock:
@@ -593,6 +646,58 @@ class CognitiveServiceHost:
             await asyncio.to_thread(adapter._persist_state)
             return result
 
+    async def _production_channel_command(self, command, *, commit, channel, module, diagnostic):
+        from harness.cognitive.production import activate_host, digest
+        from harness.production.metering import production_call_scope
+
+        activate_host(self)
+        await self.recover_production_memory()
+        adapter = self.adapter
+        context = dict(command.payload["production_context"])
+        lock = adapter._production_session_locks.setdefault(channel, asyncio.Lock())
+        async with lock:
+            async with adapter._lock:
+                replay = adapter._lookup_replay(command)
+                if replay is not None:
+                    return replay
+                rejected = adapter._preflight(command)
+                if rejected is not None:
+                    return rejected
+                signature = digest((self.chat.active_preset_id, self.chat.memory.get_persona().model_dump(mode="json")))
+                context["cognitive_signature"] = signature
+            try:
+                clean = command.model_copy(update={"payload": {key: value for key, value in command.payload.items()
+                    if key != "production_context"}})
+                with production_call_scope(context, command_id=command.command_id,
+                        autonomous=bool(context.get("autonomous")), meter=getattr(adapter, "production_meter", None)):
+                    payload = await (module.commit(self, clean, diagnostic=diagnostic) if commit
+                                     else module.prepare(self, clean, diagnostic=diagnostic))
+                if not commit:
+                    from harness.cognitive.production import validate_runtime_fence
+                    await asyncio.to_thread(validate_runtime_fence, adapter, context)
+                async with adapter._lock:
+                    if signature != digest((self.chat.active_preset_id, self.chat.memory.get_persona().model_dump(mode="json"))):
+                        raise ValueError("production_snapshot_superseded")
+                    if not commit and adapter._preflight(command) is not None:
+                        raise TimeoutError("production_preparation_expired")
+                    if commit:
+                        adapter._revision += 1
+                        adapter._component_revisions["memory"] = adapter._revision
+                    result = DomainCommandResult[dict](command_id=command.command_id, command_type=command.command_type,
+                        status="applied", request_hash=command.effective_request_hash(), committed_revision=adapter._revision,
+                        acknowledged_event_id=command.event_id, acknowledged_receive_seq=command.receive_seq,
+                        result=payload, completed_at=datetime.now(timezone.utc))
+            except Exception as exc:
+                result = adapter._failure(command, channel + "_shared_" + ("commit" if commit else "prepare")
+                    + "_failed:" + diagnostic.error_code(exc))
+                result = result.model_copy(update={"result": {"diagnostic": diagnostic.metadata()}})
+            async with adapter._lock:
+                adapter._cursor = max(adapter._cursor, command.receive_seq)
+                adapter._event_id = command.event_id
+                adapter._remember(command, result)
+                await asyncio.to_thread(adapter._persist_state)
+            return result
+
     async def commit_interaction(self, command):
         return await self.adapter.commit_interaction(command)
 
@@ -616,11 +721,60 @@ class CognitiveServiceHost:
         finally:
             self.owner_lease.release()
 
+    def production_memory_recovery_status(self):
+        ready = self._production_memory_ready
+        enabled = self.shared.production_enabled
+        return {"enabled": enabled,
+            "status": "disabled" if not enabled else "failed" if self._production_memory_recovery_error else
+                "ready" if ready and ready[0] == self.chat.active_preset_id and ready[1] is self.chat.memory else "pending",
+            "preset_id": self.chat.active_preset_id, "error_type": self._production_memory_recovery_error}
+
+    async def recover_production_memory(self, *, _control_locked=False, force=False):
+        """Publish the loaded authoritative preset once before this owner runs.
+
+        A crash between preset save and SQL publication loses only this
+        process's readiness marker. Restart, retry, and switching owners all
+        reconstruct the projection without another interpretation model call.
+        """
+        if not self.shared.production_enabled:
+            return False
+        self.owner_lease.acquire()
+        from harness.cognitive.qq_memory import snapshot_owner
+
+        async with nullcontext() if _control_locked else self._control_lock:
+            async with self.adapter._lock:
+                ready = self._production_memory_ready
+                if (not force and ready and ready[0] == self.chat.active_preset_id
+                        and ready[1] is self.chat.memory
+                        and not getattr(self.adapter, "_qq_memory_publication_pending", False)
+                        and not getattr(self.adapter, "_daily_revision_publication_pending", False)):
+                    return False
+                self.adapter._qq_memory_publication_pending = True
+                self.adapter._daily_revision_publication_pending = True
+                self._production_memory_ready = None
+                try:
+                    preset = await asyncio.to_thread(snapshot_owner, self)
+                    await asyncio.to_thread(self.shared.sync_production, preset)
+                    await asyncio.to_thread(self.adapter._persist_state)
+                except Exception as exc:
+                    self._production_memory_recovery_error = type(exc).__name__
+                    raise ProductionMemoryRecoveryError("production_memory_recovery_failed:" + type(exc).__name__) from exc
+                self.adapter._qq_memory_publication_pending = False
+                self.adapter._daily_revision_publication_pending = False
+                self._production_memory_recovery_error = None
+                self._production_memory_ready = (self.chat.active_preset_id, self.chat.memory)
+                return True
+
     async def start(self) -> None:
         self.owner_lease.acquire()
         try:
+            if self.chat.settings.production_memory_enabled:
+                from harness.production.metering import get_production_meter
+                if not hasattr(self.adapter, "production_meter"):
+                    self.adapter.production_meter = get_production_meter()
             await asyncio.to_thread(self.shared.sync_qq)
             await asyncio.to_thread(self.shared.sync_local)
+            await self.recover_production_memory()
             await self.qq_memory.start()
             await self.daily_revision.start()
         except BaseException:
@@ -629,8 +783,32 @@ class CognitiveServiceHost:
 
     async def ui_snapshot(self) -> dict[str, Any]:
         self._sync_transcript()
-        return {**self.chat.status(), **self.shared.ui(), "qq_memory": self.qq_memory.status(),
-                "daily_revision": self.daily_revision.status()}
+        if not self.shared.production_enabled:
+            return {**self.chat.status(), **self.shared.ui(), "qq_memory": self.qq_memory.status(),
+                    "daily_revision": self.daily_revision.status()}
+        from itertools import islice
+
+        snapshot = self.chat.status()
+        for legacy in ("relationship", "psych", "homeostasis"):
+            snapshot.pop(legacy, None)
+        # UI access is authenticated at /v1/ui/snapshot. This operator view
+        # never enters a model prompt or changes its scope capability.
+        memory = await asyncio.to_thread(self.shared.ui)
+        affects = getattr(self.adapter, "production_affect", {})
+        current = list(islice((value for key, value in affects.items() if not key.startswith("history:")), 32))
+        current.sort(key=lambda value: value.get("observed_at", ""), reverse=True)
+        worker = self.qq_memory
+        maintenance = {**worker.control.model_dump(), "processing": worker.processing,
+            "queue": dict(worker._queue_counts), "last_error_type": worker.last_error,
+            "last_completed_at": worker.last_completed_at, "last_duration_ms": worker.last_duration_ms,
+            "maintenance_paused": self.adapter._maintenance_paused}
+        meter = getattr(self.adapter, "production_meter", None)
+        spool = getattr(meter, "spool", None)
+        usage = await asyncio.to_thread(spool.status) if spool is not None else None
+        return {**snapshot, **memory, "qq_memory": maintenance,
+                "daily_revision": self.daily_revision.status(),
+                "production_cognitive": {"enabled": True, "affect": current,
+                                         "usage_spool": usage, "memory_maintenance": maintenance}}
 
     async def control(self, operation: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         body = payload or {}
@@ -692,6 +870,7 @@ class CognitiveServiceHost:
                 )
                 return {"base_url": url, "models": names}
             require_development(operation, control_mode=self.control_mode)
+            production = self.shared.production_enabled
             self._apply_mutation(operation, body)
             self.chat.pipeline.compiler = SharedMemoryCompiler(self.chat.settings)
             self.adapter.pipeline = self.chat.pipeline
@@ -699,6 +878,11 @@ class CognitiveServiceHost:
             self.adapter.default_session_id = self.chat.active_session_id
             self.chat.flush_active()
             self._persist()
+            if production:
+                from harness.cognitive.production import activate_host
+                activate_host(self)
+                await self.recover_production_memory(_control_locked=True,
+                    force=operation in {"debug.episodic", "debug.semantic", "debug.candidate"})
             snapshot = await self.ui_snapshot()
             self.observer.emit_state(snapshot)
             return snapshot if not operation.startswith("debug.") else self.chat.debug_state()

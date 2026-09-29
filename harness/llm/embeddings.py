@@ -36,16 +36,24 @@ class OpenAICompatEmbedding:
     def embed(self, texts: Sequence[str]) -> list[list[float]]:
         if not texts:
             return []
+        from harness.llm.client import _record_production_response
+        from harness.production.metering import production_attempt
+
         headers = {"Authorization": f"Bearer {self.settings.llm_api_key}"}
-        response = self._client.post(
-            f"{self.settings.embedding_base_url.rstrip('/')}/embeddings",
-            json={"model": self.settings.embedding_model, "input": list(texts)},
-            headers=headers,
-        )
-        response.raise_for_status()
-        data = response.json()["data"]
-        data = sorted(data, key=lambda item: item["index"])
-        return [row["embedding"] for row in data]
+        with production_attempt(model=self.settings.embedding_model) as metering:
+            response = self._client.post(
+                f"{self.settings.embedding_base_url.rstrip('/')}/embeddings",
+                json={"model": self.settings.embedding_model, "input": list(texts)},
+                headers=headers,
+            )
+            try:
+                body = response.json()
+            except (ValueError, UnicodeError):
+                body = None
+            _record_production_response(metering, body)
+            response.raise_for_status()
+            data = sorted(body["data"], key=lambda item: item["index"])
+            return [row["embedding"] for row in data]
 
     def embed_one(self, text: str) -> list[float]:
         return self.embed([text])[0]
@@ -65,8 +73,12 @@ class GuardedEmbedding:
     def embed(self, texts: Sequence[str]) -> list[list[float] | None]:
         if not texts:
             return []
+        from harness.production.maintenance import ProductionMaintenanceDeferred
+
         try:
             return list(self.inner.embed(texts))
+        except ProductionMaintenanceDeferred:
+            raise
         except Exception as exc:
             marker = type(exc).__name__
             if self._logged_error != marker:

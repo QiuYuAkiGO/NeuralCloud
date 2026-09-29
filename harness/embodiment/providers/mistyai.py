@@ -21,6 +21,8 @@ from harness.embodiment.capabilities import (
     EVIDENCE_REFERENCE,
     OBSERVATION_SNAPSHOT,
     PHYSIOLOGY_BODY_STATE,
+    PHYSIOLOGY_REST,
+    PHYSIOLOGY_COGNITIVE_USAGE,
     PHYSIOLOGY_VIRTUAL_RESOURCE_LEDGER,
     CapabilityDescriptor,
     CapabilityStatus,
@@ -30,6 +32,11 @@ from harness.embodiment.capabilities import (
 )
 from harness.embodiment.contracts import (
     BodyStateSnapshot,
+    BodyRestCommand,
+    BodyRestReceipt,
+    BodyRestStatus,
+    CognitiveUsage,
+    CognitiveUsageReceipt,
     EnergyState,
     EvidenceRef,
     PerceptionSnapshot,
@@ -39,6 +46,9 @@ from harness.embodiment.providers.mistyai_dto import (
     NativeActionResult,
     NativeBodyState,
     NativeBodyStateCaptureResponse,
+    NativeRestReceipt,
+    NativeRestStatus,
+    NativeUsageReceipt,
     NativeCapabilities,
     NativeError,
     NativeHealth,
@@ -54,9 +64,7 @@ DEFAULT_MAX_EVIDENCE_BYTES = 16 * 1024 * 1024
 DEFAULT_EVIDENCE_TIMEOUT_SECONDS = 10.0
 DEFAULT_EVIDENCE_CACHE_ENTRIES = 128
 DEFAULT_MAX_EVIDENCE_REFS = 32
-TERMINAL_NATIVE_STATES = frozenset(
-    {"execution_succeeded", "failed", "cancelled", "unknown"}
-)
+TERMINAL_NATIVE_STATES = frozenset({"execution_succeeded", "failed", "cancelled", "unknown"})
 
 _NativePayload = TypeVar("_NativePayload", bound=BaseModel)
 
@@ -108,6 +116,7 @@ class MistyAIClient:
         base_url: str,
         *,
         token: str,
+        accounting_token: str | None = None,
         timeout_seconds: float = 10.0,
         evidence_timeout_seconds: float = DEFAULT_EVIDENCE_TIMEOUT_SECONDS,
         max_evidence_bytes: int = DEFAULT_MAX_EVIDENCE_BYTES,
@@ -127,6 +136,7 @@ class MistyAIClient:
         if max_evidence_refs <= 0:
             raise ValueError("maximum evidence reference count must be positive")
         self._owns_client = client is None
+        self._accounting_token = accounting_token
         self.evidence_timeout_seconds = evidence_timeout_seconds
         self.max_evidence_bytes = max_evidence_bytes
         self.evidence_cache_entries = evidence_cache_entries
@@ -206,9 +216,7 @@ class MistyAIClient:
         )
 
     async def request_safe_point(self, action_id: str) -> NativeActionResult:
-        return await self._action_result(
-            f"/v1/actions/{action_id}:request-safe-point"
-        )
+        return await self._action_result(f"/v1/actions/{action_id}:request-safe-point")
 
     async def verify(self, action_id: str) -> NativeActionResult:
         return await self._action_result(f"/v1/actions/{action_id}:verify")
@@ -228,6 +236,50 @@ class MistyAIClient:
         )
         await self.verify_evidence_refs(response.body_state.evidence_refs)
         return response.body_state
+
+    async def rest(self, request: BodyRestCommand, *, start: bool) -> NativeRestReceipt:
+        response = _validate_native(
+            NativeRestReceipt,
+            await self._request(
+                "POST", "/v1/body/rest:start" if start else "/v1/body/rest:end", json=request.model_dump(mode="json")
+            ),
+            surface="body-rest",
+        )
+        if (
+            response.command_id != request.command_id
+            or response.body_instance_id != request.body_instance_id
+            or response.episode_id != request.episode_id
+            or response.resting != start
+        ):
+            raise MistyAIError("rest response identity mismatch", code="invalid_provider_response")
+        await self.verify_evidence_refs([*response.evidence_refs, *response.body_state.evidence_refs])
+        return response
+
+    async def rest_status(self) -> NativeRestStatus:
+        response = _validate_native(NativeRestStatus, await self._request("GET", "/v1/body/rest"), surface="body-rest")
+        await self.verify_evidence_refs([*response.evidence_refs, *response.body_state.evidence_refs])
+        return response
+
+    async def record_usage(self, request: CognitiveUsage) -> NativeUsageReceipt:
+        if self._accounting_token is None:
+            raise MistyAIError("a trusted accounting credential is required", code="accounting_not_configured")
+        response = _validate_native(
+            NativeUsageReceipt,
+            await self._request(
+                "POST",
+                "/v1/cognition/usage",
+                json=request.model_dump(mode="json"),
+                headers={"X-MistyAI-Accounting-Token": self._accounting_token},
+            ),
+            surface="cognitive-usage",
+        )
+        if any(
+            getattr(response, key) != getattr(request, key)
+            for key in ("inference_id", "body_instance_id", "episode_id", "source", "metering")
+        ):
+            raise MistyAIError("usage response identity mismatch", code="invalid_provider_response")
+        await self.verify_evidence_refs(response.evidence_refs)
+        return response
 
     async def _action_result(self, path: str) -> NativeActionResult:
         result = _validate_native(
@@ -313,9 +365,7 @@ class MistyAIClient:
                 details={"expected": expected_digest, "actual": digest},
             )
         normalized_expected = (
-            self._normalize_media_type(expected_media_type)
-            if expected_media_type is not None
-            else None
+            self._normalize_media_type(expected_media_type) if expected_media_type is not None else None
         )
         cached_media_type = self._verified_evidence.get(digest)
         if cached_media_type is not None:
@@ -343,9 +393,7 @@ class MistyAIClient:
                 details={"digest": digest},
             )
         normalized_expected = (
-            self._normalize_media_type(expected_media_type)
-            if expected_media_type is not None
-            else None
+            self._normalize_media_type(expected_media_type) if expected_media_type is not None else None
         )
         cached = self._evidence_content.get(digest)
         if cached is not None:
@@ -432,8 +480,10 @@ class MistyAIClient:
                 self._evidence_content_bytes -= len(previous[1])
             self._evidence_content[digest] = (media_type, verified_content)
             self._evidence_content_bytes += len(verified_content)
-            while (len(self._evidence_content) > self.evidence_cache_entries
-                   or self._evidence_content_bytes > self.evidence_byte_cache_bytes):
+            while (
+                len(self._evidence_content) > self.evidence_cache_entries
+                or self._evidence_content_bytes > self.evidence_byte_cache_bytes
+            ):
                 _, (_, evicted) = self._evidence_content.popitem(last=False)
                 self._evidence_content_bytes -= len(evicted)
         return verified_content
@@ -461,9 +511,10 @@ class MistyAIClient:
         path: str,
         *,
         json: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         try:
-            response = await self.client.request(method, path, json=json)
+            response = await self.client.request(method, path, json=json, **({"headers": headers} if headers else {}))
         except (httpx.TimeoutException, httpx.TransportError) as exc:
             raise MistyAIError(str(exc) or type(exc).__name__) from exc
         if response.is_success:
@@ -590,8 +641,7 @@ class MistyAIActionBackend:
                     "arguments": execution.embodied_action.intent.arguments,
                 },
                 "success_criteria": [
-                    item.model_dump(mode="json")
-                    for item in execution.embodied_action.success_criteria
+                    item.model_dump(mode="json") for item in execution.embodied_action.success_criteria
                 ],
                 "idempotency_key": execution.idempotency_key,
                 "risk_class": risk_class,
@@ -683,10 +733,15 @@ class MistyAIPerceptionBackend:
         elif "degraded" in native.backend_health.values():
             confidence = 0.5
         extension = native.model_dump(mode="json", exclude={"frame"})
-        references = [EvidenceRef(
-            provider_id=PROVIDER_ID, ref=native.frame.evidence_ref,
-            digest=native.frame.sha256, media_type=native.frame.media_type, created_at=native.captured_at,
-        )]
+        references = [
+            EvidenceRef(
+                provider_id=PROVIDER_ID,
+                ref=native.frame.evidence_ref,
+                digest=native.frame.sha256,
+                media_type=native.frame.media_type,
+                created_at=native.captured_at,
+            )
+        ]
         if native.a11y_ref is not None:
             digest = EVIDENCE_REF_PATTERN.fullmatch(native.a11y_ref).group(1)
             content = await self.client.get_evidence(digest, expected_media_type="application/vnd.mistyai.a11y+json")
@@ -707,16 +762,23 @@ class MistyAIPerceptionBackend:
                     item = {key: node[key] for key in ("app_id", "window_id", "role", "name", "rect") if key in node}
                     text_value = node.get("text")
                     if isinstance(text_value, str) and remaining_text > 0:
-                        item["text"] = text_value[-min(32_768, remaining_text):]
+                        item["text"] = text_value[-min(32_768, remaining_text) :]
                         remaining_text -= len(item["text"])
                     projected.append(item)
                 extension["a11y_tree"] = {"schema_version": "a11y-tree-v1", "nodes": projected}
             except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
-                raise MistyAIError("provider returned invalid accessibility evidence", code="invalid_a11y_evidence") from exc
-            references.append(EvidenceRef(
-                provider_id=PROVIDER_ID, ref=native.a11y_ref, digest=digest,
-                media_type="application/vnd.mistyai.a11y+json", created_at=native.captured_at,
-            ))
+                raise MistyAIError(
+                    "provider returned invalid accessibility evidence", code="invalid_a11y_evidence"
+                ) from exc
+            references.append(
+                EvidenceRef(
+                    provider_id=PROVIDER_ID,
+                    ref=native.a11y_ref,
+                    digest=digest,
+                    media_type="application/vnd.mistyai.a11y+json",
+                    created_at=native.captured_at,
+                )
+            )
         return PerceptionSnapshot(
             provider_id=PROVIDER_ID,
             body_instance_id=native.body_instance_id,
@@ -739,8 +801,9 @@ class MistyAICapabilityProvider:
         """Read only the provider's last validated capability response."""
         if self._last_capabilities is None:
             return frozenset()
-        return frozenset(skill for skill in self._last_capabilities.skills
-                         if re.fullmatch(r"[a-z][a-z0-9_.-]+\.v[0-9]+", skill))
+        return frozenset(
+            skill for skill in self._last_capabilities.skills if re.fullmatch(r"[a-z][a-z0-9_.-]+\.v[0-9]+", skill)
+        )
 
     async def capabilities(self) -> ProviderCapabilities:
         native = await self.client.capabilities()
@@ -757,6 +820,10 @@ class MistyAICapabilityProvider:
             names.append(PHYSIOLOGY_BODY_STATE)
         if native.extensions.virtual_resource_ledger:
             names.append(PHYSIOLOGY_VIRTUAL_RESOURCE_LEDGER)
+        if native.extensions.production_rest_v1:
+            names.append(PHYSIOLOGY_REST)
+        if native.extensions.cognitive_usage_v1:
+            names.append(PHYSIOLOGY_COGNITIVE_USAGE)
         return ProviderCapabilities(
             provider_id=PROVIDER_ID,
             provider_kind="desktop-body",
@@ -794,15 +861,11 @@ class MistyAICapabilityProvider:
         }
         if self._last_capabilities and self._last_capabilities.extensions.body_state_v1:
             mapping[PHYSIOLOGY_BODY_STATE] = (
-                HealthStatus(native.body_state.status)
-                if native.body_state is not None
-                else HealthStatus.UNAVAILABLE
+                HealthStatus(native.body_state.status) if native.body_state is not None else HealthStatus.UNAVAILABLE
             )
         if self._last_capabilities and self._last_capabilities.extensions.virtual_resource_ledger:
             mapping[PHYSIOLOGY_VIRTUAL_RESOURCE_LEDGER] = (
-                HealthStatus(native.body_state.status)
-                if native.body_state is not None
-                else HealthStatus.UNAVAILABLE
+                HealthStatus(native.body_state.status) if native.body_state is not None else HealthStatus.UNAVAILABLE
             )
         return ProviderHealth(
             provider_id=PROVIDER_ID,
@@ -814,6 +877,7 @@ class MistyAICapabilityProvider:
                 "active_action_id": native.active_action_id,
                 "manual_takeover_active": native.manual_takeover_active,
                 "agency_state": native.agency_state,
+                "exhausted": native.exhausted,
             },
         )
 
@@ -824,10 +888,23 @@ class MistyAIBodyStateProvider:
 
     async def snapshot(self) -> BodyStateSnapshot:
         native = await self.client.body_state()
+        return self._snapshot(native)
+
+    @staticmethod
+    def _snapshot(native: NativeBodyState) -> BodyStateSnapshot:
         return BodyStateSnapshot(
             provider_id=PROVIDER_ID,
             body_instance_id=native.body_instance_id,
             revision=native.revision,
+            episode_id=native.episode_id,
+            sample_sequence=native.sample_sequence,
+            ledger_revision=native.ledger_revision or native.revision,
+            resting=native.resting,
+            exhausted=native.exhausted,
+            physiology_mode=native.physiology_mode,
+            thermal=native.thermal.model_dump() if native.thermal else None,
+            compute=native.compute.model_dump() if native.compute else None,
+            integrity=native.integrity.model_dump() if native.integrity else None,
             captured_at=native.captured_at,
             energy=EnergyState(
                 capacity_units=native.energy.capacity_units,
@@ -835,16 +912,40 @@ class MistyAIBodyStateProvider:
                 available_ratio=native.energy.available_ratio,
                 delta_units_per_minute=native.energy.delta_units_per_minute,
                 charging=native.energy.charging,
-                estimated_time_to_empty_seconds=(
-                    native.energy.estimated_time_to_terminal_seconds
-                ),
+                estimated_time_to_empty_seconds=(native.energy.estimated_time_to_terminal_seconds),
                 terminal=native.energy.terminal,
             ),
             evidence_refs=[_evidence(ref, created_at=native.captured_at) for ref in native.evidence_refs],
         )
 
+    def _rest_result(self, native):
+        values = native.model_dump(exclude={"body_state", "evidence_refs"})
+        values["body_state"] = self._snapshot(native.body_state)
+        values["evidence_refs"] = [
+            _evidence(ref, created_at=native.body_state.captured_at) for ref in native.evidence_refs
+        ]
+        return (BodyRestReceipt if isinstance(native, NativeRestReceipt) else BodyRestStatus).model_validate(values)
 
-def _evidence(ref: str, *, created_at: datetime) -> EvidenceRef:
+    async def start_rest(self, request: BodyRestCommand) -> BodyRestReceipt:
+        return self._rest_result(await self.client.rest(request, start=True))
+
+    async def end_rest(self, request: BodyRestCommand) -> BodyRestReceipt:
+        return self._rest_result(await self.client.rest(request, start=False))
+
+    async def rest_status(self) -> BodyRestStatus:
+        return self._rest_result(await self.client.rest_status())
+
+    async def record_usage(self, request: CognitiveUsage) -> CognitiveUsageReceipt:
+        native = await self.client.record_usage(request)
+        return CognitiveUsageReceipt.model_validate(
+            {
+                **native.model_dump(exclude={"evidence_refs"}),
+                "evidence_refs": [_evidence(ref, created_at=None) for ref in native.evidence_refs],
+            }
+        )
+
+
+def _evidence(ref: str, *, created_at: datetime | None) -> EvidenceRef:
     digest = ref.rsplit("/", 1)[-1] if ref.startswith("evidence://sha256/") else None
     return EvidenceRef(
         provider_id=PROVIDER_ID,

@@ -1,0 +1,2675 @@
+{
+  "schema_version": "qq-latency-ten-v1",
+  "mode": "live-model-simulated-qq",
+  "model": "claude-sonnet-4-5-20250929",
+  "simulation_only": true,
+  "attempts": 10,
+  "successful_replies": 4,
+  "outcomes": {
+    "model_invalid": 6,
+    "ready": 4
+  },
+  "http_requests": 22,
+  "percentile_method": "nearest-rank (n=10: p50=5th, p95=10th)",
+  "all_attempts_total": {
+    "samples": 10,
+    "p50_ms": 30082.065,
+    "p95_ms": 36003.166
+  },
+  "successful_reply_total": {
+    "samples": 4,
+    "p50_ms": 32433.292,
+    "p95_ms": 36003.166
+  },
+  "all_attempts_cognitive": {
+    "samples": 10,
+    "p50_ms": 30064.374,
+    "p95_ms": 35951.467
+  },
+  "successful_reply_cognitive": {
+    "samples": 4,
+    "p50_ms": 32382.705,
+    "p95_ms": 35951.467
+  },
+  "boundaries": {
+    "total": "Direct on_event ingress through durable simulated protocol receipt",
+    "cognitive": "Runtime _prepare_qq_turn including real Cognitive prepare/resume; in-process transport",
+    "body": "unavailable/unknown, user-triggered restricted dialogue",
+    "memory": "fresh isolated SQLite; progressive same session",
+    "excluded": [
+      "real QQ network",
+      "cross-process HTTP RPC",
+      "background maintenance",
+      "autonomous work",
+      "external embedding"
+    ]
+  },
+  "rows": [
+    {
+      "index": 1,
+      "status": "failed",
+      "terminal_reason": "model_invalid",
+      "decision_outcome": null,
+      "total_ms": 18073.82,
+      "cooldown_wait_ms": 0.215,
+      "post_result_model_drain_ms": 0.137,
+      "error_type": "QQTurnRejected",
+      "cognitive_ms": 18050.136,
+      "runtime_status": null,
+      "successful_reply": false,
+      "first_simulated_verified_ms": null,
+      "fully_simulated_verified_ms": null,
+      "http_requests": 1,
+      "response_models": [
+        "claude-sonnet-4-5-20250929"
+      ],
+      "model_usage": [
+        {
+          "prompt_tokens": 6241,
+          "completion_tokens": 610,
+          "total_tokens": 6851,
+          "completion_tokens_details": {},
+          "prompt_tokens_details": {}
+        }
+      ],
+      "synthetic_calls": 0,
+      "domain_errors": [
+        "qq_turn_rejected:ValueError"
+      ],
+      "stages": [
+        {
+          "name": "protocol.observation_commit",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 3.447,
+          "end_offset_ms": 11.199,
+          "duration_ms": 7.753
+        },
+        {
+          "name": "protocol.read",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 2.876,
+          "end_offset_ms": 12.677,
+          "duration_ms": 9.8
+        },
+        {
+          "name": "protocol.precheck",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 12.694,
+          "end_offset_ms": 13.198,
+          "duration_ms": 0.503
+        },
+        {
+          "name": "protocol.shared_prepare",
+          "outcome": "error",
+          "error_type": "model_invalid",
+          "start_offset_ms": 15.205,
+          "end_offset_ms": 18069.513,
+          "duration_ms": 18054.308
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "status": "failed",
+      "terminal_reason": "model_invalid",
+      "decision_outcome": null,
+      "total_ms": 17433.117,
+      "cooldown_wait_ms": 0.136,
+      "post_result_model_drain_ms": 0.139,
+      "error_type": "QQTurnRejected",
+      "cognitive_ms": 17416.926,
+      "runtime_status": null,
+      "successful_reply": false,
+      "first_simulated_verified_ms": null,
+      "fully_simulated_verified_ms": null,
+      "http_requests": 1,
+      "response_models": [
+        "claude-sonnet-4-5-20250929"
+      ],
+      "model_usage": [
+        {
+          "prompt_tokens": 7590,
+          "completion_tokens": 641,
+          "total_tokens": 8231,
+          "completion_tokens_details": {},
+          "prompt_tokens_details": {}
+        }
+      ],
+      "synthetic_calls": 0,
+      "domain_errors": [
+        "qq_turn_rejected:ValueError"
+      ],
+      "stages": [
+        {
+          "name": "protocol.observation_commit",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 3.323,
+          "end_offset_ms": 6.157,
+          "duration_ms": 2.835
+        },
+        {
+          "name": "protocol.read",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 2.782,
+          "end_offset_ms": 7.768,
+          "duration_ms": 4.986
+        },
+        {
+          "name": "protocol.precheck",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 7.788,
+          "end_offset_ms": 8.308,
+          "duration_ms": 0.52
+        },
+        {
+          "name": "protocol.shared_prepare",
+          "outcome": "error",
+          "error_type": "model_invalid",
+          "start_offset_ms": 10.518,
+          "end_offset_ms": 17428.066,
+          "duration_ms": 17417.548
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "status": "failed",
+      "terminal_reason": "model_invalid",
+      "decision_outcome": null,
+      "total_ms": 30073.226,
+      "cooldown_wait_ms": 0.129,
+      "post_result_model_drain_ms": 0.236,
+      "error_type": "QQTurnRejected",
+      "cognitive_ms": 30056.539,
+      "runtime_status": null,
+      "successful_reply": false,
+      "first_simulated_verified_ms": null,
+      "fully_simulated_verified_ms": null,
+      "http_requests": 2,
+      "response_models": [
+        "claude-sonnet-4-5-20250929"
+      ],
+      "model_usage": [
+        {
+          "prompt_tokens": 8991,
+          "completion_tokens": 671,
+          "total_tokens": 9662,
+          "completion_tokens_details": {},
+          "prompt_tokens_details": {}
+        }
+      ],
+      "synthetic_calls": 0,
+      "domain_errors": [
+        "command deadline expired"
+      ],
+      "stages": [
+        {
+          "name": "protocol.observation_commit",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 4.141,
+          "end_offset_ms": 7.176,
+          "duration_ms": 3.035
+        },
+        {
+          "name": "protocol.read",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 3.655,
+          "end_offset_ms": 8.754,
+          "duration_ms": 5.1
+        },
+        {
+          "name": "protocol.precheck",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 8.773,
+          "end_offset_ms": 9.308,
+          "duration_ms": 0.536
+        },
+        {
+          "name": "protocol.shared_prepare",
+          "outcome": "error",
+          "error_type": "model_invalid",
+          "start_offset_ms": 11.423,
+          "end_offset_ms": 30068.626,
+          "duration_ms": 30057.203
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "status": "sent",
+      "terminal_reason": "sent",
+      "decision_outcome": "ready",
+      "total_ms": 32433.292,
+      "cooldown_wait_ms": 0.131,
+      "post_result_model_drain_ms": 0.145,
+      "error_type": null,
+      "cognitive_ms": 32382.705,
+      "runtime_status": "completed",
+      "successful_reply": true,
+      "first_simulated_verified_ms": 32407,
+      "fully_simulated_verified_ms": 32429,
+      "http_requests": 3,
+      "response_models": [
+        "claude-sonnet-4-5-20250929"
+      ],
+      "model_usage": [
+        {
+          "prompt_tokens": 11011,
+          "completion_tokens": 621,
+          "total_tokens": 11632,
+          "completion_tokens_details": {},
+          "prompt_tokens_details": {}
+        },
+        {
+          "prompt_tokens": 10446,
+          "completion_tokens": 370,
+          "total_tokens": 10816,
+          "completion_tokens_details": {},
+          "prompt_tokens_details": {}
+        },
+        {
+          "prompt_tokens": 13284,
+          "completion_tokens": 76,
+          "total_tokens": 13360,
+          "completion_tokens_details": {},
+          "prompt_tokens_details": {}
+        }
+      ],
+      "synthetic_calls": 0,
+      "domain_errors": [],
+      "stages": [
+        {
+          "name": "protocol.observation_commit",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 3.187,
+          "end_offset_ms": 6.67,
+          "duration_ms": 3.483
+        },
+        {
+          "name": "protocol.read",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 2.723,
+          "end_offset_ms": 8.241,
+          "duration_ms": 5.517
+        },
+        {
+          "name": "protocol.precheck",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 8.256,
+          "end_offset_ms": 8.693,
+          "duration_ms": 0.437
+        },
+        {
+          "name": "cognitive.lock_wait",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 16.189,
+          "end_offset_ms": 16.193,
+          "duration_ms": 0.004,
+          "remote_start_offset_ms": 0.017,
+          "remote_end_offset_ms": 0.021,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "source.verify",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 16.435,
+          "end_offset_ms": 19.251,
+          "duration_ms": 2.816,
+          "remote_start_offset_ms": 0.263,
+          "remote_end_offset_ms": 3.079,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "memory.import_qq",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 19.901,
+          "end_offset_ms": 24.215,
+          "duration_ms": 4.314,
+          "remote_start_offset_ms": 3.729,
+          "remote_end_offset_ms": 8.043,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "memory.import_local",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 24.252,
+          "end_offset_ms": 25.123,
+          "duration_ms": 0.871,
+          "remote_start_offset_ms": 8.08,
+          "remote_end_offset_ms": 8.951,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "memory.prepare",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 19.892,
+          "end_offset_ms": 35.825,
+          "duration_ms": 15.933,
+          "remote_start_offset_ms": 3.72,
+          "remote_end_offset_ms": 19.653,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "shared_memory",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 19.855,
+          "end_offset_ms": 35.993,
+          "duration_ms": 16.138,
+          "remote_start_offset_ms": 3.683,
+          "remote_end_offset_ms": 19.821,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17966.499,
+          "end_offset_ms": 17966.548,
+          "duration_ms": 0.049,
+          "remote_start_offset_ms": 17950.327,
+          "remote_end_offset_ms": 17950.376,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17966.635,
+          "end_offset_ms": 17966.762,
+          "duration_ms": 0.127,
+          "remote_start_offset_ms": 17950.463,
+          "remote_end_offset_ms": 17950.59,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "persistence.fsync",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17966.779,
+          "end_offset_ms": 17967.429,
+          "duration_ms": 0.65,
+          "remote_start_offset_ms": 17950.607,
+          "remote_end_offset_ms": 17951.257,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "persistence.replace",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17967.45,
+          "end_offset_ms": 17967.497,
+          "duration_ms": 0.047,
+          "remote_start_offset_ms": 17951.278,
+          "remote_end_offset_ms": 17951.325,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "memory.import_qq",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17967.675,
+          "end_offset_ms": 17968.618,
+          "duration_ms": 0.943,
+          "remote_start_offset_ms": 17951.503,
+          "remote_end_offset_ms": 17952.446,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "memory.import_local",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17968.633,
+          "end_offset_ms": 17969.282,
+          "duration_ms": 0.648,
+          "remote_start_offset_ms": 17952.461,
+          "remote_end_offset_ms": 17953.11,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "memory.prepare",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17967.656,
+          "end_offset_ms": 17976.763,
+          "duration_ms": 9.107,
+          "remote_start_offset_ms": 17951.484,
+          "remote_end_offset_ms": 17960.591,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "context.history_selection",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18011.649,
+          "end_offset_ms": 18022.382,
+          "duration_ms": 10.733,
+          "remote_start_offset_ms": 17995.477,
+          "remote_end_offset_ms": 18006.21,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "gate.model_call",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18031.426,
+          "end_offset_ms": 26991.177,
+          "duration_ms": 8959.751,
+          "remote_start_offset_ms": 18015.254,
+          "remote_end_offset_ms": 26975.005,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "gate",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18028.614,
+          "end_offset_ms": 26991.408,
+          "duration_ms": 8962.794,
+          "remote_start_offset_ms": 18012.442,
+          "remote_end_offset_ms": 26975.236,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27030.264,
+          "end_offset_ms": 27030.408,
+          "duration_ms": 0.143,
+          "remote_start_offset_ms": 27014.092,
+          "remote_end_offset_ms": 27014.236,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27030.527,
+          "end_offset_ms": 27031.169,
+          "duration_ms": 0.642,
+          "remote_start_offset_ms": 27014.355,
+          "remote_end_offset_ms": 27014.997,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "persistence.fsync",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27031.178,
+          "end_offset_ms": 27031.918,
+          "duration_ms": 0.74,
+          "remote_start_offset_ms": 27015.006,
+          "remote_end_offset_ms": 27015.746,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "persistence.replace",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27031.935,
+          "end_offset_ms": 27031.986,
+          "duration_ms": 0.05,
+          "remote_start_offset_ms": 27015.763,
+          "remote_end_offset_ms": 27015.814,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "persistence.command",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27030.113,
+          "end_offset_ms": 27032.101,
+          "duration_ms": 1.988,
+          "remote_start_offset_ms": 27013.941,
+          "remote_end_offset_ms": 27015.929,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "runtime.web",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27032.12,
+          "end_offset_ms": 27032.183,
+          "duration_ms": 0.06280599336605519,
+          "remote_start_offset_ms": 27015.948,
+          "remote_end_offset_ms": 27016.010805993366,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "cognitive.lock_wait",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27034.634,
+          "end_offset_ms": 27034.639,
+          "duration_ms": 0.005,
+          "remote_start_offset_ms": 27018.46244200867,
+          "remote_end_offset_ms": 27018.46744200867,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "source.verify",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27034.897,
+          "end_offset_ms": 27037.689,
+          "duration_ms": 2.792,
+          "remote_start_offset_ms": 27018.72544200867,
+          "remote_end_offset_ms": 27021.51744200867,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "persona.model_call",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27060.869,
+          "end_offset_ms": 32339.652,
+          "duration_ms": 5278.782,
+          "remote_start_offset_ms": 27044.69744200867,
+          "remote_end_offset_ms": 32323.48044200867,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "persona",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27055.872,
+          "end_offset_ms": 32341.13,
+          "duration_ms": 5285.258,
+          "remote_start_offset_ms": 27039.70044200867,
+          "remote_end_offset_ms": 32324.95844200867,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32391.204,
+          "end_offset_ms": 32391.461,
+          "duration_ms": 0.257,
+          "remote_start_offset_ms": 32375.03244200867,
+          "remote_end_offset_ms": 32375.28944200867,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32391.59,
+          "end_offset_ms": 32392.863,
+          "duration_ms": 1.274,
+          "remote_start_offset_ms": 32375.418442008668,
+          "remote_end_offset_ms": 32376.69144200867,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "persistence.fsync",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32392.878,
+          "end_offset_ms": 32393.51,
+          "duration_ms": 0.632,
+          "remote_start_offset_ms": 32376.706442008668,
+          "remote_end_offset_ms": 32377.33844200867,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "persistence.replace",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32393.525,
+          "end_offset_ms": 32393.574,
+          "duration_ms": 0.048,
+          "remote_start_offset_ms": 32377.35344200867,
+          "remote_end_offset_ms": 32377.40244200867,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "persistence.command",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32391.055,
+          "end_offset_ms": 32393.725,
+          "duration_ms": 2.67,
+          "remote_start_offset_ms": 32374.88344200867,
+          "remote_end_offset_ms": 32377.55344200867,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.288
+        },
+        {
+          "name": "protocol.shared_prepare",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 10.721,
+          "end_offset_ms": 32394.359,
+          "duration_ms": 32383.638
+        },
+        {
+          "name": "protocol.first_verified_segment",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32407.245,
+          "end_offset_ms": 32407.248,
+          "duration_ms": 0.003
+        },
+        {
+          "name": "protocol.fully_verified",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32428.519,
+          "end_offset_ms": 32428.528,
+          "duration_ms": 0.009
+        },
+        {
+          "name": "protocol.delivery",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32397.114,
+          "end_offset_ms": 32430.362,
+          "duration_ms": 33.249
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "status": "failed",
+      "terminal_reason": "model_invalid",
+      "decision_outcome": null,
+      "total_ms": 30075.279,
+      "cooldown_wait_ms": 10069.521,
+      "post_result_model_drain_ms": 0.172,
+      "error_type": "QQTurnRejected",
+      "cognitive_ms": 30056.422,
+      "runtime_status": null,
+      "successful_reply": false,
+      "first_simulated_verified_ms": null,
+      "fully_simulated_verified_ms": null,
+      "http_requests": 2,
+      "response_models": [
+        "claude-sonnet-4-5-20250929"
+      ],
+      "model_usage": [
+        {
+          "prompt_tokens": 11308,
+          "completion_tokens": 690,
+          "total_tokens": 11998,
+          "completion_tokens_details": {},
+          "prompt_tokens_details": {}
+        }
+      ],
+      "synthetic_calls": 0,
+      "domain_errors": [
+        "command deadline expired"
+      ],
+      "stages": [
+        {
+          "name": "protocol.observation_commit",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 4.923,
+          "end_offset_ms": 8.227,
+          "duration_ms": 3.304
+        },
+        {
+          "name": "protocol.read",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 4.454,
+          "end_offset_ms": 10.823,
+          "duration_ms": 6.369
+        },
+        {
+          "name": "protocol.precheck",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 10.843,
+          "end_offset_ms": 11.357,
+          "duration_ms": 0.514
+        },
+        {
+          "name": "protocol.shared_prepare",
+          "outcome": "error",
+          "error_type": "model_invalid",
+          "start_offset_ms": 13.436,
+          "end_offset_ms": 30070.284,
+          "duration_ms": 30056.848
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "status": "sent",
+      "terminal_reason": "sent",
+      "decision_outcome": "ready",
+      "total_ms": 32768.027,
+      "cooldown_wait_ms": 0.202,
+      "post_result_model_drain_ms": 0.149,
+      "error_type": null,
+      "cognitive_ms": 32712.257,
+      "runtime_status": "completed",
+      "successful_reply": true,
+      "first_simulated_verified_ms": 32740,
+      "fully_simulated_verified_ms": 32763,
+      "http_requests": 3,
+      "response_models": [
+        "claude-sonnet-4-5-20250929"
+      ],
+      "model_usage": [
+        {
+          "prompt_tokens": 12343,
+          "completion_tokens": 703,
+          "total_tokens": 13046,
+          "completion_tokens_details": {},
+          "prompt_tokens_details": {}
+        },
+        {
+          "prompt_tokens": 12701,
+          "completion_tokens": 336,
+          "total_tokens": 13037,
+          "completion_tokens_details": {},
+          "prompt_tokens_details": {}
+        },
+        {
+          "prompt_tokens": 15467,
+          "completion_tokens": 81,
+          "total_tokens": 15548,
+          "completion_tokens_details": {},
+          "prompt_tokens_details": {}
+        }
+      ],
+      "synthetic_calls": 0,
+      "domain_errors": [],
+      "stages": [
+        {
+          "name": "protocol.observation_commit",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 3.989,
+          "end_offset_ms": 7.051,
+          "duration_ms": 3.062
+        },
+        {
+          "name": "protocol.read",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 3.525,
+          "end_offset_ms": 8.724,
+          "duration_ms": 5.199
+        },
+        {
+          "name": "protocol.precheck",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 8.742,
+          "end_offset_ms": 9.249,
+          "duration_ms": 0.507
+        },
+        {
+          "name": "cognitive.lock_wait",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 16.969,
+          "end_offset_ms": 16.975,
+          "duration_ms": 0.005,
+          "remote_start_offset_ms": 0.016,
+          "remote_end_offset_ms": 0.022,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "source.verify",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17.214,
+          "end_offset_ms": 19.962,
+          "duration_ms": 2.748,
+          "remote_start_offset_ms": 0.261,
+          "remote_end_offset_ms": 3.009,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "memory.import_qq",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 20.505,
+          "end_offset_ms": 24.783,
+          "duration_ms": 4.278,
+          "remote_start_offset_ms": 3.552,
+          "remote_end_offset_ms": 7.83,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "memory.import_local",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 24.805,
+          "end_offset_ms": 25.335,
+          "duration_ms": 0.53,
+          "remote_start_offset_ms": 7.852,
+          "remote_end_offset_ms": 8.382,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "memory.prepare",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 20.497,
+          "end_offset_ms": 38.537,
+          "duration_ms": 18.04,
+          "remote_start_offset_ms": 3.544,
+          "remote_end_offset_ms": 21.584,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "shared_memory",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 20.463,
+          "end_offset_ms": 38.686,
+          "duration_ms": 18.223,
+          "remote_start_offset_ms": 3.51,
+          "remote_end_offset_ms": 21.733,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18408.95,
+          "end_offset_ms": 18409.195,
+          "duration_ms": 0.245,
+          "remote_start_offset_ms": 18391.997,
+          "remote_end_offset_ms": 18392.242,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18409.277,
+          "end_offset_ms": 18410.222,
+          "duration_ms": 0.945,
+          "remote_start_offset_ms": 18392.324,
+          "remote_end_offset_ms": 18393.269,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "persistence.fsync",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18410.234,
+          "end_offset_ms": 18410.841,
+          "duration_ms": 0.607,
+          "remote_start_offset_ms": 18393.281,
+          "remote_end_offset_ms": 18393.888,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "persistence.replace",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18410.86,
+          "end_offset_ms": 18410.906,
+          "duration_ms": 0.046,
+          "remote_start_offset_ms": 18393.907,
+          "remote_end_offset_ms": 18393.953,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "memory.import_qq",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18411.161,
+          "end_offset_ms": 18412.406,
+          "duration_ms": 1.245,
+          "remote_start_offset_ms": 18394.208,
+          "remote_end_offset_ms": 18395.453,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "memory.import_local",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18412.418,
+          "end_offset_ms": 18412.864,
+          "duration_ms": 0.446,
+          "remote_start_offset_ms": 18395.465,
+          "remote_end_offset_ms": 18395.911,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "memory.prepare",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18411.142,
+          "end_offset_ms": 18420.965,
+          "duration_ms": 9.823,
+          "remote_start_offset_ms": 18394.189,
+          "remote_end_offset_ms": 18404.012,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "context.history_selection",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18464.853,
+          "end_offset_ms": 18480.711,
+          "duration_ms": 15.858,
+          "remote_start_offset_ms": 18447.9,
+          "remote_end_offset_ms": 18463.758,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "gate.model_call",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18491.547,
+          "end_offset_ms": 26172.994,
+          "duration_ms": 7681.447,
+          "remote_start_offset_ms": 18474.594,
+          "remote_end_offset_ms": 26156.041,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "gate",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18488.655,
+          "end_offset_ms": 26173.113,
+          "duration_ms": 7684.457,
+          "remote_start_offset_ms": 18471.702,
+          "remote_end_offset_ms": 26156.16,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 26216.791,
+          "end_offset_ms": 26216.984,
+          "duration_ms": 0.193,
+          "remote_start_offset_ms": 26199.838,
+          "remote_end_offset_ms": 26200.031,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 26217.071,
+          "end_offset_ms": 26217.942,
+          "duration_ms": 0.871,
+          "remote_start_offset_ms": 26200.118,
+          "remote_end_offset_ms": 26200.989,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "persistence.fsync",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 26217.952,
+          "end_offset_ms": 26218.671,
+          "duration_ms": 0.719,
+          "remote_start_offset_ms": 26200.999,
+          "remote_end_offset_ms": 26201.718,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "persistence.replace",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 26218.689,
+          "end_offset_ms": 26218.743,
+          "duration_ms": 0.054,
+          "remote_start_offset_ms": 26201.736,
+          "remote_end_offset_ms": 26201.79,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "persistence.command",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 26216.672,
+          "end_offset_ms": 26218.871,
+          "duration_ms": 2.198,
+          "remote_start_offset_ms": 26199.719,
+          "remote_end_offset_ms": 26201.918,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "runtime.web",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 26218.888,
+          "end_offset_ms": 26218.995,
+          "duration_ms": 0.10710700007621199,
+          "remote_start_offset_ms": 26201.935,
+          "remote_end_offset_ms": 26202.042107000078,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "cognitive.lock_wait",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 26221.992,
+          "end_offset_ms": 26221.998,
+          "duration_ms": 0.006,
+          "remote_start_offset_ms": 26205.03842899204,
+          "remote_end_offset_ms": 26205.04442899204,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "source.verify",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 26222.246,
+          "end_offset_ms": 26225.664,
+          "duration_ms": 3.418,
+          "remote_start_offset_ms": 26205.29242899204,
+          "remote_end_offset_ms": 26208.71042899204,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "persona.model_call",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 26248.492,
+          "end_offset_ms": 32664.238,
+          "duration_ms": 6415.746,
+          "remote_start_offset_ms": 26231.53842899204,
+          "remote_end_offset_ms": 32647.28442899204,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "persona",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 26242.76,
+          "end_offset_ms": 32665.995,
+          "duration_ms": 6423.236,
+          "remote_start_offset_ms": 26225.80642899204,
+          "remote_end_offset_ms": 32649.04142899204,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32721.082,
+          "end_offset_ms": 32721.481,
+          "duration_ms": 0.399,
+          "remote_start_offset_ms": 32704.12842899204,
+          "remote_end_offset_ms": 32704.52742899204,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32721.597,
+          "end_offset_ms": 32723.025,
+          "duration_ms": 1.427,
+          "remote_start_offset_ms": 32704.64342899204,
+          "remote_end_offset_ms": 32706.07142899204,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "persistence.fsync",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32723.035,
+          "end_offset_ms": 32723.683,
+          "duration_ms": 0.649,
+          "remote_start_offset_ms": 32706.08142899204,
+          "remote_end_offset_ms": 32706.72942899204,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "persistence.replace",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32723.727,
+          "end_offset_ms": 32723.817,
+          "duration_ms": 0.09,
+          "remote_start_offset_ms": 32706.77342899204,
+          "remote_end_offset_ms": 32706.86342899204,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "persistence.command",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32720.956,
+          "end_offset_ms": 32724.017,
+          "duration_ms": 3.061,
+          "remote_start_offset_ms": 32704.00242899204,
+          "remote_end_offset_ms": 32707.06342899204,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.343
+        },
+        {
+          "name": "protocol.shared_prepare",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 11.384,
+          "end_offset_ms": 32724.418,
+          "duration_ms": 32713.034
+        },
+        {
+          "name": "protocol.first_verified_segment",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32740.036,
+          "end_offset_ms": 32740.04,
+          "duration_ms": 0.005
+        },
+        {
+          "name": "protocol.fully_verified",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32762.932,
+          "end_offset_ms": 32762.942,
+          "duration_ms": 0.01
+        },
+        {
+          "name": "protocol.delivery",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32730.446,
+          "end_offset_ms": 32764.798,
+          "duration_ms": 34.352
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "status": "sent",
+      "terminal_reason": "sent",
+      "decision_outcome": "ready",
+      "total_ms": 36003.166,
+      "cooldown_wait_ms": 10071.604,
+      "post_result_model_drain_ms": 0.188,
+      "error_type": null,
+      "cognitive_ms": 35951.467,
+      "runtime_status": "completed",
+      "successful_reply": true,
+      "first_simulated_verified_ms": 35976,
+      "fully_simulated_verified_ms": 35998,
+      "http_requests": 3,
+      "response_models": [
+        "claude-sonnet-4-5-20250929"
+      ],
+      "model_usage": [
+        {
+          "prompt_tokens": 12991,
+          "completion_tokens": 744,
+          "total_tokens": 13735,
+          "completion_tokens_details": {},
+          "prompt_tokens_details": {}
+        },
+        {
+          "prompt_tokens": 14102,
+          "completion_tokens": 305,
+          "total_tokens": 14407,
+          "completion_tokens_details": {},
+          "prompt_tokens_details": {}
+        },
+        {
+          "prompt_tokens": 16809,
+          "completion_tokens": 72,
+          "total_tokens": 16881,
+          "completion_tokens_details": {},
+          "prompt_tokens_details": {}
+        }
+      ],
+      "synthetic_calls": 0,
+      "domain_errors": [],
+      "stages": [
+        {
+          "name": "protocol.observation_commit",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 4.023,
+          "end_offset_ms": 7.236,
+          "duration_ms": 3.213
+        },
+        {
+          "name": "protocol.read",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 3.518,
+          "end_offset_ms": 8.977,
+          "duration_ms": 5.458
+        },
+        {
+          "name": "protocol.precheck",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 9.011,
+          "end_offset_ms": 10.289,
+          "duration_ms": 1.278
+        },
+        {
+          "name": "cognitive.lock_wait",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18.614,
+          "end_offset_ms": 18.62,
+          "duration_ms": 0.006,
+          "remote_start_offset_ms": 0.018,
+          "remote_end_offset_ms": 0.024,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "source.verify",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18.884,
+          "end_offset_ms": 21.282,
+          "duration_ms": 2.399,
+          "remote_start_offset_ms": 0.288,
+          "remote_end_offset_ms": 2.686,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "memory.import_qq",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 21.823,
+          "end_offset_ms": 30.012,
+          "duration_ms": 8.19,
+          "remote_start_offset_ms": 3.227,
+          "remote_end_offset_ms": 11.416,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "memory.import_local",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 30.039,
+          "end_offset_ms": 31.164,
+          "duration_ms": 1.125,
+          "remote_start_offset_ms": 11.443,
+          "remote_end_offset_ms": 12.568,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "memory.prepare",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 21.816,
+          "end_offset_ms": 50.224,
+          "duration_ms": 28.409,
+          "remote_start_offset_ms": 3.22,
+          "remote_end_offset_ms": 31.628,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "shared_memory",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 21.781,
+          "end_offset_ms": 50.379,
+          "duration_ms": 28.598,
+          "remote_start_offset_ms": 3.185,
+          "remote_end_offset_ms": 31.783,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18907.105,
+          "end_offset_ms": 18907.655,
+          "duration_ms": 0.55,
+          "remote_start_offset_ms": 18888.509,
+          "remote_end_offset_ms": 18889.059,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18907.8,
+          "end_offset_ms": 18909.532,
+          "duration_ms": 1.732,
+          "remote_start_offset_ms": 18889.204,
+          "remote_end_offset_ms": 18890.936,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "persistence.fsync",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18909.545,
+          "end_offset_ms": 18910.21,
+          "duration_ms": 0.665,
+          "remote_start_offset_ms": 18890.949,
+          "remote_end_offset_ms": 18891.614,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "persistence.replace",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18910.229,
+          "end_offset_ms": 18910.282,
+          "duration_ms": 0.053,
+          "remote_start_offset_ms": 18891.633,
+          "remote_end_offset_ms": 18891.686,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "memory.import_qq",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18910.536,
+          "end_offset_ms": 18911.303,
+          "duration_ms": 0.767,
+          "remote_start_offset_ms": 18891.94,
+          "remote_end_offset_ms": 18892.707,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "memory.import_local",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18911.316,
+          "end_offset_ms": 18911.792,
+          "duration_ms": 0.475,
+          "remote_start_offset_ms": 18892.72,
+          "remote_end_offset_ms": 18893.196,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "memory.prepare",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18910.526,
+          "end_offset_ms": 18921.322,
+          "duration_ms": 10.796,
+          "remote_start_offset_ms": 18891.93,
+          "remote_end_offset_ms": 18902.726,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "context.history_selection",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 18971.808,
+          "end_offset_ms": 18992.76,
+          "duration_ms": 20.952,
+          "remote_start_offset_ms": 18953.212,
+          "remote_end_offset_ms": 18974.164,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "gate.model_call",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 19003.694,
+          "end_offset_ms": 28045.442,
+          "duration_ms": 9041.749,
+          "remote_start_offset_ms": 18985.098,
+          "remote_end_offset_ms": 28026.846,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "gate",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 19001.035,
+          "end_offset_ms": 28045.57,
+          "duration_ms": 9044.535,
+          "remote_start_offset_ms": 18982.439,
+          "remote_end_offset_ms": 28026.974,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 28092.938,
+          "end_offset_ms": 28093.45,
+          "duration_ms": 0.512,
+          "remote_start_offset_ms": 28074.342,
+          "remote_end_offset_ms": 28074.854,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 28093.547,
+          "end_offset_ms": 28094.993,
+          "duration_ms": 1.446,
+          "remote_start_offset_ms": 28074.951,
+          "remote_end_offset_ms": 28076.397,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "persistence.fsync",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 28095.007,
+          "end_offset_ms": 28095.797,
+          "duration_ms": 0.79,
+          "remote_start_offset_ms": 28076.411,
+          "remote_end_offset_ms": 28077.201,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "persistence.replace",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 28095.829,
+          "end_offset_ms": 28095.9,
+          "duration_ms": 0.071,
+          "remote_start_offset_ms": 28077.233,
+          "remote_end_offset_ms": 28077.304,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "persistence.command",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 28092.763,
+          "end_offset_ms": 28096.107,
+          "duration_ms": 3.344,
+          "remote_start_offset_ms": 28074.167,
+          "remote_end_offset_ms": 28077.511,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "runtime.web",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 28096.144,
+          "end_offset_ms": 28096.218,
+          "duration_ms": 0.07364600605797023,
+          "remote_start_offset_ms": 28077.548,
+          "remote_end_offset_ms": 28077.621646006057,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "cognitive.lock_wait",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 28099.316,
+          "end_offset_ms": 28099.323,
+          "duration_ms": 0.007,
+          "remote_start_offset_ms": 28080.71971400255,
+          "remote_end_offset_ms": 28080.726714002547,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "source.verify",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 28099.571,
+          "end_offset_ms": 28102.705,
+          "duration_ms": 3.134,
+          "remote_start_offset_ms": 28080.97471400255,
+          "remote_end_offset_ms": 28084.10871400255,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "persona.model_call",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 28129.072,
+          "end_offset_ms": 35900.005,
+          "duration_ms": 7770.933,
+          "remote_start_offset_ms": 28110.47571400255,
+          "remote_end_offset_ms": 35881.40871400255,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "persona",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 28121.554,
+          "end_offset_ms": 35901.371,
+          "duration_ms": 7779.817,
+          "remote_start_offset_ms": 28102.95771400255,
+          "remote_end_offset_ms": 35882.774714002546,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 35960.608,
+          "end_offset_ms": 35961.442,
+          "duration_ms": 0.834,
+          "remote_start_offset_ms": 35942.01171400255,
+          "remote_end_offset_ms": 35942.84571400255,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 35961.61,
+          "end_offset_ms": 35963.5,
+          "duration_ms": 1.89,
+          "remote_start_offset_ms": 35943.01371400255,
+          "remote_end_offset_ms": 35944.90371400255,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "persistence.fsync",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 35963.516,
+          "end_offset_ms": 35964.237,
+          "duration_ms": 0.721,
+          "remote_start_offset_ms": 35944.91971400255,
+          "remote_end_offset_ms": 35945.64071400255,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "persistence.replace",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 35964.26,
+          "end_offset_ms": 35964.329,
+          "duration_ms": 0.069,
+          "remote_start_offset_ms": 35945.66371400255,
+          "remote_end_offset_ms": 35945.73271400255,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "persistence.command",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 35960.388,
+          "end_offset_ms": 35964.519,
+          "duration_ms": 4.131,
+          "remote_start_offset_ms": 35941.791714002546,
+          "remote_end_offset_ms": 35945.92271400255,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.687
+        },
+        {
+          "name": "protocol.shared_prepare",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 12.759,
+          "end_offset_ms": 35964.926,
+          "duration_ms": 35952.167
+        },
+        {
+          "name": "protocol.first_verified_segment",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 35976.223,
+          "end_offset_ms": 35976.226,
+          "duration_ms": 0.003
+        },
+        {
+          "name": "protocol.fully_verified",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 35997.995,
+          "end_offset_ms": 35998.004,
+          "duration_ms": 0.009
+        },
+        {
+          "name": "protocol.delivery",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 35967.145,
+          "end_offset_ms": 35999.667,
+          "duration_ms": 32.522
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "status": "failed",
+      "terminal_reason": "model_invalid",
+      "decision_outcome": null,
+      "total_ms": 30082.065,
+      "cooldown_wait_ms": 10071.795,
+      "post_result_model_drain_ms": 0.154,
+      "error_type": "QQTurnRejected",
+      "cognitive_ms": 30064.374,
+      "runtime_status": null,
+      "successful_reply": false,
+      "first_simulated_verified_ms": null,
+      "fully_simulated_verified_ms": null,
+      "http_requests": 2,
+      "response_models": [
+        "claude-sonnet-4-5-20250929"
+      ],
+      "model_usage": [
+        {
+          "prompt_tokens": 13876,
+          "completion_tokens": 808,
+          "total_tokens": 14684,
+          "completion_tokens_details": {},
+          "prompt_tokens_details": {}
+        }
+      ],
+      "synthetic_calls": 0,
+      "domain_errors": [
+        "command deadline expired"
+      ],
+      "stages": [
+        {
+          "name": "protocol.observation_commit",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 4.722,
+          "end_offset_ms": 8.111,
+          "duration_ms": 3.389
+        },
+        {
+          "name": "protocol.read",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 4.115,
+          "end_offset_ms": 9.663,
+          "duration_ms": 5.547
+        },
+        {
+          "name": "protocol.precheck",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 9.681,
+          "end_offset_ms": 10.18,
+          "duration_ms": 0.499
+        },
+        {
+          "name": "protocol.shared_prepare",
+          "outcome": "error",
+          "error_type": "model_invalid",
+          "start_offset_ms": 12.205,
+          "end_offset_ms": 30076.975,
+          "duration_ms": 30064.77
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "status": "sent",
+      "terminal_reason": "sent",
+      "decision_outcome": "ready",
+      "total_ms": 32411.84,
+      "cooldown_wait_ms": 0.2,
+      "post_result_model_drain_ms": 0.139,
+      "error_type": null,
+      "cognitive_ms": 32359.025,
+      "runtime_status": "completed",
+      "successful_reply": true,
+      "first_simulated_verified_ms": 32385,
+      "fully_simulated_verified_ms": 32407,
+      "http_requests": 3,
+      "response_models": [
+        "claude-sonnet-4-5-20250929"
+      ],
+      "model_usage": [
+        {
+          "prompt_tokens": 14497,
+          "completion_tokens": 783,
+          "total_tokens": 15280,
+          "completion_tokens_details": {},
+          "prompt_tokens_details": {}
+        },
+        {
+          "prompt_tokens": 16156,
+          "completion_tokens": 328,
+          "total_tokens": 16484,
+          "completion_tokens_details": {},
+          "prompt_tokens_details": {}
+        },
+        {
+          "prompt_tokens": 18909,
+          "completion_tokens": 85,
+          "total_tokens": 18994,
+          "completion_tokens_details": {},
+          "prompt_tokens_details": {}
+        }
+      ],
+      "synthetic_calls": 0,
+      "domain_errors": [],
+      "stages": [
+        {
+          "name": "protocol.observation_commit",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 4.513,
+          "end_offset_ms": 7.649,
+          "duration_ms": 3.136
+        },
+        {
+          "name": "protocol.read",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 4.0,
+          "end_offset_ms": 9.207,
+          "duration_ms": 5.207
+        },
+        {
+          "name": "protocol.precheck",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 9.227,
+          "end_offset_ms": 9.763,
+          "duration_ms": 0.535
+        },
+        {
+          "name": "cognitive.lock_wait",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17.188,
+          "end_offset_ms": 17.194,
+          "duration_ms": 0.006,
+          "remote_start_offset_ms": 0.018,
+          "remote_end_offset_ms": 0.024,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "source.verify",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17.581,
+          "end_offset_ms": 20.466,
+          "duration_ms": 2.885,
+          "remote_start_offset_ms": 0.411,
+          "remote_end_offset_ms": 3.296,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "memory.import_qq",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 21.065,
+          "end_offset_ms": 26.519,
+          "duration_ms": 5.454,
+          "remote_start_offset_ms": 3.895,
+          "remote_end_offset_ms": 9.349,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "memory.import_local",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 26.547,
+          "end_offset_ms": 27.124,
+          "duration_ms": 0.577,
+          "remote_start_offset_ms": 9.377,
+          "remote_end_offset_ms": 9.954,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "memory.prepare",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 21.056,
+          "end_offset_ms": 45.155,
+          "duration_ms": 24.099,
+          "remote_start_offset_ms": 3.886,
+          "remote_end_offset_ms": 27.985,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "shared_memory",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 21.015,
+          "end_offset_ms": 45.295,
+          "duration_ms": 24.28,
+          "remote_start_offset_ms": 3.845,
+          "remote_end_offset_ms": 28.125,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17519.26,
+          "end_offset_ms": 17520.26,
+          "duration_ms": 1.0,
+          "remote_start_offset_ms": 17502.09,
+          "remote_end_offset_ms": 17503.09,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17520.436,
+          "end_offset_ms": 17522.318,
+          "duration_ms": 1.882,
+          "remote_start_offset_ms": 17503.266,
+          "remote_end_offset_ms": 17505.148,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "persistence.fsync",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17522.334,
+          "end_offset_ms": 17523.082,
+          "duration_ms": 0.748,
+          "remote_start_offset_ms": 17505.164,
+          "remote_end_offset_ms": 17505.912,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "persistence.replace",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17523.109,
+          "end_offset_ms": 17523.186,
+          "duration_ms": 0.077,
+          "remote_start_offset_ms": 17505.939,
+          "remote_end_offset_ms": 17506.016,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "memory.import_qq",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17523.528,
+          "end_offset_ms": 17524.342,
+          "duration_ms": 0.814,
+          "remote_start_offset_ms": 17506.358,
+          "remote_end_offset_ms": 17507.172,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "memory.import_local",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17524.356,
+          "end_offset_ms": 17524.821,
+          "duration_ms": 0.464,
+          "remote_start_offset_ms": 17507.186,
+          "remote_end_offset_ms": 17507.651,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "memory.prepare",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17523.515,
+          "end_offset_ms": 17535.771,
+          "duration_ms": 12.256,
+          "remote_start_offset_ms": 17506.345,
+          "remote_end_offset_ms": 17518.601,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "context.history_selection",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17650.123,
+          "end_offset_ms": 17675.653,
+          "duration_ms": 25.53,
+          "remote_start_offset_ms": 17632.953,
+          "remote_end_offset_ms": 17658.483,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "gate.model_call",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17687.632,
+          "end_offset_ms": 27066.107,
+          "duration_ms": 9378.475,
+          "remote_start_offset_ms": 17670.462,
+          "remote_end_offset_ms": 27048.937,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "gate",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 17685.053,
+          "end_offset_ms": 27066.228,
+          "duration_ms": 9381.176,
+          "remote_start_offset_ms": 17667.883,
+          "remote_end_offset_ms": 27049.058,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27114.686,
+          "end_offset_ms": 27115.527,
+          "duration_ms": 0.842,
+          "remote_start_offset_ms": 27097.516,
+          "remote_end_offset_ms": 27098.357,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27115.619,
+          "end_offset_ms": 27117.629,
+          "duration_ms": 2.01,
+          "remote_start_offset_ms": 27098.449,
+          "remote_end_offset_ms": 27100.459,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "persistence.fsync",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27117.643,
+          "end_offset_ms": 27118.454,
+          "duration_ms": 0.811,
+          "remote_start_offset_ms": 27100.473,
+          "remote_end_offset_ms": 27101.284,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "persistence.replace",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27118.473,
+          "end_offset_ms": 27118.536,
+          "duration_ms": 0.063,
+          "remote_start_offset_ms": 27101.303,
+          "remote_end_offset_ms": 27101.366,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "persistence.command",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27114.502,
+          "end_offset_ms": 27118.805,
+          "duration_ms": 4.303,
+          "remote_start_offset_ms": 27097.332,
+          "remote_end_offset_ms": 27101.635,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "runtime.web",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27118.847,
+          "end_offset_ms": 27118.912,
+          "duration_ms": 0.0644879910396412,
+          "remote_start_offset_ms": 27101.677,
+          "remote_end_offset_ms": 27101.74148799104,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "cognitive.lock_wait",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27122.018,
+          "end_offset_ms": 27122.025,
+          "duration_ms": 0.007,
+          "remote_start_offset_ms": 27104.84793299821,
+          "remote_end_offset_ms": 27104.85493299821,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "source.verify",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27122.362,
+          "end_offset_ms": 27125.555,
+          "duration_ms": 3.194,
+          "remote_start_offset_ms": 27105.191932998212,
+          "remote_end_offset_ms": 27108.38493299821,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "persona.model_call",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27154.016,
+          "end_offset_ms": 32306.155,
+          "duration_ms": 5152.139,
+          "remote_start_offset_ms": 27136.84593299821,
+          "remote_end_offset_ms": 32288.98493299821,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "persona",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 27146.831,
+          "end_offset_ms": 32307.427,
+          "duration_ms": 5160.595,
+          "remote_start_offset_ms": 27129.66093299821,
+          "remote_end_offset_ms": 32290.25693299821,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32367.38,
+          "end_offset_ms": 32367.894,
+          "duration_ms": 0.514,
+          "remote_start_offset_ms": 32350.20993299821,
+          "remote_end_offset_ms": 32350.72393299821,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32367.987,
+          "end_offset_ms": 32370.236,
+          "duration_ms": 2.249,
+          "remote_start_offset_ms": 32350.816932998212,
+          "remote_end_offset_ms": 32353.065932998208,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "persistence.fsync",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32370.25,
+          "end_offset_ms": 32371.019,
+          "duration_ms": 0.768,
+          "remote_start_offset_ms": 32353.07993299821,
+          "remote_end_offset_ms": 32353.84893299821,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "persistence.replace",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32371.054,
+          "end_offset_ms": 32371.156,
+          "duration_ms": 0.102,
+          "remote_start_offset_ms": 32353.88393299821,
+          "remote_end_offset_ms": 32353.98593299821,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "persistence.command",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32367.25,
+          "end_offset_ms": 32371.387,
+          "duration_ms": 4.137,
+          "remote_start_offset_ms": 32350.07993299821,
+          "remote_end_offset_ms": 32354.21693299821,
+          "timing_origin": "shared_cognitive",
+          "rpc_residual_ms": 5.005
+        },
+        {
+          "name": "protocol.shared_prepare",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 11.894,
+          "end_offset_ms": 32372.316,
+          "duration_ms": 32360.421
+        },
+        {
+          "name": "protocol.first_verified_segment",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32384.652,
+          "end_offset_ms": 32384.657,
+          "duration_ms": 0.005
+        },
+        {
+          "name": "protocol.fully_verified",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32407.272,
+          "end_offset_ms": 32407.286,
+          "duration_ms": 0.014
+        },
+        {
+          "name": "protocol.delivery",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 32374.685,
+          "end_offset_ms": 32409.091,
+          "duration_ms": 34.406
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "status": "failed",
+      "terminal_reason": "model_invalid",
+      "decision_outcome": null,
+      "total_ms": 30082.735,
+      "cooldown_wait_ms": 10074.766,
+      "post_result_model_drain_ms": 0.147,
+      "error_type": "QQTurnRejected",
+      "cognitive_ms": 30065.543,
+      "runtime_status": null,
+      "successful_reply": false,
+      "first_simulated_verified_ms": null,
+      "fully_simulated_verified_ms": null,
+      "http_requests": 2,
+      "response_models": [
+        "claude-sonnet-4-5-20250929"
+      ],
+      "model_usage": [
+        {
+          "prompt_tokens": 15387,
+          "completion_tokens": 784,
+          "total_tokens": 16171,
+          "completion_tokens_details": {},
+          "prompt_tokens_details": {}
+        }
+      ],
+      "synthetic_calls": 0,
+      "domain_errors": [
+        "command deadline expired"
+      ],
+      "stages": [
+        {
+          "name": "protocol.observation_commit",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 3.616,
+          "end_offset_ms": 6.478,
+          "duration_ms": 2.862
+        },
+        {
+          "name": "protocol.read",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 3.162,
+          "end_offset_ms": 7.937,
+          "duration_ms": 4.775
+        },
+        {
+          "name": "protocol.precheck",
+          "outcome": "ok",
+          "error_type": null,
+          "start_offset_ms": 7.948,
+          "end_offset_ms": 8.382,
+          "duration_ms": 0.434
+        },
+        {
+          "name": "protocol.shared_prepare",
+          "outcome": "error",
+          "error_type": "model_invalid",
+          "start_offset_ms": 11.13,
+          "end_offset_ms": 30077.137,
+          "duration_ms": 30066.007
+        }
+      ]
+    }
+  ],
+  "started_at": "2026-09-22T10:29:45.714452+00:00",
+  "effective_policy": {
+    "qq_context_projection": "compact",
+    "qq_body_pipeline": "direct",
+    "qq_history_selection": "shadow",
+    "qq_gate_history_soft_characters": 24000,
+    "qq_body_history_soft_characters": 64000,
+    "qq_web_policy": "legacy",
+    "qq_reply_scheduler": "shadow",
+    "qq_stage_budgets_enabled": false,
+    "qq_gate_timeout_seconds": 15.0,
+    "qq_web_timeout_seconds": 10.0,
+    "qq_body_reserve_seconds": 10.0,
+    "qq_delivery_reserve_seconds": 3.0,
+    "cognitive_incremental_persistence_enabled": true,
+    "qq_latency_conversations": [
+      "29999/10001"
+    ]
+  },
+  "policy_overrides": {
+    "production_memory_enabled": true,
+    "aux_llm_preload": false,
+    "call_log_enabled": false,
+    "direct_image_mode": "off",
+    "direct_reply_scheduler": "legacy",
+    "qq_latency_conversations": [
+      "29999/10001"
+    ]
+  },
+  "driver_sha256": "96dabdd080c0e7ea81a5ee4b54a90503897c504bb9c9eef176d4b39f9063e597",
+  "source_root": "/home/qiuyu/neuralcloud-evidence-v2-final-20260922/neuralcloud",
+  "source_production_sha256": "0df2c622d17d7220c241cb0ea5f3eb4aaa14755683006c18e1483b4b1587cb05",
+  "runtime_command_timeout_seconds": 30,
+  "maximum_turn_deadline_seconds": 60,
+  "validation": {
+    "usage_spool": {
+      "attempts": 22,
+      "in_flight": 0
+    },
+    "source_files_unchanged": true,
+    "configurations_unchanged": true,
+    "service_states": {
+      "neuralcloud-cognitive.service": "active",
+      "neuralcloud-runtime.service": "active",
+      "neuralcloud-homeostasis.service": "active",
+      "neuralcloud-gui.service": "active"
+    }
+  },
+  "model_response_diagnostics": [
+    {
+      "response_model": "claude-sonnet-4-5-20250929",
+      "content_type": "text",
+      "finish_reason": "stop",
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "usage": {
+        "prompt_tokens": 6241,
+        "completion_tokens": 610,
+        "total_tokens": 6851,
+        "completion_tokens_details": {},
+        "prompt_tokens_details": {}
+      },
+      "visible_response_characters": 1694,
+      "appraisal_envelope_schema": "valid"
+    },
+    {
+      "response_model": "claude-sonnet-4-5-20250929",
+      "content_type": "text",
+      "finish_reason": "stop",
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "usage": {
+        "prompt_tokens": 7590,
+        "completion_tokens": 641,
+        "total_tokens": 8231,
+        "completion_tokens_details": {},
+        "prompt_tokens_details": {}
+      },
+      "visible_response_characters": 1286,
+      "appraisal_envelope_schema": "valid"
+    },
+    {
+      "response_model": "claude-sonnet-4-5-20250929",
+      "content_type": "text",
+      "finish_reason": "stop",
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "usage": {
+        "prompt_tokens": 8991,
+        "completion_tokens": 671,
+        "total_tokens": 9662,
+        "completion_tokens_details": {},
+        "prompt_tokens_details": {}
+      },
+      "visible_response_characters": 1445,
+      "appraisal_envelope_schema": "valid"
+    },
+    {
+      "response_model": "claude-sonnet-4-5-20250929",
+      "content_type": "text",
+      "finish_reason": "stop",
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "usage": {
+        "prompt_tokens": 11011,
+        "completion_tokens": 621,
+        "total_tokens": 11632,
+        "completion_tokens_details": {},
+        "prompt_tokens_details": {}
+      },
+      "visible_response_characters": 1330,
+      "appraisal_envelope_schema": "valid"
+    },
+    {
+      "response_model": "claude-sonnet-4-5-20250929",
+      "content_type": "text",
+      "finish_reason": "stop",
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "usage": {
+        "prompt_tokens": 10446,
+        "completion_tokens": 370,
+        "total_tokens": 10816,
+        "completion_tokens_details": {},
+        "prompt_tokens_details": {}
+      },
+      "visible_response_characters": 680
+    },
+    {
+      "response_model": "claude-sonnet-4-5-20250929",
+      "content_type": "text",
+      "finish_reason": "stop",
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "usage": {
+        "prompt_tokens": 13284,
+        "completion_tokens": 76,
+        "total_tokens": 13360,
+        "completion_tokens_details": {},
+        "prompt_tokens_details": {}
+      },
+      "visible_response_characters": 67,
+      "json_object": false
+    },
+    {
+      "response_model": "claude-sonnet-4-5-20250929",
+      "content_type": "text",
+      "finish_reason": "stop",
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "usage": {
+        "prompt_tokens": 11308,
+        "completion_tokens": 690,
+        "total_tokens": 11998,
+        "completion_tokens_details": {},
+        "prompt_tokens_details": {}
+      },
+      "visible_response_characters": 1370,
+      "appraisal_envelope_schema": "valid"
+    },
+    {
+      "response_model": "claude-sonnet-4-5-20250929",
+      "content_type": "text",
+      "finish_reason": "stop",
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "usage": {
+        "prompt_tokens": 12343,
+        "completion_tokens": 703,
+        "total_tokens": 13046,
+        "completion_tokens_details": {},
+        "prompt_tokens_details": {}
+      },
+      "visible_response_characters": 1345,
+      "appraisal_envelope_schema": "valid"
+    },
+    {
+      "response_model": "claude-sonnet-4-5-20250929",
+      "content_type": "text",
+      "finish_reason": "stop",
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "usage": {
+        "prompt_tokens": 12701,
+        "completion_tokens": 336,
+        "total_tokens": 13037,
+        "completion_tokens_details": {},
+        "prompt_tokens_details": {}
+      },
+      "visible_response_characters": 651
+    },
+    {
+      "response_model": "claude-sonnet-4-5-20250929",
+      "content_type": "text",
+      "finish_reason": "stop",
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "usage": {
+        "prompt_tokens": 15467,
+        "completion_tokens": 81,
+        "total_tokens": 15548,
+        "completion_tokens_details": {},
+        "prompt_tokens_details": {}
+      },
+      "visible_response_characters": 75,
+      "json_object": false
+    },
+    {
+      "response_model": "claude-sonnet-4-5-20250929",
+      "content_type": "text",
+      "finish_reason": "stop",
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "usage": {
+        "prompt_tokens": 12991,
+        "completion_tokens": 744,
+        "total_tokens": 13735,
+        "completion_tokens_details": {},
+        "prompt_tokens_details": {}
+      },
+      "visible_response_characters": 1409,
+      "appraisal_envelope_schema": "valid"
+    },
+    {
+      "response_model": "claude-sonnet-4-5-20250929",
+      "content_type": "text",
+      "finish_reason": "stop",
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "usage": {
+        "prompt_tokens": 14102,
+        "completion_tokens": 305,
+        "total_tokens": 14407,
+        "completion_tokens_details": {},
+        "prompt_tokens_details": {}
+      },
+      "visible_response_characters": 589
+    },
+    {
+      "response_model": "claude-sonnet-4-5-20250929",
+      "content_type": "text",
+      "finish_reason": "stop",
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "usage": {
+        "prompt_tokens": 16809,
+        "completion_tokens": 72,
+        "total_tokens": 16881,
+        "completion_tokens_details": {},
+        "prompt_tokens_details": {}
+      },
+      "visible_response_characters": 66,
+      "json_object": false
+    },
+    {
+      "response_model": "claude-sonnet-4-5-20250929",
+      "content_type": "text",
+      "finish_reason": "stop",
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "usage": {
+        "prompt_tokens": 13876,
+        "completion_tokens": 808,
+        "total_tokens": 14684,
+        "completion_tokens_details": {},
+        "prompt_tokens_details": {}
+      },
+      "visible_response_characters": 1474,
+      "appraisal_envelope_schema": "valid"
+    },
+    {
+      "response_model": "claude-sonnet-4-5-20250929",
+      "content_type": "text",
+      "finish_reason": "stop",
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "usage": {
+        "prompt_tokens": 14497,
+        "completion_tokens": 783,
+        "total_tokens": 15280,
+        "completion_tokens_details": {},
+        "prompt_tokens_details": {}
+      },
+      "visible_response_characters": 1459,
+      "appraisal_envelope_schema": "valid"
+    },
+    {
+      "response_model": "claude-sonnet-4-5-20250929",
+      "content_type": "text",
+      "finish_reason": "stop",
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "usage": {
+        "prompt_tokens": 16156,
+        "completion_tokens": 328,
+        "total_tokens": 16484,
+        "completion_tokens_details": {},
+        "prompt_tokens_details": {}
+      },
+      "visible_response_characters": 616
+    },
+    {
+      "response_model": "claude-sonnet-4-5-20250929",
+      "content_type": "text",
+      "finish_reason": "stop",
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "usage": {
+        "prompt_tokens": 18909,
+        "completion_tokens": 85,
+        "total_tokens": 18994,
+        "completion_tokens_details": {},
+        "prompt_tokens_details": {}
+      },
+      "visible_response_characters": 73,
+      "json_object": false
+    },
+    {
+      "response_model": "claude-sonnet-4-5-20250929",
+      "content_type": "text",
+      "finish_reason": "stop",
+      "has_tool_calls": false,
+      "has_refusal": false,
+      "usage": {
+        "prompt_tokens": 15387,
+        "completion_tokens": 784,
+        "total_tokens": 16171,
+        "completion_tokens_details": {},
+        "prompt_tokens_details": {}
+      },
+      "visible_response_characters": 1492,
+      "appraisal_envelope_schema": "valid"
+    }
+  ]
+}

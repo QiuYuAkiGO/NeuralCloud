@@ -151,6 +151,24 @@ class DirectQQActor:
                      else self.store.uncertain(untransmitted_send=untransmitted_send))
         if uncertain:
             raise OneBotError("direct_delivery_unknown")
+        if event.get("_production_contact"):
+            from harness.qq.direct_contacts import request, validate_source
+            try:
+                configured = os.environ.get("NC_QQ_DIRECT_CONFIG")
+                current = DirectQQSettings.read(Path(configured)) if configured else self.settings
+                with closing(self.store.connect()) as db:
+                    _, contact = request(db, event["_production_contact"])
+                    intent, source, _ = validate_source(current, self.session, db, contact)
+                if (contact["event_id"] != event["event_id"] or intent.run_id != event["run_id"]
+                        or (decision is not None and (decision.initiated_by != "production"
+                            or decision.idle_intent_id != intent.intent_id
+                            or source["source_record_id"] not in decision.source_record_ids))):
+                    raise ValueError("direct_contact_binding_invalid")
+            except Exception:
+                raise OneBotError("direct_owner_unavailable") from None
+            # New natural messages are perceived normally; a control revocation
+            # and the original deadline still prevent this autonomous effect.
+            return
         request = self.store.reply_requests.check(event)
         addressing = verified_protocol_addressing(event, evidence_dir=self.settings.evidence_dir,
             self_id=self.settings.self_member_id, groups=self.groups, private_peers=self.private_peers)
@@ -434,7 +452,8 @@ class DirectQQActor:
                 "reply", "reply_segments", "source_record_ids", "new_observation_record_ids",
                 "initiated_by", "idle_intent_id", "addressing", "trigger_member_id",
                 "addressing_source", "addressing_source_record_ids", "addressing_evidence_refs")
-            if (not sendable_speak_outcome(frozen.outcome) or frozen.initiated_by != "message"
+            expected_origin = "production" if event.get("_production_contact") else "message"
+            if (not sendable_speak_outcome(frozen.outcome) or frozen.initiated_by != expected_origin
                     or any(getattr(frozen, name) != getattr(decision, name) for name in fields)
                     or self.store.get(event["event_id"])["source_record_id"] not in frozen.source_record_ids):
                 raise ValueError("frozen_plan_mismatch")
@@ -488,7 +507,7 @@ class DirectQQActor:
                 receipt = record_qq_protocol_segment_delivery(memory_db=self.session.memory_db,
                     group_id=event["group_id"], self_member_id=self.settings.self_member_id,
                     decision_id=decision.decision_id, segment_index=index, segment_count=len(texts), delivered_text=text,
-                    source_record_ids=[send["source_record_id"]], delivered_at=delivered_at,
+                    source_record_ids=[] if event.get("_production_contact") else [send["source_record_id"]], delivered_at=delivered_at,
                     protocol_message_id=message_id, evidence_refs=[ack, proof,
                         protocol_message_evidence_ref(event["group_id"], self.settings.self_member_id, message_id)])
                 self.store.update_send(send, "sent", receipt_id=receipt.receipt_id, delivered_at=delivered_at.isoformat())
@@ -500,7 +519,7 @@ class DirectQQActor:
                 raise OneBotError("direct_delivery_unknown") from None
         record_qq_protocol_delivery(memory_db=self.session.memory_db, group_id=event["group_id"],
             self_member_id=self.settings.self_member_id, decision_id=decision.decision_id,
-            delivered_text="\n\n".join(texts), source_record_ids=[self.store.get(event["event_id"])["source_record_id"]],
+            delivered_text="\n\n".join(texts), source_record_ids=[] if event.get("_production_contact") else [self.store.get(event["event_id"])["source_record_id"]],
             evidence_refs=list(dict.fromkeys(ref for receipt in receipts for ref in receipt.evidence_refs)),
             protocol_message_ids=[receipt.protocol_message_id for receipt in receipts],
             delivered_at=max(receipt.delivered_at for receipt in receipts))
@@ -572,13 +591,13 @@ class DirectQQActor:
                         receipt = prefix[index]
                         if (receipt.verification != "qq_protocol_verified"
                                 or receipt.protocol_message_id != send["message_id"]
-                                or receipt.source_record_ids != [send["source_record_id"]]):
+                                or receipt.source_record_ids != ([] if event.get("_production_contact") else [send["source_record_id"]])):
                             raise OneBotError("direct_reconciliation_binding_invalid")
                     else:
                         receipt = record_qq_protocol_segment_delivery(memory_db=self.session.memory_db,
                             group_id=send["group_id"], self_member_id=self.settings.self_member_id,
                             decision_id=send["decision_id"], segment_index=index, segment_count=len(texts),
-                            delivered_text=send["text"], source_record_ids=[send["source_record_id"]],
+                            delivered_text=send["text"], source_record_ids=[] if event.get("_production_contact") else [send["source_record_id"]],
                             delivered_at=utcnow(), protocol_message_id=send["message_id"],
                             evidence_refs=([send["recovery_echo_ref"]] if send.get("recovery_echo_ref") else []) +
                                 [proof, protocol_message_evidence_ref(send["group_id"],
@@ -764,6 +783,66 @@ class DirectQQActor:
             trace.flush(self.settings.state_db.with_suffix(".trace.jsonl"))
             self.write_status(state="watching" if self.active() else "paused")
 
+    async def process_contact(self):
+        from harness.qq.direct_contacts import finish, internal_event
+        from harness.qq.idle import QQIdleIntent
+        with closing(self.store.connect()) as db, db:
+            # Reconcile prior effects read-only after interruption. Never turn
+            # a pending claim into another model attempt or protocol send.
+            pending = db.execute("SELECT id,result_json FROM qq_production_contact_results WHERE json_extract(result_json,'$.status') IN ('pending','uncertain')").fetchall()
+            for row in pending:
+                previous = json.loads(row[1])
+                if not previous.get("event_id"):
+                    continue
+                observed = db.execute("SELECT state FROM qq_direct_events WHERE event_id=?", (previous["event_id"],)).fetchone()
+                if observed is not None and observed[0] not in {"preparing", "ready"}:
+                    status = "completed" if observed[0] == "sent" else "uncertain" if observed[0] in {"unknown", "partial"} else "rejected"
+                    finish(db, row[0], {**previous, "status": status})
+            candidate = db.execute("""SELECT q.id,q.request_json FROM qq_production_contact_requests q
+                LEFT JOIN qq_production_contact_results r ON q.id=r.id
+                WHERE q.authorized=1 AND r.id IS NULL ORDER BY q.rowid LIMIT 1""").fetchone()
+        if candidate is None:
+            return False
+        identity, contact = candidate[0], json.loads(candidate[1])
+        event = None
+        try:
+            intent = QQIdleIntent.model_validate(contact["intent"])
+            event = internal_event(self.store, self.settings, self.session, contact)
+            current = self.store.get(event["event_id"])
+            if current["state"] != "preparing" or current["decision_id"] is not None:
+                # An interrupted preparation or effect is never a fresh attempt.
+                raise OneBotError("direct_contact_already_claimed")
+            # Durable claim precedes cognition so actor restarts cannot repeat it.
+            with closing(self.store.connect()) as db, db:
+                finish(db, identity, {"status": "pending", "event_id": event["event_id"]})
+            deadline = QQDeadline.after(max(0, (intent.deadline_at - utcnow()).total_seconds()))
+            trace = QQTurnTrace(event_id=event["event_id"], first_seen_at=intent.created_at)
+            epoch = self.epoch
+            self.check_send(event, deadline, epoch)
+            decision = await asyncio.to_thread(self.cognition, transport="onebot", deadline=deadline, trace=trace,
+                group_id=intent.group_id, self_member_id=intent.self_member_id, idle_intent=intent,
+                verified_self_aliases=self.aliases.get(intent.group_id, []))
+            if (decision.group_id != intent.group_id or decision.self_member_id != intent.self_member_id
+                    or decision.initiated_by != "production" or decision.idle_intent_id != intent.intent_id):
+                raise OneBotError("direct_contact_decision_invalid")
+            self.store.update(event["event_id"], state="ready" if decision.action == "speak" else "wait", decision_id=decision.decision_id)
+            if decision.action == "speak":
+                await self.send_decision(event, decision, deadline, epoch, trace=trace)
+            state = self.store.get(event["event_id"])["state"]
+            result = {"status": "completed" if state == "sent" else "wait" if state == "wait" else "rejected",
+                      "event_id": event["event_id"], "decision_id": decision.decision_id}
+            receipt = get_qq_delivery(memory_db=self.session.memory_db, group_id=intent.group_id, decision_id=decision.decision_id)
+            if receipt:
+                result["evidence_refs"] = receipt.evidence_refs
+                result["receipt_id"] = receipt.receipt_id
+        except Exception as exc:
+            state = self.store.get(event["event_id"])["state"] if event else None
+            result = {"status": "uncertain" if state in {"unknown", "partial"} else "rejected",
+                      "error_type": getattr(exc, "code", type(exc).__name__), "event_id": event["event_id"] if event else None}
+        with closing(self.store.connect()) as db, db:
+            finish(db, identity, result)
+        return True
+
     async def worker(self):
         while not self.stop.is_set():
             if self.active():
@@ -777,6 +856,8 @@ class DirectQQActor:
                         self.enqueue_reply(row["event"])
                         continue
                     await self.process(row)
+                    continue
+                if await self.process_contact():
                     continue
             self.wakeup.clear()
             try:

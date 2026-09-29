@@ -185,6 +185,35 @@ def _record_provider_response(span: dict[str, Any], body: Any, messages: list[di
         span.update(usage=usage.model_dump(mode="json"), usage_source=usage.source)
 
 
+def _record_production_response(metering: dict[str, Any], body: Any) -> None:
+    """Preserve actual provider counts before response/deadline validation.
+
+    TokenUsage includes derived and default counts and is not raw evidence.
+    Numeric nested fields retain their original path; no text is persisted.
+    """
+    raw = body.get("usage") if isinstance(body, dict) else None
+    counts: dict[str, int] = {}
+
+    def visit(value, prefix="", depth=0):
+        if not isinstance(value, dict) or depth > 4:
+            return
+        for key, item in value.items():
+            if not isinstance(key, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,63}", key):
+                continue
+            path = prefix + key
+            if type(item) is int and item >= 0:
+                counts[path] = item
+            elif isinstance(item, dict):
+                visit(item, path + ".", depth + 1)
+
+    visit(raw)
+    actual = {"source": "api", "raw_usage": counts} if counts else {"source": "unavailable"}
+    metering["usage"] = actual
+    checkpoint = metering.get("checkpoint")
+    if callable(checkpoint):
+        checkpoint(actual)
+
+
 def _chat_result(body: dict[str, Any], messages: list[dict[str, Any]]) -> ChatResult:
     choice = body["choices"][0]
     message = choice["message"]
@@ -213,6 +242,7 @@ def _chat_result(body: dict[str, Any], messages: list[dict[str, Any]]) -> ChatRe
 
 
 class OpenAICompatClient:
+    production_dispatch_aware = True
     def __init__(
         self,
         settings: Settings | None = None,
@@ -271,6 +301,11 @@ class OpenAICompatClient:
     ) -> ChatResult:
         if stream:
             raise NotImplementedError("streaming is reserved for a later milestone")
+        from harness.production.metering import current_production_context
+        production_context = current_production_context()
+        if production_context is not None:
+            from harness.cognitive.production import augment_messages
+            messages = augment_messages(messages, production_context)
         from harness.llm.deadline import remaining_model_seconds
 
         remaining = remaining_model_seconds()
@@ -296,9 +331,12 @@ class OpenAICompatClient:
         if thinking is not None:
             payload["thinking"] = thinking
         headers = {"Authorization": f"Bearer {self.settings.llm_api_key}"}
-        with model_request_span(self.settings, role="main", messages=messages) as span:
+        from harness.production.metering import mark_production_dispatch, production_attempt
+        with production_attempt(model=self.settings.llm_model) as metering, model_request_span(self.settings, role="main", messages=messages) as span:
             if diagnostic_observer(self._request_observer) is not None:
-                return self._complete_observed(payload, headers, request_options, messages, span)
+                result = self._complete_observed(payload, headers, request_options, messages, span, metering)
+                return result
+            mark_production_dispatch(metering)
             response = self._client.post(
                 f"{self.settings.llm_base_url.rstrip('/')}/chat/completions",
                 json=payload,
@@ -310,6 +348,7 @@ class OpenAICompatClient:
                 body = response.json()
             except (ValueError, UnicodeError):
                 body = None
+            _record_production_response(metering, body)
             _record_provider_response(span, body, messages)
             remaining_model_seconds()
             response.raise_for_status()
@@ -320,7 +359,7 @@ class OpenAICompatClient:
                         **result.response_metadata())
             return result
 
-    def _complete_observed(self, payload, headers, request_options, messages, span) -> ChatResult:
+    def _complete_observed(self, payload, headers, request_options, messages, span, metering=None) -> ChatResult:
         """Opt-in evidence at the serialization boundary, with no production log content."""
         from harness.llm.deadline import remaining_model_seconds
 
@@ -339,6 +378,8 @@ class OpenAICompatClient:
         started = time.perf_counter()
         response = None
         try:
+            from harness.production.metering import mark_production_dispatch
+            mark_production_dispatch(metering if metering is not None else {})
             response = self._client.send(request)
             # Hooks/auth are excluded above, so the returned request still
             # describes the body passed to the transport.
@@ -348,6 +389,7 @@ class OpenAICompatClient:
                 body = response.json()
             except (ValueError, UnicodeError):
                 body = None
+            _record_production_response(metering if metering is not None else {}, body)
             _record_provider_response(span, body, messages)
             emit_diagnostic({"record_type": "http_response_received", "request_id": request_id,
                 "http_status": response.status_code, "payload_verified": True, **actual,
@@ -477,6 +519,10 @@ class RoutingLLMClient:
     def __init__(self, main: LLMClient, aux: LLMClient) -> None:
         self._main = main
         self._aux = aux
+
+    @property
+    def production_dispatch_aware(self) -> bool:
+        return getattr(self._main, "production_dispatch_aware", False) is True
 
     def complete_json(
         self, *, system: str, user: str, max_tokens: int | None = None,
@@ -700,12 +746,15 @@ def list_endpoint_models(base_url: str, api_key: str = "not-needed", *, timeout:
 
 def preload_aux_model(settings: Settings, *, timeout: float = 120.0) -> bool:
     """Issue a 1-token chat call so ollama/llama.cpp load the aux model onto GPU."""
+    from harness.production.maintenance import ProductionMaintenanceDeferred
+    from harness.production.metering import production_attempt
+
     base_url, model, api_key = resolve_aux_endpoint(settings)
     extras = aux_runtime_payload(settings)
     headers = {"Authorization": f"Bearer {api_key}"}
     native_root = ollama_native_root(base_url)
     try:
-        with httpx.Client(timeout=timeout) as client:
+        with httpx.Client(timeout=timeout) as client, production_attempt(model=model) as metering:
             if native_root:
                 response = client.post(
                     f"{native_root}/api/chat",
@@ -728,8 +777,19 @@ def preload_aux_model(settings: Settings, *, timeout: float = 120.0) -> bool:
                     },
                     headers=headers,
                 )
+            try:
+                body = response.json()
+            except (ValueError, UnicodeError):
+                body = None
+            if native_root and isinstance(body, dict):
+                # Native Ollama exposes measured counts at the root. Preserve
+                # those names; never invent OpenAI fields or missing totals.
+                body = {"usage": {key: body[key] for key in ("prompt_eval_count", "eval_count") if key in body}}
+            _record_production_response(metering, body)
             response.raise_for_status()
         return True
+    except ProductionMaintenanceDeferred:
+        raise
     except (httpx.HTTPError, OSError, TimeoutError, ValueError) as exc:
         logger.warning("aux model preload failed for %s @ %s: %s", model, base_url, exc)
         return False
@@ -832,4 +892,4 @@ class MockLLM:
                 text = GREETING_REPLY
             else:
                 text = DEFAULT_REPLY
-        return ChatResult(text=text, usage=estimate_chat_usage(messages, text))
+        return ChatResult(text=text, usage=estimate_chat_usage(messages, text), finish_reason="stop", content_type="text")

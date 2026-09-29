@@ -193,6 +193,94 @@ class BodyStateSnapshot(StrictContract):
     captured_at: AwareDatetime
     energy: EnergyState
     evidence_refs: list[EvidenceRef] = Field(min_length=1)
+    episode_id: str | None = None
+    sample_sequence: int | None = Field(default=None, ge=1)
+    ledger_revision: int | None = Field(default=None, ge=0)
+    resting: bool = False
+    exhausted: bool = False
+    physiology_mode: Literal["experiment", "production_v1"] = "experiment"
+    thermal: dict[str, float | bool] | None = None
+    compute: dict[str, float] | None = None
+    integrity: dict[str, float] | None = None
+
+    @model_validator(mode="after")
+    def _ledger_binding(self):
+        if self.ledger_revision is not None and self.ledger_revision != self.revision:
+            raise ValueError("ledger_revision must equal body revision")
+        object.__setattr__(self, "ledger_revision", self.revision)
+        return self
+
+
+class BodyRestCommand(StrictContract):
+    schema_version: Literal["body-rest-command-v1"] = "body-rest-command-v1"
+    command_id: str = Field(min_length=1, max_length=240, pattern=r"\S")
+    body_instance_id: str = Field(min_length=1, max_length=128)
+    episode_id: str = Field(min_length=1, max_length=128)
+
+
+class BodyRestStatus(StrictContract):
+    schema_version: Literal["body-rest-status-v1"] = "body-rest-status-v1"
+    body_instance_id: str
+    episode_id: str
+    resting: bool
+    ledger_revision: int = Field(ge=0)
+    evidence_refs: list[EvidenceRef] = Field(min_length=1)
+    body_state: BodyStateSnapshot
+
+    @model_validator(mode="after")
+    def _snapshot_binding(self):
+        body = self.body_state
+        if (
+            self.body_instance_id != body.body_instance_id
+            or self.episode_id != body.episode_id
+            or self.ledger_revision != body.revision
+            or self.resting != body.resting
+        ):
+            raise ValueError("rest status must match body snapshot")
+        return self
+
+
+class BodyRestReceipt(BodyRestStatus):
+    schema_version: Literal["body-rest-receipt-v1"] = "body-rest-receipt-v1"
+    command_id: str
+
+
+class CognitiveUsage(StrictContract):
+    schema_version: Literal["cognitive-usage-v1"] = "cognitive-usage-v1"
+    inference_id: str = Field(min_length=1, max_length=240, pattern=r"\S")
+    body_instance_id: str = Field(min_length=1, max_length=128)
+    episode_id: str = Field(min_length=1, max_length=128)
+    model_class: str = Field(min_length=1, max_length=128)
+    cost_class: str = Field(min_length=1, max_length=128)
+    quantity: int = Field(gt=0, le=1_000_000_000, strict=True)
+    source: Literal["cognition", "delivery", "tool"] = "cognition"
+    metering: Literal["tokens", "call", "operation"] = "call"
+    raw_usage: dict[str, Annotated[int, Field(strict=True, ge=0)]] | None = None
+
+    @model_validator(mode="after")
+    def _metering(self):
+        if self.source == "tool" and (self.metering != "operation" or self.raw_usage is not None):
+            raise ValueError("tool metering requires an identified operation without token estimates")
+        if self.raw_usage is not None and any(type(v) is not int or v < 0 for v in self.raw_usage.values()):
+            raise ValueError("raw_usage must contain measured nonnegative integers")
+        if self.metering == "tokens" and not self.raw_usage:
+            raise ValueError("token metering requires measured provider usage")
+        if self.metering in {"call", "operation"} and self.quantity != 1:
+            raise ValueError("call and operation metering account one identified attempt")
+        return self
+
+
+class CognitiveUsageReceipt(StrictContract):
+    schema_version: Literal["cognitive-usage-receipt-v1"] = "cognitive-usage-receipt-v1"
+    inference_id: str
+    cost_id: str
+    units: float = Field(ge=0, allow_inf_nan=False)
+    ledger_revision: int = Field(ge=1)
+    evidence_refs: list[EvidenceRef] = Field(min_length=2)
+    body_instance_id: str
+    episode_id: str
+    source: Literal["cognition", "delivery", "tool"]
+    metering: Literal["tokens", "call", "operation"]
 
 
 class InteroceptiveState(StrictContract):

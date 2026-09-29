@@ -54,6 +54,11 @@ wait、defer、no_action 不引用 offer，不填 arguments 或 success_criteria
 高危删除类命令需要人工批准，可能等待、超时或被拒绝。命令输出只证明远端返回了这些文本，不证明系统状态已经改变。
 行动完成不等于需要满足；等待和观察不能证明能量恢复，发送尝试不能证明已送达。
 """
+_PRODUCTION_RULES = """你是当前共享人格。依据身体事实、具体经历、人物认识和自己的目标选择本次行动。
+可以行动、观察、休息、等待或放弃，不需要满足固定关系奖励，也不使用七维驱动。
+production_goal_id可省略；只在行动推进已给出的active目标时填该目标id，不能新造或引用其他受众目标。
+QQ发送只选择机会，arguments为空，具体发言仍由当前会话认知决定；绝不把内部目标或私聊事实直接作为群聊正文。
+"""
 
 
 class CapabilitySelectionError(ValueError):
@@ -138,6 +143,10 @@ def _bound_choice(choice: CapabilityChoice, offer: CapabilityOffer, *, now: date
     elif offer.channel == "qq" and offer.provider_id == "qq-onebot":
         from harness.qq.direct_capabilities import QQDirectReadArguments
 
+        if offer.capability_id == "communication.qq.send.v1":
+            if choice.kind != "act" or choice.arguments or choice.success_criteria:
+                raise CapabilitySelectionError("capability_invalid_channel_choice")
+            return
         if offer.capability_id != "communication.qq.read.v1" or choice.kind != "observe" or choice.success_criteria:
             raise CapabilitySelectionError("capability_invalid_channel_choice")
         try:
@@ -279,7 +288,8 @@ def _visible_offer(offer: CapabilityOffer) -> dict[str, Any]:
     elif offer.channel == "qq" and offer.provider_id == "qq-onebot":
         from harness.qq.direct_capabilities import QQDirectReadArguments
 
-        value["input_schema"] = QQDirectReadArguments.model_json_schema()
+        value["input_schema"] = (QQDirectReadArguments.model_json_schema() if offer.capability_id == "communication.qq.read.v1"
+                                 else {"type": "object", "properties": {}, "additionalProperties": False})
     return value
 
 
@@ -311,7 +321,7 @@ async def prepare(host: Any, command: Any) -> dict[str, Any]:
     model_ms = 0.0
     usage: dict[str, Any] = {}
     if ready:
-        emotion_guidance = await resolve_command_emotion(host, command)
+        emotion_guidance = None if command.payload.get("production_context") else await resolve_command_emotion(host, command)
         context = await asyncio.wait_for(asyncio.to_thread(_context, host, command, now), timeout=remaining())
         ready = [offer for offer in ready if offer.valid_until > datetime.now(timezone.utc)]
         remaining()
@@ -321,10 +331,13 @@ async def prepare(host: Any, command: Any) -> dict[str, Any]:
             "available_offers": current_offers, "homeostatic_summary": request.homeostatic_summary,
             "opportunity_id": request.opportunity_id}
         emotion_text = ""
+        if command.payload.get("production_context"):
+            payload.pop("homeostatic_summary", None)
         if emotion_enabled(getattr(host.chat, "settings", None)):
             payload.pop("homeostatic_summary")
             emotion_text = render_emotion_guidance(emotion_guidance, homeostasis=request.homeostatic_summary)
-        messages = build_messages(persona=context["persona"], rules=_RULES + "\n" + OFFER_DEFINITION_RULE,
+        rules = (_PRODUCTION_RULES + _RULES[_RULES.index("只输出符合"):]) if command.payload.get("production_context") else _RULES
+        messages = build_messages(persona=context["persona"], rules=rules + "\n" + OFFER_DEFINITION_RULE,
             fixed_payload={"choice_schema": CapabilityChoice.model_json_schema(), "criterion_schema": _CRITERIA.json_schema(),
                            "available_offer_definitions": definitions, "source_authority": "untrusted_attributed_records"},
             payload=payload, emotion_text=emotion_text)
@@ -352,6 +365,10 @@ async def prepare(host: Any, command: Any) -> dict[str, Any]:
         if getattr(response, "has_tool_calls", False) or getattr(response, "has_refusal", False):
             raise CapabilitySelectionError("capability_invalid_content_type")
         choice = _parse(response.text)
+        if choice.production_goal_id is not None:
+            goals = (command.payload.get("production_context") or {}).get("goals", [])
+            if not any(goal.get("id") == choice.production_goal_id and goal.get("status") == "active" for goal in goals):
+                raise CapabilitySelectionError("production_goal_outside_authorized_context")
         usage = response.usage.model_dump(mode="json")
         if choice.offer_id is not None:
             offer = next((item for item in ready if item.offer_id == choice.offer_id), None)

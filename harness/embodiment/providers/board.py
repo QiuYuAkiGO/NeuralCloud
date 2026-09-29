@@ -254,10 +254,15 @@ class BoardProvider:
         self._receipt(entry.receipt, entry_id=entry.receipt.entry_id, decision_id=entry.receipt.decision_id,
                       text_sha256=hashlib.sha256(entry.text.encode("utf-8")).hexdigest())
 
-    async def read(self, request: BoardReadRequest) -> BoardReadResult:
+    async def read(self, request: BoardReadRequest, *, pre_effect_guard: Callable[[], bool] | None = None) -> BoardReadResult:
         request = BoardReadRequest.model_validate(request.model_dump())
         await self._guard(request, BOARD_READ)
-        result = BoardReadResult.model_validate((await self._call(self.client.read, request, deadline=request.deadline)).model_dump())
+        async def dispatch_read():
+            self._request_time(request)
+            if pre_effect_guard is not None and not pre_effect_guard():
+                raise BoardError("board_pre_effect_cancelled")
+            return await self.client.read(request)
+        result = BoardReadResult.model_validate((await self._call(dispatch_read, deadline=request.deadline)).model_dump())
         if (result.scope != self.scope or len(result.entries) > request.limit
                 or not -2 <= (self._clock() - result.observed_at).total_seconds() <= 5):
             raise BoardError("board_read_mismatch")
@@ -278,9 +283,9 @@ class BoardProvider:
             await self._guard(request, BOARD_APPEND)
             async def dispatch_append():
                 nonlocal entered
+                self._request_time(request)
                 if pre_effect_guard is not None and not pre_effect_guard():
                     raise BoardError("board_pre_effect_cancelled")
-                self._request_time(request)
                 entered = True
                 return await self.client.append(request)
             receipt = BoardReceipt.model_validate((await self._call(dispatch_append, deadline=request.deadline)).model_dump())

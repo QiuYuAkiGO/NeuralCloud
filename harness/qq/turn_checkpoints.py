@@ -127,7 +127,7 @@ class QQTurnCheckpointStore:
                        (resume_hash, identity))
             return value
 
-    def complete(self, binding: dict, decision: dict):
+    def complete(self, binding: dict, decision: dict, *, used_sources=None):
         identity = binding_identity(binding)
         with closing(self._connect()) as db, db:
             db.execute("BEGIN IMMEDIATE")
@@ -154,6 +154,10 @@ class QQTurnCheckpointStore:
             db.execute("UPDATE qq_reply_decisions SET status='completed',record_json=? WHERE decision_id=?",
                        (canonical(decision), decision["decision_id"]))
             record = {"binding": binding, "public": public}
+            if used_sources is not None:
+                record["used_sources"] = used_sources
+            elif value.get("used_sources") is not None:
+                record["used_sources"] = value["used_sources"]
             if value.get("snapshot") is not None:
                 record["snapshot"] = value["snapshot"]
             db.execute("UPDATE qq_turn_checkpoints SET status='completed',record_json=? WHERE prepare_id=?",

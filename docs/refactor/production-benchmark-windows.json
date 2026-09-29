@@ -1,0 +1,43 @@
+{
+  "schema_version": "production-memory-benchmark-v1",
+  "environment": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.10",
+    "machine": "ARM64"
+  },
+  "synthetic_only": true,
+  "queries": 100,
+  "warmup_queries": 5,
+  "candidate_limit": 192,
+  "excludes": [
+    "network",
+    "models",
+    "embeddings",
+    "context_compiler",
+    "cold_os_cache"
+  ],
+  "final_recall_after_lineage_and_identity_changes": [
+    {"rows": 100000, "rows_inserted": 0, "database_bytes": 367751168, "p50_ms": 37.615, "p95_ms": 65.364, "max_ms": 72.797, "max_candidates": 180},
+    {"rows": 1000000, "rows_inserted": 0, "database_bytes": 3796770816, "p50_ms": 65.713, "p95_ms": 136.183, "max_ms": 166.169, "max_candidates": 180}
+  ],
+  "initial_ingestion_and_recall": [
+    {
+      "rows": 100000,
+      "ingestion_seconds": 43.695,
+      "database_bytes": 347873280,
+      "p50_ms": 32.339,
+      "p95_ms": 51.533,
+      "max_ms": 57.051,
+      "max_candidates": 180
+    },
+    {
+      "rows": 1000000,
+      "ingestion_seconds": 591.172,
+      "database_bytes": 3586863104,
+      "p50_ms": 30.421,
+      "p95_ms": 62.773,
+      "max_ms": 77.166,
+      "max_candidates": 180
+    }
+  ]
+}

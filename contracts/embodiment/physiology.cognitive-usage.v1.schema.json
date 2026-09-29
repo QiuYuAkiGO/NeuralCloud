@@ -1,0 +1,241 @@
+{
+  "$defs": {
+    "CognitiveUsage": {
+      "additionalProperties": false,
+      "properties": {
+        "body_instance_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Body Instance Id",
+          "type": "string"
+        },
+        "cost_class": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Cost Class",
+          "type": "string"
+        },
+        "episode_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Episode Id",
+          "type": "string"
+        },
+        "inference_id": {
+          "maxLength": 240,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Inference Id",
+          "type": "string"
+        },
+        "metering": {
+          "default": "call",
+          "enum": [
+            "tokens",
+            "call",
+            "operation"
+          ],
+          "title": "Metering",
+          "type": "string"
+        },
+        "model_class": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Model Class",
+          "type": "string"
+        },
+        "quantity": {
+          "exclusiveMinimum": 0,
+          "maximum": 1000000000,
+          "title": "Quantity",
+          "type": "integer"
+        },
+        "raw_usage": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw Usage"
+        },
+        "schema_version": {
+          "const": "cognitive-usage-v1",
+          "default": "cognitive-usage-v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source": {
+          "default": "cognition",
+          "enum": [
+            "cognition",
+            "delivery",
+            "tool"
+          ],
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "inference_id",
+        "body_instance_id",
+        "episode_id",
+        "model_class",
+        "cost_class",
+        "quantity"
+      ],
+      "title": "CognitiveUsage",
+      "type": "object"
+    },
+    "CognitiveUsageReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "body_instance_id": {
+          "title": "Body Instance Id",
+          "type": "string"
+        },
+        "cost_id": {
+          "title": "Cost Id",
+          "type": "string"
+        },
+        "episode_id": {
+          "title": "Episode Id",
+          "type": "string"
+        },
+        "evidence_refs": {
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "minItems": 2,
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "inference_id": {
+          "title": "Inference Id",
+          "type": "string"
+        },
+        "ledger_revision": {
+          "minimum": 1,
+          "title": "Ledger Revision",
+          "type": "integer"
+        },
+        "metering": {
+          "enum": [
+            "tokens",
+            "call",
+            "operation"
+          ],
+          "title": "Metering",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "cognitive-usage-receipt-v1",
+          "default": "cognitive-usage-receipt-v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source": {
+          "enum": [
+            "cognition",
+            "delivery",
+            "tool"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "units": {
+          "minimum": 0,
+          "title": "Units",
+          "type": "number"
+        }
+      },
+      "required": [
+        "inference_id",
+        "cost_id",
+        "units",
+        "ledger_revision",
+        "evidence_refs",
+        "body_instance_id",
+        "episode_id",
+        "source",
+        "metering"
+      ],
+      "title": "CognitiveUsageReceipt",
+      "type": "object"
+    },
+    "EvidenceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "created_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created At"
+        },
+        "digest": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Digest"
+        },
+        "media_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Media Type"
+        },
+        "provider_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Provider Id",
+          "type": "string"
+        },
+        "ref": {
+          "minLength": 1,
+          "title": "Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "provider_id",
+        "ref"
+      ],
+      "title": "EvidenceRef",
+      "type": "object"
+    }
+  },
+  "anyOf": [
+    {
+      "$ref": "#/$defs/CognitiveUsage"
+    },
+    {
+      "$ref": "#/$defs/CognitiveUsageReceipt"
+    }
+  ]
+}

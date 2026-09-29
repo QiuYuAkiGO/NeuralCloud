@@ -66,6 +66,7 @@ def _reject_constant(_value):
 
 
 class TavilyWebProvider:
+    supports_dispatch_hook = True
     def __init__(self, condition: EmbodimentCondition, base_url: str, api_key: str,
                  body_instance_id: str, timeout_seconds: float = 12,
                  transport: httpx.AsyncBaseTransport | None = None):
@@ -155,12 +156,14 @@ class TavilyWebProvider:
             self._reasons[capability] = code
             self._cooldowns[capability] = time.monotonic() + COOLDOWN_SECONDS
 
-    async def _post(self, capability: str, path: str, payload: dict) -> dict:
+    async def _post(self, capability: str, path: str, payload: dict, *, before_dispatch=None) -> dict:
         # A fresh local guard immediately precedes each request; no discovery or
         # health probe spends credits. The HTTP transport never follows redirects.
         await self._guard(capability)
         try:
             async with asyncio.timeout(self.timeout_seconds):
+                if before_dispatch is not None:
+                    before_dispatch()
                 async with self._client.stream("POST", self.base_url + path, json=payload) as response:
                     status = response.status_code
                     if status in {401, 403}:
@@ -223,7 +226,7 @@ class TavilyWebProvider:
                     safe_usage[key] = item
         return {"provider_request_id": request_id, "usage": safe_usage}
 
-    async def search(self, request: WebSearchArguments) -> WebResult:
+    async def search(self, request: WebSearchArguments, *, before_dispatch=None) -> WebResult:
         try:
             request = WebSearchArguments.model_validate(request)
         except (TypeError, ValueError):
@@ -234,7 +237,7 @@ class TavilyWebProvider:
         if request.time_range is not None:
             payload["time_range"] = request.time_range
         async with self._call_lock:
-            value = await self._post(WEB_SEARCH, "/search", payload)
+            value = await self._post(WEB_SEARCH, "/search", payload, before_dispatch=before_dispatch)
             try:
                 rows = value.get("results")
                 if not isinstance(rows, list) or len(rows) > 100:
@@ -264,7 +267,7 @@ class TavilyWebProvider:
             self._success(WEB_SEARCH)
             return result
 
-    async def read(self, urls: list[str]) -> WebResult:
+    async def read(self, urls: list[str], *, before_dispatch=None) -> WebResult:
         if not isinstance(urls, list) or not 1 <= len(urls) <= 3:
             raise WebError("web_read_arguments_invalid")
         urls = [validate_public_url(url) for url in urls]
@@ -272,7 +275,7 @@ class TavilyWebProvider:
             raise WebError("web_read_arguments_invalid")
         payload = {"urls": urls, "extract_depth": "basic", "format": "text", "include_usage": True}
         async with self._call_lock:
-            value = await self._post(WEB_READ, "/extract", payload)
+            value = await self._post(WEB_READ, "/extract", payload, before_dispatch=before_dispatch)
             try:
                 rows, failed_rows = value.get("results"), value.get("failed_results", [])
                 if not isinstance(rows, list) or not isinstance(failed_rows, list) or len(rows) > 100 or len(failed_rows) > 100:

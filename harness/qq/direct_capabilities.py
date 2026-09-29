@@ -24,6 +24,7 @@ from harness.qq.memory import QQID, QQVerifiedProfile, QQVisualObservation, _his
 
 
 READ = "communication.qq.read.v1"
+SEND = "communication.qq.send.v1"
 
 
 class QQDirectReadArguments(BaseModel):
@@ -145,6 +146,29 @@ class QQDirectCapabilityBridge:
                         "transport": "onebot", "current_live_observation": False,
                         "effect": "read_or_search_retained_protocol_messages_and_image_analysis",
                         **self._metadata(settings, group.group_id)}})
+            if getattr(self.supervisor, "production_runtime", None) is not None:
+                from harness.qq.conversation import private_scope_id
+                recipients = [(g.group_id, g.label) for g in settings.group_roster if g.observe and g.send]
+                recipients += [(private_scope_id(settings.self_member_id, p.peer_id), p.label)
+                               for p in settings.private_contacts if p.observe and p.send]
+                with closing(_readonly(settings.state_db)) as db:
+                    for group_id, label in recipients:
+                        source = db.execute("SELECT event_id FROM qq_direct_events WHERE group_id=? AND self_id=? AND source_record_id IS NOT NULL AND json_extract(record_json,'$._production_contact') IS NULL ORDER BY received_at DESC LIMIT 1",
+                                            (group_id, settings.self_member_id)).fetchone()
+                        if source is None:
+                            continue
+                        scope = QQDirectReadScope(group_id=group_id, self_member_id=settings.self_member_id)
+                        self._scope_authorized(settings, scope)
+                        key = hashlib.sha256(canonical(scope.model_dump(mode="json")).encode()).hexdigest()
+                        offers.append({"offer_id": "qq-onebot:" + key + ":send", "channel": "qq", "capability_id": SEND,
+                            "provider_id": "qq-onebot", "body_instance_id": "qq-onebot:" + settings.self_member_id,
+                            "scope": scope.model_dump(mode="json"), "activation_revision": f"{status['run_id']}:{generation}",
+                            "input_schema": {"type": "object", "properties": {}, "additionalProperties": False},
+                            "observation_refs": [], "supported": True, "available": True, "ready": True,
+                            "valid_until": (self.clock() + timedelta(seconds=10)).isoformat(),
+                            "observation": {"group_id": group_id, "group_label": label,
+                                "effect": "request_target_scoped_model_gate_then_original_direct_sender",
+                                "retained_source_required": True, "body_arguments_allowed": False}})
             # Runtime capability results feed generic goal review. Until that
             # path carries an enforced audience, expose only group offers.
             # Private history belongs to its scoped QQ reply preparation.
@@ -242,6 +266,8 @@ class QQDirectCapabilityBridge:
             "evidence_refs": list(dict.fromkeys(refs))[:128]}
 
     def enqueue(self, row):
+        if row.get("capability_id") == SEND:
+            return self.enqueue_contact(row)
         owner, generation = self._ownership()
         scope = QQDirectReadScope.model_validate(row["scope"])
         if conversation_scope(scope.group_id)["kind"] == "private":
@@ -274,7 +300,19 @@ class QQDirectCapabilityBridge:
         with closing(self._db()) as db:
             row = db.execute("SELECT request_json,result_json FROM qq_direct_capability_results WHERE opportunity_id=?", (opportunity_id,)).fetchone()
         if row is None:
-            return None
+            try:
+                settings = DirectQQSettings.read(self.config_path)
+                with closing(_readonly(settings.state_db)) as db:
+                    from harness.qq.direct_contacts import request
+                    active, contact = request(db, opportunity_id)
+                    result = db.execute("SELECT result_json FROM qq_production_contact_results WHERE id=?", (opportunity_id,)).fetchone()
+                    if result:
+                        value = json.loads(result[0])
+                        # Scope-specific body text never returns to owner reasoning.
+                        return {"opportunity_id": opportunity_id, **value}
+                    return {"opportunity_id": opportunity_id, "status": "pending" if active else "rejected"}
+            except (ValueError, OSError, sqlite3.Error):
+                return None
         request = json.loads(row[0])
         scope = QQDirectReadScope.model_validate(request["scope"])
         if conversation_scope(scope.group_id)["kind"] == "private":
@@ -282,6 +320,86 @@ class QQDirectCapabilityBridge:
         return {"opportunity_id": opportunity_id, **json.loads(row[1])}
 
     get = result
+
+    def enqueue_contact(self, row):
+        from harness.qq.direct_contacts import initialize, authorize
+        from harness.qq.idle import QQIdleIntent
+        production = getattr(self.supervisor, "production_runtime", None)
+        owner, generation = self._ownership()
+        if (production is None or owner != "shared" or row.get("generation") != generation
+                or row.get("arguments") or not row.get("production_context")
+                or row["production_context"].get("epoch") != production.epoch
+                or row["production_context"].get("restricted_dialogue")):
+            raise ValueError("direct_contact_not_authorized")
+        settings, status = self._active()
+        scope = QQDirectReadScope.model_validate(row["scope"])
+        authorize(settings, self.config, scope.group_id)
+        deadline = _time(row["deadline_at"])
+        if not 0 < (deadline - self.clock()).total_seconds() <= 60:
+            raise ValueError("direct_contact_expired")
+        offer = next((o for o in self.catalog() if o["offer_id"] == row["offer_id"]), None)
+        if offer is None or any(row.get(k, row.get("offer", {}).get(k)) != offer[k]
+                                for k in ("capability_id", "scope", "body_instance_id", "activation_revision")):
+            raise ValueError("direct_contact_offer_changed")
+        import sqlite3
+        with closing(sqlite3.connect(settings.state_db, timeout=3)) as db, db:
+            initialize(db)
+            db.execute("BEGIN IMMEDIATE")
+            old = db.execute("SELECT request_json FROM qq_production_contact_requests WHERE id=?", (row["opportunity_id"],)).fetchone()
+            binding = {key: row[key] for key in ("opportunity_id", "generation", "selection_ref", "scope", "deadline_at")}
+            if old:
+                if json.loads(old[0])["binding"] != binding:
+                    raise ValueError("direct_contact_request_conflict")
+                return {"opportunity_id": row["opportunity_id"], "status": "pending"}
+            source = db.execute("SELECT event_id FROM qq_direct_events WHERE group_id=? AND self_id=? AND source_record_id IS NOT NULL AND json_extract(record_json,'$._production_contact') IS NULL ORDER BY received_at DESC LIMIT 1",
+                                (scope.group_id, settings.self_member_id)).fetchone()
+            if source is None:
+                raise ValueError("direct_contact_source_missing")
+            key = hashlib.sha256(row["opportunity_id"].encode()).hexdigest()
+            intent = QQIdleIntent(origin="production", intent_id="production-contact:" + key,
+                group_id=scope.group_id, self_member_id=settings.self_member_id, run_id=status["run_id"],
+                created_at=self.clock(), deadline_at=deadline, episode_signature="production:" + key,
+                homeostasis_revision=0, context_signature=key, body_instance_id=row["body_instance_id"],
+                environment_revision=1, window_id="onebot", opportunity_ref=row["opportunity_id"],
+                selection_ref=row["selection_ref"], scheduler_generation=generation)
+            contact = {"binding": binding, "source_event_id": source[0], "event_id": "qq-watch-event:" + key[:32],
+                       "intent": intent.model_dump(mode="json")}
+            db.execute("INSERT INTO qq_production_contact_requests VALUES(?,1,?)", (row["opportunity_id"], canonical(contact)))
+        return {"opportunity_id": row["opportunity_id"], "status": "pending"}
+
+    def revoke_contacts(self, opportunity_id=None):
+        try:
+            settings = DirectQQSettings.read(self.config_path)
+            with closing(sqlite3.connect(settings.state_db, timeout=3)) as db, db:
+                db.execute("UPDATE qq_production_contact_requests SET authorized=0" + (" WHERE id=?" if opportunity_id else ""),
+                           (opportunity_id,) if opportunity_id else ())
+        except (OSError, ValueError, sqlite3.OperationalError):
+            pass
+
+    def verified_deliveries(self, *, after=0, limit=128):
+        """Read verified individual sends, including reconciled UNKNOWN effects."""
+        from harness.qq.decision import QQSegmentDeliveryReceipt, _checked_receipt, _frozen_decision, _read_segment_receipts
+        from harness.qq.conversation import private_scope_id
+        try:
+            settings = DirectQQSettings.read(self.config_path)
+            scopes = [g.group_id for g in settings.group_roster if g.group_id in self.config.allowed_group_ids]
+            scopes += [private_scope_id(settings.self_member_id, p.peer_id) for p in settings.private_contacts
+                       if p.peer_id in self.config.allowed_private_peer_ids]
+            with closing(_readonly(self.config.memory_db)) as db:
+                result = []
+                for row in db.execute("SELECT rowid AS sequence,* FROM qq_reply_segment_deliveries WHERE rowid>? ORDER BY rowid LIMIT ?", (after, limit)):
+                    receipt = _checked_receipt(row, QQSegmentDeliveryReceipt)
+                    if receipt.group_id not in scopes or receipt.self_member_id != settings.self_member_id or receipt.verification != "qq_protocol_verified":
+                        result.append((row["sequence"], None))
+                        continue
+                    frozen = _frozen_decision(db, receipt.group_id, receipt.decision_id)
+                    prefix = _read_segment_receipts(db, group_id=receipt.group_id, decision=frozen)
+                    if receipt not in prefix:
+                        raise ValueError("direct_delivery_prefix_invalid")
+                    result.append((row["sequence"], receipt))
+                return result
+        except (ValueError, OSError, sqlite3.Error):
+            return []
 
 
 class QQCapabilityTransports:
@@ -304,6 +422,12 @@ class QQCapabilityTransports:
         return self.direct.result(opportunity_id) or (self.desktop.result(opportunity_id) if self.desktop else None)
 
     get = result
+
+    def revoke_contacts(self, opportunity_id=None):
+        self.direct.revoke_contacts(opportunity_id)
+
+    def verified_deliveries(self, **kwargs):
+        return self.direct.verified_deliveries(**kwargs)
 
     def __getattr__(self, name):
         if name not in {"report", "claim", "acknowledge"} or self.desktop is None or self.direct.enabled():

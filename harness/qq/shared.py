@@ -62,9 +62,11 @@ class QQSharedPrepareRequest(BaseModel):
                            for item in self.source_event_ids)):
                 raise ValueError("shared_qq_request_binding_invalid")
         scope = conversation_scope(self.group_id)
+        production_idle = self.idle_intent is not None and self.idle_intent.origin == "production"
         if scope["kind"] == "private":
             if (self.transport != "onebot" or self.self_member_id != scope["self_member_id"]
-                    or self.trigger_member_id != scope["peer_id"] or self.idle_intent is not None
+                    or (self.trigger_member_id is not None if production_idle else self.trigger_member_id != scope["peer_id"])
+                    or (self.idle_intent is not None and not production_idle)
                     or any(member not in {scope["self_member_id"], scope["peer_id"]}
                            for member in self.member_ids or [])):
                 raise ValueError("shared_qq_private_scope_mismatch")

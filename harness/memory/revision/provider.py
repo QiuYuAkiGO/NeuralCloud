@@ -16,6 +16,10 @@ from zoneinfo import ZoneInfo
 import httpx
 from pydantic import Field
 
+from harness.llm.client import _record_production_response
+from harness.production.maintenance import ProductionMaintenanceDeferred
+from harness.production.metering import production_attempt
+
 from .config import DailyRevisionConfig
 from .models import (
     CleanedExperience, ImpressionRevisionProposal, MemoryRevision, RelationshipRevision,
@@ -288,41 +292,50 @@ class DailyRevisionProvider:
                 raise RevisionProviderError("daily_revision_daily_budget_exceeded", retryable=False, blocked=True)
             response = None
             try:
-                response = self.client.post(self.config.base_url.rstrip("/") + "/chat/completions",
-                    headers={"Authorization": "Bearer " + api_key}, json=payload,
-                    timeout=min(remaining, self.config.request_timeout_seconds))
-                try:
-                    body = response.json()
-                except ValueError:
-                    body = None
-                usage = body.get("usage") if isinstance(body, dict) else None
-                self.queue.account(reservation, usage, status="response_received")
-                status = response.status_code
-                if status in {401, 402, 403}:
-                    raise RevisionProviderError("daily_revision_provider_access_blocked", retryable=False, blocked=True)
-                if status == 429 or status >= 500:
-                    delay = self._retry_delay(response, attempt)
-                    if attempt + 1 == self.config.max_attempts or delay > 60 or delay >= deadline - time.monotonic():
-                        raise RevisionProviderError("daily_revision_provider_rate_limited" if status == 429
-                            else "daily_revision_provider_unavailable", retry_after_seconds=delay)
-                    time.sleep(delay)
-                    continue
-                if not 200 <= status < 300:
-                    raise RevisionProviderError("daily_revision_provider_request_rejected", retryable=False)
-                parsed = self._parse(body, model)
-                if time.monotonic() >= deadline:
-                    raise RevisionProviderError("daily_revision_job_timeout")
-                if validate is not None:
+                # Every actual transmission, including a retry, gets a distinct
+                # production attempt. Cached stages above do not spend budget.
+                with production_attempt(model=self.config.model, defer_on_reserve_failure=True) as metering:
+                    response = self.client.post(self.config.base_url.rstrip("/") + "/chat/completions",
+                        headers={"Authorization": "Bearer " + api_key}, json=payload,
+                        timeout=min(remaining, self.config.request_timeout_seconds))
                     try:
-                        validate(parsed)
-                    except RevisionProviderError:
-                        self.queue.checkpoint(run_id, "invalid:" + reservation, {"stage": stage, "request_hash": key,
-                            "response": parsed.model_dump(mode="json")})
-                        raise
-                self.queue.checkpoint(run_id, "cache:" + key, {"stage": stage, "request_hash": key,
-                    "response": parsed.model_dump(mode="json")})
-                self.queue.checkpoint(run_id, "progress", {"stage": stage, "request_hash": key})
-                return parsed
+                        body = response.json()
+                    except ValueError:
+                        body = None
+                    _record_production_response(metering, body)
+                    usage = body.get("usage") if isinstance(body, dict) else None
+                    self.queue.account(reservation, usage, status="response_received")
+                    status = response.status_code
+                    if status in {401, 402, 403}:
+                        raise RevisionProviderError("daily_revision_provider_access_blocked", retryable=False, blocked=True)
+                    if status == 429 or status >= 500:
+                        delay = self._retry_delay(response, attempt)
+                        if attempt + 1 == self.config.max_attempts or delay > 60 or delay >= deadline - time.monotonic():
+                            raise RevisionProviderError("daily_revision_provider_rate_limited" if status == 429
+                                else "daily_revision_provider_unavailable", retry_after_seconds=delay)
+                        time.sleep(delay)
+                        continue
+                    if not 200 <= status < 300:
+                        raise RevisionProviderError("daily_revision_provider_request_rejected", retryable=False)
+                    parsed = self._parse(body, model)
+                    if time.monotonic() >= deadline:
+                        raise RevisionProviderError("daily_revision_job_timeout")
+                    if validate is not None:
+                        try:
+                            validate(parsed)
+                        except RevisionProviderError:
+                            self.queue.checkpoint(run_id, "invalid:" + reservation, {"stage": stage, "request_hash": key,
+                                "response": parsed.model_dump(mode="json")})
+                            raise
+                    self.queue.checkpoint(run_id, "cache:" + key, {"stage": stage, "request_hash": key,
+                        "response": parsed.model_dump(mode="json")})
+                    self.queue.checkpoint(run_id, "progress", {"stage": stage, "request_hash": key})
+                    return parsed
+            except ProductionMaintenanceDeferred:
+                # No model request was sent: neither the daily token budget nor
+                # the maintenance retry count should be consumed by this wait.
+                self.queue.cancel_untransmitted_reservation(reservation)
+                raise
             except httpx.HTTPError:
                 # Unknown transmission is charged at the reserved upper bound.
                 self.queue.account(reservation, None, status="transmission_unknown")

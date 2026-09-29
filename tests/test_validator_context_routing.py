@@ -189,7 +189,8 @@ def test_qq_turn_keeps_large_admitted_history_and_finishes_ready(tmp_path, monke
         config_path=config, preset_path=preset_path, trigger_member_id="20001", request="评价一下配色。", trace=trace)
 
     assert result.outcome == "ready" and result.action == "speak"
-    assert result.reply == "这个配色挺好看。" and result.error_type is None
+    assert result.reply_style == "conversational"
+    assert result.reply == "这个配色挺好看" and result.error_type is None
     critic = [(role, json.loads(payload["messages"][1]["content"])) for role, payload, _ in captured
               if payload["messages"][0]["content"].startswith("You are a persona consistency")]
     assert len(critic) == 1 and critic[0][0] == "main"

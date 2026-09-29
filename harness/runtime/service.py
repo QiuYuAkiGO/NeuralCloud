@@ -136,6 +136,7 @@ def _create_owned_app(manifest, state_dir):
         embodiment_client = MistyAIClient(
             mistyai_settings.base_url,
             token=mistyai_settings.token,
+            accounting_token=mistyai_settings.accounting_token,
             timeout_seconds=mistyai_settings.timeout_seconds,
         )
         embodiment_manager = EmbodimentManager(
@@ -277,6 +278,8 @@ def _create_owned_app(manifest, state_dir):
             )
         )
     if body_state_provider is not None:
+        if getattr(supervisor, "production_runtime", None) is not None:
+            supervisor.production_runtime.attach_body_provider(body_state_provider)
         supervisor.attach_body_state_guard(
             BodyStateGuard(
                 body_state_provider,
@@ -376,6 +379,10 @@ def _create_owned_app(manifest, state_dir):
                 await task
         await monitor.close()
 
+    from harness.production.metering import install_metering_routes
+    install_metering_routes(app, supervisor, token=service_token)
+    from harness.production.accounting import install_operator_accounting_routes
+    install_operator_accounting_routes(app, supervisor, token=control_token, service_token=service_token)
     app.state.supervisor = supervisor
     app.state.control = control
     app.state.monitor = monitor

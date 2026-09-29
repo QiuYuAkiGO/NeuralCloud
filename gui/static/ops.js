@@ -145,6 +145,7 @@ function renderOverview() {
   const data = state.overview;
   if (!data) return;
   const runtime = data.runtime || {};
+  const production = runtime.production;
   const health = runtime.health || {};
   const embodiment = runtime.embodiment || health.embodiment || {};
   const manifest = data.manifest || {};
@@ -165,7 +166,8 @@ function renderOverview() {
     healthCard("GUI", "本页在线", true),
     healthCard("Runtime", lifecycle, lifecycle === "RUNNING", lifecycle !== "FAULTED"),
     healthCard("Cognitive", services.cognitive?.revision != null ? `revision ${services.cognitive.revision}` : health.cognitive_healthy === false ? "不可用" : "healthy", health.cognitive_healthy !== false),
-    healthCard("Homeostasis", homeostasis.revision != null ? `revision ${homeostasis.revision}` : health.homeostasis_healthy === false ? "不可用" : "healthy", health.homeostasis_healthy !== false),
+    production ? healthCard("具身内稳态", production.body_available ? production.resting ? "休息中" : production.exhausted ? "资源耗尽" : "可用" : "不可用", production.body_available && !production.exhausted, production.resting)
+      : healthCard("Homeostasis", homeostasis.revision != null ? `revision ${homeostasis.revision}` : health.homeostasis_healthy === false ? "不可用" : "healthy", health.homeostasis_healthy !== false),
     healthCard("LLM", health.llm_healthy === false ? "不可用" : "healthy", health.llm_healthy !== false),
     healthCard("Embodiment", embodimentState, ["available", "disabled"].includes(embodimentState), embodimentState === "degraded"),
   ].join("");
@@ -181,6 +183,10 @@ function renderOverview() {
     [aggregates.warnings || 0, "警告", `${aggregates.errors || 0} 错误 · ${(Number(aggregates.failure_rate || 0) * 100).toFixed(1)}% 失败`],
     [runtime.pending_actions || 0, "待处理动作", `current ${runtime.current_action?.state || "none"}`],
   ];
+  if (production) metricData.push(
+    [production.budget?.remaining ?? "—", "自主模型预算剩余", `${production.budget?.used ?? "—"} / ${production.budget?.limit ?? "—"}`],
+    [production.usage_pending ?? "—", "用量待确认", `任务 ${production.tasks ?? "—"} · 队列 ${production.queued ?? "—"}`],
+  );
   $("metric-grid").innerHTML = metricData.map(([value, label, detail]) =>
     `<article class="metric-card"><strong>${esc(value)}</strong><span>${esc(label)}</span><em>${esc(detail)}</em></article>`
   ).join("");
@@ -207,8 +213,20 @@ function renderOverview() {
     ["Character", runtime.character_id],
     ["Manifest", `${manifest.experiment_id || "—"}@${manifest.revision || runtime.manifest_revision || "—"}`],
     ["Version vector", Object.entries(vector).map(([key, value]) => `${key}:${value}`).join(" · ") || "—"],
-    ["Homeostasis", homeostasis.profile_id ? `${homeostasis.profile_id}@${homeostasis.profile_revision} · r${homeostasis.revision}` : "—"],
-    ["Emotion", homeostasis.emotion?.label ? `${homeostasis.emotion.label} · ${Number(homeostasis.emotion.intensity || 0).toFixed(2)}` : "—"],
+    ...(production ? [
+      ["Body observation age", production.body_age_seconds == null ? "未知" : `${Number(production.body_age_seconds).toFixed(1)} s`],
+      ["Body identity", `${production.body_identity?.body_instance_id || "—"} / ${production.body_identity?.episode_id || "—"}`],
+      ["Energy", production.body_available && production.energy ? `${production.energy.available_units} / ${production.energy.capacity_units} · ${production.energy.delta_units_per_minute} / min` : "未知"],
+      ["Sample / ledger", `${production.sample_sequence ?? "未知"} / ${production.ledger_revision ?? "未知"}`],
+      ["Resting / exhausted", [production.resting, production.exhausted].map(value => !production.body_available || value == null ? "未知" : String(value)).join(" / ")],
+      ["Rest receipts pending", String(production.rest_pending ?? "—")],
+      ["Unassigned usage", String(production.usage_unassigned ?? "—")],
+      ["Production reason", production.last_reason || production.body_error || "—"],
+      ["Goals", (production.goals || []).slice(0, 32).map(goal => `${goal.description || goal.id} (${goal.status})`).join(" · ") || "暂无"],
+    ] : [
+      ["Homeostasis", homeostasis.profile_id ? `${homeostasis.profile_id}@${homeostasis.profile_revision} · r${homeostasis.revision}` : "—"],
+      ["Emotion", homeostasis.emotion?.label ? `${homeostasis.emotion.label} · ${Number(homeostasis.emotion.intensity || 0).toFixed(2)}` : "—"],
+    ]),
     ["Journal", health.journal_writable === false ? "不可写" : `可写 · ${timeLabel(health.last_journal_append_at)}`],
     ["Embodiment provider", embodiment.provider_id || "disabled"],
     ["Body", embodiment.body_instance_id || "—"],

@@ -172,6 +172,8 @@ class _PreparedEntry(BaseModel):
     autonomous_memory_ref: str | None = None
     research: bool = False
     capability: bool = False
+    production: bool = False
+    production_autonomous: bool = False
 
 
 def _utc_now() -> datetime:
@@ -279,6 +281,8 @@ class PipelineCognitiveAdapter:
         self._research_manifest = None
         self._research_manifest_hash: str | None = None
         self.research_traces: dict[str, dict[str, Any]] = TrackedDict()
+        self.production_affect: dict[str, dict[str, Any]] = TrackedDict()
+        self._production_session_locks: dict[str, asyncio.Lock] = {}
         # Backend choice is fixed for this owner's lifetime. A restart performs
         # the durable authority handoff when the compatibility flag changes.
         self._incremental_enabled = bool(getattr(pipeline.settings, "cognitive_incremental_persistence_enabled", False))
@@ -531,6 +535,9 @@ class PipelineCognitiveAdapter:
     async def _prepare_response(
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[PreparedResponse]:
+        if command.payload.get("production_context") is not None:
+            from harness.cognitive.production import prepare
+            return await prepare(self, command)
         async with self._lock:
             replay = self._lookup_replay(command)
             if replay is not None:
@@ -1254,7 +1261,8 @@ class PipelineCognitiveAdapter:
             if not isinstance(decision, GoalProposal) or evidence.goal_id != decision.goal_id:
                 raise ValueError("capability_commit_requires_bound_action_evidence")
             event_id = f"{entry.prepared.prepare_id}:action_outcome"
-            intent_id = decision.embodied_action.intent.intent_id if decision.embodied_action else "unknown"
+            intent_id = decision.embodied_action.intent.intent_id if decision.embodied_action else (
+                decision.policy_id if decision.policy_id.startswith("production:rest:") else "unknown")
             if self._archive_action is not None:
                 self._archive_action(event_id=event_id, session_id=entry.prepared.session_id,
                                      intent_id=intent_id, evidence=evidence)
@@ -1272,7 +1280,7 @@ class PipelineCognitiveAdapter:
             return
         event = entry.event
         session = self.pipeline.session_store
-        if entry.autonomous_assessment_id is None:
+        if entry.autonomous_assessment_id is None and not entry.production_autonomous:
             if self._archive_local is not None and event.channel == "chat":
                 self._archive_local(event_id=event.event_id, session_id=event.session_id, role="user",
                                     text=event.raw_text, occurred_at=event.timestamp, display_name=event.speaker)
@@ -1293,7 +1301,7 @@ class PipelineCognitiveAdapter:
                 # to leave the supervisor trying to pause while Cognitive was still
                 # blocked in synchronous enrichment.  Keep the objective audit event,
                 # but reserve enrichment for conversational deliveries.
-                enrich = not isinstance(evidence, ActionOutcomeEvidence)
+                enrich = not entry.production and not isinstance(evidence, ActionOutcomeEvidence)
                 self.pipeline.memory.record_event(
                     event,
                     generate_insight=enrich,
@@ -1302,7 +1310,7 @@ class PipelineCognitiveAdapter:
                 )
 
         if isinstance(evidence, DeliveryEvidence) and evidence.success:
-            if self.pipeline.settings.emotion_mode != "off":
+            if not entry.production and self.pipeline.settings.emotion_mode != "off":
                 from harness.emotion import EmotionMessage
 
                 self.emotion_service.record_delivery([
@@ -1454,7 +1462,8 @@ class PipelineCognitiveAdapter:
 
     def _incremental_changes(self):
         maps = {"request_hashes": self._request_hashes, "ledger": self._ledger,
-                "prepared": self._prepared, "research_traces": self.research_traces}
+                "prepared": self._prepared, "research_traces": self.research_traces,
+                "production_affect": self.production_affect}
         versions = {name: values.dirty_versions() for name, values in maps.items()}
         changes = {"owner_meta": {"state": {
             "revision": self._revision, "cursor": self._cursor, "event_id": self._event_id,
@@ -1508,6 +1517,7 @@ class PipelineCognitiveAdapter:
             "prepared": {key: value.model_dump(mode="json") for key, value in self._prepared.items()},
             "research_manifest_hash": self._research_manifest_hash,
             "research_traces": self.research_traces,
+            "production_affect": self.production_affect,
             "emotion": self.emotion_service.snapshot(),
             "sessions": {
                 key: [turn.model_dump(mode="json") for turn in turns]
@@ -1530,6 +1540,7 @@ class PipelineCognitiveAdapter:
         self._event_id = payload.get("event_id")
         self._research_manifest_hash = payload.get("research_manifest_hash")
         self.research_traces.update(payload.get("research_traces") or {})
+        self.production_affect.update(payload.get("production_affect") or {})
         self.emotion_service.load(payload.get("emotion") or {})
         self._component_revisions.update(payload.get("component_revisions") or {})
         for encoded, request_hash in (payload.get("request_hashes") or {}).items():
@@ -1556,7 +1567,7 @@ class PipelineCognitiveAdapter:
                 session.replace(key, session.recent(key))
 
     def _acknowledge_loaded_state(self) -> None:
-        for values in (self._request_hashes, self._ledger, self._prepared, self.research_traces):
+        for values in (self._request_hashes, self._ledger, self._prepared, self.research_traces, self.production_affect):
             values.acknowledge(values.dirty_versions())
         self.emotion_service.acknowledge_persistence(dict(self.emotion_service._persistence_dirty))
         session = self.pipeline.session_store

@@ -21,6 +21,7 @@ from gui.presets import atomic_write_json, snapshot_memory
 from harness.config import DEFAULT_QQ_INPUT_TOKEN_BUDGET, DEFAULT_QQ_MEMORY_RECALL_CHARACTERS
 from harness.core.models import CandidateMemory, EpisodicEvent, MemoryScope, SemanticFact
 from harness.qq.conversation import conversation_audience, conversation_scope, private_scope_id
+from harness.production.maintenance import ProductionMaintenanceDeferred
 
 
 VERSION = "qq-memory-v1"
@@ -31,9 +32,14 @@ def foreground_pending(host) -> bool:
     return any(not task.done() for task in getattr(host.adapter, "command_tasks", ()))
 
 
-async def wait_foreground_idle(host, stopping: asyncio.Event) -> bool:
-    """Wait outside owner locks without polling or cancelling foreground work."""
+async def wait_foreground_idle(host, stopping: asyncio.Event, *, maximum_wait_seconds=None) -> bool:
+    """Yield outside owner locks, with a production starvation deadline."""
+    if maximum_wait_seconds is None and getattr(getattr(host, "shared", None), "production_enabled", False):
+        maximum_wait_seconds = 30.0
+    deadline = None if maximum_wait_seconds is None else time.monotonic() + maximum_wait_seconds
     while not stopping.is_set():
+        if deadline is not None and time.monotonic() >= deadline:
+            return True
         commands = tuple(task for task in getattr(host.adapter, "command_tasks", ()) if not task.done())
         if not commands:
             return True
@@ -45,7 +51,8 @@ async def wait_foreground_idle(host, stopping: asyncio.Event) -> bool:
         wake = asyncio.create_task(changed.wait())
         shutdown = asyncio.create_task(stopping.wait())
         try:
-            await asyncio.wait((wake, shutdown), return_when=asyncio.FIRST_COMPLETED)
+            await asyncio.wait((wake, shutdown), return_when=asyncio.FIRST_COMPLETED,
+                              timeout=None if deadline is None else max(0, deadline - time.monotonic()))
         finally:
             for task in commands:
                 task.remove_done_callback(completed)
@@ -320,6 +327,10 @@ def install_committed(host, preset):
     # retry publication without installing or strengthening the memory again.
     host.adapter._qq_memory_publication_pending = True
     host.adapter._persist_state()
+    # Production's evidence store is a deterministic compatibility projection;
+    # never rerun historical interpretation models while publishing it.
+    if getattr(getattr(host, "shared", None), "production_enabled", False):
+        host.shared.sync_production(preset)
     host.adapter._qq_memory_publication_pending = False
 
 
@@ -631,17 +642,38 @@ class QQMemoryWorker:
         return event.scope.owner_id == "misty" and "local:main" in event.scope.visibility
 
     def note_recall(self, decision):
-        if (self.control.recall_enabled and decision.decision_source == "model"
+        production = getattr(getattr(self.host, "shared", None), "production_enabled", False)
+        if ((self.control.recall_enabled or production) and decision.decision_source == "model"
                 and decision.outcome in {"ready", "natural_wait"}
                 and decision.completed_at is not None
                 and getattr(decision, "recalled_memory_ids", None)):
             self._recall_pending[decision.decision_id] = {
                 "ids": list(decision.recalled_memory_ids), "group_id": decision.group_id,
+                "adopted_ids": list(getattr(decision, "used_memory_ids", None)
+                                    or getattr(decision, "adopted_memory_ids", ())),
                 "episode_ids": list(getattr(decision, "recalled_episode_ids", [])),
                 "at": decision.completed_at.isoformat(), "preset_id": self.host.chat.active_preset_id}
+            if production:
+                self._record_production_use(decision.decision_id, self._recall_pending[decision.decision_id])
+
+    def _record_production_use(self, decision_id, adoption):
+        store = self.host.shared.production_store
+        audience = conversation_audience(adoption["group_id"])
+        try:
+            store.record_use("qq-exposure:" + decision_id, adoption["ids"], audience=audience, kind="context_exposure")
+            adopted = set(adoption.get("adopted_ids", ())) & set(adoption["ids"])
+            if adopted:
+                store.record_use("qq-decision-use:" + decision_id, adopted, audience=audience, kind="decision_use")
+        except ValueError:
+            # A revoked/stale selection must not revive evidence or imply use.
+            pass
 
     async def start(self):
         if self.task is None:
+            if getattr(getattr(self.host, "shared", None), "production_enabled", False):
+                # The host owns startup and preset-switch recovery. Repeating
+                # this hook is cheap after the current owner's first success.
+                await self.host.recover_production_memory()
             self.task = asyncio.create_task(self.run(), name="qq-memory-assimilation")
 
     async def close(self):
@@ -664,7 +696,16 @@ class QQMemoryWorker:
                 pass
 
     async def tick(self):
+        self._foreground_deadline = time.monotonic() + 30.0
         return await self._tick()
+
+    async def _wait_foreground(self):
+        timeout = (max(0, getattr(self, "_foreground_deadline", time.monotonic()) - time.monotonic())
+                   if getattr(getattr(self.host, "shared", None), "production_enabled", False) else None)
+        available = await wait_foreground_idle(self.host, self.stopping, maximum_wait_seconds=timeout)
+        if self.stopping.is_set() or self.host.adapter._maintenance_paused:
+            raise ProductionMaintenanceDeferred("qq_memory_maintenance_paused")
+        return available
 
     async def _recover_publication(self):
         from harness.memory.qq_assimilation import QQAssimilationQueue
@@ -680,6 +721,8 @@ class QQMemoryWorker:
                 # also covers an import whose queue has never been opened by
                 # this worker, and runs while both feature switches are off.
                 adapter._persist_state()
+                if getattr(getattr(self.host, "shared", None), "production_enabled", False):
+                    await asyncio.to_thread(self.host.shared.sync_production, snapshot_owner(self.host))
                 qq = self.host.shared.qq_settings
                 if qq is not None and self.host.chat.active_preset_id == "misty":
                     queue = QQAssimilationQueue(self.host.shared.store.path,
@@ -698,10 +741,15 @@ class QQMemoryWorker:
         if self.stopping.is_set():
             return
         await self._recover_publication()
+        if getattr(getattr(self.host, "shared", None), "production_enabled", False):
+            # Ingestion has its own bounded budget even during sustained chat.
+            await asyncio.to_thread(self.host.shared.sync_qq)
+            await asyncio.to_thread(self.host.shared.sync_production)
         if self.host.adapter._maintenance_paused:
             return
         if foreground_pending(self.host):
-            return
+            if not getattr(getattr(self.host, "shared", None), "production_enabled", False) or not await self._wait_foreground():
+                return
         if not (self.control.enabled or self.control.recall_enabled):
             return
         qq = self.host.shared.qq_settings
@@ -732,7 +780,7 @@ class QQMemoryWorker:
         # failed source queue must not indefinitely postpone decay or durable
         # adoption of memories that have already been committed.
         await self.maintain()
-        if foreground_pending(self.host) or self.stopping.is_set():
+        if (foreground_pending(self.host) and not getattr(getattr(self.host, "shared", None), "production_enabled", False)) or self.stopping.is_set():
             return
         job = await asyncio.to_thread(self.queue.next_job) if self.control.enabled else None
         if job is None:
@@ -740,7 +788,7 @@ class QQMemoryWorker:
         started = time.perf_counter()
         self.processing = True
         try:
-            if not await wait_foreground_idle(self.host, self.stopping):
+            if not await self._wait_foreground():
                 raise ValueError("qq_memory_owner_changed")
             async with self.host.adapter._lock:
                 memory_identity = self.host.chat.memory
@@ -749,6 +797,18 @@ class QQMemoryWorker:
             if job.job_id in state["receipts"]:
                 await asyncio.to_thread(self.queue.acknowledge, job.job_id, set(state["receipts"]))
                 return
+            production_store = (self.host.shared.production_store
+                if getattr(getattr(self.host, "shared", None), "production_enabled", False) else None)
+            if production_store is not None:
+                # The bounded archive cursor may lag this claimed source window.
+                # Publish the exact authenticated originals before projecting its
+                # legacy proposal; do not guess aliases or wait for a full scan.
+                await asyncio.to_thread(production_store.ingest,
+                    [production_store.from_shared(source.record) for source in job.sources])
+                if not production_store.validate_references([source.source_id for source in job.sources],
+                                                            audience=conversation_audience(job.group_id)):
+                    await asyncio.to_thread(self.queue.skip, job.job_id, "qq_memory_source_revoked")
+                    return
             old = proposal_context(state, job)
             proposal = job.proposal
             if proposal is not None and job.proposal_basis_digest != _hash(old):
@@ -759,9 +819,11 @@ class QQMemoryWorker:
                                         expected_digest=job.proposal_basis_digest)
                 return
             if proposal is None:
-                if not await wait_foreground_idle(self.host, self.stopping):
+                if not await self._wait_foreground():
                     raise ValueError("qq_memory_owner_changed")
-                proposal = await asyncio.to_thread(self.make_proposal, job, old, preset.persona)
+                from harness.cognitive.production import maintenance_scope
+                async with maintenance_scope(self.host, command_id="qq-memory:" + job.job_id):
+                    proposal = await asyncio.to_thread(self.make_proposal, job, old, preset.persona)
                 await asyncio.to_thread(self.queue.store_proposal, job.job_id, proposal,
                                         old_impressions=old, basis_digest=_hash(old))
             # Validate every proposal again at commit, including recovered output.
@@ -769,32 +831,42 @@ class QQMemoryWorker:
             new_event_ids = set(memory_state(committed.qq_memory_state)["receipts"][job.job_id]["episode_ids"])
             # Embedding work is optional for QQ's bounded lexical recall, and is
             # performed off the foreground path using the existing embedding client.
-            if self.stopping.is_set() or self.host.chat.memory is not memory_identity:
+            if self.stopping.is_set() or self.host.adapter._maintenance_paused:
+                raise ProductionMaintenanceDeferred("qq_memory_maintenance_paused")
+            if self.host.chat.memory is not memory_identity:
                 raise ValueError("qq_memory_owner_changed")
             new_events = [event for event in committed.episodic if event.event_id in new_event_ids]
-            if not await wait_foreground_idle(self.host, self.stopping):
+            if not await self._wait_foreground():
                 raise ValueError("qq_memory_owner_changed")
             try:
-                vectors = await asyncio.wait_for(asyncio.to_thread(memory_identity.embeddings.embed,
-                    [event.summary + " " + event.objective_fact for event in new_events]), timeout=5)
+                from harness.cognitive.production import maintenance_scope
+                async with maintenance_scope(self.host, command_id="qq-memory-embedding:" + job.job_id):
+                    vectors = await asyncio.wait_for(asyncio.to_thread(memory_identity.embeddings.embed,
+                        [event.summary + " " + event.objective_fact for event in new_events]), timeout=5)
                 for event, vector in zip(new_events, vectors, strict=True):
                     event.embedding = vector
+            except ProductionMaintenanceDeferred:
+                raise
             except Exception:
                 for event in new_events:
                     event.embedding = None
-            if not await wait_foreground_idle(self.host, self.stopping):
+            if not await self._wait_foreground():
                 raise ValueError("qq_memory_owner_changed")
             async with self.host._control_lock:
                 async with self.host.adapter._lock:
-                    if (self.stopping.is_set() or not self.control.enabled
-                            or self.host.adapter._maintenance_paused
-                            or self.host.chat.memory is not memory_identity
+                    if self.stopping.is_set() or self.host.adapter._maintenance_paused:
+                        raise ProductionMaintenanceDeferred("qq_memory_maintenance_paused")
+                    if (not self.control.enabled or self.host.chat.memory is not memory_identity
                             or self.host.chat.active_preset_id != job.preset_id
                             or self.host.shared.qq_settings is None
                             or self.host.shared.qq_settings.self_member_id != job.self_id
                             or not self._conversation_authorized(job.group_id)):
                         raise ValueError("qq_memory_owner_changed")
                     current = snapshot_owner(self.host)
+                    if (production_store is not None and not production_store.validate_references(
+                            [source.source_id for source in job.sources], audience=conversation_audience(job.group_id))):
+                        await asyncio.to_thread(self.queue.skip, job.job_id, "qq_memory_source_revoked")
+                        return
                     if memory_state(current.qq_memory_state)["revision"] != state["revision"]:
                         raise ValueError("qq_memory_basis_changed")
                     # Local turns may have committed while the model was running.
@@ -808,6 +880,10 @@ class QQMemoryWorker:
                                     set(memory_state(committed.qq_memory_state)["receipts"]))
             self.last_completed_at = now_utc().isoformat()
             self.last_error = None
+        except ProductionMaintenanceDeferred as exc:
+            self.last_error = exc.error_code
+            await asyncio.to_thread(self.queue.defer, job.job_id, exc.error_code,
+                                    retry_after_seconds=exc.retry_after_seconds)
         except Exception as exc:
             self.last_error = getattr(exc, "error_code", type(exc).__name__)
             await asyncio.to_thread(self.queue.fail, job.job_id, self.last_error)
@@ -838,12 +914,12 @@ class QQMemoryWorker:
             apply_local_event_hit, maintain_qq_events, reinforce_qq_event, qq_event_strength,
         )
 
-        if foreground_pending(self.host):
+        if foreground_pending(self.host) and not getattr(getattr(self.host, "shared", None), "production_enabled", False):
             return
         moment = now or now_utc()
         async with self.host._control_lock:
             async with self.host.adapter._lock:
-                if foreground_pending(self.host):
+                if foreground_pending(self.host) and not getattr(getattr(self.host, "shared", None), "production_enabled", False):
                     return
                 current = snapshot_owner(self.host)
                 state = memory_state(current.qq_memory_state)
@@ -858,6 +934,7 @@ class QQMemoryWorker:
                             and decision.get("recalled_memory_ids")):
                         pending.setdefault(decision["decision_id"], {
                             "ids": decision["recalled_memory_ids"], "group_id": decision["group_id"],
+                            "adopted_ids": decision.get("used_memory_ids", decision.get("adopted_memory_ids", [])),
                             "episode_ids": decision.get("recalled_episode_ids", []),
                             "at": decision["completed_at"], "preset_id": "misty"})
                 last_review = state.get("last_review_at")
@@ -876,6 +953,11 @@ class QQMemoryWorker:
                     if decision_id in state["recalls"] or adoption["preset_id"] != current.preset_id:
                         continue
                     at = datetime.fromisoformat(adoption["at"])
+                    if getattr(getattr(self.host, "shared", None), "production_enabled", False):
+                        # Context exposure is not evidence and cannot increase a belief.
+                        self._record_production_use(decision_id, adoption)
+                        state["recalls"][decision_id] = []
+                        continue
                     episode_ids = set()
                     # Freeze the evidence actually shown to this decision.
                     # Expanding today's impression could reinforce unseen or

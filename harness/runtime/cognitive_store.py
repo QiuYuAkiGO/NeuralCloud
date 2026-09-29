@@ -18,7 +18,7 @@ from harness.files import replace_path
 from harness.qq.telemetry import measure_stage
 
 DELETED = object()
-_MAPS = ("request_hashes", "ledger", "prepared", "research_traces", "sessions")
+_MAPS = ("request_hashes", "ledger", "prepared", "research_traces", "sessions", "production_affect")
 _EMOTION_MAPS = ("sources", "windows", "reservations")
 
 

@@ -1,0 +1,154 @@
+{
+  "cases": [
+    {
+      "id": "direct_quiet_bookshop",
+      "text": "我周末更愿意待在安静的书店。",
+      "expected_mode": "direct",
+      "expected_people": [],
+      "required_quotes": ["我周末更愿意待在安静的书店"]
+    },
+    {
+      "id": "direct_preference_correction",
+      "text": "更正之前的记录：我现在最喜欢吃梨，苹果已经不是首选。",
+      "expected_mode": "direct",
+      "expected_people": [],
+      "required_quotes": ["我现在最喜欢吃梨", "苹果已经不是首选"]
+    },
+    {
+      "id": "reported_quoted_preference",
+      "text": "方宁对我说：‘我最近更喜欢骑车通勤。’",
+      "expected_mode": "reported",
+      "expected_people": ["方宁"],
+      "required_quotes": ["方宁对我说", "我最近更喜欢骑车通勤"]
+    },
+    {
+      "id": "reported_separate_speaker_subject",
+      "text": "唐宁告诉我，余夏习惯在晚饭后散步。",
+      "expected_mode": "reported",
+      "expected_people": ["唐宁", "余夏"],
+      "required_quotes": ["唐宁告诉我", "余夏习惯在晚饭后散步"]
+    },
+    {
+      "id": "hypothetical_first_person",
+      "text": "如果我喜欢热闹，也许会报名那场音乐节。",
+      "expected_mode": "hypothetical",
+      "expected_people": [],
+      "required_quotes": ["如果我喜欢热闹", "也许会报名那场音乐节"]
+    },
+    {
+      "id": "hypothetical_named_person",
+      "text": "假设纪禾住在海边，她可能每天都去游泳。",
+      "expected_mode": "hypothetical",
+      "expected_people": ["纪禾"],
+      "required_quotes": ["假设纪禾住在海边", "她可能每天都去游泳"]
+    },
+    {
+      "id": "denied_preference",
+      "text": "我并不喜欢在拥挤的餐厅吃饭。",
+      "expected_mode": "denied",
+      "expected_people": [],
+      "required_quotes": ["我并不喜欢在拥挤的餐厅吃饭"]
+    },
+    {
+      "id": "denied_named_event",
+      "text": "我没有答应替沈越完成这份报告。",
+      "expected_mode": "denied",
+      "expected_people": ["沈越"],
+      "required_quotes": ["我没有答应替沈越完成这份报告"]
+    },
+    {
+      "id": "request_assistant_rest",
+      "text": "你先休息十分钟，之后再处理温岚的提问。",
+      "expected_mode": "request",
+      "expected_people": ["温岚"],
+      "required_quotes": ["你先休息十分钟", "之后再处理温岚的提问"]
+    },
+    {
+      "id": "request_remember_name",
+      "text": "请记住纪禾这个名字，下一次帮我提醒她带伞。",
+      "expected_mode": "request",
+      "expected_people": ["纪禾"],
+      "required_quotes": ["请记住纪禾这个名字", "下一次帮我提醒她带伞"]
+    },
+    {
+      "id": "intention_future_visit",
+      "text": "我打算下周二去看望陆遥。",
+      "expected_mode": "intention",
+      "expected_people": ["陆遥"],
+      "required_quotes": ["我打算下周二去看望陆遥"]
+    },
+    {
+      "id": "intention_changed_plan",
+      "text": "我计划从明天开始练习书法，每晚练十五分钟。",
+      "expected_mode": "intention",
+      "expected_people": [],
+      "required_quotes": ["我计划从明天开始练习书法", "每晚练十五分钟"]
+    },
+    {
+      "id": "ambiguous_pronoun_subject",
+      "text": "许青和温岚一起到了，她说自己喜欢独自旅行。",
+      "expected_mode": "ambiguous",
+      "expected_people": ["许青", "温岚"],
+      "required_quotes": ["许青和温岚一起到了", "她说自己喜欢独自旅行"]
+    },
+    {
+      "id": "ambiguous_missing_referent",
+      "text": "还是之前那个人更合适吧。",
+      "expected_mode": "ambiguous",
+      "expected_people": [],
+      "required_quotes": ["还是之前那个人更合适吧"]
+    },
+    {
+      "id": "mixed_others_and_self",
+      "text": "方宁说她喜欢登山；我自己更喜欢在家画画。",
+      "expected_mode": "mixed",
+      "expected_people": ["方宁"],
+      "required_quotes": ["方宁说她喜欢登山", "我自己更喜欢在家画画"]
+    },
+    {
+      "id": "mixed_assistant_rest_and_correction",
+      "text": "你可以先休息。另外更正我的偏好：我现在喜欢听轻音乐，不再偏爱重金属。",
+      "expected_mode": "mixed",
+      "expected_people": [],
+      "required_quotes": ["你可以先休息", "我现在喜欢听轻音乐", "不再偏爱重金属"]
+    }
+  ],
+  "relations": [
+    {
+      "id": "supports_specific_arrival",
+      "claim": "许青在周二的排练中准时到场。",
+      "evidence": "周二排练定在十九点开始，许青十八点五十五分已经到场。",
+      "expected_relation": "supports"
+    },
+    {
+      "id": "challenges_same_person_same_event",
+      "claim": "余夏在周三的读书会中准时到场。",
+      "evidence": "周三的读书会约定十点开始，余夏十点二十分才到场。",
+      "expected_relation": "challenges"
+    },
+    {
+      "id": "insufficient_wrong_person",
+      "claim": "唐宁目前偏爱纸质书。",
+      "evidence": "纪禾说：‘我最近更喜欢纸质书，电子书看得少了。’",
+      "expected_relation": "insufficient"
+    },
+    {
+      "id": "insufficient_old_time_interval",
+      "claim": "沈越在2026年9月的周末仍然偏爱爬山。",
+      "evidence": "沈越在2019年4月说：‘这个月的周末我最喜欢爬山。’",
+      "expected_relation": "insufficient"
+    },
+    {
+      "id": "insufficient_intention_not_completion",
+      "claim": "陆遥已经把借来的相机归还给失主。",
+      "evidence": "陆遥说：‘我打算今晚归还那台借来的相机。’",
+      "expected_relation": "insufficient"
+    },
+    {
+      "id": "insufficient_attendance_not_completion",
+      "claim": "温岚已经完成了周五约定的合作报告。",
+      "evidence": "温岚周五按时到达了讨论合作报告的会议。",
+      "expected_relation": "insufficient"
+    }
+  ]
+}

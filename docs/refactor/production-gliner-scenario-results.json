@@ -1,0 +1,2353 @@
+{
+  "schema_version": "gliner-neuralcloud-scenarios-v1",
+  "started_at": "2026-09-22T11:47:57.998995+00:00",
+  "model_path": "/home/qiuyu/neuralcloud-evals/gliner2-20260922-jev-alternative/model-compat",
+  "source_sha256": {
+    "harness/memory/production.py": "bf1899e5e4e85b44bed0273b9e0bf90e9d77078a097f951c5ae12174de013ba0",
+    "harness/memory/evidence_manifest.py": "5d7de7c0bcdebb8c04b2f0817c221c616016503ecd3f69d5aa8f72a0f299257d",
+    "harness/core/models.py": "262dd9810c54c832a2fa54d819dc89e61719b1fce9c9fc240d57e70b0d2193c0",
+    "tools/production_acceptance/gliner_bridge.py": "4dacc84d33d22cd2dc539e83e166f2e89a48b1496fd38c4d3e7933c1acb3cfeb",
+    "tools/production_acceptance/gliner_scenarios.py": "253baa9da6e1d14a1a9788beb2fb969b99a03cc67adb1bf4b645bfeae95e39d5",
+    "tools/production_acceptance/gliner_cases.json": "ff434d7b8562acfd548157a5cac72c28f5221ef4ea7d82acc031a1d4fd4ed827"
+  },
+  "model_sha256": {
+    "config.json": "8b59a0f426a65859c89cd1ea850c3529c09aa3be3a6fafd8eddfdd17b1bf0146",
+    "encoder_config/config.json": "fa4f9ef2903b5369ab172333aae4574e6a476511d7465845cf59f8360ee18716",
+    "model.safetensors": "c1ff4ec0bc00031c15530b8f3c33d3677f27949e6a0cb52e1247a6224b6c5395",
+    "tokenizer.json": "c62446df87ae18ec98b133f8f84fc449a07cc89bbf8ef192a4cb5f9c53777a7a",
+    "tokenizer_config.json": "df46e8dd7c618b810d40c3c6ded627e2e008250158d65f9d7708e6302ca3736f"
+  },
+  "cases_sha256": "ff434d7b8562acfd548157a5cac72c28f5221ef4ea7d82acc031a1d4fd4ed827",
+  "threads": 2,
+  "concurrency": 1,
+  "word_splitter": "char",
+  "threshold": 0.5,
+  "percentile_method": "nearest-rank",
+  "schemas": {
+    "modes": {
+      "direct": "发言者直接陈述自己的实际偏好或经历，不是引用或假设。",
+      "reported": "转述或引用别人的话，不可归为当前消息作者本人的自述。",
+      "hypothetical": "明确假设、条件或想象，不声称事实已经发生。",
+      "denied": "明确否认某句话、行为或偏好的归属，不能提取被否认内容为肯定事实。",
+      "request": "向对方提出请求、问题或建议，不等于对方已经选择或完成该动作。",
+      "intention": "表达自己的未来计划或意图，不表示动作已完成。",
+      "ambiguous": "说话人或被描述对象无法确定，保留未知，不根据代词猜身份。",
+      "mixed": "同条消息有多个归属或陈述类型，如对他人的请求和本人的偏好更正。"
+    },
+    "entities": {
+      "person": "原文中明确出现的人名；不包括我、你、他、她等代词，不猜测账号身份。",
+      "statement": "包含人物或代词及其谓语的完整连续原文陈述，保留否定、假设、转述和时间限定。",
+      "preference": "原文中关于喜好或偏好的连续表达，保留不喜欢或以前等限定。",
+      "time": "原文中明确出现的日期、时段或生效时间表达。"
+    },
+    "relations": {
+      "supports": "证据支持目标命题，必须是相同人物、相同时间条件、相同行为或偏好。",
+      "challenges": "证据与目标命题相冲突，必须是相同人物和相同时间条件。",
+      "insufficient": "不能判断目标命题；人物或时间不同，或计划不证明完成、出席不证明完成。"
+    }
+  },
+  "synthetic_data": true,
+  "production_configuration_read": false,
+  "external_qq_messages": 0,
+  "person_judgments_written": 0,
+  "external_model_requests": 0,
+  "sample_composition": "16 new synthetic messages, 6 synthetic relation pairs, 1 replay of a previous synthetic QQ benchmark message",
+  "measurement_limits": [
+    "mode score is fixture label agreement, not verified speaker/subject attribution",
+    "negative self-report, intent and mixed labels have overlapping semantics",
+    "model files hashed before load, so load_ms is not a cold filesystem measurement",
+    "integration includes source ingestion and manifest validation, not QQ delivery or the main LLM"
+  ],
+  "trust_boundary": "Only exact original quotations are verified; labels, attribution and evidence roles remain fallible model interpretations.",
+  "packages": {
+    "gliner2": "2.0.0",
+    "torch": "2.8.0+cpu",
+    "transformers": "4.57.6",
+    "tokenizers": "0.22.2",
+    "pydantic": "2.13.5"
+  },
+  "import_ms": 2303.74,
+  "load_ms": 10032.427,
+  "stored_records": {
+    "experience": 17
+  },
+  "peak_rss_bytes": 2887053312,
+  "completed": true,
+  "elapsed_ms": 24960.313,
+  "blocked_network_connections": 0,
+  "warmups": [
+    {
+      "kind": "extraction",
+      "model_ms": 569.375,
+      "result": {
+        "entities": {
+          "person": [],
+          "statement": [
+            {
+              "text": "我喜欢清晨散步",
+              "confidence": 0.8474332690238953,
+              "start": 0,
+              "end": 7
+            }
+          ],
+          "preference": [],
+          "time": [
+            {
+              "text": "清晨",
+              "confidence": 0.879150390625,
+              "start": 3,
+              "end": 5
+            }
+          ]
+        },
+        "speech_mode": {
+          "label": "direct",
+          "confidence": 0.7688241004943848
+        }
+      }
+    },
+    {
+      "kind": "relation",
+      "model_ms": 242.691,
+      "result": {
+        "evidence_relation": {
+          "label": "supports",
+          "confidence": 0.9408188462257385
+        }
+      }
+    }
+  ],
+  "rows": [
+    {
+      "id": "direct_quiet_bookshop",
+      "text": "我周末更愿意待在安静的书店。",
+      "model_ms": 555.122,
+      "validation_ms": 1.778,
+      "integration_ms": 564.315,
+      "expected_mode": "direct",
+      "actual_mode": "direct",
+      "mode_correct": true,
+      "result": {
+        "entities": {
+          "person": [
+            {
+              "text": "我",
+              "confidence": 0.8893353939056396,
+              "start": 0,
+              "end": 1
+            }
+          ],
+          "statement": [
+            {
+              "text": "我周末更愿意待在安静的书店",
+              "confidence": 0.7276031970977783,
+              "start": 0,
+              "end": 13
+            }
+          ],
+          "preference": [],
+          "time": [
+            {
+              "text": "周末",
+              "confidence": 0.9697926044464111,
+              "start": 1,
+              "end": 3
+            }
+          ]
+        },
+        "speech_mode": {
+          "label": "direct",
+          "confidence": 0.4604870676994324
+        }
+      },
+      "verified": {
+        "schema_version": "gliner-quote-candidates-v1",
+        "trust_boundary": {
+          "verified": "exact_displayed_quote_only",
+          "label_and_confidence": "untrusted_model_interpretation",
+          "identity_binding": "none",
+          "memory_writes": "none",
+          "semantic_support_or_counterevidence": "not_verified",
+          "lifetime": "read_snapshot_only_revalidate_before_commit"
+        },
+        "candidates": [
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:8df33f2b808a1974c3deca31a092ea6427d68e21c6d5ae4492e690277d290f3e",
+              "unit_id": "evidence-unit:e1cf3dd2387e7a23c66b0ee19d98d8bbdedbbfb8a634d5f08d822d3bc71a3bd7",
+              "start": 0,
+              "end": 1,
+              "quote": "我",
+              "canonical_source_id": "gliner-source:direct_quiet_bookshop",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "person",
+              "confidence": 0.8893353939056396
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:8df33f2b808a1974c3deca31a092ea6427d68e21c6d5ae4492e690277d290f3e",
+              "unit_id": "evidence-unit:e1cf3dd2387e7a23c66b0ee19d98d8bbdedbbfb8a634d5f08d822d3bc71a3bd7",
+              "start": 0,
+              "end": 13,
+              "quote": "我周末更愿意待在安静的书店",
+              "canonical_source_id": "gliner-source:direct_quiet_bookshop",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "statement",
+              "confidence": 0.7276031970977783
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:8df33f2b808a1974c3deca31a092ea6427d68e21c6d5ae4492e690277d290f3e",
+              "unit_id": "evidence-unit:e1cf3dd2387e7a23c66b0ee19d98d8bbdedbbfb8a634d5f08d822d3bc71a3bd7",
+              "start": 1,
+              "end": 3,
+              "quote": "周末",
+              "canonical_source_id": "gliner-source:direct_quiet_bookshop",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "time",
+              "confidence": 0.9697926044464111
+            }
+          }
+        ],
+        "rejected": []
+      },
+      "actual_people": [
+        "我"
+      ],
+      "people_exact": false,
+      "required_quotes": [
+        "我周末更愿意待在安静的书店"
+      ],
+      "quote_exact": [
+        true
+      ],
+      "quote_covered": [
+        true
+      ],
+      "candidate_count": 3,
+      "rejected_count": 0
+    },
+    {
+      "id": "direct_preference_correction",
+      "text": "更正之前的记录：我现在最喜欢吃梨，苹果已经不是首选。",
+      "model_ms": 584.379,
+      "validation_ms": 2.282,
+      "integration_ms": 594.749,
+      "expected_mode": "direct",
+      "actual_mode": "mixed",
+      "mode_correct": false,
+      "result": {
+        "entities": {
+          "person": [
+            {
+              "text": "我",
+              "confidence": 0.8736974596977234,
+              "start": 8,
+              "end": 9
+            }
+          ],
+          "statement": [
+            {
+              "text": "苹果已经不是首选",
+              "confidence": 0.9299257397651672,
+              "start": 17,
+              "end": 25
+            },
+            {
+              "text": "我现在最喜欢吃梨",
+              "confidence": 0.7447919845581055,
+              "start": 8,
+              "end": 16
+            }
+          ],
+          "preference": [
+            {
+              "text": "梨",
+              "confidence": 0.81491619348526,
+              "start": 15,
+              "end": 16
+            }
+          ],
+          "time": []
+        },
+        "speech_mode": {
+          "label": "mixed",
+          "confidence": 0.28048211336135864
+        }
+      },
+      "verified": {
+        "schema_version": "gliner-quote-candidates-v1",
+        "trust_boundary": {
+          "verified": "exact_displayed_quote_only",
+          "label_and_confidence": "untrusted_model_interpretation",
+          "identity_binding": "none",
+          "memory_writes": "none",
+          "semantic_support_or_counterevidence": "not_verified",
+          "lifetime": "read_snapshot_only_revalidate_before_commit"
+        },
+        "candidates": [
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:f58f8369d863fd3f032752377077351d0a390cf764a6ad7c78c1a2b89c34e30e",
+              "unit_id": "evidence-unit:9264e3e7127b1a9997b4c35cbe91b3c9a5a874d6ffe369a19c92f046d6e4c7fb",
+              "start": 8,
+              "end": 9,
+              "quote": "我",
+              "canonical_source_id": "gliner-source:direct_preference_correction",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "person",
+              "confidence": 0.8736974596977234
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:f58f8369d863fd3f032752377077351d0a390cf764a6ad7c78c1a2b89c34e30e",
+              "unit_id": "evidence-unit:9264e3e7127b1a9997b4c35cbe91b3c9a5a874d6ffe369a19c92f046d6e4c7fb",
+              "start": 17,
+              "end": 25,
+              "quote": "苹果已经不是首选",
+              "canonical_source_id": "gliner-source:direct_preference_correction",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "statement",
+              "confidence": 0.9299257397651672
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:f58f8369d863fd3f032752377077351d0a390cf764a6ad7c78c1a2b89c34e30e",
+              "unit_id": "evidence-unit:9264e3e7127b1a9997b4c35cbe91b3c9a5a874d6ffe369a19c92f046d6e4c7fb",
+              "start": 8,
+              "end": 16,
+              "quote": "我现在最喜欢吃梨",
+              "canonical_source_id": "gliner-source:direct_preference_correction",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "statement",
+              "confidence": 0.7447919845581055
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:f58f8369d863fd3f032752377077351d0a390cf764a6ad7c78c1a2b89c34e30e",
+              "unit_id": "evidence-unit:9264e3e7127b1a9997b4c35cbe91b3c9a5a874d6ffe369a19c92f046d6e4c7fb",
+              "start": 15,
+              "end": 16,
+              "quote": "梨",
+              "canonical_source_id": "gliner-source:direct_preference_correction",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "preference",
+              "confidence": 0.81491619348526
+            }
+          }
+        ],
+        "rejected": []
+      },
+      "actual_people": [
+        "我"
+      ],
+      "people_exact": false,
+      "required_quotes": [
+        "我现在最喜欢吃梨",
+        "苹果已经不是首选"
+      ],
+      "quote_exact": [
+        true,
+        true
+      ],
+      "quote_covered": [
+        true,
+        true
+      ],
+      "candidate_count": 4,
+      "rejected_count": 0
+    },
+    {
+      "id": "reported_quoted_preference",
+      "text": "方宁对我说：‘我最近更喜欢骑车通勤。’",
+      "model_ms": 557.651,
+      "validation_ms": 1.444,
+      "integration_ms": 567.473,
+      "expected_mode": "reported",
+      "actual_mode": "direct",
+      "mode_correct": false,
+      "result": {
+        "entities": {
+          "person": [
+            {
+              "text": "方宁",
+              "confidence": 0.9993957281112671,
+              "start": 0,
+              "end": 2
+            }
+          ],
+          "statement": [
+            {
+              "text": "我最近更喜欢骑车通勤。",
+              "confidence": 0.9949926733970642,
+              "start": 7,
+              "end": 18
+            }
+          ],
+          "preference": [],
+          "time": []
+        },
+        "speech_mode": {
+          "label": "direct",
+          "confidence": 0.7358530759811401
+        }
+      },
+      "verified": {
+        "schema_version": "gliner-quote-candidates-v1",
+        "trust_boundary": {
+          "verified": "exact_displayed_quote_only",
+          "label_and_confidence": "untrusted_model_interpretation",
+          "identity_binding": "none",
+          "memory_writes": "none",
+          "semantic_support_or_counterevidence": "not_verified",
+          "lifetime": "read_snapshot_only_revalidate_before_commit"
+        },
+        "candidates": [
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:415af7c7f73886ad955ed221f6368952bce9ca47dd8817177871ea618f401ce7",
+              "unit_id": "evidence-unit:0ed73fbee8ee637b34bdce9021743b2834d6b84673daad887097ffc312c9b371",
+              "start": 0,
+              "end": 2,
+              "quote": "方宁",
+              "canonical_source_id": "gliner-source:reported_quoted_preference",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "person",
+              "confidence": 0.9993957281112671
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:415af7c7f73886ad955ed221f6368952bce9ca47dd8817177871ea618f401ce7",
+              "unit_id": "evidence-unit:0ed73fbee8ee637b34bdce9021743b2834d6b84673daad887097ffc312c9b371",
+              "start": 7,
+              "end": 18,
+              "quote": "我最近更喜欢骑车通勤。",
+              "canonical_source_id": "gliner-source:reported_quoted_preference",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "statement",
+              "confidence": 0.9949926733970642
+            }
+          }
+        ],
+        "rejected": []
+      },
+      "actual_people": [
+        "方宁"
+      ],
+      "people_exact": true,
+      "required_quotes": [
+        "方宁对我说",
+        "我最近更喜欢骑车通勤"
+      ],
+      "quote_exact": [
+        false,
+        false
+      ],
+      "quote_covered": [
+        false,
+        true
+      ],
+      "candidate_count": 2,
+      "rejected_count": 0
+    },
+    {
+      "id": "reported_separate_speaker_subject",
+      "text": "唐宁告诉我，余夏习惯在晚饭后散步。",
+      "model_ms": 565.527,
+      "validation_ms": 1.727,
+      "integration_ms": 574.699,
+      "expected_mode": "reported",
+      "actual_mode": "direct",
+      "mode_correct": false,
+      "result": {
+        "entities": {
+          "person": [
+            {
+              "text": "唐宁",
+              "confidence": 0.9940139651298523,
+              "start": 0,
+              "end": 2
+            },
+            {
+              "text": "余夏",
+              "confidence": 0.9103856086730957,
+              "start": 6,
+              "end": 8
+            }
+          ],
+          "statement": [],
+          "preference": [],
+          "time": [
+            {
+              "text": "晚饭后",
+              "confidence": 0.9465621709823608,
+              "start": 11,
+              "end": 14
+            }
+          ]
+        },
+        "speech_mode": {
+          "label": "direct",
+          "confidence": 0.6386380791664124
+        }
+      },
+      "verified": {
+        "schema_version": "gliner-quote-candidates-v1",
+        "trust_boundary": {
+          "verified": "exact_displayed_quote_only",
+          "label_and_confidence": "untrusted_model_interpretation",
+          "identity_binding": "none",
+          "memory_writes": "none",
+          "semantic_support_or_counterevidence": "not_verified",
+          "lifetime": "read_snapshot_only_revalidate_before_commit"
+        },
+        "candidates": [
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:d83bbfd3a19e8f93487ec4af8578be1a1f8e9116d5f4d2268e43333bfd7afff1",
+              "unit_id": "evidence-unit:71646b04b514d66bbd9f44431b4c718689b3d3b7c64e8ffb7df5db1494b8aafe",
+              "start": 0,
+              "end": 2,
+              "quote": "唐宁",
+              "canonical_source_id": "gliner-source:reported_separate_speaker_subject",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "person",
+              "confidence": 0.9940139651298523
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:d83bbfd3a19e8f93487ec4af8578be1a1f8e9116d5f4d2268e43333bfd7afff1",
+              "unit_id": "evidence-unit:71646b04b514d66bbd9f44431b4c718689b3d3b7c64e8ffb7df5db1494b8aafe",
+              "start": 6,
+              "end": 8,
+              "quote": "余夏",
+              "canonical_source_id": "gliner-source:reported_separate_speaker_subject",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "person",
+              "confidence": 0.9103856086730957
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:d83bbfd3a19e8f93487ec4af8578be1a1f8e9116d5f4d2268e43333bfd7afff1",
+              "unit_id": "evidence-unit:71646b04b514d66bbd9f44431b4c718689b3d3b7c64e8ffb7df5db1494b8aafe",
+              "start": 11,
+              "end": 14,
+              "quote": "晚饭后",
+              "canonical_source_id": "gliner-source:reported_separate_speaker_subject",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "time",
+              "confidence": 0.9465621709823608
+            }
+          }
+        ],
+        "rejected": []
+      },
+      "actual_people": [
+        "余夏",
+        "唐宁"
+      ],
+      "people_exact": true,
+      "required_quotes": [
+        "唐宁告诉我",
+        "余夏习惯在晚饭后散步"
+      ],
+      "quote_exact": [
+        false,
+        false
+      ],
+      "quote_covered": [
+        false,
+        false
+      ],
+      "candidate_count": 3,
+      "rejected_count": 0
+    },
+    {
+      "id": "hypothetical_first_person",
+      "text": "如果我喜欢热闹，也许会报名那场音乐节。",
+      "model_ms": 581.691,
+      "validation_ms": 2.066,
+      "integration_ms": 591.587,
+      "expected_mode": "hypothetical",
+      "actual_mode": "direct",
+      "mode_correct": false,
+      "result": {
+        "entities": {
+          "person": [
+            {
+              "text": "我",
+              "confidence": 0.8266035914421082,
+              "start": 2,
+              "end": 3
+            }
+          ],
+          "statement": [
+            {
+              "text": "如果我喜欢热闹",
+              "confidence": 0.755299985408783,
+              "start": 0,
+              "end": 7
+            },
+            {
+              "text": "也许会报名那场音乐节",
+              "confidence": 0.7283790707588196,
+              "start": 8,
+              "end": 18
+            }
+          ],
+          "preference": [
+            {
+              "text": "热闹",
+              "confidence": 0.6733925938606262,
+              "start": 5,
+              "end": 7
+            }
+          ],
+          "time": []
+        },
+        "speech_mode": {
+          "label": "direct",
+          "confidence": 0.4292537569999695
+        }
+      },
+      "verified": {
+        "schema_version": "gliner-quote-candidates-v1",
+        "trust_boundary": {
+          "verified": "exact_displayed_quote_only",
+          "label_and_confidence": "untrusted_model_interpretation",
+          "identity_binding": "none",
+          "memory_writes": "none",
+          "semantic_support_or_counterevidence": "not_verified",
+          "lifetime": "read_snapshot_only_revalidate_before_commit"
+        },
+        "candidates": [
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:3972ce0ce297bba8693dd2c9019581de8fa66c2eccae314897d2199daa873129",
+              "unit_id": "evidence-unit:ec6325d3bad6645be10c9655ceb5cd19e59fac78f5bbe3ccfbc7708275c28343",
+              "start": 2,
+              "end": 3,
+              "quote": "我",
+              "canonical_source_id": "gliner-source:hypothetical_first_person",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "person",
+              "confidence": 0.8266035914421082
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:3972ce0ce297bba8693dd2c9019581de8fa66c2eccae314897d2199daa873129",
+              "unit_id": "evidence-unit:ec6325d3bad6645be10c9655ceb5cd19e59fac78f5bbe3ccfbc7708275c28343",
+              "start": 0,
+              "end": 7,
+              "quote": "如果我喜欢热闹",
+              "canonical_source_id": "gliner-source:hypothetical_first_person",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "statement",
+              "confidence": 0.755299985408783
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:3972ce0ce297bba8693dd2c9019581de8fa66c2eccae314897d2199daa873129",
+              "unit_id": "evidence-unit:ec6325d3bad6645be10c9655ceb5cd19e59fac78f5bbe3ccfbc7708275c28343",
+              "start": 8,
+              "end": 18,
+              "quote": "也许会报名那场音乐节",
+              "canonical_source_id": "gliner-source:hypothetical_first_person",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "statement",
+              "confidence": 0.7283790707588196
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:3972ce0ce297bba8693dd2c9019581de8fa66c2eccae314897d2199daa873129",
+              "unit_id": "evidence-unit:ec6325d3bad6645be10c9655ceb5cd19e59fac78f5bbe3ccfbc7708275c28343",
+              "start": 5,
+              "end": 7,
+              "quote": "热闹",
+              "canonical_source_id": "gliner-source:hypothetical_first_person",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "preference",
+              "confidence": 0.6733925938606262
+            }
+          }
+        ],
+        "rejected": []
+      },
+      "actual_people": [
+        "我"
+      ],
+      "people_exact": false,
+      "required_quotes": [
+        "如果我喜欢热闹",
+        "也许会报名那场音乐节"
+      ],
+      "quote_exact": [
+        true,
+        true
+      ],
+      "quote_covered": [
+        true,
+        true
+      ],
+      "candidate_count": 4,
+      "rejected_count": 0
+    },
+    {
+      "id": "hypothetical_named_person",
+      "text": "假设纪禾住在海边，她可能每天都去游泳。",
+      "model_ms": 582.671,
+      "validation_ms": 1.654,
+      "integration_ms": 590.903,
+      "expected_mode": "hypothetical",
+      "actual_mode": "hypothetical",
+      "mode_correct": true,
+      "result": {
+        "entities": {
+          "person": [
+            {
+              "text": "纪禾",
+              "confidence": 0.9928870797157288,
+              "start": 2,
+              "end": 4
+            }
+          ],
+          "statement": [
+            {
+              "text": "纪禾住在海边",
+              "confidence": 0.6988911032676697,
+              "start": 2,
+              "end": 8
+            }
+          ],
+          "preference": [
+            {
+              "text": "每天都去游泳",
+              "confidence": 0.7571934461593628,
+              "start": 12,
+              "end": 18
+            }
+          ],
+          "time": []
+        },
+        "speech_mode": {
+          "label": "hypothetical",
+          "confidence": 0.311155766248703
+        }
+      },
+      "verified": {
+        "schema_version": "gliner-quote-candidates-v1",
+        "trust_boundary": {
+          "verified": "exact_displayed_quote_only",
+          "label_and_confidence": "untrusted_model_interpretation",
+          "identity_binding": "none",
+          "memory_writes": "none",
+          "semantic_support_or_counterevidence": "not_verified",
+          "lifetime": "read_snapshot_only_revalidate_before_commit"
+        },
+        "candidates": [
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:e0c175369ec4c604888dee554ee71516c5896838bfa4086c8bc5af0028a71148",
+              "unit_id": "evidence-unit:3d1fb07de6229c6dc74e9028560cbd953316de659c571c145ba7a8d36d5244bc",
+              "start": 2,
+              "end": 4,
+              "quote": "纪禾",
+              "canonical_source_id": "gliner-source:hypothetical_named_person",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "person",
+              "confidence": 0.9928870797157288
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:e0c175369ec4c604888dee554ee71516c5896838bfa4086c8bc5af0028a71148",
+              "unit_id": "evidence-unit:3d1fb07de6229c6dc74e9028560cbd953316de659c571c145ba7a8d36d5244bc",
+              "start": 2,
+              "end": 8,
+              "quote": "纪禾住在海边",
+              "canonical_source_id": "gliner-source:hypothetical_named_person",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "statement",
+              "confidence": 0.6988911032676697
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:e0c175369ec4c604888dee554ee71516c5896838bfa4086c8bc5af0028a71148",
+              "unit_id": "evidence-unit:3d1fb07de6229c6dc74e9028560cbd953316de659c571c145ba7a8d36d5244bc",
+              "start": 12,
+              "end": 18,
+              "quote": "每天都去游泳",
+              "canonical_source_id": "gliner-source:hypothetical_named_person",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "preference",
+              "confidence": 0.7571934461593628
+            }
+          }
+        ],
+        "rejected": []
+      },
+      "actual_people": [
+        "纪禾"
+      ],
+      "people_exact": true,
+      "required_quotes": [
+        "假设纪禾住在海边",
+        "她可能每天都去游泳"
+      ],
+      "quote_exact": [
+        false,
+        false
+      ],
+      "quote_covered": [
+        false,
+        false
+      ],
+      "candidate_count": 3,
+      "rejected_count": 0
+    },
+    {
+      "id": "denied_preference",
+      "text": "我并不喜欢在拥挤的餐厅吃饭。",
+      "model_ms": 563.624,
+      "validation_ms": 1.486,
+      "integration_ms": 572.198,
+      "expected_mode": "denied",
+      "actual_mode": "denied",
+      "mode_correct": true,
+      "result": {
+        "entities": {
+          "person": [
+            {
+              "text": "我",
+              "confidence": 0.8478310108184814,
+              "start": 0,
+              "end": 1
+            }
+          ],
+          "statement": [
+            {
+              "text": "我并不喜欢在拥挤的餐厅吃饭。",
+              "confidence": 0.9403888583183289,
+              "start": 0,
+              "end": 14
+            }
+          ],
+          "preference": [],
+          "time": []
+        },
+        "speech_mode": {
+          "label": "denied",
+          "confidence": 0.6401927471160889
+        }
+      },
+      "verified": {
+        "schema_version": "gliner-quote-candidates-v1",
+        "trust_boundary": {
+          "verified": "exact_displayed_quote_only",
+          "label_and_confidence": "untrusted_model_interpretation",
+          "identity_binding": "none",
+          "memory_writes": "none",
+          "semantic_support_or_counterevidence": "not_verified",
+          "lifetime": "read_snapshot_only_revalidate_before_commit"
+        },
+        "candidates": [
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:e641bcf0bdd418e6491c2381a0d9099a38fb7fc1010a11885a8909d8b442f463",
+              "unit_id": "evidence-unit:ce92fafd321beb485d1220e8f2b6eaa7b6642606347999e886e60e54c98187ed",
+              "start": 0,
+              "end": 1,
+              "quote": "我",
+              "canonical_source_id": "gliner-source:denied_preference",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "person",
+              "confidence": 0.8478310108184814
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:e641bcf0bdd418e6491c2381a0d9099a38fb7fc1010a11885a8909d8b442f463",
+              "unit_id": "evidence-unit:ce92fafd321beb485d1220e8f2b6eaa7b6642606347999e886e60e54c98187ed",
+              "start": 0,
+              "end": 14,
+              "quote": "我并不喜欢在拥挤的餐厅吃饭。",
+              "canonical_source_id": "gliner-source:denied_preference",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "statement",
+              "confidence": 0.9403888583183289
+            }
+          }
+        ],
+        "rejected": []
+      },
+      "actual_people": [
+        "我"
+      ],
+      "people_exact": false,
+      "required_quotes": [
+        "我并不喜欢在拥挤的餐厅吃饭"
+      ],
+      "quote_exact": [
+        false
+      ],
+      "quote_covered": [
+        true
+      ],
+      "candidate_count": 2,
+      "rejected_count": 0
+    },
+    {
+      "id": "denied_named_event",
+      "text": "我没有答应替沈越完成这份报告。",
+      "model_ms": 543.261,
+      "validation_ms": 1.43,
+      "integration_ms": 551.255,
+      "expected_mode": "denied",
+      "actual_mode": "denied",
+      "mode_correct": true,
+      "result": {
+        "entities": {
+          "person": [
+            {
+              "text": "沈越",
+              "confidence": 0.993860125541687,
+              "start": 6,
+              "end": 8
+            }
+          ],
+          "statement": [
+            {
+              "text": "我没有答应",
+              "confidence": 0.6315136551856995,
+              "start": 0,
+              "end": 5
+            }
+          ],
+          "preference": [],
+          "time": []
+        },
+        "speech_mode": {
+          "label": "denied",
+          "confidence": 0.3126288950443268
+        }
+      },
+      "verified": {
+        "schema_version": "gliner-quote-candidates-v1",
+        "trust_boundary": {
+          "verified": "exact_displayed_quote_only",
+          "label_and_confidence": "untrusted_model_interpretation",
+          "identity_binding": "none",
+          "memory_writes": "none",
+          "semantic_support_or_counterevidence": "not_verified",
+          "lifetime": "read_snapshot_only_revalidate_before_commit"
+        },
+        "candidates": [
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:3ef8568bc0e7d4f521244c82bc3543396da89fd77bca6283f32b825258492f89",
+              "unit_id": "evidence-unit:fe65fced69a6d76d3e8802435ffd5f6ef78b2d9c51a19b20ae35111ebdc5b46f",
+              "start": 6,
+              "end": 8,
+              "quote": "沈越",
+              "canonical_source_id": "gliner-source:denied_named_event",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "person",
+              "confidence": 0.993860125541687
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:3ef8568bc0e7d4f521244c82bc3543396da89fd77bca6283f32b825258492f89",
+              "unit_id": "evidence-unit:fe65fced69a6d76d3e8802435ffd5f6ef78b2d9c51a19b20ae35111ebdc5b46f",
+              "start": 0,
+              "end": 5,
+              "quote": "我没有答应",
+              "canonical_source_id": "gliner-source:denied_named_event",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "statement",
+              "confidence": 0.6315136551856995
+            }
+          }
+        ],
+        "rejected": []
+      },
+      "actual_people": [
+        "沈越"
+      ],
+      "people_exact": true,
+      "required_quotes": [
+        "我没有答应替沈越完成这份报告"
+      ],
+      "quote_exact": [
+        false
+      ],
+      "quote_covered": [
+        false
+      ],
+      "candidate_count": 2,
+      "rejected_count": 0
+    },
+    {
+      "id": "request_assistant_rest",
+      "text": "你先休息十分钟，之后再处理温岚的提问。",
+      "model_ms": 591.014,
+      "validation_ms": 1.508,
+      "integration_ms": 601.083,
+      "expected_mode": "request",
+      "actual_mode": "direct",
+      "mode_correct": false,
+      "result": {
+        "entities": {
+          "person": [
+            {
+              "text": "温岚",
+              "confidence": 0.9975989460945129,
+              "start": 13,
+              "end": 15
+            }
+          ],
+          "statement": [],
+          "preference": [],
+          "time": [
+            {
+              "text": "十分钟",
+              "confidence": 0.9725043773651123,
+              "start": 4,
+              "end": 7
+            }
+          ]
+        },
+        "speech_mode": {
+          "label": "direct",
+          "confidence": 0.5893604755401611
+        }
+      },
+      "verified": {
+        "schema_version": "gliner-quote-candidates-v1",
+        "trust_boundary": {
+          "verified": "exact_displayed_quote_only",
+          "label_and_confidence": "untrusted_model_interpretation",
+          "identity_binding": "none",
+          "memory_writes": "none",
+          "semantic_support_or_counterevidence": "not_verified",
+          "lifetime": "read_snapshot_only_revalidate_before_commit"
+        },
+        "candidates": [
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:94ad904c3bfcbdd138863231c1987708c69aaaa3498ad99d2f4e8888f574c6f2",
+              "unit_id": "evidence-unit:ffe548e054ddab20c4d1ccca9eb87dd182892ad51766de8a8ed911f22072bcee",
+              "start": 13,
+              "end": 15,
+              "quote": "温岚",
+              "canonical_source_id": "gliner-source:request_assistant_rest",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "person",
+              "confidence": 0.9975989460945129
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:94ad904c3bfcbdd138863231c1987708c69aaaa3498ad99d2f4e8888f574c6f2",
+              "unit_id": "evidence-unit:ffe548e054ddab20c4d1ccca9eb87dd182892ad51766de8a8ed911f22072bcee",
+              "start": 4,
+              "end": 7,
+              "quote": "十分钟",
+              "canonical_source_id": "gliner-source:request_assistant_rest",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "time",
+              "confidence": 0.9725043773651123
+            }
+          }
+        ],
+        "rejected": []
+      },
+      "actual_people": [
+        "温岚"
+      ],
+      "people_exact": true,
+      "required_quotes": [
+        "你先休息十分钟",
+        "之后再处理温岚的提问"
+      ],
+      "quote_exact": [
+        false,
+        false
+      ],
+      "quote_covered": [
+        false,
+        false
+      ],
+      "candidate_count": 2,
+      "rejected_count": 0
+    },
+    {
+      "id": "request_remember_name",
+      "text": "请记住纪禾这个名字，下一次帮我提醒她带伞。",
+      "model_ms": 595.495,
+      "validation_ms": 1.475,
+      "integration_ms": 603.816,
+      "expected_mode": "request",
+      "actual_mode": "direct",
+      "mode_correct": false,
+      "result": {
+        "entities": {
+          "person": [
+            {
+              "text": "纪禾",
+              "confidence": 0.9959319233894348,
+              "start": 3,
+              "end": 5
+            }
+          ],
+          "statement": [
+            {
+              "text": "下一次帮我提醒她带伞",
+              "confidence": 0.9965805411338806,
+              "start": 10,
+              "end": 20
+            }
+          ],
+          "preference": [],
+          "time": []
+        },
+        "speech_mode": {
+          "label": "direct",
+          "confidence": 0.4596022069454193
+        }
+      },
+      "verified": {
+        "schema_version": "gliner-quote-candidates-v1",
+        "trust_boundary": {
+          "verified": "exact_displayed_quote_only",
+          "label_and_confidence": "untrusted_model_interpretation",
+          "identity_binding": "none",
+          "memory_writes": "none",
+          "semantic_support_or_counterevidence": "not_verified",
+          "lifetime": "read_snapshot_only_revalidate_before_commit"
+        },
+        "candidates": [
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:4cc8d3cd9c935159371800deac2bdf59a42fd08d746490bb157cf2ffb7307fd9",
+              "unit_id": "evidence-unit:ab06d3215e6b4020f59dba8b5b90edebf253a856acefa7f3936c5030cabd97b4",
+              "start": 3,
+              "end": 5,
+              "quote": "纪禾",
+              "canonical_source_id": "gliner-source:request_remember_name",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "person",
+              "confidence": 0.9959319233894348
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:4cc8d3cd9c935159371800deac2bdf59a42fd08d746490bb157cf2ffb7307fd9",
+              "unit_id": "evidence-unit:ab06d3215e6b4020f59dba8b5b90edebf253a856acefa7f3936c5030cabd97b4",
+              "start": 10,
+              "end": 20,
+              "quote": "下一次帮我提醒她带伞",
+              "canonical_source_id": "gliner-source:request_remember_name",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "statement",
+              "confidence": 0.9965805411338806
+            }
+          }
+        ],
+        "rejected": []
+      },
+      "actual_people": [
+        "纪禾"
+      ],
+      "people_exact": true,
+      "required_quotes": [
+        "请记住纪禾这个名字",
+        "下一次帮我提醒她带伞"
+      ],
+      "quote_exact": [
+        false,
+        true
+      ],
+      "quote_covered": [
+        false,
+        true
+      ],
+      "candidate_count": 2,
+      "rejected_count": 0
+    },
+    {
+      "id": "intention_future_visit",
+      "text": "我打算下周二去看望陆遥。",
+      "model_ms": 551.268,
+      "validation_ms": 1.514,
+      "integration_ms": 559.994,
+      "expected_mode": "intention",
+      "actual_mode": "direct",
+      "mode_correct": false,
+      "result": {
+        "entities": {
+          "person": [
+            {
+              "text": "陆遥",
+              "confidence": 0.9982258677482605,
+              "start": 9,
+              "end": 11
+            }
+          ],
+          "statement": [],
+          "preference": [],
+          "time": [
+            {
+              "text": "下周二",
+              "confidence": 0.9891498684883118,
+              "start": 3,
+              "end": 6
+            }
+          ]
+        },
+        "speech_mode": {
+          "label": "direct",
+          "confidence": 0.534562885761261
+        }
+      },
+      "verified": {
+        "schema_version": "gliner-quote-candidates-v1",
+        "trust_boundary": {
+          "verified": "exact_displayed_quote_only",
+          "label_and_confidence": "untrusted_model_interpretation",
+          "identity_binding": "none",
+          "memory_writes": "none",
+          "semantic_support_or_counterevidence": "not_verified",
+          "lifetime": "read_snapshot_only_revalidate_before_commit"
+        },
+        "candidates": [
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:7c740ce7aeea02a91cd7d346329c7116af74f65527f82d9d0af7fabadb9bd6f5",
+              "unit_id": "evidence-unit:e85e6b4f7f4fe105a6b96689679b05d3510afcf287daf591ab2c5b697e6b001a",
+              "start": 9,
+              "end": 11,
+              "quote": "陆遥",
+              "canonical_source_id": "gliner-source:intention_future_visit",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "person",
+              "confidence": 0.9982258677482605
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:7c740ce7aeea02a91cd7d346329c7116af74f65527f82d9d0af7fabadb9bd6f5",
+              "unit_id": "evidence-unit:e85e6b4f7f4fe105a6b96689679b05d3510afcf287daf591ab2c5b697e6b001a",
+              "start": 3,
+              "end": 6,
+              "quote": "下周二",
+              "canonical_source_id": "gliner-source:intention_future_visit",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "time",
+              "confidence": 0.9891498684883118
+            }
+          }
+        ],
+        "rejected": []
+      },
+      "actual_people": [
+        "陆遥"
+      ],
+      "people_exact": true,
+      "required_quotes": [
+        "我打算下周二去看望陆遥"
+      ],
+      "quote_exact": [
+        false
+      ],
+      "quote_covered": [
+        false
+      ],
+      "candidate_count": 2,
+      "rejected_count": 0
+    },
+    {
+      "id": "intention_changed_plan",
+      "text": "我计划从明天开始练习书法，每晚练十五分钟。",
+      "model_ms": 586.815,
+      "validation_ms": 1.448,
+      "integration_ms": 597.477,
+      "expected_mode": "intention",
+      "actual_mode": "direct",
+      "mode_correct": false,
+      "result": {
+        "entities": {
+          "person": [],
+          "statement": [
+            {
+              "text": "我计划从明天开始练习书法",
+              "confidence": 0.90105801820755,
+              "start": 0,
+              "end": 12
+            }
+          ],
+          "preference": [],
+          "time": [
+            {
+              "text": "每晚练十五分钟",
+              "confidence": 0.5068501234054565,
+              "start": 13,
+              "end": 20
+            }
+          ]
+        },
+        "speech_mode": {
+          "label": "direct",
+          "confidence": 0.5667648315429688
+        }
+      },
+      "verified": {
+        "schema_version": "gliner-quote-candidates-v1",
+        "trust_boundary": {
+          "verified": "exact_displayed_quote_only",
+          "label_and_confidence": "untrusted_model_interpretation",
+          "identity_binding": "none",
+          "memory_writes": "none",
+          "semantic_support_or_counterevidence": "not_verified",
+          "lifetime": "read_snapshot_only_revalidate_before_commit"
+        },
+        "candidates": [
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:f65d2f6688ec5371a04553e10eb74dc2ffb12ced0a9c0cb44df4f26746eff869",
+              "unit_id": "evidence-unit:1b10aba37b4e2ba0a2f8f0a49c8f4b44e845ba9b4830a7de53a02b155eaef005",
+              "start": 0,
+              "end": 12,
+              "quote": "我计划从明天开始练习书法",
+              "canonical_source_id": "gliner-source:intention_changed_plan",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "statement",
+              "confidence": 0.90105801820755
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:f65d2f6688ec5371a04553e10eb74dc2ffb12ced0a9c0cb44df4f26746eff869",
+              "unit_id": "evidence-unit:1b10aba37b4e2ba0a2f8f0a49c8f4b44e845ba9b4830a7de53a02b155eaef005",
+              "start": 13,
+              "end": 20,
+              "quote": "每晚练十五分钟",
+              "canonical_source_id": "gliner-source:intention_changed_plan",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "time",
+              "confidence": 0.5068501234054565
+            }
+          }
+        ],
+        "rejected": []
+      },
+      "actual_people": [],
+      "people_exact": true,
+      "required_quotes": [
+        "我计划从明天开始练习书法",
+        "每晚练十五分钟"
+      ],
+      "quote_exact": [
+        true,
+        false
+      ],
+      "quote_covered": [
+        true,
+        false
+      ],
+      "candidate_count": 2,
+      "rejected_count": 0
+    },
+    {
+      "id": "ambiguous_pronoun_subject",
+      "text": "许青和温岚一起到了，她说自己喜欢独自旅行。",
+      "model_ms": 597.367,
+      "validation_ms": 1.913,
+      "integration_ms": 607.591,
+      "expected_mode": "ambiguous",
+      "actual_mode": "direct",
+      "mode_correct": false,
+      "result": {
+        "entities": {
+          "person": [
+            {
+              "text": "许青",
+              "confidence": 0.9992210865020752,
+              "start": 0,
+              "end": 2
+            },
+            {
+              "text": "温岚",
+              "confidence": 0.998957633972168,
+              "start": 3,
+              "end": 5
+            }
+          ],
+          "statement": [
+            {
+              "text": "独自旅行",
+              "confidence": 0.7602404356002808,
+              "start": 16,
+              "end": 20
+            }
+          ],
+          "preference": [
+            {
+              "text": "独自旅行",
+              "confidence": 0.813164234161377,
+              "start": 16,
+              "end": 20
+            }
+          ],
+          "time": []
+        },
+        "speech_mode": {
+          "label": "direct",
+          "confidence": 0.710664689540863
+        }
+      },
+      "verified": {
+        "schema_version": "gliner-quote-candidates-v1",
+        "trust_boundary": {
+          "verified": "exact_displayed_quote_only",
+          "label_and_confidence": "untrusted_model_interpretation",
+          "identity_binding": "none",
+          "memory_writes": "none",
+          "semantic_support_or_counterevidence": "not_verified",
+          "lifetime": "read_snapshot_only_revalidate_before_commit"
+        },
+        "candidates": [
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:347eb2f8dac5f556ae182274f7b56b445ee2c49a0f7560e0a9583f9c588eae4f",
+              "unit_id": "evidence-unit:307269affc059c518078e762dc6a10ffe92c9deeb3cea2fd40fef6b5a35a2c5b",
+              "start": 0,
+              "end": 2,
+              "quote": "许青",
+              "canonical_source_id": "gliner-source:ambiguous_pronoun_subject",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "person",
+              "confidence": 0.9992210865020752
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:347eb2f8dac5f556ae182274f7b56b445ee2c49a0f7560e0a9583f9c588eae4f",
+              "unit_id": "evidence-unit:307269affc059c518078e762dc6a10ffe92c9deeb3cea2fd40fef6b5a35a2c5b",
+              "start": 3,
+              "end": 5,
+              "quote": "温岚",
+              "canonical_source_id": "gliner-source:ambiguous_pronoun_subject",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "person",
+              "confidence": 0.998957633972168
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:347eb2f8dac5f556ae182274f7b56b445ee2c49a0f7560e0a9583f9c588eae4f",
+              "unit_id": "evidence-unit:307269affc059c518078e762dc6a10ffe92c9deeb3cea2fd40fef6b5a35a2c5b",
+              "start": 16,
+              "end": 20,
+              "quote": "独自旅行",
+              "canonical_source_id": "gliner-source:ambiguous_pronoun_subject",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "statement",
+              "confidence": 0.7602404356002808
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:347eb2f8dac5f556ae182274f7b56b445ee2c49a0f7560e0a9583f9c588eae4f",
+              "unit_id": "evidence-unit:307269affc059c518078e762dc6a10ffe92c9deeb3cea2fd40fef6b5a35a2c5b",
+              "start": 16,
+              "end": 20,
+              "quote": "独自旅行",
+              "canonical_source_id": "gliner-source:ambiguous_pronoun_subject",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "preference",
+              "confidence": 0.813164234161377
+            }
+          }
+        ],
+        "rejected": []
+      },
+      "actual_people": [
+        "温岚",
+        "许青"
+      ],
+      "people_exact": true,
+      "required_quotes": [
+        "许青和温岚一起到了",
+        "她说自己喜欢独自旅行"
+      ],
+      "quote_exact": [
+        false,
+        false
+      ],
+      "quote_covered": [
+        false,
+        false
+      ],
+      "candidate_count": 4,
+      "rejected_count": 0
+    },
+    {
+      "id": "ambiguous_missing_referent",
+      "text": "还是之前那个人更合适吧。",
+      "model_ms": 551.429,
+      "validation_ms": 1.246,
+      "integration_ms": 558.888,
+      "expected_mode": "ambiguous",
+      "actual_mode": "direct",
+      "mode_correct": false,
+      "result": {
+        "entities": {
+          "person": [],
+          "statement": [],
+          "preference": [
+            {
+              "text": "之前那个人",
+              "confidence": 0.8385562300682068,
+              "start": 2,
+              "end": 7
+            }
+          ],
+          "time": []
+        },
+        "speech_mode": {
+          "label": "direct",
+          "confidence": 0.6138686537742615
+        }
+      },
+      "verified": {
+        "schema_version": "gliner-quote-candidates-v1",
+        "trust_boundary": {
+          "verified": "exact_displayed_quote_only",
+          "label_and_confidence": "untrusted_model_interpretation",
+          "identity_binding": "none",
+          "memory_writes": "none",
+          "semantic_support_or_counterevidence": "not_verified",
+          "lifetime": "read_snapshot_only_revalidate_before_commit"
+        },
+        "candidates": [
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:89dc73dd1cc4acd80e19b2b6a6d1c1a45e24026ceba0f5055487ff533146248a",
+              "unit_id": "evidence-unit:42590daa44855d12cd2b2992c31fb3ce70609dd14faef8920b411b68540dc8ee",
+              "start": 2,
+              "end": 7,
+              "quote": "之前那个人",
+              "canonical_source_id": "gliner-source:ambiguous_missing_referent",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "preference",
+              "confidence": 0.8385562300682068
+            }
+          }
+        ],
+        "rejected": []
+      },
+      "actual_people": [],
+      "people_exact": true,
+      "required_quotes": [
+        "还是之前那个人更合适吧"
+      ],
+      "quote_exact": [
+        false
+      ],
+      "quote_covered": [
+        false
+      ],
+      "candidate_count": 1,
+      "rejected_count": 0
+    },
+    {
+      "id": "mixed_others_and_self",
+      "text": "方宁说她喜欢登山；我自己更喜欢在家画画。",
+      "model_ms": 571.378,
+      "validation_ms": 1.799,
+      "integration_ms": 581.116,
+      "expected_mode": "mixed",
+      "actual_mode": "direct",
+      "mode_correct": false,
+      "result": {
+        "entities": {
+          "person": [
+            {
+              "text": "方宁",
+              "confidence": 0.9990103244781494,
+              "start": 0,
+              "end": 2
+            }
+          ],
+          "statement": [
+            {
+              "text": "她喜欢登山",
+              "confidence": 0.9803857803344727,
+              "start": 3,
+              "end": 8
+            },
+            {
+              "text": "我自己更喜欢在家画画",
+              "confidence": 0.5359071493148804,
+              "start": 9,
+              "end": 19
+            }
+          ],
+          "preference": [
+            {
+              "text": "在家画画",
+              "confidence": 0.7006828784942627,
+              "start": 15,
+              "end": 19
+            }
+          ],
+          "time": []
+        },
+        "speech_mode": {
+          "label": "direct",
+          "confidence": 0.6102107167243958
+        }
+      },
+      "verified": {
+        "schema_version": "gliner-quote-candidates-v1",
+        "trust_boundary": {
+          "verified": "exact_displayed_quote_only",
+          "label_and_confidence": "untrusted_model_interpretation",
+          "identity_binding": "none",
+          "memory_writes": "none",
+          "semantic_support_or_counterevidence": "not_verified",
+          "lifetime": "read_snapshot_only_revalidate_before_commit"
+        },
+        "candidates": [
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:5b1afb30fc9dcba2ce03675391402a027aa7805466044ebf8ede30bcf276cfa1",
+              "unit_id": "evidence-unit:51bb091e7e665a9d715ff119d1b3523d593f41caf86546665de1257eee986428",
+              "start": 0,
+              "end": 2,
+              "quote": "方宁",
+              "canonical_source_id": "gliner-source:mixed_others_and_self",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "person",
+              "confidence": 0.9990103244781494
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:5b1afb30fc9dcba2ce03675391402a027aa7805466044ebf8ede30bcf276cfa1",
+              "unit_id": "evidence-unit:51bb091e7e665a9d715ff119d1b3523d593f41caf86546665de1257eee986428",
+              "start": 3,
+              "end": 8,
+              "quote": "她喜欢登山",
+              "canonical_source_id": "gliner-source:mixed_others_and_self",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "statement",
+              "confidence": 0.9803857803344727
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:5b1afb30fc9dcba2ce03675391402a027aa7805466044ebf8ede30bcf276cfa1",
+              "unit_id": "evidence-unit:51bb091e7e665a9d715ff119d1b3523d593f41caf86546665de1257eee986428",
+              "start": 9,
+              "end": 19,
+              "quote": "我自己更喜欢在家画画",
+              "canonical_source_id": "gliner-source:mixed_others_and_self",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "statement",
+              "confidence": 0.5359071493148804
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:5b1afb30fc9dcba2ce03675391402a027aa7805466044ebf8ede30bcf276cfa1",
+              "unit_id": "evidence-unit:51bb091e7e665a9d715ff119d1b3523d593f41caf86546665de1257eee986428",
+              "start": 15,
+              "end": 19,
+              "quote": "在家画画",
+              "canonical_source_id": "gliner-source:mixed_others_and_self",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "preference",
+              "confidence": 0.7006828784942627
+            }
+          }
+        ],
+        "rejected": []
+      },
+      "actual_people": [
+        "方宁"
+      ],
+      "people_exact": true,
+      "required_quotes": [
+        "方宁说她喜欢登山",
+        "我自己更喜欢在家画画"
+      ],
+      "quote_exact": [
+        false,
+        true
+      ],
+      "quote_covered": [
+        false,
+        true
+      ],
+      "candidate_count": 4,
+      "rejected_count": 0
+    },
+    {
+      "id": "mixed_assistant_rest_and_correction",
+      "text": "你可以先休息。另外更正我的偏好：我现在喜欢听轻音乐，不再偏爱重金属。",
+      "model_ms": 631.24,
+      "validation_ms": 1.851,
+      "integration_ms": 640.696,
+      "expected_mode": "mixed",
+      "actual_mode": "direct",
+      "mode_correct": false,
+      "result": {
+        "entities": {
+          "person": [
+            {
+              "text": "我",
+              "confidence": 0.964553713798523,
+              "start": 11,
+              "end": 12
+            },
+            {
+              "text": "我",
+              "confidence": 0.8717594146728516,
+              "start": 16,
+              "end": 17
+            }
+          ],
+          "statement": [
+            {
+              "text": "你可以先休息。",
+              "confidence": 0.8888170123100281,
+              "start": 0,
+              "end": 7
+            }
+          ],
+          "preference": [
+            {
+              "text": "轻音乐",
+              "confidence": 0.9839690923690796,
+              "start": 22,
+              "end": 25
+            }
+          ],
+          "time": []
+        },
+        "speech_mode": {
+          "label": "direct",
+          "confidence": 0.7533846497535706
+        }
+      },
+      "verified": {
+        "schema_version": "gliner-quote-candidates-v1",
+        "trust_boundary": {
+          "verified": "exact_displayed_quote_only",
+          "label_and_confidence": "untrusted_model_interpretation",
+          "identity_binding": "none",
+          "memory_writes": "none",
+          "semantic_support_or_counterevidence": "not_verified",
+          "lifetime": "read_snapshot_only_revalidate_before_commit"
+        },
+        "candidates": [
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:ad40e6e8f88b12d72cacc3b376a50b282a5a0b5a5639764537d6528c82d9c295",
+              "unit_id": "evidence-unit:b9f53d5fd78f3eefe83cf75147b33ce6dd79aef369a1549dc86f948c56d4251a",
+              "start": 11,
+              "end": 12,
+              "quote": "我",
+              "canonical_source_id": "gliner-source:mixed_assistant_rest_and_correction",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "person",
+              "confidence": 0.964553713798523
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:ad40e6e8f88b12d72cacc3b376a50b282a5a0b5a5639764537d6528c82d9c295",
+              "unit_id": "evidence-unit:b9f53d5fd78f3eefe83cf75147b33ce6dd79aef369a1549dc86f948c56d4251a",
+              "start": 16,
+              "end": 17,
+              "quote": "我",
+              "canonical_source_id": "gliner-source:mixed_assistant_rest_and_correction",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "person",
+              "confidence": 0.8717594146728516
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:ad40e6e8f88b12d72cacc3b376a50b282a5a0b5a5639764537d6528c82d9c295",
+              "unit_id": "evidence-unit:b9f53d5fd78f3eefe83cf75147b33ce6dd79aef369a1549dc86f948c56d4251a",
+              "start": 0,
+              "end": 7,
+              "quote": "你可以先休息。",
+              "canonical_source_id": "gliner-source:mixed_assistant_rest_and_correction",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "statement",
+              "confidence": 0.8888170123100281
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:ad40e6e8f88b12d72cacc3b376a50b282a5a0b5a5639764537d6528c82d9c295",
+              "unit_id": "evidence-unit:b9f53d5fd78f3eefe83cf75147b33ce6dd79aef369a1549dc86f948c56d4251a",
+              "start": 22,
+              "end": 25,
+              "quote": "轻音乐",
+              "canonical_source_id": "gliner-source:mixed_assistant_rest_and_correction",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "preference",
+              "confidence": 0.9839690923690796
+            }
+          }
+        ],
+        "rejected": []
+      },
+      "actual_people": [
+        "我"
+      ],
+      "people_exact": false,
+      "required_quotes": [
+        "你可以先休息",
+        "我现在喜欢听轻音乐",
+        "不再偏爱重金属"
+      ],
+      "quote_exact": [
+        false,
+        false,
+        false
+      ],
+      "quote_covered": [
+        true,
+        false,
+        false
+      ],
+      "candidate_count": 4,
+      "rejected_count": 0
+    },
+    {
+      "id": "qq_failed_anchor_replay",
+      "text": "刚忙完手头的事，我想放松一下，你有什么简单的主意？",
+      "model_ms": 593.853,
+      "validation_ms": 1.764,
+      "integration_ms": 603.506,
+      "expected_mode": null,
+      "actual_mode": "direct",
+      "mode_correct": null,
+      "result": {
+        "entities": {
+          "person": [
+            {
+              "text": "你",
+              "confidence": 0.649638295173645,
+              "start": 15,
+              "end": 16
+            }
+          ],
+          "statement": [
+            {
+              "text": "我想放松一下",
+              "confidence": 0.9828373193740845,
+              "start": 8,
+              "end": 14
+            },
+            {
+              "text": "你有什么简单的主意",
+              "confidence": 0.947817862033844,
+              "start": 15,
+              "end": 24
+            }
+          ],
+          "preference": [],
+          "time": []
+        },
+        "speech_mode": {
+          "label": "direct",
+          "confidence": 0.45845329761505127
+        }
+      },
+      "verified": {
+        "schema_version": "gliner-quote-candidates-v1",
+        "trust_boundary": {
+          "verified": "exact_displayed_quote_only",
+          "label_and_confidence": "untrusted_model_interpretation",
+          "identity_binding": "none",
+          "memory_writes": "none",
+          "semantic_support_or_counterevidence": "not_verified",
+          "lifetime": "read_snapshot_only_revalidate_before_commit"
+        },
+        "candidates": [
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:4eab1e8c69f9a02eff3fafb14ecf9a65bfa613bea7b808a99b406621b41f591c",
+              "unit_id": "evidence-unit:ac96d3d959201c0f4f48a605a7683c2ea80797b5151893fd37ae789e066018d9",
+              "start": 15,
+              "end": 16,
+              "quote": "你",
+              "canonical_source_id": "gliner-source:qq_failed_anchor_replay",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "person",
+              "confidence": 0.649638295173645
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:4eab1e8c69f9a02eff3fafb14ecf9a65bfa613bea7b808a99b406621b41f591c",
+              "unit_id": "evidence-unit:ac96d3d959201c0f4f48a605a7683c2ea80797b5151893fd37ae789e066018d9",
+              "start": 8,
+              "end": 14,
+              "quote": "我想放松一下",
+              "canonical_source_id": "gliner-source:qq_failed_anchor_replay",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "statement",
+              "confidence": 0.9828373193740845
+            }
+          },
+          {
+            "anchor": {
+              "manifest_id": "evidence-manifest:4eab1e8c69f9a02eff3fafb14ecf9a65bfa613bea7b808a99b406621b41f591c",
+              "unit_id": "evidence-unit:ac96d3d959201c0f4f48a605a7683c2ea80797b5151893fd37ae789e066018d9",
+              "start": 15,
+              "end": 24,
+              "quote": "你有什么简单的主意",
+              "canonical_source_id": "gliner-source:qq_failed_anchor_replay",
+              "source_revision": 0,
+              "source_author_id": "qq:member:synthetic-author"
+            },
+            "model_interpretation": {
+              "label": "statement",
+              "confidence": 0.947817862033844
+            }
+          }
+        ],
+        "rejected": []
+      },
+      "actual_people": [
+        "你"
+      ],
+      "people_exact": null,
+      "required_quotes": [
+        "刚忙完手头的事",
+        "我想放松一下",
+        "你有什么简单的主意"
+      ],
+      "quote_exact": [
+        false,
+        true,
+        true
+      ],
+      "quote_covered": [
+        false,
+        true,
+        true
+      ],
+      "candidate_count": 3,
+      "rejected_count": 0
+    }
+  ],
+  "relations": [
+    {
+      "id": "supports_specific_arrival",
+      "claim": "许青在周二的排练中准时到场。",
+      "evidence": "周二排练定在十九点开始，许青十八点五十五分已经到场。",
+      "expected_relation": "supports",
+      "actual_relation": "supports",
+      "correct": true,
+      "model_ms": 301.105,
+      "result": {
+        "evidence_relation": {
+          "label": "supports",
+          "confidence": 0.5530339479446411
+        }
+      }
+    },
+    {
+      "id": "challenges_same_person_same_event",
+      "claim": "余夏在周三的读书会中准时到场。",
+      "evidence": "周三的读书会约定十点开始，余夏十点二十分才到场。",
+      "expected_relation": "challenges",
+      "actual_relation": "supports",
+      "correct": false,
+      "model_ms": 300.355,
+      "result": {
+        "evidence_relation": {
+          "label": "supports",
+          "confidence": 0.49353891611099243
+        }
+      }
+    },
+    {
+      "id": "insufficient_wrong_person",
+      "claim": "唐宁目前偏爱纸质书。",
+      "evidence": "纪禾说：‘我最近更喜欢纸质书，电子书看得少了。’",
+      "expected_relation": "insufficient",
+      "actual_relation": "challenges",
+      "correct": false,
+      "model_ms": 285.867,
+      "result": {
+        "evidence_relation": {
+          "label": "challenges",
+          "confidence": 0.7462599277496338
+        }
+      }
+    },
+    {
+      "id": "insufficient_old_time_interval",
+      "claim": "沈越在2026年9月的周末仍然偏爱爬山。",
+      "evidence": "沈越在2019年4月说：‘这个月的周末我最喜欢爬山。’",
+      "expected_relation": "insufficient",
+      "actual_relation": "supports",
+      "correct": false,
+      "model_ms": 299.553,
+      "result": {
+        "evidence_relation": {
+          "label": "supports",
+          "confidence": 0.6928766369819641
+        }
+      }
+    },
+    {
+      "id": "insufficient_intention_not_completion",
+      "claim": "陆遥已经把借来的相机归还给失主。",
+      "evidence": "陆遥说：‘我打算今晚归还那台借来的相机。’",
+      "expected_relation": "insufficient",
+      "actual_relation": "challenges",
+      "correct": false,
+      "model_ms": 290.176,
+      "result": {
+        "evidence_relation": {
+          "label": "challenges",
+          "confidence": 0.4241408705711365
+        }
+      }
+    },
+    {
+      "id": "insufficient_attendance_not_completion",
+      "claim": "温岚已经完成了周五约定的合作报告。",
+      "evidence": "温岚周五按时到达了讨论合作报告的会议。",
+      "expected_relation": "insufficient",
+      "actual_relation": "supports",
+      "correct": false,
+      "model_ms": 293.296,
+      "result": {
+        "evidence_relation": {
+          "label": "supports",
+          "confidence": 0.9050632119178772
+        }
+      }
+    }
+  ],
+  "model_calls_started": 25,
+  "model_calls_completed": 25,
+  "source_unchanged": true,
+  "model_unchanged": true,
+  "extraction": {
+    "cases": 16,
+    "mode_correct": 4,
+    "people_exact_cases": 11,
+    "people_by_gold_presence": {
+      "True": {
+        "cases": 9,
+        "correct": 9
+      },
+      "False": {
+        "cases": 7,
+        "correct": 2
+      }
+    },
+    "required_quotes": 28,
+    "quotes_exact": 8,
+    "quotes_covered": 11,
+    "all_quotes_covered_cases": 4,
+    "candidate_count": 44,
+    "rejected_count": 0,
+    "model_latency": {
+      "samples": 16,
+      "p50_ms": 571.378,
+      "p95_ms": 631.24
+    },
+    "integration_latency": {
+      "samples": 16,
+      "p50_ms": 581.116,
+      "p95_ms": 640.696
+    },
+    "confusion": {
+      "direct->direct": 1,
+      "direct->mixed": 1,
+      "reported->direct": 2,
+      "hypothetical->direct": 1,
+      "hypothetical->hypothetical": 1,
+      "denied->denied": 2,
+      "request->direct": 2,
+      "intention->direct": 2,
+      "ambiguous->direct": 2,
+      "mixed->direct": 2
+    }
+  },
+  "relation_classification": {
+    "cases": 6,
+    "correct": 1,
+    "constant_insufficient_correct": 4,
+    "per_class": {
+      "supports": {
+        "cases": 1,
+        "correct": 1
+      },
+      "challenges": {
+        "cases": 1,
+        "correct": 0
+      },
+      "insufficient": {
+        "cases": 4,
+        "correct": 0
+      }
+    },
+    "model_latency": {
+      "samples": 6,
+      "p50_ms": 293.296,
+      "p95_ms": 301.105
+    }
+  },
+  "validation": {
+    "source_files": 999,
+    "source_unchanged": true,
+    "junit": [
+      {
+        "name": "pytest",
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "89",
+        "time": "6.808",
+        "timestamp": "2026-09-22T19:44:40.470668+08:00",
+        "hostname": "yumemiyuki"
+      }
+    ],
+    "database_integrity": "ok",
+    "stored_records": {
+      "experience": 17
+    },
+    "origin": {
+      "model": "fastino/gliner2.5-multi-v1",
+      "revision": "a221b77a8baf4a613b8f8652661d41fa10a5641e",
+      "files": [
+        {
+          "rfilename": "config.json",
+          "blobId": "c4c540f52d2e48b5ca2582c6fc23f72b5ae9c79c",
+          "size": 3151
+        },
+        {
+          "rfilename": "encoder_config/config.json",
+          "blobId": "0bb5e495baad2e7fdc35500f0072d5f2d957ed5a",
+          "size": 857
+        },
+        {
+          "rfilename": "model.safetensors",
+          "blobId": "058ee36213f2851edaef1bcc213ff71f7e045a7b",
+          "size": 1149461028,
+          "lfs": {
+            "sha256": "c1ff4ec0bc00031c15530b8f3c33d3677f27949e6a0cb52e1247a6224b6c5395",
+            "size": 1149461028,
+            "pointerSize": 135
+          }
+        },
+        {
+          "rfilename": "tokenizer.json",
+          "blobId": "68f13318410c91def2c27f608b69446f28254bf9",
+          "size": 16035853,
+          "lfs": {
+            "sha256": "c62446df87ae18ec98b133f8f84fc449a07cc89bbf8ef192a4cb5f9c53777a7a",
+            "size": 16035853,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "tokenizer_config.json",
+          "blobId": "5efd586306801b08ca13390b0619a94c943046e4",
+          "size": 645
+        }
+      ]
+    },
+    "tokenizer_compatibility": {
+      "reason": "Checkpoint uses transformers 5.x list-valued extra_special_tokens; installed gliner2 requires transformers <5.",
+      "change": "Rename extra_special_tokens to additional_special_tokens in a separate tokenizer_config copy; retain token strings, original tokenizer.json and original weights.",
+      "model_directory": "/home/qiuyu/neuralcloud-evals/gliner2-20260922-jev-alternative/model-compat"
+    },
+    "initial_failure": {
+      "type": "ModuleNotFoundError",
+      "message": "No module named 'pydantic_settings'"
+    },
+    "config_sha256": {
+      "deploy.json": "ed9b3c6eb502bdf3ce106c6a301d11547ee28d155d5601ab1ea5af9174f97f11",
+      "manifest.json": "0759b3980e066223294649121e16e0937252234e20dad08848bf1d7635dc7feb",
+      "gui-settings.json": "6b4348ff97ca7fcbacdd97306f91700c4e3521e0c10591eff0fc3a157783eb24",
+      "direct.json": "290678e57e6b1a6429ac2bf9c9fa6c8175ba1b76efe40a07f0fbfd1aeccf1a14"
+    },
+    "active_release": "/opt/neuralcloud/releases/20260920-qq-memory-latency-v1",
+    "service_states": {
+      "neuralcloud-cognitive.service": "active",
+      "neuralcloud-runtime.service": "active",
+      "neuralcloud-homeostasis.service": "active",
+      "neuralcloud-gui.service": "active"
+    }
+  },
+  "configurations_unchanged_from_qq_retest": true,
+  "source_report_sha256": "0328dfb6c6b7eacea0d8de0018dedfe0d35e619f24631675789c1fafd20c84c9",
+  "production_cutover_performed": false,
+  "main_llm_changed": false
+}

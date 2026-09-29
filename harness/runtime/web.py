@@ -222,6 +222,9 @@ class WebController:
         for source in result.sources:
             if self.calls.source(scope, source.source_ref) is None:
                 self.calls.put_source(scope, source)
+        production = getattr(self.supervisor, "production_runtime", None)
+        if production is not None and production.tool_accounting.get("web", previous["id"]):
+            production.finish_tool_operation("web", previous["id"], outcome="completed", evidence_refs=result.evidence_refs)
         return result
 
     async def execute(self, identity, offer, arguments, *, deadline, autonomous=False, guard=None):
@@ -258,6 +261,12 @@ class WebController:
                 raise WebError("web_call_superseded")
             if utc_now() >= deadline:
                 raise WebError("web_deadline_exceeded")
+            production = getattr(self.supervisor, "production_runtime", None)
+            if production is not None:
+                await production.begin_tool_operation("web", identity, capability)
+                if utc_now() >= deadline or guard and guard():
+                    production.cancel_tool_operation("web", identity)
+                    raise WebError("web_call_superseded")
             # No await between the last authority check, reservation and dispatch.
             reserved = self.calls.reserve(identity, scope, capability, fingerprint, self._day(), autonomous,
                                           self.settings.daily_requests, self.settings.autonomous_daily_requests)
@@ -265,18 +274,32 @@ class WebController:
                 return self._replay_or_raise(reserved, fingerprint, scope)
             try:
                 timeout = min(self.settings.timeout_seconds, (deadline - utc_now()).total_seconds())
+                def before_dispatch():
+                    if utc_now() >= deadline or guard and guard():
+                        raise WebError("web_call_superseded")
+                    if production is not None:
+                        production.mark_tool_dispatched("web", identity)
+                options = {"before_dispatch": before_dispatch} if getattr(self.provider, "supports_dispatch_hook", False) else {}
                 async with asyncio.timeout(timeout):
-                    result = await self.provider.search(request) if capability == SEARCH else await self.provider.read(payload["urls"])
+                    if not options:
+                        before_dispatch()
+                    result = await self.provider.search(request, **options) if capability == SEARCH else await self.provider.read(payload["urls"], **options)
                 if utc_now() >= deadline or not self._permitted(capability, autonomous) or guard and guard():
                     raise WebError("web_late_result")
                 result = self._store_result(identity, scope, result)
             except BaseException as exc:
                 code = exc.code if isinstance(exc, WebError) else "web_timeout" if isinstance(exc, TimeoutError) else "web_request_failed"
                 self.calls.finish(identity, error=code, uncertain=isinstance(exc, (TimeoutError, asyncio.CancelledError)))
+                if production is not None:
+                    production.finish_tool_operation("web", identity,
+                        outcome="unknown" if isinstance(exc, (TimeoutError, asyncio.CancelledError)) or code in {
+                            "web_request_timeout", "web_network_error", "web_late_result"} else "failed")
                 if isinstance(exc, asyncio.CancelledError):
                     raise
                 raise WebError(code) from None
             # A journal failure must not erase a durable successful POST result.
+            if production is not None:
+                production.finish_tool_operation("web", identity, outcome="completed", evidence_refs=result.evidence_refs)
             self._journal(identity, capability, result)
             return result
 

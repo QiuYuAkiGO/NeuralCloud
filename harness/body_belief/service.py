@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import time
 
 from harness.body_belief.compiler import compile_body_memory
 from harness.body_belief.consolidation import BodyBeliefConsolidator
@@ -29,6 +30,7 @@ class BodyBeliefService:
         self._closed = False
         self._tasks = {}
         self._completed = {}
+        self._retry_handle = None
 
     def record_decision(
         self, *, decision_id, episode_id, context_hash, context_key, observation_before,
@@ -79,10 +81,29 @@ class BodyBeliefService:
             return
         if self._tasks:
             return
-        row = self.store.db.execute("SELECT id FROM appraisal_work ORDER BY id LIMIT 1").fetchone()
+        row = self.store.db.execute(
+            "SELECT w.id FROM appraisal_work w LEFT JOIN appraisal_retry r ON w.id=r.id "
+            "WHERE r.retry_at IS NULL OR r.retry_at<=? ORDER BY COALESCE(r.retry_at,0),w.id LIMIT 1",
+            (time.time(),),
+        ).fetchone()
         if row is not None:
             identifier = row[0]
             self._tasks[identifier] = asyncio.create_task(self._appraise(identifier))
+        elif self._retry_handle is None:
+            due = self.store.db.execute("SELECT MIN(r.retry_at) FROM appraisal_retry r JOIN appraisal_work w ON r.id=w.id").fetchone()[0]
+            if due is not None:
+                self._retry_handle = asyncio.get_running_loop().call_later(max(0.1, due - time.time()), self._retry)
+
+    def _retry(self):
+        self._retry_handle = None
+        self._schedule()
+
+    def _failed(self, identifier, error_type):
+        with self.store.db:
+            old = self.store.db.execute("SELECT attempts FROM appraisal_retry WHERE id=?", (identifier,)).fetchone()
+            attempts = (old[0] if old else 0) + 1
+            self.store.db.execute("INSERT OR REPLACE INTO appraisal_retry VALUES (?,?,?,?)",
+                                  (identifier, attempts, time.time() + min(300, 2 ** min(attempts, 8)), error_type))
 
     async def _appraise(self, identifier):
         try:
@@ -102,12 +123,14 @@ class BodyBeliefService:
             if result.success:
                 for candidate in result.candidates:
                     self.consolidator.apply(candidate)
-            with self.store.db:
-                self.store.db.execute("DELETE FROM appraisal_work WHERE id=?", (identifier,))
+                with self.store.db:
+                    self.store.db.execute("DELETE FROM appraisal_work WHERE id=?", (identifier,))
+                    self.store.db.execute("DELETE FROM appraisal_retry WHERE id=?", (identifier,))
+            else:
+                self._failed(identifier, "appraisal_unsuccessful")
         except Exception as exc:
             self.store.record_audit({"event": "appraisal_failed", "experience_id": identifier, "error_type": type(exc).__name__})
-            with self.store.db:
-                self.store.db.execute("DELETE FROM appraisal_work WHERE id=?", (identifier,))
+            self._failed(identifier, type(exc).__name__)
         finally:
             self._tasks.pop(identifier, None)
             self._schedule()
@@ -133,6 +156,9 @@ class BodyBeliefService:
 
     async def pause(self):
         self._paused = True
+        if self._retry_handle is not None:
+            self._retry_handle.cancel()
+            self._retry_handle = None
 
     async def resume(self):
         if self._closed:

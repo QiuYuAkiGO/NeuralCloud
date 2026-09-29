@@ -19,6 +19,39 @@ def _reject():
     raise QQTurnStateError("qq_turn_used_source_changed")
 
 
+def _production_store(host, group_id):
+    if not getattr(host.shared, "production_enabled", False):
+        _reject()
+    qq = host.shared.qq_settings
+    scope = conversation_scope(group_id)
+    if qq is None:
+        _reject()
+    if scope["kind"] == "private":
+        if (scope["self_member_id"] != qq.self_member_id
+                or scope["peer_id"] not in getattr(qq, "allowed_private_peer_ids", ())):
+            _reject()
+    elif group_id not in getattr(qq, "allowed_group_ids", ()):
+        _reject()
+    store = host.shared.production_store
+    if (store.owner_id != host.shared.store.owner_id
+            or store.preset_id != host.chat.active_preset_id):
+        _reject()
+    return store
+
+
+def _production_references(host, group_id, entries):
+    references = []
+    for entry in entries:
+        if (not isinstance(entry.get("record_id"), str) or type(entry.get("revision")) is not int
+                or entry["revision"] < 0):
+            _reject()
+        references.append({"record_id": entry["record_id"], "revision": entry["revision"]})
+    store = _production_store(host, group_id)
+    if not store.validate_references(references, audience=conversation_audience(group_id)):
+        _reject()
+    return references
+
+
 def _raw(memory, collection, record_id):
     if collection == "impressions":
         value = getattr(memory, "qq_memory_state", {}).get("impressions", {}).get(record_id)
@@ -114,6 +147,30 @@ def capture_used_sources(host, selected_payload) -> dict:
             manifest["shared"].append({"record_id": item.record_id, "operator": operator,
                                        "hash": digest(item.model_dump(mode="json"))})
     memory = host.chat.memory
+    derived_payload = selected_payload.get("derived_memory") or {}
+    if (getattr(host.shared, "production_enabled", False)
+            or derived_payload.get("schema_version") == "production-memory-v1"):
+        # A new version prevents old readers from accidentally skipping the
+        # production fence as though these were empty legacy-derived records.
+        manifest["version"] = "qq-used-sources-v2"
+        manifest["preset_id"] = host.chat.active_preset_id
+        store = _production_store(host, group_id)
+        raw_ids = [item["record_id"] for member in selected_payload["group_context"].get("members", [])
+                   for field in ("profiles", "observations") for item in member.get(field, [])]
+        raw_ids.extend(item["record_id"] for item in selected_payload.get("retrieval_hints", []))
+        try:
+            raw_refs = store.original_references(raw_ids, audience=conversation_audience(group_id))
+        except ValueError:
+            _reject()
+        manifest["production"] = _production_references(host, group_id,
+            [*derived_payload.get("entries", []), *raw_refs])
+        from harness.production.metering import current_production_context
+        from harness.memory.orientation import OrientationStore
+        context = current_production_context() or {}
+        manifest["orientation"] = context.get("interpersonal_orientation")
+        if not OrientationStore(store).validate(manifest["orientation"]):
+            _reject()
+        return manifest
     for entry in (selected_payload.get("derived_memory") or {}).get("entries", []):
         daily = entry.get("authority") == "daily_evidence_bound_interpretation"
         collection = (_DAILY_COLLECTIONS.get(entry["kind"]) if daily else
@@ -152,7 +209,7 @@ def capture_used_sources(host, selected_payload) -> dict:
 
 
 def validate_used_sources(host, manifest) -> None:
-    if manifest.get("version") != "qq-used-sources-v1" or manifest["owner_id"] != host.shared.store.owner_id:
+    if manifest.get("version") not in {"qq-used-sources-v1", "qq-used-sources-v2"} or manifest["owner_id"] != host.shared.store.owner_id:
         _reject()
     group_id = manifest["group_id"]
     for entry in manifest["shared"]:
@@ -160,6 +217,14 @@ def validate_used_sources(host, manifest) -> None:
         records = host.shared.store.read_exact(scope, [entry["record_id"]])
         if len(records) != 1 or digest(records[0].model_dump(mode="json")) != entry["hash"]:
             _reject()
+    if manifest["version"] == "qq-used-sources-v2":
+        if manifest.get("preset_id") != host.chat.active_preset_id or manifest["derived"] or "production" not in manifest:
+            _reject()
+        _production_references(host, group_id, manifest["production"])
+        from harness.memory.orientation import OrientationStore
+        if not OrientationStore(_production_store(host, group_id)).validate(manifest.get("orientation")):
+            _reject()
+        return
     memory = host.chat.memory
     for entry in manifest["derived"]:
         raw = _raw(memory, entry["collection"], entry["record_id"])

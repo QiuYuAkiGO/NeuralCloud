@@ -23,6 +23,19 @@ from harness.research.interoception.renderer import bounded_observations
 from harness.research.interoception.transforms import OpaqueSensorTransform, _aware
 
 
+def _legacy_provider_truth_hash(body: WireBodyState | ProviderBodyState) -> str | None:
+    """Match a persisted pre-extension snapshot without hiding any new fact."""
+    if not isinstance(body, ProviderBodyState) or (
+        body.episode_id is not None or body.sample_sequence is not None
+        or body.resting or body.exhausted or body.physiology_mode != "experiment"
+        or any(value is not None for value in (body.thermal, body.compute, body.integrity))
+    ):
+        return None
+    return content_hash(body.model_dump(mode="json", include={
+        "schema_version", "provider_id", "body_instance_id", "revision", "captured_at", "energy", "evidence_refs",
+    }))
+
+
 class OpaqueInteroceptionStore:
     """Keep truth references and replay records private; release symbols when due.
 
@@ -161,7 +174,8 @@ class OpaqueInteroceptionStore:
             ).fetchone()
             if existing is not None:
                 envelope = OpaqueInteroceptionEnvelope.model_validate_json(existing["envelope_json"])
-                if envelope.truth_ref.truth_hash != truth_hash:
+                if (envelope.truth_ref.truth_hash != truth_hash
+                        and envelope.truth_ref.truth_hash != _legacy_provider_truth_hash(body)):
                     raise ValueError("same body revision contains conflicting truth")
                 if existing["source_value"] != value:
                     raise ValueError("same body revision contains a conflicting sensor intervention")

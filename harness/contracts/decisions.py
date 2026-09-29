@@ -102,6 +102,7 @@ class PreparedResponse(BaseModel):
     expires_at: AwareDatetime
     model_version: str
     prompt_version: str
+    production_effects: dict | None = None
 
     @model_validator(mode="after")
     def _validate_expiry(self) -> PreparedResponse:

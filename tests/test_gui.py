@@ -151,7 +151,7 @@ def test_api_status_and_index(api_client) -> None:
     assert 'id="chat-tabs"' in home.text
     assert body["presets"]["active_id"] == DEFAULT_PRESET_ID
     default_summary = next(item for item in body["presets"]["items"] if item["preset_id"] == DEFAULT_PRESET_ID)
-    assert default_summary["name"] == "小雾 · MistyDigitalBody v0.2.0"
+    assert default_summary["name"] == "小雾 · MistyDigitalBody v0.2.2"
     css = api_client.get("/static/styles.css")
     assert css.status_code == 200
     js = api_client.get("/static/app.js")

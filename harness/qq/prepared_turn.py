@@ -58,18 +58,19 @@ def prepare_qq_turn(*, turn_binding: dict, web_capabilities: dict | None = None,
     store = QQTurnCheckpointStore(path)
     store.reserve(turn_binding)
     try:
-        result = qq.decide_qq_reply(**kwargs, _turn_preparation={
+        preparation = {
             "binding": turn_binding, "web_capabilities": web_capabilities or {"enabled": False},
             "used_sources_provider": used_sources_provider,
             "request_validator": request_validator,
             "request": {key: _json(kwargs[key]) for key in (
                 "group_id", "self_member_id", "trigger_member_id", "request", "query", "member_ids",
-                "idle_intent", "homeostatic_interoception") if key in kwargs}})
+                "idle_intent", "homeostatic_interoception") if key in kwargs}}
+        result = qq.decide_qq_reply(**kwargs, _turn_preparation=preparation)
         if isinstance(result, dict):
             return result
         if request_validator is not None:
             request_validator()
-        return store.complete(turn_binding, result.model_dump(mode="json"))
+        return store.complete(turn_binding, result.model_dump(mode="json"), used_sources=preparation.get("used_sources"))
     except QQTurnStateError:
         store.terminate(turn_binding, "cancelled")
         raise
@@ -127,6 +128,10 @@ def checkpoint_gate(*, preparation, path, settings, preset, result, choice, raw_
         "trace": trace.snapshot(), "timings": timings,
         "web_plan": _json(web_plan), "web_plan_invalid": choice._web_plan_invalid,
     }
+    from harness.production.metering import current_production_context
+    production = current_production_context()
+    if production is not None:
+        snapshot["production_context"] = production
     public = {"kind": "prepared", "decision_id": result.decision_id,
         "expires_at": preparation["binding"]["deadline_at"],
         "prepared_revision": preparation["binding"].get("prepared_revision"),
@@ -178,6 +183,17 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
     snapshot = row.get("snapshot")
     if snapshot is None:
         raise QQTurnStateError("qq_turn_not_prepared")
+    from harness.production.metering import _scope
+    active_scope = _scope.get()
+    frozen_production = snapshot.get("production_context")
+    if (active_scope is None) != (frozen_production is None):
+        raise QQTurnStateError("qq_turn_configuration_changed")
+    if active_scope is not None:
+        if frozen_production.get("epoch") != active_scope.context.get("epoch"):
+            raise QQTurnStateError("qq_turn_cancelled")
+        # Resume uses the same body/affect/audience snapshot as its gate.
+        # Budget authorization is still checked live for every physical call.
+        active_scope.context = frozen_production
     web_context = normalize_web_context(runtime_web_context) if runtime_web_context is not None else None
     if web_context and not snapshot["web_plan"] and any(
         source.get("origin") != "user_link" for source in web_context.get("sources", [])
@@ -187,6 +203,15 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
     if row["status"] == "completed":
         if row["resume_hash"] != resume_hash:
             raise QQTurnStateError("qq_turn_resume_conflict")
+        # A cached body may not have been delivered. Retrying it still releases
+        # its evidence, so withdrawal must fence replay as well as generation.
+        if request_validator is not None:
+            request_validator()
+        _verify_source_records(memory_db, snapshot)
+        if snapshot.get("used_sources") is not None:
+            if used_sources_validator is None:
+                raise QQTurnStateError("qq_turn_evidence_validator_missing")
+            used_sources_validator(snapshot["used_sources"])
         result = qq.QQReplyDecision.model_validate(row["public"]["decision"])
         result = result.model_copy(update={"new_decision": False, "replayed": True})
         return qq._deadline_override(result, deadline)
@@ -197,7 +222,8 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
     if deadline is None:
         deadline = QQDeadline.after(remaining)
     else:
-        deadline = QQDeadline(min(deadline.deadline_mono, deadline.clock() + remaining), deadline.clock)
+        deadline = QQDeadline(min(deadline.deadline_mono, deadline.clock() + remaining), deadline.clock,
+                              deadline.downstream_reserved_seconds)
     deadline.check()
     policy = QQLatencyOptions.model_validate(snapshot["policy"])
     if policy.version != snapshot["policy_version"]:
@@ -233,7 +259,8 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
     result = qq.QQReplyDecision.model_validate(snapshot["decision"])
     trace.bind_decision(result.decision_id)
     usage = TokenUsage.model_validate(snapshot["usage"])
-    choice = qq._GateDecision.model_validate(snapshot["choice"])
+    choice_model = qq._ProductionGateDecision if "used_memory_ids" in snapshot["choice"] else qq._GateDecision
+    choice = choice_model.model_validate(snapshot["choice"])
     timings = dict(snapshot["timings"])
     started = trace.clock()
     raw_llm = llm = None
@@ -285,7 +312,7 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
         body_ids = presentation.get("body_observation_ids", result.source_record_ids)
         result = result.model_copy(update={"action": "speak", "reply": reply, "reply_segments": segments,
             "source_record_ids": body_ids, "evidence_refs": snapshot.get("body_evidence_refs", result.evidence_refs),
-            "seen_observation_record_ids": ([] if result.initiated_by == "homeostasis" else
+            "seen_observation_record_ids": ([] if result.initiated_by != "message" else
                 sorted(set(result.seen_observation_record_ids) | set(body_ids))),
             "new_observation_record_ids": presentation.get("body_new_observation_ids", result.new_observation_record_ids),
             "outcome": "ready", "style_diagnostics": {**qq.style_diagnostics(reply, segments=len(segments),

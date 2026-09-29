@@ -203,6 +203,8 @@ class DiaryController:
         if row["status"] in {"committed", "wait", "expired", "superseded", "paused", "error", "queue_failed"}:
             return self._result(event, process_seq, row)
         self.active_entry = row["entry_id"]
+        production = getattr(self.supervisor, "production_runtime", None)
+        effect_epoch = production.epoch if production is not None else None
         try:
             deadline = datetime.fromisoformat(row["deadline_at"])
             if utc_now() >= deadline:
@@ -236,13 +238,33 @@ class DiaryController:
                 return self._finish(event, process_seq, row, "wait")
             if decision["action"] != "write":
                 raise ValueError("diary_decision_action_invalid")
+            if production is not None:
+                await production.begin_tool_operation("diary", row["entry_id"], "expression.diary.write.v1")
+            invalid = ("expired" if utc_now() >= deadline else
+                "paused" if self.store.paused or self.supervisor.lifecycle != RuntimeLifecycle.RUNNING else
+                "superseded" if production is not None and (production.epoch != effect_epoch or
+                    production.context_snapshot("owner")["restricted_dialogue"]) else None)
+            if invalid:
+                if production is not None:
+                    production.cancel_tool_operation("diary", row["entry_id"])
+                return self._finish(event, process_seq, row, invalid)
             original = DiaryOriginal(
                 entry_id=row["entry_id"], decision_id=decision["decision_id"],
                 text=decision["text"], written_at=utc_now(),
                 body_hash=hashlib.sha256(decision["text"].encode("utf-8")).hexdigest(),
                 source_event_id=event.event_id, homeostatic_summary=summary or {},
             )
-            stored = self.store.put(original, day=row["day"], revision=self.supervisor._cognitive_snapshot.revision + 1)
+            if production is not None:
+                production.mark_tool_dispatched("diary", row["entry_id"])
+            try:
+                stored = self.store.put(original, day=row["day"], revision=self.supervisor._cognitive_snapshot.revision + 1)
+            except Exception:
+                if production is not None:
+                    production.finish_tool_operation("diary", row["entry_id"], outcome="failed")
+                raise
+            if production is not None:
+                production.finish_tool_operation("diary", row["entry_id"], outcome="completed",
+                    evidence_refs=[stored["entry_id"], "diary-body:sha256:" + stored["body_hash"]])
             await self._command(event, "CommitDiaryEntry", {
                 "entry_id": stored["entry_id"], "decision_id": stored["decision_id"],
                 "body_hash": stored["body_hash"], "written_at": stored["written_at"],

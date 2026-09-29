@@ -18,7 +18,7 @@ from typing import Annotated, Any, Literal
 import unicodedata
 from uuid import uuid4
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, PrivateAttr, ValidationError, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, PrivateAttr, ValidationError, model_serializer, model_validator
 
 from harness.config import DEFAULT_QQ_INPUT_TOKEN_BUDGET
 from harness.cognitive.prompts import persona_prefix
@@ -176,6 +176,12 @@ _IDLE_RULES = (
     "不要声称任何成员刚刚发言、提问或要求你回应。"
     "本轮一律ambient，addressing的两个来源字段为null；历史仅作为背景，不算已回应的消息。"
 )
+_PRODUCTION_IDLE_RULES = (
+    "\n本轮由具身主体的自主机会发起，不是刚收到的消息或对方的请求。"
+    "结合完整人格、当前身体事实和本会话允许使用的经历判断是否开口，没有具体合适内容可以wait。"
+    "不可引用其他会话的私密事实或本地私有目标，不把历史消息说成刚刚发生。"
+    "本轮一律ambient，addressing的两个来源字段为null；历史仅作背景，不声称已回应某条消息。"
+)
 
 
 _PRIVATE_RULES = (
@@ -259,7 +265,7 @@ class _StrictModel(BaseModel):
                     raise ValueError("private conversation participant mismatch")
                 if getattr(self, "verification", "qq_protocol_verified") != "qq_protocol_verified":
                     raise ValueError("private conversation requires protocol verification")
-                if getattr(self, "initiated_by", "message") != "message":
+                if getattr(self, "initiated_by", "message") not in {"message", "production"}:
                     raise ValueError("private conversation requires an incoming peer message")
         return self
 
@@ -325,7 +331,20 @@ class _GateDecision(_StrictModel):
         return self
 
 
-def _parse_gate_response(response, trace: QQTurnTrace) -> _GateDecision:
+_PRODUCTION_MEMORY_USE_RULES = (
+    "\n生产记忆附加字段used_memory_ids遵循production_memory_use_schema，默认空数组。"
+    "只列出当前derived_memory.entries中实际参与本轮判断、选取回应内容或决定等待的record_id。"
+    "检索到、在上下文看见、或和当前话题有关，不等于实际采用；不要自动列出全部记忆。"
+    "不得填原文中的编号、未展示条目、其他场合条目或猜测的编号；此字段只记录使用，不增加事实置信。"
+)
+
+
+class _ProductionGateDecision(_GateDecision):
+    used_memory_ids: list[Annotated[str, Field(min_length=1, max_length=256)]] = Field(
+        default_factory=list, max_length=8)
+
+
+def _parse_gate_response(response, trace: QQTurnTrace, *, production=False) -> _GateDecision:
     """Validate one whole response; tolerate only a complete JSON code fence.
 
     Diagnostics deliberately contain no model text, exception message, input,
@@ -345,15 +364,16 @@ def _parse_gate_response(response, trace: QQTurnTrace) -> _GateDecision:
     if fenced is not None:
         text = fenced[1]
         trace.add_counter("gate_response_json_fence")
+    choice_model = _ProductionGateDecision if production else _GateDecision
     try:
-        choice = _GateDecision.model_validate_json(text)
+        choice = choice_model.model_validate_json(text)
     except ValidationError as exc:
         known_types = {"json_invalid", "model_type", "missing", "extra_forbidden", "literal_error",
                        "string_type", "string_too_short", "string_too_long", "value_error"}
         seen = set()
         for error in exc.errors(include_url=False, include_context=False, include_input=False):
             location = error["loc"]
-            field = location[0] if location and location[0] in _GateDecision.model_fields else "other"
+            field = location[0] if location and location[0] in choice_model.model_fields else "other"
             kind = error["type"] if error["type"] in known_types else "other"
             # Two independent small vocabularies bound telemetry cardinality.
             seen.update(("gate_invalid_field_" + field, "gate_invalid_type_" + kind))
@@ -387,10 +407,12 @@ class QQReplyDecision(_StrictModel):
     decision_id: str
     input_hash: str
     created_at: AwareDatetime
-    initiated_by: Literal["message", "homeostasis"] = "message"
+    initiated_by: Literal["message", "homeostasis", "production"] = "message"
     idle_intent_id: str | None = Field(default=None, min_length=1, max_length=160)
     shared_memory_source_ids: list[str] = Field(default_factory=list)
     recalled_memory_ids: list[str] = Field(default_factory=list, max_length=8)
+    used_memory_ids: list[Annotated[str, Field(min_length=1, max_length=256)]] = Field(
+        default_factory=list, max_length=8)
     recalled_episode_ids: list[str] = Field(default_factory=list, max_length=40)
     action: Literal["speak", "wait"]
     reason: str = Field(min_length=1, max_length=512)
@@ -432,9 +454,18 @@ class QQReplyDecision(_StrictModel):
     addressing_source_record_ids: list[str] = Field(default_factory=list)
     addressing_evidence_refs: list[str] = Field(default_factory=list)
 
+    @model_serializer(mode="wrap")
+    def omit_unused_production_extension(self, handler):
+        value = handler(self)
+        if not self.used_memory_ids:
+            value.pop("used_memory_ids", None)
+        return value
+
     @model_validator(mode="after")
     def check_reply(self):
-        if self.initiated_by == "homeostasis":
+        if not set(self.used_memory_ids).issubset(self.recalled_memory_ids):
+            raise ValueError("used production memory must belong to the presented context")
+        if self.initiated_by in {"homeostasis", "production"}:
             if (self.idle_intent_id is None or not self.idle_intent_id.strip()
                     or self.trigger_member_id is not None or self.self_member_id is None
                     or self.addressing != "ambient" or self.addressing_source_record_ids
@@ -657,9 +688,9 @@ class _QQContextBudgetExceeded(QQDraftError):
     """A local input-budget failure, distinct from transport and model output."""
 
 
-def _assessment_reserve(*, include_web_plan: bool = False) -> int:
+def _assessment_reserve(*, include_web_plan: bool = False, production=False) -> int:
     """Worst serialized assessment allowed by the gate DTO, including escapes."""
-    schema = _GateDecision.model_json_schema()
+    schema = (_ProductionGateDecision if production else _GateDecision).model_json_schema()
     # Web plans are bounded by validators as well as JSON-schema fields. Their
     # separate finite reserve avoids treating pattern-only source refs as free
     # strings, and leaves historical legacy budgets unchanged.
@@ -773,7 +804,7 @@ def _checked_receipt(row, model):
 
 
 def _check_sources(connection, *, group_id: str, sources: list[str], decision: QQReplyDecision | None):
-    if decision is not None and decision.initiated_by == "homeostasis" and sources:
+    if decision is not None and decision.initiated_by in {"homeostasis", "production"} and sources:
         raise QQDraftError("An internally initiated delivery cannot claim addressed observations.")
     if decision is not None and not set(sources).issubset(decision.source_record_ids):
         raise QQDraftError("Addressed observations must be a subset of the decision's considered records.")
@@ -1219,7 +1250,12 @@ class _QQScopedLLM:
         if self.policy.qq_stage_budgets_enabled:
             stage = "gate" if self.stage_name == "gate" else "body"
             if stage not in self._stage_deadlines:
-                seconds = self.policy.stage_budget(stage, original_budget.check())
+                remaining = original_budget.check()
+                # Production Runtime already removed the downstream reserve
+                # from this command's deadline. Optional per-model stage caps
+                # must not remove it a second time or extend that deadline.
+                seconds = min(remaining, self.policy.stage_budget(
+                    stage, remaining + original_budget.downstream_reserved_seconds))
                 self._stage_deadlines[stage] = QQDeadline.after(seconds, clock=original_budget.clock)
             budget = self._stage_deadlines[stage]
         for attempt in range(2):
@@ -1409,9 +1445,10 @@ def decide_qq_reply(
     trace = trace or QQTurnTrace()
     conversation = conversation_scope(group_id)
     private = conversation["kind"] == "private"
+    production_idle = idle_intent is not None and validated_idle_intent(idle_intent).origin == "production"
     if private and (self_member_id != conversation["self_member_id"]
-                    or trigger_member_id != conversation["peer_id"]
-                    or idle_intent is not None or goal_context is not None):
+                    or (trigger_member_id is not None if production_idle else trigger_member_id != conversation["peer_id"])
+                    or (idle_intent is not None and not production_idle) or goal_context is not None):
         raise QQDraftError("Private decisions require their exact self account and incoming peer.")
     prompt_version = PRIVATE_PROMPT_VERSION if private else PROMPT_VERSION
     started_mono = trace.clock()
@@ -1432,7 +1469,8 @@ def decide_qq_reply(
         summary = idle_intent.homeostatic_interoception
         clock = deadline.clock if deadline is not None else trace.clock
         idle_deadline = QQDeadline.after(max(0.0, (idle_intent.deadline_at - datetime.now(timezone.utc)).total_seconds()), clock=clock)
-        deadline = QQDeadline(min(deadline.deadline_mono, idle_deadline.deadline_mono), clock) if deadline else idle_deadline
+        deadline = QQDeadline(min(deadline.deadline_mono, idle_deadline.deadline_mono), clock,
+            deadline.downstream_reserved_seconds) if deadline else idle_deadline
     if goal_context is not None:
         from harness.contracts.goals import QQGoalContext
         goal_context = QQGoalContext.model_validate(goal_context.model_dump() if isinstance(goal_context, QQGoalContext) else goal_context)
@@ -1461,6 +1499,9 @@ def decide_qq_reply(
         history_limit_per_member=history_limit_per_member, window_mode="chronological_append")
     settings, preset = ((shared_owner.settings, shared_owner.preset) if shared_owner is not None
                         else _load_configuration(config_path, preset_path))
+    production_store = getattr(shared_owner, "production_store", None)
+    if production_store is not None:
+        context = production_store.filter_qq_context(context, memory_db=path)
     emotion_on = emotion_enabled(settings)
     if emotion_guidance is not None and emotion_on:
         guidance_scope = (emotion_guidance.get("scope") if isinstance(emotion_guidance, dict)
@@ -1473,6 +1514,12 @@ def decide_qq_reply(
     )
 
     context, referenced_items = include_trusted_reply_references(path, context, _reply_reference_record_ids)
+    if production_store is not None:
+        context = production_store.filter_qq_context(context, memory_db=path)
+        valid_ids = {item.record_id for member in context.members for item in member.observations}
+        closed_items = [item for item in closed_items if item.record_id in valid_ids]
+        open_items = [item for item in open_items if item.record_id in valid_ids]
+        referenced_items = [item for item in referenced_items if item.record_id in valid_ids]
     open_items = sorted([*open_items, *referenced_items], key=lambda item: (item.observed_at, item.stored_at, item.record_id))
     observations = [item for member in context.members for item in member.observations]
     request_observation_ids = []
@@ -1524,6 +1571,8 @@ def decide_qq_reply(
         base_payload["shared_memory"] = shared_owner.context
     if shared_owner is not None and getattr(shared_owner, "derived_memory", None):
         base_payload["derived_memory"] = shared_owner.derived_memory
+    if production_store is not None:
+        base_payload["production_memory_use_schema"] = _ProductionGateDecision.model_json_schema()["properties"]["used_memory_ids"]
     web_rules = ""
     if runtime_web_context is not None:
         from harness.cognitive.web import normalize_web_context, WEB_RULES
@@ -1543,7 +1592,7 @@ def decide_qq_reply(
             + _canonical(QQWebPlan.model_json_schema())
         )
     if idle_intent is not None:
-        base_payload["initiation"] = {"origin": "homeostasis", "idle_intent_id": idle_intent.intent_id,
+        base_payload["initiation"] = {"origin": idle_intent.origin, "idle_intent_id": idle_intent.intent_id,
                                       "meaning": "internal opportunity; not an incoming message or an addressed response"}
     if goal_context is not None:
         base_payload["goal_continuation"] = goal_context.model_context()
@@ -1615,7 +1664,7 @@ def decide_qq_reply(
         new_ids = [] if idle_intent is not None else sorted(set(source_ids) - handled)
         result = QQReplyDecision(
             decision_id=f"qq-decision:{uuid4().hex}", input_hash=fingerprint, created_at=datetime.now(timezone.utc),
-            initiated_by="homeostasis" if idle_intent is not None else "message",
+            initiated_by=idle_intent.origin if idle_intent is not None else "message",
             idle_intent_id=idle_intent.intent_id if idle_intent is not None else None,
             shared_memory_source_ids=list(shared_owner.source_ids) if shared_owner is not None else [],
             action="wait", reason="相同输入正在处理或此前处理已中断，暂不重复生成。", decision_source="pending",
@@ -1655,7 +1704,8 @@ def decide_qq_reply(
         # Reuse the exact text validated before reservation and fingerprinted
         # above. Selection must budget every eventual model-message field.
         payload["emotion_guidance_text"] = trusted_fingerprint["emotion_guidance"]["text"]
-    assessment_reserve = _assessment_reserve(include_web_plan=_turn_preparation is not None)
+    assessment_reserve = _assessment_reserve(include_web_plan=_turn_preparation is not None,
+                                              production=production_store is not None)
     input_character_budget = settings.qq_input_token_budget * 2
     projection = getattr(settings, "qq_context_projection", "compact")
     trace.add_counter("context_input_token_budget", settings.qq_input_token_budget)
@@ -1751,7 +1801,7 @@ def decide_qq_reply(
         # It remains processed history; ordinary older mentions gain no grant.
         candidates.extend(item for item in observations if item.record_id == _request_authority_record_id)
     addressing = _explicit_addressing(candidates, aliases, context)
-    if private and candidates:
+    if private and candidates and idle_intent is None:
         item = (next(item for item in candidates if item.record_id == _request_authority_record_id)
                 if _request_authority_record_id is not None else
                 max(candidates, key=lambda value: (value.observed_at, value.stored_at, value.record_id)))
@@ -1810,7 +1860,8 @@ def decide_qq_reply(
                                               "evidence_refs": evidence_refs, "delivery_refs": list(selection.delivery_ids)})
             messages = [{"role": "system", "content": persona_prefix(preset.persona)
                         + (_PRIVATE_RULES if private else _RULES) + web_rules
-                        + (_IDLE_RULES if idle_intent is not None else "")},
+                        + (_PRODUCTION_MEMORY_USE_RULES if production_store is not None else "")
+                        + ((_PRODUCTION_IDLE_RULES if production_idle else _IDLE_RULES) if idle_intent is not None else "")},
                         *({"role": "user", "content": content} for content in encoded_messages)]
             llm.stable_messages = messages[:-1]
             # Some configured reasoning models consume completion tokens before
@@ -1824,18 +1875,27 @@ def decide_qq_reply(
                         max_tokens=gate_token_budget, response_format={"type": "json_object"})
                     reported_usage = response.usage if response.usage.total_tokens else estimate_chat_usage(messages, response.text)
                     usage = usage.add(reported_usage.for_call())
-                    choice = _parse_gate_response(response, trace)
+                    choice = _parse_gate_response(response, trace, production=production_store is not None)
             finally:
                 timings["gate"] = round(max(0.0, trace.clock() - gate_started) * 1000, 3)
             if self_member_id is not None:
                 addressing = _gate_addressing(choice, candidates, addressing)
+            production_use = {}
+            if production_store is not None:
+                # Only the SQL entries actually admitted to this gate count as
+                # presented. A model cannot cite trimmed, stale or hidden IDs.
+                allowed = {entry["record_id"] for entry in recalled
+                    if production_store.validate_references([entry], audience=conversation_audience(group_id))}
+                used = list(dict.fromkeys(ref for ref in choice.used_memory_ids if ref in allowed))
+                choice = choice.model_copy(update={"used_memory_ids": used})
+                production_use = {"used_memory_ids": used}
             result = result.model_copy(update={"reason": choice.reason, "decision_source": "model",
                                               "reply_style": choice.reply_style, "reply_style_reason": choice.reply_style_reason,
                                               "reply_plan": choice.reply_plan,
                                               "style_diagnostics": {"reply_plan_invalid": choice._reply_plan_invalid,
                                                   "gate_presented_observations": len(selection.observation_ids),
                                                   "body_presented_observations": 0},
-                                              "outcome": "natural_wait", **addressing})
+                                              "outcome": "natural_wait", **addressing, **production_use})
             if choice._reply_plan_invalid:
                 trace.add_counter("reply_plan_invalid")
             if choice.action == "speak":

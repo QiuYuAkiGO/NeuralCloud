@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import hmac
 from dataclasses import dataclass, field
 from ipaddress import ip_address
 from math import isfinite
@@ -53,6 +54,8 @@ class MistyAIConnectionSettings:
     timeout_seconds: float = 10.0
     poll_interval_seconds: float = 0.2
     token_source: str = "environment"
+    accounting_token: str | None = field(default=None, repr=False)
+    accounting_token_source: str | None = None
 
     @classmethod
     def from_environment(
@@ -61,6 +64,21 @@ class MistyAIConnectionSettings:
     ) -> MistyAIConnectionSettings:
         values = os.environ if environ is None else environ
         token, token_source = _load_token(values)
+        accounting_token, accounting_source = None, None
+        if any(key in values for key in ("NC_MISTYAI_ACCOUNTING_TOKEN", "NC_MISTYAI_ACCOUNTING_TOKEN_FILE")):
+            accounting_values = {
+                key.replace("NC_MISTYAI_ACCOUNTING_", "NC_MISTYAI_"): value
+                for key, value in values.items()
+                if key.startswith("NC_MISTYAI_ACCOUNTING_")
+            }
+            try:
+                accounting_token, accounting_source = _load_token(accounting_values)
+            except MistyAIConfigurationError as exc:
+                raise MistyAIConfigurationError(
+                    str(exc).replace("NC_MISTYAI_TOKEN", "NC_MISTYAI_ACCOUNTING_TOKEN")
+                ) from None
+            if hmac.compare_digest(accounting_token, token):
+                raise MistyAIConfigurationError("MistyAI accounting credential must differ from the body credential")
         base_url = _validate_base_url(
             values.get("NC_MISTYAI_BASE_URL") or values.get("NC_MISTYAI_URL") or "http://127.0.0.1:8787"
         )
@@ -76,6 +94,8 @@ class MistyAIConnectionSettings:
                 values.get("NC_MISTYAI_POLL_INTERVAL_SECONDS", "0.2"),
             ),
             token_source=token_source,
+            accounting_token=accounting_token,
+            accounting_token_source=accounting_source,
         )
 
 
@@ -106,9 +126,7 @@ def _validate_token(value: str) -> str:
     if not token:
         raise MistyAIConfigurationError("MistyAI token cannot be empty")
     if len(token) < _MIN_TOKEN_LENGTH:
-        raise MistyAIConfigurationError(
-            f"MistyAI token must contain at least {_MIN_TOKEN_LENGTH} characters"
-        )
+        raise MistyAIConfigurationError(f"MistyAI token must contain at least {_MIN_TOKEN_LENGTH} characters")
     if any(character.isspace() for character in token):
         raise MistyAIConfigurationError("MistyAI token must be a single non-whitespace value")
     if (
@@ -137,9 +155,7 @@ def _validate_base_url(value: str) -> str:
             "NC_MISTYAI_BASE_URL must be an HTTP(S) origin without a path, query, or fragment"
         )
     if parsed.scheme == "http" and not _is_loopback_host(parsed.hostname):
-        raise MistyAIConfigurationError(
-            "NC_MISTYAI_BASE_URL must use HTTPS unless the host is loopback"
-        )
+        raise MistyAIConfigurationError("NC_MISTYAI_BASE_URL must use HTTPS unless the host is loopback")
     return base_url
 
 

@@ -136,6 +136,9 @@ function renderMemories(memories) {
 
 function renderStateBuild(data) {
   const snap = data.snapshot || {};
+  if (state.snapshot?.production_cognitive?.enabled || state.snapshot?.runtime?.production) {
+    return renderProductionCards(state.snapshot.runtime?.production, state.snapshot.production_cognitive);
+  }
   const persona = snap.persona?.identity || {};
   const rel = data.relationship || snap.relationship || {};
   const psych = (snap.psych && snap.psych.short) || {};
@@ -473,6 +476,73 @@ function renderHomeostasisCards(home) {
   </article>`;
 }
 
+function renderProductionCards(production = {}, cognitive = {}) {
+  production = production || {};
+  cognitive = cognitive || {};
+  const body = production.body_identity || {};
+  const budget = production.budget || {};
+  const energy = production.body_available ? production.energy : null;
+  const bodyFlag = (value, yes) => !production.body_available || value == null ? "未知" : value ? yes : "否";
+  const rows = [
+    ["身体", production.body_available ? "可用" : "不可用"],
+    ["观察年龄", production.body_age_seconds == null ? "未知" : `${Number(production.body_age_seconds).toFixed(1)} 秒`],
+    ["身份 / episode", `${body.body_instance_id || "—"} / ${body.episode_id || "—"}`],
+    ["资源", energy ? `${energy.available_units} / ${energy.capacity_units} · ${energy.delta_units_per_minute} / 分钟` : "未知"],
+    ["采样 / 账本版本", `${production.sample_sequence ?? "未知"} / ${production.ledger_revision ?? "未知"}`],
+    ["休息 / 耗尽", `${bodyFlag(production.resting, "休息中")} / ${bodyFlag(production.exhausted, "已耗尽")}`],
+    ["休息待确认", production.rest_pending ?? "—"],
+    ["自主模型预算", `${budget.used ?? "—"} / ${budget.limit ?? "—"} · 剩余 ${budget.remaining ?? "—"}`],
+    ["用量待确认", production.usage_pending ?? "—"],
+    ["待人工分配账单", production.usage_unassigned ?? "—"],
+    ["任务 / 队列", `${production.tasks ?? "—"} / ${production.queued ?? "—"}`],
+    ["最近原因", production.last_reason || production.body_error || "—"],
+  ];
+  const goals = (production.goals || []).slice(0, 32);
+  const affects = (cognitive.affect || []).slice(0, 32);
+  return `<article class="card"><h2>具身状态</h2><div class="kv">${rows.map(([label, value]) =>
+    `<div class="kv-row"><span>${esc(label)}</span><span>${esc(value)}</span></div>`).join("")}</div>
+    <details><summary>当前目标 · ${goals.length}</summary>${goals.map(goal =>
+      `<p>${esc(goal.description || goal.statement || goal.title || goal.id)} · ${esc(goal.status || "—")}</p>`).join("") || '<p class="hint">暂无目标</p>'}</details></article>
+    <article class="card"><h2>当前情绪解释</h2>${affects.map(value =>
+      `<section><p>${esc(value.description || "—")}</p><p class="hint">${esc(value.scope)} · r${esc(value.revision)} · ${esc(value.observed_at)}</p>
+       <p class="hint">来源 ${esc((value.source_refs || []).join(" · ") || "—")}</p></section>`).join("") || '<p class="hint">尚无有据可查的情绪解释</p>'}</article>`;
+}
+
+function renderProductionMemory(memory = {}, maintenance = {}, cognitive = {}) {
+  memory = memory || {};
+  maintenance = maintenance || {};
+  cognitive = cognitive || {};
+  const spool = cognitive.usage_spool;
+  const stateLabels = {support_only: "有支持", challenge_only: "有挑战", contested: "同时存在支持与挑战", neither: "尚无合格证据"};
+  const roleLabels = {support: "支持", supports: "支持", counter: "反证", challenges: "挑战", challenge: "挑战",
+    qualifies: "限定", qualify: "限定", context: "背景", mixed: "混合或未决", dependency: "来源依赖"};
+  return `<article class="card"><h2>人物认识与证据 <span class="badge">操作者只读</span></h2>
+    <p class="hint">当前有效认识，最多 ${esc(memory.limit ?? 16)} 条；原话与可修订判断分别保留。</p>
+    ${(memory.entries || []).map(item => `<article class="memory">
+      <h3>${esc(item.subject_id || item.subject_mention || (item.subject_refs || []).join(" · ") || "主体未解析")} · ${esc(item.topic)} · r${esc(item.revision)}</h3>
+      <p>${esc(item.statement || item.current_impression)}</p><p class="hint">${esc(item.authority === "legacy_interpreted_self_report" ? "旧自述解释（未核验为原话）" : item.semantic_status === "legacy_model_interpretation" ? "历史模型解释" : "暂定模型解释（语义未核验）")} · ${esc(item.context || "一般情境")} · ${esc(item.valid_from || item.occurred_at)}</p>
+      ${item.model_interpretation && item.model_interpretation !== (item.statement || item.current_impression) ? `<p>模型暂定解释：${esc(item.model_interpretation)}</p>` : ""}
+      ${item.evidence_state ? `<p class="hint">证据状态：${esc(stateLabels[item.evidence_state] || item.evidence_state)}${item.needs_review ? " · 仍需复核" : ""}</p>` : ""}
+      ${item.quote_verified ? '<p class="hint">引用与来源逐字匹配；这不证明语义解释或内容真实。</p>' : ""}
+      <p class="hint">${item.legacy_confidence != null ? `历史算法值 ${esc(item.legacy_confidence)}（非概率） · ` : ""}${item.pinned ? "明确保留" : item.important ? "重要记忆" : "普通可达性"}${item.important_reason ? ` · ${esc(item.important_reason)}` : ""}</p>
+      ${(item.quotations || []).length ? `<details><summary>原话片段 · ${item.quotations.length}</summary>${item.quotations.map(quote =>
+        `<blockquote>${esc(quote.quote || quote.text)}</blockquote><p class="hint">${esc(quote.author_id || quote.author)} · ${esc(quote.source_id || quote.record_id)} · ${esc(quote.occurred_at)}${quote.role ? ` · ${esc(roleLabels[quote.role] || quote.role)}` : ""}</p>`).join("")}</details>` : ""}
+      <details><summary>依据与反证 · ${(item.evidence || []).length}${item.omitted_evidence_count ? `（另有 ${esc(item.omitted_evidence_count)} 条）` : ""}</summary>
+        ${(item.evidence || []).map(evidence => `<p><strong>${esc(roleLabels[evidence.role || evidence.stance] || "来源")}</strong> ${esc(evidence.text || evidence.quote)}</p>
+          <p class="hint">${esc(evidence.author_id)} · ${esc(evidence.scope?.conversation_id)} · ${esc(evidence.occurred_at)} · ${esc(evidence.record_id)} · ${esc((evidence.source_refs || []).join(" · "))}</p>`).join("")}
+      </details></article>`).join("") || '<p class="hint">尚无当前有效的人物认识</p>'}</article>
+    <article class="card"><h2>记忆维护</h2><p>${maintenance.maintenance_paused ? "已暂停" : maintenance.processing ? "学习中" : maintenance.enabled ? "等待任务" : "自动学习未启用"}</p>
+      <p class="hint">队列 ${esc(JSON.stringify(maintenance.queue || {}))}</p>
+      <p class="hint">最近完成 ${esc(maintenance.last_completed_at || "—")} · ${esc(maintenance.last_duration_ms ?? "—")} ms</p>
+      <p class="hint">最近错误 ${esc(maintenance.last_error_type || "无")}</p>
+      ${(memory.evidence_tasks || []).length ? `<details><summary>本地认识提案待处理 · ${memory.evidence_tasks.length}</summary>
+        <p class="hint">原文及合法更新已保留；这些提案尚未采纳，需重新评估或明确处置。</p>
+        ${memory.evidence_tasks.map(task => `<p class="hint">${esc(task.group_id)} · ${esc(task.reason)} · ${esc(task.created_at)}</p>`).join("")}</details>` : ""}
+      ${spool ? `<p class="hint">Cognitive 用量收据：待同步 ${esc(spool.pending)} · 进行中 ${esc(spool.in_flight)}</p>` : ""}
+      <details><summary>增量摄取游标</summary>${(memory.ingestion_cursors || []).map(row => `<p class="hint">${esc(row.stream)} · ${esc(row.cursor)}</p>`).join("") || '<p class="hint">尚未开始</p>'}</details>
+    </article>`;
+}
+
 function renderSubsystems(snap) {
   const root = $("subsystems");
   if (!snap) {
@@ -486,6 +556,7 @@ function renderSubsystems(snap) {
   const counts = snap.counts || {};
   const llm = snap.llm || {};
   const runtime = snap.runtime || {};
+  const production = Boolean(snap.production_cognitive?.enabled || runtime.production);
   const home = snap.homeostasis || {};
   const manifest = snap.manifest || {};
   const services = snap.services || {};
@@ -547,6 +618,10 @@ function renderSubsystems(snap) {
     const homeHealthy = runtime.health?.homeostasis_healthy !== false && !(home.watchdog || []).length;
     homeBadge.textContent = home.profile_id ? `内稳态 · r${home.revision}` : "内稳态 · 未接入";
     homeBadge.className = `badge ${home.profile_id && homeHealthy ? "ok" : home.profile_id ? "bad" : "ghost"}`;
+    if (production) {
+      homeBadge.textContent = runtime.production?.body_available ? "具身 · 可用" : "具身 · 不可用";
+      homeBadge.className = `badge ${runtime.production?.body_available ? "ok" : "bad"}`;
+    }
   }
   const controlBadge = $("control-badge");
   if (controlBadge) {
@@ -554,7 +629,10 @@ function renderSubsystems(snap) {
     controlBadge.className = `badge ${state.snapshot?.authority?.development === true ? "ghost" : "ok"}`;
   }
   const homeButton = $("btn-homeostasis");
-  if (homeButton) homeButton.disabled = !home.profile;
+  if (homeButton) {
+    homeButton.hidden = production;
+    homeButton.disabled = production || !home.profile;
+  }
 
   const embodiment = runtime.embodiment || runtime.health?.embodiment;
   const embodimentCard = embodiment
@@ -570,15 +648,15 @@ function renderSubsystems(snap) {
     : "";
 
   root.innerHTML = `
-    ${renderHomeostasisCards(home)}
-    ${embodimentCard}
+    ${production ? renderProductionCards(runtime.production, snap.production_cognitive) : renderHomeostasisCards(home)}
+    ${production ? "" : embodimentCard}
     <article class="card">
       <h2>Persona Core <span class="badge">${persona.locked ? "LOCKED" : "open"}</span></h2>
       <p><strong>${esc(persona.name || "—")}</strong></p>
       ${chips(persona.core_traits)}
       ${chips(persona.speech_style)}
     </article>
-    <article class="card">
+    ${production ? "" : `<article class="card">
       <h2>Relationship</h2>
       ${["closeness", "trust", "attachment", "recent_tension"]
         .map((key) => {
@@ -593,7 +671,7 @@ function renderSubsystems(snap) {
       <p class="hint">short ${esc(JSON.stringify(psych.short || {}))}</p>
       <p class="hint">mid ${esc(JSON.stringify(psych.mid || {}))}</p>
       <p class="hint">long ${esc(JSON.stringify(psych.long || {}))}</p>
-    </article>
+    </article>`}
     <article class="card">
       <h2>World</h2>
       <div class="kv">
@@ -602,7 +680,7 @@ function renderSubsystems(snap) {
         <div class="kv-row"><span>app</span><span>${esc(world.active_application || "—")}</span></div>
       </div>
     </article>
-    <article class="card">
+    ${production ? "" : `<article class="card">
       <h2>Memory stores</h2>
       <div class="stat-grid">
         <div class="stat"><b>${esc(counts.episodic)}</b><span>episodic</span></div>
@@ -610,7 +688,7 @@ function renderSubsystems(snap) {
         <div class="stat"><b>${esc(counts.candidates)}</b><span>candidates</span></div>
         <div class="stat"><b>${esc(counts.audit)}</b><span>audit log</span></div>
       </div>
-    </article>`;
+    </article>`}`;
 }
 
 function turnsFromSnapshot(snap) {
@@ -650,6 +728,10 @@ function applyDevelopmentAuthority() {
 function renderSharedMemory(snap) {
   const root = $("shared-memory");
   if (!root) return;
+  if (snap?.production_cognitive?.enabled) {
+    root.innerHTML = renderProductionMemory(snap.production_memory, snap.qq_memory, snap.production_cognitive);
+    return;
+  }
   const owner = snap?.shared_mind;
   if (!owner) {
     root.innerHTML = "";
@@ -1328,6 +1410,12 @@ function syncDebugSnapshot(data) {
 }
 
 async function loadDebugState() {
+  if (state.snapshot?.production_cognitive?.enabled || state.snapshot?.runtime?.production) {
+    await fetchStatus();
+    state.debug.data = {persona: state.snapshot.persona};
+    renderDebugBody();
+    return;
+  }
   const res = await fetch("/api/debug/state");
   const data = await res.json();
   if (!res.ok) {
@@ -1516,9 +1604,14 @@ function renderTuningTab(data) {
 function renderDebugBody() {
   const root = $("debug-body");
   const data = state.debug.data;
+  const production = Boolean(state.snapshot?.production_cognitive?.enabled || state.snapshot?.runtime?.production);
+  if (production && !["persona", "qqmemory"].includes(state.debug.tab)) state.debug.tab = "qqmemory";
   $("debug-tabs")
     .querySelectorAll("button")
-    .forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === state.debug.tab));
+    .forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.tab === state.debug.tab);
+      btn.hidden = production && !["persona", "qqmemory"].includes(btn.dataset.tab);
+    });
   if (!data) {
     root.innerHTML = `<p class="hint">加载中…</p>`;
     return;
@@ -1543,7 +1636,8 @@ function renderDebugBody() {
       root.innerHTML = renderCandidatesTab(data);
       break;
     case "qqmemory":
-      root.innerHTML = renderQQMemoryTab(data);
+      if (production) root.innerHTML = renderProductionMemory(state.snapshot.production_memory, state.snapshot.qq_memory, state.snapshot.production_cognitive);
+      else root.innerHTML = renderQQMemoryTab(data);
       break;
     case "tuning":
       root.innerHTML = renderTuningTab(data);

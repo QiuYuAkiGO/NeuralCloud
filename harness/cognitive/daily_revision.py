@@ -14,6 +14,7 @@ from gui.presets import atomic_write_json
 from harness.cognitive.qq_memory import foreground_pending, snapshot_owner, wait_foreground_idle
 from harness.memory.revision.config import DailyRevisionConfig, load_config
 from harness.memory.revision.queue import DailyRevisionQueue
+from harness.production.maintenance import ProductionMaintenanceDeferred
 
 
 def _digest(value: Any) -> str:
@@ -163,7 +164,8 @@ class DailyRevisionWorker:
         return result
 
     def poke(self):
-        if self.stopping.is_set() or self.host.adapter._maintenance_paused or foreground_pending(self.host):
+        if (self.stopping.is_set() or self.host.adapter._maintenance_paused or
+                (foreground_pending(self.host) and not getattr(getattr(self.host, "shared", None), "production_enabled", False))):
             return
         if self._work_task is not None and not self._work_task.done():
             return
@@ -236,10 +238,12 @@ class DailyRevisionWorker:
                 async with self.host._control_lock:
                     async with self.host.adapter._lock:
                         self.host.adapter._persist_state()
+                        if getattr(getattr(self.host, "shared", None), "production_enabled", False):
+                            await asyncio.to_thread(self.host.shared.sync_production, snapshot_owner(self.host))
                         self.host.adapter._daily_revision_publication_pending = False
                         self.host.adapter._qq_memory_publication_pending = False
                 self._recover_queue()
-            if foreground_pending(self.host):
+            if foreground_pending(self.host) and not getattr(getattr(self.host, "shared", None), "production_enabled", False):
                 return False
             job = await asyncio.to_thread(self.queue.claim, owner_id=self.host.shared.store.owner_id,
                                           preset_id=self.host.chat.active_preset_id)
@@ -264,7 +268,7 @@ class DailyRevisionWorker:
                 memory = self.host.chat.memory
                 sources = [FrozenSource.model_validate(row) for row in job["sources"]]
                 if not await wait_foreground_idle(self.host, self.stopping):
-                    raise ValueError("daily_revision_maintenance_paused")
+                    raise ProductionMaintenanceDeferred("daily_revision_maintenance_paused")
                 async with self.host.adapter._lock:
                     before = snapshot_owner(self.host)
                 context = revision_context(before, sources)
@@ -275,10 +279,12 @@ class DailyRevisionWorker:
                     frozen = None
                 if frozen is None:
                     if not await wait_foreground_idle(self.host, self.stopping):
-                        raise ValueError("daily_revision_maintenance_paused")
+                        raise ProductionMaintenanceDeferred("daily_revision_maintenance_paused")
                     provider = self.provider or DailyRevisionProvider(self.config, self.queue)
                     try:
-                        proposal = await asyncio.to_thread(provider.propose, run_id, sources, context)
+                        from harness.cognitive.production import maintenance_scope
+                        async with maintenance_scope(self.host, command_id="daily-memory:" + run_id):
+                            proposal = await asyncio.to_thread(provider.propose, run_id, sources, context)
                     finally:
                         if self.provider is None:
                             await asyncio.to_thread(provider.close)
@@ -286,11 +292,13 @@ class DailyRevisionWorker:
                 else:
                     proposal = RevisionProposal.model_validate(frozen)
                 if self.stopping.is_set() or self.host.adapter._maintenance_paused:
-                    raise ValueError("daily_revision_maintenance_paused")
+                    raise ProductionMaintenanceDeferred("daily_revision_maintenance_paused")
                 if not await wait_foreground_idle(self.host, self.stopping):
-                    raise ValueError("daily_revision_maintenance_paused")
+                    raise ProductionMaintenanceDeferred("daily_revision_maintenance_paused")
                 async with self.host._control_lock:
                     async with self.host.adapter._lock:
+                        if self.stopping.is_set() or self.host.adapter._maintenance_paused:
+                            raise ProductionMaintenanceDeferred("daily_revision_maintenance_paused")
                         if self.host.chat.memory is not memory or self.host.chat.active_preset_id != job["preset_id"]:
                             raise ValueError("daily_revision_owner_changed")
                         current = snapshot_owner(self.host)
@@ -319,6 +327,11 @@ class DailyRevisionWorker:
                 if not job.get("dry_run"):
                     await asyncio.to_thread(self.queue.finish, run_id, "applied", receipt=self._receipts()[run_id])
                 self.last_error = None
+            except ProductionMaintenanceDeferred as exc:
+                self.last_error = exc.error_code
+                await asyncio.to_thread(self.queue.defer, run_id, exc.error_code,
+                                        retry_after_seconds=exc.retry_after_seconds)
+                return False
             except Exception as exc:
                 code = getattr(exc, "error_code", None) or (str(exc) if isinstance(exc, ValueError)
                     and str(exc).startswith("daily_revision_") else type(exc).__name__)
@@ -348,7 +361,7 @@ class DailyRevisionWorker:
     async def _loop(self):
         while not self.stopping.is_set():
             try:
-                if not self.host.adapter._maintenance_paused and not foreground_pending(self.host):
+                if not self.host.adapter._maintenance_paused and (getattr(getattr(self.host, "shared", None), "production_enabled", False) or not foreground_pending(self.host)):
                     now = datetime.now(ZoneInfo(self.config.timezone))
                     if (self.config.enabled and self.config.configured
                             and now.strftime("%H:%M") >= self.config.schedule_time

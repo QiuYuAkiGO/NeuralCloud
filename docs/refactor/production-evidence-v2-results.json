@@ -1,0 +1,304 @@
+{
+  "schema_version": "production-evidence-v2-validation-v1",
+  "date": "2026-09-22",
+  "scope": "isolated candidate implementation and synthetic acceptance; no online rollout",
+  "windows_regression_before_final_provenance_guard": {
+    "tests": 366,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "junit_sha256": "3186b4a4b18a9045c3e18c159d60873112f49073b986db5492e5205db5c32735"
+  },
+  "linux_frozen_before_final_provenance_guard": {
+    "tests": 528,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "junit_sha256": "9dec14dfcc7cf98cb359b14c90337ed735531cc15a6f80ce8fd6b2a74431c8b6",
+    "exit_code": 0,
+    "seconds": 78.38945126533508,
+    "source_unchanged": true,
+    "files": [
+      "tests/test_evidence_manifest.py",
+      "tests/test_evidence_v2.py",
+      "tests/test_evidence_v2_crash_recovery.py",
+      "tests/test_evidence_v2_review_regressions.py",
+      "tests/test_production_acceptance_tools.py",
+      "tests/test_production_accounting_assignment.py",
+      "tests/test_production_baseline.py",
+      "tests/test_production_board_diary_accounting.py",
+      "tests/test_production_capability_integration.py",
+      "tests/test_production_cognition.py",
+      "tests/test_production_commit_fence.py",
+      "tests/test_production_contacts.py",
+      "tests/test_production_dispatch_exposure.py",
+      "tests/test_production_embedding_metering.py",
+      "tests/test_production_evidence_acceptance.py",
+      "tests/test_production_evidence_integration.py",
+      "tests/test_production_evidence_projection.py",
+      "tests/test_production_identity.py",
+      "tests/test_production_json_mode.py",
+      "tests/test_production_maintenance_deferred.py",
+      "tests/test_production_memory.py",
+      "tests/test_production_memory_live_chain.py",
+      "tests/test_production_memory_migration.py",
+      "tests/test_production_memory_recovery.py",
+      "tests/test_production_memory_ui.py",
+      "tests/test_production_metering.py",
+      "tests/test_production_model_candidates.py",
+      "tests/test_production_orientation.py",
+      "tests/test_production_qq_memory_use.py",
+      "tests/test_production_retention.py",
+      "tests/test_production_runtime.py",
+      "tests/test_production_runtime_benchmark.py",
+      "tests/test_production_tool_accounting.py",
+      "tests/test_production_usage_refresh.py",
+      "tests/test_production_voice_accounting.py",
+      "tests/test_daily_revision_production_metering.py",
+      "tests/test_qq_cognitive_pipeline_integration.py",
+      "tests/test_qq_prepared_evidence.py",
+      "tests/test_qq_brief_evaluation.py",
+      "tests/embodiment",
+      "tests/body_belief",
+      "tests/research/interoception"
+    ]
+  },
+  "linux_final": {
+    "tests": 536,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "junit_sha256": "f0831a4591c707cf348c6419f97719d1b06c9b4687bcbe2313c9fbc51ee681ee",
+    "exit_code": 0,
+    "seconds": 84.36390662193298,
+    "source_unchanged": true,
+    "files": [
+      "tests/test_evidence_manifest.py",
+      "tests/test_evidence_v2.py",
+      "tests/test_evidence_v2_crash_recovery.py",
+      "tests/test_evidence_v2_review_regressions.py",
+      "tests/test_evidence_v2_self_report_provenance.py",
+      "tests/test_production_acceptance_tools.py",
+      "tests/test_production_accounting_assignment.py",
+      "tests/test_production_baseline.py",
+      "tests/test_production_board_diary_accounting.py",
+      "tests/test_production_capability_integration.py",
+      "tests/test_production_cognition.py",
+      "tests/test_production_commit_fence.py",
+      "tests/test_production_contacts.py",
+      "tests/test_production_dispatch_exposure.py",
+      "tests/test_production_embedding_metering.py",
+      "tests/test_production_evidence_acceptance.py",
+      "tests/test_production_evidence_integration.py",
+      "tests/test_production_evidence_projection.py",
+      "tests/test_production_identity.py",
+      "tests/test_production_json_mode.py",
+      "tests/test_production_maintenance_deferred.py",
+      "tests/test_production_memory.py",
+      "tests/test_production_memory_live_chain.py",
+      "tests/test_production_memory_migration.py",
+      "tests/test_production_memory_recovery.py",
+      "tests/test_production_memory_ui.py",
+      "tests/test_production_metering.py",
+      "tests/test_production_model_candidates.py",
+      "tests/test_production_orientation.py",
+      "tests/test_production_qq_memory_use.py",
+      "tests/test_production_retention.py",
+      "tests/test_production_runtime.py",
+      "tests/test_production_runtime_benchmark.py",
+      "tests/test_production_tool_accounting.py",
+      "tests/test_production_usage_refresh.py",
+      "tests/test_production_voice_accounting.py",
+      "tests/test_daily_revision_production_metering.py",
+      "tests/test_qq_cognitive_pipeline_integration.py",
+      "tests/test_qq_prepared_evidence.py",
+      "tests/test_qq_brief_evaluation.py",
+      "tests/embodiment",
+      "tests/body_belief",
+      "tests/research/interoception"
+    ]
+  },
+  "final_core_sha256": {
+    "harness/cognitive/production.py": "0df2c622d17d7220c241cb0ea5f3eb4aaa14755683006c18e1483b4b1587cb05",
+    "harness/memory/production.py": "bf1899e5e4e85b44bed0273b9e0bf90e9d77078a097f951c5ae12174de013ba0",
+    "harness/memory/evidence_models.py": "7a9c5939c25e2146eb1720fc8bb7b6f6805eb20d72f0121f7b9213c9276ef7a1",
+    "harness/memory/evidence_v2.py": "867805c755efe1326e4d8046c95d9ac01f1370ea60028b1dd1e8cccb1cfd4f69",
+    "harness/memory/evidence_manifest.py": "5d7de7c0bcdebb8c04b2f0817c221c616016503ecd3f69d5aa8f72a0f299257d",
+    "harness/production/metering.py": "878d056e0defa2d1f8696cbf84c087ed8842d0fd893ddc965d8e3c33cdee4625",
+    "harness/llm/client.py": "5223512252f00fe5477859d70bd2c7e3748e77aa979a98eaf888296dbb86bc86",
+    "tools/production_acceptance/evidence_v2.py": "2f227cd9e960fe53ea291389f4188a8b45e3c57ae3d5609c460988a54e1b903e"
+  },
+  "model_diagnostic": {
+    "requested": "claude-sonnet-4-6",
+    "reported": "claude-sonnet-4-6",
+    "protocol": "native Messages forced data-tool; isolated diagnostic adapter only",
+    "tested_source_hashes": {
+      "harness/cognitive/production.py": "1fb38b0384a76061a74d04c33539acd9fe8491521e018372aa5b9e5573fb1d47",
+      "harness/llm/client.py": "5223512252f00fe5477859d70bd2c7e3748e77aa979a98eaf888296dbb86bc86",
+      "harness/memory/evidence_manifest.py": "5d7de7c0bcdebb8c04b2f0817c221c616016503ecd3f69d5aa8f72a0f299257d",
+      "harness/memory/evidence_models.py": "94469bd4f09a70833d4d7dc08581a8df0e654ca6197cc7e680466b79de9d6083",
+      "harness/memory/evidence_v2.py": "e9429e599faad48413d8d27aa7e896b0ee9e4f2b50ce43f88b812244c6c1cb61",
+      "harness/memory/production.py": "bf1899e5e4e85b44bed0273b9e0bf90e9d77078a097f951c5ae12174de013ba0",
+      "harness/production/metering.py": "878d056e0defa2d1f8696cbf84c087ed8842d0fd893ddc965d8e3c33cdee4625",
+      "tools/production_acceptance/evidence_v2.py": "2f227cd9e960fe53ea291389f4188a8b45e3c57ae3d5609c460988a54e1b903e",
+      "tools/production_acceptance/model_candidates.py": "db514646911d9faf00f746d03fd529c3ddcdd50741e487e3139202b215304d8a"
+    },
+    "final_provenance_guard_added_after_model_run": true,
+    "requests": 1,
+    "usage_receipts": 1,
+    "contract_accepted": 0,
+    "skipped": 5,
+    "configuration_unchanged": true,
+    "source_hashes_unchanged": true,
+    "results": [
+      {
+        "dispatch_attempts": 1,
+        "error_type": "ValueError",
+        "fatal": null,
+        "http_capture": {
+          "alternative_fields_promoted_to_decision": false,
+          "body_bytes": 3062,
+          "body_capture_scope": "Complete decoded HTTP response entity; compression/framing bytes are not retained.",
+          "capture_saved": true,
+          "complete_unmodified_body_saved": true,
+          "credential_redaction_applied": false,
+          "http_json_valid": true,
+          "http_status": 200,
+          "original_body_sha256": "eea345fa72d733956d04cb4c2a6e1cbaf75cceeea4bb05fecc8eb9e1d77c599a",
+          "private_artifact_directory": "private-http-response",
+          "saved_body_sha256": "eea345fa72d733956d04cb4c2a6e1cbaf75cceeea4bb05fecc8eb9e1d77c599a",
+          "saved_response_header_names": [
+            "content-type",
+            "date",
+            "server"
+          ]
+        },
+        "http_status": 200,
+        "original_sources_unchanged": true,
+        "reason": "production_memory_proposals_rejected",
+        "scenario": "correction",
+        "seeded_belief": true,
+        "status": "rejected"
+      },
+      {
+        "scenario": "quoted",
+        "seeded_belief": false,
+        "status": "skipped"
+      },
+      {
+        "scenario": "hypothetical",
+        "seeded_belief": false,
+        "status": "skipped"
+      },
+      {
+        "scenario": "rest_source",
+        "seeded_belief": true,
+        "status": "skipped"
+      },
+      {
+        "scenario": "counter",
+        "seeded_belief": false,
+        "status": "skipped"
+      },
+      {
+        "scenario": "future",
+        "seeded_belief": true,
+        "status": "skipped"
+      }
+    ],
+    "actual_usage": [
+      {
+        "attempt_id": "model-attempt-8a1015bb0ab54d82814569c0225e1dca",
+        "usage": {
+          "body_instance_id": "synthetic-body",
+          "episode_id": "synthetic-episode:correction",
+          "model": "claude-sonnet-4-6",
+          "outcome": "completed",
+          "raw_usage": {
+            "cache_creation.ephemeral_1h_input_tokens": 0,
+            "cache_creation.ephemeral_5m_input_tokens": 0,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 0,
+            "input_tokens": 13324,
+            "output_tokens": 1242
+          },
+          "source": "api"
+        }
+      }
+    ],
+    "manual_review": {
+      "anchors": [
+        {
+          "claim": 0,
+          "start": 0,
+          "end": 9,
+          "quote_length": 9
+        },
+        {
+          "claim": 0,
+          "start": 0,
+          "end": 18,
+          "quote_length": 17
+        },
+        {
+          "claim": 1,
+          "start": 0,
+          "end": 42,
+          "quote_length": 42
+        }
+      ],
+      "schema_errors": [
+        {
+          "type": "value_error",
+          "loc": [
+            "claims",
+            0,
+            "anchors",
+            1
+          ],
+          "msg": "Value error, evidence_anchor_span_invalid",
+          "url": "https://errors.pydantic.dev/2.13/v/value_error"
+        }
+      ],
+      "reported_response_model": "claude-sonnet-4-6",
+      "manual_observations": [
+        "Recognized current oolong preference and did not infer character.",
+        "Redundantly proposed expiry of existing claim despite fixed-interval contract.",
+        "Old claim omitted subject identity and current-source partial quote had incorrect end offset.",
+        "Group not committed; reply claiming memory succeeded was not delivered.",
+        "Original coffee statement labeled challenge to the old coffee claim; relationship rationale confuses supersession with counterevidence."
+      ],
+      "structural_pass": false,
+      "production_ready": false,
+      "semantics_proven": false
+    },
+    "archive_sha256": "6872bf2698e7bbcb482d609e58766cfd0e23584c6c2c61bffc79ff64acb9995c",
+    "external_actions": 0,
+    "qq_sends": 0,
+    "production_model_changed": false
+  },
+  "online_status": {
+    "config_sha256": {
+      "deploy.json": "ed9b3c6eb502bdf3ce106c6a301d11547ee28d155d5601ab1ea5af9174f97f11",
+      "manifest.json": "0759b3980e066223294649121e16e0937252234e20dad08848bf1d7635dc7feb",
+      "gui-settings.json": "6b4348ff97ca7fcbacdd97306f91700c4e3521e0c10591eff0fc3a157783eb24",
+      "direct.json": "290678e57e6b1a6429ac2bf9c9fa6c8175ba1b76efe40a07f0fbfd1aeccf1a14"
+    },
+    "active_release": "/opt/neuralcloud/releases/20260920-qq-memory-latency-v1",
+    "service_states": {
+      "neuralcloud-cognitive.service": "active",
+      "neuralcloud-runtime.service": "active",
+      "neuralcloud-homeostasis.service": "active",
+      "neuralcloud-gui.service": "active"
+    },
+    "configurations_unchanged_from_inventory": true
+  },
+  "limitations": [
+    "No automatic rejected-proposal worker",
+    "Exact dedup does not prove semantic equivalence",
+    "No new 100k/1m performance qualification",
+    "No distributed atomic transaction across Runtime and memory",
+    "No seven-day live observation",
+    "Model first scenario failed; later five were not called"
+  ]
+}

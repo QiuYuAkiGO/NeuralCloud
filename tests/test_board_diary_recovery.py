@@ -16,7 +16,8 @@ def test_episode_projection_does_not_grow_with_failed_attempts_or_mutate_ledger(
                "seen_calls": [str(i) for i in range(400)]}
     projected = _episode_context(episode)
     assert len(json.dumps(projected).encode()) < 20_000
-    assert projected["results"] == episode["results"][-16:]
+    assert projected["results"] == [{"call_id": str(i)} for i in range(384, 400)]
+    assert all("error" not in item for item in projected["results"])
     assert projected["steps"] == episode["steps"]
     assert len(episode["results"]) == 400 and len(episode["seen_calls"]) == 400
 

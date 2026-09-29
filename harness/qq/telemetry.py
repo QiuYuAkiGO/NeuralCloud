@@ -97,13 +97,16 @@ def _aware(value: datetime) -> datetime:
 class QQDeadline:
     deadline_mono: float
     clock: Callable[[], float] = time.monotonic
+    downstream_reserved_seconds: float = 0.0
 
     def __post_init__(self):
         _finite(self.deadline_mono)
+        _finite(self.downstream_reserved_seconds)
 
     @classmethod
-    def after(cls, seconds: float, *, clock: Callable[[], float] = time.monotonic) -> QQDeadline:
-        return cls(_finite(clock()) + _finite(seconds), clock)
+    def after(cls, seconds: float, *, clock: Callable[[], float] = time.monotonic,
+              downstream_reserved_seconds: float = 0.0) -> QQDeadline:
+        return cls(_finite(clock()) + _finite(seconds), clock, downstream_reserved_seconds)
 
     @classmethod
     def from_first_seen(

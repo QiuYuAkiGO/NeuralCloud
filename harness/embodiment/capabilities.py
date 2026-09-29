@@ -17,6 +17,8 @@ ACTION_RECONCILE = "action.reconcile.v1"
 OBSERVATION_SNAPSHOT = "observation.snapshot.v1"
 EVIDENCE_REFERENCE = "evidence.reference.v1"
 PHYSIOLOGY_BODY_STATE = "physiology.body-state.v1"
+PHYSIOLOGY_REST = "physiology.rest.v1"
+PHYSIOLOGY_COGNITIVE_USAGE = "physiology.cognitive-usage.v1"
 PHYSIOLOGY_VIRTUAL_RESOURCE_LEDGER = "physiology.virtual-resource-ledger.v1"
 QQ_COMMUNICATION_READ = "communication.qq.read.v1"
 QQ_COMMUNICATION_SEND = "communication.qq.send.v1"
@@ -44,6 +46,8 @@ RUNTIME_CAPABILITIES = frozenset(
         OBSERVATION_SNAPSHOT,
         EVIDENCE_REFERENCE,
         PHYSIOLOGY_BODY_STATE,
+        PHYSIOLOGY_REST,
+        PHYSIOLOGY_COGNITIVE_USAGE,
         PHYSIOLOGY_VIRTUAL_RESOURCE_LEDGER,
         QQ_COMMUNICATION_READ,
         QQ_COMMUNICATION_SEND,
