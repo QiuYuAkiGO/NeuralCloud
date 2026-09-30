@@ -1,0 +1,14 @@
+{
+  "schema_version": "production-body-schema-lock-v1",
+  "provenance": "Frozen from the unpublished local production candidate on 2026-09-29. A clean published commit is separately required by release_pair.py.",
+  "baseline_revision": "309c59a771528f20de431f32c14faded4bfd3eb3",
+  "canonical_json_sha256": {
+    "contracts/schemas/body-state.schema.json": "49d260c142d42651b58ab59fda32d414aaef1a430b286ec7615c84ed0c89c777",
+    "contracts/schemas/body-state-capture-response.schema.json": "fa2b07da45fc41aa74442fa114db1f9877859067749f3eab7ce7c5fcac0ca953",
+    "contracts/schemas/body-rest-command.schema.json": "c86be5564f2f1f10d649990b0124a5e4cfa946de09526ae4fb97e4692fde045f",
+    "contracts/schemas/body-rest-receipt.schema.json": "7555dd1ec67c4fdd280b05c87297a6c2ac5c780947b214a06bf38f025029a8b2",
+    "contracts/schemas/body-rest-status.schema.json": "8b32a467a6f5876690a7a582e1fd20bc50c268ed7b8ed167b4e6d8c1136a44e1",
+    "contracts/schemas/production-cognitive-usage.schema.json": "10aa0114f09a57276fa1a9180d73a8962df7b2904853c28cc0752fbb3b17be9f",
+    "contracts/schemas/production-cognitive-usage-receipt.schema.json": "f064e3a94e6acbe70ffde0ef344346a6ae9c795ee3a4c59bc5162644242658b9"
+  }
+}

@@ -30,7 +30,7 @@ class DirectQQSettings(BaseModel):
     ws_url: str = "ws://127.0.0.1:6301"
     token_file: Path
     self_member_id: QQID
-    group_roster: list[QQGroupRosterEntry] = Field(min_length=1, max_length=16)
+    group_roster: list[QQGroupRosterEntry] = Field(default_factory=list, max_length=16)
     private_contacts: list[QQPrivateContact] = Field(default_factory=list, max_length=16)
     session_config_path: Path
     state_db: Path
@@ -75,6 +75,8 @@ class DirectQQSettings(BaseModel):
         if (len(peers) != len(set(peers)) or self.self_member_id in peers
                 or any(contact.send and not contact.observe for contact in self.private_contacts)):
             raise ValueError("direct_private_contacts_invalid")
+        if self.enabled and not any(entry.observe for entry in [*self.group_roster, *self.private_contacts]):
+            raise ValueError("direct_observed_conversation_required")
         paths = [self.token_file, self.session_config_path, self.state_db, self.status_file, self.control_file,
             self.evidence_dir, self.image_cache_dir, self.desktop_status_file, self.shared_control_token_file,
             *self.allowed_local_image_roots]

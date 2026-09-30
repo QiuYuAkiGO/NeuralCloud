@@ -82,7 +82,7 @@ def test_selfcheck_heartbeat_from_runtime_event_does_not_block_queue(tmp_path):
     async def scenario():
         supervisor, cognitive = _supervisor(tmp_path)
         supervisor.self_check._last_started_at = None
-        event = await supervisor.submit_event(
+        await supervisor.submit_event(
             event_type=RuntimeEventType.HEARTBEAT, priority=RuntimeEventPriority.HEARTBEAT,
             source="test", payload={})
         queued = await supervisor.queue.get(timeout=0)

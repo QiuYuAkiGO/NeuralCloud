@@ -78,12 +78,17 @@ def _chat_reply(runtime: ApiClient, *, timeout: float) -> ProbeResult:
         return probe("chat.reply", 2, "fail", evidence={"http_status": status, "payload": payload})
     completed = wait_for(lambda: _completed(runtime, correlation), timeout=timeout)
     mark_ran("chat")
-    ok = bool(completed) and _kind(completed) in {"reply", None}
-    # processing_completed with status completed is enough; decision_kind lives in payload.
-    return probe("chat.reply", 2, "pass" if completed else "fail",
+    result = _result_data(completed)
+    detail = result.get("detail") or {}
+    delivery = detail.get("delivery") or {}
+    ok = (result.get("event_id") == payload.get("event_id") and result.get("status") == "completed"
+          and _kind(completed) == "reply" and detail.get("delivered") is True
+          and delivery.get("success") is True
+          and type(delivery.get("delivered_segments")) is int and delivery["delivered_segments"] > 0)
+    return probe("chat.reply", 2, "pass" if ok else "fail",
                  evidence={"correlation_id": correlation, "event_id": payload.get("event_id"),
                            "session_id": session_id, "completed": bool(completed),
-                           "decision_kind": _kind(completed)},
+                           "decision_kind": _kind(completed), "delivery_verified": ok},
                  triage=["GET /v1/monitor/journal?record_type=processing_completed"])
 
 
@@ -152,10 +157,10 @@ def _diary(runtime: ApiClient, *, timeout: float) -> ProbeResult:
     done = wait_for(lambda: _diary_committed(runtime, payload.get("entry_id")), timeout=timeout)
     mark_ran("diary")
     after_status, after = runtime.json("GET", "/v1/diary")
-    grew = after_status == 200 and int((after or {}).get("today_count") or 0) >= int((before or {}).get("today_count") or 0)
-    return probe("diary.write", 2, "pass" if done or grew else "fail",
+    return probe("diary.write", 2, "pass" if done else "fail",
                  evidence={"entry_id": payload.get("entry_id"), "committed": bool(done),
-                           "today_count": (after or {}).get("today_count")},
+                           "before_count": (before or {}).get("today_count"),
+                           "today_count": (after or {}).get("today_count") if after_status == 200 else None},
                  triage=["GET /v1/diary and diary-turns.sqlite3"])
 
 
@@ -195,20 +200,26 @@ def _completed(runtime: ApiClient, correlation: str) -> dict[str, Any] | None:
     return items[0] if items else None
 
 
-def _kind(item: dict[str, Any] | None) -> str | None:
+def _result_data(item: dict[str, Any] | None) -> dict[str, Any]:
     if not item:
-        return None
-    payload = item.get("payload") or {}
-    data = payload.get("data") or payload
-    return data.get("decision_kind") or payload.get("decision_kind")
+        return {}
+    payload = item.get("payload", item)
+    if not isinstance(payload, dict):
+        return {}
+    data = payload.get("data", payload)
+    return data if isinstance(data, dict) else {}
+
+
+def _kind(item: dict[str, Any] | None) -> str | None:
+    return _result_data(item).get("decision_kind")
 
 
 def _diary_committed(runtime: ApiClient, entry_id: str | None) -> bool:
+    if not entry_id:
+        return False
     status, payload = runtime.json("GET", "/v1/diary")
     if status != 200 or not isinstance(payload, dict):
         return False
-    if payload.get("wrote_today"):
-        return True
     for turn in payload.get("turns") or []:
         if entry_id and turn.get("entry_id") == entry_id and turn.get("status") == "committed":
             return True

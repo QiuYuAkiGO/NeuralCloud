@@ -61,7 +61,7 @@ def agent_case(tmp_path, monkeypatch):
     else:
         agent = pytest.importorskip("mistyai.desktop_agent.app", reason="MistyAI source/package required for real journal integration")
     contracts = importlib.import_module("mistyai.contracts.agent")
-    journal_module = importlib.import_module("mistyai.desktop_agent.journal")
+    importlib.import_module("mistyai.desktop_agent.journal")
     calls, requests, responses = [], [], []
     token = "synthetic-agent-secret-" + "x" * 32
     token_file = tmp_path / "synthetic.token"

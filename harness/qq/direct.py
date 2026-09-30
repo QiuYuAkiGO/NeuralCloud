@@ -137,11 +137,34 @@ class DirectQQActor:
     def active(self):
         return self.settings.enabled and self.connected and not self.paused() and not self.desktop_active()
 
+    def current_conversations(self, *, send=False):
+        """Revocations apply before collection and dispatch, not only after restart.
+
+        Configuration changes may remove authority from this actor, but cannot
+        add a new peer or rebind its transport/state while it is running.
+        """
+        try:
+            path = os.environ.get("NC_QQ_DIRECT_CONFIG")
+            current = DirectQQSettings.read(Path(path)) if path else self.settings
+            if not current.enabled or any(getattr(current, key) != getattr(self.settings, key) for key in (
+                    "self_member_id", "ws_url", "token_file", "state_db", "evidence_dir", "session_config_path")):
+                return set()
+            session = QQSessionSettings.model_validate_json(current.session_config_path.read_text(encoding="utf-8"))
+            if session.self_member_id != self.settings.self_member_id:
+                return set()
+            groups = {entry.group_id for entry in current.group_roster
+                      if entry.observe and (not send or entry.send) and entry.group_id in session.allowed_group_ids}
+            peers = {private_scope_id(current.self_member_id, entry.peer_id) for entry in current.private_contacts
+                     if entry.observe and (not send or entry.send) and entry.peer_id in session.allowed_private_peer_ids}
+            return (groups | peers).intersection(self.conversations)
+        except (OSError, ValueError):
+            return set()
+
     def check_send(self, event, deadline, epoch, *, decision=None, untransmitted_send=None):
         deadline.check()
         if not self.active() or self.stop.is_set() or self.epoch != epoch:
             raise OneBotError("direct_owner_unavailable")
-        if not self.conversations[event["group_id"]].send:
+        if event["group_id"] not in self.current_conversations(send=True):
             raise OneBotError("direct_group_read_only")
         if (untransmitted_send is not None and (decision is None
                 or untransmitted_send.get("event_id") != event["event_id"]
@@ -225,6 +248,8 @@ class DirectQQActor:
                     private_peers=self.private_peers)
             if event is None:
                 return
+            if event["group_id"] not in self.current_conversations():
+                return
             event["_direct_policy"] = self.scope_policy(event["group_id"])
             stale = (utcnow() - datetime.fromisoformat(event["message_time"])).total_seconds() > 60
             historical = historical or stale or datetime.fromisoformat(event["message_time"]) < self.connected_at - timedelta(seconds=2)
@@ -254,7 +279,7 @@ class DirectQQActor:
         state = await self.client.call("get_status", timeout=8)
         if state.get("online") is not True or state.get("good") is False:
             raise OneBotError("onebot_account_offline")
-        groups = await self.client.call("get_group_list", timeout=8)
+        groups = await self.client.call("get_group_list", timeout=8) if self.groups else []
         if not isinstance(groups, list):
             raise OneBotError("onebot_groups_invalid")
         joined = {numeric(group.get("group_id")) for group in groups if isinstance(group, dict)}
@@ -436,6 +461,14 @@ class DirectQQActor:
         async with self._delivery_lock:
             await self._send_decision(event, decision, deadline, epoch, trace=trace or current_qq_trace())
 
+    async def transmit_text(self, event, text, *, timeout):
+        """The sole protocol text-send primitive for replies and frozen notices."""
+        scope = conversation_scope(event["group_id"])
+        action = "send_private_msg" if scope["kind"] == "private" else "send_group_msg"
+        target = {"user_id": scope["peer_id"]} if scope["kind"] == "private" else {"group_id": int(event["group_id"])}
+        return await self.client.call(action, target | {
+            "message": [{"type": "text", "data": {"text": text}}], "auto_escape": True}, timeout=timeout)
+
     async def _send_decision(self, event, decision, deadline, epoch, *, trace=None):
         if not decision.new_decision or decision.replayed or not sendable_speak_outcome(decision.outcome) or decision.action != "speak":
             return
@@ -478,7 +511,6 @@ class DirectQQActor:
                 raise
             scope = conversation_scope(event["group_id"])
             action = "send_private_msg" if scope["kind"] == "private" else "send_group_msg"
-            target = {"user_id": scope["peer_id"]} if scope["kind"] == "private" else {"group_id": int(event["group_id"])}
             send = self.store.update_send(send, "attempted", attempted_at=utcnow().isoformat())
             # SQLite can wait for a write lock. Check again after its commit,
             # before any protocol call, while non-transmission is still known.
@@ -490,9 +522,7 @@ class DirectQQActor:
                 self.store.cancel_untransmitted(send, reason=getattr(exc, "code", "direct_send_budget_insufficient"))
                 raise
             try:
-                result = await self.client.call(action, target | {
-                    "message": [{"type": "text", "data": {"text": text}}], "auto_escape": True},
-                    timeout=min(10, deadline.check()))
+                result = await self.transmit_text(event, text, timeout=min(10, deadline.check()))
                 message_id = numeric(result.get("message_id"), signed=True)
                 send = self.store.update_send(send, "attempted", message_id=message_id)
                 ack = self.store.evidence({"action": action, "group_id": event["group_id"],
@@ -671,6 +701,8 @@ class DirectQQActor:
         terminal_reason = None
         terminal_stage = "protocol.read"
         try:
+            if event["group_id"] not in self.current_conversations():
+                raise OneBotError("direct_owner_unavailable")
             self.write_status(state="reading_message", last_error_type=None)
             defer_image_analysis = None
             if (event["images"] and request is None and event.get("_reply_request") is None
@@ -844,8 +876,11 @@ class DirectQQActor:
         return True
 
     async def worker(self):
+        from harness.qq.task_notifications import process_notice
         while not self.stop.is_set():
             if self.active():
+                if await process_notice(self):
+                    continue
                 row = self.store.pending(self.run_id, scheduler_mode=self.settings.qq_reply_scheduler)
                 if row is not None:
                     if (self.event_policy(row["event"])["scheduler"] == "coalesced" and not row.get("reply_request")
@@ -869,6 +904,8 @@ class DirectQQActor:
         if not self.history_supported or not self.active():
             return
         for group_id in self.groups:
+            if group_id not in self.current_conversations():
+                continue
             try:
                 result = await self.client.call("get_group_msg_history", {"group_id": int(group_id),
                     "count": self.settings.history_count, "disable_get_url": False}, timeout=8)
@@ -879,6 +916,8 @@ class DirectQQActor:
                 # This is an optional OneBot implementation extension.
                 self.state["history_error"] = "history_unavailable"
         for peer_id in self.private_peers:
+            if private_scope_id(self.settings.self_member_id, peer_id) not in self.current_conversations():
+                continue
             try:
                 result = await self.client.call("get_friend_msg_history", {"user_id": peer_id,
                     "count": self.settings.history_count, "reverse_order": False, "disable_get_url": False}, timeout=8)
@@ -913,6 +952,8 @@ class DirectQQActor:
                     while not self.stop.is_set() and not self.client.closed.is_set():
                         if self.active() and time.monotonic() >= next_reconciliation:
                             await self.reconcile_unknown()
+                            from harness.qq.task_notifications import reconcile_notices
+                            await reconcile_notices(self)
                             next_reconciliation = time.monotonic() + 30
                         if self.active() and time.monotonic() >= next_history:
                             await self.history()

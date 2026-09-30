@@ -6,7 +6,6 @@ are never loaded; conversation scopes are replaced with report-local aliases.
 from __future__ import annotations
 
 import argparse
-from collections import Counter
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -105,7 +104,8 @@ def make_payload(root):
         public.append(item)
     dimensions = [{"key": k, "label": label, **main["scores"][k]} for k, label in DIMENSIONS.items()]
     scored = main["scores"]["non_template"]["n"]
-    period = lambda rows: " — ".join([min(r["timestamp"] for r in rows)[:10], max(r["timestamp"] for r in rows)[:10]])
+    def period(rows):
+        return " — ".join([min(r["timestamp"] for r in rows)[:10], max(r["timestamp"] for r in rows)[:10]])
     flags = sorted(main["flag_counts"].items(), key=lambda x: (-x[1], x[0]))
     strata = [{"key": k, "label": label, **stats["strata"][k]} for k, label in STRATA.items() if k in stats["strata"]]
     result = {"title": "Misty 历史回复拟人化评估", "model": "Kimi K3", "generated_at": datetime.now(timezone.utc).isoformat(),

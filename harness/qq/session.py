@@ -17,7 +17,7 @@ import sqlite3
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StringConstraints, model_validator
 from harness.runtime.ownership import require_development
 
 from harness.qq.memory import (
@@ -32,7 +32,7 @@ class QQSessionSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
     memory_db: Path
     token_file: Path
-    allowed_group_ids: list[QQID] = Field(min_length=1, max_length=20)
+    allowed_group_ids: list[QQID] = Field(default_factory=list, max_length=20)
     allowed_private_peer_ids: list[QQID] = Field(default_factory=list, max_length=20)
     self_member_id: QQID
     decision_enabled: bool = True
@@ -41,6 +41,16 @@ class QQSessionSettings(BaseModel):
     preset_path: Path | None = None
     watcher_status_file: Path | None = None
     direct_status_file: Path | None = None
+
+    @model_validator(mode="after")
+    def conversation_scope(self):
+        if not self.allowed_group_ids and not self.allowed_private_peer_ids:
+            raise ValueError("qq_session_conversation_required")
+        if (len(set(self.allowed_group_ids)) != len(self.allowed_group_ids)
+                or len(set(self.allowed_private_peer_ids)) != len(self.allowed_private_peer_ids)
+                or self.self_member_id in self.allowed_private_peer_ids):
+            raise ValueError("qq_session_conversation_invalid")
+        return self
 
 
 def _watcher_measurements(record: dict, *, allowed: frozenset[str] | None = None) -> dict:

@@ -16,6 +16,8 @@ class ProductionRuntime:
         self.supervisor = supervisor
         self.config = supervisor.manifest.production
         self.store = ProductionStore(supervisor.state_dir / "production.sqlite3", self.config)
+        from harness.production.user_tasks import UserTaskRunner
+        self.user_tasks = UserTaskRunner(self)
         from harness.production.tool_accounting import ToolAccounting
         self.tool_accounting = ToolAccounting(self.store)
         self._provider = None
@@ -255,6 +257,8 @@ class ProductionRuntime:
                 "usage_unassigned": self.store.unassigned_usage_count(),
                 "rest_pending": len(self.store.unresolved_rest()),
                 "tasks": len(self.tasks), "queued": self.supervisor.queue.qsize(),
+                "user_tasks": self.user_tasks.store.summary(),
+                "user_task_error": self.user_tasks.last_error,
                 "last_reason": self.store.state("last_reason")}
 
     async def dispatch(self, event, process_seq):
@@ -377,6 +381,7 @@ class ProductionRuntime:
         s = self.supervisor
         while s.lifecycle not in {RuntimeLifecycle.STOPPED, RuntimeLifecycle.STOPPING}:
             if s.lifecycle == RuntimeLifecycle.RUNNING:
+                self.user_tasks.tick()
                 scheduled = s.scheduler.make_due_event()
                 if scheduled:
                     await s.submit_event(**scheduled)
@@ -431,6 +436,7 @@ class ProductionRuntime:
 
     async def cancel_jobs(self):
         self.epoch += 1
+        await self.user_tasks.close()
         bridge = getattr(self.supervisor, "qq_capability_bridge", None)
         if bridge is not None and callable(getattr(bridge, "revoke_contacts", None)):
             bridge.revoke_contacts()

@@ -113,6 +113,8 @@ settings = AppSettings(
     database_url=f"sqlite+aiosqlite:///{(state_root / 'mistyai.db').as_posix()}",
     evidence_path=state_root / "evidence",
     service_token=os.environ["MISTYAI_SERVICE_TOKEN"],
+    **({"accounting_token": os.environ["MISTYAI_ACCOUNTING_TOKEN"]}
+       if os.environ.get("MISTYAI_FIXTURE_PRODUCTION") == "1" else {}),
     agent_url="http://fixture.invalid",
     agent_token="cross-process-agent-token",
     operator_socket=state_root / "operator.sock",
@@ -129,7 +131,8 @@ manifest = MistyManifest(
     ),
     applications=(),
     commands=(),
-    physiology=PhysiologySpec(enabled=True),
+    physiology=PhysiologySpec(enabled=True, **({"mode": "production_v1"}
+        if os.environ.get("MISTYAI_FIXTURE_PRODUCTION") == "1" else {})),
 )
 
 app = create_app(settings=settings, manifest=manifest, agent=DeterministicDesktopAgent())

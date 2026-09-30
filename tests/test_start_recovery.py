@@ -242,20 +242,34 @@ def test_dead_valid_registry_recovers_without_stopping_any_process(tmp_path, mon
 ])
 def test_malformed_registry_is_retained_without_start_or_stop(tmp_path, monkeypatch, fault):
     record = _registry(tmp_path)
-    if fault == "schema": record["schema_version"] = "unknown"
-    elif fault == "root": record["root"] = str(tmp_path / "foreign")
-    elif fault == "empty_services": record["services"] = []
-    elif fault == "services_object": record["services"] = record["services"][0]
-    elif fault == "unknown_service": record["services"][0]["name"] = "foreign"
-    elif fault == "module": record["services"][0]["module"] = "foreign.service"
-    elif fault == "entry_root": record["services"][0]["root"] = str(tmp_path / "foreign")
-    elif fault == "entry_python": record["services"][0]["python_path"] = str(tmp_path / "foreign/python.exe")
-    elif fault == "timestamp": record["services"][0]["process_start_time_utc"] = "unknown"
-    elif fault == "pid": record["services"][0]["pid"] = -1
-    elif fault == "port": record["services"][0]["port"] = 65536
-    elif fault == "duplicate_pid": record["services"][1]["pid"] = record["services"][0]["pid"]
-    elif fault == "duplicate_port": record["services"][1]["port"] = record["services"][0]["port"]
-    elif fault == "legacy": (tmp_path / ".gui.pid").write_text("unidentified")
+    if fault == "schema":
+        record["schema_version"] = "unknown"
+    elif fault == "root":
+        record["root"] = str(tmp_path / "foreign")
+    elif fault == "empty_services":
+        record["services"] = []
+    elif fault == "services_object":
+        record["services"] = record["services"][0]
+    elif fault == "unknown_service":
+        record["services"][0]["name"] = "foreign"
+    elif fault == "module":
+        record["services"][0]["module"] = "foreign.service"
+    elif fault == "entry_root":
+        record["services"][0]["root"] = str(tmp_path / "foreign")
+    elif fault == "entry_python":
+        record["services"][0]["python_path"] = str(tmp_path / "foreign/python.exe")
+    elif fault == "timestamp":
+        record["services"][0]["process_start_time_utc"] = "unknown"
+    elif fault == "pid":
+        record["services"][0]["pid"] = -1
+    elif fault == "port":
+        record["services"][0]["port"] = 65536
+    elif fault == "duplicate_pid":
+        record["services"][1]["pid"] = record["services"][0]["pid"]
+    elif fault == "duplicate_port":
+        record["services"][1]["port"] = record["services"][0]["port"]
+    elif fault == "legacy":
+        (tmp_path / ".gui.pid").write_text("unidentified")
     path = tmp_path / ".neuralcloud.pids.json"
     path.write_text(json.dumps(record))
     before = path.read_bytes()

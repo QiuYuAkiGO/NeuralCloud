@@ -1,6 +1,5 @@
 """Synthetic model-only decisions; no real network, GUI, or memories."""
 from datetime import datetime, timedelta, timezone
-import json
 
 import pytest
 

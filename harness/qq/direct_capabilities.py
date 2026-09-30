@@ -321,6 +321,39 @@ class QQDirectCapabilityBridge:
 
     get = result
 
+    def task_source_authorized(self, source):
+        from harness.qq.session import QQSessionSettings
+        try:
+            settings = DirectQQSettings.read(self.config_path)
+            config = QQSessionSettings.model_validate_json(settings.session_config_path.read_text(encoding="utf-8"))
+            scope = conversation_scope(source["group_id"])
+            return (settings.enabled and scope["kind"] == "private"
+                    and source["self_member_id"] == settings.self_member_id == config.self_member_id
+                    and scope["self_member_id"] == config.self_member_id and scope["peer_id"] == source["member_id"]
+                    and scope["peer_id"] in config.allowed_private_peer_ids
+                    and any(c.peer_id == scope["peer_id"] and c.observe and c.send for c in settings.private_contacts))
+        except (ValueError, OSError):
+            return False
+
+    def publish_task_notice(self, task, notice):
+        """Internal Runtime outbox projection, deliberately absent from catalog()."""
+        from harness.qq.direct_store import DirectStore
+        from harness.qq.task_notifications import TaskNotifications
+        production = getattr(self.supervisor, "production_runtime", None)
+        if production is None:
+            raise ValueError("task_notice_production_required")
+        # Do not trust a caller-provided task or an LLM-assigned purpose. The
+        # exact task and notice must exist in this Runtime's durable ledger.
+        frozen = production.user_tasks.store.get(task["id"])
+        expected = next((n for n in frozen["notifications"] if n["id"] == notice["id"]), None)
+        if (frozen["request"] != task["request"] or frozen["status"] != task["status"] or expected is None
+                or any(expected[k] != notice[k] for k in ("task_id", "purpose", "text"))):
+            raise ValueError("task_notice_not_runtime_authorized")
+        settings = DirectQQSettings.read(self.config_path)
+        if settings.self_member_id != frozen["request"]["source"]["self_member_id"]:
+            raise ValueError("task_notice_account_changed")
+        return TaskNotifications(DirectStore(settings.state_db, settings.evidence_dir)).publish(frozen, expected)
+
     def enqueue_contact(self, row):
         from harness.qq.direct_contacts import initialize, authorize
         from harness.qq.idle import QQIdleIntent

@@ -1,5 +1,10 @@
 # Grounded Agency 全面重构调研
 
+## 当前接手入口（2026-09-30）
+
+- [首发开发交接](production-launch-handoff-20260930.md)：WP0/WP1 部分实现、实际测试结果、完整回归失败、发布阻塞及下一步。用户要求先保存推送，之后再继续开发。
+- [首发范围](production-launch-scope-20260929.md)、[实施顺序](production-launch-implementation-20260929.md)、[验收清单](production-launch-acceptance-20260929.md)。
+
 本目录保存从 `codex/grounded-agency` 分出的重构规划，不代表重构代码已经实现或部署。
 
 - [完整调研与实施路线](grounded-agency-rebuild-plan.md)：功能取舍、源码瓶颈、目标架构、数据迁移、性能与恢复验收。

@@ -429,7 +429,10 @@ class DirectStore:
 
     def cooldown(self, group_id, seconds):
         with closing(self.connect()) as db:
-            rows = db.execute("SELECT record_json FROM qq_direct_sends WHERE group_id=? AND status='sent'", (group_id,))
+            # A task acknowledgement must not rate-limit the user's next
+            # conversational turn. Task notices have their own bounded queue.
+            rows = db.execute("""SELECT record_json FROM qq_direct_sends WHERE group_id=? AND status='sent'
+                AND json_extract(record_json,'$.task_notice_id') IS NULL""", (group_id,))
             moments = [datetime.fromisoformat(json.loads(row[0])["delivered_at"]) for row in rows]
         return bool(moments and (utcnow() - max(moments)).total_seconds() < seconds)
 
@@ -461,6 +464,7 @@ class DirectStore:
             raise ValueError("onebot_reconciliation_limit_invalid")
         with closing(self.connect()) as db:
             rows = db.execute("""SELECT * FROM qq_direct_sends WHERE status IN ('attempted','unknown')
+                AND json_extract(record_json,'$.task_notice_id') IS NULL
                 AND (message_id IS NOT NULL OR ?) ORDER BY rowid LIMIT ?""", (include_unidentified, limit)).fetchall()
             result = []
             for row in rows:

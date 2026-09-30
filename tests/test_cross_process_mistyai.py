@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+from uuid import uuid4
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -115,4 +116,46 @@ def test_neuralcloud_talks_to_real_mistyai_http_process() -> None:
             await wrong_client.close()
             await client.close()
 
+    asyncio.run(scenario())
+
+
+@pytest.mark.integration
+def test_production_rest_and_usage_over_real_tcp() -> None:
+    """The release gate must exercise production roles, not only legacy actions."""
+    from harness.embodiment.contracts import BodyRestCommand, CognitiveUsage
+    base_url = os.environ.get("NC_CROSS_PROCESS_MISTYAI_URL")
+    token = os.environ.get("NC_CROSS_PROCESS_MISTYAI_TOKEN")
+    accounting = os.environ.get("NC_CROSS_PROCESS_MISTYAI_ACCOUNTING_TOKEN")
+    if not base_url or not token or not accounting:
+        pytest.skip("set the three NC_CROSS_PROCESS_MISTYAI variables for the production TCP gate")
+
+    async def scenario():
+        client = MistyAIClient(base_url, token=token, accounting_token=accounting)
+        wrong = MistyAIClient(base_url, token=token, accounting_token="wrong-accounting-token")
+        provider = MistyAIBodyStateProvider(client)
+        prefix = "launch-ci:" + uuid4().hex
+        try:
+            initial = await provider.snapshot()
+            assert initial.physiology_mode == "production_v1"
+            assert initial.episode_id and initial.sample_sequence is not None
+            identity = {"body_instance_id": initial.body_instance_id, "episode_id": initial.episode_id}
+            start = BodyRestCommand(command_id=prefix + ":start", **identity)
+            first = await provider.start_rest(start)
+            assert first.resting and first.evidence_refs
+            assert await provider.start_rest(start) == first
+            assert (await provider.snapshot()).resting is True
+            usage = CognitiveUsage(inference_id=prefix + ":usage", model_class="main", cost_class="other",
+                                   quantity=1, metering="call", **identity)
+            with pytest.raises(MistyAIError) as unauthorized:
+                await MistyAIBodyStateProvider(wrong).record_usage(usage)
+            assert unauthorized.value.status_code == 401
+            charged = await provider.record_usage(usage)
+            assert charged.inference_id == usage.inference_id and charged.evidence_refs
+            assert await provider.record_usage(usage) == charged
+            ended = await provider.end_rest(BodyRestCommand(command_id=prefix + ":end", **identity))
+            assert ended.resting is False
+            assert (await provider.snapshot()).resting is False
+        finally:
+            await wrong.close()
+            await client.close()
     asyncio.run(scenario())
