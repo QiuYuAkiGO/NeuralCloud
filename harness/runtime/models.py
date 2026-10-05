@@ -358,6 +358,7 @@ class RuntimeStatus(BaseModel):
     agency_state: AgencyState = AgencyState.AVAILABLE
     affect: list[CapabilityDescriptor] = Field(default_factory=list)
     recovery: dict[str, Any] | None = None
+    background: dict[str, Any] = Field(default_factory=dict)
     production: dict[str, Any] | None = None
 
 

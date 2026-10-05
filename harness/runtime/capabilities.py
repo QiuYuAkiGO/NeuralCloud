@@ -94,6 +94,7 @@ async def before_deadline(awaitable, deadline):
 
 class CapabilityCalls:
     def __init__(self, path):
+        self.path = path
         path.parent.mkdir(parents=True, exist_ok=True)
         self.db = sqlite3.connect(path)
         self.db.execute("PRAGMA synchronous=FULL")
@@ -125,6 +126,14 @@ class CapabilityCalls:
 
     def all(self):
         return [json.loads(row[0]) for row in self.db.execute("SELECT record_json FROM calls ORDER BY rowid DESC")]
+
+    async def all_background(self, owner):
+        worker = getattr(owner, "heartbeat", None)
+        if worker is None or not worker.active:
+            return self.all()
+        from harness.runtime.background import read_background_records
+
+        return await read_background_records(owner, self.path, "SELECT record_json FROM calls ORDER BY rowid DESC")
 
 
 class CapabilityController:
@@ -350,6 +359,8 @@ class CapabilityController:
         current = self.calls.configure(digest(self.settings.model_dump(mode="json")))
         self.generation = current
         await self.reconcile()
+        if getattr(self.supervisor, "_foreground_dispatches", ()):
+            return
         goals = getattr(self.supervisor, "goals", None)
         if goals is not None and goals.enabled:
             await goals.heartbeat()
@@ -358,7 +369,7 @@ class CapabilityController:
                 or not self.supervisor.queue.empty() or self.supervisor.action_coordinator.pending()
                 or time.monotonic() - self.last_activity < self.settings.quiet_seconds):
             return
-        rows = self.calls.all()
+        rows = await self.calls.all_background(self.supervisor)
         if any(row["status"] not in TERMINAL for row in rows):
             return
         if rows and (utc_now() - datetime.fromisoformat(rows[0]["created_at"])).total_seconds() < self.settings.opportunity_seconds:
@@ -367,7 +378,9 @@ class CapabilityController:
         if not summary or summary.get("salience") not in {"noticeable", "marked"}:
             return
         offers = [item for item in await self.catalog() if item.supported and item.available and item.ready and item.valid_until > utc_now()]
-        if not offers or not self.supervisor.queue.empty() or time.monotonic() - self.last_activity < self.settings.quiet_seconds:
+        if (not offers or self.supervisor.lifecycle != RuntimeLifecycle.RUNNING
+                or getattr(self.supervisor, "_foreground_dispatches", ()) or not self.supervisor.queue.empty()
+                or time.monotonic() - self.last_activity < self.settings.quiet_seconds):
             return
         identity = "capability:" + uuid4().hex
         now = utc_now()
@@ -659,7 +672,12 @@ class CapabilityController:
         self._finish(row, {"succeeded": "completed", "failed": "error", "cancelled": "cancelled"}.get(state, "pending"), **values)
 
     async def reconcile(self):
-        for row in self.calls.all():
+        for candidate in await self.calls.all_background(self.supervisor):
+            # The reader owns a separate SQLite snapshot. Foreground work may
+            # have advanced the attempt during I/O, so act on the current row.
+            row = self.calls.get(candidate["opportunity_id"])
+            if row is None:
+                continue
             if row["status"] in TERMINAL:
                 self._record_production_outcome(row)
                 continue

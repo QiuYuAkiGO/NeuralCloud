@@ -168,6 +168,7 @@ class EmotionService:
         self._emotion_client = build_emotion_client(settings)
         self._state = _State()
         self._lock = threading.RLock()
+        self._operation_lock = threading.RLock()
         self._persistence_version = 0
         self._persistence_dirty: dict[tuple[str, str], int] = {}
 
@@ -179,7 +180,7 @@ class EmotionService:
         return self._setting("emotion_mode", "off") in {"on", "shadow"}
 
     def load(self, value: dict) -> None:
-        with self._lock:
+        with self._operation_lock, self._lock:
             restored = _State.model_validate(value) if value else _State()
             for scope, messages in restored.windows.items():
                 if any(message.scope != scope for message in messages):
@@ -425,36 +426,38 @@ class EmotionService:
 
     def observe(self, value: EmotionInput) -> EmotionFrame:
         request = value.model_copy(deep=True) if isinstance(value, EmotionInput) else EmotionInput.model_validate(value)
-        with self._lock:
-            existing = self._state.reservations.get(request.context_id)
-            bound_request = existing.request if existing is not None else request
-            if semantic_homeostasis(bound_request.homeostasis)["salience"] == "critical":
-                raise ValueError("emotion_critical_homeostasis")
-            if not self.enabled:
-                return self._frame(request, {}, status="off", diagnostics={"model_calls": 0})
-            # Finish the durable earlier causal prefix before admitting a newer
-            # observation. An expired reservation commits a neutral fallback;
-            # it can never be replayed later on top of newer global balances.
-            order = existing.sequence if existing is not None else float("inf")
-            pending = sorted((item for item in self._state.reservations.values()
-                              if item.status == "reserved" and item.request.context_id != request.context_id
-                              and item.sequence < order), key=lambda item: (item.sequence, item.request.as_of))
+        with self._operation_lock:
+            with self._lock:
+                existing = self._state.reservations.get(request.context_id)
+                bound_request = existing.request if existing is not None else request
+                if semantic_homeostasis(bound_request.homeostasis)["salience"] == "critical":
+                    raise ValueError("emotion_critical_homeostasis")
+                if not self.enabled:
+                    return self._frame(request, {}, status="off", diagnostics={"model_calls": 0})
+                # Finish the durable earlier causal prefix before admitting a newer
+                # observation. An expired reservation commits a neutral fallback;
+                # it can never be replayed later on top of newer global balances.
+                order = existing.sequence if existing is not None else float("inf")
+                pending = sorted((item for item in self._state.reservations.values()
+                                  if item.status == "reserved" and item.request.context_id != request.context_id
+                                  and item.sequence < order), key=lambda item: (item.sequence, item.request.as_of))
             for earlier in pending:
                 self.observe(earlier.request)
-            reservation = self._reserve(request)
-            if reservation.frame is not None:
-                self._emit_frame(reservation.frame, replayed=True)
-                return reservation.frame.model_copy(deep=True)
-            # All data below comes from the persisted reservation, not retry args.
-            request = reservation.request
-            new_ids = set(reservation.new_source_ids)
-            source_messages = {message.source_id: message for message in reservation.window if message.source_id in new_ids}
-            diagnostics = {"model_calls": 0, "new_source_count": len(new_ids), "window_count": len(reservation.window),
-                           "prompt_version": PROMPT_VERSION, "input_hash": reservation.request_hash,
-                           "frozen_context_hash": _hash(request.model_dump(mode="json")),
-                           "persona_hash": _hash(project_persona(request.persona)),
-                           "homeostasis_hash": _hash(request.homeostasis),
-                           "window_hash": _hash([item.model_dump(mode="json") for item in reservation.window])}
+            with self._lock:
+                reservation = self._reserve(request)
+                if reservation.frame is not None:
+                    self._emit_frame(reservation.frame, replayed=True)
+                    return reservation.frame.model_copy(deep=True)
+                # All data below comes from the persisted reservation, not retry args.
+                request = reservation.request
+                new_ids = set(reservation.new_source_ids)
+                source_messages = {message.source_id: message for message in reservation.window if message.source_id in new_ids}
+                diagnostics = {"model_calls": 0, "new_source_count": len(new_ids), "window_count": len(reservation.window),
+                               "prompt_version": PROMPT_VERSION, "input_hash": reservation.request_hash,
+                               "frozen_context_hash": _hash(request.model_dump(mode="json")),
+                               "persona_hash": _hash(project_persona(request.persona)),
+                               "homeostasis_hash": _hash(request.homeostasis),
+                               "window_hash": _hash([item.model_dump(mode="json") for item in reservation.window])}
             appraisal = EmotionAppraisal()
             status = "empty"
             started = time.monotonic()
@@ -484,38 +487,39 @@ class EmotionService:
                     diagnostics["fallback_reason"] = _fallback_code(exc)
             diagnostics["elapsed_ms"] = round((time.monotonic() - started) * 1000, 3)
             diagnostics["appraisal_hash"] = _hash(appraisal.model_dump(mode="json"))
-            state = self._state
-            effective_at = max(request.as_of, state.global_updated_at or request.as_of)
-            balances = _decay(state.global_affect, state.global_updated_at, effective_at,
-                              self._setting("emotion_half_life_seconds", 600))
-            frozen_balances = dict(reservation.global_before)
-            events = {event.source_id: event for event in appraisal.events}
-            sources = dict(state.sources)
-            changed_sources = set()
-            changed = False
-            for source_id in sorted(new_ids, key=lambda identity: (source_messages[identity].timestamp, identity)):
-                message = source_messages[source_id]
-                key = _source_key(message)
-                if sources[key].processed:
-                    continue
-                event = events.get(source_id)
-                if event is not None:
-                    self._apply_event(balances, event, message.timestamp, effective_at)
-                    self._apply_event(frozen_balances, event, message.timestamp, request.as_of)
-                sources[key] = sources[key].model_copy(update={"processed": True})
-                changed_sources.add(key)
-                changed = True
-            revision = state.revision + int(changed)
-            frame = self._frame(request, frozen_balances, status=status, diagnostics=diagnostics, revision=revision,
-                                previous_balances=reservation.global_previous or reservation.global_before)
-            finished = reservation.model_copy(update={"status": "committed", "frame": frame, "appraisal": appraisal})
-            self._save(state.model_copy(update={"revision": revision, "sources": sources,
-                "global_affect": balances if changed else state.global_affect,
-                "global_updated_at": effective_at if changed else state.global_updated_at,
-                "reservations": {**state.reservations, request.context_id: finished}}),
-                changed={"sources": changed_sources, "reservations": {request.context_id}})
-            self._emit_frame(frame, replayed=False)
-            return frame.model_copy(deep=True)
+            with self._lock:
+                state = self._state
+                effective_at = max(request.as_of, state.global_updated_at or request.as_of)
+                balances = _decay(state.global_affect, state.global_updated_at, effective_at,
+                                  self._setting("emotion_half_life_seconds", 600))
+                frozen_balances = dict(reservation.global_before)
+                events = {event.source_id: event for event in appraisal.events}
+                sources = dict(state.sources)
+                changed_sources = set()
+                changed = False
+                for source_id in sorted(new_ids, key=lambda identity: (source_messages[identity].timestamp, identity)):
+                    message = source_messages[source_id]
+                    key = _source_key(message)
+                    if sources[key].processed:
+                        continue
+                    event = events.get(source_id)
+                    if event is not None:
+                        self._apply_event(balances, event, message.timestamp, effective_at)
+                        self._apply_event(frozen_balances, event, message.timestamp, request.as_of)
+                    sources[key] = sources[key].model_copy(update={"processed": True})
+                    changed_sources.add(key)
+                    changed = True
+                revision = state.revision + int(changed)
+                frame = self._frame(request, frozen_balances, status=status, diagnostics=diagnostics, revision=revision,
+                                    previous_balances=reservation.global_previous or reservation.global_before)
+                finished = reservation.model_copy(update={"status": "committed", "frame": frame, "appraisal": appraisal})
+                self._save(state.model_copy(update={"revision": revision, "sources": sources,
+                    "global_affect": balances if changed else state.global_affect,
+                    "global_updated_at": effective_at if changed else state.global_updated_at,
+                    "reservations": {**state.reservations, request.context_id: finished}}),
+                    changed={"sources": changed_sources, "reservations": {request.context_id}})
+                self._emit_frame(frame, replayed=False)
+                return frame.model_copy(deep=True)
 
     @staticmethod
     def _emit_frame(frame, *, replayed):
@@ -570,45 +574,46 @@ class EmotionService:
             salience=homeostasis["salience"], persona=project_persona(request.persona), diagnostics=diagnostics)
 
     def guidance(self, frame_or_ref: EmotionFrame | dict | str) -> EmotionGuidance:
-        with self._lock:
-            supplied = None if isinstance(frame_or_ref, str) else (frame_or_ref if isinstance(frame_or_ref, EmotionFrame)
-                                                                 else EmotionFrame.model_validate(frame_or_ref))
-            context_id = frame_or_ref if isinstance(frame_or_ref, str) else supplied.context_id
-            reservation = self._state.reservations.get(context_id)
-            if supplied is not None and supplied.status == "off" and not self.enabled:
-                return EmotionGuidance(text="", context_id=supplied.context_id, scope=supplied.scope,
-                                       revision=supplied.revision, status="off")
-            if reservation is None or reservation.frame is None:
-                raise ValueError("emotion_context_not_committed")
-            frame = reservation.frame
-            if supplied is not None and supplied != frame:
-                raise ValueError("emotion_frame_binding_mismatch")
-            if reservation.guidance is not None:
-                self._emit_guidance(reservation.guidance, replayed=True)
-                return reservation.guidance.model_copy(deep=True)
-            diagnostics = {"model_calls": 0, "prompt_version": PROMPT_VERSION,
-                           "validation_version": GUIDANCE_VALIDATION_VERSION}
-            text = fallback_guidance(frame)
-            status = "fallback"
-            request = reservation.request
-            # Raw dialogue and speech examples made a small instruction model
-            # answer the user instead of directing the main model. Appraisal
-            # already interpreted that window; keep only its scoped conclusions.
-            appraisal = reservation.appraisal or EmotionAppraisal()
-            payload = {"persona": {key: frame.persona.get(key, []) for key in ("core_traits", "values")},
-                       "homeostatic_needs": frame.homeostatic_needs,
-                       "shared_affect": frame.labels, "weights": frame.weights, "intensity": frame.intensity,
-                       "dominant_source": frame.dominant_source, "semantic_priority": semantic_priority(frame),
-                       "required_feelings": required_feelings(frame),
-                       "dialogue_trends": frame.dialogue_trends,
-                       "visible_context": {
-                           "current_event_labels": sorted({signal.label for event in appraisal.events for signal in event.signals
-                                                           if signal.intensity * signal.confidence > 0}),
-                           "repair_labels": sorted({repair.label for event in appraisal.events for repair in event.recovery
-                                                    if repair.strength > 0}),
-                           "need_interpretation": appraisal.need_interpretation,
-                           "personality_response": appraisal.personality_response},
-                       "schema": _response_schema("guidance")}
+        with self._operation_lock:
+            with self._lock:
+                supplied = None if isinstance(frame_or_ref, str) else (frame_or_ref if isinstance(frame_or_ref, EmotionFrame)
+                                                                     else EmotionFrame.model_validate(frame_or_ref))
+                context_id = frame_or_ref if isinstance(frame_or_ref, str) else supplied.context_id
+                reservation = self._state.reservations.get(context_id)
+                if supplied is not None and supplied.status == "off" and not self.enabled:
+                    return EmotionGuidance(text="", context_id=supplied.context_id, scope=supplied.scope,
+                                           revision=supplied.revision, status="off")
+                if reservation is None or reservation.frame is None:
+                    raise ValueError("emotion_context_not_committed")
+                frame = reservation.frame
+                if supplied is not None and supplied != frame:
+                    raise ValueError("emotion_frame_binding_mismatch")
+                if reservation.guidance is not None:
+                    self._emit_guidance(reservation.guidance, replayed=True)
+                    return reservation.guidance.model_copy(deep=True)
+                diagnostics = {"model_calls": 0, "prompt_version": PROMPT_VERSION,
+                               "validation_version": GUIDANCE_VALIDATION_VERSION}
+                text = fallback_guidance(frame)
+                status = "fallback"
+                request = reservation.request
+                # Raw dialogue and speech examples made a small instruction model
+                # answer the user instead of directing the main model. Appraisal
+                # already interpreted that window; keep only its scoped conclusions.
+                appraisal = reservation.appraisal or EmotionAppraisal()
+                payload = {"persona": {key: frame.persona.get(key, []) for key in ("core_traits", "values")},
+                           "homeostatic_needs": frame.homeostatic_needs,
+                           "shared_affect": frame.labels, "weights": frame.weights, "intensity": frame.intensity,
+                           "dominant_source": frame.dominant_source, "semantic_priority": semantic_priority(frame),
+                           "required_feelings": required_feelings(frame),
+                           "dialogue_trends": frame.dialogue_trends,
+                           "visible_context": {
+                               "current_event_labels": sorted({signal.label for event in appraisal.events for signal in event.signals
+                                                               if signal.intensity * signal.confidence > 0}),
+                               "repair_labels": sorted({repair.label for event in appraisal.events for repair in event.recovery
+                                                        if repair.strength > 0}),
+                               "need_interpretation": appraisal.need_interpretation,
+                               "personality_response": appraisal.personality_response},
+                           "schema": _response_schema("guidance")}
             started = time.monotonic()
             try:
                 raw = self._model(request=request, stage="guidance", system=_GUIDANCE_RULES, payload=payload,
@@ -630,11 +635,12 @@ class EmotionService:
             diagnostics["elapsed_ms"] = round((time.monotonic() - started) * 1000, 3)
             guidance = EmotionGuidance(text=text, context_id=context_id, scope=frame.scope,
                                        revision=frame.revision, status=status, diagnostics=diagnostics)
-            saved = reservation.model_copy(update={"guidance": guidance})
-            self._save(self._state.model_copy(update={"reservations": {**self._state.reservations, context_id: saved}}),
-                       changed={"reservations": {context_id}})
-            self._emit_guidance(guidance, replayed=False)
-            return guidance.model_copy(deep=True)
+            with self._lock:
+                saved = reservation.model_copy(update={"guidance": guidance})
+                self._save(self._state.model_copy(update={"reservations": {**self._state.reservations, context_id: saved}}),
+                           changed={"reservations": {context_id}})
+                self._emit_guidance(guidance, replayed=False)
+                return guidance.model_copy(deep=True)
 
     def drop_conflicting_new_sources(self, value: EmotionInput) -> tuple[EmotionInput, list[str]]:
         """Drop fingerprint conflicts from one AppraiseAffect batch; keep the rest."""

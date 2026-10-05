@@ -43,7 +43,7 @@ from harness.core.inference import ContextSegment, FinalResponse, InteroceptiveS
 from harness.core.models import EpisodicEvent, InteractionEvent
 from harness.homeostasis.models import HomeostaticInteroceptiveSummary
 from harness.pipeline.pipeline import InferencePipeline
-from harness.runtime.cognitive_store import CognitiveStateStore, DELETED, TrackedDict
+from harness.runtime.cognitive_store import CognitiveStateStore, DELETED, TrackedDict, write_checkpoint
 from harness.qq.telemetry import measure_stage
 from infra.trace.request_spans import trace_scope
 
@@ -265,6 +265,10 @@ class PipelineCognitiveAdapter:
         self._archive_local = archive_local
         self._archive_action = archive_action
         self._lock = asyncio.Lock()
+        self._affect_lock = asyncio.Lock()
+        from harness.runtime.background import ThreadLane
+
+        self._affect_thread = ThreadLane("nc-affect")
         self._revision = 0
         self._cursor = 0
         self._event_id: str | None = None
@@ -297,10 +301,12 @@ class PipelineCognitiveAdapter:
         self._maintenance_paused = False
         from harness.emotion import EmotionService
 
-        self.emotion_service = EmotionService(pipeline.settings, pipeline.llm, persist=self._persist_state)
+        self.emotion_service = EmotionService(pipeline.settings, pipeline.llm, persist=self._persist_emotion_state)
         self.pipeline.emotion_service = self.emotion_service
         self.emotion_input_provider = None
         self._load_state()
+        self._legacy_initial_state = (json.dumps(self._legacy_state_payload(), ensure_ascii=False)
+            if not self._incremental_enabled and self.state_path is not None and not self.state_path.exists() else None)
         self._publish_snapshot()
 
     async def health(self) -> ServiceHealth:
@@ -435,55 +441,64 @@ class PipelineCognitiveAdapter:
 
     async def appraise_affect(self, command):
         async def operation():
-            async with self._lock:
-                replay = self._lookup_replay(command)
-                if replay is not None:
-                    await asyncio.to_thread(self._persist_state)
-                    return replay
-                rejected = self._preflight(command)
-                if rejected is not None:
-                    return rejected
-                if (command.command_type != "AppraiseAffect" or self.pipeline.settings.emotion_mode == "off"
-                        or self._research_manifest is not None):
-                    return self._failure(command, "emotion observation is disabled", status="rejected")
-                from harness.runtime.emotion import observation_input
-
-                homeostasis = command.payload.get("homeostasis") or {}
-                if (command.version_vector is not None and homeostasis.get("snapshot_revision")
-                        != command.version_vector.homeostasis_state):
-                    return self._failure(command, "emotion snapshot revision mismatch", status="rejected")
-                request_key = (command.command_type, command.idempotency_key)
-                request_hash = command.effective_request_hash()
-                reserved_hash = self._request_hashes.get(request_key)
-                if reserved_hash is not None and reserved_hash != request_hash:
-                    return self._failure(command, "emotion reservation request conflict", status="conflict")
-                self._request_hashes[request_key] = request_hash
-                await asyncio.to_thread(self._persist_state)
-                provider = self.emotion_input_provider or (lambda value: observation_input(self, value))
-                with trace_scope(event_id=command.event_id, command_id=command.command_id, phase="emotion_appraisal"):
-                    observation = self.emotion_service.existing_input(command.payload["context_id"])
-                    dropped = []
-                    if observation is None:
-                        observation = await asyncio.to_thread(provider, command)
-                        observation, dropped = self.emotion_service.drop_conflicting_new_sources(observation)
-                    frame = await asyncio.to_thread(self.emotion_service.observe, observation)
-                    guidance = await asyncio.to_thread(self.emotion_service.guidance, frame)
-                self._cursor = max(self._cursor, command.receive_seq)
-                self._event_id = command.event_id
-                result = DomainCommandResult[dict](command_id=command.command_id,
-                    command_type=command.command_type, status="applied",
-                    request_hash=command.effective_request_hash(), committed_revision=self._revision,
-                    acknowledged_event_id=command.event_id, acknowledged_receive_seq=command.receive_seq,
-                    result={"accepted_ids": self.emotion_service.accepted_new_sources(frame.context_id),
-                            "dropped_conflict_ids": dropped, "emotion_revision": frame.revision,
-                            "frame_status": frame.status, "guidance_status": guidance.status,
-                            "appraisal_ms": frame.diagnostics.get("elapsed_ms"),
-                            "guidance_ms": guidance.diagnostics.get("elapsed_ms")},
-                    completed_at=_utc_now())
-                self._remember(command, result)
-                await asyncio.to_thread(self._persist_state)
-                return result
+            # One affect writer preserves causal stimulus order, independently
+            # of the foreground command queue. The shared command lock covers
+            # only reservation and final ledger publication, never model I/O.
+            async with self._affect_lock:
+                return await self._appraise_affect(command)
         return await self._run_command(operation)
+
+    async def _appraise_affect(self, command):
+        async with self._lock:
+            replay = self._lookup_replay(command)
+            if replay is not None:
+                await asyncio.to_thread(self._persist_state)
+                return replay
+            rejected = self._preflight(command)
+            if rejected is not None:
+                return rejected
+            if (command.command_type != "AppraiseAffect" or self.pipeline.settings.emotion_mode == "off"
+                    or self._research_manifest is not None):
+                return self._failure(command, "emotion observation is disabled", status="rejected")
+            from harness.runtime.emotion import observation_input
+
+            homeostasis = command.payload.get("homeostasis") or {}
+            if (command.version_vector is not None and homeostasis.get("snapshot_revision")
+                    != command.version_vector.homeostasis_state):
+                return self._failure(command, "emotion snapshot revision mismatch", status="rejected")
+            request_key = (command.command_type, command.idempotency_key)
+            request_hash = command.effective_request_hash()
+            reserved_hash = self._request_hashes.get(request_key)
+            if reserved_hash is not None and reserved_hash != request_hash:
+                return self._failure(command, "emotion reservation request conflict", status="conflict")
+            self._request_hashes[request_key] = request_hash
+            await asyncio.to_thread(self._persist_state)
+        provider = self.emotion_input_provider or (lambda value: observation_input(self, value))
+        with trace_scope(event_id=command.event_id, command_id=command.command_id, phase="emotion_appraisal"):
+            observation = await self._affect_thread.run(self.emotion_service.existing_input, command.payload["context_id"])
+            dropped = []
+            if observation is None:
+                observation = await self._affect_thread.run(provider, command)
+                observation, dropped = await self._affect_thread.run(self.emotion_service.drop_conflicting_new_sources, observation)
+            frame = await self._affect_thread.run(self.emotion_service.observe, observation)
+            guidance = await self._affect_thread.run(self.emotion_service.guidance, frame)
+        async with self._lock:
+            if command.receive_seq >= self._cursor:
+                self._event_id = command.event_id
+            self._cursor = max(self._cursor, command.receive_seq)
+            result = DomainCommandResult[dict](command_id=command.command_id,
+                command_type=command.command_type, status="applied",
+                request_hash=command.effective_request_hash(), committed_revision=self._revision,
+                acknowledged_event_id=command.event_id, acknowledged_receive_seq=command.receive_seq,
+                result={"accepted_ids": self.emotion_service.accepted_new_sources(frame.context_id),
+                        "dropped_conflict_ids": dropped, "emotion_revision": frame.revision,
+                        "frame_status": frame.status, "guidance_status": guidance.status,
+                        "appraisal_ms": frame.diagnostics.get("elapsed_ms"),
+                        "guidance_ms": guidance.diagnostics.get("elapsed_ms")},
+                completed_at=_utc_now())
+            self._remember(command, result)
+            await asyncio.to_thread(self._persist_state)
+            return result
 
     async def emotion_guidance(self, command):
         reference = command.payload.get("emotion_context_ref")
@@ -1222,6 +1237,7 @@ class PipelineCognitiveAdapter:
         workers = tuple(self.research_tasks | self.command_tasks)
         if workers:
             await asyncio.gather(*workers, return_exceptions=True)
+        await self._affect_thread.close()
         async with self._lock:
             await asyncio.to_thread(self._flush_and_close)
 
@@ -1430,6 +1446,25 @@ class PipelineCognitiveAdapter:
             cognitive_maintenance=self._component_revisions["maintenance"],
         )
 
+    def _persist_emotion_state(self) -> None:
+        # A background emotion commit must not checkpoint or publish an
+        # unrelated foreground command that is still constructing its result.
+        if self.state_path is None:
+            return
+        with self.emotion_service.persistence_guard(), self._persistence_lock:
+            versions, rows = self.emotion_service.persistence_changes()
+            if self._incremental_enabled:
+                assert self._state_store is not None
+                self._state_store.commit(rows)
+                self._state_store.checkpoint()
+            else:
+                # Replace only emotion in the last durable JSON projection.
+                # Other owner fields may be mid-command on the foreground lane.
+                payload = json.loads(self.state_path.read_text(encoding="utf-8")) if self.state_path.exists() else json.loads(self._legacy_initial_state)
+                payload["emotion"] = self.emotion_service.snapshot()
+                write_checkpoint(self.state_path, payload)
+            self.emotion_service.acknowledge_persistence(versions)
+
     def _persist_state(self) -> None:
         if self.state_path is None:
             self._publish_snapshot()
@@ -1502,6 +1537,7 @@ class PipelineCognitiveAdapter:
         with measure_stage("persistence.replace"):
             replace_path(temporary, self.state_path)
         self._acknowledge_loaded_state()
+        self._legacy_initial_state = None
         self._publish_snapshot()
 
     def _legacy_state_payload(self):

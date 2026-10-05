@@ -1,0 +1,56 @@
+{
+  "release_id": "20261006-background-queues-v2",
+  "previous_release": "20261006-background-queues-v1",
+  "config_hashes": {
+    "/etc/neuralcloud/homeostasis-profile.json": "38b29b27bc07f3c9baa6b2d29f39ca335c3ecd28fc6aa350600cd67718683781",
+    "/etc/neuralcloud/gui-settings.json": "13914b7f16d06cd3a544d059247f24879a09d20b506208bf3fa9db06d41df695",
+    "/etc/neuralcloud/structured-llm.json": "84523b0df11e938d2a451cc7e01e8ed69a17fe1f8f9f41a94621330047343f4c",
+    "/etc/neuralcloud/main-fallback.json": "34249eaf819a3ae62c83b31eb010ca359e25108c74aecb39f99e797c22f785db",
+    "/etc/neuralcloud/watcher.json": "d5c52326876dab16e032a83bbd8aecb12fb751cc8afb24b808b8292c329acd5f",
+    "/etc/neuralcloud/session.json": "5c2ba3483536856086d24046d84ad42a98cdd12239d03670dd66f1242b176a91",
+    "/etc/neuralcloud/emotion-deepseek.json": "05dc77d99b4875e72871cfd0b4583c0d1591488123a41924328011f892e38324",
+    "/etc/neuralcloud/deploy.pre-emotion-20260917.json": "2d33337999871fd9eb4b70de8bd90825f07adf7504aabb21fbebcf3d6cc29d11",
+    "/etc/neuralcloud/deploy.before-board-repair-20260917.json": "4a0dce38a681c9328206d14527eaf546600ad786648bc049593f793d7d80ae4b",
+    "/etc/neuralcloud/diary.json": "e6492a2ce46e5b014d30a344cfbcd6fd415b42371206c45804f9a693affecb6e",
+    "/etc/neuralcloud/direct.json": "d922f9282ffa26d3252c02b84c3845ef82a0bdfb98cdfa01bb88e74328351726",
+    "/etc/neuralcloud/manifest.json": "0759b3980e066223294649121e16e0937252234e20dad08848bf1d7635dc7feb",
+    "/etc/neuralcloud/deploy.json": "007a434c72d3ae37c32240cd4c7519f6d1d11d872666fce18bebd426fa1b41c4",
+    "/etc/neuralcloud/direct.before-disable-1060979317-20260917T032643Z.json": "3e127c6ec469b8955ed07b17741de441b39e449ae616a6afce08ecb1eb89a0c2",
+    "/etc/neuralcloud/board-client.json": "6797f63a65f014134816cd06a62552d2abee3005e6212b25ead0c421692ed5a4"
+  },
+  "tests": [
+    "tests/test_runtime_background_queues.py",
+    "tests/test_runtime_affect_worker.py",
+    "tests/test_emotion_service.py",
+    "tests/test_emotion_runtime.py",
+    "tests/test_runtime_supervisor.py",
+    "tests/test_runtime_qq_deadline.py",
+    "tests/test_cognitive_incremental_store.py",
+    "tests/test_board_runtime.py",
+    "tests/test_diary_controller.py",
+    "tests/test_self_check_controller.py",
+    "tests/test_self_check_tool.py",
+    "tests/test_board_diary_recovery.py",
+    "tests/test_autonomous_capabilities.py",
+    "tests/test_goal_runtime.py",
+    "tests/test_goal_runtime_review.py",
+    "tests/test_runtime_recovery.py",
+    "tests/test_runtime_rpc.py",
+    "tests/test_body_state_runtime.py",
+    "tests/test_runtime_homeostasis_api.py",
+    "tests/test_production_runtime.py"
+  ],
+  "expected_tests": 340,
+  "files": [
+    {
+      "path": "harness/runtime/supervisor.py",
+      "before_sha256": "0057b4f48a0b6c82318a754765bdf68f3f8112cec4c1245bd1b0169cf08a1324",
+      "after_sha256": "2358a82b770e7e434b62a34ac58fdbb40b8243282bacbbee72b288e58c14c0c2"
+    },
+    {
+      "path": "tests/test_runtime_background_queues.py",
+      "before_sha256": "2ddb55f20010c5041d5115d59a9653e700ab1ad5feca11643b09522876aa54ef",
+      "after_sha256": "ebbb7093d73c584dac6385070491162e469bc455aaec861be01479892d6cfe5e"
+    }
+  ]
+}

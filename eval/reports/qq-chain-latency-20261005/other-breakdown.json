@@ -1,0 +1,852 @@
+{
+  "captured_at": "2026-10-05T15:03:32.909921+00:00",
+  "version": "20261005-structured-routing-v1",
+  "n": 7,
+  "totals_s": {
+    "other_s": 32.511270999999994,
+    "pre_admission_s": 14.582799999999999,
+    "runtime_queue_s": 3.08574,
+    "web_command_s": 11.968608999999999,
+    "web_model_s": 4.419408,
+    "web_outside_model_s": 7.549200999999999,
+    "affect_read_s": 0.038208,
+    "decision_other_s": 2.1645619999999997,
+    "persist_s": 0.022159,
+    "remaining_s": 0.6491929999999944
+  },
+  "rows": [
+    {
+      "local_time": "22:50:54",
+      "message": "Misty,现在可以看见吗",
+      "trace_id": "qq-trace:b6a6256b332a4399ac64bf956836e1ee",
+      "runtime_event_id": "qq-turn:da348a698f5648d5c9a70f0e4a46f9ae3874fd3c064f53c875f80d51ed5f3325",
+      "termination": "sent",
+      "other_s": 4.488934,
+      "decision_other_s": 0.2481869999999997,
+      "persist_s": 0.00322,
+      "caller_rpc_start": "2026-10-05T14:50:54.321644+00:00",
+      "runtime_accepted": "2026-10-05T14:50:54.763639+00:00",
+      "runtime_processing_started": "2026-10-05T14:50:54.787684+00:00",
+      "pre_admission_s": 0.441995,
+      "runtime_queue_s": 0.024045,
+      "web_command_s": 3.683311,
+      "web_model_s": 0.9317580000000001,
+      "web_outside_model_s": 2.7515529999999995,
+      "affect_read_s": 0.006324,
+      "affect_guidance_status": "fallback",
+      "history_selection_s": 0.078612,
+      "background_affect_s": 5.644303,
+      "background_affect_model_s": 2.205461,
+      "background_affect_outside_model_s": 3.4388419999999997,
+      "web_commands": [
+        {
+          "command_id": "cmd_dff5c98c",
+          "command_type": "PrepareWebStep",
+          "event_id": "qq-turn:da348a698f5648d5c9a70f0e4a46f9ae3874fd3c064f53c875f80d51ed5f3325",
+          "start": "2026-10-05T14:50:54.792472+00:00",
+          "service": "cognitive",
+          "end": "2026-10-05T14:50:58.475783+00:00",
+          "status": "applied",
+          "choice": {
+            "kind": "finish",
+            "offer_id": null,
+            "arguments": {}
+          },
+          "duration_s": 3.683311,
+          "models": [
+            {
+              "span_id": "model_request_c38093adfc514e35bdbe19e2cfe2e9b4",
+              "phase": "web_selection",
+              "model": "deepseek-flash",
+              "start": "2026-10-05T14:50:56.830359+00:00",
+              "end": "2026-10-05T14:50:57.762110+00:00",
+              "duration_s": 0.9317580000000001
+            }
+          ],
+          "model_s": 0.9317580000000001,
+          "outside_model_s": 2.7515529999999995
+        }
+      ],
+      "qq_command": {
+        "command_id": "cmd_172f1098",
+        "command_type": "PrepareQQResponse",
+        "event_id": "qq-turn:da348a698f5648d5c9a70f0e4a46f9ae3874fd3c064f53c875f80d51ed5f3325",
+        "start": "2026-10-05T14:50:58.486101+00:00",
+        "service": "cognitive",
+        "end": "2026-10-05T14:51:24.528338+00:00",
+        "status": "applied",
+        "choice": null,
+        "duration_s": 26.042237,
+        "models": [
+          {
+            "span_id": "model_request_49553d2c4cad48e4ada152329374a2fa",
+            "phase": "qq_gate",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T14:51:13.987338+00:00",
+            "end": "2026-10-05T14:51:15.610157+00:00",
+            "duration_s": 1.622824
+          },
+          {
+            "span_id": "model_request_49e6b0f90a944925b9491f36a333178c",
+            "phase": "qq_persona",
+            "model": "qwen3.8-27b",
+            "start": "2026-10-05T14:51:15.653070+00:00",
+            "end": "2026-10-05T14:51:24.489168+00:00",
+            "duration_s": 8.836112
+          }
+        ],
+        "model_s": 10.458936,
+        "outside_model_s": 15.583301
+      },
+      "background_affect_command": {
+        "command_id": "cmd_463a1369",
+        "command_type": "AppraiseAffect",
+        "event_id": "qq-turn:da348a698f5648d5c9a70f0e4a46f9ae3874fd3c064f53c875f80d51ed5f3325",
+        "start": "2026-10-05T14:51:24.536284+00:00",
+        "service": "cognitive",
+        "end": "2026-10-05T14:51:30.180587+00:00",
+        "status": "applied",
+        "choice": null,
+        "duration_s": 5.644303,
+        "models": [
+          {
+            "span_id": "model_request_8cded5fe63184c8c92d5f696931a23af",
+            "phase": "emotion_appraisal",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T14:51:24.562008+00:00",
+            "end": "2026-10-05T14:51:25.645615+00:00",
+            "duration_s": 1.083611
+          },
+          {
+            "span_id": "model_request_3fbc36d2c3234aef945339d17a117b22",
+            "phase": "emotion_guidance",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T14:51:25.650290+00:00",
+            "end": "2026-10-05T14:51:26.772139+00:00",
+            "duration_s": 1.12185
+          }
+        ],
+        "model_s": 2.205461,
+        "outside_model_s": 3.4388419999999997
+      },
+      "remaining_s": 0.08185200000000048
+    },
+    {
+      "local_time": "22:51:38",
+      "message": "已经做完了",
+      "trace_id": "qq-trace:50fe05d5e91c4a7cb16dab50756ca2d9",
+      "runtime_event_id": "qq-turn:04aeccecb8892302536b2dcff5a70fb53cf1d06a473106ad13a865b40ebd9417",
+      "termination": "sent",
+      "other_s": 1.3395580000000002,
+      "decision_other_s": 0.21920800000000185,
+      "persist_s": 0.002285,
+      "caller_rpc_start": "2026-10-05T14:51:38.459441+00:00",
+      "runtime_accepted": "2026-10-05T14:51:38.463348+00:00",
+      "runtime_processing_started": "2026-10-05T14:51:38.486670+00:00",
+      "pre_admission_s": 0.003907,
+      "runtime_queue_s": 0.023322,
+      "web_command_s": 0.99898,
+      "web_model_s": 0.943491,
+      "web_outside_model_s": 0.05548900000000001,
+      "affect_read_s": 0.005213,
+      "affect_guidance_status": "fallback",
+      "history_selection_s": 0.084492,
+      "background_affect_s": 2.879525,
+      "background_affect_model_s": 2.427483,
+      "background_affect_outside_model_s": 0.45204200000000005,
+      "web_commands": [
+        {
+          "command_id": "cmd_17ba231c",
+          "command_type": "PrepareWebStep",
+          "event_id": "qq-turn:04aeccecb8892302536b2dcff5a70fb53cf1d06a473106ad13a865b40ebd9417",
+          "start": "2026-10-05T14:51:38.490458+00:00",
+          "service": "cognitive",
+          "end": "2026-10-05T14:51:39.489438+00:00",
+          "status": "applied",
+          "choice": {
+            "kind": "finish",
+            "offer_id": null,
+            "arguments": {}
+          },
+          "duration_s": 0.99898,
+          "models": [
+            {
+              "span_id": "model_request_2a0ca7f7f39b4ca89b1950ff9d9e283e",
+              "phase": "web_selection",
+              "model": "deepseek-flash",
+              "start": "2026-10-05T14:51:38.529364+00:00",
+              "end": "2026-10-05T14:51:39.472856+00:00",
+              "duration_s": 0.943491
+            }
+          ],
+          "model_s": 0.943491,
+          "outside_model_s": 0.05548900000000001
+        }
+      ],
+      "qq_command": {
+        "command_id": "cmd_7a86ad43",
+        "command_type": "PrepareQQResponse",
+        "event_id": "qq-turn:04aeccecb8892302536b2dcff5a70fb53cf1d06a473106ad13a865b40ebd9417",
+        "start": "2026-10-05T14:51:39.499145+00:00",
+        "service": "cognitive",
+        "end": "2026-10-05T14:52:03.833333+00:00",
+        "status": "applied",
+        "choice": null,
+        "duration_s": 24.334188,
+        "models": [
+          {
+            "span_id": "model_request_7e752997a5114ca4a6be9f7400eef09d",
+            "phase": "qq_gate",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T14:51:52.895747+00:00",
+            "end": "2026-10-05T14:51:54.727434+00:00",
+            "duration_s": 1.831693
+          },
+          {
+            "span_id": "model_request_4305d27445b74946981b29a13234cb06",
+            "phase": "qq_persona",
+            "model": "qwen3.8-27b",
+            "start": "2026-10-05T14:51:54.770964+00:00",
+            "end": "2026-10-05T14:52:03.795203+00:00",
+            "duration_s": 9.024259
+          }
+        ],
+        "model_s": 10.855952,
+        "outside_model_s": 13.478236
+      },
+      "background_affect_command": {
+        "command_id": "cmd_7ea109d7",
+        "command_type": "AppraiseAffect",
+        "event_id": "qq-turn:04aeccecb8892302536b2dcff5a70fb53cf1d06a473106ad13a865b40ebd9417",
+        "start": "2026-10-05T14:52:03.841353+00:00",
+        "service": "cognitive",
+        "end": "2026-10-05T14:52:06.720878+00:00",
+        "status": "applied",
+        "choice": null,
+        "duration_s": 2.879525,
+        "models": [
+          {
+            "span_id": "model_request_1563f7f9291f4051acbad09bab5c2576",
+            "phase": "emotion_appraisal",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T14:52:03.866075+00:00",
+            "end": "2026-10-05T14:52:05.031454+00:00",
+            "duration_s": 1.165386
+          },
+          {
+            "span_id": "model_request_4c6b803039c840adb6fa6c6681ded30a",
+            "phase": "emotion_guidance",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T14:52:05.036149+00:00",
+            "end": "2026-10-05T14:52:06.298234+00:00",
+            "duration_s": 1.262097
+          }
+        ],
+        "model_s": 2.427483,
+        "outside_model_s": 0.45204200000000005
+      },
+      "remaining_s": 0.08664299999999847
+    },
+    {
+      "local_time": "22:55:43",
+      "message": "现在,Misty的状态应该稳定了",
+      "trace_id": "qq-trace:16a01f666c1146feb655d8adedcef6e7",
+      "runtime_event_id": "qq-turn:b76d6647dee41f06eb5ed80fbc7ce92f3a39411528ecb43ecfca179d804cc7a8",
+      "termination": "natural_wait",
+      "other_s": 3.1495710000000017,
+      "decision_other_s": 0.5525559999999998,
+      "persist_s": 0.0033799999999999998,
+      "caller_rpc_start": "2026-10-05T14:55:43.172813+00:00",
+      "runtime_accepted": "2026-10-05T14:55:43.175760+00:00",
+      "runtime_processing_started": "2026-10-05T14:55:43.204633+00:00",
+      "pre_admission_s": 0.002947,
+      "runtime_queue_s": 0.028873,
+      "web_command_s": 2.440539,
+      "web_model_s": 0.653952,
+      "web_outside_model_s": 1.786587,
+      "affect_read_s": 0.0043479999999999994,
+      "affect_guidance_status": "model",
+      "history_selection_s": 0.094606,
+      "background_affect_s": 2.914331,
+      "background_affect_model_s": 2.493727,
+      "background_affect_outside_model_s": 0.420604,
+      "web_commands": [
+        {
+          "command_id": "cmd_ea7c1ec8",
+          "command_type": "PrepareWebStep",
+          "event_id": "qq-turn:b76d6647dee41f06eb5ed80fbc7ce92f3a39411528ecb43ecfca179d804cc7a8",
+          "start": "2026-10-05T14:55:43.209748+00:00",
+          "service": "cognitive",
+          "end": "2026-10-05T14:55:45.650287+00:00",
+          "status": "applied",
+          "choice": {
+            "kind": "finish",
+            "offer_id": null,
+            "arguments": {}
+          },
+          "duration_s": 2.440539,
+          "models": [
+            {
+              "span_id": "model_request_7ab6936e4e3f45d7862e344b0bc46caf",
+              "phase": "web_selection",
+              "model": "deepseek-flash",
+              "start": "2026-10-05T14:55:44.987690+00:00",
+              "end": "2026-10-05T14:55:45.641641+00:00",
+              "duration_s": 0.653952
+            }
+          ],
+          "model_s": 0.653952,
+          "outside_model_s": 1.786587
+        }
+      ],
+      "qq_command": {
+        "command_id": "cmd_5b9c3065",
+        "command_type": "PrepareQQResponse",
+        "event_id": "qq-turn:b76d6647dee41f06eb5ed80fbc7ce92f3a39411528ecb43ecfca179d804cc7a8",
+        "start": "2026-10-05T14:55:45.658677+00:00",
+        "service": "cognitive",
+        "end": "2026-10-05T14:56:06.012529+00:00",
+        "status": "applied",
+        "choice": null,
+        "duration_s": 20.353852,
+        "models": [
+          {
+            "span_id": "model_request_c72adc83a42448b7ae13b8212ff5b202",
+            "phase": "qq_gate",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T14:56:03.965338+00:00",
+            "end": "2026-10-05T14:56:05.934400+00:00",
+            "duration_s": 1.969073
+          }
+        ],
+        "model_s": 1.969073,
+        "outside_model_s": 18.384778999999998
+      },
+      "background_affect_command": {
+        "command_id": "cmd_dac312a4",
+        "command_type": "AppraiseAffect",
+        "event_id": "qq-turn:b76d6647dee41f06eb5ed80fbc7ce92f3a39411528ecb43ecfca179d804cc7a8",
+        "start": "2026-10-05T14:56:06.021338+00:00",
+        "service": "cognitive",
+        "end": "2026-10-05T14:56:08.935669+00:00",
+        "status": "applied",
+        "choice": null,
+        "duration_s": 2.914331,
+        "models": [
+          {
+            "span_id": "model_request_6bb2347a2f1a49b5909598fd9f38f503",
+            "phase": "emotion_appraisal",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T14:56:06.086749+00:00",
+            "end": "2026-10-05T14:56:07.262838+00:00",
+            "duration_s": 1.176089
+          },
+          {
+            "span_id": "model_request_9b80207fcf5b4d54b8b011d95e8545a0",
+            "phase": "emotion_guidance",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T14:56:07.273860+00:00",
+            "end": "2026-10-05T14:56:08.591484+00:00",
+            "duration_s": 1.3176379999999999
+          }
+        ],
+        "model_s": 2.493727,
+        "outside_model_s": 0.420604
+      },
+      "remaining_s": 0.11692800000000192
+    },
+    {
+      "local_time": "22:55:56",
+      "message": "兜兜转转还是得本地部署啊",
+      "trace_id": "qq-trace:660449445409441cbfa3910f989f3b3c",
+      "runtime_event_id": "qq-turn:63cc262e5727b62445d26d120cc45c1f4fadae3321a61f542f6764511b9452f4",
+      "termination": "sent",
+      "other_s": 3.7921189999999996,
+      "decision_other_s": 0.23087199999999974,
+      "persist_s": 0.002826,
+      "caller_rpc_start": "2026-10-05T14:56:06.046643+00:00",
+      "runtime_accepted": "2026-10-05T14:56:08.937957+00:00",
+      "runtime_processing_started": "2026-10-05T14:56:08.963701+00:00",
+      "pre_admission_s": 2.891314,
+      "runtime_queue_s": 0.025744,
+      "web_command_s": 0.553412,
+      "web_model_s": 0.509818,
+      "web_outside_model_s": 0.04359400000000002,
+      "affect_read_s": 0.004538,
+      "affect_guidance_status": "fallback",
+      "history_selection_s": 0.087333,
+      "background_affect_s": 2.816917,
+      "background_affect_model_s": 2.6553390000000006,
+      "background_affect_outside_model_s": 0.16157799999999956,
+      "web_commands": [
+        {
+          "command_id": "cmd_96ed2586",
+          "command_type": "PrepareWebStep",
+          "event_id": "qq-turn:63cc262e5727b62445d26d120cc45c1f4fadae3321a61f542f6764511b9452f4",
+          "start": "2026-10-05T14:56:08.968903+00:00",
+          "service": "cognitive",
+          "end": "2026-10-05T14:56:09.522315+00:00",
+          "status": "applied",
+          "choice": {
+            "kind": "finish",
+            "offer_id": null,
+            "arguments": {}
+          },
+          "duration_s": 0.553412,
+          "models": [
+            {
+              "span_id": "model_request_05ac794d339148f786ce0806f7b85e9f",
+              "phase": "web_selection",
+              "model": "deepseek-flash",
+              "start": "2026-10-05T14:56:09.001759+00:00",
+              "end": "2026-10-05T14:56:09.511577+00:00",
+              "duration_s": 0.509818
+            }
+          ],
+          "model_s": 0.509818,
+          "outside_model_s": 0.04359400000000002
+        }
+      ],
+      "qq_command": {
+        "command_id": "cmd_215fbee2",
+        "command_type": "PrepareQQResponse",
+        "event_id": "qq-turn:63cc262e5727b62445d26d120cc45c1f4fadae3321a61f542f6764511b9452f4",
+        "start": "2026-10-05T14:56:09.531112+00:00",
+        "service": "cognitive",
+        "end": "2026-10-05T14:56:30.921473+00:00",
+        "status": "applied",
+        "choice": null,
+        "duration_s": 21.390361,
+        "models": [
+          {
+            "span_id": "model_request_fcbe7d982ec0417db02a03e5aa5267ac",
+            "phase": "qq_gate",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T14:56:19.614056+00:00",
+            "end": "2026-10-05T14:56:21.481628+00:00",
+            "duration_s": 1.867581
+          },
+          {
+            "span_id": "model_request_334af037dc9649d99b6777722c37c15e",
+            "phase": "qq_persona",
+            "model": "qwen3.8-27b",
+            "start": "2026-10-05T14:56:21.526392+00:00",
+            "end": "2026-10-05T14:56:30.883537+00:00",
+            "duration_s": 9.357156999999999
+          }
+        ],
+        "model_s": 11.224737999999999,
+        "outside_model_s": 10.165623
+      },
+      "background_affect_command": {
+        "command_id": "cmd_87ab2b21",
+        "command_type": "AppraiseAffect",
+        "event_id": "qq-turn:63cc262e5727b62445d26d120cc45c1f4fadae3321a61f542f6764511b9452f4",
+        "start": "2026-10-05T14:56:30.929501+00:00",
+        "service": "cognitive",
+        "end": "2026-10-05T14:56:33.746418+00:00",
+        "status": "applied",
+        "choice": null,
+        "duration_s": 2.816917,
+        "models": [
+          {
+            "span_id": "model_request_87d9a95b2b7e4ba39937f0ba24b8262d",
+            "phase": "emotion_appraisal",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T14:56:30.955014+00:00",
+            "end": "2026-10-05T14:56:32.342626+00:00",
+            "duration_s": 1.3876220000000001
+          },
+          {
+            "span_id": "model_request_3a0d678c2264465fb376d476303d3796",
+            "phase": "emotion_guidance",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T14:56:32.348339+00:00",
+            "end": "2026-10-05T14:56:33.616045+00:00",
+            "duration_s": 1.2677170000000002
+          }
+        ],
+        "model_s": 2.6553390000000006,
+        "outside_model_s": 0.16157799999999956
+      },
+      "remaining_s": 0.08341299999999974
+    },
+    {
+      "local_time": "23:00:36",
+      "message": "[图片 1]",
+      "trace_id": "qq-trace:f8d2076429794ef0af7004847bb6548f",
+      "runtime_event_id": "qq-turn:14abe6ab8bc01b73bcc6799e5746d7792721af9b197a44bc51d7d1a0f6be61a8",
+      "termination": "natural_wait",
+      "other_s": 5.457504999999998,
+      "decision_other_s": 0.349896,
+      "persist_s": 0.005263,
+      "caller_rpc_start": "2026-10-05T15:00:36.270586+00:00",
+      "runtime_accepted": "2026-10-05T15:00:38.934196+00:00",
+      "runtime_processing_started": "2026-10-05T15:00:38.957976+00:00",
+      "pre_admission_s": 2.66361,
+      "runtime_queue_s": 0.02378,
+      "web_command_s": 2.321439,
+      "web_model_s": 0.6004160000000001,
+      "web_outside_model_s": 1.7210229999999997,
+      "affect_read_s": 0.004611,
+      "affect_guidance_status": "model",
+      "history_selection_s": 0.104628,
+      "background_affect_s": 5.866122,
+      "background_affect_model_s": 2.3338159999999997,
+      "background_affect_outside_model_s": 3.532306,
+      "web_commands": [
+        {
+          "command_id": "cmd_057e6aad",
+          "command_type": "PrepareWebStep",
+          "event_id": "qq-turn:14abe6ab8bc01b73bcc6799e5746d7792721af9b197a44bc51d7d1a0f6be61a8",
+          "start": "2026-10-05T15:00:38.962545+00:00",
+          "service": "cognitive",
+          "end": "2026-10-05T15:00:41.283984+00:00",
+          "status": "applied",
+          "choice": {
+            "kind": "finish",
+            "offer_id": null,
+            "arguments": {}
+          },
+          "duration_s": 2.321439,
+          "models": [
+            {
+              "span_id": "model_request_62136417b3f64cc1bc4381d171d62802",
+              "phase": "web_selection",
+              "model": "deepseek-flash",
+              "start": "2026-10-05T15:00:40.671414+00:00",
+              "end": "2026-10-05T15:00:41.271826+00:00",
+              "duration_s": 0.6004160000000001
+            }
+          ],
+          "model_s": 0.6004160000000001,
+          "outside_model_s": 1.7210229999999997
+        }
+      ],
+      "qq_command": {
+        "command_id": "cmd_580aefa7",
+        "command_type": "PrepareQQResponse",
+        "event_id": "qq-turn:14abe6ab8bc01b73bcc6799e5746d7792721af9b197a44bc51d7d1a0f6be61a8",
+        "start": "2026-10-05T15:00:41.292825+00:00",
+        "service": "cognitive",
+        "end": "2026-10-05T15:00:58.927319+00:00",
+        "status": "applied",
+        "choice": null,
+        "duration_s": 17.634494,
+        "models": [
+          {
+            "span_id": "model_request_1d993bcda3e7497883b5c3fbbfc87743",
+            "phase": "qq_gate",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T15:00:57.751650+00:00",
+            "end": "2026-10-05T15:00:58.885271+00:00",
+            "duration_s": 1.133619
+          }
+        ],
+        "model_s": 1.133619,
+        "outside_model_s": 16.500875
+      },
+      "background_affect_command": {
+        "command_id": "cmd_23d3f55b",
+        "command_type": "AppraiseAffect",
+        "event_id": "qq-turn:14abe6ab8bc01b73bcc6799e5746d7792721af9b197a44bc51d7d1a0f6be61a8",
+        "start": "2026-10-05T15:00:58.935241+00:00",
+        "service": "cognitive",
+        "end": "2026-10-05T15:01:04.801363+00:00",
+        "status": "applied",
+        "choice": null,
+        "duration_s": 5.866122,
+        "models": [
+          {
+            "span_id": "model_request_6f6af2faa2e140ca803665193cdf3944",
+            "phase": "emotion_appraisal",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T15:01:00.162689+00:00",
+            "end": "2026-10-05T15:01:01.539642+00:00",
+            "duration_s": 1.3769639999999999
+          },
+          {
+            "span_id": "model_request_fd4692416c3f40ca9fa27f8b7f9afe37",
+            "phase": "emotion_guidance",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T15:01:01.545139+00:00",
+            "end": "2026-10-05T15:01:02.501974+00:00",
+            "duration_s": 0.9568519999999999
+          }
+        ],
+        "model_s": 2.3338159999999997,
+        "outside_model_s": 3.532306
+      },
+      "remaining_s": 0.08890599999999793
+    },
+    {
+      "local_time": "23:00:55",
+      "message": "晚上好哇Misty",
+      "trace_id": "qq-trace:cee322a9320d423ebcb165ebbcc609e2",
+      "runtime_event_id": "qq-turn:eaa6c1e035f1a6c64f4a7b1e41733978a76624bf7f48eb1b57bc5a733351ae86",
+      "termination": "direct_newer_context",
+      "other_s": 11.219224,
+      "decision_other_s": 0.3300870000000007,
+      "persist_s": 0.002716,
+      "caller_rpc_start": "2026-10-05T15:00:58.963918+00:00",
+      "runtime_accepted": "2026-10-05T15:01:04.803270+00:00",
+      "runtime_processing_started": "2026-10-05T15:01:07.740595+00:00",
+      "pre_admission_s": 5.839352,
+      "runtime_queue_s": 2.937325,
+      "web_command_s": 1.970928,
+      "web_model_s": 0.7799729999999999,
+      "web_outside_model_s": 1.1909550000000002,
+      "affect_read_s": 0.005307,
+      "affect_guidance_status": "fallback",
+      "history_selection_s": 0.101897,
+      "background_affect_s": 2.774259,
+      "background_affect_model_s": 2.418309,
+      "background_affect_outside_model_s": 0.35595,
+      "web_commands": [
+        {
+          "command_id": "cmd_79b97d94",
+          "command_type": "PrepareWebStep",
+          "event_id": "qq-turn:eaa6c1e035f1a6c64f4a7b1e41733978a76624bf7f48eb1b57bc5a733351ae86",
+          "start": "2026-10-05T15:01:07.745376+00:00",
+          "service": "cognitive",
+          "end": "2026-10-05T15:01:09.716304+00:00",
+          "status": "applied",
+          "choice": {
+            "kind": "finish",
+            "offer_id": null,
+            "arguments": {}
+          },
+          "duration_s": 1.970928,
+          "models": [
+            {
+              "span_id": "model_request_bf15b7e4bceb47599acad61fdc306d66",
+              "phase": "web_selection",
+              "model": "deepseek-flash",
+              "start": "2026-10-05T15:01:08.925207+00:00",
+              "end": "2026-10-05T15:01:09.705180+00:00",
+              "duration_s": 0.7799729999999999
+            }
+          ],
+          "model_s": 0.7799729999999999,
+          "outside_model_s": 1.1909550000000002
+        }
+      ],
+      "qq_command": {
+        "command_id": "cmd_5fa6b147",
+        "command_type": "PrepareQQResponse",
+        "event_id": "qq-turn:eaa6c1e035f1a6c64f4a7b1e41733978a76624bf7f48eb1b57bc5a733351ae86",
+        "start": "2026-10-05T15:01:09.725447+00:00",
+        "service": "cognitive",
+        "end": "2026-10-05T15:01:26.012741+00:00",
+        "status": "applied",
+        "choice": null,
+        "duration_s": 16.287294,
+        "models": [
+          {
+            "span_id": "model_request_b4265469597045fe9684ee2f1f9fd0cd",
+            "phase": "qq_gate",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T15:01:13.903960+00:00",
+            "end": "2026-10-05T15:01:16.219897+00:00",
+            "duration_s": 2.315945
+          },
+          {
+            "span_id": "model_request_69c1eb539b554e3d85c41f0e76d81623",
+            "phase": "qq_persona",
+            "model": "qwen3.8-27b",
+            "start": "2026-10-05T15:01:16.306748+00:00",
+            "end": "2026-10-05T15:01:25.535321+00:00",
+            "duration_s": 9.22858
+          }
+        ],
+        "model_s": 11.544525,
+        "outside_model_s": 4.742768999999999
+      },
+      "background_affect_command": {
+        "command_id": "cmd_7b822bfb",
+        "command_type": "AppraiseAffect",
+        "event_id": "qq-turn:eaa6c1e035f1a6c64f4a7b1e41733978a76624bf7f48eb1b57bc5a733351ae86",
+        "start": "2026-10-05T15:01:26.022394+00:00",
+        "service": "cognitive",
+        "end": "2026-10-05T15:01:28.796653+00:00",
+        "status": "applied",
+        "choice": null,
+        "duration_s": 2.774259,
+        "models": [
+          {
+            "span_id": "model_request_aaea5977b3b543f0bf5285099e5d0031",
+            "phase": "emotion_appraisal",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T15:01:26.047796+00:00",
+            "end": "2026-10-05T15:01:27.351063+00:00",
+            "duration_s": 1.303272
+          },
+          {
+            "span_id": "model_request_ce957493984840c6babaa5819adcf08a",
+            "phase": "emotion_guidance",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T15:01:27.356017+00:00",
+            "end": "2026-10-05T15:01:28.471047+00:00",
+            "duration_s": 1.115037
+          }
+        ],
+        "model_s": 2.418309,
+        "outside_model_s": 0.35595
+      },
+      "remaining_s": 0.1335090000000001
+    },
+    {
+      "local_time": "23:00:59",
+      "message": "好久不见",
+      "trace_id": "qq-trace:97d4330b352b48de941a038d3b066514",
+      "runtime_event_id": "qq-turn:fb8c4b0ba3100d1cfd8e834ee2fe32ddf35cacf0c573fc23a8fc7824b788827f",
+      "termination": "sent",
+      "other_s": 3.0643599999999935,
+      "decision_other_s": 0.23375599999999785,
+      "persist_s": 0.002469,
+      "caller_rpc_start": "2026-10-05T15:01:26.062194+00:00",
+      "runtime_accepted": "2026-10-05T15:01:28.801869+00:00",
+      "runtime_processing_started": "2026-10-05T15:01:28.824520+00:00",
+      "pre_admission_s": 2.739675,
+      "runtime_queue_s": 0.022651,
+      "web_command_s": 0,
+      "web_model_s": 0,
+      "web_outside_model_s": 0,
+      "affect_read_s": 0.007867,
+      "affect_guidance_status": "model",
+      "history_selection_s": 0.09599200000000001,
+      "background_affect_s": 2.764097,
+      "background_affect_model_s": 2.580286,
+      "background_affect_outside_model_s": 0.18381099999999995,
+      "web_commands": [],
+      "qq_command": {
+        "command_id": "cmd_a5beedb9",
+        "command_type": "PrepareQQResponse",
+        "event_id": "qq-turn:fb8c4b0ba3100d1cfd8e834ee2fe32ddf35cacf0c573fc23a8fc7824b788827f",
+        "start": "2026-10-05T15:01:28.838639+00:00",
+        "service": "cognitive",
+        "end": "2026-10-05T15:01:51.883208+00:00",
+        "status": "applied",
+        "choice": null,
+        "duration_s": 23.044569,
+        "models": [
+          {
+            "span_id": "model_request_97893fc90a5a46668bcd759ecf4687d6",
+            "phase": "qq_gate",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T15:01:39.405973+00:00",
+            "end": "2026-10-05T15:01:41.579059+00:00",
+            "duration_s": 2.173089
+          },
+          {
+            "span_id": "model_request_aa1fb1f183a745fe8f78bbd3fdb4eba2",
+            "phase": "qq_persona",
+            "model": "qwen3.8-27b",
+            "start": "2026-10-05T15:01:41.626963+00:00",
+            "end": "2026-10-05T15:01:50.628368+00:00",
+            "duration_s": 9.001425
+          },
+          {
+            "span_id": "model_request_808104d69ead443b84e35c526a77ffa4",
+            "phase": "qq_persona",
+            "model": "deepseek-v4-flash",
+            "start": "2026-10-05T15:01:50.628955+00:00",
+            "end": "2026-10-05T15:01:51.869109+00:00",
+            "duration_s": 1.240172
+          }
+        ],
+        "model_s": 12.414686,
+        "outside_model_s": 10.629883
+      },
+      "background_affect_command": {
+        "command_id": "cmd_8c9330ce",
+        "command_type": "AppraiseAffect",
+        "event_id": "qq-turn:fb8c4b0ba3100d1cfd8e834ee2fe32ddf35cacf0c573fc23a8fc7824b788827f",
+        "start": "2026-10-05T15:01:51.890663+00:00",
+        "service": "cognitive",
+        "end": "2026-10-05T15:01:54.654760+00:00",
+        "status": "applied",
+        "choice": null,
+        "duration_s": 2.764097,
+        "models": [
+          {
+            "span_id": "model_request_9e8b5b002c0246f0a45fba670112e02b",
+            "phase": "emotion_appraisal",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T15:01:51.945779+00:00",
+            "end": "2026-10-05T15:01:53.259329+00:00",
+            "duration_s": 1.313551
+          },
+          {
+            "span_id": "model_request_bb8eb1b3c9e54354a0dad98b1e85ce93",
+            "phase": "emotion_guidance",
+            "model": "deepseek-flash",
+            "start": "2026-10-05T15:01:53.264438+00:00",
+            "end": "2026-10-05T15:01:54.531163+00:00",
+            "duration_s": 1.266735
+          }
+        ],
+        "model_s": 2.580286,
+        "outside_model_s": 0.18381099999999995
+      },
+      "remaining_s": 0.05794199999999572
+    }
+  ],
+  "heartbeat_overlap": [
+    {
+      "event_id": "evt_6608df8a",
+      "start": "2026-10-05T15:00:58.933278+00:00",
+      "end": "2026-10-05T15:01:04.791406+00:00",
+      "duration_s": 5.858128,
+      "apply_heartbeat_s": 0.01568,
+      "interoception_observed": "2026-10-05T15:00:58.955268+00:00",
+      "after_interoception_s": 5.836138
+    },
+    {
+      "event_id": "evt_688a65a9",
+      "start": "2026-10-05T15:01:04.793470+00:00",
+      "end": "2026-10-05T15:01:07.739426+00:00",
+      "duration_s": 2.945956,
+      "apply_heartbeat_s": 0.049068,
+      "interoception_observed": "2026-10-05T15:01:04.848095+00:00",
+      "after_interoception_s": 2.891331
+    }
+  ],
+  "guidance_status_counts": {
+    "fallback": 4,
+    "model": 3
+  },
+  "source_checks": {
+    "release": "/opt/neuralcloud/releases/20261005-structured-routing-v1",
+    "sha256": {
+      "harness/runtime/supervisor.py": "f7751607e83f76e44f803267ea9c298945b237025728cc08785d4dc78ca12ab3",
+      "harness/runtime/affect.py": "090a480c56dbe5428f7e7192eaf1d369b8410d831e22c6567223f439160833bf",
+      "harness/runtime/web_dialogue.py": "2b1cd487464ea7f1d8f04cc908bfa3c9c658cbe4142597f72ac4081a0d34ce05",
+      "harness/runtime/qq_pipeline.py": "88ae86cbf84aaea4b1da91e86dea67390710c3e0d5ce4ee752475b147313497f",
+      "harness/runtime/qq_turns.py": "54fafd43c891a3f7fcd6fa6187a8eb5d4163679645d31a9b584fb117e5717a57",
+      "harness/runtime/adapters.py": "8a1bd0e241206163e22eaa959f4b8e3728615b893e0633530a277c5e58b13754",
+      "harness/runtime/capabilities.py": "dcac7246ec62f210d71014f958203ef8e89d1a83eb09c7975fa972df7c9c2ff3",
+      "harness/runtime/board.py": "7d3611505d4fae74ce5bc79a1c2d149714d721f5f7a0ecf569e4c7c0138deeab",
+      "harness/runtime/diary.py": "95909e660b55e3c4cf251ce6c9543575d1c64dbf400b074efd688a8d53399e4d",
+      "harness/runtime/daily_report.py": "99334f8fc9717b3891f2f38e419aabc58ac3d3e9a79aacfef4d3f6b4bec55a7c",
+      "harness/runtime/self_check.py": "9599ec147f25b83043ef512e9a6673adc285dfef8d2eb8147e74fd33d271e9d3",
+      "harness/cognitive/web.py": "dc96de0d58b838db89967ad96fef15fa8f566b59f9707c35be7fad0a8627ad25",
+      "harness/qq/decision.py": "70d643c462c63d0d1e735630efe50ba2b74ae6ab9365cf4061631b3ab79c3b0b",
+      "harness/qq/direct_source.py": "11e1602c48b609a3096fb104ab390d7f90f1c61ef8e69937273e719eafe80ac0"
+    }
+  },
+  "source_sha256": {
+    ".tmp/latency-snapshot-20261005.json": "0f43a010c0934f1049e131838cb2169029213de45c066bd7c24376c16b8cc29f",
+    ".tmp/latency-other-runtime-20261005.json": "5acf84e7b19bf1c13e293a2c7ff20c2e4ce4237d18355f420f23a9d936e40c7d",
+    ".tmp/latency-other-scope-20261005.json": "b47c5c678f68359da58c5b5ee4868b65028a1ad746eb683df5d659f76eeff980"
+  },
+  "methodology": [
+    "All analysis retains the original frozen cutoff; use exact runtime_event_id and command_id for Runtime/model joins.",
+    "RPC start uses local caller span, not end-aligned remote stages; wall-clock pre-admission has cross-process clock uncertainty.",
+    "Affect snapshot reads have no event_id; assign by exact scope and nonoverlapping processing-start to QQ-command-intent window.",
+    "Other is partitioned into pre-admission, Runtime queue, Web command, affect read, decision preparation, persistence and remaining. Nested model/selection durations are explanatory only.",
+    "Current background affect occurs after QQ preparation and is not added to current other_s; overlap with the next call does not prove the blocking cause.",
+    "Heartbeat outer duration is observed; individual maintenance tasks lack spans. Second heartbeat proves dispatcher occupancy behind the QQ queue.",
+    "Local deployed-source hashes match except decision.py; deployed copy inspected: local adds source-index initialization, not deployed; do not attribute this to frozen observations."
+  ]
+}

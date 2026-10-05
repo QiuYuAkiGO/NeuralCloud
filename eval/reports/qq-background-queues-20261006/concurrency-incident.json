@@ -1,0 +1,20 @@
+{
+  "release": "20261006-background-queues-v1",
+  "observed_at": "2026-10-05T16:43:19.098575+00:00",
+  "event_id": "qq-turn:8d267dc4112367c676a46c27739950b1b2a4e5393d8d013b21ba744d12b6d233",
+  "command_type": "PrepareQQResponse",
+  "frozen_summary_revision": 121035,
+  "command_version_vector_revision": 121036,
+  "result": "qq_shared_prepare_failed:ValueError",
+  "runtime_result": "PAUSED",
+  "cause": "Heartbeat advanced Homeostasis during awaited web preparation; the command bound the latest owner version instead of its frozen read version.",
+  "fixed_release": "20261006-background-queues-v2",
+  "regressions": [
+    "web preparation",
+    "affect read"
+  ],
+  "reproduced_before_fix": true,
+  "passed_after_fix": true,
+  "final_runtime_lifecycle": "RUNNING",
+  "final_verified_at": "2026-10-05T16:57:48.024105+00:00"
+}

@@ -1,0 +1,32 @@
+{
+  "verified_at": "2026-10-05T17:06:17.050137+00:00",
+  "branch": "codex/grounded-agency-rebuild-plan",
+  "base_commit": "e6951ed3524bf6d1f2ab7925e15829bfd45f6a7d",
+  "verification": "Full relevant regression on an isolated checkout of the exact Git index; source blobs rechecked afterward.",
+  "tests": {
+    "tests": 338,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "seconds": 192.504,
+    "artifact": "git-commit-regression.xml"
+  },
+  "source_blobs": {
+    "harness/runtime/supervisor.py": "7ed999b74efe33a2550416724717fcc5a67d30f0",
+    "tests/test_runtime_background_queues.py": "a4b9c147415cf52f23180ec7079da1bd89c82c82",
+    "harness/runtime/background.py": "cf19be426e9f72bf6bd32ce85040726f4c5e05f9",
+    "harness/runtime/adapters.py": "05801cd4df594399184129a662864cdd83e9f4be",
+    "harness/runtime/affect.py": "835f793aab3aaf4ddfb76511193f5f15fa83fd76",
+    "harness/runtime/models.py": "69d38700a4735e171c13e352173c6e5965b22be4",
+    "harness/runtime/board.py": "d61d90ed59a6fd2c74f35876bcf0252948f839f1",
+    "harness/runtime/diary.py": "a3e1141a204622821c8318daf8092ffe677e573e",
+    "harness/runtime/capabilities.py": "4ef49a74cf03ddb9d0dc6ac9a0f5f10aadcf9bce",
+    "harness/runtime/self_check.py": "09588efddffad0a6538fa0fe2b763394b81c4a40",
+    "harness/runtime/goals.py": "f5518d6c98a05e5bb48c558faca917effa33120a",
+    "harness/emotion/service.py": "919b0941247d9dc5ca04698d604d6d9ce4845b42"
+  },
+  "ruff": "passed",
+  "credential_check": "passed",
+  "deployment_evidence": "deployment.json",
+  "scope": "Background queues, Homeostasis concurrency fences and frozen QQ snapshot binding; prior goal recovery optimization and other unrelated working changes remain unstaged."
+}

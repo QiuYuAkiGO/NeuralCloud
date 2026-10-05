@@ -1,0 +1,2162 @@
+{
+  "release": "20261006-background-queues-v2",
+  "previous_release": "20261006-background-queues-v1",
+  "captured_at": "2026-10-05T16:56:02.296232+00:00",
+  "services": {
+    "cognitive": {
+      "MainPID": "151915",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "homeostasis": {
+      "MainPID": "151949",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "runtime": {
+      "MainPID": "151988",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "gui": {
+      "MainPID": "152587",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "board": {
+      "MainPID": "151979",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "qq_direct": {
+      "MainPID": "152618",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    }
+  },
+  "runtime": {
+    "lifecycle": "RUNNING",
+    "health": {
+      "lifecycle": "RUNNING",
+      "journal_writable": true,
+      "cognitive_healthy": true,
+      "homeostasis_healthy": true,
+      "llm_healthy": true,
+      "body_healthy": true,
+      "degraded_reasons": [],
+      "last_heartbeat_at": "2026-10-05T16:57:46.502234Z",
+      "last_journal_append_at": "2026-10-05T16:57:50.206455Z",
+      "embodiment": {
+        "state": "disabled",
+        "provider_id": null,
+        "body_instance_id": null,
+        "activated_capabilities": [],
+        "effective_capabilities": [],
+        "negotiated": null,
+        "health": null,
+        "reason": "embodiment disabled by manifest"
+      },
+      "agency_state": "AVAILABLE",
+      "body_episode_id": null,
+      "body_revision": null,
+      "body_state_age_seconds": null
+    },
+    "pending_actions": 0,
+    "pending_events": 0,
+    "background": {
+      "heartbeat": {
+        "active": true,
+        "pending": 0,
+        "running": false,
+        "coalesced": 0,
+        "thread_jobs": 0,
+        "last_duration_ms": 3730.291,
+        "last_error": null
+      },
+      "affect": {
+        "pending": 0,
+        "running": 0,
+        "scopes": 1,
+        "degraded": false
+      }
+    }
+  },
+  "cognitive": {
+    "healthy": true,
+    "revision": 4185,
+    "acknowledged_receive_seq": 123171,
+    "detail": {
+      "maintenance_paused": false,
+      "commands_pending": 0,
+      "emotion_mode": "on",
+      "qq_memory": {
+        "enabled": true,
+        "recall_enabled": true,
+        "private_enabled": true,
+        "private_recall_enabled": true,
+        "owner_private_full_recall_enabled": true,
+        "processing": false,
+        "input_budget": {
+          "estimated_tokens": 60000,
+          "characters": 120000,
+          "recall_characters": 16000,
+          "recall_items": 8
+        },
+        "queue": {
+          "pending": 0,
+          "preparing": 0,
+          "retry": 0,
+          "applied": 1953,
+          "skipped": 596,
+          "total_jobs": 2549,
+          "assigned_sources": 6849,
+          "oldest_pending_seconds": 0.0
+        },
+        "tiers": {
+          "forgotten": 2139,
+          "mid": 116,
+          "long": 57,
+          "short": 44
+        },
+        "episodes": 2356,
+        "impressions": 371,
+        "impression_states": {
+          "stable": 28,
+          "dormant": 288,
+          "provisional": 54,
+          "disputed": 1
+        },
+        "stable_judgments": 28,
+        "processed_observations": 5158,
+        "committed_windows": 1953,
+        "last_error_type": null,
+        "last_completed_at": "2026-10-05T16:55:35.383387+00:00",
+        "last_duration_ms": 6707.184,
+        "last_recall_ms": 0.0,
+        "channels": {
+          "qq_group": {
+            "episodes": 2344,
+            "impressions": 370,
+            "tiers": {
+              "forgotten": 2130,
+              "mid": 115,
+              "long": 57,
+              "short": 42
+            }
+          },
+          "qq_private": {
+            "episodes": 12,
+            "impressions": 1,
+            "tiers": {
+              "forgotten": 9,
+              "mid": 1,
+              "short": 2
+            }
+          }
+        }
+      },
+      "daily_revision": {
+        "config": {
+          "enabled": false,
+          "base_url": "https://api.deepseek.com",
+          "model": "deepseek-flash",
+          "reasoning_effort": "none",
+          "schedule_time": "03:00",
+          "timezone": "Asia/Shanghai",
+          "backfill_days": 7,
+          "request_timeout_seconds": 180.0,
+          "job_timeout_seconds": 900.0,
+          "max_attempts": 3,
+          "max_completion_tokens": 32768,
+          "chunk_input_tokens": 16000,
+          "max_input_tokens": 96000,
+          "daily_token_budget": null,
+          "api_key_configured": true
+        },
+        "configured": true,
+        "processing": false,
+        "current_run_id": null,
+        "last_error": null,
+        "maintenance_paused": false,
+        "queue": {
+          "counts": {},
+          "usage": []
+        }
+      },
+      "production_memory_recovery": {
+        "enabled": false,
+        "status": "disabled",
+        "preset_id": "misty",
+        "error_type": null
+      },
+      "qq_turn_commands": [
+        "PrepareQQTurn",
+        "ResumeQQResponse"
+      ]
+    }
+  },
+  "homeostasis": {
+    "healthy": true,
+    "revision": 121044
+  },
+  "qq_direct": {
+    "running": true,
+    "connected": true,
+    "repository_root": "/opt/neuralcloud/releases/20261006-background-queues-v2",
+    "heartbeat_at": "2026-10-05T16:57:50.017494+00:00"
+  },
+  "heartbeat_samples": [
+    {
+      "captured_at": "2026-10-05T16:55:28.892808+00:00",
+      "last_heartbeat_at": "2026-10-05T16:55:18.450591Z",
+      "heartbeat": {
+        "active": true,
+        "pending": 1,
+        "running": true,
+        "coalesced": 0,
+        "thread_jobs": 0,
+        "last_duration_ms": null,
+        "last_error": null
+      }
+    },
+    {
+      "captured_at": "2026-10-05T16:55:32.229609+00:00",
+      "last_heartbeat_at": "2026-10-05T16:55:29.718443Z",
+      "heartbeat": {
+        "active": true,
+        "pending": 0,
+        "running": false,
+        "coalesced": 0,
+        "thread_jobs": 0,
+        "last_duration_ms": 2545.319,
+        "last_error": null
+      }
+    },
+    {
+      "captured_at": "2026-10-05T16:55:37.258985+00:00",
+      "last_heartbeat_at": "2026-10-05T16:55:32.676519Z",
+      "heartbeat": {
+        "active": true,
+        "pending": 0,
+        "running": false,
+        "coalesced": 0,
+        "thread_jobs": 0,
+        "last_duration_ms": 4554.997,
+        "last_error": null
+      }
+    },
+    {
+      "captured_at": "2026-10-05T16:55:42.244064+00:00",
+      "last_heartbeat_at": "2026-10-05T16:55:37.678914Z",
+      "heartbeat": {
+        "active": true,
+        "pending": 0,
+        "running": false,
+        "coalesced": 0,
+        "thread_jobs": 0,
+        "last_duration_ms": 4536.992,
+        "last_error": null
+      }
+    },
+    {
+      "captured_at": "2026-10-05T16:55:47.210686+00:00",
+      "last_heartbeat_at": "2026-10-05T16:55:42.697131Z",
+      "heartbeat": {
+        "active": true,
+        "pending": 0,
+        "running": false,
+        "coalesced": 0,
+        "thread_jobs": 0,
+        "last_duration_ms": 4504.841,
+        "last_error": null
+      }
+    },
+    {
+      "captured_at": "2026-10-05T16:55:52.286053+00:00",
+      "last_heartbeat_at": "2026-10-05T16:55:47.677501Z",
+      "heartbeat": {
+        "active": true,
+        "pending": 0,
+        "running": false,
+        "coalesced": 0,
+        "thread_jobs": 0,
+        "last_duration_ms": 4578.024,
+        "last_error": null
+      }
+    },
+    {
+      "captured_at": "2026-10-05T16:55:57.337345+00:00",
+      "last_heartbeat_at": "2026-10-05T16:55:52.680937Z",
+      "heartbeat": {
+        "active": true,
+        "pending": 0,
+        "running": false,
+        "coalesced": 0,
+        "thread_jobs": 0,
+        "last_duration_ms": 4622.54,
+        "last_error": null
+      }
+    }
+  ],
+  "backup": {
+    "path": "/var/backups/neuralcloud/20261006-background-queues-v2-state",
+    "files": 11014,
+    "bytes": 10109981556,
+    "sqlite_databases": 21,
+    "manifest_sha256": "cb5fffe89c29dc1f27a6daa198b1049cd79a60d38944392c1b37d8a5e7b092dd",
+    "verified_before_switch": true
+  },
+  "verified_process_release": true,
+  "config_hashes_unchanged": true,
+  "source_hashes": {
+    "harness/runtime/supervisor.py": "2358a82b770e7e434b62a34ac58fdbb40b8243282bacbbee72b288e58c14c0c2",
+    "tests/test_runtime_background_queues.py": "ebbb7093d73c584dac6385070491162e469bc455aaec861be01479892d6cfe5e",
+    "harness/runtime/background.py": "2e5485baa2668e80d558649cdd028facb3e7a40b2121d37fd8c29cf66d1595b1",
+    "harness/runtime/adapters.py": "eb31c8bca86d55b6482787527a151dea0dc5a24fca0ef1606297cbfe3b98eea3",
+    "harness/runtime/affect.py": "08caf86eaed6b4d9ca937a5fe98122aafa12fe8e5d8fce38c78e5b7f8899a909",
+    "harness/runtime/models.py": "f54f683dd5c1f7cae334b808f53d626a1e67a48c12360f8c9e03fea585cc1763",
+    "harness/runtime/board.py": "9e796286f86adc5bca7135d6b0b9ec22371b4bfb13e1054166df5b344b01c81f",
+    "harness/runtime/diary.py": "7d2e2717baa7abadb08e4da708c2a35fcd298bf5245ca9e8e364e5764b1091db",
+    "harness/runtime/capabilities.py": "e2a46b3406b5db01ad456ab8db0879eabd044aaed3be69066a37c797b0ab572a",
+    "harness/runtime/self_check.py": "09293b21c20ec8af521389d867ca378b945a267fd57bc43ea2eb5e9e664ad58a",
+    "harness/runtime/goals.py": "c3a9894204cbda1180839589c7afa01461c613a3c3417a93520d73e66cc57bbc",
+    "harness/emotion/service.py": "102e3ff5d4494ec467ba462e7474fd420e7780b5b183a81066e2c4aae3e46cec"
+  },
+  "manual_qq_messages_sent": 0,
+  "linux_tests": {
+    "phase": "passed",
+    "release": "20261006-background-queues-v2",
+    "recorded_at": 1791219053.6585078,
+    "test_counts": {
+      "tests": 340,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "regression_summary": "340 passed, 2 warnings in 50.30s"
+  },
+  "verified_release": {
+    "release_id": "20261006-background-queues-v2",
+    "verified_files": 422
+  },
+  "final_captured_at": "2026-10-05T16:57:48.024105+00:00",
+  "recovery": {
+    "mode": "strict",
+    "fallback_reason": null,
+    "checkpoint_seq": 770778,
+    "checkpoint_at": "2026-10-05T16:57:46.480220+00:00",
+    "checkpoint_age_seconds": 3.769961,
+    "projected_seq": 770790,
+    "cache_lag": 12,
+    "persistent": true,
+    "error": null,
+    "pending": {
+      "events": 487,
+      "commands": 0,
+      "actions": 0
+    },
+    "timings": {
+      "journal_open_seconds": 85.54600057400239,
+      "runtime_indexes_seconds": 0.0013031740018050186,
+      "module_recovery_seconds": 0.003206412002327852,
+      "service_checks_seconds": 0.793150482008059,
+      "homeostasis_reconcile_seconds": 6.703499821014702e-05,
+      "cognitive_reconcile_seconds": 2.0799001504201442e-05,
+      "action_reconcile_seconds": 7.159400411183015e-05,
+      "pending_events_seconds": 2.0893302639960893,
+      "boot_seconds": 2.8906569280006806
+    },
+    "replayed_records": 769343,
+    "audit": {
+      "state": "scheduled"
+    },
+    "monitor": {
+      "backfill_state": "running",
+      "cursor": 770772,
+      "lag": 18
+    }
+  },
+  "activation": {
+    "phase": "passed",
+    "release": "20261006-background-queues-v2",
+    "recorded_at": "2026-10-05T16:56:02.297344+00:00",
+    "elapsed_seconds": 289.78,
+    "previous_release": "20261006-background-queues-v1",
+    "backup": "/var/backups/neuralcloud/20261006-background-queues-v2-state"
+  },
+  "changed_files": [
+    {
+      "path": "harness/runtime/supervisor.py",
+      "before_sha256": "0057b4f48a0b6c82318a754765bdf68f3f8112cec4c1245bd1b0169cf08a1324",
+      "after_sha256": "2358a82b770e7e434b62a34ac58fdbb40b8243282bacbbee72b288e58c14c0c2"
+    },
+    {
+      "path": "tests/test_runtime_background_queues.py",
+      "before_sha256": "2ddb55f20010c5041d5115d59a9653e700ab1ad5feca11643b09522876aa54ef",
+      "after_sha256": "ebbb7093d73c584dac6385070491162e469bc455aaec861be01479892d6cfe5e"
+    }
+  ],
+  "config_hashes": {
+    "/etc/neuralcloud/homeostasis-profile.json": "38b29b27bc07f3c9baa6b2d29f39ca335c3ecd28fc6aa350600cd67718683781",
+    "/etc/neuralcloud/gui-settings.json": "13914b7f16d06cd3a544d059247f24879a09d20b506208bf3fa9db06d41df695",
+    "/etc/neuralcloud/structured-llm.json": "84523b0df11e938d2a451cc7e01e8ed69a17fe1f8f9f41a94621330047343f4c",
+    "/etc/neuralcloud/main-fallback.json": "34249eaf819a3ae62c83b31eb010ca359e25108c74aecb39f99e797c22f785db",
+    "/etc/neuralcloud/watcher.json": "d5c52326876dab16e032a83bbd8aecb12fb751cc8afb24b808b8292c329acd5f",
+    "/etc/neuralcloud/session.json": "5c2ba3483536856086d24046d84ad42a98cdd12239d03670dd66f1242b176a91",
+    "/etc/neuralcloud/emotion-deepseek.json": "05dc77d99b4875e72871cfd0b4583c0d1591488123a41924328011f892e38324",
+    "/etc/neuralcloud/deploy.pre-emotion-20260917.json": "2d33337999871fd9eb4b70de8bd90825f07adf7504aabb21fbebcf3d6cc29d11",
+    "/etc/neuralcloud/deploy.before-board-repair-20260917.json": "4a0dce38a681c9328206d14527eaf546600ad786648bc049593f793d7d80ae4b",
+    "/etc/neuralcloud/diary.json": "e6492a2ce46e5b014d30a344cfbcd6fd415b42371206c45804f9a693affecb6e",
+    "/etc/neuralcloud/direct.json": "d922f9282ffa26d3252c02b84c3845ef82a0bdfb98cdfa01bb88e74328351726",
+    "/etc/neuralcloud/manifest.json": "0759b3980e066223294649121e16e0937252234e20dad08848bf1d7635dc7feb",
+    "/etc/neuralcloud/deploy.json": "007a434c72d3ae37c32240cd4c7519f6d1d11d872666fce18bebd426fa1b41c4",
+    "/etc/neuralcloud/direct.before-disable-1060979317-20260917T032643Z.json": "3e127c6ec469b8955ed07b17741de441b39e449ae616a6afce08ecb1eb89a0c2",
+    "/etc/neuralcloud/board-client.json": "6797f63a65f014134816cd06a62552d2abee3005e6212b25ead0c421692ed5a4"
+  },
+  "heartbeat_observations": [
+    {
+      "seq": 107780190,
+      "observed_at": "2026-10-05T16:56:21.989959+00:00",
+      "topic": "journal.heartbeat_work_completed",
+      "event_id": "evt_b55c60ea",
+      "data": {
+        "elapsed_ms": 4323.284,
+        "error_type": null
+      }
+    },
+    {
+      "seq": 107780200,
+      "observed_at": "2026-10-05T16:56:22.752268+00:00",
+      "topic": "journal.heartbeat_work_started",
+      "event_id": "evt_05b44d8f",
+      "data": {
+        "queue_wait_ms": 1.3439999999999999
+      }
+    },
+    {
+      "seq": 107780205,
+      "observed_at": "2026-10-05T16:56:22.769044+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_05b44d8f",
+      "data": {
+        "stage": "embodiment",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780206,
+      "observed_at": "2026-10-05T16:56:22.769905+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_05b44d8f",
+      "data": {
+        "stage": "watchdog",
+        "elapsed_ms": 0.017
+      }
+    },
+    {
+      "seq": 107780207,
+      "observed_at": "2026-10-05T16:56:22.770595+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_05b44d8f",
+      "data": {
+        "stage": "server_approvals",
+        "elapsed_ms": 0.031
+      }
+    },
+    {
+      "seq": 107780208,
+      "observed_at": "2026-10-05T16:56:22.772611+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_05b44d8f",
+      "data": {
+        "stage": "board",
+        "elapsed_ms": 1.387
+      }
+    },
+    {
+      "seq": 107780209,
+      "observed_at": "2026-10-05T16:56:22.773523+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_05b44d8f",
+      "data": {
+        "stage": "diary",
+        "elapsed_ms": 0.002
+      }
+    },
+    {
+      "seq": 107780210,
+      "observed_at": "2026-10-05T16:56:22.774436+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_05b44d8f",
+      "data": {
+        "stage": "daily_report",
+        "elapsed_ms": 0.018
+      }
+    },
+    {
+      "seq": 107780211,
+      "observed_at": "2026-10-05T16:56:22.775093+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_05b44d8f",
+      "data": {
+        "stage": "self_check",
+        "elapsed_ms": 0.004
+      }
+    },
+    {
+      "seq": 107780212,
+      "observed_at": "2026-10-05T16:56:25.132201+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_05b44d8f",
+      "data": {
+        "stage": "capabilities",
+        "elapsed_ms": 2356.409
+      }
+    },
+    {
+      "seq": 107780214,
+      "observed_at": "2026-10-05T16:56:25.134498+00:00",
+      "topic": "journal.heartbeat_work_completed",
+      "event_id": "evt_05b44d8f",
+      "data": {
+        "elapsed_ms": 2382.23,
+        "error_type": null
+      }
+    },
+    {
+      "seq": 107780222,
+      "observed_at": "2026-10-05T16:56:27.753242+00:00",
+      "topic": "journal.heartbeat_work_started",
+      "event_id": "evt_7519426c",
+      "data": {
+        "queue_wait_ms": 1.435
+      }
+    },
+    {
+      "seq": 107780229,
+      "observed_at": "2026-10-05T16:56:27.772620+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_7519426c",
+      "data": {
+        "stage": "embodiment",
+        "elapsed_ms": 0.002
+      }
+    },
+    {
+      "seq": 107780230,
+      "observed_at": "2026-10-05T16:56:27.773519+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_7519426c",
+      "data": {
+        "stage": "watchdog",
+        "elapsed_ms": 0.023
+      }
+    },
+    {
+      "seq": 107780231,
+      "observed_at": "2026-10-05T16:56:27.774248+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_7519426c",
+      "data": {
+        "stage": "server_approvals",
+        "elapsed_ms": 0.052
+      }
+    },
+    {
+      "seq": 107780232,
+      "observed_at": "2026-10-05T16:56:27.776174+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_7519426c",
+      "data": {
+        "stage": "board",
+        "elapsed_ms": 1.214
+      }
+    },
+    {
+      "seq": 107780233,
+      "observed_at": "2026-10-05T16:56:27.776966+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_7519426c",
+      "data": {
+        "stage": "diary",
+        "elapsed_ms": 0.002
+      }
+    },
+    {
+      "seq": 107780234,
+      "observed_at": "2026-10-05T16:56:27.777677+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_7519426c",
+      "data": {
+        "stage": "daily_report",
+        "elapsed_ms": 0.02
+      }
+    },
+    {
+      "seq": 107780235,
+      "observed_at": "2026-10-05T16:56:27.778318+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_7519426c",
+      "data": {
+        "stage": "self_check",
+        "elapsed_ms": 0.005
+      }
+    },
+    {
+      "seq": 107780236,
+      "observed_at": "2026-10-05T16:56:30.060135+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_7519426c",
+      "data": {
+        "stage": "capabilities",
+        "elapsed_ms": 2281.045
+      }
+    },
+    {
+      "seq": 107780238,
+      "observed_at": "2026-10-05T16:56:30.062647+00:00",
+      "topic": "journal.heartbeat_work_completed",
+      "event_id": "evt_7519426c",
+      "data": {
+        "elapsed_ms": 2309.406,
+        "error_type": null
+      }
+    },
+    {
+      "seq": 107780250,
+      "observed_at": "2026-10-05T16:56:32.753977+00:00",
+      "topic": "journal.heartbeat_work_started",
+      "event_id": "evt_70ba5265",
+      "data": {
+        "queue_wait_ms": 1.2550000000000001
+      }
+    },
+    {
+      "seq": 107780257,
+      "observed_at": "2026-10-05T16:56:32.769137+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_70ba5265",
+      "data": {
+        "stage": "embodiment",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780258,
+      "observed_at": "2026-10-05T16:56:32.769812+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_70ba5265",
+      "data": {
+        "stage": "watchdog",
+        "elapsed_ms": 0.015
+      }
+    },
+    {
+      "seq": 107780259,
+      "observed_at": "2026-10-05T16:56:32.770643+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_70ba5265",
+      "data": {
+        "stage": "server_approvals",
+        "elapsed_ms": 0.048
+      }
+    },
+    {
+      "seq": 107780260,
+      "observed_at": "2026-10-05T16:56:32.772186+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_70ba5265",
+      "data": {
+        "stage": "board",
+        "elapsed_ms": 0.839
+      }
+    },
+    {
+      "seq": 107780261,
+      "observed_at": "2026-10-05T16:56:32.772848+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_70ba5265",
+      "data": {
+        "stage": "diary",
+        "elapsed_ms": 0.027
+      }
+    },
+    {
+      "seq": 107780262,
+      "observed_at": "2026-10-05T16:56:32.773476+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_70ba5265",
+      "data": {
+        "stage": "daily_report",
+        "elapsed_ms": 0.013
+      }
+    },
+    {
+      "seq": 107780263,
+      "observed_at": "2026-10-05T16:56:32.774140+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_70ba5265",
+      "data": {
+        "stage": "self_check",
+        "elapsed_ms": 0.003
+      }
+    },
+    {
+      "seq": 107780265,
+      "observed_at": "2026-10-05T16:56:39.634250+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_70ba5265",
+      "data": {
+        "stage": "capabilities",
+        "elapsed_ms": 6859.491
+      }
+    },
+    {
+      "seq": 107780267,
+      "observed_at": "2026-10-05T16:56:39.636241+00:00",
+      "topic": "journal.heartbeat_work_completed",
+      "event_id": "evt_70ba5265",
+      "data": {
+        "elapsed_ms": 6882.272,
+        "error_type": null
+      }
+    },
+    {
+      "seq": 107780269,
+      "observed_at": "2026-10-05T16:56:39.691020+00:00",
+      "topic": "journal.heartbeat_work_started",
+      "event_id": "evt_478616a8",
+      "data": {
+        "queue_wait_ms": 1.585
+      }
+    },
+    {
+      "seq": 107780277,
+      "observed_at": "2026-10-05T16:56:39.747343+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_478616a8",
+      "data": {
+        "stage": "embodiment",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780278,
+      "observed_at": "2026-10-05T16:56:39.747992+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_478616a8",
+      "data": {
+        "stage": "watchdog",
+        "elapsed_ms": 0.017
+      }
+    },
+    {
+      "seq": 107780279,
+      "observed_at": "2026-10-05T16:56:39.748710+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_478616a8",
+      "data": {
+        "stage": "server_approvals",
+        "elapsed_ms": 0.039
+      }
+    },
+    {
+      "seq": 107780280,
+      "observed_at": "2026-10-05T16:56:39.751110+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_478616a8",
+      "data": {
+        "stage": "board",
+        "elapsed_ms": 1.777
+      }
+    },
+    {
+      "seq": 107780281,
+      "observed_at": "2026-10-05T16:56:39.751785+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_478616a8",
+      "data": {
+        "stage": "diary",
+        "elapsed_ms": 0.002
+      }
+    },
+    {
+      "seq": 107780282,
+      "observed_at": "2026-10-05T16:56:39.752439+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_478616a8",
+      "data": {
+        "stage": "daily_report",
+        "elapsed_ms": 0.019
+      }
+    },
+    {
+      "seq": 107780283,
+      "observed_at": "2026-10-05T16:56:39.753262+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_478616a8",
+      "data": {
+        "stage": "self_check",
+        "elapsed_ms": 0.005
+      }
+    },
+    {
+      "seq": 107780284,
+      "observed_at": "2026-10-05T16:56:41.936673+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_478616a8",
+      "data": {
+        "stage": "capabilities",
+        "elapsed_ms": 2182.747
+      }
+    },
+    {
+      "seq": 107780286,
+      "observed_at": "2026-10-05T16:56:41.938789+00:00",
+      "topic": "journal.heartbeat_work_completed",
+      "event_id": "evt_478616a8",
+      "data": {
+        "elapsed_ms": 2247.77,
+        "error_type": null
+      }
+    },
+    {
+      "seq": 107780294,
+      "observed_at": "2026-10-05T16:56:44.692209+00:00",
+      "topic": "journal.heartbeat_work_started",
+      "event_id": "evt_1ac71cce",
+      "data": {
+        "queue_wait_ms": 1.6280000000000001
+      }
+    },
+    {
+      "seq": 107780300,
+      "observed_at": "2026-10-05T16:56:44.711208+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_1ac71cce",
+      "data": {
+        "stage": "embodiment",
+        "elapsed_ms": 0.002
+      }
+    },
+    {
+      "seq": 107780301,
+      "observed_at": "2026-10-05T16:56:44.711925+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_1ac71cce",
+      "data": {
+        "stage": "watchdog",
+        "elapsed_ms": 0.017
+      }
+    },
+    {
+      "seq": 107780302,
+      "observed_at": "2026-10-05T16:56:44.712574+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_1ac71cce",
+      "data": {
+        "stage": "server_approvals",
+        "elapsed_ms": 0.03
+      }
+    },
+    {
+      "seq": 107780303,
+      "observed_at": "2026-10-05T16:56:44.714159+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_1ac71cce",
+      "data": {
+        "stage": "board",
+        "elapsed_ms": 0.959
+      }
+    },
+    {
+      "seq": 107780304,
+      "observed_at": "2026-10-05T16:56:44.714803+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_1ac71cce",
+      "data": {
+        "stage": "diary",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780305,
+      "observed_at": "2026-10-05T16:56:44.715488+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_1ac71cce",
+      "data": {
+        "stage": "daily_report",
+        "elapsed_ms": 0.019
+      }
+    },
+    {
+      "seq": 107780306,
+      "observed_at": "2026-10-05T16:56:44.716113+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_1ac71cce",
+      "data": {
+        "stage": "self_check",
+        "elapsed_ms": 0.004
+      }
+    },
+    {
+      "seq": 107780307,
+      "observed_at": "2026-10-05T16:56:46.948973+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_1ac71cce",
+      "data": {
+        "stage": "capabilities",
+        "elapsed_ms": 2232.22
+      }
+    },
+    {
+      "seq": 107780309,
+      "observed_at": "2026-10-05T16:56:46.951295+00:00",
+      "topic": "journal.heartbeat_work_completed",
+      "event_id": "evt_1ac71cce",
+      "data": {
+        "elapsed_ms": 2259.089,
+        "error_type": null
+      }
+    },
+    {
+      "seq": 107780313,
+      "observed_at": "2026-10-05T16:56:49.692737+00:00",
+      "topic": "journal.heartbeat_work_started",
+      "event_id": "evt_6fc15072",
+      "data": {
+        "queue_wait_ms": 1.788
+      }
+    },
+    {
+      "seq": 107780319,
+      "observed_at": "2026-10-05T16:56:49.709882+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_6fc15072",
+      "data": {
+        "stage": "embodiment",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780320,
+      "observed_at": "2026-10-05T16:56:49.710516+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_6fc15072",
+      "data": {
+        "stage": "watchdog",
+        "elapsed_ms": 0.015
+      }
+    },
+    {
+      "seq": 107780321,
+      "observed_at": "2026-10-05T16:56:49.711250+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_6fc15072",
+      "data": {
+        "stage": "server_approvals",
+        "elapsed_ms": 0.026
+      }
+    },
+    {
+      "seq": 107780322,
+      "observed_at": "2026-10-05T16:56:49.713293+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_6fc15072",
+      "data": {
+        "stage": "board",
+        "elapsed_ms": 1.406
+      }
+    },
+    {
+      "seq": 107780323,
+      "observed_at": "2026-10-05T16:56:49.714089+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_6fc15072",
+      "data": {
+        "stage": "diary",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780324,
+      "observed_at": "2026-10-05T16:56:49.714720+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_6fc15072",
+      "data": {
+        "stage": "daily_report",
+        "elapsed_ms": 0.017
+      }
+    },
+    {
+      "seq": 107780325,
+      "observed_at": "2026-10-05T16:56:49.715341+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_6fc15072",
+      "data": {
+        "stage": "self_check",
+        "elapsed_ms": 0.004
+      }
+    },
+    {
+      "seq": 107780326,
+      "observed_at": "2026-10-05T16:56:52.166897+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_6fc15072",
+      "data": {
+        "stage": "capabilities",
+        "elapsed_ms": 2450.918
+      }
+    },
+    {
+      "seq": 107780328,
+      "observed_at": "2026-10-05T16:56:52.169405+00:00",
+      "topic": "journal.heartbeat_work_completed",
+      "event_id": "evt_6fc15072",
+      "data": {
+        "elapsed_ms": 2476.67,
+        "error_type": null
+      }
+    },
+    {
+      "seq": 107780332,
+      "observed_at": "2026-10-05T16:56:54.693904+00:00",
+      "topic": "journal.heartbeat_work_started",
+      "event_id": "evt_df85befb",
+      "data": {
+        "queue_wait_ms": 1.796
+      }
+    },
+    {
+      "seq": 107780337,
+      "observed_at": "2026-10-05T16:56:54.712705+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_df85befb",
+      "data": {
+        "stage": "embodiment",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780338,
+      "observed_at": "2026-10-05T16:56:54.713376+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_df85befb",
+      "data": {
+        "stage": "watchdog",
+        "elapsed_ms": 0.017
+      }
+    },
+    {
+      "seq": 107780339,
+      "observed_at": "2026-10-05T16:56:54.714062+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_df85befb",
+      "data": {
+        "stage": "server_approvals",
+        "elapsed_ms": 0.048
+      }
+    },
+    {
+      "seq": 107780340,
+      "observed_at": "2026-10-05T16:56:54.719416+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_df85befb",
+      "data": {
+        "stage": "board",
+        "elapsed_ms": 1.221
+      }
+    },
+    {
+      "seq": 107780341,
+      "observed_at": "2026-10-05T16:56:54.720268+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_df85befb",
+      "data": {
+        "stage": "diary",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780342,
+      "observed_at": "2026-10-05T16:56:54.721159+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_df85befb",
+      "data": {
+        "stage": "daily_report",
+        "elapsed_ms": 0.023
+      }
+    },
+    {
+      "seq": 107780343,
+      "observed_at": "2026-10-05T16:56:54.721860+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_df85befb",
+      "data": {
+        "stage": "self_check",
+        "elapsed_ms": 0.005
+      }
+    },
+    {
+      "seq": 107780345,
+      "observed_at": "2026-10-05T16:56:57.066640+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_df85befb",
+      "data": {
+        "stage": "capabilities",
+        "elapsed_ms": 2344.029
+      }
+    },
+    {
+      "seq": 107780347,
+      "observed_at": "2026-10-05T16:56:57.068696+00:00",
+      "topic": "journal.heartbeat_work_completed",
+      "event_id": "evt_df85befb",
+      "data": {
+        "elapsed_ms": 2374.795,
+        "error_type": null
+      }
+    },
+    {
+      "seq": 107780352,
+      "observed_at": "2026-10-05T16:56:59.694997+00:00",
+      "topic": "journal.heartbeat_work_started",
+      "event_id": "evt_d51b52d8",
+      "data": {
+        "queue_wait_ms": 1.8940000000000001
+      }
+    },
+    {
+      "seq": 107780357,
+      "observed_at": "2026-10-05T16:56:59.713368+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_d51b52d8",
+      "data": {
+        "stage": "embodiment",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780358,
+      "observed_at": "2026-10-05T16:56:59.714094+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_d51b52d8",
+      "data": {
+        "stage": "watchdog",
+        "elapsed_ms": 0.018
+      }
+    },
+    {
+      "seq": 107780359,
+      "observed_at": "2026-10-05T16:56:59.714781+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_d51b52d8",
+      "data": {
+        "stage": "server_approvals",
+        "elapsed_ms": 0.033
+      }
+    },
+    {
+      "seq": 107780360,
+      "observed_at": "2026-10-05T16:56:59.716606+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_d51b52d8",
+      "data": {
+        "stage": "board",
+        "elapsed_ms": 1.17
+      }
+    },
+    {
+      "seq": 107780361,
+      "observed_at": "2026-10-05T16:56:59.717277+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_d51b52d8",
+      "data": {
+        "stage": "diary",
+        "elapsed_ms": 0.002
+      }
+    },
+    {
+      "seq": 107780362,
+      "observed_at": "2026-10-05T16:56:59.717957+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_d51b52d8",
+      "data": {
+        "stage": "daily_report",
+        "elapsed_ms": 0.02
+      }
+    },
+    {
+      "seq": 107780363,
+      "observed_at": "2026-10-05T16:56:59.718630+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_d51b52d8",
+      "data": {
+        "stage": "self_check",
+        "elapsed_ms": 0.004
+      }
+    },
+    {
+      "seq": 107780364,
+      "observed_at": "2026-10-05T16:57:01.849642+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_d51b52d8",
+      "data": {
+        "stage": "capabilities",
+        "elapsed_ms": 2130.329
+      }
+    },
+    {
+      "seq": 107780366,
+      "observed_at": "2026-10-05T16:57:01.852216+00:00",
+      "topic": "journal.heartbeat_work_completed",
+      "event_id": "evt_d51b52d8",
+      "data": {
+        "elapsed_ms": 2157.223,
+        "error_type": null
+      }
+    },
+    {
+      "seq": 107780379,
+      "observed_at": "2026-10-05T16:57:04.695089+00:00",
+      "topic": "journal.heartbeat_work_started",
+      "event_id": "evt_153828da",
+      "data": {
+        "queue_wait_ms": 1.714
+      }
+    },
+    {
+      "seq": 107780385,
+      "observed_at": "2026-10-05T16:57:04.713700+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_153828da",
+      "data": {
+        "stage": "embodiment",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780386,
+      "observed_at": "2026-10-05T16:57:04.714383+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_153828da",
+      "data": {
+        "stage": "watchdog",
+        "elapsed_ms": 0.018
+      }
+    },
+    {
+      "seq": 107780387,
+      "observed_at": "2026-10-05T16:57:04.715079+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_153828da",
+      "data": {
+        "stage": "server_approvals",
+        "elapsed_ms": 0.04
+      }
+    },
+    {
+      "seq": 107780388,
+      "observed_at": "2026-10-05T16:57:04.716945+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_153828da",
+      "data": {
+        "stage": "board",
+        "elapsed_ms": 1.142
+      }
+    },
+    {
+      "seq": 107780389,
+      "observed_at": "2026-10-05T16:57:04.717626+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_153828da",
+      "data": {
+        "stage": "diary",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780390,
+      "observed_at": "2026-10-05T16:57:04.718307+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_153828da",
+      "data": {
+        "stage": "daily_report",
+        "elapsed_ms": 0.019
+      }
+    },
+    {
+      "seq": 107780391,
+      "observed_at": "2026-10-05T16:57:04.718953+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_153828da",
+      "data": {
+        "stage": "self_check",
+        "elapsed_ms": 0.004
+      }
+    },
+    {
+      "seq": 107780392,
+      "observed_at": "2026-10-05T16:57:07.169693+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_153828da",
+      "data": {
+        "stage": "capabilities",
+        "elapsed_ms": 2449.909
+      }
+    },
+    {
+      "seq": 107780394,
+      "observed_at": "2026-10-05T16:57:07.171706+00:00",
+      "topic": "journal.heartbeat_work_completed",
+      "event_id": "evt_153828da",
+      "data": {
+        "elapsed_ms": 2476.62,
+        "error_type": null
+      }
+    },
+    {
+      "seq": 107780401,
+      "observed_at": "2026-10-05T16:57:09.695788+00:00",
+      "topic": "journal.heartbeat_work_started",
+      "event_id": "evt_582f603a",
+      "data": {
+        "queue_wait_ms": 1.706
+      }
+    },
+    {
+      "seq": 107780406,
+      "observed_at": "2026-10-05T16:57:09.713824+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_582f603a",
+      "data": {
+        "stage": "embodiment",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780407,
+      "observed_at": "2026-10-05T16:57:09.714535+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_582f603a",
+      "data": {
+        "stage": "watchdog",
+        "elapsed_ms": 0.015
+      }
+    },
+    {
+      "seq": 107780408,
+      "observed_at": "2026-10-05T16:57:09.715223+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_582f603a",
+      "data": {
+        "stage": "server_approvals",
+        "elapsed_ms": 0.028
+      }
+    },
+    {
+      "seq": 107780409,
+      "observed_at": "2026-10-05T16:57:09.716869+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_582f603a",
+      "data": {
+        "stage": "board",
+        "elapsed_ms": 1.028
+      }
+    },
+    {
+      "seq": 107780410,
+      "observed_at": "2026-10-05T16:57:09.717499+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_582f603a",
+      "data": {
+        "stage": "diary",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780411,
+      "observed_at": "2026-10-05T16:57:09.718264+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_582f603a",
+      "data": {
+        "stage": "daily_report",
+        "elapsed_ms": 0.018
+      }
+    },
+    {
+      "seq": 107780412,
+      "observed_at": "2026-10-05T16:57:09.718981+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_582f603a",
+      "data": {
+        "stage": "self_check",
+        "elapsed_ms": 0.003
+      }
+    },
+    {
+      "seq": 107780414,
+      "observed_at": "2026-10-05T16:57:11.856126+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_582f603a",
+      "data": {
+        "stage": "capabilities",
+        "elapsed_ms": 2136.525
+      }
+    },
+    {
+      "seq": 107780416,
+      "observed_at": "2026-10-05T16:57:11.858252+00:00",
+      "topic": "journal.heartbeat_work_completed",
+      "event_id": "evt_582f603a",
+      "data": {
+        "elapsed_ms": 2162.466,
+        "error_type": null
+      }
+    },
+    {
+      "seq": 107780426,
+      "observed_at": "2026-10-05T16:57:14.696355+00:00",
+      "topic": "journal.heartbeat_work_started",
+      "event_id": "evt_21336003",
+      "data": {
+        "queue_wait_ms": 1.867
+      }
+    },
+    {
+      "seq": 107780432,
+      "observed_at": "2026-10-05T16:57:14.713869+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_21336003",
+      "data": {
+        "stage": "embodiment",
+        "elapsed_ms": 0.002
+      }
+    },
+    {
+      "seq": 107780433,
+      "observed_at": "2026-10-05T16:57:14.714495+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_21336003",
+      "data": {
+        "stage": "watchdog",
+        "elapsed_ms": 0.017
+      }
+    },
+    {
+      "seq": 107780434,
+      "observed_at": "2026-10-05T16:57:14.715410+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_21336003",
+      "data": {
+        "stage": "server_approvals",
+        "elapsed_ms": 0.037
+      }
+    },
+    {
+      "seq": 107780435,
+      "observed_at": "2026-10-05T16:57:14.717231+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_21336003",
+      "data": {
+        "stage": "board",
+        "elapsed_ms": 1.147
+      }
+    },
+    {
+      "seq": 107780436,
+      "observed_at": "2026-10-05T16:57:14.717891+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_21336003",
+      "data": {
+        "stage": "diary",
+        "elapsed_ms": 0.003
+      }
+    },
+    {
+      "seq": 107780437,
+      "observed_at": "2026-10-05T16:57:14.718615+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_21336003",
+      "data": {
+        "stage": "daily_report",
+        "elapsed_ms": 0.019
+      }
+    },
+    {
+      "seq": 107780438,
+      "observed_at": "2026-10-05T16:57:14.719223+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_21336003",
+      "data": {
+        "stage": "self_check",
+        "elapsed_ms": 0.004
+      }
+    },
+    {
+      "seq": 107780439,
+      "observed_at": "2026-10-05T16:57:17.146644+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_21336003",
+      "data": {
+        "stage": "capabilities",
+        "elapsed_ms": 2426.682
+      }
+    },
+    {
+      "seq": 107780441,
+      "observed_at": "2026-10-05T16:57:17.149519+00:00",
+      "topic": "journal.heartbeat_work_completed",
+      "event_id": "evt_21336003",
+      "data": {
+        "elapsed_ms": 2453.163,
+        "error_type": null
+      }
+    },
+    {
+      "seq": 107780445,
+      "observed_at": "2026-10-05T16:57:19.696761+00:00",
+      "topic": "journal.heartbeat_work_started",
+      "event_id": "evt_8c871afb",
+      "data": {
+        "queue_wait_ms": 1.858
+      }
+    },
+    {
+      "seq": 107780450,
+      "observed_at": "2026-10-05T16:57:19.714157+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_8c871afb",
+      "data": {
+        "stage": "embodiment",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780451,
+      "observed_at": "2026-10-05T16:57:19.714785+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_8c871afb",
+      "data": {
+        "stage": "watchdog",
+        "elapsed_ms": 0.015
+      }
+    },
+    {
+      "seq": 107780452,
+      "observed_at": "2026-10-05T16:57:19.715416+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_8c871afb",
+      "data": {
+        "stage": "server_approvals",
+        "elapsed_ms": 0.029
+      }
+    },
+    {
+      "seq": 107780453,
+      "observed_at": "2026-10-05T16:57:19.717404+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_8c871afb",
+      "data": {
+        "stage": "board",
+        "elapsed_ms": 1.365
+      }
+    },
+    {
+      "seq": 107780455,
+      "observed_at": "2026-10-05T16:57:19.718125+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_8c871afb",
+      "data": {
+        "stage": "diary",
+        "elapsed_ms": 0.002
+      }
+    },
+    {
+      "seq": 107780456,
+      "observed_at": "2026-10-05T16:57:19.718770+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_8c871afb",
+      "data": {
+        "stage": "daily_report",
+        "elapsed_ms": 0.02
+      }
+    },
+    {
+      "seq": 107780457,
+      "observed_at": "2026-10-05T16:57:19.719669+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_8c871afb",
+      "data": {
+        "stage": "self_check",
+        "elapsed_ms": 0.005
+      }
+    },
+    {
+      "seq": 107780458,
+      "observed_at": "2026-10-05T16:57:22.096412+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_8c871afb",
+      "data": {
+        "stage": "capabilities",
+        "elapsed_ms": 2375.94
+      }
+    },
+    {
+      "seq": 107780460,
+      "observed_at": "2026-10-05T16:57:22.098786+00:00",
+      "topic": "journal.heartbeat_work_completed",
+      "event_id": "evt_8c871afb",
+      "data": {
+        "elapsed_ms": 2402.026,
+        "error_type": null
+      }
+    },
+    {
+      "seq": 107780465,
+      "observed_at": "2026-10-05T16:57:24.698633+00:00",
+      "topic": "journal.heartbeat_work_started",
+      "event_id": "evt_8f82939f",
+      "data": {
+        "queue_wait_ms": 2.06
+      }
+    },
+    {
+      "seq": 107780470,
+      "observed_at": "2026-10-05T16:57:24.715188+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_8f82939f",
+      "data": {
+        "stage": "embodiment",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780471,
+      "observed_at": "2026-10-05T16:57:24.715817+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_8f82939f",
+      "data": {
+        "stage": "watchdog",
+        "elapsed_ms": 0.016
+      }
+    },
+    {
+      "seq": 107780472,
+      "observed_at": "2026-10-05T16:57:24.716507+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_8f82939f",
+      "data": {
+        "stage": "server_approvals",
+        "elapsed_ms": 0.026
+      }
+    },
+    {
+      "seq": 107780473,
+      "observed_at": "2026-10-05T16:57:24.717775+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_8f82939f",
+      "data": {
+        "stage": "board",
+        "elapsed_ms": 0.658
+      }
+    },
+    {
+      "seq": 107780474,
+      "observed_at": "2026-10-05T16:57:24.718377+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_8f82939f",
+      "data": {
+        "stage": "diary",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780475,
+      "observed_at": "2026-10-05T16:57:24.719019+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_8f82939f",
+      "data": {
+        "stage": "daily_report",
+        "elapsed_ms": 0.016
+      }
+    },
+    {
+      "seq": 107780476,
+      "observed_at": "2026-10-05T16:57:24.719702+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_8f82939f",
+      "data": {
+        "stage": "self_check",
+        "elapsed_ms": 0.003
+      }
+    },
+    {
+      "seq": 107780477,
+      "observed_at": "2026-10-05T16:57:26.774139+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_8f82939f",
+      "data": {
+        "stage": "capabilities",
+        "elapsed_ms": 2053.815
+      }
+    },
+    {
+      "seq": 107780479,
+      "observed_at": "2026-10-05T16:57:26.776489+00:00",
+      "topic": "journal.heartbeat_work_completed",
+      "event_id": "evt_8f82939f",
+      "data": {
+        "elapsed_ms": 2077.858,
+        "error_type": null
+      }
+    },
+    {
+      "seq": 107780483,
+      "observed_at": "2026-10-05T16:57:29.698828+00:00",
+      "topic": "journal.heartbeat_work_started",
+      "event_id": "evt_12215c81",
+      "data": {
+        "queue_wait_ms": 1.769
+      }
+    },
+    {
+      "seq": 107780489,
+      "observed_at": "2026-10-05T16:57:29.715925+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_12215c81",
+      "data": {
+        "stage": "embodiment",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780490,
+      "observed_at": "2026-10-05T16:57:29.716924+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_12215c81",
+      "data": {
+        "stage": "watchdog",
+        "elapsed_ms": 0.021
+      }
+    },
+    {
+      "seq": 107780491,
+      "observed_at": "2026-10-05T16:57:29.717858+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_12215c81",
+      "data": {
+        "stage": "server_approvals",
+        "elapsed_ms": 0.052
+      }
+    },
+    {
+      "seq": 107780492,
+      "observed_at": "2026-10-05T16:57:29.719756+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_12215c81",
+      "data": {
+        "stage": "board",
+        "elapsed_ms": 1.142
+      }
+    },
+    {
+      "seq": 107780493,
+      "observed_at": "2026-10-05T16:57:29.720379+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_12215c81",
+      "data": {
+        "stage": "diary",
+        "elapsed_ms": 0.002
+      }
+    },
+    {
+      "seq": 107780494,
+      "observed_at": "2026-10-05T16:57:29.721109+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_12215c81",
+      "data": {
+        "stage": "daily_report",
+        "elapsed_ms": 0.028
+      }
+    },
+    {
+      "seq": 107780495,
+      "observed_at": "2026-10-05T16:57:29.721799+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_12215c81",
+      "data": {
+        "stage": "self_check",
+        "elapsed_ms": 0.005
+      }
+    },
+    {
+      "seq": 107780496,
+      "observed_at": "2026-10-05T16:57:32.235651+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_12215c81",
+      "data": {
+        "stage": "capabilities",
+        "elapsed_ms": 2513.22
+      }
+    },
+    {
+      "seq": 107780498,
+      "observed_at": "2026-10-05T16:57:32.238007+00:00",
+      "topic": "journal.heartbeat_work_completed",
+      "event_id": "evt_12215c81",
+      "data": {
+        "elapsed_ms": 2539.179,
+        "error_type": null
+      }
+    },
+    {
+      "seq": 107780503,
+      "observed_at": "2026-10-05T16:57:34.700847+00:00",
+      "topic": "journal.heartbeat_work_started",
+      "event_id": "evt_13d5242a",
+      "data": {
+        "queue_wait_ms": 1.873
+      }
+    },
+    {
+      "seq": 107780509,
+      "observed_at": "2026-10-05T16:57:34.718335+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_13d5242a",
+      "data": {
+        "stage": "embodiment",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780510,
+      "observed_at": "2026-10-05T16:57:34.718997+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_13d5242a",
+      "data": {
+        "stage": "watchdog",
+        "elapsed_ms": 0.016
+      }
+    },
+    {
+      "seq": 107780511,
+      "observed_at": "2026-10-05T16:57:34.719646+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_13d5242a",
+      "data": {
+        "stage": "server_approvals",
+        "elapsed_ms": 0.031
+      }
+    },
+    {
+      "seq": 107780512,
+      "observed_at": "2026-10-05T16:57:34.721345+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_13d5242a",
+      "data": {
+        "stage": "board",
+        "elapsed_ms": 1.02
+      }
+    },
+    {
+      "seq": 107780513,
+      "observed_at": "2026-10-05T16:57:34.722108+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_13d5242a",
+      "data": {
+        "stage": "diary",
+        "elapsed_ms": 0.002
+      }
+    },
+    {
+      "seq": 107780514,
+      "observed_at": "2026-10-05T16:57:34.722752+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_13d5242a",
+      "data": {
+        "stage": "daily_report",
+        "elapsed_ms": 0.018
+      }
+    },
+    {
+      "seq": 107780515,
+      "observed_at": "2026-10-05T16:57:34.723392+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_13d5242a",
+      "data": {
+        "stage": "self_check",
+        "elapsed_ms": 0.006
+      }
+    },
+    {
+      "seq": 107780516,
+      "observed_at": "2026-10-05T16:57:36.807927+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_13d5242a",
+      "data": {
+        "stage": "capabilities",
+        "elapsed_ms": 2083.684
+      }
+    },
+    {
+      "seq": 107780518,
+      "observed_at": "2026-10-05T16:57:36.809880+00:00",
+      "topic": "journal.heartbeat_work_completed",
+      "event_id": "evt_13d5242a",
+      "data": {
+        "elapsed_ms": 2109.04,
+        "error_type": null
+      }
+    },
+    {
+      "seq": 107780525,
+      "observed_at": "2026-10-05T16:57:39.702685+00:00",
+      "topic": "journal.heartbeat_work_started",
+      "event_id": "evt_d76e4f81",
+      "data": {
+        "queue_wait_ms": 2.598
+      }
+    },
+    {
+      "seq": 107780533,
+      "observed_at": "2026-10-05T16:57:39.719180+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_d76e4f81",
+      "data": {
+        "stage": "embodiment",
+        "elapsed_ms": 0.001
+      }
+    },
+    {
+      "seq": 107780534,
+      "observed_at": "2026-10-05T16:57:39.719823+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_d76e4f81",
+      "data": {
+        "stage": "watchdog",
+        "elapsed_ms": 0.016
+      }
+    },
+    {
+      "seq": 107780535,
+      "observed_at": "2026-10-05T16:57:39.720608+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_d76e4f81",
+      "data": {
+        "stage": "server_approvals",
+        "elapsed_ms": 0.031
+      }
+    },
+    {
+      "seq": 107780536,
+      "observed_at": "2026-10-05T16:57:39.722374+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_d76e4f81",
+      "data": {
+        "stage": "board",
+        "elapsed_ms": 1.034
+      }
+    },
+    {
+      "seq": 107780537,
+      "observed_at": "2026-10-05T16:57:39.723107+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_d76e4f81",
+      "data": {
+        "stage": "diary",
+        "elapsed_ms": 0.045
+      }
+    },
+    {
+      "seq": 107780538,
+      "observed_at": "2026-10-05T16:57:39.723838+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_d76e4f81",
+      "data": {
+        "stage": "daily_report",
+        "elapsed_ms": 0.015
+      }
+    },
+    {
+      "seq": 107780539,
+      "observed_at": "2026-10-05T16:57:39.724462+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_d76e4f81",
+      "data": {
+        "stage": "self_check",
+        "elapsed_ms": 0.004
+      }
+    },
+    {
+      "seq": 107780542,
+      "observed_at": "2026-10-05T16:57:46.419852+00:00",
+      "topic": "journal.heartbeat_stage_completed",
+      "event_id": "evt_d76e4f81",
+      "data": {
+        "stage": "capabilities",
+        "elapsed_ms": 6694.698
+      }
+    }
+  ],
+  "qq_post_deploy_observations": [
+    {
+      "observed_at": "2026-10-05T16:56:25.180150+00:00",
+      "topic": "journal.domain_command_result",
+      "event_id": "qq-turn:11836aeb29600abbb33bfff8a68c6c5980630093f5819356b1f737403003c857",
+      "data": {
+        "command_type": "PrepareWebStep",
+        "status": "applied",
+        "error": null
+      }
+    },
+    {
+      "observed_at": "2026-10-05T16:56:25.464006+00:00",
+      "topic": "journal.domain_command_intent",
+      "event_id": "qq-turn:11836aeb29600abbb33bfff8a68c6c5980630093f5819356b1f737403003c857",
+      "command_type": "PrepareQQResponse",
+      "summary_revision": 121048,
+      "homeostasis_vector_revision": 121048
+    },
+    {
+      "observed_at": "2026-10-05T16:56:30.107932+00:00",
+      "topic": "journal.domain_command_result",
+      "event_id": "qq-turn:11836aeb29600abbb33bfff8a68c6c5980630093f5819356b1f737403003c857",
+      "data": {
+        "command_type": "PrepareQQResponse",
+        "status": "applied",
+        "error": null
+      }
+    },
+    {
+      "observed_at": "2026-10-05T16:56:30.114219+00:00",
+      "topic": "journal.processing_completed",
+      "event_id": "qq-turn:11836aeb29600abbb33bfff8a68c6c5980630093f5819356b1f737403003c857",
+      "data": {
+        "status": "completed",
+        "decision_kind": "qq_prepare"
+      }
+    },
+    {
+      "observed_at": "2026-10-05T16:56:32.670090+00:00",
+      "topic": "journal.domain_command_result",
+      "event_id": "qq-turn:11836aeb29600abbb33bfff8a68c6c5980630093f5819356b1f737403003c857",
+      "data": {
+        "command_type": "AppraiseAffect",
+        "status": "applied",
+        "error": null
+      }
+    },
+    {
+      "observed_at": "2026-10-05T16:56:41.982862+00:00",
+      "topic": "journal.domain_command_result",
+      "event_id": "qq-turn:2d5e62e6788b51abc9ed0761e9549766bd86bd8aaada5de6fa3f6005217a23b0",
+      "data": {
+        "command_type": "PrepareWebStep",
+        "status": "applied",
+        "error": null
+      }
+    },
+    {
+      "observed_at": "2026-10-05T16:56:41.990988+00:00",
+      "topic": "journal.domain_command_intent",
+      "event_id": "qq-turn:2d5e62e6788b51abc9ed0761e9549766bd86bd8aaada5de6fa3f6005217a23b0",
+      "command_type": "PrepareQQResponse",
+      "summary_revision": 121051,
+      "homeostasis_vector_revision": 121051
+    },
+    {
+      "observed_at": "2026-10-05T16:57:01.896928+00:00",
+      "topic": "journal.domain_command_result",
+      "event_id": "qq-turn:2d5e62e6788b51abc9ed0761e9549766bd86bd8aaada5de6fa3f6005217a23b0",
+      "data": {
+        "command_type": "PrepareQQResponse",
+        "status": "applied",
+        "error": null
+      }
+    },
+    {
+      "observed_at": "2026-10-05T16:57:02.454183+00:00",
+      "topic": "journal.processing_completed",
+      "event_id": "qq-turn:2d5e62e6788b51abc9ed0761e9549766bd86bd8aaada5de6fa3f6005217a23b0",
+      "data": {
+        "status": "completed",
+        "decision_kind": "qq_prepare"
+      }
+    },
+    {
+      "observed_at": "2026-10-05T16:57:07.220579+00:00",
+      "topic": "journal.domain_command_result",
+      "event_id": "qq-turn:81a2a9d721f836c54a9eedc487d6086f9aac9c9ac837f3ffcfe941e1bb1f7266",
+      "data": {
+        "command_type": "PrepareWebStep",
+        "status": "applied",
+        "error": null
+      }
+    },
+    {
+      "observed_at": "2026-10-05T16:57:08.542877+00:00",
+      "topic": "journal.domain_command_result",
+      "event_id": "qq-turn:2d5e62e6788b51abc9ed0761e9549766bd86bd8aaada5de6fa3f6005217a23b0",
+      "data": {
+        "command_type": "AppraiseAffect",
+        "status": "applied",
+        "error": null
+      }
+    },
+    {
+      "observed_at": "2026-10-05T16:57:13.567728+00:00",
+      "topic": "journal.domain_command_result",
+      "event_id": "qq-turn:81a2a9d721f836c54a9eedc487d6086f9aac9c9ac837f3ffcfe941e1bb1f7266",
+      "data": {
+        "command_type": "PrepareWebStep",
+        "status": "applied",
+        "error": null
+      }
+    },
+    {
+      "observed_at": "2026-10-05T16:57:13.579446+00:00",
+      "topic": "journal.domain_command_intent",
+      "event_id": "qq-turn:81a2a9d721f836c54a9eedc487d6086f9aac9c9ac837f3ffcfe941e1bb1f7266",
+      "command_type": "PrepareQQResponse",
+      "summary_revision": 121056,
+      "homeostasis_vector_revision": 121056
+    },
+    {
+      "observed_at": "2026-10-05T16:57:36.862408+00:00",
+      "topic": "journal.domain_command_result",
+      "event_id": "qq-turn:81a2a9d721f836c54a9eedc487d6086f9aac9c9ac837f3ffcfe941e1bb1f7266",
+      "data": {
+        "command_type": "PrepareQQResponse",
+        "status": "applied",
+        "error": null
+      }
+    },
+    {
+      "observed_at": "2026-10-05T16:57:36.867232+00:00",
+      "topic": "journal.processing_completed",
+      "event_id": "qq-turn:81a2a9d721f836c54a9eedc487d6086f9aac9c9ac837f3ffcfe941e1bb1f7266",
+      "data": {
+        "status": "completed",
+        "decision_kind": "qq_prepare"
+      }
+    },
+    {
+      "observed_at": "2026-10-05T16:57:39.767216+00:00",
+      "topic": "journal.domain_command_result",
+      "event_id": "qq-turn:81a2a9d721f836c54a9eedc487d6086f9aac9c9ac837f3ffcfe941e1bb1f7266",
+      "data": {
+        "command_type": "AppraiseAffect",
+        "status": "applied",
+        "error": null
+      }
+    }
+  ],
+  "services_rechecked": true
+}

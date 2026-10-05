@@ -49,6 +49,11 @@ class AffectWorker:
             CapabilityDescriptor(capability=AFFECT_APPRAISE, status=status),
         ]
 
+    def queue_status(self) -> dict:
+        return {"pending": sum(len(scope.pending) for scope in self._scopes.values()),
+                "running": sum(not task.done() for task in self.tasks),
+                "scopes": len(self._scopes), "degraded": self._appraise_degraded}
+
     def submit(self, scope: str, trigger: dict[str, Any], *, event) -> None:
         if not self.enabled:
             return

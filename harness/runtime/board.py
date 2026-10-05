@@ -28,6 +28,7 @@ class ReflectionRequest(BaseModel):
 
 class BoardTurns:
     def __init__(self, path):
+        self.path = path
         path.parent.mkdir(parents=True, exist_ok=True)
         self.db = sqlite3.connect(path)
         self.db.execute("PRAGMA synchronous=FULL")
@@ -46,6 +47,14 @@ class BoardTurns:
 
     def all(self):
         return [json.loads(row[0]) for row in self.db.execute("SELECT record_json FROM turns ORDER BY rowid DESC LIMIT 200")]
+
+    async def all_background(self, owner):
+        worker = getattr(owner, "heartbeat", None)
+        if worker is None or not worker.active:
+            return self.all()
+        from harness.runtime.background import read_background_records
+
+        return await read_background_records(owner, self.path, "SELECT record_json FROM turns ORDER BY rowid DESC LIMIT 200")
 
     @property
     def paused(self):
@@ -156,7 +165,13 @@ class BoardController:
         """One bounded scheduling check, called after the real shared heartbeat."""
         if self.supervisor.lifecycle != RuntimeLifecycle.RUNNING or self.active_entry:
             return
-        for row in self.turns.all():
+        rows = await self.turns.all_background(self.supervisor)
+        if self.supervisor.lifecycle != RuntimeLifecycle.RUNNING or self.active_entry:
+            return
+        for candidate in rows:
+            row = self.turns.get(candidate["entry_id"])
+            if row is None:
+                continue
             if (row["status"] in {"append_started", "uncertain", "written_pending_memory"}
                     and row["entry_id"] not in self._recovery_queued
                     and time.monotonic() >= self._recovery_next.get(row["entry_id"], 0)
@@ -170,6 +185,8 @@ class BoardController:
                     self._recovery_queued.add(row["entry_id"])
                 return
         controller = getattr(self.supervisor, "capabilities", None)
+        if getattr(self.supervisor, "_foreground_dispatches", ()):
+            return
         if getattr(getattr(self.supervisor, "goals", None), "enabled", False):
             return
         if controller is not None and controller.owner("board") != "legacy":
@@ -182,7 +199,6 @@ class BoardController:
         if summary is None or summary.get("salience") not in {"noticeable", "marked"}:
             return
         # The last opportunity time is durable: restarting never resets cadence.
-        rows = self.turns.all()
         if rows:
             from datetime import datetime
             latest = max(datetime.fromisoformat(row["requested_at"]) for row in rows)

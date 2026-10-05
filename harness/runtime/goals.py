@@ -424,10 +424,11 @@ class GoalController:
                 "verified_evidence_refs": row["goal_request"]["goal_context"].get("appraisal_evidence_refs", [])})
         envelope = envelope.model_copy(update={"deadline": min(envelope.deadline, decision.deadline_at)})
         try:
-            outcome = await before_deadline(self.supervisor._invoke_domain(service="homeostasis", envelope=envelope,
-                method=self.supervisor.homeostasis.apply_appraisal, event=event), envelope.deadline)
-            if outcome.status == "applied":
-                self.supervisor._homeostasis_snapshot = await self.supervisor.homeostasis.get_snapshot()
+            async with self.supervisor._homeostasis_command_lock:
+                outcome = await before_deadline(self.supervisor._invoke_domain(service="homeostasis", envelope=envelope,
+                    method=self.supervisor.homeostasis.apply_appraisal, event=event), envelope.deadline)
+                if outcome.status == "applied":
+                    self.supervisor._homeostasis_snapshot = await self.supervisor.homeostasis.get_snapshot()
         except Exception as exc:
             # Stale/rejected self-assessment never becomes evidence or a retry loop.
             self.store.put("appraisal_rejection", decision.decision_id,

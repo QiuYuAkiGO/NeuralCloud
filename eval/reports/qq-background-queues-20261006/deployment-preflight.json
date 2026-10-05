@@ -1,0 +1,163 @@
+{
+  "captured_at": "2026-10-05T16:48:54.628924+00:00",
+  "release": "/opt/neuralcloud/releases/20261006-background-queues-v1",
+  "verified_release": {
+    "release_id": "20261006-background-queues-v1",
+    "verified_files": 422
+  },
+  "source_hashes": {
+    "harness/runtime/background.py": "2e5485baa2668e80d558649cdd028facb3e7a40b2121d37fd8c29cf66d1595b1",
+    "harness/runtime/supervisor.py": "0057b4f48a0b6c82318a754765bdf68f3f8112cec4c1245bd1b0169cf08a1324",
+    "harness/runtime/adapters.py": "eb31c8bca86d55b6482787527a151dea0dc5a24fca0ef1606297cbfe3b98eea3",
+    "harness/runtime/affect.py": "08caf86eaed6b4d9ca937a5fe98122aafa12fe8e5d8fce38c78e5b7f8899a909",
+    "harness/runtime/models.py": "f54f683dd5c1f7cae334b808f53d626a1e67a48c12360f8c9e03fea585cc1763",
+    "harness/runtime/board.py": "9e796286f86adc5bca7135d6b0b9ec22371b4bfb13e1054166df5b344b01c81f",
+    "harness/runtime/diary.py": "7d2e2717baa7abadb08e4da708c2a35fcd298bf5245ca9e8e364e5764b1091db",
+    "harness/runtime/capabilities.py": "e2a46b3406b5db01ad456ab8db0879eabd044aaed3be69066a37c797b0ab572a",
+    "harness/runtime/self_check.py": "09293b21c20ec8af521389d867ca378b945a267fd57bc43ea2eb5e9e664ad58a",
+    "harness/runtime/goals.py": "c3a9894204cbda1180839589c7afa01461c613a3c3417a93520d73e66cc57bbc",
+    "harness/emotion/service.py": "102e3ff5d4494ec467ba462e7474fd420e7780b5b183a81066e2c4aae3e46cec",
+    "tests/test_runtime_background_queues.py": "2ddb55f20010c5041d5115d59a9653e700ab1ad5feca11643b09522876aa54ef",
+    "tests/test_runtime_affect_worker.py": "25ba5341541fa4d0c4dcd713e7ca3897910345c58b6c4a6d4da903e7839bb89f",
+    "tests/test_emotion_service.py": "dbcd40dcee1e281d3ad9ebd6c69927013a0eadb9950dd2e9030d672ffc9bd2df",
+    "tests/test_emotion_runtime.py": "efd8fb5b985eb9cc8764292c75633f136c73ab361ba7bfd6e8ca0da435104d04",
+    "tests/test_runtime_supervisor.py": "25fb03bdfb66ccb24ec33e89db380d60e98a3da75096fe79eaa8836af5ef57dd",
+    "tests/test_runtime_qq_deadline.py": "04845574c5d1f0660469e9fc27c19f156fa570d1fe1edf0092ef57230a6c0e63",
+    "tests/test_cognitive_incremental_store.py": "29159f922a35cf9dc05bb2f3adbfffad4af4921b725364e5f302525baa905ca8",
+    "tests/test_board_runtime.py": "a88ca42d90e19aa7ca45674f83d86e47a72dfe4d0f31fdfe9366ab2a0254db7a",
+    "tests/test_diary_controller.py": "b87885b55ee5c1ed6e1eda89d5fd23b1497dad633911df9387ab8b4c6a92bc56",
+    "tests/test_self_check_controller.py": "c3d2e821a602a6bf7f0152a8cd4805ed43b1110ed4566040401a45bd052f4cdb",
+    "tests/test_self_check_tool.py": "82bdf257e753a572c75b28d6c19dcc1843bb23fe3833ac8c0410a1b41d67a4b4",
+    "tests/test_board_diary_recovery.py": "cb44e1ffba73acb33f7ae06882ffb4d09d8318d9e76d24d45f618325c645360e",
+    "tests/test_autonomous_capabilities.py": "0354841757e7337804ad5f3bdfee2056a2284719d007f3ef56d0c769d2b48e28",
+    "tests/test_goal_runtime.py": "6a0a10702d9de1c4ad825d7ec09aacb942a2f601c84913f4875222a0cf4d3bc0",
+    "tests/test_goal_runtime_review.py": "349b1ccf687fdb7da914a6aa0e22ad332f2628b0cf55ea301650bd4a5214f7cd",
+    "tests/test_runtime_recovery.py": "34335bb058b6e4de6e41fa353bb14ffa136048aa3449ec9e2f037a0a4f2869b4",
+    "tests/test_runtime_rpc.py": "982ffe721b3f574eca6c36ee2328a0227087e4a9c300d7faeaa251fa21209eac",
+    "tests/test_body_state_runtime.py": "2b1b980e9ccae6a73f82516d9e5269918bcfb1673e71dc03ebe0e025029d459d",
+    "tests/test_runtime_homeostasis_api.py": "f586bf5f77c9ce4f8901d801cfde893303425ac64fc2b31247cc8fff01e2ed1d",
+    "tests/test_production_runtime.py": "3391e18d9aa8c91f85ce08a311bbfac809b60f688003c9a03ef279ca077d5ee9",
+    "tests/test_basic_persona_continuity.py": "623ee434c3d1e368b323635faaf348491e39b442430d285f20fbf14da23760a2"
+  },
+  "config_hashes": {
+    "/etc/neuralcloud/homeostasis-profile.json": "38b29b27bc07f3c9baa6b2d29f39ca335c3ecd28fc6aa350600cd67718683781",
+    "/etc/neuralcloud/gui-settings.json": "13914b7f16d06cd3a544d059247f24879a09d20b506208bf3fa9db06d41df695",
+    "/etc/neuralcloud/structured-llm.json": "84523b0df11e938d2a451cc7e01e8ed69a17fe1f8f9f41a94621330047343f4c",
+    "/etc/neuralcloud/main-fallback.json": "34249eaf819a3ae62c83b31eb010ca359e25108c74aecb39f99e797c22f785db",
+    "/etc/neuralcloud/watcher.json": "d5c52326876dab16e032a83bbd8aecb12fb751cc8afb24b808b8292c329acd5f",
+    "/etc/neuralcloud/session.json": "5c2ba3483536856086d24046d84ad42a98cdd12239d03670dd66f1242b176a91",
+    "/etc/neuralcloud/emotion-deepseek.json": "05dc77d99b4875e72871cfd0b4583c0d1591488123a41924328011f892e38324",
+    "/etc/neuralcloud/deploy.pre-emotion-20260917.json": "2d33337999871fd9eb4b70de8bd90825f07adf7504aabb21fbebcf3d6cc29d11",
+    "/etc/neuralcloud/deploy.before-board-repair-20260917.json": "4a0dce38a681c9328206d14527eaf546600ad786648bc049593f793d7d80ae4b",
+    "/etc/neuralcloud/diary.json": "e6492a2ce46e5b014d30a344cfbcd6fd415b42371206c45804f9a693affecb6e",
+    "/etc/neuralcloud/direct.json": "d922f9282ffa26d3252c02b84c3845ef82a0bdfb98cdfa01bb88e74328351726",
+    "/etc/neuralcloud/manifest.json": "0759b3980e066223294649121e16e0937252234e20dad08848bf1d7635dc7feb",
+    "/etc/neuralcloud/deploy.json": "007a434c72d3ae37c32240cd4c7519f6d1d11d872666fce18bebd426fa1b41c4",
+    "/etc/neuralcloud/direct.before-disable-1060979317-20260917T032643Z.json": "3e127c6ec469b8955ed07b17741de441b39e449ae616a6afce08ecb1eb89a0c2",
+    "/etc/neuralcloud/board-client.json": "6797f63a65f014134816cd06a62552d2abee3005e6212b25ead0c421692ed5a4"
+  },
+  "services": {
+    "cognitive": {
+      "MainPID": "149280",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "homeostasis": {
+      "MainPID": "149312",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "runtime": {
+      "MainPID": "149352",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "gui": {
+      "MainPID": "150002",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "board": {
+      "MainPID": "149342",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "qq_direct": {
+      "MainPID": "150089",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    }
+  },
+  "runtime": {
+    "lifecycle": "PAUSED",
+    "health": {
+      "lifecycle": "PAUSED",
+      "journal_writable": true,
+      "cognitive_healthy": true,
+      "homeostasis_healthy": true,
+      "llm_healthy": true,
+      "body_healthy": true,
+      "degraded_reasons": [],
+      "last_heartbeat_at": "2026-10-05T16:43:16.742160Z",
+      "last_journal_append_at": "2026-10-05T16:48:38.495425Z",
+      "embodiment": {
+        "state": "disabled",
+        "provider_id": null,
+        "body_instance_id": null,
+        "activated_capabilities": [],
+        "effective_capabilities": [],
+        "negotiated": null,
+        "health": null,
+        "reason": "embodiment disabled by manifest"
+      },
+      "agency_state": "AVAILABLE",
+      "body_episode_id": null,
+      "body_revision": null,
+      "body_state_age_seconds": null
+    },
+    "pending_actions": 0,
+    "pending_events": 7,
+    "background": {
+      "heartbeat": {
+        "active": true,
+        "pending": 0,
+        "running": false,
+        "coalesced": 0,
+        "thread_jobs": 0,
+        "last_duration_ms": 2305.517,
+        "last_error": null
+      },
+      "affect": {
+        "pending": 0,
+        "running": 0,
+        "scopes": 0,
+        "degraded": false
+      }
+    }
+  },
+  "qq_direct": {
+    "running": true,
+    "connected": true,
+    "repository_root": "/opt/neuralcloud/releases/20261006-background-queues-v1",
+    "heartbeat_at": "2026-10-05T16:48:53.997269+00:00"
+  },
+  "manifest": {
+    "emotion_mode": "on",
+    "grounded_agency": null,
+    "production": null
+  },
+  "venv": "/opt/neuralcloud/releases/20261006-background-queues-v1/.venv/bin/python",
+  "check_python": "/home/qiuyu/.config/neuralcloud/20261005-refactor-130601/check-venv/bin/python",
+  "disk_free": {
+    "/opt/neuralcloud": 174607167488,
+    "/var/backups/neuralcloud": 174607167488
+  },
+  "startup_timeout_seconds": 1800,
+  "stop_timeout_seconds": 180
+}

@@ -213,13 +213,16 @@ class RuntimeIngress:
                 data={"sequence_range": event.sequence_range},
             )
             return event
-        queued = await self.supervisor.queue.put(event)
+        target_queue = (self.supervisor.heartbeat.queue
+            if event.event_type == RuntimeEventType.HEARTBEAT and self.supervisor.heartbeat.active
+            else self.supervisor.queue)
+        queued = await target_queue.put(event)
         if event.event_type == RuntimeEventType.USER_MESSAGE:
             # Queue insertion has now produced an authoritative outcome: the
             # normal user path is visible to eligibility checks, or an
             # explicitly low-priority malformed ingress was dropped.
             self.supervisor._pending_user_ingress_event_ids.discard(event.event_id)
-        shed_events = self.supervisor.queue.take_shedding_events()
+        shed_events = target_queue.take_shedding_events()
         for shed in shed_events:
             self.supervisor._append_journal(
                 "event_dropped",
@@ -304,6 +307,11 @@ class RuntimeSupervisor:
         from harness.runtime.affect import AffectWorker
 
         self.affect = AffectWorker(self)
+        from harness.runtime.background import HeartbeatWorker
+
+        self.heartbeat = HeartbeatWorker(self)
+        self._homeostasis_command_lock = asyncio.Lock()
+        self._foreground_dispatches: set[str] = set()
         self._agency_decision_bindings: dict[str, dict[str, str]] = {}
         if manifest.grounded_agency is not None:
             from harness.research.grounded_agency.manifest import GroundedAgencyRuntimeOptions
@@ -953,9 +961,12 @@ class RuntimeSupervisor:
             if self.production_runtime is not None:
                 await self.production_runtime.run()
                 return
+            if self.manifest.grounded_agency is None:
+                self.heartbeat.start()
             while self.lifecycle != RuntimeLifecycle.STOPPED:
                 predicate = self._dispatch_predicate()
-                timeout = self.scheduler.seconds_until_deadline() if self.lifecycle == RuntimeLifecycle.RUNNING else None
+                timeout = (self.scheduler.seconds_until_deadline()
+                    if self.lifecycle == RuntimeLifecycle.RUNNING and not self.heartbeat.active else None)
                 try:
                     event = await self.queue.get(timeout=timeout, predicate=predicate)
                 except QueueClosedError:
@@ -971,6 +982,9 @@ class RuntimeSupervisor:
                     event = await self.queue.get(timeout=0, predicate=predicate)
                     if event is None:
                         continue
+                if event.event_type == RuntimeEventType.HEARTBEAT and self.heartbeat.active:
+                    await self.heartbeat.queue.put(event)
+                    continue
                 await self.dispatch(event)
         except asyncio.CancelledError:
             if self.lifecycle not in {RuntimeLifecycle.STOPPED, RuntimeLifecycle.STOPPING}:
@@ -980,6 +994,15 @@ class RuntimeSupervisor:
             self._run_task = None
 
     async def dispatch(self, event: RuntimeEvent) -> EventDispatchResult:
+        if event.event_type == RuntimeEventType.HEARTBEAT:
+            return await self._dispatch_event(event)
+        self._foreground_dispatches.add(event.event_id)
+        try:
+            return await self._dispatch_event(event)
+        finally:
+            self._foreground_dispatches.discard(event.event_id)
+
+    async def _dispatch_event(self, event: RuntimeEvent) -> EventDispatchResult:
         self._process_seq += 1
         process_seq = self._process_seq
         self._append_journal(
@@ -1051,7 +1074,9 @@ class RuntimeSupervisor:
                             },
                         )
                 try:
-                    await self.queue.put(event)
+                    target_queue = (self.heartbeat.queue
+                        if event.event_type == RuntimeEventType.HEARTBEAT and self.heartbeat.active else self.queue)
+                    await target_queue.put(event)
                     self._append_journal(
                         "event_requeued",
                         event=event,
@@ -1205,6 +1230,8 @@ class RuntimeSupervisor:
         # the same persisted condition at a newer Homeostasis revision.
         self._homeostasis_watchdog_signature = None
         self.scheduler.reset_from_now()
+        if self._run_task is not None and self.production_runtime is None and self.manifest.grounded_agency is None:
+            self.heartbeat.start()
         self._start_embodiment_guards()
         if summary is not None:
             await self.submit_event(
@@ -1281,6 +1308,11 @@ class RuntimeSupervisor:
         if self.body_monitor is not None:
             await self.body_monitor.stop()
         try:
+            self_check = getattr(self, "self_check", None)
+            if callable(getattr(self_check, "close", None)):
+                await self_check.close()
+            if not await self.heartbeat.close(self.maintenance_drain_seconds):
+                raise RuntimeStateError("heartbeat maintenance did not drain during shutdown")
             daily_report = getattr(self, "daily_report", None)
             if daily_report is not None:
                 await daily_report.close()
@@ -1344,6 +1376,8 @@ class RuntimeSupervisor:
     def _research_workers_pending(self) -> bool:
         """Keep exclusive state ownership while an uncancellable model worker runs."""
         tasks = list(self._social_appraisal_tasks)
+        if self.heartbeat.current_event is not None and self.heartbeat.task is not None:
+            tasks.append(self.heartbeat.task)
         tasks.extend(self.affect.tasks)
         tasks.extend(getattr(self.cognitive, "research_tasks", ()))
         tasks.extend(getattr(self.cognitive, "command_tasks", ()))
@@ -1351,7 +1385,7 @@ class RuntimeSupervisor:
             tasks.extend(self._research_memory.service._tasks.values())
         if self._agency_service is not None and self._agency_service._inflight is not None:
             tasks.append(self._agency_service._inflight)
-        return any(not task.done() for task in tasks)
+        return bool(self.heartbeat.thread.pending) or any(not task.done() for task in tasks)
 
     def write_checkpoint(self) -> RuntimeCheckpoint:
         checkpoint = RuntimeCheckpoint(
@@ -1365,7 +1399,7 @@ class RuntimeSupervisor:
             lifecycle=self.lifecycle,
             lifecycle_reason=self.lifecycle_reason,
             version_vector=self.version_vector,
-            pending_event_ids=[event.event_id for event in self.queue.snapshot()],
+            pending_event_ids=[event.event_id for event in self.queue.snapshot() + self.heartbeat.queue.snapshot()],
             prepared_response_ids=[
                 str(context["prepared"].prepare_id) for context in self._action_context.values()
             ],
@@ -1500,6 +1534,7 @@ class RuntimeSupervisor:
             embodiment=embodiment_status,
             agency_state=self._agency_state,
             affect=self.affect.status(),
+            background={"heartbeat": self.heartbeat.status(), "affect": self.affect.queue_status()},
             recovery=self.recovery_status(),
         )
 
@@ -1677,31 +1712,34 @@ class RuntimeSupervisor:
             )
             homeostasis_watchdog = False
         else:
-            homeostasis_command = (
-                "ApplyHeartbeat"
-                if event.event_type == RuntimeEventType.HEARTBEAT
-                else "ApplyEvent"
-            )
-            homeostasis_envelope = self._make_command(
-                event,
-                command_type=homeostasis_command,
-                idempotency_key=f"homeostasis:{homeostasis_command}:{event.event_id}",
-                expected_revision=self._homeostasis_snapshot.revision,
-                payload={"event": event.model_dump(mode="json"),
-                    **({"regulation_feedback": True} if self.goals.enabled else {})},
-            )
-            method = (
-                self.homeostasis.apply_heartbeat
-                if event.event_type == RuntimeEventType.HEARTBEAT
-                else self.homeostasis.apply_event
-            )
-            homeostasis_result = await self._invoke_domain(
-                service="homeostasis", envelope=homeostasis_envelope, method=method, event=event
-            )
-            homeostasis_watchdog = await self._update_homeostasis(
-                homeostasis_result,
-                event=event,
-            )
+            async with self._homeostasis_command_lock:
+                homeostasis_revision_before = self._homeostasis_snapshot.revision
+                homeostasis_command = (
+                    "ApplyHeartbeat"
+                    if event.event_type == RuntimeEventType.HEARTBEAT
+                    else "ApplyEvent"
+                )
+                homeostasis_envelope = self._make_command(
+                    event,
+                    command_type=homeostasis_command,
+                    idempotency_key=f"homeostasis:{homeostasis_command}:{event.event_id}",
+                    expected_revision=self._homeostasis_snapshot.revision,
+                    payload={"event": event.model_dump(mode="json"),
+                        **({"regulation_feedback": True} if self.goals.enabled else {})},
+                )
+                method = (
+                    self.homeostasis.apply_heartbeat
+                    if event.event_type == RuntimeEventType.HEARTBEAT
+                    else self.homeostasis.apply_event
+                )
+                homeostasis_result = await self._invoke_domain(
+                    service="homeostasis", envelope=homeostasis_envelope, method=method, event=event
+                )
+                homeostasis_watchdog = await self._update_homeostasis(
+                    homeostasis_result,
+                    event=event, schedule_marked=False,
+                )
+            await self._schedule_homeostasis_after_update(event, homeostasis_revision_before, homeostasis_watchdog)
 
         homeostatic_interoception = self._response_homeostatic_interoception()
         causal_context = self._homeostatic_causal_fields(homeostatic_interoception)
@@ -1782,64 +1820,7 @@ class RuntimeSupervisor:
         if event.event_type == RuntimeEventType.HEARTBEAT:
             scheduled_after_user_receive_seq = self._causal_user_receive_seq(event)
             self._last_heartbeat_at = utc_now()
-            await self._refresh_embodiment()
-            await self.check_watchdog()
-            if self._basic_terminal is not None and self.lifecycle == RuntimeLifecycle.RUNNING:
-                await self._basic_terminal.expire_pending_approvals()
-            server = getattr(self, "server", None)
-            if server is not None and self.lifecycle == RuntimeLifecycle.RUNNING:
-                await server.expire_pending_approvals()
-            board = getattr(self, "board", None)
-            if board is not None:
-                await board.heartbeat()
-            diary = getattr(self, "diary", None)
-            if diary is not None:
-                await diary.heartbeat()
-            daily_report = getattr(self, "daily_report", None)
-            if daily_report is not None:
-                try:
-                    await daily_report.heartbeat()
-                except Exception as exc:
-                    self._append_journal(
-                        "daily_report_failed",
-                        data={"error_type": type(exc).__name__},
-                    )
-            self_check = getattr(self, "self_check", None)
-            if self_check is not None:
-                try:
-                    await self_check.heartbeat()
-                except Exception as exc:
-                    self._append_journal(
-                        "self_check_failed",
-                        data={"error_type": type(exc).__name__},
-                    )
-            await self.capabilities.heartbeat()
-            policies: list[dict[str, Any]] = []
-            if (
-                self.manifest.autonomous_chat_enabled
-                and self.lifecycle == RuntimeLifecycle.RUNNING
-                and self.queue.empty()
-                and not self._pending_user_ingress_event_ids
-                and self.action_coordinator.current is None
-            ):
-                policies = await self.homeostasis.propose_policies(
-                    version_vector=self.version_vector
-                )
-                if policies:
-                    payload: dict[str, Any] = {
-                        "mode": "autonomous",
-                        "policies": policies,
-                        "scheduled_after_user_receive_seq": scheduled_after_user_receive_seq,
-                        "channel": self._last_user_channel,
-                    }
-                    if self._last_user_session_id is not None:
-                        payload["session_id"] = self._last_user_session_id
-                    await self.submit_event(
-                        event_type=RuntimeEventType.IDLE,
-                        priority=RuntimeEventPriority.IDLE,
-                        source="scheduler",
-                        payload=payload,
-                    )
+            policies = await self._heartbeat_maintenance(event, scheduled_after_user_receive_seq)
             return EventDispatchResult(
                 event_id=event.event_id,
                 receive_seq=event.receive_seq,
@@ -2191,6 +2172,91 @@ class RuntimeSupervisor:
         if self._agency_state == AgencyState.TERMINAL:
             self.embodiment.set_terminal("restored terminal body state")
 
+    async def _schedule_homeostasis_after_update(self, event, prior_revision, watchdog):
+        if watchdog or self.manifest.homeostatic_expression.mode != "full":
+            return
+        if event.event_type == RuntimeEventType.HEARTBEAT and self._foreground_dispatches:
+            return
+        summary = self._response_homeostatic_interoception()
+        if summary is not None:
+            await self._maybe_schedule_marked_trigger(event, summary, source_revision=prior_revision)
+
+    async def _heartbeat_step(self, event, name, operation):
+        if self.lifecycle != RuntimeLifecycle.RUNNING:
+            return
+        started = time.monotonic()
+        try:
+            return await operation()
+        finally:
+            self._append_journal("heartbeat_stage_completed", event=event,
+                data={"stage": name, "elapsed_ms": round((time.monotonic() - started) * 1000, 3)})
+
+    async def _heartbeat_maintenance(self, event, scheduled_after_user_receive_seq):
+        await self._heartbeat_step(event, "embodiment", self._refresh_embodiment)
+        await self._heartbeat_step(event, "watchdog", self.check_watchdog)
+        if self._basic_terminal is not None and self.lifecycle == RuntimeLifecycle.RUNNING:
+            await self._heartbeat_step(event, "terminal_approvals", self._basic_terminal.expire_pending_approvals)
+        server = getattr(self, "server", None)
+        if server is not None and self.lifecycle == RuntimeLifecycle.RUNNING:
+            await self._heartbeat_step(event, "server_approvals", server.expire_pending_approvals)
+        board = getattr(self, "board", None)
+        if board is not None:
+            await self._heartbeat_step(event, "board", board.heartbeat)
+        diary = getattr(self, "diary", None)
+        if diary is not None:
+            await self._heartbeat_step(event, "diary", diary.heartbeat)
+        daily_report = getattr(self, "daily_report", None)
+        if daily_report is not None:
+            try:
+                await self._heartbeat_step(event, "daily_report", daily_report.heartbeat)
+            except Exception as exc:
+                self._append_journal(
+                    "daily_report_failed",
+                    data={"error_type": type(exc).__name__},
+                )
+        self_check = getattr(self, "self_check", None)
+        if self_check is not None:
+            try:
+                await self._heartbeat_step(event, "self_check", self_check.heartbeat)
+            except Exception as exc:
+                self._append_journal(
+                    "self_check_failed",
+                    data={"error_type": type(exc).__name__},
+                )
+        await self._heartbeat_step(event, "capabilities", self.capabilities.heartbeat)
+        policies: list[dict[str, Any]] = []
+        if (
+            self.manifest.autonomous_chat_enabled
+            and self.lifecycle == RuntimeLifecycle.RUNNING
+            and not self._foreground_dispatches
+            and self.queue.empty()
+            and not self._pending_user_ingress_event_ids
+            and self.action_coordinator.current is None
+        ):
+            policies = await self.homeostasis.propose_policies(
+                version_vector=self.version_vector
+            )
+            if (policies and (not self.heartbeat.active or (
+                    self.lifecycle == RuntimeLifecycle.RUNNING
+                    and not self._foreground_dispatches and self.queue.empty()
+                    and not self._pending_user_ingress_event_ids
+                    and self.action_coordinator.current is None))):
+                payload: dict[str, Any] = {
+                    "mode": "autonomous",
+                    "policies": policies,
+                    "scheduled_after_user_receive_seq": scheduled_after_user_receive_seq,
+                    "channel": self._last_user_channel,
+                }
+                if self._last_user_session_id is not None:
+                    payload["session_id"] = self._last_user_session_id
+                await self.submit_event(
+                    event_type=RuntimeEventType.IDLE,
+                    priority=RuntimeEventPriority.IDLE,
+                    source="scheduler",
+                    payload=payload,
+                )
+        return policies
+
     async def _dispatch_grounded_event(self, event: RuntimeEvent, process_seq: int) -> EventDispatchResult:
         """Independent research route: no legacy ranking, reflection or social increments."""
         self._grounded_binding.assert_matches(self.manifest)
@@ -2493,20 +2559,23 @@ class RuntimeSupervisor:
                 evidence_refs=snapshot.evidence_refs,
                 observed_at=snapshot.captured_at,
             )
-            envelope = self._make_command(
-                event,
-                command_type="AssimilateObservation",
-                idempotency_key=f"homeostasis:body-state:{snapshot.body_instance_id}:{snapshot.revision}",
-                expected_revision=self._homeostasis_snapshot.revision,
-                payload={"observation": observation.model_dump(mode="json")},
-            )
-            result = await self._invoke_domain(
-                service="homeostasis",
-                envelope=envelope,
-                method=self.homeostasis.assimilate_observation,
-                event=event,
-            )
-            homeostasis_watchdog = await self._update_homeostasis(result, event=event)
+            async with self._homeostasis_command_lock:
+                prior_revision = self._homeostasis_snapshot.revision
+                envelope = self._make_command(
+                    event,
+                    command_type="AssimilateObservation",
+                    idempotency_key=f"homeostasis:body-state:{snapshot.body_instance_id}:{snapshot.revision}",
+                    expected_revision=self._homeostasis_snapshot.revision,
+                    payload={"observation": observation.model_dump(mode="json")},
+                )
+                result = await self._invoke_domain(
+                    service="homeostasis",
+                    envelope=envelope,
+                    method=self.homeostasis.assimilate_observation,
+                    event=event,
+                )
+                homeostasis_watchdog = await self._update_homeostasis(result, event=event, schedule_marked=False)
+            await self._schedule_homeostasis_after_update(event, prior_revision, homeostasis_watchdog)
         if homeostasis_watchdog:
             return EventDispatchResult(
                 event_id=event.event_id,
@@ -2617,36 +2686,39 @@ class RuntimeSupervisor:
             )
         if self.manifest.embodiment.mode != "grounded":
             raise RuntimeStateError("body event received while embodiment is off")
-        command = self._make_command(
-            event,
-            command_type="ApplyObservation",
-            idempotency_key=(
-                f"homeostasis:body:{snapshot.body_instance_id}:"
-                f"{snapshot.episode_id}:r{snapshot.revision}"
-            ),
-            expected_revision=self._homeostasis_snapshot.revision,
-            payload={
-                "observation": {
-                    "source": "system_sensor",
-                    "observed_values": {
-                        "energy_reserve": snapshot.energy.available_ratio,
-                    },
-                    "body_instance_id": snapshot.body_instance_id,
-                    "episode_id": snapshot.episode_id,
-                    "body_revision": snapshot.revision,
-                    "captured_at": snapshot.captured_at,
-                    "evidence_refs": snapshot.evidence_refs,
-                    "experiment_mode": "grounded",
-                }
-            },
-        )
-        result = await self._invoke_domain(
-            service="homeostasis",
-            envelope=command,
-            method=self.homeostasis.apply_observation,
-            event=event,
-        )
-        homeostasis_watchdog = await self._update_homeostasis(result, event=event)
+        async with self._homeostasis_command_lock:
+            prior_revision = self._homeostasis_snapshot.revision
+            command = self._make_command(
+                event,
+                command_type="ApplyObservation",
+                idempotency_key=(
+                    f"homeostasis:body:{snapshot.body_instance_id}:"
+                    f"{snapshot.episode_id}:r{snapshot.revision}"
+                ),
+                expected_revision=self._homeostasis_snapshot.revision,
+                payload={
+                    "observation": {
+                        "source": "system_sensor",
+                        "observed_values": {
+                            "energy_reserve": snapshot.energy.available_ratio,
+                        },
+                        "body_instance_id": snapshot.body_instance_id,
+                        "episode_id": snapshot.episode_id,
+                        "body_revision": snapshot.revision,
+                        "captured_at": snapshot.captured_at,
+                        "evidence_refs": snapshot.evidence_refs,
+                        "experiment_mode": "grounded",
+                    }
+                },
+            )
+            result = await self._invoke_domain(
+                service="homeostasis",
+                envelope=command,
+                method=self.homeostasis.apply_observation,
+                event=event,
+            )
+            homeostasis_watchdog = await self._update_homeostasis(result, event=event, schedule_marked=False)
+        await self._schedule_homeostasis_after_update(event, prior_revision, homeostasis_watchdog)
         if homeostasis_watchdog:
             return EventDispatchResult(
                 event_id=event.event_id,
@@ -2768,6 +2840,9 @@ class RuntimeSupervisor:
         homeostatic_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         causal = homeostatic_context or {}
+        if isinstance(decision, GoalProposal) and self._response_block_reason() is not None:
+            return {"prepare_id": prepared.prepare_id, "reason": self._response_block_reason(),
+                    "effective_decision_kind": "no_action"}
         if event.event_type == RuntimeEventType.IDLE:
             ineligible = self._autonomous_ineligible(event)
             if ineligible is not None:
@@ -2792,8 +2867,11 @@ class RuntimeSupervisor:
                 )
             if delivery is None:
                 async with self._foreground_lock:
-                    if self.production_runtime is not None and self.lifecycle != RuntimeLifecycle.RUNNING:
-                        return {"prepare_id": prepared.prepare_id, "reason": "production_result_fenced", "effective_decision_kind": "no_action"}
+                    blocked = self._response_block_reason()
+                    if blocked is not None:
+                        return {"prepare_id": prepared.prepare_id,
+                            "reason": "production_result_fenced" if self.production_runtime is not None else blocked,
+                            "effective_decision_kind": "no_action"}
                     # User ingress does not take this lock, but it can only run at
                     # an await boundary.  Keeping this final check, durable intent,
                     # and invocation start in one synchronous critical section
@@ -3267,20 +3345,23 @@ class RuntimeSupervisor:
         if self.production_runtime is None and original_event.event_type != RuntimeEventType.CAPABILITY_OPPORTUNITY and (
             ga is None or ga.action_selection == "engineered_argmin"
         ):
-            outcome_command = self._make_command(
-                effective_outcome_event,
-                command_type="ApplyOutcome",
-                idempotency_key=f"homeostasis:outcome:{action.idempotency_key}",
-                expected_revision=self._homeostasis_snapshot.revision,
-                payload={"action": action.model_dump(mode="json"), "evidence": evidence.model_dump(mode="json")},
-            )
-            result = await self._invoke_domain(
-                service="homeostasis",
-                envelope=outcome_command,
-                method=self.homeostasis.apply_outcome,
-                event=effective_outcome_event,
-            )
-            await self._update_homeostasis(result, event=effective_outcome_event)
+            async with self._homeostasis_command_lock:
+                prior_revision = self._homeostasis_snapshot.revision
+                outcome_command = self._make_command(
+                    effective_outcome_event,
+                    command_type="ApplyOutcome",
+                    idempotency_key=f"homeostasis:outcome:{action.idempotency_key}",
+                    expected_revision=self._homeostasis_snapshot.revision,
+                    payload={"action": action.model_dump(mode="json"), "evidence": evidence.model_dump(mode="json")},
+                )
+                result = await self._invoke_domain(
+                    service="homeostasis",
+                    envelope=outcome_command,
+                    method=self.homeostasis.apply_outcome,
+                    event=effective_outcome_event,
+                )
+                homeostasis_watchdog = await self._update_homeostasis(result, event=effective_outcome_event, schedule_marked=False)
+            await self._schedule_homeostasis_after_update(effective_outcome_event, prior_revision, homeostasis_watchdog)
         self._record_grounded_experience(
             original_event, evidence=evidence.model_dump(mode="json"),
             success=action.state == ActionExecutionState.SUCCEEDED,
@@ -3421,6 +3502,15 @@ class RuntimeSupervisor:
                 envelope = DomainCommandEnvelope[dict[str, Any]].model_validate(previous)
                 return self._renew_command_window(envelope)
         issued_at = utc_now()
+        version_vector = self.version_vector
+        summary = payload.get("homeostatic_interoception") or payload.get("homeostatic_summary")
+        if isinstance(summary, dict) and type(summary.get("snapshot_revision")) is int:
+            # These trusted summaries are frozen before asynchronous context
+            # preparation. A concurrent heartbeat may advance the owner, but
+            # the command must bind the revision it actually read. Homeostasis
+            # writes retain their current expected_revision and mutation lock.
+            version_vector = VersionVector.model_validate({**version_vector.model_dump(),
+                "homeostasis_state": summary["snapshot_revision"]})
         return DomainCommandEnvelope[dict[str, Any]](
             command_type=command_type,
             event_id=event.event_id,
@@ -3433,7 +3523,7 @@ class RuntimeSupervisor:
             issued_at=issued_at,
             deadline=issued_at + timedelta(seconds=self.command_timeout_seconds),
             expected_revision=expected_revision,
-            version_vector=self.version_vector,
+            version_vector=version_vector,
             payload=payload,
         )
 
@@ -3505,6 +3595,11 @@ class RuntimeSupervisor:
                 # this waiter leaves Cognitive's shielded command/lock intact.
                 async with budget:
                     result = await self._prepare_qq_turn(event, process_seq, request)
+                blocked = self._response_block_reason()
+                if blocked is not None:
+                    return EventDispatchResult(event_id=event.event_id, receive_seq=event.receive_seq,
+                        process_seq=process_seq, status="ignored", decision_kind="qq_prepare",
+                        detail={"error_type": "qq_turn_rejected", "reason": blocked})
                 if utc_now() < request.deadline_at or (
                     result.status == "completed" and _qq_error_fallback_payload(result.detail)
                     and utc_now() < request.deadline_at + timedelta(seconds=grace)
@@ -3525,6 +3620,14 @@ class RuntimeSupervisor:
         return EventDispatchResult(event_id=event.event_id, receive_seq=event.receive_seq,
             process_seq=process_seq, status="ignored", decision_kind="qq_prepare",
             detail={"error_type": "qq_turn_expired"})
+
+    def _response_block_reason(self) -> str | None:
+        if self.lifecycle != RuntimeLifecycle.RUNNING:
+            return "runtime_result_fenced"
+        summary = self._response_homeostatic_interoception()
+        if summary is not None and summary.get("salience") == "critical":
+            return "critical_homeostasis_before_effect"
+        return None
 
     @staticmethod
     def _qq_turn_expired(event: RuntimeEvent) -> bool:
@@ -3970,6 +4073,7 @@ class RuntimeSupervisor:
         result: DomainCommandResult[Any],
         *,
         event: RuntimeEvent,
+        schedule_marked: bool = True,
     ) -> bool:
         previous = self._homeostasis_snapshot
         effective_result = result
@@ -4046,7 +4150,7 @@ class RuntimeSupervisor:
                 event=event,
                 data={"rollout_mode": mode, **causal},
             )
-            if not reasons and mode == "full":
+            if schedule_marked and not reasons and mode == "full":
                 await self._maybe_schedule_marked_trigger(
                     event,
                     summary,
@@ -4525,9 +4629,11 @@ class RuntimeSupervisor:
         if not self._journal_writable:
             return False, self.version_vector, "runtime journal is degraded"
         try:
-            cognitive, homeostasis = await asyncio.gather(
-                self.cognitive.get_snapshot(), self.homeostasis.get_snapshot()
-            )
+            async with self._homeostasis_command_lock:
+                cognitive, homeostasis = await asyncio.gather(
+                    self.cognitive.get_snapshot(), self.homeostasis.get_snapshot()
+                )
+                self._homeostasis_snapshot = homeostasis
         except Exception as exc:
             return False, self.version_vector, f"snapshot barrier failed: {exc}"
         context = self._action_context.get(action.action_id)
@@ -4538,7 +4644,6 @@ class RuntimeSupervisor:
             if self.production_runtime is None and homeostasis.acknowledged_receive_seq < event.receive_seq:
                 return False, self.version_vector, "homeostasis service has not acknowledged event"
         self._cognitive_snapshot = cognitive
-        self._homeostasis_snapshot = homeostasis
         return True, self.version_vector, None
 
     async def _transition(
@@ -4562,6 +4667,7 @@ class RuntimeSupervisor:
             self.lifecycle_since = transition.at
             self.lifecycle_reason = reason
         await self.queue.wake()
+        await self.heartbeat.queue.wake()
         await self._publish("lifecycle", transition.model_dump(mode="json"))
         return transition
 
@@ -4729,7 +4835,8 @@ class RuntimeSupervisor:
 
     async def _restore_pending_events(self) -> None:
         self._needs_refill = False
-        queued_ids = {queued.event_id for queued in self.queue.snapshot()}
+        queued_ids = {queued.event_id for queued in self.queue.snapshot() + self.heartbeat.queue.snapshot()}
+        queued_ids.update(self._foreground_dispatches)
         if self.production_runtime is not None:
             queued_ids.update(event.event_id for event in self.production_runtime.tasks.values())
         for record in self.recovery.pending_events():

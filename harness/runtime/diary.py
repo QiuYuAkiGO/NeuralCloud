@@ -26,6 +26,7 @@ class DiaryInvite(BaseModel):
 
 class DiaryTurns:
     def __init__(self, path):
+        self.path = path
         path.parent.mkdir(parents=True, exist_ok=True)
         import sqlite3
         self.db = sqlite3.connect(path, check_same_thread=False)
@@ -46,6 +47,14 @@ class DiaryTurns:
 
     def all(self):
         return [json.loads(row[0]) for row in self.db.execute("SELECT record_json FROM turns ORDER BY rowid DESC LIMIT 200")]
+
+    async def all_background(self, owner):
+        worker = getattr(owner, "heartbeat", None)
+        if worker is None or not worker.active:
+            return self.all()
+        from harness.runtime.background import read_background_records
+
+        return await read_background_records(owner, self.path, "SELECT record_json FROM turns ORDER BY rowid DESC LIMIT 200")
 
 
 def _in_window(moment: datetime, window_local: str) -> bool:
@@ -138,7 +147,8 @@ class DiaryController:
         return {"accepted": True, "entry_id": entry_id, "event_id": event.event_id, "status": "queued"}
 
     async def heartbeat(self):
-        if self.supervisor.lifecycle != RuntimeLifecycle.RUNNING or self.active_entry:
+        if (self.supervisor.lifecycle != RuntimeLifecycle.RUNNING or self.active_entry
+                or getattr(self.supervisor, "_foreground_dispatches", ())):
             return
         controller = getattr(self.supervisor, "capabilities", None)
         # Goals currently dispatch board/QQ/web, not diary. Only the diary
@@ -156,7 +166,10 @@ class DiaryController:
         salience = (summary or {}).get("salience")
         if salience not in {"noticeable", "marked"} and self.activity_revision <= 0:
             return
-        rows = self.turns.all()
+        rows = await self.turns.all_background(self.supervisor)
+        if (self.supervisor.lifecycle != RuntimeLifecycle.RUNNING or self.active_entry
+                or getattr(self.supervisor, "_foreground_dispatches", ()) or not self.supervisor.queue.empty()):
+            return
         if rows:
             latest = max(datetime.fromisoformat(row["requested_at"]) for row in rows)
             if (utc_now() - latest).total_seconds() < self.settings.opportunity_seconds:

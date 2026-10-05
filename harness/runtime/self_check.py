@@ -95,11 +95,8 @@ class SelfCheckController:
                 append("self_check_failed", data={"error_type": type(exc).__name__})
             raise
 
-    async def collect(self) -> dict[str, Any]:
+    def _history_counts(self, since):
         supervisor = self.supervisor
-        status = supervisor.status().model_dump(mode="json")
-        window_hours = self.settings.evidence_window_hours
-        since = utc_now() - timedelta(hours=window_hours)
         counts: dict[str, int] = {}
         qq_turns = 0
         web_with_qq = 0
@@ -115,6 +112,14 @@ class SelfCheckController:
                 payload = record.data or {}
                 if "qq" in str(payload.get("call_id") or payload.get("capability") or ""):
                     web_with_qq += 1
+        return counts, qq_turns, web_with_qq
+
+    async def collect(self) -> dict[str, Any]:
+        supervisor = self.supervisor
+        status = supervisor.status().model_dump(mode="json")
+        window_hours = self.settings.evidence_window_hours
+        since = utc_now() - timedelta(hours=window_hours)
+        counts, qq_turns, web_with_qq = await supervisor.heartbeat.thread.run(self._history_counts, since)
         diary = getattr(supervisor, "diary", None)
         diary_snap = diary.snapshot() if diary is not None else None
         goals = supervisor.goals.snapshot() if getattr(supervisor, "goals", None) is not None else None

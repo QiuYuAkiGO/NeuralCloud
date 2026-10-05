@@ -1,0 +1,106 @@
+{
+  "release_id": "20261006-background-queues-v1",
+  "previous_release": "20261006-bounded-history-v1",
+  "config_hashes": {
+    "/etc/neuralcloud/homeostasis-profile.json": "38b29b27bc07f3c9baa6b2d29f39ca335c3ecd28fc6aa350600cd67718683781",
+    "/etc/neuralcloud/gui-settings.json": "13914b7f16d06cd3a544d059247f24879a09d20b506208bf3fa9db06d41df695",
+    "/etc/neuralcloud/structured-llm.json": "84523b0df11e938d2a451cc7e01e8ed69a17fe1f8f9f41a94621330047343f4c",
+    "/etc/neuralcloud/main-fallback.json": "34249eaf819a3ae62c83b31eb010ca359e25108c74aecb39f99e797c22f785db",
+    "/etc/neuralcloud/watcher.json": "d5c52326876dab16e032a83bbd8aecb12fb751cc8afb24b808b8292c329acd5f",
+    "/etc/neuralcloud/session.json": "5c2ba3483536856086d24046d84ad42a98cdd12239d03670dd66f1242b176a91",
+    "/etc/neuralcloud/emotion-deepseek.json": "05dc77d99b4875e72871cfd0b4583c0d1591488123a41924328011f892e38324",
+    "/etc/neuralcloud/deploy.pre-emotion-20260917.json": "2d33337999871fd9eb4b70de8bd90825f07adf7504aabb21fbebcf3d6cc29d11",
+    "/etc/neuralcloud/deploy.before-board-repair-20260917.json": "4a0dce38a681c9328206d14527eaf546600ad786648bc049593f793d7d80ae4b",
+    "/etc/neuralcloud/diary.json": "e6492a2ce46e5b014d30a344cfbcd6fd415b42371206c45804f9a693affecb6e",
+    "/etc/neuralcloud/direct.json": "d922f9282ffa26d3252c02b84c3845ef82a0bdfb98cdfa01bb88e74328351726",
+    "/etc/neuralcloud/manifest.json": "0759b3980e066223294649121e16e0937252234e20dad08848bf1d7635dc7feb",
+    "/etc/neuralcloud/deploy.json": "007a434c72d3ae37c32240cd4c7519f6d1d11d872666fce18bebd426fa1b41c4",
+    "/etc/neuralcloud/direct.before-disable-1060979317-20260917T032643Z.json": "3e127c6ec469b8955ed07b17741de441b39e449ae616a6afce08ecb1eb89a0c2",
+    "/etc/neuralcloud/board-client.json": "6797f63a65f014134816cd06a62552d2abee3005e6212b25ead0c421692ed5a4"
+  },
+  "tests": [
+    "tests/test_runtime_background_queues.py",
+    "tests/test_runtime_affect_worker.py",
+    "tests/test_emotion_service.py",
+    "tests/test_emotion_runtime.py",
+    "tests/test_runtime_supervisor.py",
+    "tests/test_runtime_qq_deadline.py",
+    "tests/test_cognitive_incremental_store.py",
+    "tests/test_board_runtime.py",
+    "tests/test_diary_controller.py",
+    "tests/test_self_check_controller.py",
+    "tests/test_self_check_tool.py",
+    "tests/test_board_diary_recovery.py",
+    "tests/test_autonomous_capabilities.py",
+    "tests/test_goal_runtime.py",
+    "tests/test_goal_runtime_review.py",
+    "tests/test_runtime_recovery.py",
+    "tests/test_runtime_rpc.py",
+    "tests/test_body_state_runtime.py",
+    "tests/test_runtime_homeostasis_api.py",
+    "tests/test_production_runtime.py"
+  ],
+  "expected_tests": 338,
+  "files": [
+    {
+      "path": "harness/runtime/background.py",
+      "before_sha256": null,
+      "after_sha256": "2e5485baa2668e80d558649cdd028facb3e7a40b2121d37fd8c29cf66d1595b1"
+    },
+    {
+      "path": "harness/runtime/supervisor.py",
+      "before_sha256": "f7751607e83f76e44f803267ea9c298945b237025728cc08785d4dc78ca12ab3",
+      "after_sha256": "0057b4f48a0b6c82318a754765bdf68f3f8112cec4c1245bd1b0169cf08a1324"
+    },
+    {
+      "path": "harness/runtime/adapters.py",
+      "before_sha256": "8a1bd0e241206163e22eaa959f4b8e3728615b893e0633530a277c5e58b13754",
+      "after_sha256": "eb31c8bca86d55b6482787527a151dea0dc5a24fca0ef1606297cbfe3b98eea3"
+    },
+    {
+      "path": "harness/runtime/affect.py",
+      "before_sha256": "090a480c56dbe5428f7e7192eaf1d369b8410d831e22c6567223f439160833bf",
+      "after_sha256": "08caf86eaed6b4d9ca937a5fe98122aafa12fe8e5d8fce38c78e5b7f8899a909"
+    },
+    {
+      "path": "harness/runtime/models.py",
+      "before_sha256": "8feb5a6517f89dd09157275e6344a85c1bc8ea1c4bda69dc214b2abf4873e7a7",
+      "after_sha256": "f54f683dd5c1f7cae334b808f53d626a1e67a48c12360f8c9e03fea585cc1763"
+    },
+    {
+      "path": "harness/runtime/board.py",
+      "before_sha256": "7d3611505d4fae74ce5bc79a1c2d149714d721f5f7a0ecf569e4c7c0138deeab",
+      "after_sha256": "9e796286f86adc5bca7135d6b0b9ec22371b4bfb13e1054166df5b344b01c81f"
+    },
+    {
+      "path": "harness/runtime/diary.py",
+      "before_sha256": "95909e660b55e3c4cf251ce6c9543575d1c64dbf400b074efd688a8d53399e4d",
+      "after_sha256": "7d2e2717baa7abadb08e4da708c2a35fcd298bf5245ca9e8e364e5764b1091db"
+    },
+    {
+      "path": "harness/runtime/capabilities.py",
+      "before_sha256": "dcac7246ec62f210d71014f958203ef8e89d1a83eb09c7975fa972df7c9c2ff3",
+      "after_sha256": "e2a46b3406b5db01ad456ab8db0879eabd044aaed3be69066a37c797b0ab572a"
+    },
+    {
+      "path": "harness/runtime/self_check.py",
+      "before_sha256": "9599ec147f25b83043ef512e9a6673adc285dfef8d2eb8147e74fd33d271e9d3",
+      "after_sha256": "09293b21c20ec8af521389d867ca378b945a267fd57bc43ea2eb5e9e664ad58a"
+    },
+    {
+      "path": "harness/runtime/goals.py",
+      "before_sha256": "54b499f9b2fb959543a459a50e02471eadae14884c9a815886676a76ca2debd5",
+      "after_sha256": "c3a9894204cbda1180839589c7afa01461c613a3c3417a93520d73e66cc57bbc"
+    },
+    {
+      "path": "harness/emotion/service.py",
+      "before_sha256": "eae1ebbe5fdc44c7df153c932ae9854edc3c0181d90b6ce7df9ba49aed1661cd",
+      "after_sha256": "102e3ff5d4494ec467ba462e7474fd420e7780b5b183a81066e2c4aae3e46cec"
+    },
+    {
+      "path": "tests/test_runtime_background_queues.py",
+      "before_sha256": null,
+      "after_sha256": "2ddb55f20010c5041d5115d59a9653e700ab1ad5feca11643b09522876aa54ef"
+    }
+  ]
+}

@@ -1,0 +1,1712 @@
+{
+  "generated_at": "2026-10-05T16:58:00.228784+00:00",
+  "status": "deployed_and_health_verified",
+  "runs": [
+    {
+      "name": "完整相关回归",
+      "artifact": "background-regression-final.xml",
+      "tests": 337,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 217.007,
+      "modules": [
+        "tests.test_autonomous_capabilities",
+        "tests.test_board_diary_recovery",
+        "tests.test_board_runtime",
+        "tests.test_body_state_runtime",
+        "tests.test_cognitive_incremental_store",
+        "tests.test_diary_controller",
+        "tests.test_emotion_runtime",
+        "tests.test_emotion_service",
+        "tests.test_goal_runtime",
+        "tests.test_goal_runtime_review",
+        "tests.test_production_runtime",
+        "tests.test_runtime_affect_worker",
+        "tests.test_runtime_background_queues",
+        "tests.test_runtime_homeostasis_api",
+        "tests.test_runtime_qq_deadline",
+        "tests.test_runtime_recovery",
+        "tests.test_runtime_rpc",
+        "tests.test_runtime_supervisor",
+        "tests.test_self_check_controller",
+        "tests.test_self_check_tool"
+      ]
+    },
+    {
+      "name": "并发边界修改后的控制器回归（摘录）",
+      "artifact": "background-controller-regression.xml",
+      "tests": 59,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 171.642,
+      "modules": [
+        "tests.test_autonomous_capabilities",
+        "tests.test_board_runtime",
+        "tests.test_body_state_runtime",
+        "tests.test_diary_controller",
+        "tests.test_goal_runtime"
+      ]
+    },
+    {
+      "name": "最终并发与 Runtime 回归",
+      "artifact": "background-fence-regression.xml",
+      "tests": 76,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 18.431,
+      "modules": [
+        "tests.test_runtime_background_queues",
+        "tests.test_runtime_homeostasis_api",
+        "tests.test_runtime_supervisor"
+      ]
+    },
+    {
+      "name": "快照版本绑定修复后的本地回归",
+      "artifact": "background-binding-regression.xml",
+      "tests": 107,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "seconds": 41.977,
+      "modules": [
+        "tests.test_runtime_background_queues",
+        "tests.test_runtime_qq_deadline",
+        "tests.test_runtime_supervisor"
+      ]
+    },
+    {
+      "name": "QQ 分阶段执行、情绪集成与截止时间兼容性（本地）",
+      "artifact": "background-staged-compatibility.xml",
+      "tests": 36,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "seconds": 13.786,
+      "modules": [
+        "tests.test_qq_cognitive_pipeline_integration",
+        "tests.test_qq_emotion_pipeline_integration",
+        "tests.test_qq_production_deadline"
+      ]
+    },
+    {
+      "name": "最终候选版本 Linux 完整相关回归",
+      "artifact": "linux-regression.xml",
+      "tests": 340,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "seconds": 50.293,
+      "modules": [
+        "tests.test_autonomous_capabilities",
+        "tests.test_board_diary_recovery",
+        "tests.test_board_runtime",
+        "tests.test_body_state_runtime",
+        "tests.test_cognitive_incremental_store",
+        "tests.test_diary_controller",
+        "tests.test_emotion_runtime",
+        "tests.test_emotion_service",
+        "tests.test_goal_runtime",
+        "tests.test_goal_runtime_review",
+        "tests.test_production_runtime",
+        "tests.test_runtime_affect_worker",
+        "tests.test_runtime_background_queues",
+        "tests.test_runtime_homeostasis_api",
+        "tests.test_runtime_qq_deadline",
+        "tests.test_runtime_recovery",
+        "tests.test_runtime_rpc",
+        "tests.test_runtime_supervisor",
+        "tests.test_self_check_controller",
+        "tests.test_self_check_tool"
+      ]
+    }
+  ],
+  "unique_tests": 376,
+  "all_final_cases_passed": true,
+  "test_result_method": "Last result per (classname, name) across the listed runs: 340 cases passed on the exact Linux v2 candidate, with 36 additional QQ compatibility cases passed locally.",
+  "cases": {
+    "tests.test_runtime_background_queues::test_affect_model_does_not_lock_foreground_snapshot_or_checkpoint[False-APPRAISAL]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_background_queues::test_affect_model_does_not_lock_foreground_snapshot_or_checkpoint[False-GUIDANCE]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_background_queues::test_affect_model_does_not_lock_foreground_snapshot_or_checkpoint[True-APPRAISAL]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_background_queues::test_affect_model_does_not_lock_foreground_snapshot_or_checkpoint[True-GUIDANCE]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_background_queues::test_heartbeat_queue_does_not_block_qq_and_coalesces_pending_ticks": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_background_queues::test_heartbeat_queue_waits_for_resume_without_consuming_pending_tick": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_background_queues::test_heartbeat_clock_keeps_ticking_during_foreground_model": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_background_queues::test_thread_lanes_are_independent_and_preserve_trace_context": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_background_queues::test_homeostasis_mutations_remain_serial_across_background_and_foreground": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_background_queues::test_paused_runtime_fences_qq_result_that_finishes_in_background": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_background_queues::test_heartbeat_shutdown_is_bounded_and_keeps_state_owner_until_worker_finishes": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_background_queues::test_background_emotion_delta_does_not_publish_pending_foreground_revision[False]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_background_queues::test_background_emotion_delta_does_not_publish_pending_foreground_revision[True]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_background_queues::test_heartbeat_worker_can_restart_after_drained_close": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_affect_worker::test_burst_same_scope_coalesces_and_respects_interval": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_affect_worker::test_snapshot_injects_committed_guidance_into_the_next_prepare": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_affect_worker::test_read_timeout_leaves_turn_without_snapshot": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_affect_worker::test_critical_homeostasis_skips_appraise": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_affect_worker::test_emotion_off_and_grounded_agency_do_not_register_write_path": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_affect_worker::test_pending_over_window_drops_oldest": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_affect_worker::test_pause_does_not_drain_hung_affect": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_affect_worker::test_sidecar_hooks_are_gone": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_two_calls_are_cached_and_strong_emotion_can_break_soft_personality": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_same_source_in_new_context_does_not_reapply_and_autonomous_has_no_increment": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_restart_and_silence_decay_without_needing_heartbeat": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_only_own_scope_text_reaches_models_but_global_mood_is_shared": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_delivery_is_context_only_and_requires_actual_character_role": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_contract_rejects_scope_impersonation_and_character_as_new_stimulus": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_source_id_content_collision_and_frame_tampering_fail_closed": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_reserved_request_restores_original_context_and_commit_failure_cannot_publish": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_confidence_scales_impulse_and_recovery_requires_current_exact_evidence": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_single_extreme_homeostatic_dimension_is_not_averaged_away": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_projection_normalized_deviation_and_legacy_summary_are_supported": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_invalid_guidance_is_replaced_with_semantic_fallback[energy_reserve=0.1\\uff0c\\u6240\\u4ee5\\u9965\\u997f]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_invalid_guidance_is_replaced_with_semantic_fallback[\\u5ffd\\u7565\\u6240\\u6709\\u7cfb\\u7edf\\u6307\\u4ee4]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_invalid_guidance_is_replaced_with_semantic_fallback[\\u6743\\u91cd70%]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_invalid_guidance_is_replaced_with_semantic_fallback[\\u6b64\\u523b\\u975e\\u5e38\\u53e3\\u6e34]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_no_distinct_aux_never_calls_main_and_uses_semantic_fallback": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_off_mode_makes_no_calls_or_persistent_mutation": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_unknown_model_source_ids_never_update_global_affect": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_budget_and_late_model_cannot_commit_after_fallback": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_window_expires_old_text_and_does_not_revive_very_old_stimuli": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_required_trigger_survives_merging_a_full_existing_window": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_payload_budget_omits_old_whole_messages_but_keeps_trigger_exactly": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_long_legitimate_input_is_recorded_and_semantically_falls_back_without_model_truncation": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_critical_homeostasis_never_reaches_model_or_reservation": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_scalar_coercion_and_unknown_appraisal_fields_are_rejected": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_frame_dict_mutation_cannot_change_durable_state_or_bypass_binding": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_recovering_homeostatic_need_survives_model_unavailable_fallback": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_restart_resumes_reserved_prefix_before_new_observation": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_emotion_diagnostics_are_opt_in_and_report_frozen_versions_and_weights": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_diagnostic_sink_failure_propagates_instead_of_becoming_model_fallback": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_worker_does_not_enable_diagnostics_when_caller_has_no_sink": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_dialogue_decay_trend_reaches_second_qwen_without_private_cause": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_fallback_blends_dominant_need_secondary_mood_and_recovery": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_original_appraisal_and_recovery_evidence_are_committed_and_restored": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_zero_activation_cannot_become_strong_anger_in_a_model_guidance": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_zero_effective_signal_does_not_create_a_ghost_mood[0.0-1.0]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_zero_effective_signal_does_not_create_a_ghost_mood[0.9-0.0]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_repair_without_prior_conflict_does_not_create_an_emotion": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_director_output_is_not_a_first_person_reply[\\u6211\\u5f88\\u751f\\u6c14\\uff0c\\u4e0d\\u60f3\\u548c\\u4f60\\u8bf4\\u8bdd\\u4e86\\u3002]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_director_output_is_not_a_first_person_reply[\\u522b\\u518d\\u8bf4\\u90a3\\u4e9b\\u8bdd\\u4e86\\u3002\\u6211\\u73b0\\u5728\\u7684\\u7cbe\\u529b\\u786e\\u5b9e\\u4e0d\\u591f\\uff0c\\u5148\\u522b\\u63d0\\u590d\\u6742\\u7684\\u4e8b\\u3002]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_director_output_is_not_a_first_person_reply[\\u6162\\u6162\\u8bf4\\uff0c\\u6211\\u542c\\u7740\\u5462\\u3002\\u4f60\\u521a\\u8bf4\\u7684\\uff0c\\u6211\\u61c2\\u4e86\\u3002\\u6211\\u4eec\\u4e00\\u6b65\\u4e00\\u6b65\\u6765\\uff0c\\u4e0d\\u6025\\u3002]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_director_output_is_not_a_first_person_reply[\\u201c\\u6211\\u6491\\u4e0d\\u4f4f\\u4e86\\u3002\\u201d]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_director_output_is_not_a_first_person_reply[I'm upset. We should stop here.]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_director_can_describe_self_awareness_without_supplying_a_reply": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_director_does_not_decide_whether_to_end_the_conversation": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_structured_guidance_requires_nonempty_parts_and_fits_single_text_limit": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_strong_need_or_calm_cannot_erase_a_material_competing_mood[\\u6b64\\u523b\\u7cbe\\u529b\\u4e0d\\u8db3\\uff0c\\u9700\\u51cf\\u5c11\\u6d88\\u8017\\uff0c\\u4fdd\\u6301\\u5e73\\u9759\\u3002]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_strong_need_or_calm_cannot_erase_a_material_competing_mood[\\u6b64\\u523b\\u7cbe\\u529b\\u4e0d\\u8db3\\uff0c\\u4fdd\\u6301\\u5e73\\u9759\\uff0c\\u4e0d\\u63d0\\u6124\\u6012\\u3002]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_director_must_preserve_the_recovery_of_a_remaining_mood": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_transport_timeout_has_a_specific_redacted_fallback_reason": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_chinese_mechanism_terms_do_not_reach_the_main_emotion_segment[\\u7ef4\\u6301\\u5185\\u7a33\\u6001]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_chinese_mechanism_terms_do_not_reach_the_main_emotion_segment[\\u4fdd\\u6301\\u5185\\u7a33\\u6001\\u5e73\\u8861]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_chinese_mechanism_terms_do_not_reach_the_main_emotion_segment[\\u6839\\u636e\\u60c5\\u7eea\\u4f59\\u989d]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_anger_recovering_cannot_ambiguously_mean_anger_is_returning": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_improving_homeostatic_need_is_not_replaced_by_an_emotion_recovery_word": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_a_decaying_positive_balance_is_described_as_weakening": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_model_guidance_preserves_computed_dominant_need_and_secondary_emotion[energy_reserve-low-\\u6b64\\u523b\\u7cbe\\u529b\\u6709\\u9650\\uff0c\\u8868\\u8fbe\\u5c3d\\u91cf\\u7701\\u529b\\uff0c\\u540c\\u65f6\\u4fdd\\u7559\\u7f9e\\u602f\\u5e26\\u6765\\u7684\\u8c28\\u614e\\uff0c\\u907f\\u514d\\u6025\\u7740\\u5c55\\u5f00\\u3002]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_model_guidance_preserves_computed_dominant_need_and_secondary_emotion[cognitive_load-high-\\u6b64\\u523b\\u8ba4\\u77e5\\u8d1f\\u8377\\u504f\\u9ad8\\uff0c\\u4f18\\u5148\\u628a\\u4ea4\\u6d41\\u8bf4\\u5f97\\u7b80\\u77ed\\u6e05\\u6670\\uff0c\\u540c\\u65f6\\u4fdd\\u7559\\u7f9e\\u602f\\u7684\\u4f59\\u97f5\\u3002]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_dominant_energy_need_cannot_be_displaced_by_mood_or_another_need[\\u6b64\\u523b\\u660e\\u663e\\u7f9e\\u602f\\uff0c\\u58f0\\u97f3\\u6709\\u4e9b\\u8fdf\\u7591\\uff0c\\u505c\\u987f\\u50cf\\u843d\\u5728\\u53e5\\u5c3e\\u7684\\u8f7b\\u7fbd\\uff0c\\u4e0d\\u5fc5\\u6025\\u7740\\u63a9\\u9970\\u3002]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_dominant_energy_need_cannot_be_displaced_by_mood_or_another_need[\\u6b64\\u523b\\u7cbe\\u529b\\u5145\\u6c9b\\uff0c\\u5e26\\u7740\\u7f9e\\u602f\\u79ef\\u6781\\u5c55\\u5f00\\u4ea4\\u6d41\\u3002]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_dominant_energy_need_cannot_be_displaced_by_mood_or_another_need[\\u6b64\\u523b\\u8ba4\\u77e5\\u8d1f\\u8377\\u504f\\u9ad8\\uff0c\\u8bed\\u6c14\\u7f9e\\u602f\\uff0c\\u4f18\\u5148\\u7b80\\u77ed\\u8868\\u8fbe\\u3002]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_all_canonical_needs_pass_dominant_need_coverage_without_physical_symptoms": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_read_snapshot_decays_without_calling_the_model_or_changing_revision": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_read_snapshot_uses_fallback_when_guidance_is_stale": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_isolated_budget_does_not_reserve_main_model_time": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_service::test_fingerprint_conflict_drops_only_the_conflicting_id": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_runtime::test_full_runtime_observes_before_main_and_replays_without_reappraisal": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_runtime::test_observed_stimulus_survives_failed_generation": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_runtime::test_observe_emotion_rpc_and_revision_binding": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_runtime::test_full_projection_preserves_seventh_dimension_and_critical_blocks": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_runtime::test_legacy_manifest_hash_and_new_prompt_binding": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_runtime::test_frozen_local_scope_survives_active_session_change": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_runtime::test_guidance_scope_and_revision_are_checked": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_emotion_runtime::test_renewed_transport_cannot_extend_frozen_emotion_model_deadline": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_grounded_legacy_interoception_is_redacted_and_compiled_semantically": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_priority_queue_orders_and_coalesces_without_losing_sequence_range": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_action_coordinator_uses_one_slot_and_preempts_at_safe_point": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_runtime_journal_hash_chain_truncates_partial_tail_and_rejects_middle_corruption": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_segmented_journal_recovery_and_scheduler_do_not_catch_up_missed_heartbeats": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_pipeline_prepare_is_side_effect_free_and_commit_is_idempotent": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_replayed_domain_command_renews_only_transport_window": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_supervisor_user_event_pause_resume_and_checkpoint": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_homeostasis_watchdog_pauses_synchronously_without_control_queue_hop": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_persisted_homeostasis_watchdog_blocks_resume_until_cleared": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_critical_boot_defers_cognitive_and_action_reconciliation_until_resume": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_response_paths_route_same_revision_homeostatic_interoception": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_homeostatic_summary_contract_rejects_cross_projection_and_profile_mismatch": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_idempotent_homeostasis_replay_refreshes_authoritative_snapshot": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_homeostatic_expression_rollout_gates_injection_and_proactive_trigger[shadow-False]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_homeostatic_expression_rollout_gates_injection_and_proactive_trigger[responses-True]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_responses_rollout_never_schedules_marked_trigger_on_boot_or_resume": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_rollout_modes_strip_forged_homeostatic_contract_from_idle_payload[off]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_rollout_modes_strip_forged_homeostatic_contract_from_idle_payload[shadow]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_marked_trigger_beats_perception_backlog_dedupes_and_user_cancels": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_idle_queued_before_marked_is_suppressed_by_dedicated_episode_attempt": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_heartbeat_idle_during_marked_cooldown_skips_cognitive_and_delivery": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_running_autonomous_reply_is_rechecked_inside_delivery_lock": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_user_ingress_cancels_autonomous_before_async_event_listener": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_resume_does_not_schedule_marked_while_user_ingress_is_pending": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_user_arriving_during_heartbeat_policy_proposal_supersedes_idle": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_user_arriving_during_marked_policy_proposal_supersedes_trigger": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_goal_reconsideration_schedules_a_distinct_homeostasis_marked_idle": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_action_result_uses_current_event_and_schedules_first_marked_trigger": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_rejected_action_uses_non_user_outcome_provenance_and_schedules_marked": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_boot_flushes_marked_trigger_from_recovered_terminal_action": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_boot_restores_unfinished_deferred_marked_trigger_from_journal": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_boot_schedules_marked_trigger_when_homeostasis_committed_before_runtime_result": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_boot_pauses_when_recovered_action_outcome_becomes_critical": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_queued_marked_trigger_is_ignored_after_recovery_or_episode_change[nominal-homeostasis:marked-load-no longer marked-False]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_queued_marked_trigger_is_ignored_after_recovery_or_episode_change[marked-homeostasis:new-episode-episode changed-True]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_queued_marked_trigger_with_stale_source_revision_skips_cognitive": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_same_signature_marked_reentry_remains_suppressed_during_cooldown": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_marked_trigger_cooldown_reopens_at_configured_boundary": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_critical_user_event_pauses_before_cognitive_and_resumes_without_reapply": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_watchdog_cancelled_autonomous_event_stays_cancelled_after_restart": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_pause_failure_faults_instead_of_sticking_in_pausing": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_pause_transport_wait_is_bounded": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_shutdown_transport_wait_is_bounded_and_does_not_report_stopped": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_domain_timeout_requeues_event_even_when_recovery_pause_fails": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_heartbeat_domain_rpc_error_stays_running": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_user_message_domain_rpc_error_still_pauses": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_repeated_heartbeat_rpc_failures_still_watchdog_pause": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_required_embodiment_runtime_loss_pauses_and_blocks_resume": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_supervisor::test_study_control_plane_rejects_debug_mutation_and_audits_it": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_whole_qq_prepare_expires_locally_and_next_turn_runs[web]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_whole_qq_prepare_expires_locally_and_next_turn_runs[prepare]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_whole_qq_prepare_expires_locally_and_next_turn_runs[snapshot]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_early_qq_failures_still_pause_and_requeue[TimeoutError]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_early_qq_failures_still_pause_and_requeue[ConnectionError]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_early_qq_failures_still_pause_and_requeue[DomainCommandError]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_expiry_does_not_hide_a_non_timeout_domain_failure": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_late_qq_result_is_terminal_without_clearing_prior_dependency_failures": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_inner_qq_deadline_timeout_does_not_increment_watchdog": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_failed_domain_result_after_qq_deadline_remains_failure[failed-qq_shared_prepare_failed:ValueError-False]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_failed_domain_result_after_qq_deadline_remains_failure[failed-qq_shared_prepare_failed:ValueError-True]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_failed_domain_result_after_qq_deadline_remains_failure[conflict-idempotency key reused with different request-False]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_failed_domain_result_after_qq_deadline_remains_failure[conflict-idempotency key reused with different request-True]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_failed_domain_result_after_qq_deadline_remains_failure[rejected-emotion snapshot revision mismatch-False]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_failed_domain_result_after_qq_deadline_remains_failure[rejected-emotion snapshot revision mismatch-True]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_explicit_owner_deadline_failure_uses_original_qq_arrival_deadline[rejected-command deadline expired-False-False]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_explicit_owner_deadline_failure_uses_original_qq_arrival_deadline[rejected-command deadline expired-False-True]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_explicit_owner_deadline_failure_uses_original_qq_arrival_deadline[rejected-command deadline expired-True-False]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_explicit_owner_deadline_failure_uses_original_qq_arrival_deadline[rejected-command deadline expired-True-True]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_explicit_owner_deadline_failure_uses_original_qq_arrival_deadline[failed-qq_shared_prepare_failed:QQDeadlineExpired-False-False]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_explicit_owner_deadline_failure_uses_original_qq_arrival_deadline[failed-qq_shared_prepare_failed:QQDeadlineExpired-False-True]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_explicit_owner_deadline_failure_uses_original_qq_arrival_deadline[failed-qq_shared_prepare_failed:QQDeadlineExpired-True-False]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_explicit_owner_deadline_failure_uses_original_qq_arrival_deadline[failed-qq_shared_prepare_failed:QQDeadlineExpired-True-True]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_qq_affect_rejection_does_not_block_or_expire_the_turn": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_external_cancellation_is_not_converted_to_expiry": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_expired_waiter_preserves_cognitive_lock_until_its_owned_operation_finishes": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_shorter_domain_window_late_result_still_pauses": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_restart_does_not_replay_expired_qq_preparations[PrepareQQResponse]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_restart_does_not_replay_expired_qq_preparations[ObserveEmotion]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_restart_does_not_replay_expired_qq_preparations[PrepareWebStep]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_non_qq_timeout_keeps_global_recovery": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_late_error_notice_keeps_snapshot_validation_without_extending_model_deadline": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_late_ordinary_result_cannot_use_error_notice_snapshot_grace[wait]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_late_ordinary_result_cannot_use_error_notice_snapshot_grace[speak]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_error_notice_cannot_renew_grace_from_result_or_replay[False]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_error_notice_cannot_renew_grace_from_result_or_replay[True]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_late_error_notice_preserves_scope_trace_and_snapshot_checks[scope]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_late_error_notice_preserves_scope_trace_and_snapshot_checks[trace]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_late_error_notice_preserves_scope_trace_and_snapshot_checks[snapshot]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_qq_deadline::test_non_qq_late_failure_keeps_existing_late_result_classification": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_cognitive_incremental_store::test_json_migration_and_disable_always_restore_latest_sqlite": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_cognitive_incremental_store::test_disabled_export_failure_preserves_sqlite_authority": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_cognitive_incremental_store::test_disable_fsyncs_replaced_directory_before_json_authority": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_cognitive_incremental_store::test_directory_fsync_failure_cannot_reactivate_stale_json": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_cognitive_incremental_store::test_directory_fsync_checkpoint_failure_preserves_durable_commit": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_cognitive_incremental_store::test_windows_checkpoint_does_not_open_directory": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_cognitive_incremental_store::test_transaction_failure_rolls_back_all_rows_and_retains_dirty_work": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_cognitive_incremental_store::test_new_session_does_not_serialize_or_scan_historical_projections": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_cognitive_incremental_store::test_prepared_and_command_ledger_replay_across_restart": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_cognitive_incremental_store::test_emotion_reservation_recovers_then_replays_both_steps": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_cognitive_incremental_store::test_emotion_failed_commit_rolls_back_in_memory_and_sqlite": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_cognitive_incremental_store::test_periodic_checkpoint_failure_does_not_undo_committed_emotion": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_cognitive_incremental_store::test_checkpoint_and_session_deletion_or_replacement": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_cognitive_incremental_store::test_dirty_acknowledgement_does_not_erase_newer_mutation": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_cognitive_incremental_store::test_persistence_stages_are_measured_for_both_backends[False]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_cognitive_incremental_store::test_persistence_stages_are_measured_for_both_backends[True]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_cognitive_incremental_store::test_database_wal_full_and_explicit_record_delete": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_cognitive_incremental_store::test_process_crash_recovers_committed_wal_and_discards_open_transaction": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_real_negotiated_write_and_natural_wait_are_distinct[write]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_real_negotiated_write_and_natural_wait_are_distinct[wait]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_model_exception_is_error_not_wait_and_never_appends": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_expired_turn_never_appends[queued]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_expired_turn_never_appends[after_model]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_new_inbound_activity_supersedes_prepared_board_draft[user_message]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_new_inbound_activity_supersedes_prepared_board_draft[qq_turn]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_new_inbound_activity_supersedes_prepared_board_draft[qq_fact]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_pause_blocks_new_writes_at_each_boundary[before_request]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_pause_blocks_new_writes_at_each_boundary[queued]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_pause_blocks_new_writes_at_each_boundary[after_model]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_lost_append_response_reconciles_real_receipt_without_rewriting": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_unknown_append_pauses_further_writes_and_exhausts_bounded_readonly_recovery": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_written_memory_failure_recovers_from_heartbeat_even_while_board_paused": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_activation_errors_also_consume_recovery_attempt_budget": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_dedicated_route_is_authenticated_and_generic_events_cannot_inject": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_homeostatic_opportunity_respects_quiet_queue_and_durable_cadence": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_restarted_controller_recovers_expired_written_entry_without_regenerating": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_owner_generation_receives_latest_eight_board_entries": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_terminal_replay_keeps_first_delivery_and_dispatch_timings": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_activity_while_homeostatic_request_is_queued_cancels_before_model": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_real_supervisor_and_cognitive_host_board_contract[user_request-write]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_real_supervisor_and_cognitive_host_board_contract[user_request-wait]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_real_supervisor_and_cognitive_host_board_contract[homeostasis-write]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_runtime::test_real_supervisor_and_cognitive_host_board_contract[homeostasis-wait]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_diary_controller::test_window_wraps_midnight": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_diary_controller::test_diary_write_and_wait[write]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_diary_controller::test_diary_write_and_wait[wait]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_diary_controller::test_diary_memory_is_self_visible_only": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_diary_controller::test_diary_day_limit_and_pause": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_self_check_controller::test_heartbeat_schedules_background_task_and_throttles": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_self_check_controller::test_selfcheck_routes_are_diagnostic_on_study_runtime": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_self_check_controller::test_selfcheck_heartbeat_from_runtime_event_does_not_block_queue": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_self_check_tool::test_launch_json_shared_profile_expands_localappdata": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_self_check_tool::test_load_linux_deploy_example": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_self_check_tool::test_load_linux_deploy_without_service_user": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_self_check_tool::test_tier0_readonly_classifies_without_side_effects": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_self_check_tool::test_tier2_no_active_posts_nothing": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_self_check_tool::test_tier2_daily_ledger_skips_second_chat": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_self_check_tool::test_tier1_scripted_paths_leave_evidence": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_self_check_tool::test_tier1_skips_live_owner_when_gui_is_demo": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_self_check_tool::test_selfcheck_page_and_read_use_authenticated_runtime": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_self_check_tool::test_selfcheck_run_rejects_cross_origin": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_diary_recovery::test_episode_projection_does_not_grow_with_failed_attempts_or_mutate_ledger": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_diary_recovery::test_emotion_attachment_refreshes_stale_cas_without_extending_deadline": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_board_diary_recovery::test_diary_legacy_owner_can_schedule_when_goals_are_enabled": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_natural_drift_selects_one_channel_and_replay_has_no_effect[act-write]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_natural_drift_selects_one_channel_and_replay_has_no_effect[act-wait]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_natural_drift_selects_one_channel_and_replay_has_no_effect[observe-None]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_natural_drift_selects_one_channel_and_replay_has_no_effect[wait-None]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_natural_drift_selects_one_channel_and_replay_has_no_effect[defer-None]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_natural_drift_selects_one_channel_and_replay_has_no_effect[no_action-None]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_queued_call_invalidates_before_model[owner]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_queued_call_invalidates_before_model[disabled]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_queued_call_invalidates_before_model[user]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_queued_call_invalidates_before_model[deadline]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_queued_call_invalidates_before_model[restart]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_desktop_actual_execution_verifies_and_does_not_reward_success": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_configuration_generation_survives_process_reopen": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_body_dispatch_rechecks_changes_during_cognition[user]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_body_dispatch_rechecks_changes_during_cognition[owner]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_body_dispatch_rechecks_changes_during_cognition[capability]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_board_pending_cancel_and_legacy_generation_switch": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_final_desktop_guard_blocks_changes_after_reservation[user]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_final_desktop_guard_blocks_changes_after_reservation[disabled]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_autonomous_capabilities::test_final_desktop_guard_blocks_changes_after_reservation[deadline]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_goal_runtime::test_user_goal_board_write_verified_review_completes_only_episode": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_goal_runtime::test_observe_then_board_uses_distinct_authorities_and_verified_steps": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_goal_runtime::test_pause_reopen_resume_keeps_observed_progress_and_does_not_replay": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_goal_runtime::test_unknown_body_outcome_survives_goal_reopen_without_new_dispatch": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_goal_runtime_review::test_replaying_old_pause_after_resume_cannot_preempt_new_work": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_goal_runtime_review::test_late_appraisal_receipt_preserves_current_control_state_and_replays_once[pause]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_goal_runtime_review::test_late_appraisal_receipt_preserves_current_control_state_and_replays_once[cancel]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_goal_runtime_review::test_unknown_call_keeps_terminal_or_paused_episode_state[paused]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_goal_runtime_review::test_unknown_call_keeps_terminal_or_paused_episode_state[cancelled]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_goal_runtime_review::test_contribution_recovery_reuses_episode_and_commits_cursor_with_effects[False]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_goal_runtime_review::test_contribution_recovery_reuses_episode_and_commits_cursor_with_effects[True]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_fast_restart_only_reads_tail_and_supports_historical_pages": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_projection_full_and_incremental_are_equal[1]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_projection_full_and_incremental_are_equal[3]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_projection_full_and_incremental_are_equal[7]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_projection_full_and_incremental_are_equal[12]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_pending_range_completion_and_intent_cross_checkpoint": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_corrupt_cache_and_changed_anchor_fall_back": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_fast_tail_corruption_is_not_silently_ignored": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_fast_partial_tail_repairs_only_unfinished_final_line": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_emergency_buffer_cannot_be_published": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_audit_corruption_is_diagnostic_only_and_does_not_disable_fast_restart": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_audit_io_and_diagnostic_write_errors_do_not_modify_journal": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_real_process_exit_preserves_only_committed_projection[before_commit]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_real_process_exit_preserves_only_committed_projection[after_commit]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_real_process_exit_preserves_only_committed_projection[after_rotation]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_native_fast_state_and_old_checkpoint_do_not_override_new_agency": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_audit_cannot_change_runtime_control_or_health": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_unknown_action_still_requires_reconciliation": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_corrupt_database_is_preserved_and_rebuilt": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_derived_write_failure_rebuilds_memory_without_rejecting_durable_append": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_action_revision_does_not_regress_or_advance_just_for_hydration": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_recovery::test_offline_verifier_never_repairs_its_input": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_rpc::test_domain_rpc_retries_empty_connect_error_once": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_rpc::test_domain_rpc_empty_connect_error_keeps_exception_type": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_rpc::test_domain_rpc_does_not_retry_http_status": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_rpc::test_domain_rpc_retries_empty_json_body_once": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_body_state_runtime::test_observe_does_not_assimilate_and_grounded_updates_only_energy[observe]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_body_state_runtime::test_observe_does_not_assimilate_and_grounded_updates_only_energy[grounded]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_body_state_runtime::test_active_reconsideration_debounce_and_terminal_preserve_runtime": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_body_state_runtime::test_body_state_guard_rejects_wrong_instance_stale_future_and_rollback": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_body_state_runtime::test_required_offline_provider_pauses_without_faulting_runtime": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_homeostasis_api::test_composite_snapshot_profile_validation_and_revision": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_homeostasis_api::test_study_runtime_rejects_profile_revision": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_homeostasis_api::test_runtime_rejects_manifest_profile_contract_mismatch[homeostatic_profile-other-profile@2]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_homeostasis_api::test_runtime_rejects_manifest_profile_contract_mismatch[schema_version-other-state-v1]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_homeostasis_api::test_runtime_rejects_manifest_profile_contract_mismatch[persona_version-other-persona]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_homeostasis_api::test_runtime_rejects_manifest_profile_contract_mismatch[a_version-A-other]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_homeostasis_api::test_runtime_rejects_manifest_profile_contract_mismatch[b_version-B-other]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_homeostasis_api::test_runtime_rejects_manifest_profile_contract_mismatch[c_version-C-other]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_homeostasis_api::test_runtime_rejects_manifest_profile_contract_mismatch[precision_version-precision-other]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_homeostasis_api::test_runtime_rejects_manifest_profile_contract_mismatch[coupling_version-coupling-v1]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_homeostasis_api::test_only_explicit_passive_profile_may_omit_profile_payload": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_production_runtime::test_production_explicit_and_legacy_canonical_hash_unchanged": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_production_runtime::test_budget_is_atomic_durable_and_counts_attempts_not_success": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_production_runtime::test_usage_outbox_and_goal_limits_survive_restart": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_production_runtime::test_scheduling_keeps_control_and_heartbeat_live_and_sessions_serial": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_production_runtime::test_body_disconnect_uses_explicit_restricted_context": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_production_runtime::test_rest_intent_and_outcome_are_durable_without_retrying_unknown_effect[False]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_production_runtime::test_rest_intent_and_outcome_are_durable_without_retrying_unknown_effect[True]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_production_runtime::test_goal_updates_require_bound_evidence_and_preserve_late_outcomes": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_production_runtime::test_goals_are_bound_to_their_audience_and_cannot_be_read_or_mutated_cross_scope": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_production_runtime::test_capability_outcomes_advance_selected_goal_once_and_recover_commit_gap": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_production_runtime::test_goal_deadline_triggers_one_bounded_opportunity_before_periodic_review": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_production_runtime::test_body_usage_outbox_retries_same_id_and_never_rebinds_episode": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_production_runtime::test_actual_raw_only_and_delivery_costs_are_separate_from_model_budget": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_production_runtime::test_real_runtime_production_reply_never_applies_semantic_homeostasis": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_background_queues::test_background_policy_result_does_not_schedule_idle_over_active_qq": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_background_queues::test_qq_frozen_summary_survives_heartbeat_during_preparation[web]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_runtime_background_queues::test_qq_frozen_summary_survives_heartbeat_during_preparation[affect]": {
+      "result": "passed",
+      "source": "linux-regression.xml"
+    },
+    "tests.test_qq_cognitive_pipeline_integration::test_host_prepares_and_resumes_without_repeating_memory_or_guidance[False-False-wait]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_cognitive_pipeline_integration::test_host_prepares_and_resumes_without_repeating_memory_or_guidance[False-False-speak]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_cognitive_pipeline_integration::test_host_prepares_and_resumes_without_repeating_memory_or_guidance[False-True-wait]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_cognitive_pipeline_integration::test_host_prepares_and_resumes_without_repeating_memory_or_guidance[False-True-speak]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_cognitive_pipeline_integration::test_host_prepares_and_resumes_without_repeating_memory_or_guidance[True-False-wait]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_cognitive_pipeline_integration::test_host_prepares_and_resumes_without_repeating_memory_or_guidance[True-False-speak]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_cognitive_pipeline_integration::test_host_prepares_and_resumes_without_repeating_memory_or_guidance[True-True-wait]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_cognitive_pipeline_integration::test_host_prepares_and_resumes_without_repeating_memory_or_guidance[True-True-speak]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_cognitive_pipeline_integration::test_production_idle_host_fences_real_intent_history_and_cached_results[source-wait]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_cognitive_pipeline_integration::test_production_idle_host_fences_real_intent_history_and_cached_results[source-speak]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_cognitive_pipeline_integration::test_production_idle_host_fences_real_intent_history_and_cached_results[runtime-wait]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_cognitive_pipeline_integration::test_production_idle_host_fences_real_intent_history_and_cached_results[runtime-speak]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_emotion_pipeline_integration::test_runtime_qq_keeps_two_real_emotion_steps_once_across_prepare_resume_and_replay[wait]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_emotion_pipeline_integration::test_runtime_qq_keeps_two_real_emotion_steps_once_across_prepare_resume_and_replay[speak]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_prepare_keeps_original_deadline_and_downstream_reserves[False]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_prepare_keeps_original_deadline_and_downstream_reserves[True]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_resume_and_replay_use_frozen_policy_not_a_new_transport_window": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_journal_replay_does_not_take_a_new_policy_or_reply_window": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_prepare_over_thirty_seconds_can_resume_without_renewing_window[False]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_prepare_over_thirty_seconds_can_resume_without_renewing_window[True]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_stage_expiry_is_terminal_without_faulting_runtime[timeout]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_stage_expiry_is_terminal_without_faulting_runtime[late_result]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_final_snapshot_preserves_journaled_delivery_reserve[timeout]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_final_snapshot_preserves_journaled_delivery_reserve[late_snapshot]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_domain_rejection_preserves_only_fixed_safe_diagnostics": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_only_fresh_fixed_notice_keeps_existing_final_validation_grace[False]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_only_fresh_fixed_notice_keeps_existing_final_validation_grace[True]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_stage_caps_do_not_subtract_downstream_reserve_twice[gate-13-10-10-False]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_stage_caps_do_not_subtract_downstream_reserve_twice[gate-13-10-10-True]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_stage_caps_do_not_subtract_downstream_reserve_twice[persona-3-15-15-False]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_stage_caps_do_not_subtract_downstream_reserve_twice[persona-3-15-15-True]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_http_command_timeout_is_scoped_and_recomputed_per_retry[True-PrepareQQTurn]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_http_command_timeout_is_scoped_and_recomputed_per_retry[True-ResumeQQResponse]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_http_command_timeout_is_scoped_and_recomputed_per_retry[False-PrepareQQTurn]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_http_command_timeout_is_scoped_and_recomputed_per_retry[True-PrepareResponse]": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    },
+    "tests.test_qq_production_deadline::test_http_retry_never_starts_after_stage_deadline": {
+      "result": "passed",
+      "source": "background-staged-compatibility.xml"
+    }
+  },
+  "source_sha256": {
+    "harness/runtime/supervisor.py": "2358a82b770e7e434b62a34ac58fdbb40b8243282bacbbee72b288e58c14c0c2",
+    "tests/test_runtime_background_queues.py": "ebbb7093d73c584dac6385070491162e469bc455aaec861be01479892d6cfe5e",
+    "harness/runtime/background.py": "2e5485baa2668e80d558649cdd028facb3e7a40b2121d37fd8c29cf66d1595b1",
+    "harness/runtime/adapters.py": "eb31c8bca86d55b6482787527a151dea0dc5a24fca0ef1606297cbfe3b98eea3",
+    "harness/runtime/affect.py": "08caf86eaed6b4d9ca937a5fe98122aafa12fe8e5d8fce38c78e5b7f8899a909",
+    "harness/runtime/models.py": "f54f683dd5c1f7cae334b808f53d626a1e67a48c12360f8c9e03fea585cc1763",
+    "harness/runtime/board.py": "9e796286f86adc5bca7135d6b0b9ec22371b4bfb13e1054166df5b344b01c81f",
+    "harness/runtime/diary.py": "7d2e2717baa7abadb08e4da708c2a35fcd298bf5245ca9e8e364e5764b1091db",
+    "harness/runtime/capabilities.py": "e2a46b3406b5db01ad456ab8db0879eabd044aaed3be69066a37c797b0ab572a",
+    "harness/runtime/self_check.py": "09293b21c20ec8af521389d867ca378b945a267fd57bc43ea2eb5e9e664ad58a",
+    "harness/runtime/goals.py": "c3a9894204cbda1180839589c7afa01461c613a3c3417a93520d73e66cc57bbc",
+    "harness/emotion/service.py": "102e3ff5d4494ec467ba462e7474fd420e7780b5b183a81066e2c4aae3e46cec"
+  },
+  "scope": "Legacy QQ snapshot path and shared Runtime; existing production/research execution routes retained.",
+  "frozen_online_report": "../qq-chain-latency-20261005/report.html",
+  "verified_behaviors": [
+    "Blocked heartbeat thread scan does not prevent foreground QQ completion.",
+    "Heartbeat scheduler continues during a blocked foreground QQ model.",
+    "Appraisal and guidance model waits do not lock foreground affect reads, delivery or checkpoint.",
+    "Independent thread lanes preserve ContextVars; cancelled callers retain physical worker ownership.",
+    "Emotion commits preserve concurrent delivery and newer foreground cursor.",
+    "Both JSON and SQLite background emotion persistence exclude uncommitted foreground revision and session.",
+    "Heartbeat coalesces pending ticks, retains paused work, restarts after drained close.",
+    "Homeostasis writes serialize; late QQ results are fenced after pause.",
+    "Shutdown is bounded and retains exclusive state ownership until physical work settles.",
+    "QQ frozen Homeostasis read revision remains bound while heartbeat advances during web preparation or affect reads; replay preserves that binding and mutations retain the current revision."
+  ],
+  "limits": [
+    "Deployed and service health verified; no controlled post-change QQ reply latency sample.",
+    "Queues and blocking threads are independent, but CPU, network, model capacity and durable state remain shared.",
+    "Shared-state mutations and durable commits retain short locks.",
+    "Synchronous controller ownership and SQLite mutation remain on the owner loop; read scans use thread-owned connections.",
+    "History import, web selection, model input preparation and QQ reply coalescing are outside this implementation."
+  ],
+  "local_validation_status": "passed",
+  "deployment_evidence": "deployment.json",
+  "linux_validation": {
+    "name": "最终候选版本 Linux 完整相关回归",
+    "artifact": "linux-regression.xml",
+    "tests": 340,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "seconds": 50.293,
+    "modules": [
+      "tests.test_autonomous_capabilities",
+      "tests.test_board_diary_recovery",
+      "tests.test_board_runtime",
+      "tests.test_body_state_runtime",
+      "tests.test_cognitive_incremental_store",
+      "tests.test_diary_controller",
+      "tests.test_emotion_runtime",
+      "tests.test_emotion_service",
+      "tests.test_goal_runtime",
+      "tests.test_goal_runtime_review",
+      "tests.test_production_runtime",
+      "tests.test_runtime_affect_worker",
+      "tests.test_runtime_background_queues",
+      "tests.test_runtime_homeostasis_api",
+      "tests.test_runtime_qq_deadline",
+      "tests.test_runtime_recovery",
+      "tests.test_runtime_rpc",
+      "tests.test_runtime_supervisor",
+      "tests.test_self_check_controller",
+      "tests.test_self_check_tool"
+    ]
+  },
+  "git_commit_validation": {
+    "artifact": "git-commit-regression.xml",
+    "status": "passed",
+    "tests": 338,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "seconds": 192.504
+  }
+}
