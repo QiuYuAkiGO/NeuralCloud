@@ -12,6 +12,7 @@ from harness.qq.history_selection import (
     additional_body_messages, history_wire_characters, include_trusted_reply_references, select_bounded_history,
 )
 from harness.qq.memory_evidence import build_qq_memory_evidence
+from harness.qq.policy import QQLatencyOptions, settings_with_policy
 from harness.qq.telemetry import QQTurnTrace
 from harness.qq.turn_checkpoints import QQTurnStateError
 from tests.test_qq_decision import NOW, add_member, setup as setup
@@ -125,6 +126,44 @@ def test_bounded_wait_marks_only_presented_history_seen(setup, monkeypatch):
     assert set(result.seen_observation_record_ids) == set(result.source_record_ids)
     assert set(result.new_observation_record_ids) == set(result.source_record_ids)
     assert result.style_diagnostics["body_presented_observations"] == 0
+
+
+@pytest.mark.parametrize("history_mode", [None, "shadow"])
+def test_default_bounds_unhandled_backlog_outside_rollout_before_gate(setup, monkeypatch, history_mode):
+    records = _history(setup[0], count=109)
+    monkeypatch.delenv("NC_QQ_HISTORY_SELECTION", raising=False)
+    if history_mode is not None:
+        monkeypatch.setenv("NC_QQ_HISTORY_SELECTION", history_mode)
+    monkeypatch.setenv("NC_QQ_INPUT_TOKEN_BUDGET", "60000")
+    monkeypatch.setenv("NC_QQ_LATENCY_CONVERSATIONS", "[]")
+    load = decision._load_configuration
+
+    def excluded_configuration(*args):
+        settings, preset = load(*args)
+        policy = QQLatencyOptions.from_settings(settings).for_conversation(
+            group_id="10001", self_member_id="29999")
+        return settings_with_policy(settings, policy), preset
+
+    monkeypatch.setattr(decision, "_load_configuration", excluded_configuration)
+    setup[1].choice = '{"action":"wait","reason":"只是旁听。"}'
+    trace = QQTurnTrace()
+    result = decision.decide_qq_reply(**setup[3], trigger_member_id="20002", trace=trace)
+    counters = trace.snapshot()["counters"]
+    assert counters["context_compact_projection"] == 0
+    if history_mode == "shadow":
+        assert result.outcome == "error_fallback"
+        assert counters["context_selected_observations"] == 111
+        assert counters["context_budget_exceeded_final"] == 1
+        assert not setup[1].gate_messages
+    else:
+        assert result.outcome == "natural_wait"
+        assert setup[1].gate_messages
+        assert "context_budget_exceeded" not in counters
+        assert counters["context_selected_observations"] < 111
+        assert counters["context_final_characters"] + counters["context_assessment_reserved_characters"] <= 120_000
+        assert records[-1].record_id in result.source_record_ids
+        assert set(result.seen_observation_record_ids) == set(result.source_record_ids)
+        assert set(result.new_observation_record_ids) == set(result.source_record_ids)
 
 
 def test_bounded_resume_uses_frozen_extra_history_after_exact_gate_prefix(setup, monkeypatch):

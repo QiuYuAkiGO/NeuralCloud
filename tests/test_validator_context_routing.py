@@ -49,13 +49,17 @@ def _routed(tmp_path, *, main_status=200, model="deepseek-v4-flash", context=819
         if qq_turn:
             from harness.qq.decision import is_qq_gate_messages
             from harness.validator.validator import _LLM_SYSTEM
-            system = payload["messages"][0]["content"]
-            if is_qq_gate_messages(payload["messages"]):
+            messages = payload.get("messages", payload.get("input"))
+            system = messages[0]["content"]
+            if is_qq_gate_messages(messages):
                 content = json.dumps({"action": "speak", "reason": "synthetic direct question"})
             elif role == "aux":
                 content = json.dumps({"path": "fast"})
             elif not system.startswith(_LLM_SYSTEM):
                 content = "这个配色挺好看。[END]"
+        if request.url.path == "/responses":
+            return httpx.Response(200, json={"status": "completed", "model": "deepseek-flash", "output": [
+                {"type": "message", "content": [{"type": "output_text", "text": content}]}]})
         return httpx.Response(200, json={"choices": [{"message": {"content": content}}]})
 
     for client in (main, aux):
@@ -192,7 +196,7 @@ def test_qq_turn_keeps_large_admitted_history_and_finishes_ready(tmp_path, monke
     assert result.reply_style == "conversational"
     assert result.reply == "这个配色挺好看" and result.error_type is None
     critic = [(role, json.loads(payload["messages"][1]["content"])) for role, payload, _ in captured
-              if payload["messages"][0]["content"].startswith("You are a persona consistency")]
+              if payload.get("messages", [{}])[0].get("content", "").startswith("You are a persona consistency")]
     assert len(critic) == 1 and critic[0][0] == "main"
     projected = critic[0][1]["memory_evidence"]
     entries = [dict(zip(projected["columns"], row)) for row in projected["rows"]]

@@ -31,6 +31,12 @@ def test_id_prefixes() -> None:
     assert new_id("response").startswith("resp_")
 
 
+def test_durable_ids_retain_at_least_128_random_bits() -> None:
+    for kind in ("command", "event", "journal", "action"):
+        suffix = new_id(kind).split("_", 1)[1]
+        assert len(bytes.fromhex(suffix)) >= 16
+
+
 def test_episodic_roundtrip() -> None:
     event = EpisodicEvent(
         event_id="evt_03812",

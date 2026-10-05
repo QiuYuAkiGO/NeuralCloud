@@ -69,6 +69,31 @@ def scope(audience="local:main", **kwargs):
     return SharedReadScope(audience=audience, **kwargs)
 
 
+def test_local_batch_is_idempotent_and_preserves_source_order(store):
+    events = [local(event_id="batch-1"), local(event_id="batch-2", text="第二条原话")]
+    first = store.record_local_batch(events)
+    assert all(item.created for item in first)
+    assert [item.record.source.original_record_id for item in first] == ["batch-1", "batch-2"]
+    replay = store.record_local_batch(events)
+    assert all(not item.created for item in replay)
+    assert [item.record for item in replay] == [item.record for item in first]
+    assert store.record_local_batch([]) == ()
+
+
+@pytest.mark.parametrize("failure", ["conflict", "invalid"])
+def test_local_batch_failure_preserves_entire_source_and_index_prefix(store, failure):
+    existing = store.record_local(local(event_id="existing")).record
+    with sqlite3.connect(store.path) as db:
+        before = db.execute("SELECT * FROM shared_memory_source_index ORDER BY sequence").fetchall()
+    bad = (local(event_id="existing", text="冲突的新原话") if failure == "conflict" else
+           local(event_id="invalid").model_copy(update={"text": ""}))
+    with pytest.raises((SharedMemoryConflict, ValueError)):
+        store.record_local_batch([local(event_id="must-rollback"), bad])
+    assert [item.record_id for item in store.query(scope()).records] == [existing.record_id]
+    with sqlite3.connect(store.path) as db:
+        assert db.execute("SELECT * FROM shared_memory_source_index ORDER BY sequence").fetchall() == before
+
+
 def test_local_private_by_default_and_explicit_shared_entries(store):
     private = store.record_local(local()).record
     public = store.record_local(local(event_id="shared-1", visibility=("local:main", "qq:group:100"))).record

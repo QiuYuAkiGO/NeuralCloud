@@ -1,0 +1,3798 @@
+{
+  "schema_version": "openai-clm-comparison-v1",
+  "started_at": "2026-10-05T09:03:09.710802+00:00",
+  "completed": false,
+  "model_requested": "gpt-6-luna",
+  "effort": "none",
+  "endpoint": "https://api.openai.com/v1/responses",
+  "network": "environment-proxy",
+  "automatic_retries": 0,
+  "case_sha256": "76eae06c9395582ed9bd3e355753e3811dfd47513a9cc5a1dd8cffbcd752f573",
+  "synthetic": true,
+  "quality": [
+    {
+      "phase": "quality",
+      "case_id": "gate-01",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 2607.7537999954075,
+      "headers_ms": 2075.614500005031,
+      "request_id": "req_7e9bcae58a57475daf76eedba771976b",
+      "terminal_ms": 2607.980900007533,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0875aada81a2911a016ac367d2788087d0ab8da073e2312d30",
+      "usage": {
+        "input_tokens": 253,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 13,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 266
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"speak\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "speak"
+      },
+      "elapsed_ms": 2608.2198999938555,
+      "category": "gate",
+      "expected": "speak",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-02",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"私聊用户说：请现在回答，二加二等于几？没有其他待办。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1826.7486999975517,
+      "headers_ms": 1297.1218000166118,
+      "request_id": "req_65200d8b061a4a8399aaf058ff4cafc0",
+      "terminal_ms": 2095.756099995924,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0345444f9a7f496f016ac367d503a087d0ae24d06df5ff9912",
+      "usage": {
+        "input_tokens": 250,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 13,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 263
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"speak\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "speak"
+      },
+      "elapsed_ms": 2095.9245999983978,
+      "category": "gate",
+      "expected": "speak",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-03",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：我先记个备忘，你不用回复。这条消息没有问题。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 3101.4240000222344,
+      "headers_ms": 1783.9984000020195,
+      "request_id": "req_f8da1a4d62ff498da9783ac2aa6d5729",
+      "terminal_ms": 3101.6245000064373,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0ff17770adea6046016ac367d7261c87d0841121958a2276b4",
+      "usage": {
+        "input_tokens": 247,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 259
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"wait\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "wait"
+      },
+      "elapsed_ms": 3101.784000027692,
+      "category": "gate",
+      "expected": "wait",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-04",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：下面我会连续发三段，在我说发完之前先别回复。目前只收到第一段。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1726.8672999925911,
+      "headers_ms": 1473.8250999944285,
+      "request_id": "req_8c572f03a2f740af8e3f7ce3075a498d",
+      "terminal_ms": 1980.4923000046983,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0f9992740cad6e9b016ac367da33ec87d0ae3c6d7d8ddb137c",
+      "usage": {
+        "input_tokens": 254,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 266
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"wait\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "wait"
+      },
+      "elapsed_ms": 1980.6556999974418,
+      "category": "gate",
+      "expected": "wait",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-05",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：等我下课后再回答这个问题，我会告诉你下课了。目前还没有下课消息。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1963.6235999932978,
+      "headers_ms": 1209.2503000167198,
+      "request_id": "req_4ae3748d7d254cb6bd0f71f40c8ff0d9",
+      "terminal_ms": 2199.7175000142306,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_089b0aa75428e32a016ac367dc2df887d0938b5a8064f85f6a",
+      "usage": {
+        "input_tokens": 255,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 13,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 268
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"defer\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "defer"
+      },
+      "elapsed_ms": 2199.903100001393,
+      "category": "gate",
+      "expected": "defer",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-06",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：等文件上传完成后再给我处理结果。目前文件尚未上传完成。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 3591.684399987571,
+      "headers_ms": 2867.0727999997325,
+      "request_id": "req_23e10f7e74a24af88d39770804ffb983",
+      "terminal_ms": 3591.899099992588,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_05db4095f8ea09f2016ac367de762087d0a3a08e5421bd4863",
+      "usage": {
+        "input_tokens": 249,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 13,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 262
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"defer\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "defer"
+      },
+      "elapsed_ms": 3592.0534000033513,
+      "category": "gate",
+      "expected": "defer",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-07",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户之前要求等他说发完再回答。现在用户说：发完了，请总结上面内容。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 2341.5316000173334,
+      "headers_ms": 1781.1799000191968,
+      "request_id": "req_9514728c48594f58a2c69e12462757d0",
+      "terminal_ms": 2341.7302000161726,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_08bdf5da34a2c363016ac367e2136087d098b4ffd429d2951a",
+      "usage": {
+        "input_tokens": 252,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 13,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 265
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"speak\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "speak"
+      },
+      "elapsed_ms": 2341.8827000132296,
+      "category": "gate",
+      "expected": "speak",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-08",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"群成员甲对乙说：乙，今天你值班吗？小雾没有被提及，没有待办，也没有需要介入的问题。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1906.4286000211723,
+      "headers_ms": 1312.5111999979708,
+      "request_id": "req_136c07c55d514e099e335d174e6a76e8",
+      "terminal_ms": 1906.759300007252,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_05e08383b889866c016ac367e467e887d08a9a14b55b0d9077",
+      "usage": {
+        "input_tokens": 261,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 273
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"wait\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "wait"
+      },
+      "elapsed_ms": 1907.05110001727,
+      "category": "gate",
+      "expected": "wait",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-09",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户明确说：请先保持安静，我要休息，不需要晚安或确认消息。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1875.4330000083428,
+      "headers_ms": 1264.602900017053,
+      "request_id": "req_24f28d65ca384ce288b68322789d4234",
+      "terminal_ms": 1875.677900010487,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0b97b4e4aaf1589e016ac367e6471c87d0bb9a79fadde6d30e",
+      "usage": {
+        "input_tokens": 250,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 262
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"wait\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "wait"
+      },
+      "elapsed_ms": 1875.837200001115,
+      "category": "gate",
+      "expected": "wait",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-10",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：我现在需要帮助，请告诉我如何找回刚才保存的文件。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1817.9817000054754,
+      "headers_ms": 1313.8662000128534,
+      "request_id": "req_85491a2c66ef4367a9f4769ea5b75b4f",
+      "terminal_ms": 2057.591999997385,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0c470bfbc9a1e0ff016ac367e82be087d0a7005c89e4a244a3",
+      "usage": {
+        "input_tokens": 248,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 13,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 261
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"speak\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "speak"
+      },
+      "elapsed_ms": 2057.751599990297,
+      "category": "gate",
+      "expected": "speak",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-11",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：不用马上解释，等明天我再次问你时再答。现在还是当天。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1903.648500010604,
+      "headers_ms": 1302.850700012641,
+      "request_id": "req_c2f3a5a48b3b485aa71f68d42393da2e",
+      "terminal_ms": 1903.8617000041995,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_08306bf0575f9819016ac367ea3e7487d0b29ed73d9ffd69b1",
+      "usage": {
+        "input_tokens": 251,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 13,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 264
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"defer\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "defer"
+      },
+      "elapsed_ms": 1904.0114000090398,
+      "category": "gate",
+      "expected": "defer",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-12",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户刚说：刚才让你不回复的要求取消了，现在请回答我的问题。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 2209.5136000134517,
+      "headers_ms": 1334.807200008072,
+      "request_id": "req_5974e971dd9e4f139c6b7451d60ce43c",
+      "terminal_ms": 2209.9633000034373,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0ca588815fc14e17016ac367ec4a4487d0bf3aad9e821d2b0b",
+      "usage": {
+        "input_tokens": 249,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 13,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 262
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"speak\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "speak"
+      },
+      "elapsed_ms": 2210.1892000064254,
+      "category": "gate",
+      "expected": "speak",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-01",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"甲今天说：我喜欢红茶。\", \"待判断命题\": \"甲今天自述喜欢红茶。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 2234.8401000199374,
+      "headers_ms": 1661.6612000216264,
+      "request_id": "req_4bf00d2e5eb54e969fcdc9a9a43fa311",
+      "terminal_ms": 2861.8063000030816,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_01722581b2188c79016ac367ee8f2487d0ae2f9ac78d95d37b",
+      "usage": {
+        "input_tokens": 266,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 278
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"support\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "support"
+      },
+      "elapsed_ms": 2861.9767000200227,
+      "category": "evidence",
+      "expected": "support",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-02",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"甲今天说：我不喜欢红茶。\", \"待判断命题\": \"甲今天自述喜欢红茶。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 2143.552300025476,
+      "headers_ms": 1451.7526000272483,
+      "request_id": "req_4721ede712f941bc813c79b016c2d6b5",
+      "terminal_ms": 2143.767500005197,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0ee4ea2e2fffc09a016ac367f1691087d0bd691bd1a90ed62e",
+      "usage": {
+        "input_tokens": 267,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 14,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 281
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"contradict\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "contradict"
+      },
+      "elapsed_ms": 2143.928600009531,
+      "category": "evidence",
+      "expected": "contradict",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-03",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"乙今天说：我喜欢红茶。\", \"待判断命题\": \"甲今天自述喜欢红茶。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": false,
+      "schema_valid": false,
+      "status": 200,
+      "ttft_ms": null,
+      "headers_ms": 1451.5485999872908,
+      "request_id": "req_e38f8f675a8f45298a7164fb9c82eab2",
+      "terminal_ms": 1730.2257999836002,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_07fda2e140ade6b4016ac367f3936887d0b9aa07c9dbb89f94",
+      "usage": null,
+      "service_tier": "auto",
+      "incomplete_details": null,
+      "text": "",
+      "refused": false,
+      "validation_error_type": "JSONDecodeError",
+      "elapsed_ms": 1730.3293999866582,
+      "category": "evidence",
+      "expected": "insufficient",
+      "correct": false
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-04",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"甲说：我打算明天完成报告。\", \"待判断命题\": \"甲已经完成报告。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": false,
+      "schema_valid": false,
+      "status": 200,
+      "ttft_ms": null,
+      "headers_ms": 1415.5436000146437,
+      "request_id": "req_6eb08e4c7e5c491a8677fd4e74d73f77",
+      "terminal_ms": 1686.3293000205886,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_08d84cb68e056ce0016ac367f54eb087d0aa35250c94d4d965",
+      "usage": null,
+      "service_tier": "auto",
+      "incomplete_details": null,
+      "text": "",
+      "refused": false,
+      "validation_error_type": "JSONDecodeError",
+      "elapsed_ms": 1686.436899995897,
+      "category": "evidence",
+      "expected": "insufficient",
+      "correct": false
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-05",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"甲说：我已经完成报告了。\", \"待判断命题\": \"甲自述报告已经完成。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1874.9422000255436,
+      "headers_ms": 1346.6403000056744,
+      "request_id": "req_6dfb65b8e9934d94b5eaff661977ff57",
+      "terminal_ms": 2140.0239000213332,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_019403833e01a01a016ac367f6fdb087d0b2ec90cd00691aba",
+      "usage": {
+        "input_tokens": 265,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 277
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"support\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "support"
+      },
+      "elapsed_ms": 2140.1899000047706,
+      "category": "evidence",
+      "expected": "support",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-06",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"甲说：报告还没有做完。\", \"待判断命题\": \"甲自述报告已经完成。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": false,
+      "schema_valid": false,
+      "status": 200,
+      "ttft_ms": null,
+      "headers_ms": 1477.9093000106514,
+      "request_id": "req_f9e4bae36d7e43959bcb6aa0bcec89ec",
+      "terminal_ms": 1747.0678000245243,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_07978164796ce748016ac367f9251c87d09b8d0ba10f4fac00",
+      "usage": null,
+      "service_tier": "auto",
+      "incomplete_details": null,
+      "text": "",
+      "refused": false,
+      "validation_error_type": "JSONDecodeError",
+      "elapsed_ms": 1747.1837000048254,
+      "category": "evidence",
+      "expected": "contradict",
+      "correct": false
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-07",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"甲说：如果下雨，我会带伞。没有天气或出行记录。\", \"待判断命题\": \"甲今天带了伞。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": false,
+      "schema_valid": false,
+      "status": 200,
+      "ttft_ms": null,
+      "headers_ms": 1446.942200011108,
+      "request_id": "req_4ab88e3546c542349f26ad78e1a8268f",
+      "terminal_ms": 1715.8533000038005,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0f3dab0ee0d45080016ac367faeb3487d08e5321b5880392b6",
+      "usage": null,
+      "service_tier": "auto",
+      "incomplete_details": null,
+      "text": "",
+      "refused": false,
+      "validation_error_type": "JSONDecodeError",
+      "elapsed_ms": 1715.987600007793,
+      "category": "evidence",
+      "expected": "insufficient",
+      "correct": false
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-08",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"甲说：更正一下，我现在住苏州，不住上海了。\", \"待判断命题\": \"甲现在自述居住在苏州。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": false,
+      "schema_valid": false,
+      "status": 200,
+      "ttft_ms": null,
+      "headers_ms": 1499.2526000132784,
+      "request_id": "req_e25ae889fe734492823485a19dfd8f28",
+      "terminal_ms": 1769.978500000434,
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0730d775a317fcb9016ac367fcaa0487d09a423ce6b6eee423",
+      "usage": null,
+      "service_tier": "auto",
+      "incomplete_details": null,
+      "text": "",
+      "refused": false,
+      "validation_error_type": "JSONDecodeError",
+      "elapsed_ms": 1770.0875000155065,
+      "category": "evidence",
+      "expected": "support",
+      "correct": false
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-09",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"甲说：更正一下，我现在住苏州，不住上海了。\", \"待判断命题\": \"甲现在自述居住在上海。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 3447.338199999649,
+      "headers_ms": 2900.0545000017155,
+      "request_id": "req_ff7e709b4e1346259ad8980386a82b3a",
+      "terminal_event_type": "response.completed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 3447.5569000060204,
+      "response_status": "completed",
+      "provider_error": {
+        "type": null,
+        "code": null,
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_00d0938bc77106ea016ac36833b10c87d096cd33868ef432a6",
+      "usage": {
+        "input_tokens": 274,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 14,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 288
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"contradict\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "contradict"
+      },
+      "elapsed_ms": 3447.756399982609,
+      "category": "evidence",
+      "expected": "contradict",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-10",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"小雾对甲说：我可以帮你写报告。\", \"待判断命题\": \"甲本人自述喜欢写报告。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1836.5307000058237,
+      "headers_ms": 1280.178800021531,
+      "request_id": "req_84c69b0782b74c74bfa2aed8d0cba24b",
+      "terminal_event_type": "response.completed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1836.6900000255555,
+      "response_status": "completed",
+      "provider_error": {
+        "type": null,
+        "code": null,
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_04d2d922447db5f7016ac3683601b487d0863acc17162ec68a",
+      "usage": {
+        "input_tokens": 271,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 13,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 284
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"insufficient\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "insufficient"
+      },
+      "elapsed_ms": 1836.903000017628,
+      "category": "evidence",
+      "expected": "insufficient",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-11",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"消息发送系统返回已送达回执，消息ID为m1。\", \"待判断命题\": \"消息m1已经被系统确认送达。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1884.5260000089183,
+      "headers_ms": 1327.7243000047747,
+      "request_id": "req_47037e7d1e7346cfb0718e2a66aa3bfd",
+      "terminal_event_type": "response.completed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1884.7771000000648,
+      "response_status": "completed",
+      "provider_error": {
+        "type": null,
+        "code": null,
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_049a79a345de13f0016ac36837dfdc87d0b79c724d3746362a",
+      "usage": {
+        "input_tokens": 275,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 287
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"support\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "support"
+      },
+      "elapsed_ms": 2159.5372000010684,
+      "category": "evidence",
+      "expected": "support",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-12",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"消息m1发送失败，系统明确返回未投递。\", \"待判断命题\": \"消息m1已经被系统确认送达。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1880.0303000025451,
+      "headers_ms": 1316.9248000194784,
+      "request_id": "req_7891d5d8c05d47f18100a37c518a5870",
+      "terminal_event_type": "response.completed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1880.2209999994375,
+      "response_status": "completed",
+      "provider_error": {
+        "type": null,
+        "code": null,
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0dcf32ddc3422bf8016ac3683a068c87d0b44ac156996c26f0",
+      "usage": {
+        "input_tokens": 272,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 14,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 286
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"contradict\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "contradict"
+      },
+      "elapsed_ms": 1880.3834000136703,
+      "category": "evidence",
+      "expected": "contradict",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "attribution-01",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"A\", \"B\", \"M\", \"unknown\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"消息作者账号A，原文：我现在想喝水。\", \"question\": {\"type\": \"choice\", \"instructions\": \"这段第一人称内容可归为谁自己的明确自述？\", \"criteria\": {\"A\": \"账号A自己的明确自述。\", \"B\": \"账号B自己的明确自述。\", \"M\": \"小雾自己的明确自述。\", \"unknown\": \"无法确定是这些对象中谁的自述。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "M",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1850.0582000124268,
+      "headers_ms": 1291.303700010758,
+      "request_id": "req_18d53f171fe7420082f9e3ed0c3a1d64",
+      "terminal_event_type": "response.completed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1850.2325000008568,
+      "response_status": "completed",
+      "provider_error": {
+        "type": null,
+        "code": null,
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_05502578b6517fa2016ac3683bed6087d0b2b75fba11daa93d",
+      "usage": {
+        "input_tokens": 239,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 251
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"A\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "A"
+      },
+      "elapsed_ms": 1850.399999995716,
+      "category": "attribution",
+      "expected": "A",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "attribution-02",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"A\", \"B\", \"M\", \"unknown\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"消息作者账号B，原文：我现在想喝水。\", \"question\": {\"type\": \"choice\", \"instructions\": \"这段第一人称内容可归为谁自己的明确自述？\", \"criteria\": {\"A\": \"账号A自己的明确自述。\", \"B\": \"账号B自己的明确自述。\", \"M\": \"小雾自己的明确自述。\", \"unknown\": \"无法确定是这些对象中谁的自述。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "M",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 2090.568699990399,
+      "headers_ms": 1530.3032999800052,
+      "request_id": "req_7baef42b4a044afc9ba65b02b8cb6c75",
+      "terminal_event_type": "response.completed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 2090.9999999857973,
+      "response_status": "completed",
+      "provider_error": {
+        "type": null,
+        "code": null,
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_003daa4b1d71aa51016ac3683de1b087d0a03da8232125806a",
+      "usage": {
+        "input_tokens": 239,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 251
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"B\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "B"
+      },
+      "elapsed_ms": 2091.1727999919094,
+      "category": "attribution",
+      "expected": "B",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "attribution-03",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"A\", \"B\", \"M\", \"unknown\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"消息作者小雾，原文：我想去看展。\", \"question\": {\"type\": \"choice\", \"instructions\": \"这段第一人称内容可归为谁自己的明确自述？\", \"criteria\": {\"A\": \"账号A自己的明确自述。\", \"B\": \"账号B自己的明确自述。\", \"M\": \"小雾自己的明确自述。\", \"unknown\": \"无法确定是这些对象中谁的自述。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "M",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1641.469900001539,
+      "headers_ms": 1362.3413000022992,
+      "request_id": "req_8528c576309a4b3da1af0b29bdbda53b",
+      "terminal_event_type": "response.completed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1921.7477000202052,
+      "response_status": "completed",
+      "provider_error": {
+        "type": null,
+        "code": null,
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0efe7563b0e1be9a016ac3683fe53487d09f9e3b55530c815e",
+      "usage": {
+        "input_tokens": 240,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 252
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"M\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "M"
+      },
+      "elapsed_ms": 1921.918200008804,
+      "category": "attribution",
+      "expected": "M",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "attribution-04",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"A\", \"B\", \"M\", \"unknown\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"匿名消息，原文：我喜欢猫。没有作者信息。\", \"question\": {\"type\": \"choice\", \"instructions\": \"这段第一人称内容可归为谁自己的明确自述？\", \"criteria\": {\"A\": \"账号A自己的明确自述。\", \"B\": \"账号B自己的明确自述。\", \"M\": \"小雾自己的明确自述。\", \"unknown\": \"无法确定是这些对象中谁的自述。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "M",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1994.7417000075802,
+      "headers_ms": 1384.1975000104867,
+      "request_id": "req_ca186fa0ceda45c98e0b06904e1d42a8",
+      "terminal_event_type": "response.completed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1994.930699991528,
+      "response_status": "completed",
+      "provider_error": {
+        "type": null,
+        "code": null,
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_01754db769b6bcf6016ac36841d5e487d091f18fcf32744f1c",
+      "usage": {
+        "input_tokens": 239,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 251
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"unknown\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "unknown"
+      },
+      "elapsed_ms": 1995.0963000010233,
+      "category": "attribution",
+      "expected": "unknown",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "attribution-05",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"A\", \"B\", \"M\", \"unknown\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"账号A和账号B都叫小林。消息的协议作者ID为B，原文：我今天搬家了。\", \"question\": {\"type\": \"choice\", \"instructions\": \"这段第一人称内容可归为谁自己的明确自述？\", \"criteria\": {\"A\": \"账号A自己的明确自述。\", \"B\": \"账号B自己的明确自述。\", \"M\": \"小雾自己的明确自述。\", \"unknown\": \"无法确定是这些对象中谁的自述。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "M",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1948.9591000019573,
+      "headers_ms": 1392.1743999817409,
+      "request_id": "req_dc8f1c172259469f98279539cb12a32a",
+      "terminal_event_type": "response.completed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1949.1436000098474,
+      "response_status": "completed",
+      "provider_error": {
+        "type": null,
+        "code": null,
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0814a6a79e56ba3c016ac36843dc7c87d08470065daee959bd",
+      "usage": {
+        "input_tokens": 252,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 264
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"B\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "B"
+      },
+      "elapsed_ms": 2224.7048999997787,
+      "category": "attribution",
+      "expected": "B",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "attribution-06",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"A\", \"B\", \"M\", \"unknown\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"账号A和账号B都叫小林。消息的协议作者ID为A，原文：我今天搬家了。\", \"question\": {\"type\": \"choice\", \"instructions\": \"这段第一人称内容可归为谁自己的明确自述？\", \"criteria\": {\"A\": \"账号A自己的明确自述。\", \"B\": \"账号B自己的明确自述。\", \"M\": \"小雾自己的明确自述。\", \"unknown\": \"无法确定是这些对象中谁的自述。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "M",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1850.7960999850184,
+      "headers_ms": 1306.4860999875236,
+      "request_id": "req_194068d91edd452a859e2937cbf05d50",
+      "terminal_event_type": "response.completed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1850.9517000056803,
+      "response_status": "completed",
+      "provider_error": {
+        "type": null,
+        "code": null,
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0fd63017e1ebc3a2016ac368460c1887d0a95413bd5d0240b1",
+      "usage": {
+        "input_tokens": 252,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 264
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"A\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "A"
+      },
+      "elapsed_ms": 1851.115800003754,
+      "category": "attribution",
+      "expected": "A",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "attribution-07",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"A\", \"B\", \"M\", \"unknown\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"账号A引用了一句没有署名的话：我讨厌下雨。A没有表明自己同意这句话。\", \"question\": {\"type\": \"choice\", \"instructions\": \"这段第一人称内容可归为谁自己的明确自述？\", \"criteria\": {\"A\": \"账号A自己的明确自述。\", \"B\": \"账号B自己的明确自述。\", \"M\": \"小雾自己的明确自述。\", \"unknown\": \"无法确定是这些对象中谁的自述。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "M",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1947.369500005152,
+      "headers_ms": 1390.5203000176698,
+      "request_id": "req_753b8736b18f44c49ff63f088279fb62",
+      "terminal_event_type": "response.completed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1947.513599996455,
+      "response_status": "completed",
+      "provider_error": {
+        "type": null,
+        "code": null,
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_03376f682f46dfe5016ac36847f01487d08151d33d52017894",
+      "usage": {
+        "input_tokens": 252,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 264
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"unknown\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "unknown"
+      },
+      "elapsed_ms": 1947.718100011116,
+      "category": "attribution",
+      "expected": "unknown",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "attribution-08",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"A\", \"B\", \"M\", \"unknown\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"小雾说：我是小雾，我现在选择休息。该消息作者ID为M。\", \"question\": {\"type\": \"choice\", \"instructions\": \"这段第一人称内容可归为谁自己的明确自述？\", \"criteria\": {\"A\": \"账号A自己的明确自述。\", \"B\": \"账号B自己的明确自述。\", \"M\": \"小雾自己的明确自述。\", \"unknown\": \"无法确定是这些对象中谁的自述。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "M",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1640.5209000222385,
+      "headers_ms": 1019.5481000118889,
+      "request_id": "req_08c23b2b347b458a8d65afe0e0c535a6",
+      "terminal_event_type": "response.completed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1640.6674000027124,
+      "response_status": "completed",
+      "provider_error": {
+        "type": null,
+        "code": null,
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0e8fb1cb3d939324016ac368499df087d09c53f33323620126",
+      "usage": {
+        "input_tokens": 247,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 259
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"M\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "M"
+      },
+      "elapsed_ms": 1640.8290000108536,
+      "category": "attribution",
+      "expected": "M",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "tool-01",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"web\", \"memory\", \"file\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户问：帮我查一下今天杭州的天气。允许查询公开网页。\", \"question\": {\"type\": \"choice\", \"instructions\": \"哪个已有工具最适合当前请求？没有合法适用工具时选择none。\", \"criteria\": {\"web\": \"查询公开互联网，获取当前公开信息。\", \"memory\": \"查询已经授权的本地对话记忆。\", \"file\": \"读取用户本轮已上传并授权处理的文件。\", \"none\": \"不需要上述工具，或当前没有满足请求所需的授权和输入。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "web",
+                    "memory",
+                    "file",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 2076.5325999818742,
+      "headers_ms": 1387.3277999809943,
+      "request_id": "req_5c4c1606fabf48d293dd33bb7850e4f7",
+      "terminal_event_type": "response.completed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 2076.7190999758895,
+      "response_status": "completed",
+      "provider_error": {
+        "type": null,
+        "code": null,
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_00655b4d7187792c016ac3684b873c87d0be2fc4737173a883",
+      "usage": {
+        "input_tokens": 261,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 273
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"web\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "web"
+      },
+      "elapsed_ms": 2076.8977999978233,
+      "category": "tool",
+      "expected": "web",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "tool-02",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"web\", \"memory\", \"file\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户问：我上周告诉你的茶叶名字是什么？相关聊天记忆允许查询。\", \"question\": {\"type\": \"choice\", \"instructions\": \"哪个已有工具最适合当前请求？没有合法适用工具时选择none。\", \"criteria\": {\"web\": \"查询公开互联网，获取当前公开信息。\", \"memory\": \"查询已经授权的本地对话记忆。\", \"file\": \"读取用户本轮已上传并授权处理的文件。\", \"none\": \"不需要上述工具，或当前没有满足请求所需的授权和输入。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "web",
+                    "memory",
+                    "file",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": false,
+      "schema_valid": false,
+      "status": 200,
+      "ttft_ms": null,
+      "headers_ms": 1401.2916999927256,
+      "request_id": "req_c3d50c35d1b241ff87c51303f74c239c",
+      "terminal_event_type": "response.failed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1683.6452999850735,
+      "response_status": "failed",
+      "provider_error": {
+        "type": null,
+        "code": "rate_limit_exceeded",
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0f727da237d907ee016ac3684da2e087d098fcbe2c73609eae",
+      "usage": null,
+      "service_tier": "auto",
+      "incomplete_details": null,
+      "text": "",
+      "refused": false,
+      "validation_error_type": "JSONDecodeError",
+      "elapsed_ms": 1683.7614999967627,
+      "category": "tool",
+      "expected": "memory",
+      "correct": false
+    },
+    {
+      "phase": "quality",
+      "case_id": "tool-03",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"web\", \"memory\", \"file\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户已上传report.txt并要求：总结这个文件。文件可读且已授权。\", \"question\": {\"type\": \"choice\", \"instructions\": \"哪个已有工具最适合当前请求？没有合法适用工具时选择none。\", \"criteria\": {\"web\": \"查询公开互联网，获取当前公开信息。\", \"memory\": \"查询已经授权的本地对话记忆。\", \"file\": \"读取用户本轮已上传并授权处理的文件。\", \"none\": \"不需要上述工具，或当前没有满足请求所需的授权和输入。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "web",
+                    "memory",
+                    "file",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 2703.658999991603,
+      "headers_ms": 1384.8472999816295,
+      "request_id": "req_84f12521a3474fada3605c5824f9b7db",
+      "terminal_event_type": "response.completed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 3232.3575999762397,
+      "response_status": "completed",
+      "provider_error": {
+        "type": null,
+        "code": null,
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0ef96889dc251857016ac3684f519087d09562421182880fd0",
+      "usage": {
+        "input_tokens": 263,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 275
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"file\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "file"
+      },
+      "elapsed_ms": 3232.5423999864142,
+      "category": "tool",
+      "expected": "file",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "tool-04",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"web\", \"memory\", \"file\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：你好，小雾。没有提出查询或处理任务。\", \"question\": {\"type\": \"choice\", \"instructions\": \"哪个已有工具最适合当前请求？没有合法适用工具时选择none。\", \"criteria\": {\"web\": \"查询公开互联网，获取当前公开信息。\", \"memory\": \"查询已经授权的本地对话记忆。\", \"file\": \"读取用户本轮已上传并授权处理的文件。\", \"none\": \"不需要上述工具，或当前没有满足请求所需的授权和输入。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "web",
+                    "memory",
+                    "file",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": false,
+      "schema_valid": false,
+      "status": 200,
+      "ttft_ms": null,
+      "headers_ms": 1413.9927000214811,
+      "request_id": "req_5111c9f0d32d4d36953c96b9f1262ce9",
+      "terminal_event_type": "response.failed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1691.2944000214338,
+      "response_status": "failed",
+      "provider_error": {
+        "type": null,
+        "code": "rate_limit_exceeded",
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0f2a424d93d4bf60016ac36852925c87d0a324b52671e0f8f7",
+      "usage": null,
+      "service_tier": "auto",
+      "incomplete_details": null,
+      "text": "",
+      "refused": false,
+      "validation_error_type": "JSONDecodeError",
+      "elapsed_ms": 1691.4025000005495,
+      "category": "tool",
+      "expected": "none",
+      "correct": false
+    },
+    {
+      "phase": "quality",
+      "case_id": "tool-05",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"web\", \"memory\", \"file\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户要求查看乙的私聊，但没有乙的授权。候选工具都不允许访问他人的私聊。\", \"question\": {\"type\": \"choice\", \"instructions\": \"哪个已有工具最适合当前请求？没有合法适用工具时选择none。\", \"criteria\": {\"web\": \"查询公开互联网，获取当前公开信息。\", \"memory\": \"查询已经授权的本地对话记忆。\", \"file\": \"读取用户本轮已上传并授权处理的文件。\", \"none\": \"不需要上述工具，或当前没有满足请求所需的授权和输入。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "web",
+                    "memory",
+                    "file",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": false,
+      "schema_valid": false,
+      "status": 200,
+      "ttft_ms": null,
+      "headers_ms": 1414.7511999763083,
+      "request_id": "req_68031fedd0cd4b0898f6ea9a4cecec47",
+      "terminal_event_type": "response.failed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1698.9833999832626,
+      "response_status": "failed",
+      "provider_error": {
+        "type": null,
+        "code": "rate_limit_exceeded",
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_07aae464e15dadd0016ac36854482887d0bc54446310e63eb7",
+      "usage": null,
+      "service_tier": "auto",
+      "incomplete_details": null,
+      "text": "",
+      "refused": false,
+      "validation_error_type": "JSONDecodeError",
+      "elapsed_ms": 1699.0888000000268,
+      "category": "tool",
+      "expected": "none",
+      "correct": false
+    },
+    {
+      "phase": "quality",
+      "case_id": "tool-06",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"web\", \"memory\", \"file\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户问：请查询某产品官网现在公开的发布公告。\", \"question\": {\"type\": \"choice\", \"instructions\": \"哪个已有工具最适合当前请求？没有合法适用工具时选择none。\", \"criteria\": {\"web\": \"查询公开互联网，获取当前公开信息。\", \"memory\": \"查询已经授权的本地对话记忆。\", \"file\": \"读取用户本轮已上传并授权处理的文件。\", \"none\": \"不需要上述工具，或当前没有满足请求所需的授权和输入。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "web",
+                    "memory",
+                    "file",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 2006.5908999822568,
+      "headers_ms": 1342.600699979812,
+      "request_id": "req_908f5b08c6df449a829afc01d3b14017",
+      "terminal_event_type": "response.completed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 2006.7619000037666,
+      "response_status": "completed",
+      "provider_error": {
+        "type": null,
+        "code": null,
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_00139de8ca57b327016ac36855fb8087d0b0748a84881cdfd3",
+      "usage": {
+        "input_tokens": 258,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 270
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"web\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "web"
+      },
+      "elapsed_ms": 2007.054199988488,
+      "category": "tool",
+      "expected": "web",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "tool-07",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"web\", \"memory\", \"file\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户问：我之前明确让你记住的生日是几月几号？只查询我授权的记忆。\", \"question\": {\"type\": \"choice\", \"instructions\": \"哪个已有工具最适合当前请求？没有合法适用工具时选择none。\", \"criteria\": {\"web\": \"查询公开互联网，获取当前公开信息。\", \"memory\": \"查询已经授权的本地对话记忆。\", \"file\": \"读取用户本轮已上传并授权处理的文件。\", \"none\": \"不需要上述工具，或当前没有满足请求所需的授权和输入。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "web",
+                    "memory",
+                    "file",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": false,
+      "schema_valid": false,
+      "status": 200,
+      "ttft_ms": null,
+      "headers_ms": 1417.9812999791466,
+      "request_id": "req_267b5afad7eb4c4caff9d6c4f258a7f8",
+      "terminal_event_type": "response.failed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1701.1009999841917,
+      "response_status": "failed",
+      "provider_error": {
+        "type": null,
+        "code": "rate_limit_exceeded",
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_02217e5554c7f2b6016ac3685803f487d095d4612be2323422",
+      "usage": null,
+      "service_tier": "auto",
+      "incomplete_details": null,
+      "text": "",
+      "refused": false,
+      "validation_error_type": "JSONDecodeError",
+      "elapsed_ms": 1701.2039999826811,
+      "category": "tool",
+      "expected": "memory",
+      "correct": false
+    },
+    {
+      "phase": "quality",
+      "case_id": "tool-08",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"web\", \"memory\", \"file\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：统计我刚上传的CSV有多少行。CSV已经接收并授权读取。\", \"question\": {\"type\": \"choice\", \"instructions\": \"哪个已有工具最适合当前请求？没有合法适用工具时选择none。\", \"criteria\": {\"web\": \"查询公开互联网，获取当前公开信息。\", \"memory\": \"查询已经授权的本地对话记忆。\", \"file\": \"读取用户本轮已上传并授权处理的文件。\", \"none\": \"不需要上述工具，或当前没有满足请求所需的授权和输入。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "web",
+                    "memory",
+                    "file",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": false,
+      "schema_valid": false,
+      "status": 200,
+      "ttft_ms": null,
+      "headers_ms": 1387.560900009703,
+      "request_id": "req_2ff08ff33a0c4974b8d48bba1f74b5e9",
+      "terminal_event_type": "response.failed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1664.7983999864664,
+      "response_status": "failed",
+      "provider_error": {
+        "type": null,
+        "code": "rate_limit_exceeded",
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_051231ff8d48b4ac016ac36859b37c87d09d358036fb1e5484",
+      "usage": null,
+      "service_tier": "auto",
+      "incomplete_details": null,
+      "text": "",
+      "refused": false,
+      "validation_error_type": "JSONDecodeError",
+      "elapsed_ms": 1664.9238000100013,
+      "category": "tool",
+      "expected": "file",
+      "correct": false
+    },
+    {
+      "phase": "quality",
+      "case_id": "retrieval-01",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"a\", \"b\", \"c\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"检索问题\": \"甲最近更正后的茶饮偏好是什么？\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"选择最能直接回答检索问题的记忆；不足以回答时选none。\", \"criteria\": {\"a\": \"甲上月说喜欢红茶。\", \"b\": \"甲昨天更正：现在更喜欢绿茶。\", \"c\": \"乙昨天说喜欢咖啡。\", \"none\": \"没有相关记忆。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "a",
+                    "b",
+                    "c",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": true,
+      "schema_valid": true,
+      "status": 200,
+      "ttft_ms": 1949.4287999987137,
+      "headers_ms": 1366.1684000107925,
+      "request_id": "req_f45dedd7b1da4a098ac05890cea96ea2",
+      "terminal_event_type": "response.completed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1949.8616000055335,
+      "response_status": "completed",
+      "provider_error": {
+        "type": null,
+        "code": null,
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0aa96496ae16b288016ac3685b693c87d08d24473c7962e218",
+      "usage": {
+        "input_tokens": 244,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 256
+      },
+      "service_tier": "default",
+      "incomplete_details": null,
+      "text": "{\"decision\":\"b\"}",
+      "refused": false,
+      "parsed": {
+        "decision": "b"
+      },
+      "elapsed_ms": 1950.1523000071757,
+      "category": "retrieval",
+      "expected": "b",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "retrieval-02",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"a\", \"b\", \"c\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"检索问题\": \"甲养的猫叫什么名字？\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"选择最能直接回答检索问题的记忆；不足以回答时选none。\", \"criteria\": {\"a\": \"甲的猫叫团团。\", \"b\": \"乙的猫叫圆圆。\", \"c\": \"甲喜欢猫。\", \"none\": \"没有相关记忆。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "a",
+                    "b",
+                    "c",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": false,
+      "schema_valid": false,
+      "status": 200,
+      "ttft_ms": null,
+      "headers_ms": 1479.851799987955,
+      "request_id": "req_1210783cb4ac4019a84eb0fcadd32d52",
+      "terminal_event_type": "response.failed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1765.4317000124138,
+      "response_status": "failed",
+      "provider_error": {
+        "type": null,
+        "code": "rate_limit_exceeded",
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_0d2e4dbf851dbb7d016ac3685d5ab087d084472b9f4c240597",
+      "usage": null,
+      "service_tier": "auto",
+      "incomplete_details": null,
+      "text": "",
+      "refused": false,
+      "validation_error_type": "JSONDecodeError",
+      "elapsed_ms": 1765.5381000076886,
+      "category": "retrieval",
+      "expected": "a",
+      "correct": false
+    },
+    {
+      "phase": "quality",
+      "case_id": "retrieval-03",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"a\", \"b\", \"c\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"检索问题\": \"乙现在住在哪里？\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"选择最能直接回答检索问题的记忆；不足以回答时选none。\", \"criteria\": {\"a\": \"甲住杭州。\", \"b\": \"乙过去住南京。\", \"c\": \"乙昨天说已经搬到苏州，现在住苏州。\", \"none\": \"没有相关记忆。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "a",
+                    "b",
+                    "c",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": false,
+      "schema_valid": false,
+      "status": 200,
+      "ttft_ms": null,
+      "headers_ms": 1140.0573999853805,
+      "request_id": "req_3fe3b7db20d941929b31ca199c1f6a5c",
+      "terminal_event_type": "response.failed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1418.192099983571,
+      "response_status": "failed",
+      "provider_error": {
+        "type": null,
+        "code": "rate_limit_exceeded",
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_092e0610d007ced4016ac3685edd9c87d08f0637a8a678a0b9",
+      "usage": null,
+      "service_tier": "auto",
+      "incomplete_details": null,
+      "text": "",
+      "refused": false,
+      "validation_error_type": "JSONDecodeError",
+      "elapsed_ms": 1418.2955999858677,
+      "category": "retrieval",
+      "expected": "c",
+      "correct": false
+    },
+    {
+      "phase": "quality",
+      "case_id": "retrieval-04",
+      "payload": {
+        "model": "gpt-6-luna",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"a\", \"b\", \"c\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"检索问题\": \"下次和甲见面的约定时间？\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"选择最能直接回答检索问题的记忆；不足以回答时选none。\", \"criteria\": {\"a\": \"甲喜欢傍晚散步。\", \"b\": \"甲和小雾约好本周六下午三点见面。\", \"c\": \"乙下周日要出差。\", \"none\": \"没有相关记忆。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "a",
+                    "b",
+                    "c",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            },
+            "strict": true
+          }
+        },
+        "store": false
+      },
+      "completed": false,
+      "schema_valid": false,
+      "status": 200,
+      "ttft_ms": null,
+      "headers_ms": 1386.8654999823775,
+      "request_id": "req_8933f77bdc6846be87b17485b65472bd",
+      "terminal_event_type": "response.failed",
+      "terminal_event_keys": [
+        "type",
+        "response",
+        "sequence_number"
+      ],
+      "terminal_ms": 1670.1909999828786,
+      "response_status": "failed",
+      "provider_error": {
+        "type": null,
+        "code": "rate_limit_exceeded",
+        "param": null
+      },
+      "response_model": "gpt-6-luna",
+      "response_id": "resp_041409481bce1084016ac368608e9087d0aa62919a82ff3b76",
+      "usage": null,
+      "service_tier": "auto",
+      "incomplete_details": null,
+      "text": "",
+      "refused": false,
+      "validation_error_type": "JSONDecodeError",
+      "elapsed_ms": 1670.301499980269,
+      "category": "retrieval",
+      "expected": "b",
+      "correct": false
+    }
+  ],
+  "performance": {},
+  "reply": [],
+  "events": [
+    {
+      "event": "start",
+      "utc": "2026-10-05T09:03:09.761049+00:00"
+    },
+    {
+      "event": "first_request",
+      "utc": "2026-10-05T09:03:13.911421+00:00",
+      "status": 200,
+      "valid": true
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:16.528507+00:00",
+      "case": "gate-01",
+      "correct": true,
+      "valid": true,
+      "ms": 2608.2198999938555
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:18.635000+00:00",
+      "case": "gate-02",
+      "correct": true,
+      "valid": true,
+      "ms": 2095.9245999983978
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:21.746085+00:00",
+      "case": "gate-03",
+      "correct": true,
+      "valid": true,
+      "ms": 3101.784000027692
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:23.736325+00:00",
+      "case": "gate-04",
+      "correct": true,
+      "valid": true,
+      "ms": 1980.6556999974418
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:25.945822+00:00",
+      "case": "gate-05",
+      "correct": true,
+      "valid": true,
+      "ms": 2199.903100001393
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:29.545052+00:00",
+      "case": "gate-06",
+      "correct": true,
+      "valid": true,
+      "ms": 3592.0534000033513
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:31.893414+00:00",
+      "case": "gate-07",
+      "correct": true,
+      "valid": true,
+      "ms": 2341.8827000132296
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:33.810353+00:00",
+      "case": "gate-08",
+      "correct": true,
+      "valid": true,
+      "ms": 1907.05110001727
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:35.698053+00:00",
+      "case": "gate-09",
+      "correct": true,
+      "valid": true,
+      "ms": 1875.837200001115
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:37.761765+00:00",
+      "case": "gate-10",
+      "correct": true,
+      "valid": true,
+      "ms": 2057.751599990297
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:39.798097+00:00",
+      "case": "gate-11",
+      "correct": true,
+      "valid": true,
+      "ms": 1904.0114000090398
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:42.014317+00:00",
+      "case": "gate-12",
+      "correct": true,
+      "valid": true,
+      "ms": 2210.1892000064254
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:44.889728+00:00",
+      "case": "evidence-01",
+      "correct": true,
+      "valid": true,
+      "ms": 2861.9767000200227
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:47.047532+00:00",
+      "case": "evidence-02",
+      "correct": true,
+      "valid": true,
+      "ms": 2143.928600009531
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:48.793154+00:00",
+      "case": "evidence-03",
+      "correct": false,
+      "valid": false,
+      "ms": 1730.3293999866582
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:50.492790+00:00",
+      "case": "evidence-04",
+      "correct": false,
+      "valid": false,
+      "ms": 1686.436899995897
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:52.639622+00:00",
+      "case": "evidence-05",
+      "correct": true,
+      "valid": true,
+      "ms": 2140.1899000047706
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:54.400047+00:00",
+      "case": "evidence-06",
+      "correct": false,
+      "valid": false,
+      "ms": 1747.1837000048254
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:56.135156+00:00",
+      "case": "evidence-07",
+      "correct": false,
+      "valid": false,
+      "ms": 1715.987600007793
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:03:57.918458+00:00",
+      "case": "evidence-08",
+      "correct": false,
+      "valid": false,
+      "ms": 1770.0875000155065
+    },
+    {
+      "event": "failed",
+      "utc": "2026-10-05T09:03:57.932743+00:00",
+      "error_type": "RuntimeError"
+    },
+    {
+      "event": "start",
+      "utc": "2026-10-05T09:04:50.034086+00:00"
+    },
+    {
+      "event": "first_request",
+      "utc": "2026-10-05T09:04:50.057634+00:00",
+      "status": 200,
+      "valid": true
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:04:53.511713+00:00",
+      "case": "evidence-09",
+      "correct": true,
+      "valid": true,
+      "ms": 3447.756399982609
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:04:55.357185+00:00",
+      "case": "evidence-10",
+      "correct": true,
+      "valid": true,
+      "ms": 1836.903000017628
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:04:57.524525+00:00",
+      "case": "evidence-11",
+      "correct": true,
+      "valid": true,
+      "ms": 2159.5372000010684
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:04:59.417402+00:00",
+      "case": "evidence-12",
+      "correct": true,
+      "valid": true,
+      "ms": 1880.3834000136703
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:01.276593+00:00",
+      "case": "attribution-01",
+      "correct": true,
+      "valid": true,
+      "ms": 1850.399999995716
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:03.378738+00:00",
+      "case": "attribution-02",
+      "correct": true,
+      "valid": true,
+      "ms": 2091.1727999919094
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:05.309488+00:00",
+      "case": "attribution-03",
+      "correct": true,
+      "valid": true,
+      "ms": 1921.918200008804
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:07.313806+00:00",
+      "case": "attribution-04",
+      "correct": true,
+      "valid": true,
+      "ms": 1995.0963000010233
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:09.550414+00:00",
+      "case": "attribution-05",
+      "correct": true,
+      "valid": true,
+      "ms": 2224.7048999997787
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:11.412891+00:00",
+      "case": "attribution-06",
+      "correct": true,
+      "valid": true,
+      "ms": 1851.115800003754
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:13.372421+00:00",
+      "case": "attribution-07",
+      "correct": true,
+      "valid": true,
+      "ms": 1947.718100011116
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:15.025144+00:00",
+      "case": "attribution-08",
+      "correct": true,
+      "valid": true,
+      "ms": 1640.8290000108536
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:17.114871+00:00",
+      "case": "tool-01",
+      "correct": true,
+      "valid": true,
+      "ms": 2076.8977999978233
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:18.811350+00:00",
+      "case": "tool-02",
+      "correct": false,
+      "valid": false,
+      "ms": 1683.7614999967627
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:22.055554+00:00",
+      "case": "tool-03",
+      "correct": true,
+      "valid": true,
+      "ms": 3232.5423999864142
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:23.760270+00:00",
+      "case": "tool-04",
+      "correct": false,
+      "valid": false,
+      "ms": 1691.4025000005495
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:25.469395+00:00",
+      "case": "tool-05",
+      "correct": false,
+      "valid": false,
+      "ms": 1699.0888000000268
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:27.485800+00:00",
+      "case": "tool-06",
+      "correct": true,
+      "valid": true,
+      "ms": 2007.054199988488
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:29.198688+00:00",
+      "case": "tool-07",
+      "correct": false,
+      "valid": false,
+      "ms": 1701.2039999826811
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:30.875004+00:00",
+      "case": "tool-08",
+      "correct": false,
+      "valid": false,
+      "ms": 1664.9238000100013
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:32.834753+00:00",
+      "case": "retrieval-01",
+      "correct": true,
+      "valid": true,
+      "ms": 1950.1523000071757
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:34.612410+00:00",
+      "case": "retrieval-02",
+      "correct": false,
+      "valid": false,
+      "ms": 1765.5381000076886
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:36.043417+00:00",
+      "case": "retrieval-03",
+      "correct": false,
+      "valid": false,
+      "ms": 1418.2955999858677
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T09:05:37.725967+00:00",
+      "case": "retrieval-04",
+      "correct": false,
+      "valid": false,
+      "ms": 1670.301499980269
+    },
+    {
+      "event": "failed",
+      "utc": "2026-10-05T09:05:37.734432+00:00",
+      "error_type": "RuntimeError"
+    }
+  ],
+  "source_sha256": {
+    "openai_structured_benchmark.py": "360f46d88288f10fc53505e53010e6423fa093fbfc40c33cec3c58685538d1ef",
+    "deepseek_structured_benchmark.py": "9e1d515f3a513e59375e3682ac26e5638e1425e2d8073b661e2013e8426121e0",
+    "clm_benchmark.py": "654a4e08773c9204c47af2ce3ac3f72eed873a81bb41a2bc9d2dfb1b1c09e437"
+  },
+  "first_request": {
+    "phase": "first_request",
+    "case_id": "gate-01",
+    "payload": {
+      "model": "gpt-6-luna",
+      "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+      "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+      "reasoning": {
+        "effort": "none"
+      },
+      "temperature": 0,
+      "max_output_tokens": 128,
+      "stream": true,
+      "text": {
+        "format": {
+          "type": "json_schema",
+          "name": "decision",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "decision": {
+                "type": "string",
+                "enum": [
+                  "speak",
+                  "wait",
+                  "defer"
+                ]
+              }
+            },
+            "required": [
+              "decision"
+            ],
+            "additionalProperties": false
+          },
+          "strict": true
+        }
+      },
+      "store": false
+    },
+    "completed": true,
+    "schema_valid": true,
+    "status": 200,
+    "ttft_ms": 4118.590900005074,
+    "headers_ms": 3577.043199999025,
+    "request_id": "req_e5b740e9f9774399942eaa89bfcad1a9",
+    "terminal_ms": 4118.780100019649,
+    "response_model": "gpt-6-luna",
+    "response_id": "resp_091c74f88082d998016ac367d0115c87d0800355f5cd8b6904",
+    "usage": {
+      "input_tokens": 253,
+      "input_tokens_details": {
+        "cache_write_tokens": 0,
+        "cached_tokens": 0
+      },
+      "output_tokens": 13,
+      "output_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "total_tokens": 266
+    },
+    "service_tier": "default",
+    "incomplete_details": null,
+    "text": "{\"decision\":\"speak\"}",
+    "refused": false,
+    "parsed": {
+      "decision": "speak"
+    },
+    "elapsed_ms": 4118.986500019673
+  },
+  "ended_at": "2026-10-05T09:05:37.745544+00:00",
+  "resumes": [
+    {
+      "utc": "2026-10-05T09:04:49.646918+00:00",
+      "sources": {
+        "openai_structured_benchmark.py": "6336e6ce7c18f4d1395fd46d4a9a28aebefb93b1a143e4fa6935d0a5b1beb6e7",
+        "deepseek_structured_benchmark.py": "9e1d515f3a513e59375e3682ac26e5638e1425e2d8073b661e2013e8426121e0",
+        "clm_benchmark.py": "654a4e08773c9204c47af2ce3ac3f72eed873a81bb41a2bc9d2dfb1b1c09e437"
+      },
+      "previous_failure": {
+        "type": "RuntimeError"
+      }
+    }
+  ],
+  "failure": {
+    "type": "RuntimeError"
+  }
+}

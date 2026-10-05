@@ -1,0 +1,155 @@
+{
+  "scope": "OpenAICompatClient smoke; no QQ or memory writes",
+  "results": [
+    {
+      "provider": "local",
+      "case_id": "c05",
+      "seconds": 1.6351374000078067,
+      "text": "啊，是空间不够了。\n\n图里说现在只剩2.3G，但更新要8.0G。\n你得先去清理点东西，腾出至少8个G的空间，然后再点更新试试。\n不然它肯定还是装不进去的。\n\n[END]",
+      "usage": {
+        "prompt_tokens": 2313,
+        "completion_tokens": 61,
+        "total_tokens": 2374,
+        "cache_hit_tokens": 1987,
+        "cache_miss_tokens": 326,
+        "cache_known_prompt_tokens": 2313,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "metadata": {
+        "finish_reason": "stop",
+        "response_id": "chatcmpl-SVv34lYkMzbg2k2H3wvNaDBVBVbZUL9d",
+        "content_type": "text",
+        "content_characters": 84,
+        "reasoning_tokens": null,
+        "has_tool_calls": false,
+        "has_refusal": false
+      },
+      "images": [
+        {
+          "source_sha256": "84d7a8e02d7ba79b8ffd00444dade089c5a1e843cb48aadd1a3681632ad4e31d",
+          "media_type": "image/png",
+          "width": 720,
+          "height": 420,
+          "frame_count": 1,
+          "sampled_frame_indices": [
+            0
+          ],
+          "animation_sampled": false,
+          "frame_sha256": [
+            "4112702c14843712333337b1bb0829ea8eb2535223bd34d890ba0c9b02b4c6c1"
+          ],
+          "detail": "high"
+        }
+      ],
+      "input_sha256": "8818434a01c046c720655e621b64b3868cd96f632e4745165f4186ef26bee4bf",
+      "success": true
+    },
+    {
+      "provider": "kimi26",
+      "case_id": "c05",
+      "seconds": 1.2275047000148334,
+      "text": "图里说的是磁盘空间不够啦，只有2.3GB，但这次更新要8GB。\n\n清理一下硬盘吧，删点不用的游戏、视频或者缓存，腾出5GB以上应该就能继续了。[END]",
+      "usage": {
+        "prompt_tokens": 2328,
+        "completion_tokens": 49,
+        "total_tokens": 2377,
+        "cache_hit_tokens": 1792,
+        "cache_miss_tokens": 536,
+        "cache_known_prompt_tokens": 2328,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "metadata": {
+        "finish_reason": "stop",
+        "response_id": "chatcmpl-6ac3dff13b3cfa45da3f461e",
+        "content_type": "text",
+        "content_characters": 76,
+        "reasoning_tokens": 1,
+        "has_tool_calls": false,
+        "has_refusal": false
+      },
+      "images": [
+        {
+          "source_sha256": "84d7a8e02d7ba79b8ffd00444dade089c5a1e843cb48aadd1a3681632ad4e31d",
+          "media_type": "image/png",
+          "width": 720,
+          "height": 420,
+          "frame_count": 1,
+          "sampled_frame_indices": [
+            0
+          ],
+          "animation_sampled": false,
+          "frame_sha256": [
+            "4112702c14843712333337b1bb0829ea8eb2535223bd34d890ba0c9b02b4c6c1"
+          ],
+          "detail": "high"
+        }
+      ],
+      "input_sha256": "8818434a01c046c720655e621b64b3868cd96f632e4745165f4186ef26bee4bf",
+      "success": true
+    },
+    {
+      "provider": "kimi3",
+      "case_id": "c05",
+      "seconds": 4.615961000032257,
+      "text": "图里说磁盘不够啦，可用只有2.3G，更新要8G\n\n清出至少6G空间再重试就行，删点不用的东西或者把游戏挪到别的盘[END]",
+      "usage": {
+        "prompt_tokens": 2418,
+        "completion_tokens": 63,
+        "total_tokens": 2481,
+        "cache_hit_tokens": 1792,
+        "cache_miss_tokens": 626,
+        "cache_known_prompt_tokens": 2418,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "metadata": {
+        "finish_reason": "stop",
+        "response_id": "chatcmpl-6ac3dff47ac468aaba562200",
+        "content_type": "text",
+        "content_characters": 61,
+        "reasoning_tokens": 4,
+        "has_tool_calls": false,
+        "has_refusal": false
+      },
+      "images": [
+        {
+          "source_sha256": "84d7a8e02d7ba79b8ffd00444dade089c5a1e843cb48aadd1a3681632ad4e31d",
+          "media_type": "image/png",
+          "width": 720,
+          "height": 420,
+          "frame_count": 1,
+          "sampled_frame_indices": [
+            0
+          ],
+          "animation_sampled": false,
+          "frame_sha256": [
+            "4112702c14843712333337b1bb0829ea8eb2535223bd34d890ba0c9b02b4c6c1"
+          ],
+          "detail": "high"
+        }
+      ],
+      "input_sha256": "8818434a01c046c720655e621b64b3868cd96f632e4745165f4186ef26bee4bf",
+      "success": true
+    }
+  ]
+}

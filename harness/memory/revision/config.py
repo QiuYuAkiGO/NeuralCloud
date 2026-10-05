@@ -20,7 +20,7 @@ class DailyRevisionConfig(BaseModel):
     model: str = "kimi-k3"
     api_key_file: Path | None = None
     queue_path: Path | None = None
-    reasoning_effort: Literal["low", "high", "max"] = "high"
+    reasoning_effort: Literal["none", "low", "high", "max"] = "high"
     schedule_time: str = "03:00"
     timezone: str = "Asia/Shanghai"
     backfill_days: int = Field(default=7, ge=1, le=90, strict=True)

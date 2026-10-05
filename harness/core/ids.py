@@ -35,4 +35,6 @@ def new_id(kind: str) -> str:
     prefix = PREFIXES.get(kind)
     if prefix is None:
         raise ValueError(f"unknown id kind: {kind}")
-    return f"{prefix}_{secrets.token_hex(4)}"
+    # These identities survive across years of journal and ledger entries.
+    # A 32-bit suffix already collides at ordinary production event volumes.
+    return f"{prefix}_{secrets.token_hex(16)}"

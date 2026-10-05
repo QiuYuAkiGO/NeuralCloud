@@ -1,0 +1,2184 @@
+{
+  "post_hoc": true,
+  "completed": true,
+  "case_sha256": "76eae06c9395582ed9bd3e355753e3811dfd47513a9cc5a1dd8cffbcd752f573",
+  "runner_sha256": "b3730c77b03a34b3e72fee4a981025a957963cec109a750f189dba72518cf802",
+  "controls": [
+    [
+      "invoice-en",
+      "Customer: my invoice was charged twice and nobody answers the phone!",
+      "Which team should handle this?",
+      {
+        "billing": "Charges, invoices, refunds",
+        "technical": "Bugs and outages"
+      },
+      "billing"
+    ],
+    [
+      "invoice-zh",
+      "客户说：我的账单被扣款两次，而且没人接电话！",
+      "应该由哪个团队处理？",
+      {
+        "billing": "收费、账单、退款",
+        "technical": "软件错误与服务中断"
+      },
+      "billing"
+    ],
+    [
+      "tides-en",
+      "What causes tides on Earth?",
+      "",
+      {
+        "moon": "The Moon's gravitational pull.",
+        "plants": "Photosynthesis in plants.",
+        "shape": "Because the Earth is round."
+      },
+      "moon"
+    ],
+    [
+      "tides-zh",
+      "是什么导致地球上的潮汐？",
+      "",
+      {
+        "moon": "月球的引力。",
+        "plants": "植物的光合作用。",
+        "shape": "因为地球是圆的。"
+      },
+      "moon"
+    ],
+    [
+      "cat-en",
+      "My cat is named Milo.",
+      "What is my cat's name?",
+      {
+        "milo": "Milo",
+        "luna": "Luna",
+        "unknown": "The cat's name is unknown."
+      },
+      "milo"
+    ],
+    [
+      "cat-zh",
+      "我的猫名叫团团。",
+      "我的猫叫什么名字？",
+      {
+        "milo": "团团",
+        "luna": "月月",
+        "unknown": "猫的名字未知。"
+      },
+      "milo"
+    ],
+    [
+      "silence-en",
+      "The user says: Please stay silent. Do not send an acknowledgement.",
+      "What should the assistant do now?",
+      {
+        "speak": "Send a reply now.",
+        "wait": "Remain silent and send no message."
+      },
+      "wait"
+    ],
+    [
+      "silence-zh",
+      "用户说：请保持安静，不要回复确认消息。",
+      "助手现在应当做什么？",
+      {
+        "speak": "现在发送回复。",
+        "wait": "保持安静，不发送消息。"
+      },
+      "wait"
+    ]
+  ],
+  "control_results": [
+    {
+      "id": "invoice-en",
+      "model": "clm-latest",
+      "expected": "billing",
+      "response": {
+        "model": "clm-latest",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "billing",
+            "confidence": 0.9787753550220804,
+            "probabilities": {
+              "billing": 0.9893876775110402,
+              "technical": 0.010612322488959847
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 30,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "invoice-en",
+      "model": "clm-raw",
+      "expected": "billing",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "billing",
+            "confidence": 0.5567566228424194,
+            "probabilities": {
+              "billing": 0.7783783114212097,
+              "technical": 0.22162168857879028
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 0,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "invoice-zh",
+      "model": "clm-latest",
+      "expected": "billing",
+      "response": {
+        "model": "clm-latest",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "billing",
+            "confidence": 0.9804944599574018,
+            "probabilities": {
+              "billing": 0.9902472299787008,
+              "technical": 0.009752770021299074
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 33,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "invoice-zh",
+      "model": "clm-raw",
+      "expected": "billing",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "technical",
+            "confidence": 0.2966822437917743,
+            "probabilities": {
+              "billing": 0.3516588781041128,
+              "technical": 0.6483411218958871
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 0,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "tides-en",
+      "model": "clm-latest",
+      "expected": "moon",
+      "response": {
+        "model": "clm-latest",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "moon",
+            "confidence": 0.9896341795894741,
+            "probabilities": {
+              "moon": 0.9930894530596494,
+              "plants": 3.096828956542999e-05,
+              "shape": 0.006879578650785154
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 24,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "tides-en",
+      "model": "clm-raw",
+      "expected": "moon",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "moon",
+            "confidence": 0.40631871541091014,
+            "probabilities": {
+              "moon": 0.6042124769406068,
+              "plants": 0.36138956275358625,
+              "shape": 0.034397960305806975
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 0,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "tides-zh",
+      "model": "clm-latest",
+      "expected": "moon",
+      "response": {
+        "model": "clm-latest",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "moon",
+            "confidence": 0.5933412058670811,
+            "probabilities": {
+              "moon": 0.7288941372447207,
+              "plants": 0.009029846666024676,
+              "shape": 0.2620760160892546
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 24,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "tides-zh",
+      "model": "clm-raw",
+      "expected": "moon",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "moon",
+            "confidence": 0.34161282120577763,
+            "probabilities": {
+              "moon": 0.5610752141371851,
+              "plants": 0.22335404680938822,
+              "shape": 0.2155707390534267
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 0,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "cat-en",
+      "model": "clm-latest",
+      "expected": "milo",
+      "response": {
+        "model": "clm-latest",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "milo",
+            "confidence": 0.2601203715322816,
+            "probabilities": {
+              "milo": 0.5067469143548544,
+              "luna": 0.00022276649320216075,
+              "unknown": 0.49303031915194345
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 24,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "cat-en",
+      "model": "clm-raw",
+      "expected": "milo",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 0.9999995516937984,
+            "probabilities": {
+              "milo": 6.96402741527634e-14,
+              "luna": 2.988707314277439e-07,
+              "unknown": 0.9999997011291989
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 0,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "cat-zh",
+      "model": "clm-latest",
+      "expected": "milo",
+      "response": {
+        "model": "clm-latest",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 0.9988639066924827,
+            "probabilities": {
+              "milo": 0.0007546538345478022,
+              "luna": 2.7417037970047024e-06,
+              "unknown": 0.9992426044616551
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 20,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "cat-zh",
+      "model": "clm-raw",
+      "expected": "milo",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 0.9994804680010657,
+            "probabilities": {
+              "milo": 0.0003436763172258717,
+              "luna": 2.678348730313199e-06,
+              "unknown": 0.9996536453340438
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 0,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "silence-en",
+      "model": "clm-latest",
+      "expected": "wait",
+      "response": {
+        "model": "clm-latest",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "wait",
+            "confidence": 0.9829750759880972,
+            "probabilities": {
+              "speak": 0.008512462005951503,
+              "wait": 0.9914875379940487
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 34,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "silence-en",
+      "model": "clm-raw",
+      "expected": "wait",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "wait",
+            "confidence": 0.00022125243779597126,
+            "probabilities": {
+              "speak": 0.49988937378110204,
+              "wait": 0.500110626218898
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 0,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "silence-zh",
+      "model": "clm-latest",
+      "expected": "wait",
+      "response": {
+        "model": "clm-latest",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "speak",
+            "confidence": 0.9927711509901989,
+            "probabilities": {
+              "speak": 0.9963855754950994,
+              "wait": 0.0036144245049005677
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 28,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "silence-zh",
+      "model": "clm-raw",
+      "expected": "wait",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "wait",
+            "confidence": 0.3104755685269292,
+            "probabilities": {
+              "speak": 0.34476221573653537,
+              "wait": 0.6552377842634646
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 0,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    }
+  ],
+  "raw_ablation": [
+    {
+      "id": "gate-01",
+      "category": "gate",
+      "expected": "speak",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "speak",
+            "confidence": 0.46741543817976194,
+            "probabilities": {
+              "speak": 0.6449436254531746,
+              "wait": 0.19654968120517027,
+              "defer": 0.15850669334165504
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 72,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "gate-02",
+      "category": "gate",
+      "expected": "speak",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "speak",
+            "confidence": 0.38678294447159584,
+            "probabilities": {
+              "speak": 0.5911886296477306,
+              "wait": 0.2521882691233489,
+              "defer": 0.15662310122892054
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 37,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "gate-03",
+      "category": "gate",
+      "expected": "wait",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "speak",
+            "confidence": 0.3210957215247758,
+            "probabilities": {
+              "speak": 0.5473971476831838,
+              "wait": 0.24669169747828312,
+              "defer": 0.20591115483853295
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 36,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "gate-04",
+      "category": "gate",
+      "expected": "wait",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "speak",
+            "confidence": 0.2126623712741435,
+            "probabilities": {
+              "speak": 0.4751082475160957,
+              "wait": 0.2795532899486464,
+              "defer": 0.24533846253525796
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 41,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "gate-05",
+      "category": "gate",
+      "expected": "defer",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "speak",
+            "confidence": 0.25963905006038107,
+            "probabilities": {
+              "speak": 0.5064260333735874,
+              "wait": 0.2373679703524054,
+              "defer": 0.2562059962740072
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 40,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "gate-06",
+      "category": "gate",
+      "expected": "defer",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "speak",
+            "confidence": 0.29374684577592225,
+            "probabilities": {
+              "speak": 0.5291645638506148,
+              "wait": 0.18058945057625408,
+              "defer": 0.290245985573131
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 35,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "gate-07",
+      "category": "gate",
+      "expected": "speak",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "speak",
+            "confidence": 0.22456719512137568,
+            "probabilities": {
+              "speak": 0.4830447967475838,
+              "wait": 0.2265263947931193,
+              "defer": 0.2904288084592969
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 38,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "gate-08",
+      "category": "gate",
+      "expected": "wait",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "speak",
+            "confidence": 0.46802864281811757,
+            "probabilities": {
+              "speak": 0.6453524285454117,
+              "wait": 0.2218297544612958,
+              "defer": 0.13281781699329254
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 46,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "gate-09",
+      "category": "gate",
+      "expected": "wait",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "speak",
+            "confidence": 0.22195055863254937,
+            "probabilities": {
+              "speak": 0.4813003724216996,
+              "wait": 0.32037553975010397,
+              "defer": 0.1983240878281965
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 36,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "gate-10",
+      "category": "gate",
+      "expected": "speak",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "speak",
+            "confidence": 0.4091622947200054,
+            "probabilities": {
+              "speak": 0.6061081964800036,
+              "wait": 0.1691185201764536,
+              "defer": 0.22477328334354277
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 32,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "gate-11",
+      "category": "gate",
+      "expected": "defer",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "speak",
+            "confidence": 0.19495333499177409,
+            "probabilities": {
+              "speak": 0.46330222332784937,
+              "wait": 0.2595699592573063,
+              "defer": 0.2771278174148442
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 38,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "gate-12",
+      "category": "gate",
+      "expected": "speak",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "speak",
+            "confidence": 0.32901672831971557,
+            "probabilities": {
+              "speak": 0.5526778188798104,
+              "wait": 0.23772371763205344,
+              "defer": 0.20959846348813618
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 35,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "evidence-01",
+      "category": "evidence",
+      "expected": "support",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "contradict",
+            "confidence": 0.08354735586915579,
+            "probabilities": {
+              "support": 0.3634565309787777,
+              "contradict": 0.3890315705794372,
+              "insufficient": 0.24751189844178514
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 66,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "evidence-02",
+      "category": "evidence",
+      "expected": "contradict",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "contradict",
+            "confidence": 0.16746889405198306,
+            "probabilities": {
+              "support": 0.3315798796533973,
+              "contradict": 0.44497926270132204,
+              "insufficient": 0.2234408576452806
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 33,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "evidence-03",
+      "category": "evidence",
+      "expected": "insufficient",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "contradict",
+            "confidence": 0.09575706160370978,
+            "probabilities": {
+              "support": 0.33501622292430056,
+              "contradict": 0.3971713744024732,
+              "insufficient": 0.26781240267322626
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 32,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "evidence-04",
+      "category": "evidence",
+      "expected": "insufficient",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "contradict",
+            "confidence": 0.14388102965379262,
+            "probabilities": {
+              "support": 0.3409723424499525,
+              "contradict": 0.42925401976919514,
+              "insufficient": 0.22977363778085247
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 32,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "evidence-05",
+      "category": "evidence",
+      "expected": "support",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "contradict",
+            "confidence": 0.11101267180797852,
+            "probabilities": {
+              "support": 0.3647573592159964,
+              "contradict": 0.407341781205319,
+              "insufficient": 0.2279008595786846
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 33,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "evidence-06",
+      "category": "evidence",
+      "expected": "contradict",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "contradict",
+            "confidence": 0.15674141787531842,
+            "probabilities": {
+              "support": 0.33372522996317905,
+              "contradict": 0.43782761191687897,
+              "insufficient": 0.228447158119942
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 32,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "evidence-07",
+      "category": "evidence",
+      "expected": "insufficient",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "contradict",
+            "confidence": 0.04842787429679185,
+            "probabilities": {
+              "support": 0.31311690794231695,
+              "contradict": 0.3656185828645279,
+              "insufficient": 0.3212645091931552
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 40,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "evidence-08",
+      "category": "evidence",
+      "expected": "support",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "contradict",
+            "confidence": 0.11099445227650734,
+            "probabilities": {
+              "support": 0.3772648105943021,
+              "contradict": 0.40732963485100493,
+              "insufficient": 0.21540555455469304
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 41,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "evidence-09",
+      "category": "evidence",
+      "expected": "contradict",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "contradict",
+            "confidence": 0.15823798739991646,
+            "probabilities": {
+              "support": 0.34638276955034375,
+              "contradict": 0.43882532493327764,
+              "insufficient": 0.21479190551637867
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 40,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "evidence-10",
+      "category": "evidence",
+      "expected": "insufficient",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "support",
+            "confidence": 0.06009080517768972,
+            "probabilities": {
+              "support": 0.3733938701184598,
+              "contradict": 0.3689367232345372,
+              "insufficient": 0.257669406647003
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 37,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "evidence-11",
+      "category": "evidence",
+      "expected": "support",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "support",
+            "confidence": 0.10865546355624478,
+            "probabilities": {
+              "support": 0.40577030903749656,
+              "contradict": 0.3662586392529991,
+              "insufficient": 0.22797105170950444
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 43,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "evidence-12",
+      "category": "evidence",
+      "expected": "contradict",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "contradict",
+            "confidence": 0.08572224672419371,
+            "probabilities": {
+              "support": 0.37534766169662126,
+              "contradict": 0.3904814978161291,
+              "insufficient": 0.23417084048724954
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 41,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "attribution-01",
+      "category": "attribution",
+      "expected": "A",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "A",
+            "confidence": 0.20861425898909847,
+            "probabilities": {
+              "A": 0.40646069424182385,
+              "B": 0.32347082851926756,
+              "M": 0.10477631519710437,
+              "unknown": 0.16529216204180416
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 57,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "attribution-02",
+      "category": "attribution",
+      "expected": "B",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "A",
+            "confidence": 0.12349138715846136,
+            "probabilities": {
+              "A": 0.34261854036884604,
+              "B": 0.31292552886080277,
+              "M": 0.13675189508526425,
+              "unknown": 0.207704035685087
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 25,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "attribution-03",
+      "category": "attribution",
+      "expected": "M",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 0.12977333384514336,
+            "probabilities": {
+              "A": 0.20616965752273808,
+              "B": 0.1633464127237166,
+              "M": 0.28315392936968775,
+              "unknown": 0.34733000038385753
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 25,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "attribution-04",
+      "category": "attribution",
+      "expected": "unknown",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 0.5741541922595342,
+            "probabilities": {
+              "A": 0.07597824797841607,
+              "B": 0.06547585996420159,
+              "M": 0.17793024786273168,
+              "unknown": 0.6806156441946507
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 26,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "attribution-05",
+      "category": "attribution",
+      "expected": "B",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "A",
+            "confidence": 0.43316531374282774,
+            "probabilities": {
+              "A": 0.5748739853071207,
+              "B": 0.3653145750965407,
+              "M": 0.013557855314742098,
+              "unknown": 0.04625358428159637
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 39,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "attribution-06",
+      "category": "attribution",
+      "expected": "A",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "A",
+            "confidence": 0.4302181422004403,
+            "probabilities": {
+              "A": 0.5726636066503302,
+              "B": 0.36441282587639545,
+              "M": 0.014305759807935308,
+              "unknown": 0.04861780766533894
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 39,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "attribution-07",
+      "category": "attribution",
+      "expected": "unknown",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "A",
+            "confidence": 0.1444057758789448,
+            "probabilities": {
+              "A": 0.3583043319092086,
+              "B": 0.28461221011492666,
+              "M": 0.059039898665657994,
+              "unknown": 0.29804355931020676
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 34,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "attribution-08",
+      "category": "attribution",
+      "expected": "M",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "unknown",
+            "confidence": 0.34311852799688963,
+            "probabilities": {
+              "A": 0.17272534171420628,
+              "B": 0.12072624298208186,
+              "M": 0.19920951930604466,
+              "unknown": 0.5073388959976672
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 33,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "tool-01",
+      "category": "tool",
+      "expected": "web",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "memory",
+            "confidence": 0.3021392964349219,
+            "probabilities": {
+              "web": 0.09723374836819697,
+              "memory": 0.4766044723261914,
+              "file": 0.32614871304714976,
+              "none": 0.10001306625846183
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 74,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "tool-02",
+      "category": "tool",
+      "expected": "memory",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "memory",
+            "confidence": 0.32034894006295056,
+            "probabilities": {
+              "web": 0.0518018841977901,
+              "memory": 0.49026170504721295,
+              "file": 0.3638787650657776,
+              "none": 0.0940576456892194
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 32,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "tool-03",
+      "category": "tool",
+      "expected": "file",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "memory",
+            "confidence": 0.18517476710144118,
+            "probabilities": {
+              "web": 0.0069748835424384365,
+              "memory": 0.3888810753260809,
+              "file": 0.32665972236300983,
+              "none": 0.2774843187684709
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 34,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "tool-04",
+      "category": "tool",
+      "expected": "none",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "memory",
+            "confidence": 0.32553227506453974,
+            "probabilities": {
+              "web": 0.04688137751290464,
+              "memory": 0.49414920629840475,
+              "file": 0.3128757849647137,
+              "none": 0.14609363122397684
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 30,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "tool-05",
+      "category": "tool",
+      "expected": "none",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "memory",
+            "confidence": 0.2655029265514308,
+            "probabilities": {
+              "web": 0.022122315123800054,
+              "memory": 0.4491271949135731,
+              "file": 0.3340534076999161,
+              "none": 0.1946970822627108
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 39,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "tool-06",
+      "category": "tool",
+      "expected": "web",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "memory",
+            "confidence": 0.25104253728601733,
+            "probabilities": {
+              "web": 0.04188706992316451,
+              "memory": 0.43828190296451297,
+              "file": 0.3341658216676407,
+              "none": 0.18566520544468174
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 28,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "tool-07",
+      "category": "tool",
+      "expected": "memory",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "memory",
+            "confidence": 0.4317723450454147,
+            "probabilities": {
+              "web": 0.028840837246225052,
+              "memory": 0.573829258784061,
+              "file": 0.24391812749372113,
+              "none": 0.15341177647599277
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 37,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "tool-08",
+      "category": "tool",
+      "expected": "file",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "file",
+            "confidence": 0.24367101787138304,
+            "probabilities": {
+              "web": 0.03599396656020633,
+              "memory": 0.37682971704977525,
+              "file": 0.43275326340353726,
+              "none": 0.15442305298648107
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 35,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "retrieval-01",
+      "category": "retrieval",
+      "expected": "b",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.9900014970843796,
+            "probabilities": {
+              "a": 4.143493742230099e-06,
+              "b": 0.007493613173443103,
+              "c": 1.1205195300124734e-06,
+              "none": 0.9925011228132847
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 56,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "retrieval-02",
+      "category": "retrieval",
+      "expected": "a",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.9999490976106714,
+            "probabilities": {
+              "a": 4.7188038562416726e-08,
+              "b": 4.711721659763075e-06,
+              "c": 3.3417882298189473e-05,
+              "none": 0.9999618232080035
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 45,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "retrieval-03",
+      "category": "retrieval",
+      "expected": "c",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.9996523205717754,
+            "probabilities": {
+              "a": 1.5150541475614383e-12,
+              "b": 0.00025930814365938325,
+              "c": 1.4514259940189564e-06,
+              "none": 0.9997392404288316
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 44,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "retrieval-04",
+      "category": "retrieval",
+      "expected": "b",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.9991150276437986,
+            "probabilities": {
+              "a": 0.000611410289785942,
+              "b": 4.792298022215309e-05,
+              "c": 4.395997143085703e-06,
+              "none": 0.9993362707328489
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 50,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "retrieval-05",
+      "category": "retrieval",
+      "expected": "none",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.9896946677820784,
+            "probabilities": {
+              "a": 0.0010062473797343965,
+              "b": 0.000370782603019687,
+              "c": 0.006351969180687061,
+              "none": 0.9922710008365587
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 51,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "retrieval-06",
+      "category": "retrieval",
+      "expected": "c",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.24319418766712092,
+            "probabilities": {
+              "a": 0.29367605194198665,
+              "b": 0.09442691146619286,
+              "c": 0.17950139584147978,
+              "none": 0.4323956407503407
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 49,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "retrieval-07",
+      "category": "retrieval",
+      "expected": "a",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.9994929111641051,
+            "probabilities": {
+              "a": 0.00035206144010092226,
+              "b": 1.9141165730006076e-05,
+              "c": 9.11402109025402e-06,
+              "none": 0.9996196833730788
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 51,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "retrieval-08",
+      "category": "retrieval",
+      "expected": "b",
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "choice",
+            "choice": "none",
+            "confidence": 0.9288451251493385,
+            "probabilities": {
+              "a": 1.832295747532848e-06,
+              "b": 0.0029755326085608032,
+              "c": 0.0503887912336878,
+              "none": 0.9466338438620039
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 46,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "noul-01",
+      "category": "noul",
+      "expected": true,
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "noul",
+            "noul": 0.4911165049843578
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 44,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "noul-02",
+      "category": "noul",
+      "expected": false,
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "noul",
+            "noul": 0.44858667363208504
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 13,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "noul-03",
+      "category": "noul",
+      "expected": true,
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "noul",
+            "noul": 0.7515384769997536
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 53,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "noul-04",
+      "category": "noul",
+      "expected": false,
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "noul",
+            "noul": 0.6376039280973606
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 17,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "noul-05",
+      "category": "noul",
+      "expected": true,
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "noul",
+            "noul": 0.2553523640220723
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 62,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "noul-06",
+      "category": "noul",
+      "expected": false,
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "noul",
+            "noul": 0.20148037446343553
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 23,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "noul-07",
+      "category": "noul",
+      "expected": true,
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "noul",
+            "noul": 0.4968681745031939
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 66,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "noul-08",
+      "category": "noul",
+      "expected": false,
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "noul",
+            "noul": 0.40676807988436753
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 23,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "score-01",
+      "category": "score",
+      "expected": 0,
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "score",
+            "score": 1.354214389410261,
+            "confidence": 0.21267356855551384,
+            "legend": {
+              "0": "没有需要处理的请求。",
+              "1": "有普通请求，但用户明确说不急。",
+              "2": "有请求且用户明确要求现在立即处理。"
+            },
+            "probabilities": {
+              "0": 0.12090132296008156,
+              "1": 0.4039829646695759,
+              "2": 0.47511571237034256
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 60,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "score-02",
+      "category": "score",
+      "expected": 0,
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "score",
+            "score": 1.4047005357803903,
+            "confidence": 0.21728132749016982,
+            "legend": {
+              "0": "没有需要处理的请求。",
+              "1": "有普通请求，但用户明确说不急。",
+              "2": "有请求且用户明确要求现在立即处理。"
+            },
+            "probabilities": {
+              "0": 0.07348701587972284,
+              "1": 0.448325432460164,
+              "2": 0.47818755166011323
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 26,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "score-03",
+      "category": "score",
+      "expected": 1,
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "score",
+            "score": 1.4449810174233257,
+            "confidence": 0.2886843942219916,
+            "legend": {
+              "0": "没有需要处理的请求。",
+              "1": "有普通请求，但用户明确说不急。",
+              "2": "有请求且用户明确要求现在立即处理。"
+            },
+            "probabilities": {
+              "0": 0.08080857872466851,
+              "1": 0.393401825127337,
+              "2": 0.5257895961479944
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 32,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "score-04",
+      "category": "score",
+      "expected": 1,
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "score",
+            "score": 1.416611163337408,
+            "confidence": 0.23700697928757747,
+            "legend": {
+              "0": "没有需要处理的请求。",
+              "1": "有普通请求，但用户明确说不急。",
+              "2": "有请求且用户明确要求现在立即处理。"
+            },
+            "probabilities": {
+              "0": 0.07472682285431018,
+              "1": 0.4339351909539715,
+              "2": 0.4913379861917183
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 29,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "score-05",
+      "category": "score",
+      "expected": 2,
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "score",
+            "score": 1.4957235653752678,
+            "confidence": 0.37646638368377394,
+            "legend": {
+              "0": "没有需要处理的请求。",
+              "1": "有普通请求，但用户明确说不急。",
+              "2": "有请求且用户明确要求现在立即处理。"
+            },
+            "probabilities": {
+              "0": 0.08858735708058124,
+              "1": 0.32710172046356945,
+              "2": 0.5843109224558493
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 33,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "score-06",
+      "category": "score",
+      "expected": 2,
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "score",
+            "score": 1.4801771640714985,
+            "confidence": 0.2934084005315958,
+            "legend": {
+              "0": "没有需要处理的请求。",
+              "1": "有普通请求，但用户明确说不急。",
+              "2": "有请求且用户明确要求现在立即处理。"
+            },
+            "probabilities": {
+              "0": 0.04876176961623208,
+              "1": 0.4222992966960374,
+              "2": 0.5289389336877305
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 30,
+          "output_tokens": 0
+        }
+      },
+      "correct": true
+    },
+    {
+      "id": "score-07",
+      "category": "score",
+      "expected": 0,
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "score",
+            "score": 1.389847108094815,
+            "confidence": 0.2120287713298073,
+            "legend": {
+              "0": "没有需要处理的请求。",
+              "1": "有普通请求，但用户明确说不急。",
+              "2": "有请求且用户明确要求现在立即处理。"
+            },
+            "probabilities": {
+              "0": 0.08483873945838995,
+              "1": 0.44047541298840515,
+              "2": 0.47468584755320486
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 29,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    },
+    {
+      "id": "score-08",
+      "category": "score",
+      "expected": 1,
+      "response": {
+        "model": "clm-raw",
+        "answers": {
+          "decision": {
+            "type": "score",
+            "score": 1.4692965810849874,
+            "confidence": 0.313402123072674,
+            "legend": {
+              "0": "没有需要处理的请求。",
+              "1": "有普通请求，但用户明确说不急。",
+              "2": "有请求且用户明确要求现在立即处理。"
+            },
+            "probabilities": {
+              "0": 0.072971500963462,
+              "1": 0.3847604169880887,
+              "2": 0.5422680820484493
+            }
+          }
+        },
+        "usage": {
+          "billing_units": 1,
+          "input_tokens": 36,
+          "output_tokens": 0
+        }
+      },
+      "correct": false
+    }
+  ]
+}

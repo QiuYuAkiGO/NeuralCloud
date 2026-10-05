@@ -425,7 +425,8 @@ def parser():
 
 
 def main(argv=None):
-    os.umask(0o077)
+    previous_umask = os.umask(0o077)
+    previous_logging_disable = logging.root.manager.disable
     logging.disable(logging.CRITICAL)
     try:
         summary = run(parser().parse_args(argv))
@@ -434,6 +435,9 @@ def main(argv=None):
     except Exception as exc:
         print(canonical({"status": "failed", "error_type": type(exc).__name__}))
         return 1
+    finally:
+        logging.disable(previous_logging_disable)
+        os.umask(previous_umask)
 
 
 if __name__ == "__main__":

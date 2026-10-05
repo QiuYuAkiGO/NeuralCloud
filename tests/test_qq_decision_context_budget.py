@@ -90,7 +90,10 @@ def test_optional_old_deliveries_are_removed_whole_but_latest_actual_send_stays(
     assert _persona_payload(client)["delivery_receipts"] == selected
 
 
-def test_required_observations_over_budget_persist_safe_failure_not_false_considered(setup):
+def test_required_observations_over_budget_persist_safe_failure_not_false_considered(setup, monkeypatch):
+    # The legacy selector treats every unhandled observation as mandatory.
+    # Default bounded history instead pins only the current request/references.
+    monkeypatch.setenv("NC_QQ_HISTORY_SELECTION", "legacy")
     store, client, builds, kwargs, _ = setup
     for index in range(3, 9):
         add_member(store, f"2000{index}", text="OBSERVATION_PRIVATE_MARKER" + "原" * 6000)

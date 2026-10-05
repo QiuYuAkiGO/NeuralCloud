@@ -52,7 +52,9 @@ class BodyBeliefAppraiser:
         try:
             method = getattr(self.llm, "complete_chat_result", None)
             sent = json.loads(canonical_json(messages))
-            raw = method(sent, stream=False).text if callable(method) else self.llm.complete_chat(sent, stream=False)
+            from harness.llm.structured import helper_options
+            raw = (method(sent, stream=False, **helper_options(self.llm, _Proposals, "body_appraisal")).text
+                   if callable(method) else self.llm.complete_chat(sent, stream=False))
             raw_hash = content_hash(raw)
             if not isinstance(raw, str) or len(raw.encode("utf-8")) > 32_768:
                 raise ValueError("bounded appraisal JSON required")

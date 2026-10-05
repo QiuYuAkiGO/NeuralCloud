@@ -25,6 +25,8 @@ from gui.presets import (
     snapshot_memory,
 )
 from harness.config import Settings
+from harness.llm.fallback import fallback_status
+from harness.llm.structured import structured_status
 from harness.core.error_notice import ERROR_FALLBACK_REPLY
 from harness.core.inference import SessionTurn
 from harness.llm.client import (
@@ -432,6 +434,8 @@ class HarnessChatService:
                 "model": self.settings.llm_model,
                 "reachable": self.llm_reachable,
                 "api_key_configured": _api_key_configured(self.settings),
+                "fallback": fallback_status(self.llm),
+                "structured": structured_status(self.llm),
                 "aux": self._aux_payload(),
                 "qq_memory": self._qq_memory_llm_payload(),
                 "embedding": dict(self.embedding_info),

@@ -434,7 +434,7 @@ class GoalController:
             self.store.put("appraisal_rejection", decision.decision_id,
                 {"episode_id": episode["id"], "error": type(exc).__name__}, immutable=True)
 
-    def record_homeostasis(self, envelope, result):
+    def record_homeostasis(self, envelope, result, *, episodes=None):
         """Project committed domain traces, including crash-replayed appraisals."""
         if not self.enabled or result.status not in {"applied", "idempotent_replay"}:
             return
@@ -444,7 +444,7 @@ class GoalController:
         source = trace.get("source", "")
         category = "self_report" if source.startswith("psychological:") else (
             "drift" if envelope.command_type == "ApplyHeartbeat" else "fact" if source == "verified_outcome" else "legacy_event")
-        for episode in self._episodes():
+        for episode in self._episodes() if episodes is None else episodes:
             when = _when(trace.get("occurred_at")) or envelope.issued_at
             end = _when(episode.get("effect_review_until") or episode.get("ended_at"))
             if when < _when(episode["created_at"]) or end and when > end:
@@ -453,6 +453,16 @@ class GoalController:
                 continue
             identity = digest([episode["id"], envelope.command_id])
             with self.store.objects.atomic():
+                previous = self.store.get("contribution", identity)
+                previous_event = (previous or {}).get("trace", {}).get("event_id")
+                event_id = trace.get("event_id")
+                if previous_event and event_id and previous_event != event_id:
+                    # Historical 32-bit command IDs can collide across events.
+                    # Keep the first immutable object and bind the second to its
+                    # full request, without accepting changed traces for one event.
+                    if event_id != envelope.event_id or trace.get("receive_seq") != envelope.receive_seq:
+                        raise ValueError("contribution trace does not match its command event")
+                    identity = digest([episode["id"], envelope.command_id, envelope.effective_request_hash()])
                 self.store.put("contribution", identity, {"episode_id": episode["id"], "source": category,
                     "command_id": envelope.command_id, "trace": trace}, immutable=True)
                 appraisal = (result.result or {}).get("appraisal")
@@ -464,7 +474,10 @@ class GoalController:
                         self._save("episode", episode)
 
     def recover_contributions(self):
-        if not self.enabled or not self._episodes():
+        if not self.enabled:
+            return
+        episodes = self._episodes()
+        if not episodes:
             return
         from harness.contracts.envelope import DomainCommandEnvelope, DomainCommandResult
         recovery = self.supervisor.recovery
@@ -474,20 +487,25 @@ class GoalController:
         boundary = recovery.projector.cursor
         if after >= boundary:
             return
-        for record in recovery.records("domain_command_result", "domain_command_late_result", after=after):
-            if record.record_seq > boundary:
-                break
-            if record.data.get("service") != "homeostasis":
-                continue
-            with recovery.lock:
-                row = recovery.db.execute("SELECT intent FROM commands WHERE id=?", (record.command_id,)).fetchone()
-            if row and row[0]:
-                intent = recovery.read(row[0])
+        # Recovery only adds appraisals to these episodes. Reuse that projection
+        # instead of decoding every episode again for each historical result.
+        # Commit contributions and their cursor together, avoiding a disk flush
+        # for every replayed command while preserving immutable conflict checks.
+        with self.store.objects.atomic():
+            for record in recovery.records("domain_command_result", "domain_command_late_result", after=after):
+                if record.record_seq > boundary:
+                    break
+                if record.data.get("service") != "homeostasis":
+                    continue
+                result = DomainCommandResult.model_validate(record.data["result"])
+                if result.status not in {"applied", "idempotent_replay"} or not isinstance((result.result or {}).get("trace"), dict):
+                    continue
+                intent = recovery.command_intent_for_result(record)
                 self.record_homeostasis(DomainCommandEnvelope.model_validate(intent.data["envelope"]),
-                                        DomainCommandResult.model_validate(record.data["result"]))
-        # This cursor is in the module's own database: losing/restoring that
-        # database also loses/restores its cursor. Effects above are idempotent.
-        self.store.put("runtime_recovery", identity, recovery.cursor_token(boundary))
+                                        result, episodes=episodes)
+            # This cursor lives with the effects, so a restored module database
+            # also restores its recovery position. Replay remains idempotent.
+            self.store.put("runtime_recovery", identity, recovery.cursor_token(boundary))
 
     def qq_context(self, request):
         """Only a bounded typed projection may enter group-visible cognition."""

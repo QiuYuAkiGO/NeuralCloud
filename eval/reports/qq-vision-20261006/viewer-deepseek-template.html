@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Misty QQ 识图回复 · DeepSeek 补充对照</title>
+<style>
+:root{font-family:system-ui,"Microsoft YaHei",sans-serif;color:#203144;background:#f5f7fa;font-size:15px}*{box-sizing:border-box}body{margin:0}main{max-width:1760px;margin:auto;padding:36px 26px}h1{font-size:31px;margin:6px 0 14px}h3{font-size:15px;margin:0 0 10px}.eyebrow{color:#657b92;font-weight:650;font-size:13px;letter-spacing:1px}.lead{max-width:1180px;line-height:1.85}.pill{display:inline-block;padding:5px 10px;border-radius:6px;background:#e6ecf3;font-size:12px;margin:0 4px 4px 0}.table-wrap{overflow:auto;background:white;border:1px solid #dae1ea;border-radius:12px;margin:22px 0}table{width:100%;border-collapse:collapse;text-align:left;white-space:nowrap}td,th{padding:12px 15px;border-bottom:1px solid #e5eaf1}th{background:#eef3f8;font-weight:600}tr:last-child td{border:0}.added{background:#eef7f6}.numbers{font-variant-numeric:tabular-nums}.controls{display:flex;gap:16px;align-items:end;padding:18px 0;position:sticky;top:0;background:#f5f7faf2;z-index:3;backdrop-filter:blur(10px);flex-wrap:wrap}label{font-size:12px;font-weight:600;display:flex;flex-direction:column;gap:6px}select{font:inherit;font-size:14px;padding:9px 12px;background:white;border:1px solid #becbd9;border-radius:7px}.case{margin:22px 0 34px;display:grid;grid-template-columns:195px 1fr;gap:18px}.image-box{background:white;border:1px solid #dae1ea;border-radius:12px;padding:14px;height:fit-content}.image-box img{display:block;width:100%;max-height:250px;object-fit:contain;background:#f8fafc}.image-box p{font-size:13px;line-height:1.65;margin-bottom:0}.gold{color:#506b54}.responses{display:grid;grid-template-columns:repeat(var(--columns,4),minmax(0,1fr));gap:12px}.response{padding:16px;background:#fff;border:1px solid #dae1ea;border-radius:12px;min-width:0;margin-bottom:12px}.response.deepseek{border-top:3px solid #589589}.response.failure{border-color:#be665d;background:#fff7f5}.reply{white-space:pre-wrap;line-height:1.85;overflow-wrap:anywhere}.meta{font-size:12px;color:#61758b;margin:10px 0}.note{font-size:12px;color:#725b3f;background:#fbf6ee;padding:10px;border-radius:6px;line-height:1.7}.query{font-size:12px;padding:10px 0;color:#576f83;line-height:1.65;overflow-wrap:anywhere}details{font-size:12px;margin-top:8px}details a{display:block;color:#416990;margin:6px 0;overflow-wrap:anywhere}.foot{font-size:13px;line-height:1.8;color:#61758b}.count{margin-left:auto;color:#61758b;font-size:13px}.rule{height:1px;background:#d8e0e9;margin:24px 0}.legend{font-size:12px;color:#6b7683}a{color:#315b89}@media(max-width:1150px){.case{grid-template-columns:170px 1fr}.responses{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){main{padding:22px 14px}h1{font-size:26px}.case,.responses{grid-template-columns:1fr}.image-box img{height:200px}.count{width:100%;margin:0}}
+</style></head><body><main>
+<div class="eyebrow">NEURALCLOUD / 2026-10-06 / DEEPSEEK SUPPLEMENT</div>
+<h1>Misty 的 QQ 识图回复：四模型对照</h1>
+<p class="lead"><b>DeepSeek Flash 原生图片输入已跑通。</b>非思考完整中位数 0.97 秒，但角色名仅命中 4/10；开启 high 思考后仍为 4/10，等待升至 2.61 秒。当前角色识别样本仍更支持 Kimi K2.6；DeepSeek 可作为 OCR、普通看图闲聊的低延迟候选。搜索没有稳定弥补角色知识缺口。</p>
+<span class="pill">7 个场景 · 4 个角色 · 5 张图</span><span class="pill" id="counts"></span><span class="pill">本次新增 51 次模型请求 · 8 次搜索</span><span class="pill">没有发送 QQ 或启用线上图片开关</span>
+<div class="table-wrap"><table><thead><tr><th>直接识图配置</th><th>完整中位数 / 样本 P95</th><th>SSE 首字中位数</th><th>角色名正确</th><th>换装正确</th><th>完整正文</th></tr></thead><tbody id="summary"></tbody></table></div>
+<p class="foot">每配置 14 次：7 场景 × 2 次。姓名正确不等于整条回复无误；“不确定”与错名分别记录。DeepSeek high 的 2048 总输出预算包含推理，一次耗尽预算没有正文；4096 上限诊断的两次结果单独保留。首字统计只计成功回复的可见 content。当前 QQ 等完整正文，以上耗时不含 QQ 入站、图片下载、记忆准备、参与判断或发送。</p>
+<div class="controls"><label>测试路径<select id="mode"></select></label><label>场景<select id="case"><option value="all">全部场景</option></select></label><label>重复轮次<select id="repeat"><option value="all">全部</option><option value="1">第 1 次</option><option value="2">第 2 次</option></select></label><label>DeepSeek 配置<select id="deepseek"><option value="all">非思考与 high</option><option value="deepseek">仅非思考</option><option value="deepseek_high">仅 high</option></select></label><div class="count" id="count"></div></div>
+<div class="legend">原图、实际用户问题、核对标签和原始最终回复。第四列为 DeepSeek 两种配置；high 只测了直接回复及预算诊断。判读由执行助手完成，没有独立盲评。</div>
+<div id="content"></div><div class="rule"></div>
+<p class="foot">证据：<a href="four-model-summary.json">四模型统计</a> · <a href="four-model-quality-review.json">逐项判读</a> · <a href="deepseek-direct.json">DeepSeek 非思考</a> · <a href="deepseek-high-direct.json">high / 2048</a> · <a href="deepseek-high-budget4096.json">high / 4096 诊断</a> · <a href="deepseek-search-auto.json">按需搜索</a> · <a href="deepseek-search-verify.json">强制核验</a> · <a href="deepseek-context-12k-nonstream.json">长背景</a> · <a href="deepseek-adapter-smoke.json">项目客户端实测</a> · <a href="report.html">原三模型报告</a>。</p>
+<p class="foot">所有补测与原报告的完整 messages、处理后图片哈希一致。DeepSeek 在同日稍后运行，没有与原三模型交错重跑；缓存温度、网络和线上 GPU 占用未控制。只覆盖两款游戏的四个角色及合成错误弹窗，不能外推到 QQ 图片总体。未测反向搜图、多图、GIF 或线上完整收发。公开角色美术归游戏权利人所有，本页供本地评测复核。</p>
+</main><script>
+const DATA=__DATA__;
+const el=(name,text,cls)=>{const n=document.createElement(name);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n};
+document.querySelector('#counts').textContent=`合计 ${DATA.summary.model_calls} 次模型请求 · ${DATA.summary.search_calls} 次搜索`;
+for(const [p,m]of Object.entries(DATA.summary.metrics.direct)){
+  const tr=el('tr',undefined,p.startsWith('deepseek')?'added':'');
+  for(const s of[DATA.names[p],`${m.seconds_p50.toFixed(2)} / ${m.seconds_sample_p95.toFixed(2)} 秒`,`${m.first_visible_p50.toFixed(2)} 秒`,`${m.identity_correct}/${m.identity_attempts}`,`${m.variant_correct}/${m.variant_attempts}`,`${m.nonempty_complete}/${m.attempts}`])tr.append(el('td',s,'numbers'));
+  document.querySelector('#summary').append(tr);
+}
+for(const [v,t]of Object.entries(DATA.modes)){const o=el('option',t);o.value=v;document.querySelector('#mode').append(o)}
+for(const c of DATA.cases){const o=el('option',`${c.id} · ${c.user}`);o.value=c.id;document.querySelector('#case').append(o)}
+function render(){
+  const mode=document.querySelector('#mode').value,chosen=document.querySelector('#case').value,rep=document.querySelector('#repeat').value,ds=document.querySelector('#deepseek').value,root=document.querySelector('#content');
+  root.replaceChildren();let shown=0;
+  for(const c of DATA.cases){
+    if(chosen!=='all'&&chosen!==c.id)continue;
+    const rows=DATA.rows.filter(r=>r.mode===mode&&r.case_id===c.id&&(rep==='all'||String(r.repeat)===rep)&&(!r.provider.startsWith('deepseek')||ds==='all'||ds===r.provider));
+    if(!rows.length)continue;shown+=rows.length;
+    const section=el('section',undefined,'case'),pic=el('aside',undefined,'image-box');pic.append(el('h3',c.id));
+    for(const src of c.pictures){const img=el('img');img.src=src;img.alt=c.user;pic.append(img)}
+    pic.append(el('p',c.user));pic.append(el('p','核对标签：'+c.expected,'gold'));section.append(pic);
+    const responses=el('div',undefined,'responses');
+    const groups=[['local'],['kimi26'],['kimi3'],['deepseek','deepseek_high']].filter(group=>rows.some(r=>group.includes(r.provider)));
+    responses.style.setProperty('--columns',groups.length);
+    for(const group of groups){
+      const col=el('div');
+      for(const p of group)for(const r of rows.filter(x=>x.provider===p)){
+        const card=el('article',undefined,'response'+(p.startsWith('deepseek')?' deepseek':'')+(r.success?'':' failure'));
+        card.append(el('h3',mode==='thinking-budget4096'?'DeepSeek Flash · high / 4096':DATA.names[p]));
+        card.append(el('div',`第${r.repeat}次 · 完整 ${r.seconds.toFixed(2)}秒${r.first?' · 首字 '+r.first.toFixed(2)+'秒':''} · ${r.success?'输出完整':'输出失败 / 不可交付'}`,'meta'));
+        const text=r.reply||'（无可见正文）';card.append(el('p',text.length>650?text.slice(0,650)+'\n……（完整失败输出保留在 JSON）':text,'reply'));
+        card.append(el('p',r.note.notes.join(' '),'note'));
+        for(const s of r.searches){
+          card.append(el('div',`查询：${s.query}\n搜索 ${s.seconds.toFixed(2)}秒 · ${s.status}`,'query'));
+          const d=el('details');d.append(el('summary','查看检索来源'));
+          for(const source of s.sources){if(!/^https?:\/\//i.test(source.url||''))continue;const a=el('a',source.title||source.url);a.href=source.url;a.target='_blank';a.rel='noreferrer noopener';d.append(a)}
+          card.append(d);
+        }
+        col.append(card);
+      }
+      responses.append(col);
+    }
+    section.append(responses);root.append(section);
+  }
+  document.querySelector('#count').textContent=shown+' 条回复';
+  if(!shown)root.append(el('p','此配置没有这一组样本。','foot'));
+}
+for(const id of['mode','case','repeat','deepseek'])document.querySelector('#'+id).addEventListener('change',render);render();
+</script></body></html>

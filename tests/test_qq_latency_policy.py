@@ -78,10 +78,31 @@ def test_conversation_rollout_uses_exact_account_scope_and_freezes_policy():
     assert excluded.qq_web_policy == "legacy" and excluded.qq_body_pipeline == "legacy"
     assert excluded.qq_context_projection == "legacy" and not excluded.qq_stage_budgets_enabled
     assert excluded.cognitive_incremental_persistence_enabled
+    assert selected.qq_history_selection == excluded.qq_history_selection == "bounded"
     changed = candidate.model_copy(update={"qq_latency_conversations": []})
     assert changed.for_conversation(group_id="10001", self_member_id="29999").qq_web_policy == "legacy"
     assert selected.qq_web_policy == "after_gate"
     assert selected.version != excluded.version
+
+
+@pytest.mark.parametrize("history_mode", ["legacy", "shadow", "bounded"])
+@pytest.mark.parametrize("group_id", ["712342021", "private:29999:2285027817"])
+def test_history_selection_is_independent_of_other_conversation_rollouts(history_mode, group_id):
+    policy = QQLatencyOptions(qq_history_selection=history_mode, qq_latency_conversations=[])
+    effective = policy.for_conversation(group_id=group_id, self_member_id="29999")
+    assert effective.qq_history_selection == history_mode
+    assert effective.qq_context_projection == effective.qq_body_pipeline == effective.qq_web_policy == "legacy"
+
+
+def test_old_persisted_policy_without_history_selection_uses_bounded(tmp_path, monkeypatch):
+    monkeypatch.delenv("NC_QQ_HISTORY_SELECTION", raising=False)
+    path = tmp_path / "old-policy.json"
+    path.write_text(json.dumps({"qq_latency": {"qq_latency_conversations": []}}), encoding="utf-8")
+    settings = Settings(_env_file=None)
+    apply_loaded_tuning(settings, load_gui_settings(path))
+    effective = QQLatencyOptions.from_settings(settings).for_conversation(
+        group_id="712342021", self_member_id="29999")
+    assert effective.qq_history_selection == "bounded"
 
 
 @pytest.mark.parametrize("scopes", [["29999/10001", "29999/10001"], ["10001"], ["29999/private:38888:20001"]])

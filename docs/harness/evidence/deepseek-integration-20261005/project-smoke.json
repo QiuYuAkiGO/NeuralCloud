@@ -1,0 +1,4275 @@
+{
+  "started_at": "2026-10-05T09:17:21.822436+00:00",
+  "completed": true,
+  "synthetic": true,
+  "model": "deepseek-flash",
+  "reasoning": "none",
+  "automatic_retries": 0,
+  "network": "existing project httpx client; environment proxy settings inherited",
+  "rows": [
+    {
+      "schema_name": "production_choice",
+      "schema": {
+        "$defs": {
+          "A11yNodeCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "a11y_node",
+                "default": "a11y_node",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "present",
+                  "absent"
+                ],
+                "title": "Condition",
+                "type": "string"
+              },
+              "app_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "App Id"
+              },
+              "role": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Role"
+              },
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Name"
+              }
+            },
+            "required": [
+              "condition"
+            ],
+            "title": "A11yNodeCriterion",
+            "type": "object"
+          },
+          "ActionIntent": {
+            "additionalProperties": false,
+            "properties": {
+              "intent_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9_.-]+\\.v[0-9]+$",
+                "title": "Intent Id",
+                "type": "string"
+              },
+              "arguments": {
+                "additionalProperties": true,
+                "title": "Arguments",
+                "type": "object"
+              }
+            },
+            "required": [
+              "intent_id"
+            ],
+            "title": "ActionIntent",
+            "type": "object"
+          },
+          "AffectInterpretation": {
+            "additionalProperties": false,
+            "properties": {
+              "description": {
+                "maxLength": 600,
+                "minLength": 1,
+                "title": "Description",
+                "type": "string"
+              },
+              "valence": {
+                "maximum": 1,
+                "minimum": -1,
+                "title": "Valence",
+                "type": "number"
+              },
+              "activation": {
+                "maximum": 1,
+                "minimum": 0,
+                "title": "Activation",
+                "type": "number"
+              },
+              "source_refs": {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 24,
+                "minItems": 1,
+                "title": "Source Refs",
+                "type": "array"
+              }
+            },
+            "required": [
+              "description",
+              "valence",
+              "activation",
+              "source_refs"
+            ],
+            "title": "AffectInterpretation",
+            "type": "object"
+          },
+          "ClaimProposal": {
+            "additionalProperties": false,
+            "oneOf": [
+              {
+                "properties": {
+                  "subject_id": {
+                    "type": "string"
+                  },
+                  "subject_mention": {
+                    "type": "null"
+                  }
+                },
+                "required": [
+                  "subject_id"
+                ]
+              },
+              {
+                "properties": {
+                  "subject_id": {
+                    "type": "null"
+                  },
+                  "subject_mention": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "subject_mention"
+                ]
+              }
+            ],
+            "properties": {
+              "record_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 160,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Omit for a new judgment. Existing IDs require exact expected_revision and preserve subject, topic, context, facet, kind, report_mode and temporal interval. Direct self-report IDs also preserve the original utterance set; only their spans/interpretation may be revised. New utterances require a new ID; preference/intention corrections use explicit supersedes. Future changes use a new ID plus explicit supersedes.",
+                "title": "Record Id"
+              },
+              "expected_revision": {
+                "default": 0,
+                "minimum": 0,
+                "title": "Expected Revision",
+                "type": "integer"
+              },
+              "subject_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 160,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Supplied stable ID of this claim's subject. Set exactly one non-null subject_id or subject_mention; omit or set the other to null. The evidence author or reported speaker does not fill this field.",
+                "title": "Subject Id"
+              },
+              "subject_mention": {
+                "anyOf": [
+                  {
+                    "maxLength": 2000,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Unresolved mention of this claim's subject when no supplied stable ID applies. Set exactly one non-null subject_id or subject_mention; omit or set the other to null.",
+                "title": "Subject Mention"
+              },
+              "topic": {
+                "maxLength": 200,
+                "minLength": 1,
+                "title": "Topic",
+                "type": "string"
+              },
+              "context": {
+                "default": "",
+                "maxLength": 1000,
+                "title": "Context",
+                "type": "string"
+              },
+              "statement": {
+                "description": "Model interpretation, never certified by exact quotation matching.",
+                "maxLength": 2000,
+                "minLength": 1,
+                "title": "Statement",
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "interpretation",
+                  "self_report"
+                ],
+                "title": "Kind",
+                "type": "string"
+              },
+              "report_mode": {
+                "enum": [
+                  "direct",
+                  "reported",
+                  "hypothetical",
+                  "negated",
+                  "request",
+                  "intention",
+                  "ambiguous"
+                ],
+                "title": "Report Mode",
+                "type": "string"
+              },
+              "reported_speaker_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 160,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Reported Speaker Id"
+              },
+              "facet": {
+                "enum": [
+                  "preference",
+                  "intention",
+                  "character",
+                  "event",
+                  "other"
+                ],
+                "title": "Facet",
+                "type": "string"
+              },
+              "valid_from": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "For existing IDs null preserves the current interval; never moves its start.",
+                "title": "Valid From"
+              },
+              "valid_until": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "For existing IDs null preserves the current interval; never removes an expiry.",
+                "title": "Valid Until"
+              },
+              "anchors": {
+                "items": {
+                  "$ref": "#/$defs/EvidenceAnchor"
+                },
+                "maxItems": 32,
+                "minItems": 1,
+                "title": "Anchors",
+                "type": "array"
+              },
+              "supersedes": {
+                "items": {
+                  "$ref": "#/$defs/Supersession"
+                },
+                "maxItems": 8,
+                "title": "Supersedes",
+                "type": "array"
+              },
+              "revision_reason": {
+                "anyOf": [
+                  {
+                    "maxLength": 2000,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Revision Reason"
+              }
+            },
+            "required": [
+              "topic",
+              "statement",
+              "kind",
+              "report_mode",
+              "facet",
+              "anchors"
+            ],
+            "title": "ClaimProposal",
+            "type": "object"
+          },
+          "EntityInteractionCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "entity_interaction",
+                "default": "entity_interaction",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "const": "operation_recorded",
+                "default": "operation_recorded",
+                "title": "Condition",
+                "type": "string"
+              },
+              "actor_ref": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+                "title": "Actor Ref",
+                "type": "string"
+              },
+              "operation": {
+                "enum": [
+                  "approach",
+                  "avoid",
+                  "request",
+                  "respond",
+                  "refuse",
+                  "assist",
+                  "commit",
+                  "renegotiate"
+                ],
+                "title": "Operation",
+                "type": "string"
+              }
+            },
+            "required": [
+              "actor_ref",
+              "operation"
+            ],
+            "title": "EntityInteractionCriterion",
+            "type": "object"
+          },
+          "EvidenceAnchor": {
+            "additionalProperties": false,
+            "properties": {
+              "unit_id": {
+                "maxLength": 160,
+                "minLength": 1,
+                "title": "Unit Id",
+                "type": "string"
+              },
+              "start": {
+                "minimum": 0,
+                "title": "Start",
+                "type": "integer"
+              },
+              "end": {
+                "minimum": 1,
+                "title": "End",
+                "type": "integer"
+              },
+              "quote": {
+                "maxLength": 12000,
+                "minLength": 1,
+                "title": "Quote",
+                "type": "string"
+              },
+              "role": {
+                "description": "Role relative to this exact judgment version; mixed is uncertainty, never two votes.",
+                "enum": [
+                  "supports",
+                  "challenges",
+                  "qualifies",
+                  "context",
+                  "mixed"
+                ],
+                "title": "Role",
+                "type": "string"
+              },
+              "rationale": {
+                "maxLength": 2000,
+                "minLength": 1,
+                "title": "Rationale",
+                "type": "string"
+              }
+            },
+            "required": [
+              "unit_id",
+              "start",
+              "end",
+              "quote",
+              "role",
+              "rationale"
+            ],
+            "title": "EvidenceAnchor",
+            "type": "object"
+          },
+          "FileCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "file",
+                "default": "file",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "exists",
+                  "absent",
+                  "sha256_equals",
+                  "size_equals"
+                ],
+                "title": "Condition",
+                "type": "string"
+              },
+              "root_id": {
+                "title": "Root Id",
+                "type": "string"
+              },
+              "relative_path": {
+                "title": "Relative Path",
+                "type": "string"
+              },
+              "sha256": {
+                "anyOf": [
+                  {
+                    "pattern": "^[0-9a-f]{64}$",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Sha256"
+              },
+              "size": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Size"
+              }
+            },
+            "required": [
+              "condition",
+              "root_id",
+              "relative_path"
+            ],
+            "title": "FileCriterion",
+            "type": "object"
+          },
+          "ImportanceProposal": {
+            "additionalProperties": false,
+            "properties": {
+              "record_id": {
+                "maxLength": 160,
+                "minLength": 1,
+                "title": "Record Id",
+                "type": "string"
+              },
+              "expected_revision": {
+                "minimum": 0,
+                "title": "Expected Revision",
+                "type": "integer"
+              },
+              "reason": {
+                "maxLength": 2000,
+                "minLength": 1,
+                "title": "Reason",
+                "type": "string"
+              },
+              "anchors": {
+                "items": {
+                  "$ref": "#/$defs/EvidenceAnchor"
+                },
+                "maxItems": 16,
+                "minItems": 1,
+                "title": "Anchors",
+                "type": "array"
+              }
+            },
+            "required": [
+              "record_id",
+              "expected_revision",
+              "reason",
+              "anchors"
+            ],
+            "title": "ImportanceProposal",
+            "type": "object"
+          },
+          "IntentionalNoopCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "intentional_noop",
+                "default": "intentional_noop",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "waited",
+                  "observed",
+                  "deferred"
+                ],
+                "title": "Condition",
+                "type": "string"
+              }
+            },
+            "required": [
+              "condition"
+            ],
+            "title": "IntentionalNoopCriterion",
+            "type": "object"
+          },
+          "MemoryUpdateGroup": {
+            "additionalProperties": false,
+            "properties": {
+              "group_id": {
+                "maxLength": 160,
+                "minLength": 1,
+                "title": "Group Id",
+                "type": "string"
+              },
+              "depends_on": {
+                "items": {
+                  "maxLength": 160,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 8,
+                "title": "Depends On",
+                "type": "array"
+              },
+              "claims": {
+                "items": {
+                  "$ref": "#/$defs/ClaimProposal"
+                },
+                "maxItems": 8,
+                "title": "Claims",
+                "type": "array"
+              },
+              "important": {
+                "items": {
+                  "$ref": "#/$defs/ImportanceProposal"
+                },
+                "maxItems": 8,
+                "title": "Important",
+                "type": "array"
+              }
+            },
+            "required": [
+              "group_id"
+            ],
+            "title": "MemoryUpdateGroup",
+            "type": "object"
+          },
+          "OrientationInterpretation": {
+            "additionalProperties": false,
+            "properties": {
+              "direction": {
+                "enum": [
+                  "approach",
+                  "avoidance",
+                  "neutrality",
+                  "repair"
+                ],
+                "title": "Direction",
+                "type": "string"
+              },
+              "reason": {
+                "maxLength": 600,
+                "minLength": 1,
+                "title": "Reason",
+                "type": "string"
+              },
+              "source_refs": {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 24,
+                "minItems": 1,
+                "title": "Source Refs",
+                "type": "array"
+              }
+            },
+            "required": [
+              "direction",
+              "reason",
+              "source_refs"
+            ],
+            "title": "OrientationInterpretation",
+            "type": "object"
+          },
+          "PointerCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "pointer",
+                "default": "pointer",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "const": "over_element",
+                "default": "over_element",
+                "title": "Condition",
+                "type": "string"
+              },
+              "app_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "App Id"
+              },
+              "role": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Role"
+              },
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Name"
+              }
+            },
+            "title": "PointerCriterion",
+            "type": "object"
+          },
+          "ProcessCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "process",
+                "default": "process",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "running",
+                  "not_running"
+                ],
+                "title": "Condition",
+                "type": "string"
+              },
+              "app_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "App Id"
+              },
+              "pid": {
+                "anyOf": [
+                  {
+                    "exclusiveMinimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Pid"
+              }
+            },
+            "required": [
+              "condition"
+            ],
+            "title": "ProcessCriterion",
+            "type": "object"
+          },
+          "ProductionGoalUpdate": {
+            "additionalProperties": false,
+            "properties": {
+              "goal_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Goal Id"
+              },
+              "status": {
+                "enum": [
+                  "candidate",
+                  "active",
+                  "paused",
+                  "completed",
+                  "abandoned"
+                ],
+                "title": "Status",
+                "type": "string"
+              },
+              "description": {
+                "maxLength": 2000,
+                "minLength": 1,
+                "title": "Description",
+                "type": "string"
+              },
+              "success_criteria": {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 16,
+                "minItems": 1,
+                "title": "Success Criteria",
+                "type": "array"
+              },
+              "evidence_refs": {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 32,
+                "title": "Evidence Refs",
+                "type": "array"
+              },
+              "reason": {
+                "maxLength": 2000,
+                "minLength": 1,
+                "title": "Reason",
+                "type": "string"
+              },
+              "deadline_at": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Deadline At"
+              }
+            },
+            "required": [
+              "status",
+              "description",
+              "success_criteria",
+              "reason"
+            ],
+            "title": "ProductionGoalUpdate",
+            "type": "object"
+          },
+          "ScenarioCriterion": {
+            "additionalProperties": false,
+            "description": "Target-bound outcome supported by a declared experimental scenario provider.",
+            "properties": {
+              "kind": {
+                "const": "scenario",
+                "default": "scenario",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "task_completed",
+                  "station_used"
+                ],
+                "title": "Condition",
+                "type": "string"
+              },
+              "target_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_.-]+$",
+                "title": "Target Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "condition",
+              "target_id"
+            ],
+            "title": "ScenarioCriterion",
+            "type": "object"
+          },
+          "ScreenChangeCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "screen_change",
+                "default": "screen_change",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "changed",
+                  "unchanged"
+                ],
+                "title": "Condition",
+                "type": "string"
+              },
+              "baseline_evidence_ref": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Baseline Evidence Ref"
+              }
+            },
+            "required": [
+              "condition"
+            ],
+            "title": "ScreenChangeCriterion",
+            "type": "object"
+          },
+          "StructuredActionRequest": {
+            "additionalProperties": false,
+            "description": "The only payload shape that can request an embodied action.",
+            "properties": {
+              "schema_version": {
+                "const": "cognitive-action-request.v1",
+                "default": "cognitive-action-request.v1",
+                "title": "Schema Version",
+                "type": "string"
+              },
+              "policy_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "title": "Policy Id",
+                "type": "string"
+              },
+              "intent": {
+                "$ref": "#/$defs/ActionIntent"
+              },
+              "success_criteria": {
+                "items": {
+                  "discriminator": {
+                    "mapping": {
+                      "a11y_node": "#/$defs/A11yNodeCriterion",
+                      "entity_interaction": "#/$defs/EntityInteractionCriterion",
+                      "file": "#/$defs/FileCriterion",
+                      "intentional_noop": "#/$defs/IntentionalNoopCriterion",
+                      "pointer": "#/$defs/PointerCriterion",
+                      "process": "#/$defs/ProcessCriterion",
+                      "scenario": "#/$defs/ScenarioCriterion",
+                      "screen_change": "#/$defs/ScreenChangeCriterion",
+                      "window": "#/$defs/WindowCriterion"
+                    },
+                    "propertyName": "kind"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/WindowCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/FileCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/ProcessCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/ScreenChangeCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/A11yNodeCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/PointerCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/IntentionalNoopCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/ScenarioCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/EntityInteractionCriterion"
+                    }
+                  ]
+                },
+                "maxItems": 16,
+                "minItems": 1,
+                "title": "Success Criteria",
+                "type": "array"
+              }
+            },
+            "required": [
+              "policy_id",
+              "intent",
+              "success_criteria"
+            ],
+            "title": "StructuredActionRequest",
+            "type": "object"
+          },
+          "Supersession": {
+            "additionalProperties": false,
+            "properties": {
+              "record_id": {
+                "maxLength": 160,
+                "minLength": 1,
+                "title": "Record Id",
+                "type": "string"
+              },
+              "expected_revision": {
+                "minimum": 1,
+                "title": "Expected Revision",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "record_id",
+              "expected_revision"
+            ],
+            "title": "Supersession",
+            "type": "object"
+          },
+          "WindowCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "window",
+                "default": "window",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "present",
+                  "absent",
+                  "present_and_focused",
+                  "title_equals"
+                ],
+                "title": "Condition",
+                "type": "string"
+              },
+              "app_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "App Id"
+              },
+              "window_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Window Id"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Title"
+              }
+            },
+            "required": [
+              "condition"
+            ],
+            "title": "WindowCriterion",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "affect": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/AffectInterpretation"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "orientation": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/OrientationInterpretation"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "memory_updates": {
+            "items": {
+              "$ref": "#/$defs/MemoryUpdateGroup"
+            },
+            "maxItems": 8,
+            "title": "Memory Updates",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "reply",
+              "wait",
+              "defer",
+              "rest_start",
+              "rest_end",
+              "act"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 800,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "maxLength": 8000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Text"
+          },
+          "action_request": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/StructuredActionRequest"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "goal": {
+            "anyOf": [
+              {
+                "maxLength": 1500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Goal"
+          },
+          "goal_update": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProductionGoalUpdate"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "used_memory_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 32,
+            "title": "Used Memory Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "reason"
+        ],
+        "title": "ProductionChoice",
+        "type": "object"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "这是隔离接口测试，当前没有任务或人物证据。只返回符合给定 schema 的 JSON 对象。"
+        },
+        {
+          "role": "user",
+          "content": "选择 wait，不提出任何记忆、目标或情绪更新。"
+        }
+      ],
+      "ok": true,
+      "parsed": {
+        "affect": null,
+        "orientation": null,
+        "memory_updates": [],
+        "kind": "wait",
+        "reason": "当前没有任务或人物证据，也没有需要处理的输入；保持等待，不提出记忆、目标或情绪更新。",
+        "text": null,
+        "action_request": null,
+        "goal": null,
+        "goal_update": null,
+        "used_memory_ids": []
+      },
+      "usage": {
+        "prompt_tokens": 4917,
+        "completion_tokens": 35,
+        "total_tokens": 4952,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 4917,
+        "cache_known_prompt_tokens": 4917,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "response_metadata": {
+        "finish_reason": "stop",
+        "response_id": "bbae8495-baff-4e4b-a231-d792ddf74840",
+        "content_type": "text",
+        "content_characters": 72,
+        "reasoning_tokens": 0,
+        "has_tool_calls": false,
+        "has_refusal": false
+      },
+      "elapsed_ms": 886.9137000001501
+    },
+    {
+      "schema_name": "production_appraisal",
+      "schema": {
+        "$defs": {
+          "AffectInterpretation": {
+            "additionalProperties": false,
+            "properties": {
+              "description": {
+                "maxLength": 600,
+                "minLength": 1,
+                "title": "Description",
+                "type": "string"
+              },
+              "valence": {
+                "maximum": 1,
+                "minimum": -1,
+                "title": "Valence",
+                "type": "number"
+              },
+              "activation": {
+                "maximum": 1,
+                "minimum": 0,
+                "title": "Activation",
+                "type": "number"
+              },
+              "source_refs": {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 24,
+                "minItems": 1,
+                "title": "Source Refs",
+                "type": "array"
+              }
+            },
+            "required": [
+              "description",
+              "valence",
+              "activation",
+              "source_refs"
+            ],
+            "title": "AffectInterpretation",
+            "type": "object"
+          },
+          "ClaimProposal": {
+            "additionalProperties": false,
+            "oneOf": [
+              {
+                "properties": {
+                  "subject_id": {
+                    "type": "string"
+                  },
+                  "subject_mention": {
+                    "type": "null"
+                  }
+                },
+                "required": [
+                  "subject_id"
+                ]
+              },
+              {
+                "properties": {
+                  "subject_id": {
+                    "type": "null"
+                  },
+                  "subject_mention": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "subject_mention"
+                ]
+              }
+            ],
+            "properties": {
+              "record_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 160,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Omit for a new judgment. Existing IDs require exact expected_revision and preserve subject, topic, context, facet, kind, report_mode and temporal interval. Direct self-report IDs also preserve the original utterance set; only their spans/interpretation may be revised. New utterances require a new ID; preference/intention corrections use explicit supersedes. Future changes use a new ID plus explicit supersedes.",
+                "title": "Record Id"
+              },
+              "expected_revision": {
+                "default": 0,
+                "minimum": 0,
+                "title": "Expected Revision",
+                "type": "integer"
+              },
+              "subject_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 160,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Supplied stable ID of this claim's subject. Set exactly one non-null subject_id or subject_mention; omit or set the other to null. The evidence author or reported speaker does not fill this field.",
+                "title": "Subject Id"
+              },
+              "subject_mention": {
+                "anyOf": [
+                  {
+                    "maxLength": 2000,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Unresolved mention of this claim's subject when no supplied stable ID applies. Set exactly one non-null subject_id or subject_mention; omit or set the other to null.",
+                "title": "Subject Mention"
+              },
+              "topic": {
+                "maxLength": 200,
+                "minLength": 1,
+                "title": "Topic",
+                "type": "string"
+              },
+              "context": {
+                "default": "",
+                "maxLength": 1000,
+                "title": "Context",
+                "type": "string"
+              },
+              "statement": {
+                "description": "Model interpretation, never certified by exact quotation matching.",
+                "maxLength": 2000,
+                "minLength": 1,
+                "title": "Statement",
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "interpretation",
+                  "self_report"
+                ],
+                "title": "Kind",
+                "type": "string"
+              },
+              "report_mode": {
+                "enum": [
+                  "direct",
+                  "reported",
+                  "hypothetical",
+                  "negated",
+                  "request",
+                  "intention",
+                  "ambiguous"
+                ],
+                "title": "Report Mode",
+                "type": "string"
+              },
+              "reported_speaker_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 160,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Reported Speaker Id"
+              },
+              "facet": {
+                "enum": [
+                  "preference",
+                  "intention",
+                  "character",
+                  "event",
+                  "other"
+                ],
+                "title": "Facet",
+                "type": "string"
+              },
+              "valid_from": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "For existing IDs null preserves the current interval; never moves its start.",
+                "title": "Valid From"
+              },
+              "valid_until": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "For existing IDs null preserves the current interval; never removes an expiry.",
+                "title": "Valid Until"
+              },
+              "anchors": {
+                "items": {
+                  "$ref": "#/$defs/EvidenceAnchor"
+                },
+                "maxItems": 32,
+                "minItems": 1,
+                "title": "Anchors",
+                "type": "array"
+              },
+              "supersedes": {
+                "items": {
+                  "$ref": "#/$defs/Supersession"
+                },
+                "maxItems": 8,
+                "title": "Supersedes",
+                "type": "array"
+              },
+              "revision_reason": {
+                "anyOf": [
+                  {
+                    "maxLength": 2000,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Revision Reason"
+              }
+            },
+            "required": [
+              "topic",
+              "statement",
+              "kind",
+              "report_mode",
+              "facet",
+              "anchors"
+            ],
+            "title": "ClaimProposal",
+            "type": "object"
+          },
+          "EvidenceAnchor": {
+            "additionalProperties": false,
+            "properties": {
+              "unit_id": {
+                "maxLength": 160,
+                "minLength": 1,
+                "title": "Unit Id",
+                "type": "string"
+              },
+              "start": {
+                "minimum": 0,
+                "title": "Start",
+                "type": "integer"
+              },
+              "end": {
+                "minimum": 1,
+                "title": "End",
+                "type": "integer"
+              },
+              "quote": {
+                "maxLength": 12000,
+                "minLength": 1,
+                "title": "Quote",
+                "type": "string"
+              },
+              "role": {
+                "description": "Role relative to this exact judgment version; mixed is uncertainty, never two votes.",
+                "enum": [
+                  "supports",
+                  "challenges",
+                  "qualifies",
+                  "context",
+                  "mixed"
+                ],
+                "title": "Role",
+                "type": "string"
+              },
+              "rationale": {
+                "maxLength": 2000,
+                "minLength": 1,
+                "title": "Rationale",
+                "type": "string"
+              }
+            },
+            "required": [
+              "unit_id",
+              "start",
+              "end",
+              "quote",
+              "role",
+              "rationale"
+            ],
+            "title": "EvidenceAnchor",
+            "type": "object"
+          },
+          "ImportanceProposal": {
+            "additionalProperties": false,
+            "properties": {
+              "record_id": {
+                "maxLength": 160,
+                "minLength": 1,
+                "title": "Record Id",
+                "type": "string"
+              },
+              "expected_revision": {
+                "minimum": 0,
+                "title": "Expected Revision",
+                "type": "integer"
+              },
+              "reason": {
+                "maxLength": 2000,
+                "minLength": 1,
+                "title": "Reason",
+                "type": "string"
+              },
+              "anchors": {
+                "items": {
+                  "$ref": "#/$defs/EvidenceAnchor"
+                },
+                "maxItems": 16,
+                "minItems": 1,
+                "title": "Anchors",
+                "type": "array"
+              }
+            },
+            "required": [
+              "record_id",
+              "expected_revision",
+              "reason",
+              "anchors"
+            ],
+            "title": "ImportanceProposal",
+            "type": "object"
+          },
+          "MemoryUpdateGroup": {
+            "additionalProperties": false,
+            "properties": {
+              "group_id": {
+                "maxLength": 160,
+                "minLength": 1,
+                "title": "Group Id",
+                "type": "string"
+              },
+              "depends_on": {
+                "items": {
+                  "maxLength": 160,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 8,
+                "title": "Depends On",
+                "type": "array"
+              },
+              "claims": {
+                "items": {
+                  "$ref": "#/$defs/ClaimProposal"
+                },
+                "maxItems": 8,
+                "title": "Claims",
+                "type": "array"
+              },
+              "important": {
+                "items": {
+                  "$ref": "#/$defs/ImportanceProposal"
+                },
+                "maxItems": 8,
+                "title": "Important",
+                "type": "array"
+              }
+            },
+            "required": [
+              "group_id"
+            ],
+            "title": "MemoryUpdateGroup",
+            "type": "object"
+          },
+          "OrientationInterpretation": {
+            "additionalProperties": false,
+            "properties": {
+              "direction": {
+                "enum": [
+                  "approach",
+                  "avoidance",
+                  "neutrality",
+                  "repair"
+                ],
+                "title": "Direction",
+                "type": "string"
+              },
+              "reason": {
+                "maxLength": 600,
+                "minLength": 1,
+                "title": "Reason",
+                "type": "string"
+              },
+              "source_refs": {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 24,
+                "minItems": 1,
+                "title": "Source Refs",
+                "type": "array"
+              }
+            },
+            "required": [
+              "direction",
+              "reason",
+              "source_refs"
+            ],
+            "title": "OrientationInterpretation",
+            "type": "object"
+          },
+          "Supersession": {
+            "additionalProperties": false,
+            "properties": {
+              "record_id": {
+                "maxLength": 160,
+                "minLength": 1,
+                "title": "Record Id",
+                "type": "string"
+              },
+              "expected_revision": {
+                "minimum": 1,
+                "title": "Expected Revision",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "record_id",
+              "expected_revision"
+            ],
+            "title": "Supersession",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "affect": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/AffectInterpretation"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "orientation": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/OrientationInterpretation"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "memory_updates": {
+            "items": {
+              "$ref": "#/$defs/MemoryUpdateGroup"
+            },
+            "maxItems": 8,
+            "title": "Memory Updates",
+            "type": "array"
+          }
+        },
+        "title": "ProductionAppraisal",
+        "type": "object"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "这是隔离接口测试，当前没有任务或人物证据。只返回符合给定 schema 的 JSON 对象。"
+        },
+        {
+          "role": "user",
+          "content": "没有可以提出的情绪、关系或记忆更新。"
+        }
+      ],
+      "ok": true,
+      "parsed": {
+        "affect": null,
+        "orientation": null,
+        "memory_updates": []
+      },
+      "usage": {
+        "prompt_tokens": 2224,
+        "completion_tokens": 18,
+        "total_tokens": 2242,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 2224,
+        "cache_known_prompt_tokens": 2224,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "response_metadata": {
+        "finish_reason": "stop",
+        "response_id": "33d4867b-bf10-4635-8bb1-d3b4cd4d6400",
+        "content_type": "text",
+        "content_characters": 59,
+        "reasoning_tokens": 0,
+        "has_tool_calls": false,
+        "has_refusal": false
+      },
+      "elapsed_ms": 808.3563999971375
+    },
+    {
+      "schema_name": "qq_gate",
+      "schema": {
+        "$defs": {
+          "QQReplyPlan": {
+            "description": "A compact coverage plan from the gate, not a sentence-level script.",
+            "properties": {
+              "intent": {
+                "default": "other",
+                "enum": [
+                  "answer",
+                  "stance",
+                  "relationship",
+                  "clarify",
+                  "acknowledge",
+                  "other"
+                ],
+                "title": "Intent",
+                "type": "string"
+              },
+              "must_address": {
+                "default": "",
+                "maxLength": 240,
+                "title": "Must Address",
+                "type": "string"
+              },
+              "new_questions": {
+                "items": {
+                  "maxLength": 120,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 3,
+                "title": "New Questions",
+                "type": "array"
+              },
+              "detail_level": {
+                "default": "brief",
+                "enum": [
+                  "brief",
+                  "expanded"
+                ],
+                "title": "Detail Level",
+                "type": "string"
+              },
+              "necessary_boundary": {
+                "anyOf": [
+                  {
+                    "maxLength": 120,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Necessary Boundary"
+              }
+            },
+            "title": "QQReplyPlan",
+            "type": "object"
+          },
+          "QQWebPlan": {
+            "additionalProperties": false,
+            "properties": {
+              "steps": {
+                "items": {
+                  "discriminator": {
+                    "mapping": {
+                      "read": "#/$defs/QQWebReadStep",
+                      "search": "#/$defs/QQWebSearchStep"
+                    },
+                    "propertyName": "action"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/QQWebSearchStep"
+                    },
+                    {
+                      "$ref": "#/$defs/QQWebReadStep"
+                    }
+                  ]
+                },
+                "maxItems": 3,
+                "title": "Steps",
+                "type": "array"
+              }
+            },
+            "title": "QQWebPlan",
+            "type": "object"
+          },
+          "QQWebReadStep": {
+            "additionalProperties": false,
+            "properties": {
+              "step_id": {
+                "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+                "title": "Step Id",
+                "type": "string"
+              },
+              "action": {
+                "const": "read",
+                "title": "Action",
+                "type": "string"
+              },
+              "source_refs": {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 3,
+                "title": "Source Refs",
+                "type": "array"
+              },
+              "search_results": {
+                "items": {
+                  "$ref": "#/$defs/QQWebSearchSelection"
+                },
+                "maxItems": 2,
+                "title": "Search Results",
+                "type": "array"
+              }
+            },
+            "required": [
+              "step_id",
+              "action"
+            ],
+            "title": "QQWebReadStep",
+            "type": "object"
+          },
+          "QQWebSearchSelection": {
+            "additionalProperties": false,
+            "properties": {
+              "step_id": {
+                "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+                "title": "Step Id",
+                "type": "string"
+              },
+              "result_indices": {
+                "items": {
+                  "type": "integer"
+                },
+                "maxItems": 3,
+                "minItems": 1,
+                "title": "Result Indices",
+                "type": "array"
+              }
+            },
+            "required": [
+              "step_id",
+              "result_indices"
+            ],
+            "title": "QQWebSearchSelection",
+            "type": "object"
+          },
+          "QQWebSearchStep": {
+            "additionalProperties": false,
+            "properties": {
+              "step_id": {
+                "pattern": "^[a-z][a-z0-9_-]{0,31}$",
+                "title": "Step Id",
+                "type": "string"
+              },
+              "action": {
+                "const": "search",
+                "title": "Action",
+                "type": "string"
+              },
+              "query": {
+                "maxLength": 1000,
+                "minLength": 1,
+                "title": "Query",
+                "type": "string"
+              },
+              "max_results": {
+                "default": 3,
+                "maximum": 10,
+                "minimum": 1,
+                "title": "Max Results",
+                "type": "integer"
+              },
+              "time_range": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "day",
+                      "week",
+                      "month",
+                      "year"
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Time Range"
+              }
+            },
+            "required": [
+              "step_id",
+              "action",
+              "query"
+            ],
+            "title": "QQWebSearchStep",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "speak",
+              "wait"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "addressing": {
+            "default": "ambient",
+            "enum": [
+              "direct",
+              "ambient"
+            ],
+            "title": "Addressing",
+            "type": "string"
+          },
+          "addressing_source_record_id": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Addressing Source Record Id"
+          },
+          "addressing_supporting_quote": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Addressing Supporting Quote"
+          },
+          "reply_style": {
+            "default": "conversational",
+            "enum": [
+              "conversational",
+              "formal"
+            ],
+            "title": "Reply Style",
+            "type": "string"
+          },
+          "reply_style_reason": {
+            "default": "默认简短口语。",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Reply Style Reason",
+            "type": "string"
+          },
+          "reply_plan": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/QQReplyPlan"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "web_plan": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/QQWebPlan"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "used_memory_ids": {
+            "items": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Used Memory Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "action",
+          "reason"
+        ],
+        "title": "_ProductionGateDecision",
+        "type": "object"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "这是隔离接口测试，当前没有任务或人物证据。只返回符合给定 schema 的 JSON 对象。"
+        },
+        {
+          "role": "user",
+          "content": "用户要求保持安静，选择 wait。没有记忆或网页信息。"
+        }
+      ],
+      "ok": true,
+      "parsed": {
+        "action": "wait",
+        "reason": "用户明确要求保持安静，当前无任务或人物证据，无需发言。",
+        "addressing": "ambient",
+        "addressing_source_record_id": null,
+        "addressing_supporting_quote": null,
+        "reply_style": "conversational",
+        "reply_style_reason": "默认简短口语。",
+        "reply_plan": null,
+        "web_plan": null,
+        "used_memory_ids": []
+      },
+      "usage": {
+        "prompt_tokens": 1366,
+        "completion_tokens": 27,
+        "total_tokens": 1393,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 1366,
+        "cache_known_prompt_tokens": 1366,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "response_metadata": {
+        "finish_reason": "stop",
+        "response_id": "2d7a42a8-3cdd-4da6-92ae-d2a4213f28aa",
+        "content_type": "text",
+        "content_characters": 59,
+        "reasoning_tokens": 0,
+        "has_tool_calls": false,
+        "has_refusal": false
+      },
+      "elapsed_ms": 414.8556999862194
+    },
+    {
+      "schema_name": "capability",
+      "schema": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "act",
+              "observe",
+              "wait",
+              "defer",
+              "no_action"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "offer_id": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "minLength": 1,
+                "pattern": "\\S",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Offer Id"
+          },
+          "arguments": {
+            "additionalProperties": true,
+            "title": "Arguments",
+            "type": "object"
+          },
+          "success_criteria": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "maxItems": 16,
+            "title": "Success Criteria",
+            "type": "array"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reason"
+          },
+          "production_goal_id": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "minLength": 1,
+                "pattern": "\\S",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Production Goal Id"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "CapabilityChoice",
+        "type": "object"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "这是隔离接口测试，当前没有任务或人物证据。只返回符合给定 schema 的 JSON 对象。"
+        },
+        {
+          "role": "user",
+          "content": "没有能力 offer，选择 no_action。"
+        }
+      ],
+      "ok": true,
+      "parsed": {
+        "kind": "no_action",
+        "offer_id": null,
+        "arguments": {},
+        "success_criteria": [],
+        "reason": "没有可用的能力 offer，因此不采取任何行动。",
+        "production_goal_id": null
+      },
+      "usage": {
+        "prompt_tokens": 330,
+        "completion_tokens": 24,
+        "total_tokens": 354,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 330,
+        "cache_known_prompt_tokens": 330,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "response_metadata": {
+        "finish_reason": "stop",
+        "response_id": "11851c95-f31c-4243-ae0f-ad9d9471604a",
+        "content_type": "text",
+        "content_characters": 59,
+        "reasoning_tokens": 0,
+        "has_tool_calls": false,
+        "has_refusal": false
+      },
+      "elapsed_ms": 908.2014999876264
+    },
+    {
+      "schema_name": "goal",
+      "schema": {
+        "$defs": {
+          "CapabilityChoice": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "enum": [
+                  "act",
+                  "observe",
+                  "wait",
+                  "defer",
+                  "no_action"
+                ],
+                "title": "Kind",
+                "type": "string"
+              },
+              "offer_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 256,
+                    "minLength": 1,
+                    "pattern": "\\S",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Offer Id"
+              },
+              "arguments": {
+                "additionalProperties": true,
+                "title": "Arguments",
+                "type": "object"
+              },
+              "success_criteria": {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "maxItems": 16,
+                "title": "Success Criteria",
+                "type": "array"
+              },
+              "reason": {
+                "anyOf": [
+                  {
+                    "maxLength": 256,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Reason"
+              },
+              "production_goal_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 256,
+                    "minLength": 1,
+                    "pattern": "\\S",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Production Goal Id"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "title": "CapabilityChoice",
+            "type": "object"
+          },
+          "GoalCriterionResult": {
+            "additionalProperties": false,
+            "properties": {
+              "criterion": {
+                "maxLength": 600,
+                "minLength": 1,
+                "pattern": "\\S",
+                "title": "Criterion",
+                "type": "string"
+              },
+              "satisfied": {
+                "title": "Satisfied",
+                "type": "boolean"
+              },
+              "evidence_refs": {
+                "items": {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "pattern": "\\S",
+                  "type": "string"
+                },
+                "maxItems": 16,
+                "title": "Evidence Refs",
+                "type": "array"
+              }
+            },
+            "required": [
+              "criterion",
+              "satisfied"
+            ],
+            "title": "GoalCriterionResult",
+            "type": "object"
+          },
+          "GoalPlanStep": {
+            "additionalProperties": false,
+            "properties": {
+              "statement": {
+                "maxLength": 600,
+                "minLength": 1,
+                "pattern": "\\S",
+                "title": "Statement",
+                "type": "string"
+              },
+              "completion_criteria": {
+                "items": {
+                  "maxLength": 600,
+                  "minLength": 1,
+                  "pattern": "\\S",
+                  "type": "string"
+                },
+                "maxItems": 4,
+                "minItems": 1,
+                "title": "Completion Criteria",
+                "type": "array"
+              }
+            },
+            "required": [
+              "statement",
+              "completion_criteria"
+            ],
+            "title": "GoalPlanStep",
+            "type": "object"
+          },
+          "PsychologicalAppraisalDraft": {
+            "additionalProperties": false,
+            "properties": {
+              "appraisal_kind": {
+                "enum": [
+                  "event_interpretation",
+                  "self_report"
+                ],
+                "title": "Appraisal Kind",
+                "type": "string"
+              },
+              "observed_event_refs": {
+                "items": {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "pattern": "\\S",
+                  "type": "string"
+                },
+                "maxItems": 32,
+                "minItems": 1,
+                "title": "Observed Event Refs",
+                "type": "array"
+              },
+              "suggested_impacts": {
+                "additionalProperties": {
+                  "maximum": 1,
+                  "minimum": -1,
+                  "type": "number"
+                },
+                "maxProperties": 6,
+                "minProperties": 1,
+                "propertyNames": {
+                  "enum": [
+                    "cognitive_load",
+                    "safety_predictability",
+                    "competence",
+                    "autonomy",
+                    "social_connection",
+                    "novelty"
+                  ]
+                },
+                "title": "Suggested Impacts",
+                "type": "object"
+              },
+              "model_confidence": {
+                "maximum": 1,
+                "minimum": 0,
+                "title": "Model Confidence",
+                "type": "number"
+              }
+            },
+            "required": [
+              "appraisal_kind",
+              "observed_event_refs",
+              "suggested_impacts",
+              "model_confidence"
+            ],
+            "title": "PsychologicalAppraisalDraft",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "choice": {
+            "$ref": "#/$defs/CapabilityChoice"
+          },
+          "episode_operation": {
+            "enum": [
+              "start",
+              "continue",
+              "replan",
+              "complete",
+              "abandon",
+              "wait"
+            ],
+            "title": "Episode Operation",
+            "type": "string"
+          },
+          "purpose": {
+            "anyOf": [
+              {
+                "maxLength": 600,
+                "minLength": 1,
+                "pattern": "\\S",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Purpose"
+          },
+          "target_dimensions": {
+            "items": {
+              "enum": [
+                "cognitive_load",
+                "safety_predictability",
+                "competence",
+                "autonomy",
+                "social_connection",
+                "novelty"
+              ],
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Target Dimensions",
+            "type": "array"
+          },
+          "expected_effects": {
+            "additionalProperties": {
+              "maxLength": 600,
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "maxProperties": 6,
+            "propertyNames": {
+              "enum": [
+                "cognitive_load",
+                "safety_predictability",
+                "competence",
+                "autonomy",
+                "social_connection",
+                "novelty"
+              ]
+            },
+            "title": "Expected Effects",
+            "type": "object"
+          },
+          "plan": {
+            "items": {
+              "$ref": "#/$defs/GoalPlanStep"
+            },
+            "maxItems": 8,
+            "title": "Plan",
+            "type": "array"
+          },
+          "completion_criteria": {
+            "items": {
+              "maxLength": 600,
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Completion Criteria",
+            "type": "array"
+          },
+          "evidence_refs": {
+            "items": {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "criterion_results": {
+            "items": {
+              "$ref": "#/$defs/GoalCriterionResult"
+            },
+            "maxItems": 40,
+            "title": "Criterion Results",
+            "type": "array"
+          },
+          "appraisal": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/PsychologicalAppraisalDraft"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "choice",
+          "episode_operation"
+        ],
+        "title": "GoalChoice",
+        "type": "object"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "这是隔离接口测试，当前没有任务或人物证据。只返回符合给定 schema 的 JSON 对象。"
+        },
+        {
+          "role": "user",
+          "content": "episode_operation 选择 wait，choice 选择 wait，不提出其他更新。"
+        }
+      ],
+      "ok": true,
+      "parsed": {
+        "choice": {
+          "kind": "wait",
+          "offer_id": null,
+          "arguments": {},
+          "success_criteria": [],
+          "reason": "No task or character evidence is available in this isolated interface test; waiting is the only appropriate action.",
+          "production_goal_id": null
+        },
+        "episode_operation": "wait",
+        "purpose": null,
+        "target_dimensions": [],
+        "expected_effects": {},
+        "plan": [],
+        "completion_criteria": [],
+        "evidence_refs": [],
+        "criterion_results": [],
+        "appraisal": null
+      },
+      "usage": {
+        "prompt_tokens": 1466,
+        "completion_tokens": 43,
+        "total_tokens": 1509,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 1466,
+        "cache_known_prompt_tokens": 1466,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "response_metadata": {
+        "finish_reason": "stop",
+        "response_id": "7454df86-942d-4152-8a90-4fcceeab62a7",
+        "content_type": "text",
+        "content_characters": 186,
+        "reasoning_tokens": 0,
+        "has_tool_calls": false,
+        "has_refusal": false
+      },
+      "elapsed_ms": 832.2607000009157
+    },
+    {
+      "schema_name": "web",
+      "schema": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "call",
+              "finish"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "offer_id": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Offer Id"
+          },
+          "arguments": {
+            "additionalProperties": true,
+            "title": "Arguments",
+            "type": "object"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "WebStepChoice",
+        "type": "object"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "这是隔离接口测试，当前没有任务或人物证据。只返回符合给定 schema 的 JSON 对象。"
+        },
+        {
+          "role": "user",
+          "content": "没有查询或阅读请求，不调用网页工具。"
+        }
+      ],
+      "ok": true,
+      "parsed": {
+        "kind": "finish",
+        "offer_id": null,
+        "arguments": {}
+      },
+      "usage": {
+        "prompt_tokens": 178,
+        "completion_tokens": 12,
+        "total_tokens": 190,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 178,
+        "cache_known_prompt_tokens": 178,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "response_metadata": {
+        "finish_reason": "stop",
+        "response_id": "6297f85b-c21a-4f38-a241-1c10b437d427",
+        "content_type": "text",
+        "content_characters": 35,
+        "reasoning_tokens": 0,
+        "has_tool_calls": false,
+        "has_refusal": false
+      },
+      "elapsed_ms": 623.6547000007704
+    },
+    {
+      "schema_name": "board",
+      "schema": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "write",
+              "wait"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "text": {
+            "default": "",
+            "maxLength": 1600,
+            "title": "Text",
+            "type": "string"
+          },
+          "title": {
+            "default": "",
+            "maxLength": 120,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "title": "_Expression",
+        "type": "object"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "这是隔离接口测试，当前没有任务或人物证据。只返回符合给定 schema 的 JSON 对象。"
+        },
+        {
+          "role": "user",
+          "content": "选择 wait，text 和 title 为空字符串。"
+        }
+      ],
+      "ok": true,
+      "parsed": {
+        "action": "wait",
+        "text": "",
+        "title": ""
+      },
+      "usage": {
+        "prompt_tokens": 159,
+        "completion_tokens": 15,
+        "total_tokens": 174,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 159,
+        "cache_known_prompt_tokens": 159,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "response_metadata": {
+        "finish_reason": "stop",
+        "response_id": "f59acca3-289c-44c5-ae94-aac3a7e2cbbb",
+        "content_type": "text",
+        "content_characters": 43,
+        "reasoning_tokens": 0,
+        "has_tool_calls": false,
+        "has_refusal": false
+      },
+      "elapsed_ms": 440.7669999927748
+    },
+    {
+      "schema_name": "diary",
+      "schema": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "write",
+              "wait"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "text": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "title": "_Expression",
+        "type": "object"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "这是隔离接口测试，当前没有任务或人物证据。只返回符合给定 schema 的 JSON 对象。"
+        },
+        {
+          "role": "user",
+          "content": "选择 wait，text 为空字符串。"
+        }
+      ],
+      "ok": true,
+      "parsed": {
+        "action": "wait",
+        "text": ""
+      },
+      "usage": {
+        "prompt_tokens": 130,
+        "completion_tokens": 11,
+        "total_tokens": 141,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 130,
+        "cache_known_prompt_tokens": 130,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "response_metadata": {
+        "finish_reason": "stop",
+        "response_id": "4711b643-44af-4a9d-b78c-c936fda65852",
+        "content_type": "text",
+        "content_characters": 30,
+        "reasoning_tokens": 0,
+        "has_tool_calls": false,
+        "has_refusal": false
+      },
+      "elapsed_ms": 683.1974000087939
+    },
+    {
+      "schema_name": "grounded_agency",
+      "schema": {
+        "$defs": {
+          "A11yNodeCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "a11y_node",
+                "default": "a11y_node",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "present",
+                  "absent"
+                ],
+                "title": "Condition",
+                "type": "string"
+              },
+              "app_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "App Id"
+              },
+              "role": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Role"
+              },
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Name"
+              }
+            },
+            "required": [
+              "condition"
+            ],
+            "title": "A11yNodeCriterion",
+            "type": "object"
+          },
+          "ActionIntent": {
+            "additionalProperties": false,
+            "properties": {
+              "intent_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9_.-]+\\.v[0-9]+$",
+                "title": "Intent Id",
+                "type": "string"
+              },
+              "arguments": {
+                "additionalProperties": true,
+                "title": "Arguments",
+                "type": "object"
+              }
+            },
+            "required": [
+              "intent_id"
+            ],
+            "title": "ActionIntent",
+            "type": "object"
+          },
+          "EntityInteractionCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "entity_interaction",
+                "default": "entity_interaction",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "const": "operation_recorded",
+                "default": "operation_recorded",
+                "title": "Condition",
+                "type": "string"
+              },
+              "actor_ref": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+                "title": "Actor Ref",
+                "type": "string"
+              },
+              "operation": {
+                "enum": [
+                  "approach",
+                  "avoid",
+                  "request",
+                  "respond",
+                  "refuse",
+                  "assist",
+                  "commit",
+                  "renegotiate"
+                ],
+                "title": "Operation",
+                "type": "string"
+              }
+            },
+            "required": [
+              "actor_ref",
+              "operation"
+            ],
+            "title": "EntityInteractionCriterion",
+            "type": "object"
+          },
+          "ExperimentalActDecision": {
+            "additionalProperties": false,
+            "properties": {
+              "confidence": {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "title": "Confidence",
+                "type": "number"
+              },
+              "kind": {
+                "const": "act",
+                "default": "act",
+                "title": "Kind",
+                "type": "string"
+              },
+              "intent": {
+                "$ref": "#/$defs/ActionIntent"
+              },
+              "success_criteria": {
+                "items": {
+                  "discriminator": {
+                    "mapping": {
+                      "a11y_node": "#/$defs/A11yNodeCriterion",
+                      "entity_interaction": "#/$defs/EntityInteractionCriterion",
+                      "file": "#/$defs/FileCriterion",
+                      "intentional_noop": "#/$defs/IntentionalNoopCriterion",
+                      "pointer": "#/$defs/PointerCriterion",
+                      "process": "#/$defs/ProcessCriterion",
+                      "scenario": "#/$defs/ScenarioCriterion",
+                      "screen_change": "#/$defs/ScreenChangeCriterion",
+                      "window": "#/$defs/WindowCriterion"
+                    },
+                    "propertyName": "kind"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/WindowCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/FileCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/ProcessCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/ScreenChangeCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/A11yNodeCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/PointerCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/IntentionalNoopCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/ScenarioCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/EntityInteractionCriterion"
+                    }
+                  ]
+                },
+                "maxItems": 16,
+                "minItems": 1,
+                "title": "Success Criteria",
+                "type": "array"
+              },
+              "expected_observation": {
+                "anyOf": [
+                  {
+                    "maxLength": 1000,
+                    "minLength": 1,
+                    "pattern": "\\S",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Expected Observation"
+              }
+            },
+            "required": [
+              "confidence",
+              "intent",
+              "success_criteria"
+            ],
+            "title": "ExperimentalActDecision",
+            "type": "object"
+          },
+          "ExperimentalDeferDecision": {
+            "additionalProperties": false,
+            "properties": {
+              "confidence": {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "title": "Confidence",
+                "type": "number"
+              },
+              "kind": {
+                "const": "defer",
+                "default": "defer",
+                "title": "Kind",
+                "type": "string"
+              },
+              "missing_information": {
+                "items": {
+                  "maxLength": 1000,
+                  "minLength": 1,
+                  "pattern": "\\S",
+                  "type": "string"
+                },
+                "maxItems": 16,
+                "minItems": 1,
+                "title": "Missing Information",
+                "type": "array"
+              }
+            },
+            "required": [
+              "confidence",
+              "missing_information"
+            ],
+            "title": "ExperimentalDeferDecision",
+            "type": "object"
+          },
+          "ExperimentalNoActionDecision": {
+            "additionalProperties": false,
+            "properties": {
+              "confidence": {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "title": "Confidence",
+                "type": "number"
+              },
+              "kind": {
+                "const": "no_action",
+                "default": "no_action",
+                "title": "Kind",
+                "type": "string"
+              }
+            },
+            "required": [
+              "confidence"
+            ],
+            "title": "ExperimentalNoActionDecision",
+            "type": "object"
+          },
+          "ExperimentalObserveDecision": {
+            "additionalProperties": false,
+            "properties": {
+              "confidence": {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "title": "Confidence",
+                "type": "number"
+              },
+              "kind": {
+                "const": "observe",
+                "default": "observe",
+                "title": "Kind",
+                "type": "string"
+              },
+              "observation_scope": {
+                "enum": [
+                  "current",
+                  "world",
+                  "screen",
+                  "workspace"
+                ],
+                "title": "Observation Scope",
+                "type": "string"
+              }
+            },
+            "required": [
+              "confidence",
+              "observation_scope"
+            ],
+            "title": "ExperimentalObserveDecision",
+            "type": "object"
+          },
+          "ExperimentalWaitDecision": {
+            "additionalProperties": false,
+            "properties": {
+              "confidence": {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "title": "Confidence",
+                "type": "number"
+              },
+              "kind": {
+                "const": "wait",
+                "default": "wait",
+                "title": "Kind",
+                "type": "string"
+              },
+              "duration_ms": {
+                "maximum": 30000,
+                "minimum": 0,
+                "title": "Duration Ms",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "confidence",
+              "duration_ms"
+            ],
+            "title": "ExperimentalWaitDecision",
+            "type": "object"
+          },
+          "FileCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "file",
+                "default": "file",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "exists",
+                  "absent",
+                  "sha256_equals",
+                  "size_equals"
+                ],
+                "title": "Condition",
+                "type": "string"
+              },
+              "root_id": {
+                "title": "Root Id",
+                "type": "string"
+              },
+              "relative_path": {
+                "title": "Relative Path",
+                "type": "string"
+              },
+              "sha256": {
+                "anyOf": [
+                  {
+                    "pattern": "^[0-9a-f]{64}$",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Sha256"
+              },
+              "size": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Size"
+              }
+            },
+            "required": [
+              "condition",
+              "root_id",
+              "relative_path"
+            ],
+            "title": "FileCriterion",
+            "type": "object"
+          },
+          "IntentionalNoopCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "intentional_noop",
+                "default": "intentional_noop",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "waited",
+                  "observed",
+                  "deferred"
+                ],
+                "title": "Condition",
+                "type": "string"
+              }
+            },
+            "required": [
+              "condition"
+            ],
+            "title": "IntentionalNoopCriterion",
+            "type": "object"
+          },
+          "PointerCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "pointer",
+                "default": "pointer",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "const": "over_element",
+                "default": "over_element",
+                "title": "Condition",
+                "type": "string"
+              },
+              "app_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "App Id"
+              },
+              "role": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Role"
+              },
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Name"
+              }
+            },
+            "title": "PointerCriterion",
+            "type": "object"
+          },
+          "ProcessCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "process",
+                "default": "process",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "running",
+                  "not_running"
+                ],
+                "title": "Condition",
+                "type": "string"
+              },
+              "app_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "App Id"
+              },
+              "pid": {
+                "anyOf": [
+                  {
+                    "exclusiveMinimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Pid"
+              }
+            },
+            "required": [
+              "condition"
+            ],
+            "title": "ProcessCriterion",
+            "type": "object"
+          },
+          "ScenarioCriterion": {
+            "additionalProperties": false,
+            "description": "Target-bound outcome supported by a declared experimental scenario provider.",
+            "properties": {
+              "kind": {
+                "const": "scenario",
+                "default": "scenario",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "task_completed",
+                  "station_used"
+                ],
+                "title": "Condition",
+                "type": "string"
+              },
+              "target_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_.-]+$",
+                "title": "Target Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "condition",
+              "target_id"
+            ],
+            "title": "ScenarioCriterion",
+            "type": "object"
+          },
+          "ScreenChangeCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "screen_change",
+                "default": "screen_change",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "changed",
+                  "unchanged"
+                ],
+                "title": "Condition",
+                "type": "string"
+              },
+              "baseline_evidence_ref": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Baseline Evidence Ref"
+              }
+            },
+            "required": [
+              "condition"
+            ],
+            "title": "ScreenChangeCriterion",
+            "type": "object"
+          },
+          "WindowCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "window",
+                "default": "window",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "present",
+                  "absent",
+                  "present_and_focused",
+                  "title_equals"
+                ],
+                "title": "Condition",
+                "type": "string"
+              },
+              "app_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "App Id"
+              },
+              "window_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Window Id"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Title"
+              }
+            },
+            "required": [
+              "condition"
+            ],
+            "title": "WindowCriterion",
+            "type": "object"
+          }
+        },
+        "discriminator": {
+          "mapping": {
+            "act": "#/$defs/ExperimentalActDecision",
+            "defer": "#/$defs/ExperimentalDeferDecision",
+            "no_action": "#/$defs/ExperimentalNoActionDecision",
+            "observe": "#/$defs/ExperimentalObserveDecision",
+            "wait": "#/$defs/ExperimentalWaitDecision"
+          },
+          "propertyName": "kind"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/ExperimentalActDecision"
+          },
+          {
+            "$ref": "#/$defs/ExperimentalObserveDecision"
+          },
+          {
+            "$ref": "#/$defs/ExperimentalWaitDecision"
+          },
+          {
+            "$ref": "#/$defs/ExperimentalDeferDecision"
+          },
+          {
+            "$ref": "#/$defs/ExperimentalNoActionDecision"
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "这是隔离接口测试，当前没有任务或人物证据。只返回符合给定 schema 的 JSON 对象。"
+        },
+        {
+          "role": "user",
+          "content": "没有可用动作，选择 no_action。"
+        }
+      ],
+      "ok": true,
+      "parsed": {
+        "confidence": 0.9,
+        "kind": "no_action"
+      },
+      "usage": {
+        "prompt_tokens": 2903,
+        "completion_tokens": 15,
+        "total_tokens": 2918,
+        "cache_hit_tokens": 128,
+        "cache_miss_tokens": 2775,
+        "cache_known_prompt_tokens": 2903,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "response_metadata": {
+        "finish_reason": "stop",
+        "response_id": "39ae22ec-a230-46dd-95ff-04fa37ba894b",
+        "content_type": "text",
+        "content_characters": 40,
+        "reasoning_tokens": 0,
+        "has_tool_calls": false,
+        "has_refusal": false
+      },
+      "elapsed_ms": 478.27419999521226
+    },
+    {
+      "schema_name": "terminal",
+      "schema": {
+        "$defs": {
+          "A11yNodeCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "a11y_node",
+                "default": "a11y_node",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "present",
+                  "absent"
+                ],
+                "title": "Condition",
+                "type": "string"
+              },
+              "app_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "App Id"
+              },
+              "role": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Role"
+              },
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Name"
+              }
+            },
+            "required": [
+              "condition"
+            ],
+            "title": "A11yNodeCriterion",
+            "type": "object"
+          },
+          "ActionIntent": {
+            "additionalProperties": false,
+            "properties": {
+              "intent_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9_.-]+\\.v[0-9]+$",
+                "title": "Intent Id",
+                "type": "string"
+              },
+              "arguments": {
+                "additionalProperties": true,
+                "title": "Arguments",
+                "type": "object"
+              }
+            },
+            "required": [
+              "intent_id"
+            ],
+            "title": "ActionIntent",
+            "type": "object"
+          },
+          "EntityInteractionCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "entity_interaction",
+                "default": "entity_interaction",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "const": "operation_recorded",
+                "default": "operation_recorded",
+                "title": "Condition",
+                "type": "string"
+              },
+              "actor_ref": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+                "title": "Actor Ref",
+                "type": "string"
+              },
+              "operation": {
+                "enum": [
+                  "approach",
+                  "avoid",
+                  "request",
+                  "respond",
+                  "refuse",
+                  "assist",
+                  "commit",
+                  "renegotiate"
+                ],
+                "title": "Operation",
+                "type": "string"
+              }
+            },
+            "required": [
+              "actor_ref",
+              "operation"
+            ],
+            "title": "EntityInteractionCriterion",
+            "type": "object"
+          },
+          "FileCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "file",
+                "default": "file",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "exists",
+                  "absent",
+                  "sha256_equals",
+                  "size_equals"
+                ],
+                "title": "Condition",
+                "type": "string"
+              },
+              "root_id": {
+                "title": "Root Id",
+                "type": "string"
+              },
+              "relative_path": {
+                "title": "Relative Path",
+                "type": "string"
+              },
+              "sha256": {
+                "anyOf": [
+                  {
+                    "pattern": "^[0-9a-f]{64}$",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Sha256"
+              },
+              "size": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Size"
+              }
+            },
+            "required": [
+              "condition",
+              "root_id",
+              "relative_path"
+            ],
+            "title": "FileCriterion",
+            "type": "object"
+          },
+          "IntentionalNoopCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "intentional_noop",
+                "default": "intentional_noop",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "waited",
+                  "observed",
+                  "deferred"
+                ],
+                "title": "Condition",
+                "type": "string"
+              }
+            },
+            "required": [
+              "condition"
+            ],
+            "title": "IntentionalNoopCriterion",
+            "type": "object"
+          },
+          "PointerCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "pointer",
+                "default": "pointer",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "const": "over_element",
+                "default": "over_element",
+                "title": "Condition",
+                "type": "string"
+              },
+              "app_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "App Id"
+              },
+              "role": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Role"
+              },
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Name"
+              }
+            },
+            "title": "PointerCriterion",
+            "type": "object"
+          },
+          "ProcessCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "process",
+                "default": "process",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "running",
+                  "not_running"
+                ],
+                "title": "Condition",
+                "type": "string"
+              },
+              "app_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "App Id"
+              },
+              "pid": {
+                "anyOf": [
+                  {
+                    "exclusiveMinimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Pid"
+              }
+            },
+            "required": [
+              "condition"
+            ],
+            "title": "ProcessCriterion",
+            "type": "object"
+          },
+          "ScenarioCriterion": {
+            "additionalProperties": false,
+            "description": "Target-bound outcome supported by a declared experimental scenario provider.",
+            "properties": {
+              "kind": {
+                "const": "scenario",
+                "default": "scenario",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "task_completed",
+                  "station_used"
+                ],
+                "title": "Condition",
+                "type": "string"
+              },
+              "target_id": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_.-]+$",
+                "title": "Target Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "condition",
+              "target_id"
+            ],
+            "title": "ScenarioCriterion",
+            "type": "object"
+          },
+          "ScreenChangeCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "screen_change",
+                "default": "screen_change",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "changed",
+                  "unchanged"
+                ],
+                "title": "Condition",
+                "type": "string"
+              },
+              "baseline_evidence_ref": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Baseline Evidence Ref"
+              }
+            },
+            "required": [
+              "condition"
+            ],
+            "title": "ScreenChangeCriterion",
+            "type": "object"
+          },
+          "WindowCriterion": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "window",
+                "default": "window",
+                "title": "Kind",
+                "type": "string"
+              },
+              "condition": {
+                "enum": [
+                  "present",
+                  "absent",
+                  "present_and_focused",
+                  "title_equals"
+                ],
+                "title": "Condition",
+                "type": "string"
+              },
+              "app_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "App Id"
+              },
+              "window_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Window Id"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Title"
+              }
+            },
+            "required": [
+              "condition"
+            ],
+            "title": "WindowCriterion",
+            "type": "object"
+          },
+          "_Act": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "act",
+                "title": "Kind",
+                "type": "string"
+              },
+              "intent": {
+                "$ref": "#/$defs/ActionIntent"
+              },
+              "success_criteria": {
+                "items": {
+                  "discriminator": {
+                    "mapping": {
+                      "a11y_node": "#/$defs/A11yNodeCriterion",
+                      "entity_interaction": "#/$defs/EntityInteractionCriterion",
+                      "file": "#/$defs/FileCriterion",
+                      "intentional_noop": "#/$defs/IntentionalNoopCriterion",
+                      "pointer": "#/$defs/PointerCriterion",
+                      "process": "#/$defs/ProcessCriterion",
+                      "scenario": "#/$defs/ScenarioCriterion",
+                      "screen_change": "#/$defs/ScreenChangeCriterion",
+                      "window": "#/$defs/WindowCriterion"
+                    },
+                    "propertyName": "kind"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/WindowCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/FileCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/ProcessCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/ScreenChangeCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/A11yNodeCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/PointerCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/IntentionalNoopCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/ScenarioCriterion"
+                    },
+                    {
+                      "$ref": "#/$defs/EntityInteractionCriterion"
+                    }
+                  ]
+                },
+                "maxItems": 8,
+                "minItems": 1,
+                "title": "Success Criteria",
+                "type": "array"
+              }
+            },
+            "required": [
+              "kind",
+              "intent",
+              "success_criteria"
+            ],
+            "title": "_Act",
+            "type": "object"
+          },
+          "_Complete": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "complete",
+                "title": "Kind",
+                "type": "string"
+              },
+              "observed_text": {
+                "maxLength": 4096,
+                "title": "Observed Text",
+                "type": "string"
+              },
+              "evidence_ref": {
+                "maxLength": 512,
+                "minLength": 1,
+                "title": "Evidence Ref",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "observed_text",
+              "evidence_ref"
+            ],
+            "title": "_Complete",
+            "type": "object"
+          },
+          "_Defer": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "defer",
+                "title": "Kind",
+                "type": "string"
+              },
+              "reason": {
+                "maxLength": 500,
+                "minLength": 1,
+                "title": "Reason",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "reason"
+            ],
+            "title": "_Defer",
+            "type": "object"
+          },
+          "_NoAction": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "no_action",
+                "title": "Kind",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "title": "_NoAction",
+            "type": "object"
+          }
+        },
+        "discriminator": {
+          "mapping": {
+            "act": "#/$defs/_Act",
+            "complete": "#/$defs/_Complete",
+            "defer": "#/$defs/_Defer",
+            "no_action": "#/$defs/_NoAction"
+          },
+          "propertyName": "kind"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/_Act"
+          },
+          {
+            "$ref": "#/$defs/_NoAction"
+          },
+          {
+            "$ref": "#/$defs/_Defer"
+          },
+          {
+            "$ref": "#/$defs/_Complete"
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "这是隔离接口测试，当前没有任务或人物证据。只返回符合给定 schema 的 JSON 对象。"
+        },
+        {
+          "role": "user",
+          "content": "没有终端操作请求，选择 no_action。"
+        }
+      ],
+      "ok": true,
+      "parsed": {
+        "kind": "no_action"
+      },
+      "usage": {
+        "prompt_tokens": 2491,
+        "completion_tokens": 7,
+        "total_tokens": 2498,
+        "cache_hit_tokens": 384,
+        "cache_miss_tokens": 2107,
+        "cache_known_prompt_tokens": 2491,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "response_metadata": {
+        "finish_reason": "stop",
+        "response_id": "17ddecad-68c3-440b-b6b2-e4b5f477fd28",
+        "content_type": "text",
+        "content_characters": 21,
+        "reasoning_tokens": 0,
+        "has_tool_calls": false,
+        "has_refusal": false
+      },
+      "elapsed_ms": 534.3943999905605
+    }
+  ],
+  "source_sha256": {
+    "D:\\GameDev\\NeuralCloud\\tools\\production_acceptance\\deepseek_project_smoke.py": "665a5821f2ae20d552d41d62c5496aafea2d230e313a61a66804566537e721af",
+    "harness\\llm\\client.py": "13ce8cc087c77286fa25a32debb911beb56a4d20166536989bee1148f90b0db8",
+    "harness\\llm\\deepseek_structured.py": "fedfc2dc01892894967893fc619214078e06681c1e35860086126e05fc3aa9f6"
+  },
+  "all_passed": true,
+  "ended_at": "2026-10-05T09:17:28.515492+00:00"
+}

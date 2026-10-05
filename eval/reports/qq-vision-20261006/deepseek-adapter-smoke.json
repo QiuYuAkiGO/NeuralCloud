@@ -1,0 +1,55 @@
+{
+  "scope": "OpenAICompatClient smoke; no QQ or memory writes",
+  "results": [
+    {
+      "provider": "deepseek",
+      "case_id": "c05",
+      "seconds": 0.6782022999832407,
+      "text": "图里写的是游戏更新失败，错误码E-204，磁盘只剩2.3GB，这次更新要8.0GB，最后一句是提示释放空间后重试。所以问题应该就是空间不够，删掉一些不用的东西再更新试试吧。\n\n[END]",
+      "usage": {
+        "prompt_tokens": 2246,
+        "completion_tokens": 60,
+        "total_tokens": 2306,
+        "cache_hit_tokens": 2048,
+        "cache_miss_tokens": 198,
+        "cache_known_prompt_tokens": 2246,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "metadata": {
+        "finish_reason": "stop",
+        "response_id": "e7423912-de2b-498e-952e-90fea6f71220",
+        "content_type": "text",
+        "content_characters": 93,
+        "reasoning_tokens": null,
+        "has_tool_calls": false,
+        "has_refusal": false
+      },
+      "images": [
+        {
+          "source_sha256": "84d7a8e02d7ba79b8ffd00444dade089c5a1e843cb48aadd1a3681632ad4e31d",
+          "media_type": "image/png",
+          "width": 720,
+          "height": 420,
+          "frame_count": 1,
+          "sampled_frame_indices": [
+            0
+          ],
+          "animation_sampled": false,
+          "frame_sha256": [
+            "4112702c14843712333337b1bb0829ea8eb2535223bd34d890ba0c9b02b4c6c1"
+          ],
+          "detail": "high"
+        }
+      ],
+      "input_sha256": "8818434a01c046c720655e621b64b3868cd96f632e4745165f4186ef26bee4bf",
+      "success": true
+    }
+  ]
+}

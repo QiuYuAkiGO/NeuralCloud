@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "original_database_mutated": false,
+  "contributions_before": 118485,
+  "contributions_after": 118486,
+  "second_replay_added_audit_rows": 0,
+  "integrity_verified": true,
+  "elapsed_seconds": 151.348
+}

@@ -126,6 +126,7 @@ def test_all_new_records_are_mandatory_even_if_caller_also_marks_them_handled(se
 
 
 def test_final_assessment_reserve_rejects_mandatory_content_before_spending_model_call(setup, monkeypatch):
+    monkeypatch.setenv("NC_QQ_HISTORY_SELECTION", "legacy")
     monkeypatch.setenv("NC_QQ_INPUT_TOKEN_BUDGET", "24000")
     store, client, builds, kwargs, _ = setup
     add_member(store, "20003", text="必须保留的完整新原文" + "长" * 17_000)
@@ -189,6 +190,7 @@ def test_original_proof_change_invalidates_full_fingerprint_without_model_uri(se
 
 
 def test_failed_old_observations_stay_seen_but_new_input_is_the_only_new_candidate(setup, monkeypatch):
+    monkeypatch.setenv("NC_QQ_HISTORY_SELECTION", "legacy")
     monkeypatch.setenv("NC_QQ_INPUT_TOKEN_BUDGET", "24000")
     store, client, builds, kwargs, _ = setup
     for index in range(8):

@@ -69,9 +69,14 @@ def test_burst_same_scope_coalesces_and_respects_interval(affect_runtime, monkey
     calls = []
     started = asyncio.Event()
     release = asyncio.Event()
+    clock = [100.0]
+    appraisal_times = []
+    from harness.runtime import affect as affect_module
+    monkeypatch.setattr(affect_module, "time", SimpleNamespace(monotonic=lambda: clock[0]))
 
     async def gated(command):
         calls.append(command)
+        appraisal_times.append(clock[0])
         if len(calls) == 1:
             started.set()
             await release.wait()
@@ -82,6 +87,7 @@ def test_burst_same_scope_coalesces_and_respects_interval(affect_runtime, monkey
 
     async def fake_sleep(delay):
         sleeps.append(delay)
+        clock[0] += delay
 
     monkeypatch.setattr("harness.runtime.affect.asyncio.sleep", fake_sleep)
 
@@ -100,6 +106,7 @@ def test_burst_same_scope_coalesces_and_respects_interval(affect_runtime, monkey
         assert covered == {f"qq-watch-event:{i:032x}" for i in range(1, 11)}
         if len(calls) == 2:
             assert sleeps and sleeps[0] >= 2
+            assert appraisal_times[1] - appraisal_times[0] >= runtime.affect.min_interval_seconds
             second_ids = {item["event_id"] for item in calls[1].payload["triggers"]}
             assert len(second_ids) >= 9
 

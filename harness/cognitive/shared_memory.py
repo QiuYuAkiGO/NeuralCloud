@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 import sqlite3
 from typing import Any
+from threading import Lock
 
 from harness.core.inference import ContextSegment, MemoryEvidenceContext, MemoryEvidenceEntry
 from harness.core.models import WorldState
@@ -153,6 +154,7 @@ class CognitiveSharedMemory:
         self.last_import = None
         self._source_stamp = None
         self._production_stores = {}
+        self._qq_sync_lock = Lock()
 
     @property
     def production_enabled(self):
@@ -222,21 +224,31 @@ class CognitiveSharedMemory:
 
     @measure_stage("memory.import_qq")
     def sync_qq(self):
+        # UI, recall and the assimilation worker can request a sync together.
+        # Serialize checkpoint advancement within the single cognitive owner.
+        with self._qq_sync_lock:
+            return self._sync_qq()
+
+    def _sync_qq(self):
         if self.qq_settings is None or self.store.preset_id != "misty":
             return
         path = self.qq_settings.memory_db
         # SQLite WAL changes count too. This is a cache optimization, not the
         # source integrity check performed by the atomic importer.
         private_peers = getattr(self.qq_settings, "allowed_private_peer_ids", ())
-        stamp = (tuple((p.stat().st_mtime_ns, p.stat().st_size) if p.exists() else None
-                       for p in (path, Path(str(path)+"-wal"))),
+        def file_stamp(p):
+            if not p.exists():
+                return None
+            stat = p.stat()
+            return stat.st_dev, stat.st_ino, stat.st_mtime_ns, stat.st_size
+        stamp = (tuple(file_stamp(p) for p in (path, Path(str(path)+"-wal"))),
                  tuple(self.qq_settings.allowed_group_ids), tuple(private_peers), self.qq_settings.self_member_id)
         if stamp == self._source_stamp:
             return
         result = self.store.import_qq_database(path,
             allowed_group_ids=self.qq_settings.allowed_group_ids,
             self_member_id=self.qq_settings.self_member_id, allowed_private_peer_ids=private_peers,
-            incremental=self.production_enabled)
+            track_changes=True)
         self.last_import = result
         if not result.success:
             raise ValueError("shared_qq_memory_import_failed")
@@ -250,7 +262,7 @@ class CognitiveSharedMemory:
         # The pre-upgrade archive remains explicitly of unknown completeness.
         self.store.mark_archive_started("local_chat")
         self.store.mark_archive_started("action_outcome")
-        count = 0
+        events = []
         session_id = self.host.chat.active_session_id
         for turn in self.host.chat.pipeline.session_store.recent(session_id):
             if not turn.event_id or turn.timestamp is None or not turn.text.strip():
@@ -258,14 +270,13 @@ class CognitiveSharedMemory:
                 # original store; do not invent an observed historical time.
                 continue
             role = "assistant" if turn.role == "character" else "user"
-            value = self.store.record_local(SharedLocalEvent(
+            events.append(SharedLocalEvent(
                 event_id=f"{turn.event_id}.{role}", session_id=session_id,
                 author_principal="character:misty" if role == "assistant" else "local:main",
                 role=role, text=turn.text, occurred_at=turn.timestamp,
                 display_name=turn.speaker,
                 evidence_refs=(f"local-chat:{session_id}:{turn.event_id}:{role}",)))
-            count += int(value.created)
-        return count
+        return sum(int(value.created) for value in self.store.record_local_batch(events))
 
     def archive_local(self, *, event_id: str, session_id: str, role: str, text: str,
                       occurred_at: datetime, display_name: str | None = None):
@@ -505,8 +516,7 @@ class CognitiveSharedMemory:
         self.sync_local()
         if self.production_enabled:
             self.sync_production()
-            preset = self.host.chat.library.load(self.host.chat.active_preset_id)
-            preset = preset.model_copy(update={"persona": self.host.chat.memory.get_persona()})
+            preset = self._reply_preset()
             settings = self.host.chat.settings.model_copy(update={"record_interaction": False,
                 "call_log_enabled": False, "continuation_enabled": False, "max_reply_segments": 3,
                 "aux_llm_preload": False})
@@ -543,8 +553,7 @@ class CognitiveSharedMemory:
                     "操作者明确确认并要求保留的事实；来源为本地用户陈述，"
                     "不是当前聊天原话，不构成操作或发送授权。")
                 source_ids.extend(entry["record_id"] for entry in fact_payload["entries"])
-        preset = self.host.chat.library.load(self.host.chat.active_preset_id)
-        preset = preset.model_copy(update={"persona": self.host.chat.memory.get_persona()})
+        preset = self._reply_preset()
         settings = self.host.chat.settings.model_copy(update={"record_interaction": False,
             "call_log_enabled": False, "continuation_enabled": False, "max_reply_segments": 3,
             "aux_llm_preload": False})
@@ -552,6 +561,7 @@ class CognitiveSharedMemory:
         if recall_query is None:
             recent = self.store.query(SharedReadScope(audience=conversation_audience(group_id),
                 channels=("qq_private",) if private else ("qq_group",), kinds=("qq_observation",),
+                session_ids=(conversation_audience(group_id),),
                 principals=(f"qq:member:{member_id}",) if member_id else None), limit=3)
             recall_query = " ".join(entry.text for entry in recent.records)[:1000]
         from harness.memory.revision.recall import select_daily_recall, merge_derived_memory
@@ -573,6 +583,19 @@ class CognitiveSharedMemory:
             ScopedQQMemoryView(self.host.chat.memory, group_id=group_id, member_id=member_id), payload,
             tuple(dict.fromkeys(source_ids)),
             combined)
+
+    @measure_stage("memory.reply_preset")
+    def _reply_preset(self):
+        # QQ consumes the active identity/persona; its memory view is explicitly
+        # scoped below. Re-reading the full on-disk archive duplicates the owner
+        # already loaded at hydrate and can also read an older persona revision.
+        from gui.presets import CharacterPreset
+        chat = self.host.chat
+        persona = chat.memory.get_persona()
+        return CharacterPreset(preset_id=chat.active_preset_id,
+            builtin_id=chat._active_builtin_id, name=chat._active_preset_name,
+            session_id=chat.active_session_id, user_name=chat.user_name,
+            persona=persona, updated_at=datetime.now(timezone.utc))
 
     def board_context(self, *, query=None):
         """The owner's private board borrows its authorized shared recall."""

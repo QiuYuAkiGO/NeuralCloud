@@ -4,7 +4,8 @@ $script:CoreLauncher = Import-Module (Join-Path $PSScriptRoot 'Launcher.psm1') -
 $script:PathBindings = @(
     'NC_HOMEOSTASIS_STATE_DIR', 'NC_GUI_CONFIG', 'NC_QQ_SESSION_CONFIG', 'NC_QQ_WATCHER_CONFIG',
     'NC_QQ_DIRECT_CONFIG', 'NC_SHARED_MEMORY_DB', 'NC_CONTROL_TOKEN_FILE', 'NC_SERVICE_TOKEN_FILE',
-    'NC_GUI_PRESETS', 'NC_RUNTIME_STATE_DIR', 'NC_BOARD_CONFIG', 'NC_VOICE_CONFIG', 'NC_WEB_CONFIG'
+    'NC_GUI_PRESETS', 'NC_RUNTIME_STATE_DIR', 'NC_BOARD_CONFIG', 'NC_VOICE_CONFIG', 'NC_WEB_CONFIG',
+    'NC_LLM_FALLBACK_CONFIG'
 )
 
 function Get-OneClickField($Object, [string]$Name, $Default = $null) {
@@ -125,7 +126,7 @@ function Read-OneClickConfiguration([string]$Root, [string]$ConfigPath, [string]
         try { $modelConfig = [IO.File]::ReadAllText($bindings.NC_GUI_CONFIG) | ConvertFrom-Json } catch { throw 'The model configuration is not valid JSON.' }
         if ((Get-OneClickField $modelConfig 'mode') -cnotin @('demo', 'live', 'ollama')) { throw 'Saved model mode is invalid.' }
     }
-    foreach ($name in @('NC_GUI_CONFIG', 'NC_QQ_SESSION_CONFIG', 'NC_QQ_WATCHER_CONFIG', 'NC_QQ_DIRECT_CONFIG', 'NC_BOARD_CONFIG', 'NC_VOICE_CONFIG', 'NC_WEB_CONFIG')) {
+    foreach ($name in @('NC_GUI_CONFIG', 'NC_QQ_SESSION_CONFIG', 'NC_QQ_WATCHER_CONFIG', 'NC_QQ_DIRECT_CONFIG', 'NC_BOARD_CONFIG', 'NC_VOICE_CONFIG', 'NC_WEB_CONFIG', 'NC_LLM_FALLBACK_CONFIG')) {
         if ($bindings.ContainsKey($name) -and -not (Test-Path -LiteralPath $bindings[$name] -PathType Leaf)) { throw "Bound configuration is missing: $name" }
     }
     $tokenFile = Get-OneClickField $selected 'mistyai_token_file'

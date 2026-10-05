@@ -8,6 +8,7 @@ from pydantic import ValidationError
 
 from harness.core.models import RetrievalPlan, RetrievalQuery
 from harness.llm.client import LLMClient, MockLLM
+from harness.llm.structured import helper_options
 
 _SYSTEM = """Build a memory retrieval plan.
 Return JSON: {"time_scope": string|null, "entities": [string], "event_type": string|null,
@@ -31,6 +32,7 @@ class RetrievalPlanner:
             return rule_plan(query)
         try:
             raw = self.llm.complete_json(
+                **helper_options(self.llm, RetrievalPlan, "retrieval_plan"),
                 system=_SYSTEM,
                 user=str({"text": query.text, "entities": query.entities}),
             )

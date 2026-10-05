@@ -1,0 +1,507 @@
+{
+  "case_sha256": "76eae06c9395582ed9bd3e355753e3811dfd47513a9cc5a1dd8cffbcd752f573",
+  "models_and_vendor_match": true,
+  "quality": {
+    "clm-cpu": {
+      "correct": 32,
+      "total": 64,
+      "valid": 64,
+      "categories": {
+        "attribution": {
+          "correct": 6,
+          "total": 8,
+          "confusion": {
+            "A->A": 2,
+            "B->B": 1,
+            "M->M": 2,
+            "unknown->unknown": 1,
+            "B->A": 1,
+            "unknown->A": 1
+          }
+        },
+        "evidence": {
+          "correct": 8,
+          "total": 12,
+          "confusion": {
+            "support->support": 4,
+            "contradict->contradict": 4,
+            "insufficient->contradict": 3,
+            "insufficient->support": 1
+          }
+        },
+        "gate": {
+          "correct": 4,
+          "total": 12,
+          "confusion": {
+            "speak->speak": 4,
+            "wait->speak": 4,
+            "defer->speak": 3,
+            "speak->defer": 1
+          }
+        },
+        "noul": {
+          "correct": 7,
+          "total": 8,
+          "confusion": {
+            "True->True": 4,
+            "False->False": 3,
+            "False->True": 1
+          }
+        },
+        "retrieval": {
+          "correct": 2,
+          "total": 8,
+          "confusion": {
+            "b->none": 3,
+            "a->none": 1,
+            "c->none": 2,
+            "none->none": 1,
+            "a->a": 1
+          }
+        },
+        "score": {
+          "correct": 2,
+          "total": 8,
+          "confusion": {
+            "0->1": 2,
+            "1->2": 3,
+            "2->2": 2,
+            "0->2": 1
+          }
+        },
+        "tool": {
+          "correct": 3,
+          "total": 8,
+          "confusion": {
+            "web->web": 1,
+            "memory->none": 1,
+            "file->none": 2,
+            "none->none": 2,
+            "web->none": 1,
+            "memory->web": 1
+          }
+        }
+      }
+    },
+    "clm-5090": {
+      "correct": 32,
+      "total": 64,
+      "valid": 64,
+      "categories": {
+        "attribution": {
+          "correct": 6,
+          "total": 8,
+          "confusion": {
+            "A->A": 2,
+            "B->B": 1,
+            "M->M": 2,
+            "unknown->unknown": 1,
+            "B->A": 1,
+            "unknown->A": 1
+          }
+        },
+        "evidence": {
+          "correct": 8,
+          "total": 12,
+          "confusion": {
+            "support->support": 4,
+            "contradict->contradict": 4,
+            "insufficient->contradict": 3,
+            "insufficient->support": 1
+          }
+        },
+        "gate": {
+          "correct": 4,
+          "total": 12,
+          "confusion": {
+            "speak->speak": 4,
+            "wait->speak": 4,
+            "defer->speak": 3,
+            "speak->defer": 1
+          }
+        },
+        "noul": {
+          "correct": 7,
+          "total": 8,
+          "confusion": {
+            "True->True": 4,
+            "False->False": 3,
+            "False->True": 1
+          }
+        },
+        "retrieval": {
+          "correct": 2,
+          "total": 8,
+          "confusion": {
+            "b->none": 3,
+            "a->none": 1,
+            "c->none": 2,
+            "none->none": 1,
+            "a->a": 1
+          }
+        },
+        "score": {
+          "correct": 2,
+          "total": 8,
+          "confusion": {
+            "0->1": 2,
+            "1->2": 3,
+            "2->2": 2,
+            "0->2": 1
+          }
+        },
+        "tool": {
+          "correct": 3,
+          "total": 8,
+          "confusion": {
+            "web->web": 1,
+            "memory->web": 2,
+            "file->none": 2,
+            "none->none": 2,
+            "web->none": 1
+          }
+        }
+      }
+    },
+    "deepseek-none": {
+      "correct": 62,
+      "total": 64,
+      "valid": 64,
+      "categories": {
+        "attribution": {
+          "correct": 8,
+          "total": 8,
+          "confusion": {
+            "A->A": 2,
+            "B->B": 2,
+            "M->M": 2,
+            "unknown->unknown": 2
+          }
+        },
+        "evidence": {
+          "correct": 12,
+          "total": 12,
+          "confusion": {
+            "support->support": 4,
+            "contradict->contradict": 4,
+            "insufficient->insufficient": 4
+          }
+        },
+        "gate": {
+          "correct": 11,
+          "total": 12,
+          "confusion": {
+            "speak->speak": 5,
+            "wait->wait": 3,
+            "wait->defer": 1,
+            "defer->defer": 3
+          }
+        },
+        "noul": {
+          "correct": 8,
+          "total": 8,
+          "confusion": {
+            "True->True": 4,
+            "False->False": 4
+          }
+        },
+        "retrieval": {
+          "correct": 7,
+          "total": 8,
+          "confusion": {
+            "b->b": 3,
+            "a->a": 2,
+            "c->c": 1,
+            "none->none": 1,
+            "c->none": 1
+          }
+        },
+        "score": {
+          "correct": 8,
+          "total": 8,
+          "confusion": {
+            "0->0": 3,
+            "1->1": 3,
+            "2->2": 2
+          }
+        },
+        "tool": {
+          "correct": 8,
+          "total": 8,
+          "confusion": {
+            "web->web": 2,
+            "memory->memory": 2,
+            "file->file": 2,
+            "none->none": 2
+          }
+        }
+      }
+    },
+    "deepseek-low": {
+      "correct": 61,
+      "total": 64,
+      "valid": 63,
+      "categories": {
+        "attribution": {
+          "correct": 8,
+          "total": 8,
+          "confusion": {
+            "A->A": 2,
+            "B->B": 2,
+            "M->M": 2,
+            "unknown->unknown": 2
+          }
+        },
+        "evidence": {
+          "correct": 11,
+          "total": 12,
+          "confusion": {
+            "support->support": 4,
+            "contradict->contradict": 4,
+            "insufficient->insufficient": 3,
+            "insufficient->ERROR": 1
+          }
+        },
+        "gate": {
+          "correct": 11,
+          "total": 12,
+          "confusion": {
+            "speak->speak": 5,
+            "wait->wait": 3,
+            "wait->defer": 1,
+            "defer->defer": 3
+          }
+        },
+        "noul": {
+          "correct": 8,
+          "total": 8,
+          "confusion": {
+            "True->True": 4,
+            "False->False": 4
+          }
+        },
+        "retrieval": {
+          "correct": 7,
+          "total": 8,
+          "confusion": {
+            "b->b": 3,
+            "a->a": 2,
+            "c->c": 1,
+            "none->none": 1,
+            "c->none": 1
+          }
+        },
+        "score": {
+          "correct": 8,
+          "total": 8,
+          "confusion": {
+            "0->0": 3,
+            "1->1": 3,
+            "2->2": 2
+          }
+        },
+        "tool": {
+          "correct": 8,
+          "total": 8,
+          "confusion": {
+            "web->web": 2,
+            "memory->memory": 2,
+            "file->file": 2,
+            "none->none": 2
+          }
+        }
+      }
+    }
+  },
+  "performance": {
+    "clm-cpu": {
+      "uncached": {
+        "attempts": 10,
+        "successes": 10,
+        "failures": 0,
+        "p50_ms": 3941.6087,
+        "p95_ms": 3987.6032,
+        "p99_ms": 3987.6032,
+        "max_ms": 3987.6032,
+        "percentile_method": "nearest-rank; successful responses only; failures separately retained"
+      },
+      "candidates_cached_state_new": {
+        "attempts": 16,
+        "successes": 16,
+        "failures": 0,
+        "p50_ms": 1663.2207,
+        "p95_ms": 1724.379,
+        "p99_ms": 1724.379,
+        "max_ms": 1724.379,
+        "percentile_method": "nearest-rank; successful responses only; failures separately retained"
+      },
+      "fully_cached": {
+        "attempts": 30,
+        "successes": 30,
+        "failures": 0,
+        "p50_ms": 41.8233,
+        "p95_ms": 42.8395,
+        "p99_ms": 42.8442,
+        "max_ms": 42.8442,
+        "percentile_method": "nearest-rank; successful responses only; failures separately retained"
+      },
+      "concurrency2": {
+        "attempts": 16,
+        "successes": 16,
+        "failures": 0,
+        "p50_ms": 3362.8432,
+        "p95_ms": 3414.8857,
+        "p99_ms": 3414.8857,
+        "max_ms": 3414.8857,
+        "percentile_method": "nearest-rank; successful responses only; failures separately retained",
+        "wall_seconds": 26.972941125000943,
+        "successful_requests_per_second": 0.5931870731430827
+      },
+      "length_sweep": null
+    },
+    "clm-5090": {
+      "uncached": {
+        "attempts": 10,
+        "successes": 10,
+        "failures": 0,
+        "p50_ms": 123.0834,
+        "p95_ms": 127.2238,
+        "p99_ms": 127.2238,
+        "max_ms": 127.2238,
+        "percentile_method": "nearest-rank; successful responses only; failures separately retained"
+      },
+      "candidates_cached_state_new": {
+        "attempts": 16,
+        "successes": 16,
+        "failures": 0,
+        "p50_ms": 33.8366,
+        "p95_ms": 34.5738,
+        "p99_ms": 34.5738,
+        "max_ms": 34.5738,
+        "percentile_method": "nearest-rank; successful responses only; failures separately retained"
+      },
+      "fully_cached": {
+        "attempts": 30,
+        "successes": 30,
+        "failures": 0,
+        "p50_ms": 1.3876,
+        "p95_ms": 1.6528,
+        "p99_ms": 2.1916,
+        "max_ms": 2.1916,
+        "percentile_method": "nearest-rank; successful responses only; failures separately retained"
+      },
+      "concurrency2": {
+        "attempts": 16,
+        "successes": 16,
+        "failures": 0,
+        "p50_ms": 66.3326,
+        "p95_ms": 68.9912,
+        "p99_ms": 68.9912,
+        "max_ms": 68.9912,
+        "percentile_method": "nearest-rank; successful responses only; failures separately retained",
+        "wall_seconds": 0.5972916000173427,
+        "successful_requests_per_second": 26.787585828321426
+      },
+      "length_sweep": null
+    },
+    "deepseek-none-performance": {
+      "unique_state": {
+        "attempts": 16,
+        "usable": 16,
+        "failures": 0,
+        "p50_ms": 570.7804999838118,
+        "p95_ms": 1070.0535000069067,
+        "p99_ms": 1070.0535000069067,
+        "ttft_p50_ms": 503.9770999865141,
+        "note": "nearest-rank; complete schema-valid outputs only, failures retained",
+        "wall_seconds": 10.17198849999113,
+        "usable_requests_per_second": 1.5729471184531867
+      },
+      "repeated_state": {
+        "attempts": 30,
+        "usable": 30,
+        "failures": 0,
+        "p50_ms": 569.4043000112288,
+        "p95_ms": 895.9918000036851,
+        "p99_ms": 909.1843999922276,
+        "ttft_p50_ms": 446.03300001472235,
+        "note": "nearest-rank; complete schema-valid outputs only, failures retained",
+        "wall_seconds": 17.774084100004984,
+        "usable_requests_per_second": 1.6878506836811686
+      },
+      "concurrency2": {
+        "attempts": 16,
+        "usable": 16,
+        "failures": 0,
+        "p50_ms": 532.6697999844328,
+        "p95_ms": 777.2601000033319,
+        "p99_ms": 777.2601000033319,
+        "ttft_p50_ms": 472.97319999779575,
+        "note": "nearest-rank; complete schema-valid outputs only, failures retained",
+        "wall_seconds": 4.973751000012271,
+        "usable_requests_per_second": 3.2168880187127433
+      }
+    },
+    "deepseek-low-performance": {
+      "unique_state": {
+        "attempts": 16,
+        "usable": 16,
+        "failures": 0,
+        "p50_ms": 1025.6584000017028,
+        "p95_ms": 1419.5908000110649,
+        "p99_ms": 1419.5908000110649,
+        "ttft_p50_ms": 1003.1444000196643,
+        "note": "nearest-rank; complete schema-valid outputs only, failures retained",
+        "wall_seconds": 16.910347199998796,
+        "usable_requests_per_second": 0.9461662620387321
+      },
+      "repeated_state": {
+        "attempts": 30,
+        "usable": 30,
+        "failures": 0,
+        "p50_ms": 987.7945000189357,
+        "p95_ms": 1330.4267000057735,
+        "p99_ms": 1341.0755000077188,
+        "ttft_p50_ms": 971.2933000118937,
+        "note": "nearest-rank; complete schema-valid outputs only, failures retained",
+        "wall_seconds": 30.71327680000104,
+        "usable_requests_per_second": 0.9767762715568983
+      },
+      "concurrency2": {
+        "attempts": 16,
+        "usable": 16,
+        "failures": 0,
+        "p50_ms": 859.9717000033706,
+        "p95_ms": 1261.2339000042994,
+        "p99_ms": 1261.2339000042994,
+        "ttft_p50_ms": 833.0583999922965,
+        "note": "nearest-rank; complete schema-valid outputs only, failures retained",
+        "wall_seconds": 7.292477799986955,
+        "usable_requests_per_second": 2.1940416465893966
+      }
+    }
+  },
+  "differences": [
+    {
+      "id": "tool-02",
+      "expected": "memory",
+      "cpu": "none",
+      "gpu": "web"
+    }
+  ],
+  "performance_states_questions_match": true,
+  "artifact_sha256": {
+    "clm-5090-resources.json": "669b277564798065017c185b56f35f2ea8225d926706185a03441a3d0f9f726e",
+    "clm-5090.json": "a438f5dc00eb0af88c97d3e9875891c4ee8b0cb1500e9fd8358ad51c82776385",
+    "clm-cpu-resources.json": "517ffe30ff2498e9f246f76cc0123d5dd7c64110210e7c95f6c645ef5181c012",
+    "clm-cpu.json": "5db65ad58b59d85ecf0d1411ac7a2bafea0c43bb2b9d253dea07360883458a17",
+    "clm-diagnostics.json": "229c725a1a4db2fc9bc2b490b474bb4c539d278879d1561c9534accf04f7fe88",
+    "deepseek-length.json": "0f42ae6b2db468d7be0215229ed197dadf104c5db4bf340ccf805e8ab3eb1f52",
+    "deepseek-low-performance.json": "b08f995eaa78905bbb867a3569f7102d5f846c420fc1ddd9886f09d289c22460",
+    "deepseek-low.json": "017fe47ebcc7435e79ae9dd866c5a7d5b9a1116333b8bc0198441e396b412280",
+    "deepseek-none-performance.json": "bd9d27b002060a930d703381ccfc5eb0da1250615d923da3b9b76b96bea25358",
+    "deepseek-none.json": "e2cc5b7a1d151f9c7433fe591eef049cc0f1e7acc0c1a8844815929148c0cde6",
+    "deepseek-reply-contract.json": "e1286cdfe45747b1eb79dcb026da96ee29b739a25ea3cfbe9133dc70783b10ba",
+    "model-manifest.json": "f6497c174b25d34bcc1cc9faadceeaef0465e81b71d6460a566d4a3d045d5896"
+  }
+}

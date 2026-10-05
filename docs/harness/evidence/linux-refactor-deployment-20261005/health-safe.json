@@ -1,0 +1,157 @@
+{
+  "release": "/opt/neuralcloud/releases/20261005-refactor-130601",
+  "services": {
+    "cognitive": {
+      "MainPID": "120922",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "homeostasis": {
+      "MainPID": "121341",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "runtime": {
+      "MainPID": "121396",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "gui": {
+      "MainPID": "122305",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "board": {
+      "MainPID": "121387",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "qq_direct": {
+      "MainPID": "122332",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    }
+  },
+  "cognitive": {
+    "healthy": true
+  },
+  "homeostasis": {
+    "healthy": true
+  },
+  "runtime": {
+    "lifecycle": "RUNNING",
+    "health": {
+      "lifecycle": "RUNNING",
+      "journal_writable": true,
+      "cognitive_healthy": true,
+      "homeostasis_healthy": true,
+      "llm_healthy": true,
+      "body_healthy": true,
+      "degraded_reasons": [],
+      "last_heartbeat_at": "2026-10-05T13:37:06.554498Z",
+      "last_journal_append_at": "2026-10-05T13:37:09.996570Z",
+      "embodiment": {
+        "state": "disabled",
+        "provider_id": null,
+        "body_instance_id": null,
+        "activated_capabilities": [],
+        "effective_capabilities": [],
+        "negotiated": null,
+        "health": null,
+        "reason": "embodiment disabled by manifest"
+      },
+      "agency_state": "AVAILABLE",
+      "body_episode_id": null,
+      "body_revision": null,
+      "body_state_age_seconds": null
+    },
+    "recovery": {
+      "mode": "strict",
+      "fallback_reason": null,
+      "checkpoint_seq": 751413,
+      "checkpoint_at": "2026-10-05T13:36:53.830457+00:00",
+      "checkpoint_age_seconds": 16.300613,
+      "projected_seq": 751431,
+      "cache_lag": 18,
+      "persistent": true,
+      "error": null,
+      "pending": {
+        "events": 467,
+        "commands": 0,
+        "actions": 0
+      },
+      "timings": {
+        "journal_open_seconds": 97.70702701799746,
+        "runtime_indexes_seconds": 0.0014681339962407947,
+        "module_recovery_seconds": 0.004214763001073152,
+        "service_checks_seconds": 0.25989422800194006,
+        "homeostasis_reconcile_seconds": 9.200900240102783e-05,
+        "cognitive_reconcile_seconds": 2.3161999706644565e-05,
+        "action_reconcile_seconds": 0.00010713699884945527,
+        "pending_events_seconds": 2.256758911003999,
+        "boot_seconds": 2.5263076039991574
+      },
+      "replayed_records": 749099,
+      "audit": {
+        "state": "scheduled"
+      },
+      "monitor": {
+        "backfill_state": "complete",
+        "cursor": 751428,
+        "lag": 3
+      }
+    },
+    "pending_actions": 0,
+    "pending_events": 0,
+    "manifest_revision": 5
+  },
+  "gui": {
+    "runtime_lifecycle": "RUNNING"
+  },
+  "board": {
+    "status": "healthy"
+  },
+  "qq_direct": {
+    "running": true,
+    "connected": true,
+    "heartbeat_at": "2026-10-05T13:37:08.380944+00:00",
+    "repository_root": "/opt/neuralcloud/releases/20261005-refactor-130601",
+    "pid": 122332
+  },
+  "main_model": {
+    "mode": "live",
+    "base_url": "http://192.168.1.105:8080/v1",
+    "model": "qwen3.8-27b",
+    "reachable": true,
+    "api_key_configured": true,
+    "fallback": {
+      "enabled": true,
+      "model": "deepseek-v4-flash",
+      "base_url": "https://api.deepseek.com/v1",
+      "primary_timeout_seconds": 20.0
+    },
+    "aux": {
+      "base_url": "http://127.0.0.1:11435/v1",
+      "model": "qwen3:4b-instruct-2507-q4_K_M",
+      "reachable": true,
+      "preloaded": true,
+      "active": true
+    },
+    "qq_memory": {
+      "base_url": "https://api.deepseek.com",
+      "model": "deepseek-v4-flash"
+    },
+    "embedding": {
+      "backend": "mock",
+      "reachable": false,
+      "base_url": "http://127.0.0.1:8080/v1",
+      "model": "bge-m3"
+    }
+  }
+}

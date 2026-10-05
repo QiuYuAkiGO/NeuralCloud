@@ -1,0 +1,4835 @@
+{
+  "schema_version": "deepseek-clm-comparison-v1",
+  "started_at": "2026-10-05T08:23:20.452991+00:00",
+  "completed": true,
+  "model_requested": "deepseek-flash",
+  "effort": "none",
+  "format": "json_schema",
+  "endpoint": "https://api.deepseek.com/responses",
+  "network": "direct HTTPS; trust_env=False; reused client",
+  "case_sha256": "76eae06c9395582ed9bd3e355753e3811dfd47513a9cc5a1dd8cffbcd752f573",
+  "runner_sha256": "fd77bd75cfd8c4bbcd8cb9736418e7824938107065df02531515b101d0186880",
+  "synthetic": true,
+  "live_qq": false,
+  "automatic_retries": 0,
+  "cache_caveat": "Provider KV cache is automatic; repeated requests still generate output, unlike CLM full-result vector cache.",
+  "quality": [
+    {
+      "phase": "quality",
+      "case_id": "gate-01",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 768.7154000159353,
+      "headers_ms": 400.6892000033986,
+      "response_model": "deepseek-flash",
+      "response_id": "9e58b713-3b9d-4910-ae2a-e8ed9fb7ed95",
+      "usage": {
+        "input_tokens": 264,
+        "input_tokens_details": {
+          "cached_tokens": 128
+        },
+        "output_tokens": 7,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 271
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"speak\"}",
+      "parsed": {
+        "decision": "speak"
+      },
+      "elapsed_ms": 938.1568999961019,
+      "category": "gate",
+      "expected": "speak",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-02",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"私聊用户说：请现在回答，二加二等于几？没有其他待办。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 899.3737999990117,
+      "headers_ms": 561.422600003425,
+      "response_model": "deepseek-flash",
+      "response_id": "8011d6d2-ffb1-4882-a01f-db9248ba5d73",
+      "usage": {
+        "input_tokens": 262,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 7,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 269
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"speak\"}",
+      "parsed": {
+        "decision": "speak"
+      },
+      "elapsed_ms": 963.7417999911122,
+      "category": "gate",
+      "expected": "speak",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-03",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：我先记个备忘，你不用回复。这条消息没有问题。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 493.04050000500865,
+      "headers_ms": 407.95670001534745,
+      "response_model": "deepseek-flash",
+      "response_id": "4d4e809e-66a6-4195-9763-cb291aa18713",
+      "usage": {
+        "input_tokens": 257,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 263
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"wait\"}",
+      "parsed": {
+        "decision": "wait"
+      },
+      "elapsed_ms": 629.5267000095919,
+      "category": "gate",
+      "expected": "wait",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-04",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：下面我会连续发三段，在我说发完之前先别回复。目前只收到第一段。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 746.5300000039861,
+      "headers_ms": 412.14749999926426,
+      "response_model": "deepseek-flash",
+      "response_id": "53f33b33-1644-4d09-ba3d-dc39885280ef",
+      "usage": {
+        "input_tokens": 266,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 7,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 273
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"defer\"}",
+      "parsed": {
+        "decision": "defer"
+      },
+      "elapsed_ms": 835.5093999998644,
+      "category": "gate",
+      "expected": "wait",
+      "correct": false
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-05",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：等我下课后再回答这个问题，我会告诉你下课了。目前还没有下课消息。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 797.4697000172455,
+      "headers_ms": 491.1772000195924,
+      "response_model": "deepseek-flash",
+      "response_id": "e046fe36-ba6d-40d8-b69a-eae2bd9d0bca",
+      "usage": {
+        "input_tokens": 261,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 7,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 268
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"defer\"}",
+      "parsed": {
+        "decision": "defer"
+      },
+      "elapsed_ms": 876.1187000200152,
+      "category": "gate",
+      "expected": "defer",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-06",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：等文件上传完成后再给我处理结果。目前文件尚未上传完成。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 770.663200004492,
+      "headers_ms": 357.2836999956053,
+      "response_model": "deepseek-flash",
+      "response_id": "2a1e87d9-1613-4f61-b8f3-64779f4c1c7e",
+      "usage": {
+        "input_tokens": 260,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 7,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 267
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"defer\"}",
+      "parsed": {
+        "decision": "defer"
+      },
+      "elapsed_ms": 962.1220999979414,
+      "category": "gate",
+      "expected": "defer",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-07",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户之前要求等他说发完再回答。现在用户说：发完了，请总结上面内容。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 974.5704999950249,
+      "headers_ms": 406.88460000092164,
+      "response_model": "deepseek-flash",
+      "response_id": "aad6c85a-6ff4-4b69-a1f7-976bcf406569",
+      "usage": {
+        "input_tokens": 264,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 7,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 271
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"speak\"}",
+      "parsed": {
+        "decision": "speak"
+      },
+      "elapsed_ms": 1033.3814999903552,
+      "category": "gate",
+      "expected": "speak",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-08",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"群成员甲对乙说：乙，今天你值班吗？小雾没有被提及，没有待办，也没有需要介入的问题。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 461.1822000006214,
+      "headers_ms": 375.0564999936614,
+      "response_model": "deepseek-flash",
+      "response_id": "4d028a4f-4082-42ed-86ca-260023fbd6bc",
+      "usage": {
+        "input_tokens": 270,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 276
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"wait\"}",
+      "parsed": {
+        "decision": "wait"
+      },
+      "elapsed_ms": 529.1299999807961,
+      "category": "gate",
+      "expected": "wait",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-09",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户明确说：请先保持安静，我要休息，不需要晚安或确认消息。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 494.0751999965869,
+      "headers_ms": 327.0198999962304,
+      "response_model": "deepseek-flash",
+      "response_id": "17b239e4-f27d-478b-983a-5c9101fd6e50",
+      "usage": {
+        "input_tokens": 260,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 266
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"wait\"}",
+      "parsed": {
+        "decision": "wait"
+      },
+      "elapsed_ms": 587.4331000086386,
+      "category": "gate",
+      "expected": "wait",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-10",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：我现在需要帮助，请告诉我如何找回刚才保存的文件。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 915.9826999821234,
+      "headers_ms": 444.5730999868829,
+      "response_model": "deepseek-flash",
+      "response_id": "b526146b-68d4-496b-94f0-7f5dfdea17c5",
+      "usage": {
+        "input_tokens": 257,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 7,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 264
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"speak\"}",
+      "parsed": {
+        "decision": "speak"
+      },
+      "elapsed_ms": 982.2153999994043,
+      "category": "gate",
+      "expected": "speak",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-11",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：不用马上解释，等明天我再次问你时再答。现在还是当天。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 907.8255999775138,
+      "headers_ms": 340.0734000024386,
+      "response_model": "deepseek-flash",
+      "response_id": "2951d1aa-c035-4f1a-8795-681474bc5d93",
+      "usage": {
+        "input_tokens": 262,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 7,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 269
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"defer\"}",
+      "parsed": {
+        "decision": "defer"
+      },
+      "elapsed_ms": 1012.0707000023685,
+      "category": "gate",
+      "expected": "defer",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "gate-12",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户刚说：刚才让你不回复的要求取消了，现在请回答我的问题。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 992.918500007363,
+      "headers_ms": 393.469600006938,
+      "response_model": "deepseek-flash",
+      "response_id": "7d478398-673c-4f52-838a-b93b6e27a9ef",
+      "usage": {
+        "input_tokens": 259,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 7,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 266
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"speak\"}",
+      "parsed": {
+        "decision": "speak"
+      },
+      "elapsed_ms": 1039.21590000391,
+      "category": "gate",
+      "expected": "speak",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-01",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"甲今天说：我喜欢红茶。\", \"待判断命题\": \"甲今天自述喜欢红茶。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 489.5988999924157,
+      "headers_ms": 363.3886000025086,
+      "response_model": "deepseek-flash",
+      "response_id": "946ba100-ab06-487a-83dd-9ea93bf14bcc",
+      "usage": {
+        "input_tokens": 264,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 270
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"support\"}",
+      "parsed": {
+        "decision": "support"
+      },
+      "elapsed_ms": 640.1545999979135,
+      "category": "evidence",
+      "expected": "support",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-02",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"甲今天说：我不喜欢红茶。\", \"待判断命题\": \"甲今天自述喜欢红茶。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 749.2121999966912,
+      "headers_ms": 419.3880000093486,
+      "response_model": "deepseek-flash",
+      "response_id": "49331a26-8496-4ada-a647-205c5d8511d3",
+      "usage": {
+        "input_tokens": 265,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 8,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 273
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"contradict\"}",
+      "parsed": {
+        "decision": "contradict"
+      },
+      "elapsed_ms": 830.8030999905895,
+      "category": "evidence",
+      "expected": "contradict",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-03",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"乙今天说：我喜欢红茶。\", \"待判断命题\": \"甲今天自述喜欢红茶。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 910.6614000047557,
+      "headers_ms": 316.55019999016076,
+      "response_model": "deepseek-flash",
+      "response_id": "07516119-ae6d-4491-837e-33eeb9d6dd38",
+      "usage": {
+        "input_tokens": 264,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 7,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 271
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"insufficient\"}",
+      "parsed": {
+        "decision": "insufficient"
+      },
+      "elapsed_ms": 1073.377900000196,
+      "category": "evidence",
+      "expected": "insufficient",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-04",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"甲说：我打算明天完成报告。\", \"待判断命题\": \"甲已经完成报告。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 728.2512999954633,
+      "headers_ms": 393.16569999209605,
+      "response_model": "deepseek-flash",
+      "response_id": "b46536f2-6eee-4a2c-9868-a7c0e65d6aa2",
+      "usage": {
+        "input_tokens": 264,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 7,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 271
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"insufficient\"}",
+      "parsed": {
+        "decision": "insufficient"
+      },
+      "elapsed_ms": 795.1631000032648,
+      "category": "evidence",
+      "expected": "insufficient",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-05",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"甲说：我已经完成报告了。\", \"待判断命题\": \"甲自述报告已经完成。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 949.043900007382,
+      "headers_ms": 448.33339998149313,
+      "response_model": "deepseek-flash",
+      "response_id": "e3768603-234f-46aa-a7ac-3c9288adf795",
+      "usage": {
+        "input_tokens": 265,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 271
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"support\"}",
+      "parsed": {
+        "decision": "support"
+      },
+      "elapsed_ms": 1188.704800006235,
+      "category": "evidence",
+      "expected": "support",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-06",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"甲说：报告还没有做完。\", \"待判断命题\": \"甲自述报告已经完成。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 200.0533000100404,
+      "headers_ms": 138.17640001070686,
+      "response_model": "deepseek-flash",
+      "response_id": "01c493d3-a275-4db9-b8ab-8914672a495e",
+      "usage": {
+        "input_tokens": 264,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 8,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 272
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"contradict\"}",
+      "parsed": {
+        "decision": "contradict"
+      },
+      "elapsed_ms": 277.07909999298863,
+      "category": "evidence",
+      "expected": "contradict",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-07",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"甲说：如果下雨，我会带伞。没有天气或出行记录。\", \"待判断命题\": \"甲今天带了伞。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 963.8716999907047,
+      "headers_ms": 91.93450000020675,
+      "response_model": "deepseek-flash",
+      "response_id": "734d407e-09da-44e6-aa35-4a22734891bf",
+      "usage": {
+        "input_tokens": 271,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 7,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 278
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"insufficient\"}",
+      "parsed": {
+        "decision": "insufficient"
+      },
+      "elapsed_ms": 1169.1432000079658,
+      "category": "evidence",
+      "expected": "insufficient",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-08",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"甲说：更正一下，我现在住苏州，不住上海了。\", \"待判断命题\": \"甲现在自述居住在苏州。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 848.7193999753799,
+      "headers_ms": 329.63689998723567,
+      "response_model": "deepseek-flash",
+      "response_id": "5c84d704-f549-48e3-8765-9c03028c610c",
+      "usage": {
+        "input_tokens": 271,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 277
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"support\"}",
+      "parsed": {
+        "decision": "support"
+      },
+      "elapsed_ms": 948.0315999826416,
+      "category": "evidence",
+      "expected": "support",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-09",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"甲说：更正一下，我现在住苏州，不住上海了。\", \"待判断命题\": \"甲现在自述居住在上海。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 664.5035000110511,
+      "headers_ms": 295.967699988978,
+      "response_model": "deepseek-flash",
+      "response_id": "bc08f28a-2c7d-4f40-901a-7790addc3945",
+      "usage": {
+        "input_tokens": 271,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 8,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 279
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"contradict\"}",
+      "parsed": {
+        "decision": "contradict"
+      },
+      "elapsed_ms": 714.7594999987632,
+      "category": "evidence",
+      "expected": "contradict",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-10",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"小雾对甲说：我可以帮你写报告。\", \"待判断命题\": \"甲本人自述喜欢写报告。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 685.4603000101633,
+      "headers_ms": 100.98079999443144,
+      "response_model": "deepseek-flash",
+      "response_id": "d93adebd-63cf-4461-bd08-a61347368654",
+      "usage": {
+        "input_tokens": 269,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 7,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 276
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"insufficient\"}",
+      "parsed": {
+        "decision": "insufficient"
+      },
+      "elapsed_ms": 803.3142999920528,
+      "category": "evidence",
+      "expected": "insufficient",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-11",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"消息发送系统返回已送达回执，消息ID为m1。\", \"待判断命题\": \"消息m1已经被系统确认送达。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 617.5877999921795,
+      "headers_ms": 127.48639998608269,
+      "response_model": "deepseek-flash",
+      "response_id": "6acba416-2583-468c-a021-6544c7f9a706",
+      "usage": {
+        "input_tokens": 273,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 279
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"support\"}",
+      "parsed": {
+        "decision": "support"
+      },
+      "elapsed_ms": 713.1899000087287,
+      "category": "evidence",
+      "expected": "support",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "evidence-12",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"support\", \"contradict\", \"insufficient\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"原始证据\": \"消息m1发送失败，系统明确返回未投递。\", \"待判断命题\": \"消息m1已经被系统确认送达。\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"原始证据与待判断命题是什么关系？\", \"criteria\": {\"support\": \"原始证据直接支持待判断命题。\", \"contradict\": \"原始证据直接否定待判断命题。\", \"insufficient\": \"原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "contradict",
+                    "insufficient"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 708.3061000157613,
+      "headers_ms": 280.73399999993853,
+      "response_model": "deepseek-flash",
+      "response_id": "02764271-4d1c-47a8-865d-e6034870a4de",
+      "usage": {
+        "input_tokens": 271,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 8,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 279
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"contradict\"}",
+      "parsed": {
+        "decision": "contradict"
+      },
+      "elapsed_ms": 782.6919000071939,
+      "category": "evidence",
+      "expected": "contradict",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "attribution-01",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"A\", \"B\", \"M\", \"unknown\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"消息作者账号A，原文：我现在想喝水。\", \"question\": {\"type\": \"choice\", \"instructions\": \"这段第一人称内容可归为谁自己的明确自述？\", \"criteria\": {\"A\": \"账号A自己的明确自述。\", \"B\": \"账号B自己的明确自述。\", \"M\": \"小雾自己的明确自述。\", \"unknown\": \"无法确定是这些对象中谁的自述。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "M",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 490.5317999946419,
+      "headers_ms": 271.860699984245,
+      "response_model": "deepseek-flash",
+      "response_id": "b60df249-a940-49c9-a06c-a69f2c4dac7d",
+      "usage": {
+        "input_tokens": 253,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 259
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"A\"}",
+      "parsed": {
+        "decision": "A"
+      },
+      "elapsed_ms": 557.2832000034396,
+      "category": "attribution",
+      "expected": "A",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "attribution-02",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"A\", \"B\", \"M\", \"unknown\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"消息作者账号B，原文：我现在想喝水。\", \"question\": {\"type\": \"choice\", \"instructions\": \"这段第一人称内容可归为谁自己的明确自述？\", \"criteria\": {\"A\": \"账号A自己的明确自述。\", \"B\": \"账号B自己的明确自述。\", \"M\": \"小雾自己的明确自述。\", \"unknown\": \"无法确定是这些对象中谁的自述。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "M",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 979.6500000229571,
+      "headers_ms": 323.76850000582635,
+      "response_model": "deepseek-flash",
+      "response_id": "9314c885-369d-4401-b623-34b42d9f42ba",
+      "usage": {
+        "input_tokens": 253,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 259
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"B\"}",
+      "parsed": {
+        "decision": "B"
+      },
+      "elapsed_ms": 1008.2249000261072,
+      "category": "attribution",
+      "expected": "B",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "attribution-03",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"A\", \"B\", \"M\", \"unknown\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"消息作者小雾，原文：我想去看展。\", \"question\": {\"type\": \"choice\", \"instructions\": \"这段第一人称内容可归为谁自己的明确自述？\", \"criteria\": {\"A\": \"账号A自己的明确自述。\", \"B\": \"账号B自己的明确自述。\", \"M\": \"小雾自己的明确自述。\", \"unknown\": \"无法确定是这些对象中谁的自述。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "M",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 852.3373000207357,
+      "headers_ms": 306.80620000930503,
+      "response_model": "deepseek-flash",
+      "response_id": "f5cbb168-f316-4c7a-9703-b0ed5727d00d",
+      "usage": {
+        "input_tokens": 253,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 259
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"M\"}",
+      "parsed": {
+        "decision": "M"
+      },
+      "elapsed_ms": 944.0354999969713,
+      "category": "attribution",
+      "expected": "M",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "attribution-04",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"A\", \"B\", \"M\", \"unknown\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"匿名消息，原文：我喜欢猫。没有作者信息。\", \"question\": {\"type\": \"choice\", \"instructions\": \"这段第一人称内容可归为谁自己的明确自述？\", \"criteria\": {\"A\": \"账号A自己的明确自述。\", \"B\": \"账号B自己的明确自述。\", \"M\": \"小雾自己的明确自述。\", \"unknown\": \"无法确定是这些对象中谁的自述。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "M",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 705.2065999887418,
+      "headers_ms": 312.75869999080896,
+      "response_model": "deepseek-flash",
+      "response_id": "5d416b37-f02d-4b7c-bf39-68d922c22ee0",
+      "usage": {
+        "input_tokens": 254,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 260
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"unknown\"}",
+      "parsed": {
+        "decision": "unknown"
+      },
+      "elapsed_ms": 785.3512000001501,
+      "category": "attribution",
+      "expected": "unknown",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "attribution-05",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"A\", \"B\", \"M\", \"unknown\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"账号A和账号B都叫小林。消息的协议作者ID为B，原文：我今天搬家了。\", \"question\": {\"type\": \"choice\", \"instructions\": \"这段第一人称内容可归为谁自己的明确自述？\", \"criteria\": {\"A\": \"账号A自己的明确自述。\", \"B\": \"账号B自己的明确自述。\", \"M\": \"小雾自己的明确自述。\", \"unknown\": \"无法确定是这些对象中谁的自述。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "M",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 873.7662000057753,
+      "headers_ms": 360.04030000185594,
+      "response_model": "deepseek-flash",
+      "response_id": "532e2394-5dea-44a3-8e80-45875c503236",
+      "usage": {
+        "input_tokens": 265,
+        "input_tokens_details": {
+          "cached_tokens": 128
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 271
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"B\"}",
+      "parsed": {
+        "decision": "B"
+      },
+      "elapsed_ms": 1388.022800005274,
+      "category": "attribution",
+      "expected": "B",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "attribution-06",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"A\", \"B\", \"M\", \"unknown\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"账号A和账号B都叫小林。消息的协议作者ID为A，原文：我今天搬家了。\", \"question\": {\"type\": \"choice\", \"instructions\": \"这段第一人称内容可归为谁自己的明确自述？\", \"criteria\": {\"A\": \"账号A自己的明确自述。\", \"B\": \"账号B自己的明确自述。\", \"M\": \"小雾自己的明确自述。\", \"unknown\": \"无法确定是这些对象中谁的自述。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "M",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 770.3387999790721,
+      "headers_ms": 339.4428999745287,
+      "response_model": "deepseek-flash",
+      "response_id": "cc0e6756-6766-4841-956a-64272ab654f6",
+      "usage": {
+        "input_tokens": 265,
+        "input_tokens_details": {
+          "cached_tokens": 128
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 271
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"A\"}",
+      "parsed": {
+        "decision": "A"
+      },
+      "elapsed_ms": 869.3352999980561,
+      "category": "attribution",
+      "expected": "A",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "attribution-07",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"A\", \"B\", \"M\", \"unknown\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"账号A引用了一句没有署名的话：我讨厌下雨。A没有表明自己同意这句话。\", \"question\": {\"type\": \"choice\", \"instructions\": \"这段第一人称内容可归为谁自己的明确自述？\", \"criteria\": {\"A\": \"账号A自己的明确自述。\", \"B\": \"账号B自己的明确自述。\", \"M\": \"小雾自己的明确自述。\", \"unknown\": \"无法确定是这些对象中谁的自述。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "M",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 1072.1747999778017,
+      "headers_ms": 415.47259999788366,
+      "response_model": "deepseek-flash",
+      "response_id": "3806fb73-6028-4124-b6e0-253083bb2da1",
+      "usage": {
+        "input_tokens": 261,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 267
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"unknown\"}",
+      "parsed": {
+        "decision": "unknown"
+      },
+      "elapsed_ms": 1072.5130999926478,
+      "category": "attribution",
+      "expected": "unknown",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "attribution-08",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"A\", \"B\", \"M\", \"unknown\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"小雾说：我是小雾，我现在选择休息。该消息作者ID为M。\", \"question\": {\"type\": \"choice\", \"instructions\": \"这段第一人称内容可归为谁自己的明确自述？\", \"criteria\": {\"A\": \"账号A自己的明确自述。\", \"B\": \"账号B自己的明确自述。\", \"M\": \"小雾自己的明确自述。\", \"unknown\": \"无法确定是这些对象中谁的自述。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "B",
+                    "M",
+                    "unknown"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 1050.2639000187628,
+      "headers_ms": 350.22059999755584,
+      "response_model": "deepseek-flash",
+      "response_id": "7cd5b007-987b-4c28-ac0f-36227c4711ed",
+      "usage": {
+        "input_tokens": 261,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 267
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"M\"}",
+      "parsed": {
+        "decision": "M"
+      },
+      "elapsed_ms": 1054.5266999979503,
+      "category": "attribution",
+      "expected": "M",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "tool-01",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"web\", \"memory\", \"file\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户问：帮我查一下今天杭州的天气。允许查询公开网页。\", \"question\": {\"type\": \"choice\", \"instructions\": \"哪个已有工具最适合当前请求？没有合法适用工具时选择none。\", \"criteria\": {\"web\": \"查询公开互联网，获取当前公开信息。\", \"memory\": \"查询已经授权的本地对话记忆。\", \"file\": \"读取用户本轮已上传并授权处理的文件。\", \"none\": \"不需要上述工具，或当前没有满足请求所需的授权和输入。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "web",
+                    "memory",
+                    "file",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 652.5763999961782,
+      "headers_ms": 302.43839998729527,
+      "response_model": "deepseek-flash",
+      "response_id": "55af8076-2b15-45c4-9d40-c86d561d4f13",
+      "usage": {
+        "input_tokens": 269,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 275
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"web\"}",
+      "parsed": {
+        "decision": "web"
+      },
+      "elapsed_ms": 720.9476999996696,
+      "category": "tool",
+      "expected": "web",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "tool-02",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"web\", \"memory\", \"file\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户问：我上周告诉你的茶叶名字是什么？相关聊天记忆允许查询。\", \"question\": {\"type\": \"choice\", \"instructions\": \"哪个已有工具最适合当前请求？没有合法适用工具时选择none。\", \"criteria\": {\"web\": \"查询公开互联网，获取当前公开信息。\", \"memory\": \"查询已经授权的本地对话记忆。\", \"file\": \"读取用户本轮已上传并授权处理的文件。\", \"none\": \"不需要上述工具，或当前没有满足请求所需的授权和输入。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "web",
+                    "memory",
+                    "file",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 730.5843999783974,
+      "headers_ms": 101.89449999597855,
+      "response_model": "deepseek-flash",
+      "response_id": "5c80c614-0bbb-4be1-af26-f63d0bf84778",
+      "usage": {
+        "input_tokens": 270,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 276
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"memory\"}",
+      "parsed": {
+        "decision": "memory"
+      },
+      "elapsed_ms": 839.1609999816865,
+      "category": "tool",
+      "expected": "memory",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "tool-03",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"web\", \"memory\", \"file\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户已上传report.txt并要求：总结这个文件。文件可读且已授权。\", \"question\": {\"type\": \"choice\", \"instructions\": \"哪个已有工具最适合当前请求？没有合法适用工具时选择none。\", \"criteria\": {\"web\": \"查询公开互联网，获取当前公开信息。\", \"memory\": \"查询已经授权的本地对话记忆。\", \"file\": \"读取用户本轮已上传并授权处理的文件。\", \"none\": \"不需要上述工具，或当前没有满足请求所需的授权和输入。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "web",
+                    "memory",
+                    "file",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 464.9994999927003,
+      "headers_ms": 195.2160999935586,
+      "response_model": "deepseek-flash",
+      "response_id": "5dcb75d0-5fa8-46ab-afc3-13a3da0ec960",
+      "usage": {
+        "input_tokens": 271,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 277
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"file\"}",
+      "parsed": {
+        "decision": "file"
+      },
+      "elapsed_ms": 586.5154000057373,
+      "category": "tool",
+      "expected": "file",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "tool-04",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"web\", \"memory\", \"file\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：你好，小雾。没有提出查询或处理任务。\", \"question\": {\"type\": \"choice\", \"instructions\": \"哪个已有工具最适合当前请求？没有合法适用工具时选择none。\", \"criteria\": {\"web\": \"查询公开互联网，获取当前公开信息。\", \"memory\": \"查询已经授权的本地对话记忆。\", \"file\": \"读取用户本轮已上传并授权处理的文件。\", \"none\": \"不需要上述工具，或当前没有满足请求所需的授权和输入。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "web",
+                    "memory",
+                    "file",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 329.2040999804158,
+      "headers_ms": 68.80999999702908,
+      "response_model": "deepseek-flash",
+      "response_id": "06bc02d0-abd0-4539-9674-b20caa4128a4",
+      "usage": {
+        "input_tokens": 268,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 274
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"none\"}",
+      "parsed": {
+        "decision": "none"
+      },
+      "elapsed_ms": 394.92900000186637,
+      "category": "tool",
+      "expected": "none",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "tool-05",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"web\", \"memory\", \"file\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户要求查看乙的私聊，但没有乙的授权。候选工具都不允许访问他人的私聊。\", \"question\": {\"type\": \"choice\", \"instructions\": \"哪个已有工具最适合当前请求？没有合法适用工具时选择none。\", \"criteria\": {\"web\": \"查询公开互联网，获取当前公开信息。\", \"memory\": \"查询已经授权的本地对话记忆。\", \"file\": \"读取用户本轮已上传并授权处理的文件。\", \"none\": \"不需要上述工具，或当前没有满足请求所需的授权和输入。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "web",
+                    "memory",
+                    "file",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 683.4033999766689,
+      "headers_ms": 151.6041999857407,
+      "response_model": "deepseek-flash",
+      "response_id": "a793eb70-29f1-489d-8a8e-d32b84600cdf",
+      "usage": {
+        "input_tokens": 275,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 281
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"none\"}",
+      "parsed": {
+        "decision": "none"
+      },
+      "elapsed_ms": 787.905100005446,
+      "category": "tool",
+      "expected": "none",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "tool-06",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"web\", \"memory\", \"file\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户问：请查询某产品官网现在公开的发布公告。\", \"question\": {\"type\": \"choice\", \"instructions\": \"哪个已有工具最适合当前请求？没有合法适用工具时选择none。\", \"criteria\": {\"web\": \"查询公开互联网，获取当前公开信息。\", \"memory\": \"查询已经授权的本地对话记忆。\", \"file\": \"读取用户本轮已上传并授权处理的文件。\", \"none\": \"不需要上述工具，或当前没有满足请求所需的授权和输入。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "web",
+                    "memory",
+                    "file",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 495.4002999875229,
+      "headers_ms": 171.76929998095147,
+      "response_model": "deepseek-flash",
+      "response_id": "cb6efe55-3e5b-4e56-b001-e50624c6db67",
+      "usage": {
+        "input_tokens": 267,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 273
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"web\"}",
+      "parsed": {
+        "decision": "web"
+      },
+      "elapsed_ms": 562.8437999985181,
+      "category": "tool",
+      "expected": "web",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "tool-07",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"web\", \"memory\", \"file\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户问：我之前明确让你记住的生日是几月几号？只查询我授权的记忆。\", \"question\": {\"type\": \"choice\", \"instructions\": \"哪个已有工具最适合当前请求？没有合法适用工具时选择none。\", \"criteria\": {\"web\": \"查询公开互联网，获取当前公开信息。\", \"memory\": \"查询已经授权的本地对话记忆。\", \"file\": \"读取用户本轮已上传并授权处理的文件。\", \"none\": \"不需要上述工具，或当前没有满足请求所需的授权和输入。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "web",
+                    "memory",
+                    "file",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 679.1116000094917,
+      "headers_ms": 222.42289999849163,
+      "response_model": "deepseek-flash",
+      "response_id": "0345bf84-000d-4401-a54f-179827db766a",
+      "usage": {
+        "input_tokens": 274,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 280
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"memory\"}",
+      "parsed": {
+        "decision": "memory"
+      },
+      "elapsed_ms": 753.3871000050567,
+      "category": "tool",
+      "expected": "memory",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "tool-08",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"web\", \"memory\", \"file\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：统计我刚上传的CSV有多少行。CSV已经接收并授权读取。\", \"question\": {\"type\": \"choice\", \"instructions\": \"哪个已有工具最适合当前请求？没有合法适用工具时选择none。\", \"criteria\": {\"web\": \"查询公开互联网，获取当前公开信息。\", \"memory\": \"查询已经授权的本地对话记忆。\", \"file\": \"读取用户本轮已上传并授权处理的文件。\", \"none\": \"不需要上述工具，或当前没有满足请求所需的授权和输入。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "web",
+                    "memory",
+                    "file",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 725.8979000034742,
+      "headers_ms": 242.49870001222007,
+      "response_model": "deepseek-flash",
+      "response_id": "f5f43eb5-e868-4c22-aa7f-f7ea23cf1d24",
+      "usage": {
+        "input_tokens": 273,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 279
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"file\"}",
+      "parsed": {
+        "decision": "file"
+      },
+      "elapsed_ms": 829.2733000125736,
+      "category": "tool",
+      "expected": "file",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "retrieval-01",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"a\", \"b\", \"c\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"检索问题\": \"甲最近更正后的茶饮偏好是什么？\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"选择最能直接回答检索问题的记忆；不足以回答时选none。\", \"criteria\": {\"a\": \"甲上月说喜欢红茶。\", \"b\": \"甲昨天更正：现在更喜欢绿茶。\", \"c\": \"乙昨天说喜欢咖啡。\", \"none\": \"没有相关记忆。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "a",
+                    "b",
+                    "c",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 639.7818000114057,
+      "headers_ms": 310.9790000016801,
+      "response_model": "deepseek-flash",
+      "response_id": "4a39842b-a769-472d-ad5a-2a0742ce6443",
+      "usage": {
+        "input_tokens": 249,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 255
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"b\"}",
+      "parsed": {
+        "decision": "b"
+      },
+      "elapsed_ms": 649.0113000036217,
+      "category": "retrieval",
+      "expected": "b",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "retrieval-02",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"a\", \"b\", \"c\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"检索问题\": \"甲养的猫叫什么名字？\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"选择最能直接回答检索问题的记忆；不足以回答时选none。\", \"criteria\": {\"a\": \"甲的猫叫团团。\", \"b\": \"乙的猫叫圆圆。\", \"c\": \"甲喜欢猫。\", \"none\": \"没有相关记忆。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "a",
+                    "b",
+                    "c",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 757.6095999975223,
+      "headers_ms": 391.77309998194687,
+      "response_model": "deepseek-flash",
+      "response_id": "4df675b5-7ffd-4b0e-b1e8-08f115be3469",
+      "usage": {
+        "input_tokens": 241,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 247
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"a\"}",
+      "parsed": {
+        "decision": "a"
+      },
+      "elapsed_ms": 2128.429699980188,
+      "category": "retrieval",
+      "expected": "a",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "retrieval-03",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"a\", \"b\", \"c\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"检索问题\": \"乙现在住在哪里？\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"选择最能直接回答检索问题的记忆；不足以回答时选none。\", \"criteria\": {\"a\": \"甲住杭州。\", \"b\": \"乙过去住南京。\", \"c\": \"乙昨天说已经搬到苏州，现在住苏州。\", \"none\": \"没有相关记忆。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "a",
+                    "b",
+                    "c",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 1471.7096000094898,
+      "headers_ms": 413.7568000005558,
+      "response_model": "deepseek-flash",
+      "response_id": "9f36aee5-de4b-4a1d-9c40-479249f057d3",
+      "usage": {
+        "input_tokens": 245,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 251
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"c\"}",
+      "parsed": {
+        "decision": "c"
+      },
+      "elapsed_ms": 1750.0967000087257,
+      "category": "retrieval",
+      "expected": "c",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "retrieval-04",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"a\", \"b\", \"c\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"检索问题\": \"下次和甲见面的约定时间？\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"选择最能直接回答检索问题的记忆；不足以回答时选none。\", \"criteria\": {\"a\": \"甲喜欢傍晚散步。\", \"b\": \"甲和小雾约好本周六下午三点见面。\", \"c\": \"乙下周日要出差。\", \"none\": \"没有相关记忆。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "a",
+                    "b",
+                    "c",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 884.6052000008058,
+      "headers_ms": 341.0864000034053,
+      "response_model": "deepseek-flash",
+      "response_id": "d8659070-4f5e-48f3-8d6e-0b25e1f36716",
+      "usage": {
+        "input_tokens": 250,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 256
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"b\"}",
+      "parsed": {
+        "decision": "b"
+      },
+      "elapsed_ms": 1008.6621000082232,
+      "category": "retrieval",
+      "expected": "b",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "retrieval-05",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"a\", \"b\", \"c\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"检索问题\": \"甲的生日日期？\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"选择最能直接回答检索问题的记忆；不足以回答时选none。\", \"criteria\": {\"a\": \"甲喜欢生日蛋糕。\", \"b\": \"乙生日是五月一日。\", \"c\": \"小雾今天读了一本书。\", \"none\": \"没有能回答甲生日日期的相关记忆。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "a",
+                    "b",
+                    "c",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 766.8108000070788,
+      "headers_ms": 572.0773999928497,
+      "response_model": "deepseek-flash",
+      "response_id": "f711f7a1-b7b0-49f5-ac0b-b07b39c24a94",
+      "usage": {
+        "input_tokens": 248,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 254
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"none\"}",
+      "parsed": {
+        "decision": "none"
+      },
+      "elapsed_ms": 805.7006000017282,
+      "category": "retrieval",
+      "expected": "none",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "retrieval-06",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"a\", \"b\", \"c\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"检索问题\": \"刚才发出的消息m7是否送达？\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"选择最能直接回答检索问题的记忆；不足以回答时选none。\", \"criteria\": {\"a\": \"消息m7已生成。\", \"b\": \"消息m6已送达。\", \"c\": \"消息m7有真实送达回执。\", \"none\": \"没有相关记忆。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "a",
+                    "b",
+                    "c",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 635.3920999972615,
+      "headers_ms": 293.2089999958407,
+      "response_model": "deepseek-flash",
+      "response_id": "223979c5-74bc-4bb1-937f-7e6b88de7b46",
+      "usage": {
+        "input_tokens": 249,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 255
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"none\"}",
+      "parsed": {
+        "decision": "none"
+      },
+      "elapsed_ms": 669.8877000017092,
+      "category": "retrieval",
+      "expected": "c",
+      "correct": false
+    },
+    {
+      "phase": "quality",
+      "case_id": "retrieval-07",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"a\", \"b\", \"c\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"检索问题\": \"甲是否明确说过不喜欢被叫老板？\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"选择最能直接回答检索问题的记忆；不足以回答时选none。\", \"criteria\": {\"a\": \"甲说：不要叫我老板，我不喜欢这个称呼。\", \"b\": \"乙喜欢被叫老板。\", \"c\": \"甲工作很忙。\", \"none\": \"没有相关记忆。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "a",
+                    "b",
+                    "c",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 655.1727000041865,
+      "headers_ms": 129.39889999688603,
+      "response_model": "deepseek-flash",
+      "response_id": "7bfcd121-1889-4821-90e4-514fb5828a1c",
+      "usage": {
+        "input_tokens": 252,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 258
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"a\"}",
+      "parsed": {
+        "decision": "a"
+      },
+      "elapsed_ms": 718.3368999976665,
+      "category": "retrieval",
+      "expected": "a",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "retrieval-08",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"a\", \"b\", \"c\", \"none\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": {\"检索问题\": \"甲当前的任务完成了吗？\"}, \"question\": {\"type\": \"choice\", \"instructions\": \"选择最能直接回答检索问题的记忆；不足以回答时选none。\", \"criteria\": {\"a\": \"甲说昨天开始写报告。\", \"b\": \"甲刚才说：报告还没有完成。\", \"c\": \"乙已经写完报告。\", \"none\": \"没有相关记忆。\"}}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "a",
+                    "b",
+                    "c",
+                    "none"
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 825.2566000155639,
+      "headers_ms": 189.09349999739788,
+      "response_model": "deepseek-flash",
+      "response_id": "88c87679-6885-44c1-8f2f-09b33f5f5c26",
+      "usage": {
+        "input_tokens": 246,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 252
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": \"b\"}",
+      "parsed": {
+        "decision": "b"
+      },
+      "elapsed_ms": 883.8467000168748,
+      "category": "retrieval",
+      "expected": "b",
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "noul-01",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"boolean\"}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户原文：我不喜欢咖啡。\", \"question\": {\"type\": \"noul\", \"instructions\": \"用户是否明确表示不喜欢咖啡？\"}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 637.5706000253558,
+      "headers_ms": 206.11369999824092,
+      "response_model": "deepseek-flash",
+      "response_id": "59666e90-6f1b-4af8-a07a-693c9bfeb5c2",
+      "usage": {
+        "input_tokens": 160,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 5,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 165
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": true}",
+      "parsed": {
+        "decision": true
+      },
+      "elapsed_ms": 638.0585000151768,
+      "category": "noul",
+      "expected": true,
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "noul-02",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"boolean\"}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户原文：我喜欢咖啡。\", \"question\": {\"type\": \"noul\", \"instructions\": \"用户是否明确表示不喜欢咖啡？\"}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 525.1482999883592,
+      "headers_ms": 254.0883999899961,
+      "response_model": "deepseek-flash",
+      "response_id": "c9fde542-b007-4c18-88ba-ca3bf6d6a4f6",
+      "usage": {
+        "input_tokens": 159,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 5,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 164
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": false}",
+      "parsed": {
+        "decision": false
+      },
+      "elapsed_ms": 639.8254999949131,
+      "category": "noul",
+      "expected": false,
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "noul-03",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"boolean\"}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：请记住，我的生日是六月一日。\", \"question\": {\"type\": \"noul\", \"instructions\": \"用户是否明确要求记住一条信息？\"}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 736.6229000035673,
+      "headers_ms": 384.7686000226531,
+      "response_model": "deepseek-flash",
+      "response_id": "1e54ab09-6993-4106-8189-3638b6b3657a",
+      "usage": {
+        "input_tokens": 166,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 5,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 171
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": true}",
+      "parsed": {
+        "decision": true
+      },
+      "elapsed_ms": 2281.4463000104297,
+      "category": "noul",
+      "expected": true,
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "noul-04",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"boolean\"}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：今天是六月一日。\", \"question\": {\"type\": \"noul\", \"instructions\": \"用户是否明确要求记住一条信息？\"}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 747.3126999975648,
+      "headers_ms": 352.830299991183,
+      "response_model": "deepseek-flash",
+      "response_id": "f435a42c-5c5b-4311-92f0-215591816d2e",
+      "usage": {
+        "input_tokens": 161,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 5,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 166
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": false}",
+      "parsed": {
+        "decision": false
+      },
+      "elapsed_ms": 827.2733999765478,
+      "category": "noul",
+      "expected": false,
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "noul-05",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"boolean\"}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"工具日志显示：任务执行成功，输出文件已生成。\", \"question\": {\"type\": \"noul\", \"instructions\": \"是否有工具日志证明任务已经执行成功？\"}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 575.617800001055,
+      "headers_ms": 414.72929998417385,
+      "response_model": "deepseek-flash",
+      "response_id": "56ba53af-e354-45ea-8d57-4a96fe3a3fd9",
+      "usage": {
+        "input_tokens": 168,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 5,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 173
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": true}",
+      "parsed": {
+        "decision": true
+      },
+      "elapsed_ms": 639.6873999910895,
+      "category": "noul",
+      "expected": true,
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "noul-06",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"boolean\"}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"模型说：我准备执行任务。没有任何工具日志。\", \"question\": {\"type\": \"noul\", \"instructions\": \"是否有工具日志证明任务已经执行成功？\"}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 795.5362999928184,
+      "headers_ms": 415.51640001125634,
+      "response_model": "deepseek-flash",
+      "response_id": "18cc6b64-24d3-416e-9c2c-ca31c71a7e13",
+      "usage": {
+        "input_tokens": 167,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 5,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 172
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": false}",
+      "parsed": {
+        "decision": false
+      },
+      "elapsed_ms": 883.9615999895614,
+      "category": "noul",
+      "expected": false,
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "noul-07",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"boolean\"}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：更正一下，之前的地址不对，现在是苏州。\", \"question\": {\"type\": \"noul\", \"instructions\": \"本条消息是否明确更正了先前的信息？\"}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 549.4909000117332,
+      "headers_ms": 446.4618000201881,
+      "response_model": "deepseek-flash",
+      "response_id": "32effa0f-8c7d-4444-b6c1-c80e8cd8c333",
+      "usage": {
+        "input_tokens": 169,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 5,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 174
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": true}",
+      "parsed": {
+        "decision": true
+      },
+      "elapsed_ms": 646.0572000069078,
+      "category": "noul",
+      "expected": true,
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "noul-08",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"boolean\"}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：苏州天气很好。没有提到之前的信息。\", \"question\": {\"type\": \"noul\", \"instructions\": \"本条消息是否明确更正了先前的信息？\"}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 730.9509000042453,
+      "headers_ms": 426.4602000184823,
+      "response_model": "deepseek-flash",
+      "response_id": "f224eedb-52f9-4ce3-8572-a8b7391b8b8b",
+      "usage": {
+        "input_tokens": 168,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 5,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 173
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": false}",
+      "parsed": {
+        "decision": false
+      },
+      "elapsed_ms": 788.2863000268117,
+      "category": "noul",
+      "expected": false,
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "score-01",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"integer\", \"enum\": [0, 1, 2]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：今天阳光不错。这是一句分享，没有提出请求。\", \"question\": {\"type\": \"score\", \"instructions\": \"只按用户明确表达的请求时效，将本消息归到哪一级？\", \"criteria\": [\"没有需要处理的请求。\", \"有普通请求，但用户明确说不急。\", \"有请求且用户明确要求现在立即处理。\"]}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "integer",
+                  "enum": [
+                    0,
+                    1,
+                    2
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 427.72079998394474,
+      "headers_ms": 241.82070000097156,
+      "response_model": "deepseek-flash",
+      "response_id": "45f5aa32-f8a5-4398-b1f1-cf3d6a572e8a",
+      "usage": {
+        "input_tokens": 235,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 241
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": 0}",
+      "parsed": {
+        "decision": 0
+      },
+      "elapsed_ms": 477.25879997597076,
+      "category": "score",
+      "expected": 0,
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "score-02",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"integer\", \"enum\": [0, 1, 2]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：你好。没有其他内容。\", \"question\": {\"type\": \"score\", \"instructions\": \"只按用户明确表达的请求时效，将本消息归到哪一级？\", \"criteria\": [\"没有需要处理的请求。\", \"有普通请求，但用户明确说不急。\", \"有请求且用户明确要求现在立即处理。\"]}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "integer",
+                  "enum": [
+                    0,
+                    1,
+                    2
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 363.15299998386763,
+      "headers_ms": 62.27530000614934,
+      "response_model": "deepseek-flash",
+      "response_id": "89495242-d0ac-42e9-8ead-8e17b716557e",
+      "usage": {
+        "input_tokens": 229,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 235
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": 0}",
+      "parsed": {
+        "decision": 0
+      },
+      "elapsed_ms": 435.62390000442974,
+      "category": "score",
+      "expected": 0,
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "score-03",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"integer\", \"enum\": [0, 1, 2]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：稍后有空帮我整理一下清单，不着急。\", \"question\": {\"type\": \"score\", \"instructions\": \"只按用户明确表达的请求时效，将本消息归到哪一级？\", \"criteria\": [\"没有需要处理的请求。\", \"有普通请求，但用户明确说不急。\", \"有请求且用户明确要求现在立即处理。\"]}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "integer",
+                  "enum": [
+                    0,
+                    1,
+                    2
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 638.2503000204451,
+      "headers_ms": 172.1728999982588,
+      "response_model": "deepseek-flash",
+      "response_id": "a02c12d1-bb72-4345-b99b-d86ce6450c95",
+      "usage": {
+        "input_tokens": 234,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 240
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": 1}",
+      "parsed": {
+        "decision": 1
+      },
+      "elapsed_ms": 716.0910000093281,
+      "category": "score",
+      "expected": 1,
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "score-04",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"integer\", \"enum\": [0, 1, 2]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：这件事明天再看就行，不急。\", \"question\": {\"type\": \"score\", \"instructions\": \"只按用户明确表达的请求时效，将本消息归到哪一级？\", \"criteria\": [\"没有需要处理的请求。\", \"有普通请求，但用户明确说不急。\", \"有请求且用户明确要求现在立即处理。\"]}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "integer",
+                  "enum": [
+                    0,
+                    1,
+                    2
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 661.8919000029564,
+      "headers_ms": 356.7310000071302,
+      "response_model": "deepseek-flash",
+      "response_id": "936576f9-ca51-4507-b152-ce95f9a9771b",
+      "usage": {
+        "input_tokens": 230,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 236
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": 1}",
+      "parsed": {
+        "decision": 1
+      },
+      "elapsed_ms": 757.2915000200737,
+      "category": "score",
+      "expected": 1,
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "score-05",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"integer\", \"enum\": [0, 1, 2]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：请现在立即告诉我会议链接，我马上要进会。\", \"question\": {\"type\": \"score\", \"instructions\": \"只按用户明确表达的请求时效，将本消息归到哪一级？\", \"criteria\": [\"没有需要处理的请求。\", \"有普通请求，但用户明确说不急。\", \"有请求且用户明确要求现在立即处理。\"]}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "integer",
+                  "enum": [
+                    0,
+                    1,
+                    2
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 626.0960000217892,
+      "headers_ms": 299.8340000049211,
+      "response_model": "deepseek-flash",
+      "response_id": "ff4c4dad-75a8-4d22-8ce9-527a0bfe9816",
+      "usage": {
+        "input_tokens": 236,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 242
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": 2}",
+      "parsed": {
+        "decision": 2
+      },
+      "elapsed_ms": 707.5159000232816,
+      "category": "score",
+      "expected": 2,
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "score-06",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"integer\", \"enum\": [0, 1, 2]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：请立刻停止当前任务，现在就停。\", \"question\": {\"type\": \"score\", \"instructions\": \"只按用户明确表达的请求时效，将本消息归到哪一级？\", \"criteria\": [\"没有需要处理的请求。\", \"有普通请求，但用户明确说不急。\", \"有请求且用户明确要求现在立即处理。\"]}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "integer",
+                  "enum": [
+                    0,
+                    1,
+                    2
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 685.2051999885589,
+      "headers_ms": 314.01000000187196,
+      "response_model": "deepseek-flash",
+      "response_id": "795fba42-e08e-419b-8a84-f653fc826175",
+      "usage": {
+        "input_tokens": 232,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 238
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": 2}",
+      "parsed": {
+        "decision": 2
+      },
+      "elapsed_ms": 815.9046999935526,
+      "category": "score",
+      "expected": 2,
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "score-07",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"integer\", \"enum\": [0, 1, 2]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：不用处理，我只是分享一下这张照片。\", \"question\": {\"type\": \"score\", \"instructions\": \"只按用户明确表达的请求时效，将本消息归到哪一级？\", \"criteria\": [\"没有需要处理的请求。\", \"有普通请求，但用户明确说不急。\", \"有请求且用户明确要求现在立即处理。\"]}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "integer",
+                  "enum": [
+                    0,
+                    1,
+                    2
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 802.9301000060514,
+      "headers_ms": 245.19390001660213,
+      "response_model": "deepseek-flash",
+      "response_id": "1e04b7e4-14ed-4937-acfc-a488e3e59930",
+      "usage": {
+        "input_tokens": 231,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 237
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": 0}",
+      "parsed": {
+        "decision": 0
+      },
+      "elapsed_ms": 906.5596000000369,
+      "category": "score",
+      "expected": 0,
+      "correct": true
+    },
+    {
+      "phase": "quality",
+      "case_id": "score-08",
+      "payload": {
+        "model": "deepseek-flash",
+        "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"integer\", \"enum\": [0, 1, 2]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+        "input": "{\"state\": \"用户说：请帮我查资料，但什么时候有空再查就好，不急。\", \"question\": {\"type\": \"score\", \"instructions\": \"只按用户明确表达的请求时效，将本消息归到哪一级？\", \"criteria\": [\"没有需要处理的请求。\", \"有普通请求，但用户明确说不急。\", \"有请求且用户明确要求现在立即处理。\"]}}",
+        "reasoning": {
+          "effort": "none"
+        },
+        "temperature": 0,
+        "max_output_tokens": 128,
+        "stream": true,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "decision",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "integer",
+                  "enum": [
+                    0,
+                    1,
+                    2
+                  ]
+                }
+              },
+              "required": [
+                "decision"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "completed": true,
+      "status": 200,
+      "ttft_ms": 582.6853000035044,
+      "headers_ms": 217.77710001333617,
+      "response_model": "deepseek-flash",
+      "response_id": "9509382e-3718-4b44-9ddc-36426a376f60",
+      "usage": {
+        "input_tokens": 237,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 6,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 243
+      },
+      "incomplete_details": null,
+      "text": "{\"decision\": 1}",
+      "parsed": {
+        "decision": 1
+      },
+      "elapsed_ms": 648.6108000099193,
+      "category": "score",
+      "expected": 1,
+      "correct": true
+    }
+  ],
+  "performance": {},
+  "events": [
+    {
+      "event": "start",
+      "utc": "2026-10-05T08:23:21.246961+00:00"
+    },
+    {
+      "event": "first_request",
+      "utc": "2026-10-05T08:23:24.934003+00:00",
+      "status": 200,
+      "valid": true
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:25.893523+00:00",
+      "case": "gate-01",
+      "correct": true,
+      "valid": true,
+      "ms": 938.1568999961019
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:26.864539+00:00",
+      "case": "gate-02",
+      "correct": true,
+      "valid": true,
+      "ms": 963.7417999911122
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:27.504908+00:00",
+      "case": "gate-03",
+      "correct": true,
+      "valid": true,
+      "ms": 629.5267000095919
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:28.350837+00:00",
+      "case": "gate-04",
+      "correct": false,
+      "valid": true,
+      "ms": 835.5093999998644
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:29.236406+00:00",
+      "case": "gate-05",
+      "correct": true,
+      "valid": true,
+      "ms": 876.1187000200152
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:30.206339+00:00",
+      "case": "gate-06",
+      "correct": true,
+      "valid": true,
+      "ms": 962.1220999979414
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:31.246714+00:00",
+      "case": "gate-07",
+      "correct": true,
+      "valid": true,
+      "ms": 1033.3814999903552
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:31.783239+00:00",
+      "case": "gate-08",
+      "correct": true,
+      "valid": true,
+      "ms": 529.1299999807961
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:32.379504+00:00",
+      "case": "gate-09",
+      "correct": true,
+      "valid": true,
+      "ms": 587.4331000086386
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:33.372723+00:00",
+      "case": "gate-10",
+      "correct": true,
+      "valid": true,
+      "ms": 982.2153999994043
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:34.395305+00:00",
+      "case": "gate-11",
+      "correct": true,
+      "valid": true,
+      "ms": 1012.0707000023685
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:35.445500+00:00",
+      "case": "gate-12",
+      "correct": true,
+      "valid": true,
+      "ms": 1039.21590000391
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:36.096965+00:00",
+      "case": "evidence-01",
+      "correct": true,
+      "valid": true,
+      "ms": 640.1545999979135
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:36.937693+00:00",
+      "case": "evidence-02",
+      "correct": true,
+      "valid": true,
+      "ms": 830.8030999905895
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:38.022629+00:00",
+      "case": "evidence-03",
+      "correct": true,
+      "valid": true,
+      "ms": 1073.377900000196
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:38.828267+00:00",
+      "case": "evidence-04",
+      "correct": true,
+      "valid": true,
+      "ms": 795.1631000032648
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:40.028035+00:00",
+      "case": "evidence-05",
+      "correct": true,
+      "valid": true,
+      "ms": 1188.704800006235
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:40.313831+00:00",
+      "case": "evidence-06",
+      "correct": true,
+      "valid": true,
+      "ms": 277.07909999298863
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:41.490615+00:00",
+      "case": "evidence-07",
+      "correct": true,
+      "valid": true,
+      "ms": 1169.1432000079658
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:42.452843+00:00",
+      "case": "evidence-08",
+      "correct": true,
+      "valid": true,
+      "ms": 948.0315999826416
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:43.178297+00:00",
+      "case": "evidence-09",
+      "correct": true,
+      "valid": true,
+      "ms": 714.7594999987632
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:44.001964+00:00",
+      "case": "evidence-10",
+      "correct": true,
+      "valid": true,
+      "ms": 803.3142999920528
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:44.725622+00:00",
+      "case": "evidence-11",
+      "correct": true,
+      "valid": true,
+      "ms": 713.1899000087287
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:45.519478+00:00",
+      "case": "evidence-12",
+      "correct": true,
+      "valid": true,
+      "ms": 782.6919000071939
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:46.088533+00:00",
+      "case": "attribution-01",
+      "correct": true,
+      "valid": true,
+      "ms": 557.2832000034396
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:47.106616+00:00",
+      "case": "attribution-02",
+      "correct": true,
+      "valid": true,
+      "ms": 1008.2249000261072
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:48.062727+00:00",
+      "case": "attribution-03",
+      "correct": true,
+      "valid": true,
+      "ms": 944.0354999969713
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:48.859519+00:00",
+      "case": "attribution-04",
+      "correct": true,
+      "valid": true,
+      "ms": 785.3512000001501
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:50.257859+00:00",
+      "case": "attribution-05",
+      "correct": true,
+      "valid": true,
+      "ms": 1388.022800005274
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:51.137072+00:00",
+      "case": "attribution-06",
+      "correct": true,
+      "valid": true,
+      "ms": 869.3352999980561
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:52.216558+00:00",
+      "case": "attribution-07",
+      "correct": true,
+      "valid": true,
+      "ms": 1072.5130999926478
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:53.282501+00:00",
+      "case": "attribution-08",
+      "correct": true,
+      "valid": true,
+      "ms": 1054.5266999979503
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:54.014595+00:00",
+      "case": "tool-01",
+      "correct": true,
+      "valid": true,
+      "ms": 720.9476999996696
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:54.866062+00:00",
+      "case": "tool-02",
+      "correct": true,
+      "valid": true,
+      "ms": 839.1609999816865
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:55.463016+00:00",
+      "case": "tool-03",
+      "correct": true,
+      "valid": true,
+      "ms": 586.5154000057373
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:55.866576+00:00",
+      "case": "tool-04",
+      "correct": true,
+      "valid": true,
+      "ms": 394.92900000186637
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:56.689771+00:00",
+      "case": "tool-05",
+      "correct": true,
+      "valid": true,
+      "ms": 787.905100005446
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:57.261547+00:00",
+      "case": "tool-06",
+      "correct": true,
+      "valid": true,
+      "ms": 562.8437999985181
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:58.027845+00:00",
+      "case": "tool-07",
+      "correct": true,
+      "valid": true,
+      "ms": 753.3871000050567
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:58.868585+00:00",
+      "case": "tool-08",
+      "correct": true,
+      "valid": true,
+      "ms": 829.2733000125736
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:23:59.530653+00:00",
+      "case": "retrieval-01",
+      "correct": true,
+      "valid": true,
+      "ms": 649.0113000036217
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:01.695784+00:00",
+      "case": "retrieval-02",
+      "correct": true,
+      "valid": true,
+      "ms": 2128.429699980188
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:03.453160+00:00",
+      "case": "retrieval-03",
+      "correct": true,
+      "valid": true,
+      "ms": 1750.0967000087257
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:04.474947+00:00",
+      "case": "retrieval-04",
+      "correct": true,
+      "valid": true,
+      "ms": 1008.6621000082232
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:05.294198+00:00",
+      "case": "retrieval-05",
+      "correct": true,
+      "valid": true,
+      "ms": 805.7006000017282
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:05.977420+00:00",
+      "case": "retrieval-06",
+      "correct": false,
+      "valid": true,
+      "ms": 669.8877000017092
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:06.706326+00:00",
+      "case": "retrieval-07",
+      "correct": true,
+      "valid": true,
+      "ms": 718.3368999976665
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:07.598661+00:00",
+      "case": "retrieval-08",
+      "correct": true,
+      "valid": true,
+      "ms": 883.8467000168748
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:08.250205+00:00",
+      "case": "noul-01",
+      "correct": true,
+      "valid": true,
+      "ms": 638.0585000151768
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:08.902596+00:00",
+      "case": "noul-02",
+      "correct": true,
+      "valid": true,
+      "ms": 639.8254999949131
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:11.195754+00:00",
+      "case": "noul-03",
+      "correct": true,
+      "valid": true,
+      "ms": 2281.4463000104297
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:12.033387+00:00",
+      "case": "noul-04",
+      "correct": true,
+      "valid": true,
+      "ms": 827.2733999765478
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:12.684844+00:00",
+      "case": "noul-05",
+      "correct": true,
+      "valid": true,
+      "ms": 639.6873999910895
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:13.581900+00:00",
+      "case": "noul-06",
+      "correct": true,
+      "valid": true,
+      "ms": 883.9615999895614
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:14.324509+00:00",
+      "case": "noul-07",
+      "correct": true,
+      "valid": true,
+      "ms": 646.0572000069078
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:15.124222+00:00",
+      "case": "noul-08",
+      "correct": true,
+      "valid": true,
+      "ms": 788.2863000268117
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:15.713768+00:00",
+      "case": "score-01",
+      "correct": true,
+      "valid": true,
+      "ms": 477.25879997597076
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:16.160649+00:00",
+      "case": "score-02",
+      "correct": true,
+      "valid": true,
+      "ms": 435.62390000442974
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:16.886831+00:00",
+      "case": "score-03",
+      "correct": true,
+      "valid": true,
+      "ms": 716.0910000093281
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:17.655105+00:00",
+      "case": "score-04",
+      "correct": true,
+      "valid": true,
+      "ms": 757.2915000200737
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:18.375486+00:00",
+      "case": "score-05",
+      "correct": true,
+      "valid": true,
+      "ms": 707.5159000232816
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:19.298240+00:00",
+      "case": "score-06",
+      "correct": true,
+      "valid": true,
+      "ms": 815.9046999935526
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:20.214258+00:00",
+      "case": "score-07",
+      "correct": true,
+      "valid": true,
+      "ms": 906.5596000000369
+    },
+    {
+      "event": "quality_case",
+      "utc": "2026-10-05T08:24:20.969976+00:00",
+      "case": "score-08",
+      "correct": true,
+      "valid": true,
+      "ms": 648.6108000099193
+    },
+    {
+      "event": "complete",
+      "utc": "2026-10-05T08:24:20.977490+00:00",
+      "correct": 62,
+      "total": 64
+    }
+  ],
+  "first_request": {
+    "phase": "first_request",
+    "case_id": "gate-01",
+    "payload": {
+      "model": "deepseek-flash",
+      "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+      "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+      "reasoning": {
+        "effort": "none"
+      },
+      "temperature": 0,
+      "max_output_tokens": 128,
+      "stream": true,
+      "text": {
+        "format": {
+          "type": "json_schema",
+          "name": "decision",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "decision": {
+                "type": "string",
+                "enum": [
+                  "speak",
+                  "wait",
+                  "defer"
+                ]
+              }
+            },
+            "required": [
+              "decision"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "schema_valid": true,
+    "completed": true,
+    "status": 200,
+    "ttft_ms": 3531.041699985508,
+    "headers_ms": 3021.5868999948725,
+    "response_model": "deepseek-flash",
+    "response_id": "69029728-3089-45b9-b84f-10321e263186",
+    "usage": {
+      "input_tokens": 264,
+      "input_tokens_details": {
+        "cached_tokens": 0
+      },
+      "output_tokens": 7,
+      "output_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "total_tokens": 271
+    },
+    "incomplete_details": null,
+    "text": "{\"decision\": \"speak\"}",
+    "parsed": {
+      "decision": "speak"
+    },
+    "elapsed_ms": 3632.6610000105575
+  },
+  "quality_summary": {
+    "attribution": {
+      "correct": 8,
+      "total": 8,
+      "confusion": {
+        "A->A": 2,
+        "B->B": 2,
+        "M->M": 2,
+        "unknown->unknown": 2
+      }
+    },
+    "evidence": {
+      "correct": 12,
+      "total": 12,
+      "confusion": {
+        "support->support": 4,
+        "contradict->contradict": 4,
+        "insufficient->insufficient": 4
+      }
+    },
+    "gate": {
+      "correct": 11,
+      "total": 12,
+      "confusion": {
+        "speak->speak": 5,
+        "wait->wait": 3,
+        "wait->defer": 1,
+        "defer->defer": 3
+      }
+    },
+    "noul": {
+      "correct": 8,
+      "total": 8,
+      "confusion": {
+        "True->True": 4,
+        "False->False": 4
+      }
+    },
+    "retrieval": {
+      "correct": 7,
+      "total": 8,
+      "confusion": {
+        "b->b": 3,
+        "a->a": 2,
+        "c->c": 1,
+        "none->none": 1,
+        "c->none": 1
+      }
+    },
+    "score": {
+      "correct": 8,
+      "total": 8,
+      "confusion": {
+        "0->0": 3,
+        "1->1": 3,
+        "2->2": 2
+      }
+    },
+    "tool": {
+      "correct": 8,
+      "total": 8,
+      "confusion": {
+        "web->web": 2,
+        "memory->memory": 2,
+        "file->file": 2,
+        "none->none": 2
+      }
+    }
+  },
+  "quality_latency": {
+    "attempts": 64,
+    "usable": 64,
+    "failures": 0,
+    "p50_ms": 803.3142999920528,
+    "p95_ms": 1388.022800005274,
+    "p99_ms": 2281.4463000104297,
+    "ttft_p50_ms": 725.8979000034742,
+    "note": "nearest-rank; complete schema-valid outputs only, failures retained"
+  },
+  "ended_at": "2026-10-05T08:24:20.983917+00:00"
+}

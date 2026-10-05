@@ -14,6 +14,7 @@ from harness.core.inference import (
 )
 from harness.core.models import ScoredMemory
 from harness.llm.client import LLMClient, MockLLM
+from harness.llm.structured import GateOutput, helper_options
 from harness.memory.retrieval.planner import _match_time_scope
 
 _COMMITMENT_RE = re.compile(r"答应|承诺|不管|说好|不会再")
@@ -119,6 +120,7 @@ class ComplexityGate:
                     }
                 ),
                 max_tokens=self.settings.llm_json_max_tokens,
+                **helper_options(llm, GateOutput, "complexity_gate"),
             )
             path = str(raw.get("path", "")).strip().lower()
         except (ValueError, TypeError, AttributeError):

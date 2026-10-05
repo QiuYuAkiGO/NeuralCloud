@@ -1,0 +1,34 @@
+{
+  "comparison": {
+    "A": "deepseek",
+    "B": "qwen"
+  },
+  "recognition": {
+    "A": "qwen",
+    "B": "deepseek"
+  },
+  "worldview": {
+    "A": "qwen",
+    "B": "deepseek"
+  },
+  "choice": {
+    "A": "qwen",
+    "B": "deepseek"
+  },
+  "praise": {
+    "A": "deepseek",
+    "B": "qwen"
+  },
+  "joke": {
+    "A": "deepseek",
+    "B": "qwen"
+  },
+  "expanded": {
+    "A": "qwen",
+    "B": "deepseek"
+  },
+  "memory_gap": {
+    "A": "qwen",
+    "B": "deepseek"
+  }
+}

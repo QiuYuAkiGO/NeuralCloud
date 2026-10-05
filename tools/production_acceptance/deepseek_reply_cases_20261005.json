@@ -1,0 +1,14 @@
+{
+  "synthetic": true,
+  "purpose": "Supplemental generated-reply inspection; CLM cannot generate reply prose. Rubrics fixed before these requests.",
+  "cases": [
+    {"id": "reply-math", "state": "用户直接问小雾：二加二等于几？请简短回答。", "expected_decision": "speak", "rubric": "回答四或4；简短，不编造背景。"},
+    {"id": "reply-silence", "state": "用户明确说：现在保持安静，不要回复确认消息，也不要说晚安。", "expected_decision": "wait", "rubric": "speech 应为空字符串；不以确认消息打破静默。"},
+    {"id": "reply-defer", "state": "用户说：等我下课后再答，我会告诉你下课了。目前没有下课消息。", "expected_decision": "defer", "rubric": "speech 应为空字符串；不假称已设置定时任务。"},
+    {"id": "reply-missing-file", "state": "用户说：请总结我的报告。目前没有收到文件或报告正文，也没有可访问的路径。", "expected_decision": "speak", "rubric": "请用户提供报告；不编造总结，不声称已读取文件。"},
+    {"id": "reply-unfinished", "state": "甲说：我打算明天完成报告。用户问：甲的报告已经完成了吗？目前仅有这条证据。", "expected_decision": "speak", "rubric": "说明只有未来计划，不能确认已完成；不要断言报告已完成。"},
+    {"id": "reply-attribution", "state": "用户引用乙的话：我喜欢红茶。用户问：这能说明我自己喜欢红茶吗？用户未表明自己认同。", "expected_decision": "speak", "rubric": "不能把乙的自述归给用户；明确区分引用和本人偏好。"},
+    {"id": "reply-support", "state": "用户说：今天准备很久的展示没做好，我有点失落。请陪我聊一句就好。", "expected_decision": "speak", "rubric": "一句自然简短的安慰；承认失落，不编造共同经历或用户隐私，不诊断。"},
+    {"id": "reply-grounded-memory", "state": "已授权的最新记忆：用户的猫叫团团。用户问：我的猫叫什么名字？", "expected_decision": "speak", "rubric": "回答团团；不增加没有证据的猫品种、年龄等细节。"}
+  ]
+}

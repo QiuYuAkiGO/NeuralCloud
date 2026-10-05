@@ -1,0 +1,1388 @@
+{
+  "schema_version": "clm-diagnostic-cases-v1",
+  "synthetic": true,
+  "label_source": "developer-authored-before-inference; not independent human-reviewed gold",
+  "threshold_policy": "argmax; Noul threshold 0.5; Score nearest expected index for MAE and argmax for accuracy; no tuning",
+  "cases": [
+    {
+      "id": "gate-01",
+      "category": "gate",
+      "request": {
+        "model": "clm-latest",
+        "state": "私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "按用户当前明确的交流要求，小雾现在应选择哪种回应时机？",
+            "criteria": {
+              "speak": "现在向用户作出回复。",
+              "wait": "现在保持安静，不向用户发言。",
+              "defer": "用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "speak"
+    },
+    {
+      "id": "gate-02",
+      "category": "gate",
+      "request": {
+        "model": "clm-latest",
+        "state": "私聊用户说：请现在回答，二加二等于几？没有其他待办。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "按用户当前明确的交流要求，小雾现在应选择哪种回应时机？",
+            "criteria": {
+              "speak": "现在向用户作出回复。",
+              "wait": "现在保持安静，不向用户发言。",
+              "defer": "用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "speak"
+    },
+    {
+      "id": "gate-03",
+      "category": "gate",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：我先记个备忘，你不用回复。这条消息没有问题。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "按用户当前明确的交流要求，小雾现在应选择哪种回应时机？",
+            "criteria": {
+              "speak": "现在向用户作出回复。",
+              "wait": "现在保持安静，不向用户发言。",
+              "defer": "用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "wait"
+    },
+    {
+      "id": "gate-04",
+      "category": "gate",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：下面我会连续发三段，在我说发完之前先别回复。目前只收到第一段。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "按用户当前明确的交流要求，小雾现在应选择哪种回应时机？",
+            "criteria": {
+              "speak": "现在向用户作出回复。",
+              "wait": "现在保持安静，不向用户发言。",
+              "defer": "用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "wait"
+    },
+    {
+      "id": "gate-05",
+      "category": "gate",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：等我下课后再回答这个问题，我会告诉你下课了。目前还没有下课消息。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "按用户当前明确的交流要求，小雾现在应选择哪种回应时机？",
+            "criteria": {
+              "speak": "现在向用户作出回复。",
+              "wait": "现在保持安静，不向用户发言。",
+              "defer": "用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "defer"
+    },
+    {
+      "id": "gate-06",
+      "category": "gate",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：等文件上传完成后再给我处理结果。目前文件尚未上传完成。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "按用户当前明确的交流要求，小雾现在应选择哪种回应时机？",
+            "criteria": {
+              "speak": "现在向用户作出回复。",
+              "wait": "现在保持安静，不向用户发言。",
+              "defer": "用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "defer"
+    },
+    {
+      "id": "gate-07",
+      "category": "gate",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户之前要求等他说发完再回答。现在用户说：发完了，请总结上面内容。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "按用户当前明确的交流要求，小雾现在应选择哪种回应时机？",
+            "criteria": {
+              "speak": "现在向用户作出回复。",
+              "wait": "现在保持安静，不向用户发言。",
+              "defer": "用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "speak"
+    },
+    {
+      "id": "gate-08",
+      "category": "gate",
+      "request": {
+        "model": "clm-latest",
+        "state": "群成员甲对乙说：乙，今天你值班吗？小雾没有被提及，没有待办，也没有需要介入的问题。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "按用户当前明确的交流要求，小雾现在应选择哪种回应时机？",
+            "criteria": {
+              "speak": "现在向用户作出回复。",
+              "wait": "现在保持安静，不向用户发言。",
+              "defer": "用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "wait"
+    },
+    {
+      "id": "gate-09",
+      "category": "gate",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户明确说：请先保持安静，我要休息，不需要晚安或确认消息。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "按用户当前明确的交流要求，小雾现在应选择哪种回应时机？",
+            "criteria": {
+              "speak": "现在向用户作出回复。",
+              "wait": "现在保持安静，不向用户发言。",
+              "defer": "用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "wait"
+    },
+    {
+      "id": "gate-10",
+      "category": "gate",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：我现在需要帮助，请告诉我如何找回刚才保存的文件。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "按用户当前明确的交流要求，小雾现在应选择哪种回应时机？",
+            "criteria": {
+              "speak": "现在向用户作出回复。",
+              "wait": "现在保持安静，不向用户发言。",
+              "defer": "用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "speak"
+    },
+    {
+      "id": "gate-11",
+      "category": "gate",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：不用马上解释，等明天我再次问你时再答。现在还是当天。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "按用户当前明确的交流要求，小雾现在应选择哪种回应时机？",
+            "criteria": {
+              "speak": "现在向用户作出回复。",
+              "wait": "现在保持安静，不向用户发言。",
+              "defer": "用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "defer"
+    },
+    {
+      "id": "gate-12",
+      "category": "gate",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户刚说：刚才让你不回复的要求取消了，现在请回答我的问题。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "按用户当前明确的交流要求，小雾现在应选择哪种回应时机？",
+            "criteria": {
+              "speak": "现在向用户作出回复。",
+              "wait": "现在保持安静，不向用户发言。",
+              "defer": "用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "speak"
+    },
+    {
+      "id": "evidence-01",
+      "category": "evidence",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "原始证据": "甲今天说：我喜欢红茶。",
+          "待判断命题": "甲今天自述喜欢红茶。"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "原始证据与待判断命题是什么关系？",
+            "criteria": {
+              "support": "原始证据直接支持待判断命题。",
+              "contradict": "原始证据直接否定待判断命题。",
+              "insufficient": "原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "support"
+    },
+    {
+      "id": "evidence-02",
+      "category": "evidence",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "原始证据": "甲今天说：我不喜欢红茶。",
+          "待判断命题": "甲今天自述喜欢红茶。"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "原始证据与待判断命题是什么关系？",
+            "criteria": {
+              "support": "原始证据直接支持待判断命题。",
+              "contradict": "原始证据直接否定待判断命题。",
+              "insufficient": "原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "contradict"
+    },
+    {
+      "id": "evidence-03",
+      "category": "evidence",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "原始证据": "乙今天说：我喜欢红茶。",
+          "待判断命题": "甲今天自述喜欢红茶。"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "原始证据与待判断命题是什么关系？",
+            "criteria": {
+              "support": "原始证据直接支持待判断命题。",
+              "contradict": "原始证据直接否定待判断命题。",
+              "insufficient": "原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "insufficient"
+    },
+    {
+      "id": "evidence-04",
+      "category": "evidence",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "原始证据": "甲说：我打算明天完成报告。",
+          "待判断命题": "甲已经完成报告。"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "原始证据与待判断命题是什么关系？",
+            "criteria": {
+              "support": "原始证据直接支持待判断命题。",
+              "contradict": "原始证据直接否定待判断命题。",
+              "insufficient": "原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "insufficient"
+    },
+    {
+      "id": "evidence-05",
+      "category": "evidence",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "原始证据": "甲说：我已经完成报告了。",
+          "待判断命题": "甲自述报告已经完成。"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "原始证据与待判断命题是什么关系？",
+            "criteria": {
+              "support": "原始证据直接支持待判断命题。",
+              "contradict": "原始证据直接否定待判断命题。",
+              "insufficient": "原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "support"
+    },
+    {
+      "id": "evidence-06",
+      "category": "evidence",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "原始证据": "甲说：报告还没有做完。",
+          "待判断命题": "甲自述报告已经完成。"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "原始证据与待判断命题是什么关系？",
+            "criteria": {
+              "support": "原始证据直接支持待判断命题。",
+              "contradict": "原始证据直接否定待判断命题。",
+              "insufficient": "原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "contradict"
+    },
+    {
+      "id": "evidence-07",
+      "category": "evidence",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "原始证据": "甲说：如果下雨，我会带伞。没有天气或出行记录。",
+          "待判断命题": "甲今天带了伞。"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "原始证据与待判断命题是什么关系？",
+            "criteria": {
+              "support": "原始证据直接支持待判断命题。",
+              "contradict": "原始证据直接否定待判断命题。",
+              "insufficient": "原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "insufficient"
+    },
+    {
+      "id": "evidence-08",
+      "category": "evidence",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "原始证据": "甲说：更正一下，我现在住苏州，不住上海了。",
+          "待判断命题": "甲现在自述居住在苏州。"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "原始证据与待判断命题是什么关系？",
+            "criteria": {
+              "support": "原始证据直接支持待判断命题。",
+              "contradict": "原始证据直接否定待判断命题。",
+              "insufficient": "原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "support"
+    },
+    {
+      "id": "evidence-09",
+      "category": "evidence",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "原始证据": "甲说：更正一下，我现在住苏州，不住上海了。",
+          "待判断命题": "甲现在自述居住在上海。"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "原始证据与待判断命题是什么关系？",
+            "criteria": {
+              "support": "原始证据直接支持待判断命题。",
+              "contradict": "原始证据直接否定待判断命题。",
+              "insufficient": "原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "contradict"
+    },
+    {
+      "id": "evidence-10",
+      "category": "evidence",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "原始证据": "小雾对甲说：我可以帮你写报告。",
+          "待判断命题": "甲本人自述喜欢写报告。"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "原始证据与待判断命题是什么关系？",
+            "criteria": {
+              "support": "原始证据直接支持待判断命题。",
+              "contradict": "原始证据直接否定待判断命题。",
+              "insufficient": "原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "insufficient"
+    },
+    {
+      "id": "evidence-11",
+      "category": "evidence",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "原始证据": "消息发送系统返回已送达回执，消息ID为m1。",
+          "待判断命题": "消息m1已经被系统确认送达。"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "原始证据与待判断命题是什么关系？",
+            "criteria": {
+              "support": "原始证据直接支持待判断命题。",
+              "contradict": "原始证据直接否定待判断命题。",
+              "insufficient": "原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "support"
+    },
+    {
+      "id": "evidence-12",
+      "category": "evidence",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "原始证据": "消息m1发送失败，系统明确返回未投递。",
+          "待判断命题": "消息m1已经被系统确认送达。"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "原始证据与待判断命题是什么关系？",
+            "criteria": {
+              "support": "原始证据直接支持待判断命题。",
+              "contradict": "原始证据直接否定待判断命题。",
+              "insufficient": "原始证据不足以判断待判断命题；愿望、计划、其他人的情况不能证明它。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "contradict"
+    },
+    {
+      "id": "attribution-01",
+      "category": "attribution",
+      "request": {
+        "model": "clm-latest",
+        "state": "消息作者账号A，原文：我现在想喝水。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "这段第一人称内容可归为谁自己的明确自述？",
+            "criteria": {
+              "A": "账号A自己的明确自述。",
+              "B": "账号B自己的明确自述。",
+              "M": "小雾自己的明确自述。",
+              "unknown": "无法确定是这些对象中谁的自述。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "A"
+    },
+    {
+      "id": "attribution-02",
+      "category": "attribution",
+      "request": {
+        "model": "clm-latest",
+        "state": "消息作者账号B，原文：我现在想喝水。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "这段第一人称内容可归为谁自己的明确自述？",
+            "criteria": {
+              "A": "账号A自己的明确自述。",
+              "B": "账号B自己的明确自述。",
+              "M": "小雾自己的明确自述。",
+              "unknown": "无法确定是这些对象中谁的自述。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "B"
+    },
+    {
+      "id": "attribution-03",
+      "category": "attribution",
+      "request": {
+        "model": "clm-latest",
+        "state": "消息作者小雾，原文：我想去看展。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "这段第一人称内容可归为谁自己的明确自述？",
+            "criteria": {
+              "A": "账号A自己的明确自述。",
+              "B": "账号B自己的明确自述。",
+              "M": "小雾自己的明确自述。",
+              "unknown": "无法确定是这些对象中谁的自述。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "M"
+    },
+    {
+      "id": "attribution-04",
+      "category": "attribution",
+      "request": {
+        "model": "clm-latest",
+        "state": "匿名消息，原文：我喜欢猫。没有作者信息。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "这段第一人称内容可归为谁自己的明确自述？",
+            "criteria": {
+              "A": "账号A自己的明确自述。",
+              "B": "账号B自己的明确自述。",
+              "M": "小雾自己的明确自述。",
+              "unknown": "无法确定是这些对象中谁的自述。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "unknown"
+    },
+    {
+      "id": "attribution-05",
+      "category": "attribution",
+      "request": {
+        "model": "clm-latest",
+        "state": "账号A和账号B都叫小林。消息的协议作者ID为B，原文：我今天搬家了。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "这段第一人称内容可归为谁自己的明确自述？",
+            "criteria": {
+              "A": "账号A自己的明确自述。",
+              "B": "账号B自己的明确自述。",
+              "M": "小雾自己的明确自述。",
+              "unknown": "无法确定是这些对象中谁的自述。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "B"
+    },
+    {
+      "id": "attribution-06",
+      "category": "attribution",
+      "request": {
+        "model": "clm-latest",
+        "state": "账号A和账号B都叫小林。消息的协议作者ID为A，原文：我今天搬家了。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "这段第一人称内容可归为谁自己的明确自述？",
+            "criteria": {
+              "A": "账号A自己的明确自述。",
+              "B": "账号B自己的明确自述。",
+              "M": "小雾自己的明确自述。",
+              "unknown": "无法确定是这些对象中谁的自述。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "A"
+    },
+    {
+      "id": "attribution-07",
+      "category": "attribution",
+      "request": {
+        "model": "clm-latest",
+        "state": "账号A引用了一句没有署名的话：我讨厌下雨。A没有表明自己同意这句话。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "这段第一人称内容可归为谁自己的明确自述？",
+            "criteria": {
+              "A": "账号A自己的明确自述。",
+              "B": "账号B自己的明确自述。",
+              "M": "小雾自己的明确自述。",
+              "unknown": "无法确定是这些对象中谁的自述。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "unknown"
+    },
+    {
+      "id": "attribution-08",
+      "category": "attribution",
+      "request": {
+        "model": "clm-latest",
+        "state": "小雾说：我是小雾，我现在选择休息。该消息作者ID为M。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "这段第一人称内容可归为谁自己的明确自述？",
+            "criteria": {
+              "A": "账号A自己的明确自述。",
+              "B": "账号B自己的明确自述。",
+              "M": "小雾自己的明确自述。",
+              "unknown": "无法确定是这些对象中谁的自述。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "M"
+    },
+    {
+      "id": "tool-01",
+      "category": "tool",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户问：帮我查一下今天杭州的天气。允许查询公开网页。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "哪个已有工具最适合当前请求？没有合法适用工具时选择none。",
+            "criteria": {
+              "web": "查询公开互联网，获取当前公开信息。",
+              "memory": "查询已经授权的本地对话记忆。",
+              "file": "读取用户本轮已上传并授权处理的文件。",
+              "none": "不需要上述工具，或当前没有满足请求所需的授权和输入。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "web"
+    },
+    {
+      "id": "tool-02",
+      "category": "tool",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户问：我上周告诉你的茶叶名字是什么？相关聊天记忆允许查询。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "哪个已有工具最适合当前请求？没有合法适用工具时选择none。",
+            "criteria": {
+              "web": "查询公开互联网，获取当前公开信息。",
+              "memory": "查询已经授权的本地对话记忆。",
+              "file": "读取用户本轮已上传并授权处理的文件。",
+              "none": "不需要上述工具，或当前没有满足请求所需的授权和输入。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "memory"
+    },
+    {
+      "id": "tool-03",
+      "category": "tool",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户已上传report.txt并要求：总结这个文件。文件可读且已授权。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "哪个已有工具最适合当前请求？没有合法适用工具时选择none。",
+            "criteria": {
+              "web": "查询公开互联网，获取当前公开信息。",
+              "memory": "查询已经授权的本地对话记忆。",
+              "file": "读取用户本轮已上传并授权处理的文件。",
+              "none": "不需要上述工具，或当前没有满足请求所需的授权和输入。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "file"
+    },
+    {
+      "id": "tool-04",
+      "category": "tool",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：你好，小雾。没有提出查询或处理任务。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "哪个已有工具最适合当前请求？没有合法适用工具时选择none。",
+            "criteria": {
+              "web": "查询公开互联网，获取当前公开信息。",
+              "memory": "查询已经授权的本地对话记忆。",
+              "file": "读取用户本轮已上传并授权处理的文件。",
+              "none": "不需要上述工具，或当前没有满足请求所需的授权和输入。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "none"
+    },
+    {
+      "id": "tool-05",
+      "category": "tool",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户要求查看乙的私聊，但没有乙的授权。候选工具都不允许访问他人的私聊。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "哪个已有工具最适合当前请求？没有合法适用工具时选择none。",
+            "criteria": {
+              "web": "查询公开互联网，获取当前公开信息。",
+              "memory": "查询已经授权的本地对话记忆。",
+              "file": "读取用户本轮已上传并授权处理的文件。",
+              "none": "不需要上述工具，或当前没有满足请求所需的授权和输入。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "none"
+    },
+    {
+      "id": "tool-06",
+      "category": "tool",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户问：请查询某产品官网现在公开的发布公告。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "哪个已有工具最适合当前请求？没有合法适用工具时选择none。",
+            "criteria": {
+              "web": "查询公开互联网，获取当前公开信息。",
+              "memory": "查询已经授权的本地对话记忆。",
+              "file": "读取用户本轮已上传并授权处理的文件。",
+              "none": "不需要上述工具，或当前没有满足请求所需的授权和输入。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "web"
+    },
+    {
+      "id": "tool-07",
+      "category": "tool",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户问：我之前明确让你记住的生日是几月几号？只查询我授权的记忆。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "哪个已有工具最适合当前请求？没有合法适用工具时选择none。",
+            "criteria": {
+              "web": "查询公开互联网，获取当前公开信息。",
+              "memory": "查询已经授权的本地对话记忆。",
+              "file": "读取用户本轮已上传并授权处理的文件。",
+              "none": "不需要上述工具，或当前没有满足请求所需的授权和输入。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "memory"
+    },
+    {
+      "id": "tool-08",
+      "category": "tool",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：统计我刚上传的CSV有多少行。CSV已经接收并授权读取。",
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "哪个已有工具最适合当前请求？没有合法适用工具时选择none。",
+            "criteria": {
+              "web": "查询公开互联网，获取当前公开信息。",
+              "memory": "查询已经授权的本地对话记忆。",
+              "file": "读取用户本轮已上传并授权处理的文件。",
+              "none": "不需要上述工具，或当前没有满足请求所需的授权和输入。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "file"
+    },
+    {
+      "id": "retrieval-01",
+      "category": "retrieval",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "检索问题": "甲最近更正后的茶饮偏好是什么？"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "选择最能直接回答检索问题的记忆；不足以回答时选none。",
+            "criteria": {
+              "a": "甲上月说喜欢红茶。",
+              "b": "甲昨天更正：现在更喜欢绿茶。",
+              "c": "乙昨天说喜欢咖啡。",
+              "none": "没有相关记忆。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "b"
+    },
+    {
+      "id": "retrieval-02",
+      "category": "retrieval",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "检索问题": "甲养的猫叫什么名字？"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "选择最能直接回答检索问题的记忆；不足以回答时选none。",
+            "criteria": {
+              "a": "甲的猫叫团团。",
+              "b": "乙的猫叫圆圆。",
+              "c": "甲喜欢猫。",
+              "none": "没有相关记忆。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "a"
+    },
+    {
+      "id": "retrieval-03",
+      "category": "retrieval",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "检索问题": "乙现在住在哪里？"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "选择最能直接回答检索问题的记忆；不足以回答时选none。",
+            "criteria": {
+              "a": "甲住杭州。",
+              "b": "乙过去住南京。",
+              "c": "乙昨天说已经搬到苏州，现在住苏州。",
+              "none": "没有相关记忆。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "c"
+    },
+    {
+      "id": "retrieval-04",
+      "category": "retrieval",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "检索问题": "下次和甲见面的约定时间？"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "选择最能直接回答检索问题的记忆；不足以回答时选none。",
+            "criteria": {
+              "a": "甲喜欢傍晚散步。",
+              "b": "甲和小雾约好本周六下午三点见面。",
+              "c": "乙下周日要出差。",
+              "none": "没有相关记忆。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "b"
+    },
+    {
+      "id": "retrieval-05",
+      "category": "retrieval",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "检索问题": "甲的生日日期？"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "选择最能直接回答检索问题的记忆；不足以回答时选none。",
+            "criteria": {
+              "a": "甲喜欢生日蛋糕。",
+              "b": "乙生日是五月一日。",
+              "c": "小雾今天读了一本书。",
+              "none": "没有能回答甲生日日期的相关记忆。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "none"
+    },
+    {
+      "id": "retrieval-06",
+      "category": "retrieval",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "检索问题": "刚才发出的消息m7是否送达？"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "选择最能直接回答检索问题的记忆；不足以回答时选none。",
+            "criteria": {
+              "a": "消息m7已生成。",
+              "b": "消息m6已送达。",
+              "c": "消息m7有真实送达回执。",
+              "none": "没有相关记忆。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "c"
+    },
+    {
+      "id": "retrieval-07",
+      "category": "retrieval",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "检索问题": "甲是否明确说过不喜欢被叫老板？"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "选择最能直接回答检索问题的记忆；不足以回答时选none。",
+            "criteria": {
+              "a": "甲说：不要叫我老板，我不喜欢这个称呼。",
+              "b": "乙喜欢被叫老板。",
+              "c": "甲工作很忙。",
+              "none": "没有相关记忆。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "a"
+    },
+    {
+      "id": "retrieval-08",
+      "category": "retrieval",
+      "request": {
+        "model": "clm-latest",
+        "state": {
+          "检索问题": "甲当前的任务完成了吗？"
+        },
+        "questions": {
+          "decision": {
+            "type": "choice",
+            "instructions": "选择最能直接回答检索问题的记忆；不足以回答时选none。",
+            "criteria": {
+              "a": "甲说昨天开始写报告。",
+              "b": "甲刚才说：报告还没有完成。",
+              "c": "乙已经写完报告。",
+              "none": "没有相关记忆。"
+            }
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": "b"
+    },
+    {
+      "id": "noul-01",
+      "category": "noul",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户原文：我不喜欢咖啡。",
+        "questions": {
+          "decision": {
+            "type": "noul",
+            "instructions": "用户是否明确表示不喜欢咖啡？"
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": true
+    },
+    {
+      "id": "noul-02",
+      "category": "noul",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户原文：我喜欢咖啡。",
+        "questions": {
+          "decision": {
+            "type": "noul",
+            "instructions": "用户是否明确表示不喜欢咖啡？"
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": false
+    },
+    {
+      "id": "noul-03",
+      "category": "noul",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：请记住，我的生日是六月一日。",
+        "questions": {
+          "decision": {
+            "type": "noul",
+            "instructions": "用户是否明确要求记住一条信息？"
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": true
+    },
+    {
+      "id": "noul-04",
+      "category": "noul",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：今天是六月一日。",
+        "questions": {
+          "decision": {
+            "type": "noul",
+            "instructions": "用户是否明确要求记住一条信息？"
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": false
+    },
+    {
+      "id": "noul-05",
+      "category": "noul",
+      "request": {
+        "model": "clm-latest",
+        "state": "工具日志显示：任务执行成功，输出文件已生成。",
+        "questions": {
+          "decision": {
+            "type": "noul",
+            "instructions": "是否有工具日志证明任务已经执行成功？"
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": true
+    },
+    {
+      "id": "noul-06",
+      "category": "noul",
+      "request": {
+        "model": "clm-latest",
+        "state": "模型说：我准备执行任务。没有任何工具日志。",
+        "questions": {
+          "decision": {
+            "type": "noul",
+            "instructions": "是否有工具日志证明任务已经执行成功？"
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": false
+    },
+    {
+      "id": "noul-07",
+      "category": "noul",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：更正一下，之前的地址不对，现在是苏州。",
+        "questions": {
+          "decision": {
+            "type": "noul",
+            "instructions": "本条消息是否明确更正了先前的信息？"
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": true
+    },
+    {
+      "id": "noul-08",
+      "category": "noul",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：苏州天气很好。没有提到之前的信息。",
+        "questions": {
+          "decision": {
+            "type": "noul",
+            "instructions": "本条消息是否明确更正了先前的信息？"
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": false
+    },
+    {
+      "id": "score-01",
+      "category": "score",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：今天阳光不错。这是一句分享，没有提出请求。",
+        "questions": {
+          "decision": {
+            "type": "score",
+            "instructions": "只按用户明确表达的请求时效，将本消息归到哪一级？",
+            "criteria": [
+              "没有需要处理的请求。",
+              "有普通请求，但用户明确说不急。",
+              "有请求且用户明确要求现在立即处理。"
+            ]
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": 0
+    },
+    {
+      "id": "score-02",
+      "category": "score",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：你好。没有其他内容。",
+        "questions": {
+          "decision": {
+            "type": "score",
+            "instructions": "只按用户明确表达的请求时效，将本消息归到哪一级？",
+            "criteria": [
+              "没有需要处理的请求。",
+              "有普通请求，但用户明确说不急。",
+              "有请求且用户明确要求现在立即处理。"
+            ]
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": 0
+    },
+    {
+      "id": "score-03",
+      "category": "score",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：稍后有空帮我整理一下清单，不着急。",
+        "questions": {
+          "decision": {
+            "type": "score",
+            "instructions": "只按用户明确表达的请求时效，将本消息归到哪一级？",
+            "criteria": [
+              "没有需要处理的请求。",
+              "有普通请求，但用户明确说不急。",
+              "有请求且用户明确要求现在立即处理。"
+            ]
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": 1
+    },
+    {
+      "id": "score-04",
+      "category": "score",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：这件事明天再看就行，不急。",
+        "questions": {
+          "decision": {
+            "type": "score",
+            "instructions": "只按用户明确表达的请求时效，将本消息归到哪一级？",
+            "criteria": [
+              "没有需要处理的请求。",
+              "有普通请求，但用户明确说不急。",
+              "有请求且用户明确要求现在立即处理。"
+            ]
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": 1
+    },
+    {
+      "id": "score-05",
+      "category": "score",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：请现在立即告诉我会议链接，我马上要进会。",
+        "questions": {
+          "decision": {
+            "type": "score",
+            "instructions": "只按用户明确表达的请求时效，将本消息归到哪一级？",
+            "criteria": [
+              "没有需要处理的请求。",
+              "有普通请求，但用户明确说不急。",
+              "有请求且用户明确要求现在立即处理。"
+            ]
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": 2
+    },
+    {
+      "id": "score-06",
+      "category": "score",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：请立刻停止当前任务，现在就停。",
+        "questions": {
+          "decision": {
+            "type": "score",
+            "instructions": "只按用户明确表达的请求时效，将本消息归到哪一级？",
+            "criteria": [
+              "没有需要处理的请求。",
+              "有普通请求，但用户明确说不急。",
+              "有请求且用户明确要求现在立即处理。"
+            ]
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": 2
+    },
+    {
+      "id": "score-07",
+      "category": "score",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：不用处理，我只是分享一下这张照片。",
+        "questions": {
+          "decision": {
+            "type": "score",
+            "instructions": "只按用户明确表达的请求时效，将本消息归到哪一级？",
+            "criteria": [
+              "没有需要处理的请求。",
+              "有普通请求，但用户明确说不急。",
+              "有请求且用户明确要求现在立即处理。"
+            ]
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": 0
+    },
+    {
+      "id": "score-08",
+      "category": "score",
+      "request": {
+        "model": "clm-latest",
+        "state": "用户说：请帮我查资料，但什么时候有空再查就好，不急。",
+        "questions": {
+          "decision": {
+            "type": "score",
+            "instructions": "只按用户明确表达的请求时效，将本消息归到哪一级？",
+            "criteria": [
+              "没有需要处理的请求。",
+              "有普通请求，但用户明确说不急。",
+              "有请求且用户明确要求现在立即处理。"
+            ]
+          }
+        },
+        "temperature": 1.0
+      },
+      "expected": 1
+    }
+  ]
+}

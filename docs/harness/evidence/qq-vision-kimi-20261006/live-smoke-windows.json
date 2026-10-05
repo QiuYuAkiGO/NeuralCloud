@@ -1,0 +1,775 @@
+{
+  "scope": "isolated public/synthetic fixtures; no QQ sends; no production memory",
+  "main_model": "qwen3.8-27b",
+  "vision_model": "kimi-k2.6",
+  "thinking": "disabled",
+  "created_at": "2026-10-05T18:43:23.111965+00:00",
+  "rows": [
+    {
+      "case": "c02",
+      "question": "小雾，这是谁？感觉衣服和平时不一样。",
+      "expected": "蔚蓝档案 / 杏山和纱或杏山千纱 / 乐队 Kazusa (Band), Sugar Rush",
+      "seconds": 12.809,
+      "action": "speak",
+      "outcome": "ready",
+      "reply": "是Kazusa呀\n\n她平时都穿校服，这次换了件休闲T恤\n\n上面印着黑猫，还挺可爱的",
+      "model_call_counts": {
+        "gate": 2,
+        "persona": 1,
+        "vision": 1
+      },
+      "web_executed": false,
+      "vision": [
+        {
+          "seconds": 3.014,
+          "result": {
+            "tool": "inspect_qq_images",
+            "status": "ok",
+            "untrusted": true,
+            "images": [
+              {
+                "image_id": "image_1",
+                "description": "一位动漫风格女性角色的上半身特写。她有着黑色短发，发尾内侧挑染成粉红色，齐刘海。头上戴着粉红色猫耳发饰，头顶有一个白色光环。她佩戴黑色项圈，穿着白色宽松T恤，T恤正面印有卡通黑猫图案和\"SUGAR RUSH\"字样。她有着红色眼瞳，眼下似乎有淡淡的阴影或妆容，耳朵上有多个耳钉，表情略显慵懒或冷淡。",
+                "ocr_text": "SUGAR\nRUSH",
+                "characters": [
+                  {
+                    "work": "Blue Archive",
+                    "name": "Kazusa",
+                    "variant": "休闲装/私服（T恤）",
+                    "confidence": "confident"
+                  }
+                ],
+                "uncertainties": [
+                  "T恤上的具体文字是否完全准确：SUGAR RUSH为可见部分，下方可能有其他文字被遮挡",
+                  "该换装是否为游戏内正式服装还是同人创作无法完全确认"
+                ]
+              }
+            ],
+            "model": "kimi-k2.6",
+            "thinking": "disabled",
+            "evidence": [
+              {
+                "image_id": "image_1",
+                "observation_id": "qq-visual:7297d7fc6b8b4ccd85f8b3cdeb79b18a",
+                "image_index": 1,
+                "evidence_ref": "qq-direct-image:sha256:f146c56db9aab6d9a033dd948d762bc1d31bebf0452485b58c3f5d8764c8fb03",
+                "sampled_frame_indices": [
+                  0
+                ],
+                "frame_count": 1,
+                "frame_sha256": [
+                  "4b7f0b6fdf96ab2e81ae9931d046f5f81b8514372d5d15e64fc91c401c9a3607"
+                ]
+              }
+            ]
+          },
+          "usage": {
+            "prompt_tokens": 607,
+            "completion_tokens": 192,
+            "total_tokens": 799,
+            "cache_hit_tokens": 0,
+            "cache_miss_tokens": 0,
+            "cache_known_prompt_tokens": 0,
+            "cache_unknown_prompt_tokens": 607,
+            "cache_status": "unknown",
+            "prompt_tokens_source": "api",
+            "completion_tokens_source": "api",
+            "calls": 1,
+            "revision_calls": 0,
+            "revision_tokens": 0,
+            "source": "api"
+          }
+        }
+      ],
+      "trace": {
+        "schema_version": "qq-turn-trace-v1",
+        "trace_id": "qq-trace:d4bfbfcd8b764cb9aa3f76f86c512fd9",
+        "event_id": null,
+        "decision_id": "qq-decision:eaef633a2ea1484aaede12d6421cc439",
+        "first_seen_at": "2026-10-05T18:43:24.341918+00:00",
+        "first_seen_mono": 274448.031,
+        "recorded_at": "2026-10-05T18:43:37.150872+00:00",
+        "elapsed_ms": 12797.0,
+        "stages": [
+          {
+            "name": "context.history_selection",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 469.0,
+            "end_offset_ms": 469.0,
+            "duration_ms": 0.0
+          },
+          {
+            "name": "gate.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 594.0,
+            "end_offset_ms": 5265.0,
+            "duration_ms": 4671.0
+          },
+          {
+            "name": "vision.tool_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 5312.0,
+            "end_offset_ms": 8281.0,
+            "duration_ms": 2969.0
+          },
+          {
+            "name": "gate.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 8281.0,
+            "end_offset_ms": 11281.0,
+            "duration_ms": 3000.0
+          },
+          {
+            "name": "gate",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 594.0,
+            "end_offset_ms": 11281.0,
+            "duration_ms": 10687.0
+          },
+          {
+            "name": "persona.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 11625.0,
+            "end_offset_ms": 12703.0,
+            "duration_ms": 1078.0
+          },
+          {
+            "name": "persona",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 11625.0,
+            "end_offset_ms": 12703.0,
+            "duration_ms": 1078.0
+          }
+        ],
+        "counters": {
+          "context_source_characters": 4767,
+          "context_base_characters": 4138,
+          "context_input_token_budget": 60000,
+          "context_input_character_budget": 120000,
+          "context_gate_history_candidate_observations": 1,
+          "context_gate_history_candidate_characters": 1860,
+          "context_gate_history_candidate_omitted": 0,
+          "context_gate_history_candidate_fits": 1,
+          "context_body_history_candidate_observations": 1,
+          "context_body_history_candidate_characters": 1860,
+          "context_body_history_candidate_omitted": 0,
+          "context_body_history_candidate_fits": 1,
+          "context_assessment_reserved_characters": 42249,
+          "context_selected_observations": 1,
+          "context_omitted_observations": 0,
+          "context_wire_characters": 4826,
+          "context_compact_projection": 1,
+          "context_history_wire_characters": 1860,
+          "context_gate_history_soft_target_exceeded": 0,
+          "context_body_history_soft_target_exceeded": 0,
+          "context_final_characters": 5839,
+          "context_final_estimated_tokens": 2920,
+          "model_calls": 4,
+          "gate_model_calls": 2,
+          "gate_cache_hit_tokens": 4269,
+          "gate_cache_miss_tokens": 4957,
+          "gate_prompt_tokens": 9226,
+          "gate_completion_tokens": 372,
+          "gate_cache_known_prompt_tokens": 9226,
+          "gate_cache_unknown_prompt_tokens": 0,
+          "gate_usage_calls": 2,
+          "gate_cache_known_calls": 2,
+          "gate_input_api_calls": 2,
+          "gate_output_api_calls": 2,
+          "gate_api_usage_calls": 2,
+          "gate_estimated_prompt_tokens": 0,
+          "gate_estimated_completion_tokens": 0,
+          "gate_response_validated": 2,
+          "vision_model_calls": 1,
+          "vision_cache_hit_tokens": 0,
+          "vision_cache_miss_tokens": 0,
+          "vision_prompt_tokens": 607,
+          "vision_completion_tokens": 192,
+          "vision_cache_known_prompt_tokens": 0,
+          "vision_cache_unknown_prompt_tokens": 607,
+          "vision_usage_calls": 1,
+          "vision_cache_known_calls": 0,
+          "vision_input_api_calls": 1,
+          "vision_output_api_calls": 1,
+          "vision_api_usage_calls": 1,
+          "vision_estimated_prompt_tokens": 0,
+          "vision_estimated_completion_tokens": 0,
+          "context_persona_characters": 520,
+          "context_persona_estimated_tokens": 260,
+          "persona_model_calls": 1,
+          "persona_cache_hit_tokens": 4949,
+          "persona_cache_miss_tokens": 1807,
+          "persona_prompt_tokens": 6756,
+          "persona_completion_tokens": 32,
+          "persona_cache_known_prompt_tokens": 6756,
+          "persona_cache_unknown_prompt_tokens": 0,
+          "persona_usage_calls": 1,
+          "persona_cache_known_calls": 1,
+          "persona_input_api_calls": 1,
+          "persona_output_api_calls": 1,
+          "persona_api_usage_calls": 1,
+          "persona_estimated_prompt_tokens": 0,
+          "persona_estimated_completion_tokens": 0,
+          "line_segmentation": 1,
+          "decision_outcome_ready": 1
+        }
+      }
+    },
+    {
+      "case": "c04",
+      "question": "这张是哪个角色的什么形态呀？",
+      "expected": "崩坏：星穹铁道 / 三月七 / 巡猎·虚数（仙舟学剑形态）",
+      "seconds": 12.572,
+      "action": "speak",
+      "outcome": "ready",
+      "reply": "是《崩坏：星穹铁道》里的三月七呀\n\n看这身红白配色的武术装和手里的剑，应该是她新的战斗形态，感觉好飒",
+      "model_call_counts": {
+        "gate": 2,
+        "persona": 1,
+        "vision": 1
+      },
+      "web_executed": false,
+      "vision": [
+        {
+          "seconds": 4.002,
+          "result": {
+            "tool": "inspect_qq_images",
+            "status": "ok",
+            "untrusted": true,
+            "images": [
+              {
+                "image_id": "image_1",
+                "description": "A pink-haired anime-style female character in a dynamic sword-wielding pose. She has short pink hair with a small hair bun/ornament on the left side, blue-purple eyes, and an energetic expression with an open smile. She wears a red and white outfit with Chinese-inspired elements: a red cropped jacket with wide sleeves, black and gold accents, a blue sash/belt, white thigh-high leggings, and black boots. She wields a long slender sword in her right hand and appears to have a second weapon or scabbard at her waist. The character is posed mid-action on wooden barrel-like platforms, surrounded by swirling blue and purple energy effects, pink cherry blossom petals, and flower branch motifs. The overall aesthetic combines martial arts themes with floral/spring imagery.",
+                "ocr_text": null,
+                "characters": [
+                  {
+                    "work": "Honkai: Star Rail",
+                    "name": "March 7th",
+                    "variant": "Sword-wielding martial arts outfit / New form",
+                    "confidence": "confident"
+                  }
+                ],
+                "uncertainties": [
+                  "The exact official name of this specific variant/form is not confirmed from the image alone; it appears to be a newer or alternate combat form of March 7th with sword-based martial arts styling rather than her original archer appearance"
+                ]
+              }
+            ],
+            "model": "kimi-k2.6",
+            "thinking": "disabled",
+            "evidence": [
+              {
+                "image_id": "image_1",
+                "observation_id": "qq-visual:db240049429941f592fd57d596fd1167",
+                "image_index": 1,
+                "evidence_ref": "qq-direct-image:sha256:8cca80985a55730bc2569a78811b30130f59456e4c6c9634eac8846eb63cf60b",
+                "sampled_frame_indices": [
+                  0
+                ],
+                "frame_count": 1,
+                "frame_sha256": [
+                  "722791fa15b7c5bee8e6bd7de7f9fa019f2311e96dc3fb803ea6730db3c918bc"
+                ]
+              }
+            ]
+          },
+          "usage": {
+            "prompt_tokens": 1328,
+            "completion_tokens": 265,
+            "total_tokens": 1593,
+            "cache_hit_tokens": 0,
+            "cache_miss_tokens": 0,
+            "cache_known_prompt_tokens": 0,
+            "cache_unknown_prompt_tokens": 1328,
+            "cache_status": "unknown",
+            "prompt_tokens_source": "api",
+            "completion_tokens_source": "api",
+            "calls": 1,
+            "revision_calls": 0,
+            "revision_tokens": 0,
+            "source": "api"
+          }
+        }
+      ],
+      "trace": {
+        "schema_version": "qq-turn-trace-v1",
+        "trace_id": "qq-trace:d537de8df8e745709472134b475e546a",
+        "event_id": null,
+        "decision_id": "qq-decision:eb7fbcf92330484594230ae18aa416eb",
+        "first_seen_at": "2026-10-05T18:43:37.483251+00:00",
+        "first_seen_mono": 274461.171,
+        "recorded_at": "2026-10-05T18:43:50.054790+00:00",
+        "elapsed_ms": 12563.0,
+        "stages": [
+          {
+            "name": "context.history_selection",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 422.0,
+            "end_offset_ms": 422.0,
+            "duration_ms": 0.0
+          },
+          {
+            "name": "gate.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 532.0,
+            "end_offset_ms": 4000.0,
+            "duration_ms": 3468.0
+          },
+          {
+            "name": "vision.tool_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 4141.0,
+            "end_offset_ms": 8000.0,
+            "duration_ms": 3859.0
+          },
+          {
+            "name": "gate.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 8000.0,
+            "end_offset_ms": 10938.0,
+            "duration_ms": 2938.0
+          },
+          {
+            "name": "gate",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 532.0,
+            "end_offset_ms": 10938.0,
+            "duration_ms": 10406.0
+          },
+          {
+            "name": "persona.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 11266.0,
+            "end_offset_ms": 12469.0,
+            "duration_ms": 1203.0
+          },
+          {
+            "name": "persona",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 11266.0,
+            "end_offset_ms": 12469.0,
+            "duration_ms": 1203.0
+          }
+        ],
+        "counters": {
+          "context_source_characters": 4749,
+          "context_base_characters": 4120,
+          "context_input_token_budget": 60000,
+          "context_input_character_budget": 120000,
+          "context_gate_history_candidate_observations": 1,
+          "context_gate_history_candidate_characters": 1849,
+          "context_gate_history_candidate_omitted": 0,
+          "context_gate_history_candidate_fits": 1,
+          "context_body_history_candidate_observations": 1,
+          "context_body_history_candidate_characters": 1849,
+          "context_body_history_candidate_omitted": 0,
+          "context_body_history_candidate_fits": 1,
+          "context_assessment_reserved_characters": 42249,
+          "context_selected_observations": 1,
+          "context_omitted_observations": 0,
+          "context_wire_characters": 4811,
+          "context_compact_projection": 1,
+          "context_history_wire_characters": 1849,
+          "context_gate_history_soft_target_exceeded": 0,
+          "context_body_history_soft_target_exceeded": 0,
+          "context_final_characters": 6646,
+          "context_final_estimated_tokens": 3324,
+          "model_calls": 4,
+          "gate_model_calls": 2,
+          "gate_cache_hit_tokens": 7156,
+          "gate_cache_miss_tokens": 2130,
+          "gate_prompt_tokens": 9286,
+          "gate_completion_tokens": 352,
+          "gate_cache_known_prompt_tokens": 9286,
+          "gate_cache_unknown_prompt_tokens": 0,
+          "gate_usage_calls": 2,
+          "gate_cache_known_calls": 2,
+          "gate_input_api_calls": 2,
+          "gate_output_api_calls": 2,
+          "gate_api_usage_calls": 2,
+          "gate_estimated_prompt_tokens": 0,
+          "gate_estimated_completion_tokens": 0,
+          "gate_response_validated": 2,
+          "vision_model_calls": 1,
+          "vision_cache_hit_tokens": 0,
+          "vision_cache_miss_tokens": 0,
+          "vision_prompt_tokens": 1328,
+          "vision_completion_tokens": 265,
+          "vision_cache_known_prompt_tokens": 0,
+          "vision_cache_unknown_prompt_tokens": 1328,
+          "vision_usage_calls": 1,
+          "vision_cache_known_calls": 0,
+          "vision_input_api_calls": 1,
+          "vision_output_api_calls": 1,
+          "vision_api_usage_calls": 1,
+          "vision_estimated_prompt_tokens": 0,
+          "vision_estimated_completion_tokens": 0,
+          "context_persona_characters": 494,
+          "context_persona_estimated_tokens": 247,
+          "persona_model_calls": 1,
+          "persona_cache_hit_tokens": 5007,
+          "persona_cache_miss_tokens": 1791,
+          "persona_prompt_tokens": 6798,
+          "persona_completion_tokens": 40,
+          "persona_cache_known_prompt_tokens": 6798,
+          "persona_cache_unknown_prompt_tokens": 0,
+          "persona_usage_calls": 1,
+          "persona_cache_known_calls": 1,
+          "persona_input_api_calls": 1,
+          "persona_output_api_calls": 1,
+          "persona_api_usage_calls": 1,
+          "persona_estimated_prompt_tokens": 0,
+          "persona_estimated_completion_tokens": 0,
+          "paragraph_segmentation": 1,
+          "sentence_segmentation": 1,
+          "decision_outcome_ready": 1
+        }
+      }
+    },
+    {
+      "case": "c05",
+      "question": "更新又失败了，这图里到底说什么？该怎么弄？",
+      "expected": "E-204；剩余2.3GB、需要8.0GB；至少再腾5.7GB并留余量；不能误判为网络问题",
+      "seconds": 10.778,
+      "action": "speak",
+      "outcome": "ready",
+      "reply": "图里是更新失败的报错，错误码E-204，说磁盘只剩2.3G，但这次更新要8G，空间不够所以卡住了\n\n把不用的东西清一清，腾出至少8G再试一次就好",
+      "model_call_counts": {
+        "gate": 2,
+        "persona": 1,
+        "vision": 1
+      },
+      "web_executed": false,
+      "vision": [
+        {
+          "seconds": 2.459,
+          "result": {
+            "tool": "inspect_qq_images",
+            "status": "ok",
+            "untrusted": true,
+            "images": [
+              {
+                "image_id": "image_1",
+                "description": "这是一个游戏更新失败的错误提示弹窗，采用简洁的白色圆角矩形卡片设计，黑色文字。提示内容显示磁盘空间不足导致更新失败，需要释放空间后重试。",
+                "ocr_text": "游戏更新失败\n错误码：E-204\n磁盘可用空间：2.3 GB\n本次更新需要：8.0 GB\n\n请释放空间后重试",
+                "characters": [],
+                "uncertainties": []
+              }
+            ],
+            "model": "kimi-k2.6",
+            "thinking": "disabled",
+            "evidence": [
+              {
+                "image_id": "image_1",
+                "observation_id": "qq-visual:2679c032745a4dd7a8d466a51ee7a15c",
+                "image_index": 1,
+                "evidence_ref": "qq-direct-image:sha256:84d7a8e02d7ba79b8ffd00444dade089c5a1e843cb48aadd1a3681632ad4e31d",
+                "sampled_frame_indices": [
+                  0
+                ],
+                "frame_count": 1,
+                "frame_sha256": [
+                  "4112702c14843712333337b1bb0829ea8eb2535223bd34d890ba0c9b02b4c6c1"
+                ]
+              }
+            ]
+          },
+          "usage": {
+            "prompt_tokens": 924,
+            "completion_tokens": 101,
+            "total_tokens": 1025,
+            "cache_hit_tokens": 256,
+            "cache_miss_tokens": 668,
+            "cache_known_prompt_tokens": 924,
+            "cache_unknown_prompt_tokens": 0,
+            "cache_status": "known",
+            "prompt_tokens_source": "api",
+            "completion_tokens_source": "api",
+            "calls": 1,
+            "revision_calls": 0,
+            "revision_tokens": 0,
+            "source": "api"
+          }
+        }
+      ],
+      "trace": {
+        "schema_version": "qq-turn-trace-v1",
+        "trace_id": "qq-trace:d174ae7e9db44fddbe34a3799377909b",
+        "event_id": null,
+        "decision_id": "qq-decision:0b944cc7167847f9b4f82676a596b3ee",
+        "first_seen_at": "2026-10-05T18:43:50.273578+00:00",
+        "first_seen_mono": 274473.953,
+        "recorded_at": "2026-10-05T18:44:01.052286+00:00",
+        "elapsed_ms": 10781.0,
+        "stages": [
+          {
+            "name": "context.history_selection",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 390.0,
+            "end_offset_ms": 390.0,
+            "duration_ms": 0.0
+          },
+          {
+            "name": "gate.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 500.0,
+            "end_offset_ms": 3781.0,
+            "duration_ms": 3281.0
+          },
+          {
+            "name": "vision.tool_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 3843.0,
+            "end_offset_ms": 6234.0,
+            "duration_ms": 2391.0
+          },
+          {
+            "name": "gate.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 6234.0,
+            "end_offset_ms": 8718.0,
+            "duration_ms": 2484.0
+          },
+          {
+            "name": "gate",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 500.0,
+            "end_offset_ms": 8718.0,
+            "duration_ms": 8218.0
+          },
+          {
+            "name": "persona.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 9031.0,
+            "end_offset_ms": 10515.0,
+            "duration_ms": 1484.0
+          },
+          {
+            "name": "persona",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 9031.0,
+            "end_offset_ms": 10515.0,
+            "duration_ms": 1484.0
+          }
+        ],
+        "counters": {
+          "context_source_characters": 4822,
+          "context_base_characters": 4193,
+          "context_input_token_budget": 60000,
+          "context_input_character_budget": 120000,
+          "context_gate_history_candidate_observations": 1,
+          "context_gate_history_candidate_characters": 1889,
+          "context_gate_history_candidate_omitted": 0,
+          "context_gate_history_candidate_fits": 1,
+          "context_body_history_candidate_observations": 1,
+          "context_body_history_candidate_characters": 1889,
+          "context_body_history_candidate_omitted": 0,
+          "context_body_history_candidate_fits": 1,
+          "context_assessment_reserved_characters": 42249,
+          "context_selected_observations": 1,
+          "context_omitted_observations": 0,
+          "context_wire_characters": 4858,
+          "context_compact_projection": 1,
+          "context_history_wire_characters": 1889,
+          "context_gate_history_soft_target_exceeded": 0,
+          "context_body_history_soft_target_exceeded": 0,
+          "context_final_characters": 5677,
+          "context_final_estimated_tokens": 2839,
+          "model_calls": 4,
+          "gate_model_calls": 2,
+          "gate_cache_hit_tokens": 7189,
+          "gate_cache_miss_tokens": 1988,
+          "gate_prompt_tokens": 9177,
+          "gate_completion_tokens": 312,
+          "gate_cache_known_prompt_tokens": 9177,
+          "gate_cache_unknown_prompt_tokens": 0,
+          "gate_usage_calls": 2,
+          "gate_cache_known_calls": 2,
+          "gate_input_api_calls": 2,
+          "gate_output_api_calls": 2,
+          "gate_api_usage_calls": 2,
+          "gate_estimated_prompt_tokens": 0,
+          "gate_estimated_completion_tokens": 0,
+          "gate_response_validated": 2,
+          "vision_model_calls": 1,
+          "vision_cache_hit_tokens": 256,
+          "vision_cache_miss_tokens": 668,
+          "vision_prompt_tokens": 924,
+          "vision_completion_tokens": 101,
+          "vision_cache_known_prompt_tokens": 924,
+          "vision_cache_unknown_prompt_tokens": 0,
+          "vision_usage_calls": 1,
+          "vision_cache_known_calls": 1,
+          "vision_input_api_calls": 1,
+          "vision_output_api_calls": 1,
+          "vision_api_usage_calls": 1,
+          "vision_estimated_prompt_tokens": 0,
+          "vision_estimated_completion_tokens": 0,
+          "context_persona_characters": 460,
+          "context_persona_estimated_tokens": 230,
+          "persona_model_calls": 1,
+          "persona_cache_hit_tokens": 4865,
+          "persona_cache_miss_tokens": 1746,
+          "persona_prompt_tokens": 6611,
+          "persona_completion_tokens": 59,
+          "persona_cache_known_prompt_tokens": 6611,
+          "persona_cache_unknown_prompt_tokens": 0,
+          "persona_usage_calls": 1,
+          "persona_cache_known_calls": 1,
+          "persona_input_api_calls": 1,
+          "persona_output_api_calls": 1,
+          "persona_api_usage_calls": 1,
+          "persona_estimated_prompt_tokens": 0,
+          "persona_estimated_completion_tokens": 0,
+          "line_segmentation": 1,
+          "sentence_segmentation": 1,
+          "decision_outcome_ready": 1
+        }
+      }
+    },
+    {
+      "case": "no_vision",
+      "question": "这张图只是先存一下，不用看图，也不用评价。回复一句收到就行。",
+      "expected": "针对实际蓝围巾、白外套等自然短评；不必强行介绍角色或搜索",
+      "seconds": 4.775,
+      "action": "speak",
+      "outcome": "ready",
+      "reply": "收到",
+      "model_call_counts": {
+        "gate": 1,
+        "persona": 1
+      },
+      "web_executed": false,
+      "vision": [],
+      "trace": {
+        "schema_version": "qq-turn-trace-v1",
+        "trace_id": "qq-trace:75724a45b08d4af1b6db0381564e01d6",
+        "event_id": null,
+        "decision_id": "qq-decision:7cb425f018184104bdc02fb7cb998dec",
+        "first_seen_at": "2026-10-05T18:44:01.461147+00:00",
+        "first_seen_mono": 274485.14,
+        "recorded_at": "2026-10-05T18:44:06.235564+00:00",
+        "elapsed_ms": 4781.0,
+        "stages": [
+          {
+            "name": "context.history_selection",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 281.0,
+            "end_offset_ms": 281.0,
+            "duration_ms": 0.0
+          },
+          {
+            "name": "gate.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 391.0,
+            "end_offset_ms": 3703.0,
+            "duration_ms": 3312.0
+          },
+          {
+            "name": "gate",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 391.0,
+            "end_offset_ms": 3703.0,
+            "duration_ms": 3312.0
+          },
+          {
+            "name": "persona.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 3969.0,
+            "end_offset_ms": 4672.0,
+            "duration_ms": 703.0
+          },
+          {
+            "name": "persona",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 3953.0,
+            "end_offset_ms": 4672.0,
+            "duration_ms": 719.0
+          }
+        ],
+        "counters": {
+          "context_source_characters": 4931,
+          "context_base_characters": 4302,
+          "context_input_token_budget": 60000,
+          "context_input_character_budget": 120000,
+          "context_gate_history_candidate_observations": 1,
+          "context_gate_history_candidate_characters": 1948,
+          "context_gate_history_candidate_omitted": 0,
+          "context_gate_history_candidate_fits": 1,
+          "context_body_history_candidate_observations": 1,
+          "context_body_history_candidate_characters": 1948,
+          "context_body_history_candidate_omitted": 0,
+          "context_body_history_candidate_fits": 1,
+          "context_assessment_reserved_characters": 42249,
+          "context_selected_observations": 1,
+          "context_omitted_observations": 0,
+          "context_wire_characters": 4926,
+          "context_compact_projection": 1,
+          "context_history_wire_characters": 1948,
+          "context_gate_history_soft_target_exceeded": 0,
+          "context_body_history_soft_target_exceeded": 0,
+          "context_final_characters": 4926,
+          "context_final_estimated_tokens": 2463,
+          "model_calls": 2,
+          "gate_model_calls": 1,
+          "gate_cache_hit_tokens": 2885,
+          "gate_cache_miss_tokens": 1448,
+          "gate_prompt_tokens": 4333,
+          "gate_completion_tokens": 169,
+          "gate_cache_known_prompt_tokens": 4333,
+          "gate_cache_unknown_prompt_tokens": 0,
+          "gate_usage_calls": 1,
+          "gate_cache_known_calls": 1,
+          "gate_input_api_calls": 1,
+          "gate_output_api_calls": 1,
+          "gate_api_usage_calls": 1,
+          "gate_estimated_prompt_tokens": 0,
+          "gate_estimated_completion_tokens": 0,
+          "gate_response_validated": 1,
+          "context_persona_characters": 492,
+          "context_persona_estimated_tokens": 246,
+          "persona_model_calls": 1,
+          "persona_cache_hit_tokens": 4329,
+          "persona_cache_miss_tokens": 1785,
+          "persona_prompt_tokens": 6114,
+          "persona_completion_tokens": 5,
+          "persona_cache_known_prompt_tokens": 6114,
+          "persona_cache_unknown_prompt_tokens": 0,
+          "persona_usage_calls": 1,
+          "persona_cache_known_calls": 1,
+          "persona_input_api_calls": 1,
+          "persona_output_api_calls": 1,
+          "persona_api_usage_calls": 1,
+          "persona_estimated_prompt_tokens": 0,
+          "persona_estimated_completion_tokens": 0,
+          "decision_outcome_ready": 1
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "read_only": true,
+  "sent_messages": 0,
+  "counts": {
+    "history_rows": 73,
+    "valid_duplicate": 61,
+    "duplicate_identity_conflict": 12
+  },
+  "conflict_fields": {
+    "images": 12
+  }
+}

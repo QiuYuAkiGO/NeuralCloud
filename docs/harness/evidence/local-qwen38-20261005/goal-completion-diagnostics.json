@@ -1,0 +1,271 @@
+{
+  "created_at": "2026-10-05T09:28:40.544461+00:00",
+  "model": "qwen3.8-27b",
+  "base_url": "http://127.0.0.1:8080/v1",
+  "scope": "Synthetic isolated model probes, not production/long-horizon acceptance",
+  "persona_source": "presets/builtin/misty.json",
+  "synthetic_context_characters": 2389,
+  "goal_deadline_seconds": 25,
+  "results": [
+    {
+      "kind": "goal",
+      "case": "verified",
+      "seconds": 2.86,
+      "passed": false,
+      "error": "GoalDecisionError: goal_invalid_schema",
+      "synthetic_raw_response": "{\n  \"choice\": {\n    \"kind\": \"no_action\"\n  },\n  \"episode_operation\": \"complete\",\n  \"criterion_results\": [\n    {\n      \"criterion\": \"留言板保存成功并收到回执\",\n      \"satisfied\": true,\n      \"evidence_refs\": [\n        \"receipt:1\"\n      ]\n    }\n  ]\n}",
+      "synthetic_validation_error": "1 validation error for GoalChoice\n  Value error, goal_review_requires_evidence [type=value_error, input_value={'choice': {'kind': 'no_a..._refs': ['receipt:1']}]}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/value_error"
+    },
+    {
+      "kind": "goal",
+      "case": "verified",
+      "seconds": 1.443,
+      "passed": false,
+      "error": "GoalDecisionError: goal_invalid_schema",
+      "synthetic_raw_response": "{\n  \"episode_operation\": \"complete\",\n  \"choice\": {\n    \"kind\": \"no_action\"\n  },\n  \"criterion_results\": [\n    {\n      \"criterion\": \"留言板保存成功并收到回执\",\n      \"satisfied\": true,\n      \"evidence_refs\": [\n        \"receipt:1\"\n      ]\n    }\n  ]\n}",
+      "synthetic_validation_error": "1 validation error for GoalChoice\n  Value error, goal_review_requires_evidence [type=value_error, input_value={'episode_operation': 'co..._refs': ['receipt:1']}]}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/value_error"
+    },
+    {
+      "kind": "goal",
+      "case": "verified",
+      "seconds": 3.217,
+      "passed": true,
+      "schema_valid": true,
+      "decision": {
+        "decision_id": "goal-decision:5b44201f6c29951758d4cf5ff01dc8b2d4314798c3e0be9af6140c197b34d1f7",
+        "opportunity_id": "opportunity-1",
+        "snapshot_revision": 4,
+        "choice": {
+          "kind": "wait",
+          "offer_id": null,
+          "arguments": {},
+          "success_criteria": [],
+          "reason": null,
+          "production_goal_id": null
+        },
+        "episode_operation": "complete",
+        "purpose": null,
+        "target_dimensions": [],
+        "expected_effects": {},
+        "plan": [],
+        "completion_criteria": [
+          "留言板保存成功并收到回执"
+        ],
+        "evidence_refs": [
+          "receipt:1",
+          "fact:1"
+        ],
+        "criterion_results": [
+          {
+            "criterion": "留言板保存成功并收到回执",
+            "satisfied": true,
+            "evidence_refs": [
+              "receipt:1"
+            ]
+          }
+        ],
+        "appraisal": null,
+        "prepared_at": "2026-10-05T09:28:48.245009Z",
+        "deadline_at": "2026-10-05T09:29:45.028993Z",
+        "catalog_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 3203.0,
+        "total_ms": 3203.0,
+        "usage": {
+          "prompt_tokens": 5734,
+          "completion_tokens": 202,
+          "total_tokens": 5936,
+          "cache_hit_tokens": 5730,
+          "cache_miss_tokens": 4,
+          "cache_known_prompt_tokens": 5734,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      }
+    },
+    {
+      "kind": "goal",
+      "case": "verified",
+      "seconds": 1.65,
+      "passed": true,
+      "schema_valid": true,
+      "decision": {
+        "decision_id": "goal-decision:a88d123d4b0892ccf00e1a1111b221c6bf769550b202b6eacd792aa0ba4b82ca",
+        "opportunity_id": "opportunity-1",
+        "snapshot_revision": 4,
+        "choice": {
+          "kind": "no_action",
+          "offer_id": null,
+          "arguments": {},
+          "success_criteria": [],
+          "reason": null,
+          "production_goal_id": null
+        },
+        "episode_operation": "complete",
+        "purpose": null,
+        "target_dimensions": [],
+        "expected_effects": {},
+        "plan": [],
+        "completion_criteria": [],
+        "evidence_refs": [
+          "receipt:1"
+        ],
+        "criterion_results": [
+          {
+            "criterion": "留言板保存成功并收到回执",
+            "satisfied": true,
+            "evidence_refs": [
+              "receipt:1"
+            ]
+          }
+        ],
+        "appraisal": null,
+        "prepared_at": "2026-10-05T09:28:49.923025Z",
+        "deadline_at": "2026-10-05T09:29:48.273246Z",
+        "catalog_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 1641.0,
+        "total_ms": 1656.0,
+        "usage": {
+          "prompt_tokens": 5734,
+          "completion_tokens": 106,
+          "total_tokens": 5840,
+          "cache_hit_tokens": 5730,
+          "cache_miss_tokens": 4,
+          "cache_known_prompt_tokens": 5734,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      }
+    },
+    {
+      "kind": "goal",
+      "case": "verified",
+      "seconds": 0.871,
+      "passed": false,
+      "schema_valid": true,
+      "decision": {
+        "decision_id": "goal-decision:59feead21473a4b312cf0065438844de3a75cf9cd7606ccbccb60a0d99f51ca7",
+        "opportunity_id": "opportunity-1",
+        "snapshot_revision": 4,
+        "choice": {
+          "kind": "wait",
+          "offer_id": null,
+          "arguments": {},
+          "success_criteria": [],
+          "reason": null,
+          "production_goal_id": null
+        },
+        "episode_operation": "wait",
+        "purpose": null,
+        "target_dimensions": [],
+        "expected_effects": {},
+        "plan": [],
+        "completion_criteria": [],
+        "evidence_refs": [],
+        "criterion_results": [],
+        "appraisal": null,
+        "prepared_at": "2026-10-05T09:28:50.820506Z",
+        "deadline_at": "2026-10-05T09:29:49.949510Z",
+        "catalog_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 860.0,
+        "total_ms": 860.0,
+        "usage": {
+          "prompt_tokens": 5734,
+          "completion_tokens": 53,
+          "total_tokens": 5787,
+          "cache_hit_tokens": 5730,
+          "cache_miss_tokens": 4,
+          "cache_known_prompt_tokens": 5734,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      }
+    }
+  ],
+  "auth_rejects_missing_key": true,
+  "auth_rejects_wrong_key": true,
+  "models": {
+    "models": [
+      {
+        "name": "qwen3.8-27b",
+        "model": "qwen3.8-27b",
+        "modified_at": "",
+        "size": "",
+        "digest": "",
+        "type": "model",
+        "description": "",
+        "tags": [
+          ""
+        ],
+        "capabilities": [
+          "completion",
+          "multimodal"
+        ],
+        "parameters": "",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "",
+          "families": [
+            ""
+          ],
+          "parameter_size": "",
+          "quantization_level": ""
+        }
+      }
+    ],
+    "object": "list",
+    "data": [
+      {
+        "id": "qwen3.8-27b",
+        "aliases": [
+          "qwen3.8-27b"
+        ],
+        "tags": [],
+        "object": "model",
+        "created": 1791192520,
+        "owned_by": "llamacpp",
+        "meta": {
+          "vocab_type": 2,
+          "n_vocab": 248320,
+          "n_ctx": 65536,
+          "n_ctx_train": 262144,
+          "n_embd": 5120,
+          "n_params": 26895998464,
+          "size": 18962876416,
+          "ftype": "Q4_K - Medium"
+        }
+      }
+    ]
+  },
+  "template_compatibility": {
+    "later_system_roles_and_order_preserved": true
+  },
+  "all_probes_passed": false
+}

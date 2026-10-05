@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-06 Asia/Shanghai",
+  "gpu": "NVIDIA RTX 5090 32GB",
+  "local_model": "Qwen3.8-27B-Q4_K_M + mmproj-Qwen3.8-27B-Q8_0; llama.cpp b11146",
+  "local_slots": 2,
+  "production_shared_gpu": true,
+  "live_config_observed": {
+    "qq_image_mode": "off",
+    "vision_model": "deepseek-v4-flash-vision-exp",
+    "main_model": "qwen3.8-27b",
+    "qq_web_policy": "legacy",
+    "qq_history_selection": "bounded"
+  },
+  "source_sha256": {
+    "tools/production_acceptance/qq_vision_reply_benchmark.py": "9cb624b15e4f9caca7714dc23dded12251f04f89388b762f62d98dec93e066a8",
+    "tests/test_qq_vision_reply_benchmark.py": "cd8f5be4768b3968597d4bf9a5c50a4d243320ea96228c23ef5919f2b23e85ef",
+    "presets/builtin/misty.json": "3c162b3d93ae006b82e9a6b3b56703495a41e101645177148150d1da76da80a9",
+    "harness/qq/draft.py": "b99376a7681bb8e181ab80a52e15365f7a499df2bf01a9e3ec944da9daf43767",
+    "harness/qq/direct_images.py": "96391694607bd0800775d84460f53e29d64ca761b1930f5c784db64bed6db177",
+    "harness/llm/client.py": "769cc16062050d0734937e14361da6316264b2ab56ef44b9c8f267186f7b66f9"
+  },
+  "source_note": "Existing working tree had other uncommitted changes; only new benchmark/tests/report files added in this task."
+}

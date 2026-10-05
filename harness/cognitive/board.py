@@ -5,6 +5,8 @@ is an expression candidate until its Linux entry has been read back exactly.
 """
 from __future__ import annotations
 
+from harness.llm.deepseek_structured import decision_format
+
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -253,7 +255,7 @@ async def prepare(host, command, *, diagnostic=None):
                 async with asyncio.timeout(remaining):
                     response = await asyncio.to_thread(host.chat.llm.complete_chat_result,
                         messages, temperature=0.7, stream=False, max_tokens=settings.model_max_tokens,
-                        timeout_seconds=remaining, response_format={"type": "json_object"})
+                        timeout_seconds=remaining, response_format=decision_format(host.chat.llm, _Expression.model_json_schema(), "board_expression"))
             except BaseException:
                 attempt_data["latency_ms"] = round((time.monotonic() - attempt_started) * 1000, 3)
                 attempt_data["status"] = "request_failed"

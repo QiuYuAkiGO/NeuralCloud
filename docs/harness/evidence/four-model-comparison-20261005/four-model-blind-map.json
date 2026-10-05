@@ -1,0 +1,50 @@
+{
+  "choice": {
+    "A": "deepseek",
+    "B": "qwen",
+    "C": "kimi",
+    "D": "sonnet"
+  },
+  "comparison": {
+    "A": "deepseek",
+    "B": "kimi",
+    "C": "qwen",
+    "D": "sonnet"
+  },
+  "expanded": {
+    "A": "qwen",
+    "B": "kimi",
+    "C": "sonnet",
+    "D": "deepseek"
+  },
+  "joke": {
+    "A": "qwen",
+    "B": "deepseek",
+    "C": "sonnet",
+    "D": "kimi"
+  },
+  "memory_gap": {
+    "A": "kimi",
+    "B": "qwen",
+    "C": "deepseek",
+    "D": "sonnet"
+  },
+  "praise": {
+    "A": "qwen",
+    "B": "sonnet",
+    "C": "kimi",
+    "D": "deepseek"
+  },
+  "recognition": {
+    "A": "qwen",
+    "B": "deepseek",
+    "C": "sonnet",
+    "D": "kimi"
+  },
+  "worldview": {
+    "A": "deepseek",
+    "B": "sonnet",
+    "C": "kimi",
+    "D": "qwen"
+  }
+}

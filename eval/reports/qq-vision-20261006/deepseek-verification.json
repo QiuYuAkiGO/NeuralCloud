@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-05T18:11:32.389809+00:00",
+  "pytest": {
+    "command": "python -m pytest tests/test_qq_vision_reply_benchmark.py -q",
+    "passed": 25
+  },
+  "ruff": {
+    "result": "All checks passed",
+    "files": [
+      "tools/production_acceptance/qq_vision_reply_benchmark.py",
+      "tests/test_qq_vision_reply_benchmark.py",
+      "eval/reports/qq-vision-20261006/adapter_smoke.py",
+      "eval/reports/qq-vision-20261006/build_deepseek_report.py"
+    ]
+  },
+  "render": {
+    "browser": "Microsoft Edge headless",
+    "viewport": [
+      1760,
+      1900
+    ],
+    "screenshot": ".tmp/qq-vision-20261006/deepseek-preview.png",
+    "visually_inspected": true
+  },
+  "evidence_credential_pattern_matches": 0,
+  "temporary_search_key_removed": true,
+  "benchmark_calls_http_200": 50,
+  "scope": "No production configuration changes or QQ delivery. Frozen input and original-statistics checks are in deepseek-evidence-index.json."
+}

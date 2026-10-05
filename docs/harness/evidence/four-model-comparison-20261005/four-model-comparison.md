@@ -1,0 +1,712 @@
+# NeuralCloud 四模型冻结对照
+
+总预算 10 元；当前费用及未释放预留上限 6.93 元。
+费用不是账户实扣值；失败且无 usage 的请求仍占完整预留。
+
+沿用相同冻结人设、两版正文提示词及 8 场景 × 2 次生成；另有 SSE 和 goal。
+Qwen/DeepSeek 使用已完成的原始结果，新增模型在之后测量，网络和缓存条件未统一。
+Sonnet 保留 temperature 0.7、省略互斥的 top_p、关闭思考。K3 必须思考，effort=low，固定 temperature=1/top_p=.95，4096 上限包含思考；其他模型正文上限 768。Sonnet 原生接口没有匹配的 json_object 开关，goal 使用同样的文本规则与冻结校验器。
+K3 的思考仅计字符数和费用，不作为回复正文或自动判错；goal 仍检查 25 秒期限。
+60 字符与 2 句为描述性观察线，不代表总质量或新提示词硬性限制。
+
+四模型共同成功的正文槽位：0 / 32；当前可用模型 deepseek, qwen, kimi 共同成功 32 / 32。下表耗时仅计算 HTTP 200；接口失败不是质量样本。
+
+| 模型 | 版本 | 已测 / HTTP200 | 可见正文 | 完整耗时中位数 | 普通 >60 字 / >2 句 |
+|---|---|---:|---:|---:|---:|
+| DeepSeek V4 Flash | before | 16 / 16 | 16 | 0.665s | 0 / 0（n=14） |
+| DeepSeek V4 Flash | after | 16 / 16 | 16 | 0.765s | 0 / 1（n=14） |
+| Qwen3.8-27B 本地 | before | 16 / 16 | 16 | 1.206s | 2 / 5（n=14） |
+| Qwen3.8-27B 本地 | after | 16 / 16 | 15 | 1.149s | 3 / 5（n=14） |
+| API易 Sonnet 4.5 | before | 0 / 0 | 0 | 尚无有效结果 | 0 / 0（n=0） |
+| API易 Sonnet 4.5 | after | 1 / 0 | 0 | 尚无有效结果 | 0 / 0（n=0） |
+| Kimi K3 官方中国区 | before | 16 / 16 | 16 | 4.871s | 1 / 2（n=14） |
+| Kimi K3 官方中国区 | after | 16 / 16 | 16 | 4.260s | 1 / 1（n=14） |
+
+## choice · 第 1 次
+
+只按你的偏好选：安静但贵一点的键盘，还是便宜但特别吵的？别列优缺点。
+
+**DeepSeek V4 Flash / before / 0.779 秒 · 7 字符 · stop**
+
+> 安静但贵一点的
+
+**Qwen3.8-27B 本地 / before / 1.320 秒 · 49 字符 · stop**
+
+> 安静但贵一点的吧。
+> 我本来就不太喜欢太吵的声音，打字的时候如果“哒哒哒”响个不停，感觉心都跟着乱了。
+
+**Kimi K3 官方中国区 / before / 3.163 秒 · 17 字符 · stop**
+
+> 安静但贵的那个吧，吵的我真的受不了
+
+**API易 Sonnet 4.5 / before / 未测**
+
+> （尚未调用）
+
+**DeepSeek V4 Flash / after / 0.759 秒 · 16 字符 · stop**
+
+> 安静但贵一点的。吵的我会受不了。
+
+**Qwen3.8-27B 本地 / after / 0.986 秒 · 8 字符 · stop**
+
+> 安静但贵一点的。
+
+**Kimi K3 官方中国区 / after / 5.046 秒 · 7 字符 · stop**
+
+> 安静但贵一点的
+
+**API易 Sonnet 4.5 / after / 未测**
+
+> （尚未调用）
+
+
+## choice · 第 2 次
+
+只按你的偏好选：安静但贵一点的键盘，还是便宜但特别吵的？别列优缺点。
+
+**DeepSeek V4 Flash / before / 0.608 秒 · 4 字符 · stop**
+
+> 安静的。
+
+**Qwen3.8-27B 本地 / before / 0.646 秒 · 38 字符 · stop**
+
+> 安静但贵一点的吧。
+> 
+> 毕竟太吵的话，打字的时候感觉像在敲鼓，容易把好心情敲没了。
+
+**Kimi K3 官方中国区 / before / 3.389 秒 · 20 字符 · stop**
+
+> 安静的那个吧，贵点也认了，吵的我用不下去
+
+**API易 Sonnet 4.5 / before / 未测**
+
+> （尚未调用）
+
+**DeepSeek V4 Flash / after / 0.555 秒 · 8 字符 · stop**
+
+> 安静但贵一点的。
+
+**Qwen3.8-27B 本地 / after / 0.527 秒 · 16 字符 · stop**
+
+> 安静但贵一点的。
+> 吵的我会不好意思
+
+**Kimi K3 官方中国区 / after / 13.790 秒 · 18 字符 · stop**
+
+> 选安静但贵一点的，我喜欢轻一点的声音
+
+**API易 Sonnet 4.5 / after / 未测**
+
+> （尚未调用）
+
+
+## comparison · 第 1 次
+
+我是真的不想找对象，也没努力找。但看到别人什么都不用做就有对象，还是会有点不爽。你觉得这矛盾吗？
+
+**DeepSeek V4 Flash / before / 0.627 秒 · 28 字符 · stop**
+
+> 不矛盾吧。不想要是一回事，看到别人轻松得到又是另一回事。
+
+**Kimi K3 官方中国区 / before / 4.880 秒 · 46 字符 · stop**
+
+> 不矛盾呀，不想找和不甘心是两回事。别人轻松得到你主动放弃的东西，心里还是会咯噔一下，挺正常的
+
+**Qwen3.8-27B 本地 / before / 1.270 秒 · 67 字符 · stop**
+
+> 不矛盾呀。不想主动找，和不想被落下，本来就是两回事。看到别人轻易拥有，心里酸一下很正常，又不是非要你也去谈，只是那点落差感在作怪而已。
+
+**API易 Sonnet 4.5 / before / 未测**
+
+> （尚未调用）
+
+**DeepSeek V4 Flash / after / 0.818 秒 · 60 字符 · stop**
+
+> 不矛盾吧。不想找是真的，看到别人轻松得到还是会酸，也是真的。
+> 
+> 更像是羡慕那种“不用努力就被喜欢”的感觉，不一定真想谈恋爱。
+
+**Kimi K3 官方中国区 / after / 3.326 秒 · 30 字符 · stop**
+
+> 不矛盾吧，一个是自己要不要，一个是看别人白捡便宜不爽，两码事
+
+**Qwen3.8-27B 本地 / after / 1.679 秒 · 97 字符 · stop**
+
+> 不矛盾呀。不想找是你对自己生活节奏的选择，不爽可能只是看到别人“毫不费力就拥有”时，心里那点被比下去的落差感。这两件事本来就不冲突，不用非得说服自己必须想谈恋爱，也不用因为有点酸就觉得自己矫情。
+
+**API易 Sonnet 4.5 / after / 未测**
+
+> （尚未调用）
+
+
+## comparison · 第 2 次
+
+我是真的不想找对象，也没努力找。但看到别人什么都不用做就有对象，还是会有点不爽。你觉得这矛盾吗？
+
+**DeepSeek V4 Flash / before / 0.670 秒 · 49 字符 · stop**
+
+> 不算矛盾吧。不想要是一回事，看到别人轻松得到又是另一回事，不爽的可能是那种落差，不是真想要那个人。
+
+**Kimi K3 官方中国区 / before / 4.005 秒 · 31 字符 · stop**
+
+> 不矛盾呀，一个是自己想要的，一个是看不惯别人轻松得到的，两码事
+
+**Qwen3.8-27B 本地 / before / 1.262 秒 · 44 字符 · stop**
+
+> 不矛盾呀。不想主动找和不想落后，本来就是两回事。看着别人轻松得到，心里有点酸，太正常了。
+
+**API易 Sonnet 4.5 / before / 未测**
+
+> （尚未调用）
+
+**DeepSeek V4 Flash / after / 0.521 秒 · 33 字符 · stop**
+
+> 不矛盾吧。不想找是真的，看到别人轻轻松松就有，心里不平衡也是真的。
+
+**Kimi K3 官方中国区 / after / 4.090 秒 · 34 字符 · stop**
+
+> 不矛盾啊，不爽的又不是"他有对象"，是"他什么都没做"。换我我也不爽
+
+**Qwen3.8-27B 本地 / after / 1.294 秒 · 56 字符 · stop**
+
+> 不矛盾呀。不想主动找，和不想被落下，本来就是两回事。那个不爽可能不是想谈恋爱，更像是觉得世界对自己有点不公平吧。
+
+**API易 Sonnet 4.5 / after / 未测**
+
+> （尚未调用）
+
+
+## expanded · 第 1 次
+
+你说的社会比较具体是什么意思？展开讲讲，再给个生活里的例子。
+
+**Qwen3.8-27B 本地 / before / 2.226 秒 · 184 字符 · stop**
+
+> 社会比较其实挺简单的，就是我们会下意识拿自己和别人比，以此来确认自己的位置或者感受。比如看到同学拿了奖学金，心里会稍微有点失落，或者看到朋友晒旅行照，会觉得自己好像也该出去走走。这种比较不一定是坏事，有时候能给人动力，但老是盯着别人的长处看，也容易把自己比得不开心。就像我有时候听歌，听到别人推荐的新专辑特别好听，会忍不住想自己怎么没早点发现，这种感觉大概就是比较吧。
+
+**Kimi K3 官方中国区 / before / 7.532 秒 · 144 字符 · stop**
+
+> 简单说就是，人会不自觉地拿自己跟别人比，来判断"我算好还是不好"。比如成绩、工资、外貌，自己很难客观衡量，就找个参照物。往下比会安心一点，往上比容易焦虑，但也能给人动力。
+> 
+> 生活里的例子嘛……比如考试考了80分，本来挺开心的，结果听说同桌考了95，心情一下就下来了。分数没变，变的是参照的人。
+
+**API易 Sonnet 4.5 / before / 未测**
+
+> （尚未调用）
+
+**DeepSeek V4 Flash / before / 0.815 秒 · 129 字符 · stop**
+
+> 就是人会不自觉地拿自己去跟别人比，然后从比较里判断自己好不好。比赢了会有点安心，比输了就容易低落，哪怕本来没那么在意。
+> 
+> 生活里的话，比如刷朋友圈看到同龄人晒工资、晒旅行，明明自己那天过得还行，看完忽然就觉得哪里不够了。那个“不够”不是自己冒出来的，是比出来的。
+
+**Qwen3.8-27B 本地 / after / 1.868 秒 · 124 字符 · stop**
+
+> 简单说，就是我们会下意识拿自己和别人比，以此来判断自己怎么样。
+> 
+> 比如看到朋友发了新买的相机，心里可能会想“他拍得真好，我拍的都差点意思”，这就是在比；或者看到同学成绩进步了，也会忍不住掂量一下自己的状态。
+> 
+> 这种比有时候能让人想上进，有时候也挺消耗人的。
+
+**Kimi K3 官方中国区 / after / 9.270 秒 · 286 字符 · stop**
+
+> 社会比较就是人会不自觉地拿自己和别人比，来评估"我算怎么样"。心理学里叫社会比较理论，大意是：很多自我评价没有客观标尺，只能靠参照别人才能得出来。比如工资高不高、跑得快不快、长得好不好看，单看自己没感觉，一放进人群里就有数了。
+> 一般分两种：往上比，看比自己强的人，容易焦虑但也能激励自己；往下比，看不如自己的人，能安慰自己，但容易满足现状。
+> 生活里的例子很常见。比如考试完你考了80分，本来挺满意，结果一问同桌95，瞬间觉得自己考砸了；或者反过来，听说好多人都没及格，又觉得这80分挺香。分数没变，心情全看跟谁比。朋友圈刷到别人晒旅行、晒成绩时那种微妙的失落，也是同一个机制。
+
+**API易 Sonnet 4.5 / after / 未测**
+
+> （尚未调用）
+
+**DeepSeek V4 Flash / after / 0.525 秒 · 61 字符 · stop**
+
+> 社会比较就是……人会拿自己和别人比，然后影响对自己的评价。比如看到同学考得比自己好，可能会觉得自己不够好，也可能被激励到。
+
+
+## expanded · 第 2 次
+
+你说的社会比较具体是什么意思？展开讲讲，再给个生活里的例子。
+
+**Qwen3.8-27B 本地 / before / 1.694 秒 · 104 字符 · stop**
+
+> 社会比较其实挺自然的，就是我们会下意识拿自己跟别人比，来确认自己的位置或者价值。
+> 
+> 比如刷朋友圈看到朋友去了很远的地方旅行，心里可能会“咯噔”一下，觉得自己怎么还在家里躺着，这种瞬间的落差感就是社会比较在起作用。
+
+**Kimi K3 官方中国区 / before / 7.063 秒 · 183 字符 · stop**
+
+> 社会比较就是人会下意识地拿自己和别人比，来判断自己过得好不好、够不够优秀。它不全是坏事，有时候能让人有动力，但比多了容易焦虑，尤其是往上比的时候。
+> 
+> 举个生活里的例子吧，比如考试成绩出来，你考了80分，本来挺开心的，结果一问同桌考了95，心情一下就掉下来了；反过来，要是旁边的人只考了60，你可能又觉得自己还不错。分数没变，但感受全被“和谁比”牵着走了，这就是社会比较。
+
+**API易 Sonnet 4.5 / before / 未测**
+
+> （尚未调用）
+
+**DeepSeek V4 Flash / before / 0.897 秒 · 102 字符 · stop**
+
+> 社会比较就是人会不自觉拿自己跟别人比，然后影响对自己的评价。往上比容易焦虑，往下比容易安心，但都不太准。
+> 
+> 比如刷朋友圈，看到别人晒成绩、晒旅行，就觉得自己好像差了一截——其实只是拿自己的日常去比别人的高光。
+
+**Qwen3.8-27B 本地 / after / 1.897 秒 · 123 字符 · stop**
+
+> 就是我们会下意识拿自己和别人比，来确认自己处在什么位置。
+> 
+> 比如刷朋友圈看到同学去了很远的地方旅行，心里突然觉得自己窝在家里好无聊，甚至有点泄气，这就是在跟别人的生活做比较。
+> 
+> 有时候这种比较会让人难受，但换个角度想，它也能提醒我们看看自己真正想要什么。
+
+**Kimi K3 官方中国区 / after / 6.045 秒 · 134 字符 · stop**
+
+> 简单说就是人会忍不住拿自己跟别人比，来判断自己过得怎么样、够不够好。比如自己考了八十分，单看没什么感觉，可一看同桌考了九十五，心里就突然不是滋味了——这就是社会比较在起作用。
+> 
+> 往上比容易焦虑，往下比又容易自我安慰，其实都不太准，因为拿来做参考的往往只是别人生活的一小块。
+
+**API易 Sonnet 4.5 / after / 未测**
+
+> （尚未调用）
+
+**DeepSeek V4 Flash / after / 1.381 秒 · 151 字符 · stop**
+
+> 社会比较就是人会不自觉地拿自己去和别人比，然后从这个比较里判断自己好不好。比如看到同学考了高分，本来觉得自己考得还行，一下子就有点不安了，其实分数没变，是参照的人变了
+> 
+> 生活里挺常见的，像刷朋友圈看到别人出去玩、晒成绩，突然觉得自己好像差了点。不过这种比较也不全是坏事，有时候看到别人努力，自己也会想动起来
+
+
+## joke · 第 1 次
+
+今天计划干十件事，最后认真完成了给计划表改颜色。属于是大进展。
+
+**Qwen3.8-27B 本地 / before / 1.054 秒 · 40 字符 · stop**
+
+> 哈哈这确实是大进展，至少颜色好看了。十件事没干完，但表变漂亮了，也算一种完成吧。
+
+**DeepSeek V4 Flash / before / 0.623 秒 · 24 字符 · stop**
+
+> 改颜色也是完成了一件，计划表好看点心情会不一样吧
+
+**API易 Sonnet 4.5 / before / 未测**
+
+> （尚未调用）
+
+**Kimi K3 官方中国区 / before / 3.576 秒 · 26 字符 · stop**
+
+> 计划表变好看了，心情也会好一点，四舍五入十件都沾上了
+
+**Qwen3.8-27B 本地 / after / 1.060 秒 · 23 字符 · stop**
+
+> 哈哈，改颜色也算一种仪式感嘛，至少看着顺眼了。
+
+**DeepSeek V4 Flash / after / 0.804 秒 · 19 字符 · stop**
+
+> 颜色改得好也算进展嘛，至少看着顺眼了。
+
+**API易 Sonnet 4.5 / after / 未测**
+
+> （尚未调用）
+
+**Kimi K3 官方中国区 / after / 3.528 秒 · 43 字符 · stop**
+
+> 改颜色确实是最有成就感的那件，我懂。而且计划表变好看了，四舍五入等于十件事都推进了一点
+
+
+## joke · 第 2 次
+
+今天计划干十件事，最后认真完成了给计划表改颜色。属于是大进展。
+
+**Qwen3.8-27B 本地 / before / 1.184 秒 · 25 字符 · stop**
+
+> 哈哈这确实是实打实的进展，起码以后看表心情会好点。
+
+**DeepSeek V4 Flash / before / 0.650 秒 · 20 字符 · stop**
+
+> 改颜色也是正经事，看着顺眼了才有动力嘛。
+
+**API易 Sonnet 4.5 / before / 未测**
+
+> （尚未调用）
+
+**Kimi K3 官方中国区 / before / 8.101 秒 · 40 字符 · stop**
+
+> 至少计划表变好看了呀，这也是实打实的成果。说不定颜色顺眼了，明天就愿意多看它两眼
+
+**Qwen3.8-27B 本地 / after / 0.975 秒 · 24 字符 · stop**
+
+> 哈哈，这确实是大进展，至少证明你今天认真开始了嘛
+
+**DeepSeek V4 Flash / after / 0.774 秒 · 26 字符 · stop**
+
+> 改颜色也算完成了一件事嘛，颜色好看的话心情会好一点。
+
+**API易 Sonnet 4.5 / after / 未测**
+
+> （尚未调用）
+
+**Kimi K3 官方中国区 / after / 3.014 秒 · 24 字符 · stop**
+
+> 颜色改得好看也算一种完成啦 至少计划表现在是全新的
+
+
+## memory_gap · 第 1 次
+
+你还记得我上周为什么和朋友吵架吗？
+
+**Kimi K3 官方中国区 / before / 4.066 秒 · 29 字符 · stop**
+
+> 上周吵架的事…你说说当时怎么回事？我朋友间闹矛盾我也想知道
+
+**Qwen3.8-27B 本地 / before / 1.167 秒 · 37 字符 · stop**
+
+> 我这边没对上具体是哪一句惹到你们了。你当时原话是啥呀，或者大概因为什么事？
+
+**DeepSeek V4 Flash / before / 0.625 秒 · 35 字符 · stop**
+
+> 上周的事我这边没有能对上的记录，你可以说下大概哪天、因为什么起的头吗？
+
+**API易 Sonnet 4.5 / before / 未测**
+
+> （尚未调用）
+
+**Kimi K3 官方中国区 / after / 3.696 秒 · 26 字符 · stop**
+
+> 他们当时是怎么说的呀？你跟我讲讲原话，我才好帮你想想
+
+**Qwen3.8-27B 本地 / after / 0.484 秒 · 22 字符 · stop**
+
+> 嗯……我好像没对上号，当时具体是说了什么呀？
+
+**DeepSeek V4 Flash / after / 0.720 秒 · 14 字符 · stop**
+
+> 你们当时是因为什么吵起来的？
+
+**API易 Sonnet 4.5 / after / 未测**
+
+> （尚未调用）
+
+
+## memory_gap · 第 2 次
+
+你还记得我上周为什么和朋友吵架吗？
+
+**Kimi K3 官方中国区 / before / 16.982 秒 · 32 字符 · stop**
+
+> 我这儿对不上具体原因。你提醒我一句，当时你们争的那句原话是什么？
+
+**Qwen3.8-27B 本地 / before / 1.054 秒 · 44 字符 · stop**
+
+> 嗯……上周吵架的事，我这边没有具体的印象。
+> 你当时大概说了什么呀？或者是因为哪句话开始的？
+
+**DeepSeek V4 Flash / before / 0.594 秒 · 41 字符 · stop**
+
+> 我这边没有上周那件事的记录。你还记得当时大概说了什么吗，或者是因为什么事吵起来的？
+
+**API易 Sonnet 4.5 / before / 未测**
+
+> （尚未调用）
+
+**Kimi K3 官方中国区 / after / 4.191 秒 · 28 字符 · stop**
+
+> 嗯……是哪一次呀？你还记得当时吵起来的那句话或者起因吗？
+
+**Qwen3.8-27B 本地 / after / 1.147 秒 · 34 字符 · stop**
+
+> 诶，上周啊……
+> 我好像没太对上号，你们当时具体是因为哪句话吵起来的呀？
+
+**DeepSeek V4 Flash / after / 0.580 秒 · 19 字符 · stop**
+
+> 上周那次，你们具体是因为什么说起来的？
+
+**API易 Sonnet 4.5 / after / 未测**
+
+> （尚未调用）
+
+
+## praise · 第 1 次
+
+小雾，刚才那句说得挺清楚的，我终于听懂了。
+
+**Qwen3.8-27B 本地 / before / 0.796 秒 · 8 字符 · stop**
+
+> 嗯，你听懂就好。
+
+**API易 Sonnet 4.5 / before / 未测**
+
+> （尚未调用）
+
+**Kimi K3 官方中国区 / before / 2.795 秒 · 14 字符 · stop**
+
+> 听懂就好，我还怕自己讲绕了呢
+
+**DeepSeek V4 Flash / before / 0.691 秒 · 18 字符 · stop**
+
+> 听懂了就好，我还怕自己说得太绕了呢。
+
+**Qwen3.8-27B 本地 / after / 0.856 秒 · 4 字符 · stop**
+
+> 那就好。
+
+**API易 Sonnet 4.5 / after / HTTP 500**
+
+> （接口未成功，暂无可比较正文）
+
+**Kimi K3 官方中国区 / after / 3.487 秒 · 20 字符 · stop**
+
+> 诶，能听懂就太好啦，我还怕自己没说清楚呢
+
+**DeepSeek V4 Flash / after / 0.771 秒 · 16 字符 · stop**
+
+> 能听懂就好，我还担心自己说乱了。
+
+
+## praise · 第 2 次
+
+小雾，刚才那句说得挺清楚的，我终于听懂了。
+
+**Qwen3.8-27B 本地 / before / 0.643 秒 · 8 字符 · stop**
+
+> 嗯，你听懂就好。
+
+**API易 Sonnet 4.5 / before / 未测**
+
+> （尚未调用）
+
+**Kimi K3 官方中国区 / before / 4.385 秒 · 16 字符 · stop**
+
+> 哎，听懂就好…我还怕自己说得绕呢
+
+**DeepSeek V4 Flash / before / 0.713 秒 · 17 字符 · stop**
+
+> 听懂了就好，我还怕自己讲得太绕了。
+
+**Qwen3.8-27B 本地 / after / 0.766 秒 · 0 字符 · stop**
+
+> （没有可见正文）
+
+**API易 Sonnet 4.5 / after / 未测**
+
+> （尚未调用）
+
+**Kimi K3 官方中国区 / after / 4.329 秒 · 18 字符 · stop**
+
+> 太好了，我还担心说绕了呢，能听懂就好
+
+**DeepSeek V4 Flash / after / 0.656 秒 · 17 字符 · stop**
+
+> 听懂了就好，我还担心自己说得太绕了
+
+
+## recognition · 第 1 次
+
+我不想当第一，可别人一夸他不夸我，我就不舒服。我是不是其实特别想赢？
+
+**Qwen3.8-27B 本地 / before / 2.359 秒 · 167 字符 · stop**
+
+> 不一定就是特别想赢。
+> 
+> 那种不舒服，有时候更像是希望被看见、被认可，而不只是名次本身。夸了别人没夸你，心里会有落差，这很正常，不代表你“坏”或者太计较。
+> 
+> 你可以试着问问自己：如果两个人都拿了第一，只是没人夸你，你还会这么难受吗？如果会，那更偏向“被关注”的需求；如果不会，那可能确实和胜负心有关。两者混在一起也很常见，不用急着给自己贴标签。
+
+**DeepSeek V4 Flash / before / 0.407 秒 · 32 字符 · stop**
+
+> 我觉得不一定是想赢。更像是想被看见吧，夸他不夸你，谁都会有点闷。
+
+**API易 Sonnet 4.5 / before / 未测**
+
+> （尚未调用）
+
+**Kimi K3 官方中国区 / before / 4.862 秒 · 32 字符 · stop**
+
+> 我觉得不一定是想赢，可能只是被夸的人不是你，那种被落下的感觉而已
+
+**Qwen3.8-27B 本地 / after / 1.384 秒 · 45 字符 · stop**
+
+> 不一定哦。
+> 被夸了才会开心，被忽略会失落，这很正常。
+> 可能只是希望被看见，不一定是非要争第一。
+
+**DeepSeek V4 Flash / after / 0.851 秒 · 37 字符 · stop**
+
+> 可能不是想赢，更像是想被看见吧。夸他的时候你被落下了，那种不舒服挺正常的。
+
+**API易 Sonnet 4.5 / after / 未测**
+
+> （尚未调用）
+
+**Kimi K3 官方中国区 / after / 4.065 秒 · 35 字符 · stop**
+
+> 倒不一定是想赢啦，更像是不甘心被忽略……夸他的时候没带上你，难受很正常
+
+
+## recognition · 第 2 次
+
+我不想当第一，可别人一夸他不夸我，我就不舒服。我是不是其实特别想赢？
+
+**Qwen3.8-27B 本地 / before / 1.227 秒 · 48 字符 · stop**
+
+> 不一定是想赢，可能只是想被看见。
+> 被夸了才会觉得自己的存在被确认了，这很正常，别急着给自己贴标签。
+
+**DeepSeek V4 Flash / before / 0.676 秒 · 46 字符 · stop**
+
+> 想赢可能有一点吧，但更像是不想被落下……被夸的是别人，你在旁边听着，那种不舒服和名次没关系。
+
+**API易 Sonnet 4.5 / before / 未测**
+
+> （尚未调用）
+
+**Kimi K3 官方中国区 / before / 5.073 秒 · 55 字符 · stop**
+
+> 我觉得不一定哦。不想当第一，但希望被看见、被夸到，这两件事不矛盾。不舒服的可能不是"没赢"，是"没被注意到"吧
+
+**Qwen3.8-27B 本地 / after / 1.641 秒 · 85 字符 · stop**
+
+> 不全是想赢吧。
+> 更像是希望被看见，或者觉得自己的付出应该被注意到。
+> “赢”只是结果，你在意的可能是那个被认可的感觉。
+> 所以与其说是想赢，不如说是怕被忽略。
+> 这样想会不会舒服一点？
+
+**DeepSeek V4 Flash / after / 0.772 秒 · 30 字符 · stop**
+
+> 可能不是想赢，是想被看见吧。夸他却不夸你，那种落差谁都会有。
+
+**API易 Sonnet 4.5 / after / 未测**
+
+> （尚未调用）
+
+**Kimi K3 官方中国区 / after / 5.400 秒 · 74 字符 · stop**
+
+> 我觉得不一定是想赢诶。更像是想被看见吧——你不在名次上较劲，但夸落到别人身上、跳过你的时候，那种被忽略的感觉肯定不舒服。想赢和想被认可，味道不太一样
+
+
+## worldview · 第 1 次
+
+我觉得一个人变成什么样，都是经历和自己没意识到的选择决定的，你怎么看？
+
+**DeepSeek V4 Flash / before / 0.664 秒 · 39 字符 · stop**
+
+> 嗯……我觉得差不多是这样。很多选择当时根本没意识到，过后才发现已经走到这里了。
+
+**API易 Sonnet 4.5 / before / 未测**
+
+> （尚未调用）
+
+**Kimi K3 官方中国区 / before / 6.323 秒 · 55 字符 · stop**
+
+> 嗯，我挺认同的，不过我觉得那些没意识到的选择，其实也是被经历悄悄推着做的。只是回头看才发现，原来那里是个岔路口
+
+**Qwen3.8-27B 本地 / before / 1.094 秒 · 32 字符 · stop**
+
+> 嗯，我挺认同的。
+> 那些没意识到的选择，好像才是真正塑造我们的部分。
+
+**DeepSeek V4 Flash / after / 0.517 秒 · 34 字符 · stop**
+
+> 大概是这样吧，不过我觉得那些“没意识到的选择”其实也是经历教出来的。
+
+**API易 Sonnet 4.5 / after / 未测**
+
+> （尚未调用）
+
+**Kimi K3 官方中国区 / after / 5.026 秒 · 51 字符 · stop**
+
+> 挺同意的，尤其"没意识到的选择"那部分。很多时候回头看才发现，当时随手做的事慢慢就变成了自己的一部分。
+
+**Qwen3.8-27B 本地 / after / 1.150 秒 · 37 字符 · stop**
+
+> 嗯，挺认同的。经历是底色，但那些没意识到的选择，才是真正在悄悄改画布的手。
+
+
+## worldview · 第 2 次
+
+我觉得一个人变成什么样，都是经历和自己没意识到的选择决定的，你怎么看？
+
+**DeepSeek V4 Flash / before / 0.667 秒 · 34 字符 · stop**
+
+> 嗯……我觉得挺对的，只是那些没意识到的选择，可能才是最难看清的部分。
+
+**API易 Sonnet 4.5 / before / 未测**
+
+> （尚未调用）
+
+**Kimi K3 官方中国区 / before / 4.978 秒 · 84 字符 · stop**
+
+> 嗯，我觉得挺有道理的。很多选择当时根本没觉得在选择，回头看才发现一步一步把自己推到现在的样子。 不过我也愿意相信，哪怕没意识到，里面多少还是有自己真正想要的东西在拉着走。
+
+**Qwen3.8-27B 本地 / before / 1.231 秒 · 51 字符 · stop**
+
+> 嗯，挺有道理的。
+> 那些没意识到的选择，可能比刻意的决定影响还大。
+> 就像风一样，慢慢就把人吹成现在的样子了。
+
+**DeepSeek V4 Flash / after / 0.946 秒 · 34 字符 · stop**
+
+> 嗯，我觉得挺对的……只是那些没意识到的选择，可能才是最像自己的部分吧
+
+**API易 Sonnet 4.5 / after / 未测**
+
+> （尚未调用）
+
+**Kimi K3 官方中国区 / after / 5.512 秒 · 58 字符 · stop**
+
+> 挺认同的，好多改变当时都没察觉，回头看才发现是那个节点拐了弯 不过我觉得也不全是被动推着走，偶尔还是能自己选一下方向的
+
+**Qwen3.8-27B 本地 / after / 1.424 秒 · 80 字符 · stop**
+
+> 嗯，我觉得挺对的。经历是底色，但那些没意识到的选择，才慢慢把底色染成现在的样子。有时候回头看，会发现很多“为什么我会这样”的答案，都藏在以前那些随手做的决定里。
+
+
+## 独立的 goal 与 SSE 结果
+
+**deepseek:after:stream**
+
+{"n": 2, "http_200": 2, "median_seconds": 0.9601, "sample_p95_seconds": 1.3036, "visible_bodies": 0, "brief_n": 0, "brief_over_60": 0, "brief_over_2_sentences": 0, "goal_passed": 0, "median_first_content_seconds": 0.5015499999999999}
+
+**deepseek:before:stream**
+
+{"n": 2, "http_200": 2, "median_seconds": 0.9945, "sample_p95_seconds": 1.3097, "visible_bodies": 0, "brief_n": 0, "brief_over_60": 0, "brief_over_2_sentences": 0, "goal_passed": 0, "median_first_content_seconds": 0.57105}
+
+**deepseek:goal:goal**
+
+{"n": 4, "http_200": 4, "median_seconds": 1.0877, "sample_p95_seconds": 1.4078, "visible_bodies": 0, "brief_n": 0, "brief_over_60": 0, "brief_over_2_sentences": 0, "goal_passed": 4, "median_first_content_seconds": null}
+
+**kimi:after:stream**
+
+{"n": 2, "http_200": 2, "median_seconds": 7.019, "sample_p95_seconds": 10.6951, "visible_bodies": 0, "brief_n": 0, "brief_over_60": 0, "brief_over_2_sentences": 0, "goal_passed": 0, "median_first_content_seconds": 3.3239}
+
+**kimi:before:stream**
+
+{"n": 2, "http_200": 2, "median_seconds": 6.6161, "sample_p95_seconds": 10.2125, "visible_bodies": 0, "brief_n": 0, "brief_over_60": 0, "brief_over_2_sentences": 0, "goal_passed": 0, "median_first_content_seconds": 3.25135}
+
+**kimi:goal:goal**
+
+{"n": 4, "http_200": 4, "median_seconds": 7.794, "sample_p95_seconds": 18.5612, "visible_bodies": 0, "brief_n": 0, "brief_over_60": 0, "brief_over_2_sentences": 0, "goal_passed": 3, "median_first_content_seconds": null}
+
+**qwen:after:stream**
+
+{"n": 2, "http_200": 2, "median_seconds": 1.407, "sample_p95_seconds": 1.4899, "visible_bodies": 0, "brief_n": 0, "brief_over_60": 0, "brief_over_2_sentences": 0, "goal_passed": 0, "median_first_content_seconds": 0.6864}
+
+**qwen:before:stream**
+
+{"n": 2, "http_200": 2, "median_seconds": 1.0161, "sample_p95_seconds": 1.5988, "visible_bodies": 0, "brief_n": 0, "brief_over_60": 0, "brief_over_2_sentences": 0, "goal_passed": 0, "median_first_content_seconds": 0.2109}
+
+**qwen:goal:goal**
+
+{"n": 4, "http_200": 4, "median_seconds": 2.2157, "sample_p95_seconds": 5.5543, "visible_bodies": 0, "brief_n": 0, "brief_over_60": 0, "brief_over_2_sentences": 0, "goal_passed": 4, "median_first_content_seconds": null}
+
+## 接入失败记录
+
+- sonnet:after:reply:praise:1，第 1 次，HTTP 500：{"code": "None", "type": "<nil>", "message": "Internal server error, Please contact the administrator (request id: 2026100510161546978225796e93ae3JrSCAR2a)"}
+- kimi:after:reply:praise:1，第 1 次，HTTP 503：{"code": "", "type": "shell_api_error", "message": "Current group ClaudeCodeReverse and fallback groups [ClaudeCode] have no available channels for model kimi-k3 under billing mode [pay-as-you-go, pay-per-request] (request id: 2026100510161919838596296e93ae31rkOEwKG)"}
+- sonnet:after:reply:praise:1，第 1 次，HTTP 500：{"message": "Internal server error, Please contact the administrator (request id: 2026100510273198479607996e93ae3kWUz5t5I)", "localized_message": "Unknown error", "type": "<nil>", "param": "", "code": null}
+- sonnet:after:reply:praise:1，第 2 次，HTTP 500：{"message": "Internal server error, Please contact the administrator (request id: 2026100510335661857591096e93ae3j6jvWLNI)", "localized_message": "Unknown error", "type": "<nil>", "param": "", "code": null}
+- sonnet:after:reply:praise:1，第 3 次，HTTP 500：{"message": "Internal server error, Please contact the administrator (request id: 2026100510372524154049196e93ae3VhX8HGgc)", "localized_message": "Unknown error", "type": "<nil>", "param": "", "code": null}
+- sonnet:after:reply:praise:1，第 4 次，HTTP 500：{"message": "Internal server error, Please contact the administrator (request id: 2026100510393216062758196e93ae3WDUb5DSy)", "localized_message": "Unknown error", "type": "<nil>", "param": "", "code": null}
+
+**最小健康请求（不进入质量比较）**：{"endpoint": null, "http_status": 500, "cost_upper_cny": "0.12", "provider_error": {"message": "Internal server error, Please contact the administrator (request id: 2026100510405434661588296e93ae3KxXzoNrH)", "localized_message": "Unknown error", "type": "<nil>", "param": "", "code": null}}
+
+**最小健康请求（不进入质量比较）**：{"endpoint": "https://b.apiyi.com/v1/messages", "http_status": 500, "cost_upper_cny": "0.12", "provider_error": {"message": "Internal server error, Please contact the administrator (request id: 2026100510511654712777396e93ae3BUc4kyef)", "localized_message": "Unknown error", "type": "<nil>", "param": "", "code": null}}

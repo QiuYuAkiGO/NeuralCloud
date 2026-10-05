@@ -13,7 +13,7 @@ class QQLatencyOptions(BaseModel):
 
     qq_context_projection: Literal["legacy", "compact"] = "compact"
     qq_body_pipeline: Literal["legacy", "direct"] = "direct"
-    qq_history_selection: Literal["legacy", "shadow", "bounded"] = "shadow"
+    qq_history_selection: Literal["legacy", "shadow", "bounded"] = "bounded"
     qq_gate_history_soft_characters: int = Field(default=24_000, ge=1000)
     qq_body_history_soft_characters: int = Field(default=64_000, ge=1000)
     qq_web_policy: Literal["legacy", "after_gate", "off"] = "legacy"
@@ -24,8 +24,9 @@ class QQLatencyOptions(BaseModel):
     qq_body_reserve_seconds: float = Field(default=10.0, ge=10, le=30)
     qq_delivery_reserve_seconds: float = Field(default=3.0, ge=3, le=10)
     cognitive_incremental_persistence_enabled: bool = False
-    # None enables the selected policy everywhere; [] is a compatibility-only
-    # deployment. Account-qualified keys keep group/private canaries isolated.
+    # History selection applies to every conversation. Other request-local
+    # optimizations use this rollout: None enables all, [] enables none.
+    # Account-qualified keys keep group/private canaries isolated.
     qq_latency_conversations: list[str] | None = Field(default=None, max_length=128)
 
     @model_validator(mode="after")
@@ -61,10 +62,11 @@ class QQLatencyOptions(BaseModel):
         if (self.qq_latency_conversations is None
                 or f"{self_member_id}/{group_id}" in self.qq_latency_conversations):
             return self
-        # Persistence is owner-wide and cannot be toggled independently for
-        # each conversation. Only request-local optimizations are gated here.
+        # History selection remains effective outside the rollout so newly
+        # observed conversations can bound their unhandled backlog too.
+        # Persistence is owner-wide and also independent of this rollout.
         return self.model_copy(update={"qq_context_projection": "legacy", "qq_body_pipeline": "legacy",
-            "qq_history_selection": "shadow", "qq_web_policy": "legacy",
+            "qq_web_policy": "legacy",
             "qq_reply_scheduler": "shadow", "qq_stage_budgets_enabled": False})
 
     @property

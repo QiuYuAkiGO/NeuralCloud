@@ -1,0 +1,73 @@
+{
+  "complete_comparison": false,
+  "blocker": "credit_balance_exhausted and rate_limit_exceeded",
+  "case_sha256": "76eae06c9395582ed9bd3e355753e3811dfd47513a9cc5a1dd8cffbcd752f573",
+  "luna": {
+    "attempted": 44,
+    "correct": 31,
+    "latency_success_only": {
+      "attempts": 44,
+      "usable": 31,
+      "failures": 13,
+      "p50_ms": 2076.8977999978233,
+      "p95_ms": 3447.756399982609,
+      "p99_ms": 3592.0534000033513,
+      "ttft_p50_ms": 1948.9591000019573,
+      "note": "nearest-rank; complete schema-valid outputs only, failures retained"
+    },
+    "failure_codes": {
+      "not_recorded_in_initial_runner": 5,
+      "rate_limit_exceeded": 8
+    },
+    "categories": {
+      "attribution": {
+        "attempted": 8,
+        "correct": 8
+      },
+      "evidence": {
+        "attempted": 12,
+        "correct": 7
+      },
+      "gate": {
+        "attempted": 12,
+        "correct": 12
+      },
+      "retrieval": {
+        "attempted": 4,
+        "correct": 1
+      },
+      "tool": {
+        "attempted": 8,
+        "correct": 3
+      }
+    }
+  },
+  "matched_attempted_subset": {
+    "clm-cpu": {
+      "correct": 21,
+      "total": 44
+    },
+    "clm-5090": {
+      "correct": 21,
+      "total": 44
+    },
+    "deepseek-none": {
+      "correct": 43,
+      "total": 44
+    },
+    "deepseek-low": {
+      "correct": 42,
+      "total": 44
+    }
+  },
+  "files": {
+    "luna-none-partial.json": "6d102024c364df9c0fb52712e26760cb6d47f9b8e4557df8c855a95eb581224a",
+    "mini-none-preflight.json": "d979eb55eed842c422bc131763bfa6c0ace8de40c60e4b0b43c3e0ec39908773",
+    "sol-low-preflight.json": "0737da396b4d2d190c2c73515df2a8568daa76a3b55e2dfc4e85f6b484652c66",
+    "sources/310e782fbd6e-openai_structured_benchmark.py": "310e782fbd6ea1e987fffa550fa0d9d919a5522926f5b8634d45a27bf7726df4",
+    "sources/360f46d88288-openai_structured_benchmark.py": "360f46d88288f10fc53505e53010e6423fa093fbfc40c33cec3c58685538d1ef",
+    "sources/6336e6ce7c18-openai_structured_benchmark.py": "6336e6ce7c18f4d1395fd46d4a9a28aebefb93b1a143e4fa6935d0a5b1beb6e7",
+    "sources/654a4e08773c-clm_benchmark.py": "654a4e08773c9204c47af2ce3ac3f72eed873a81bb41a2bc9d2dfb1b1c09e437",
+    "sources/9e1d515f3a51-deepseek_structured_benchmark.py": "9e1d515f3a513e59375e3682ac26e5638e1425e2d8073b661e2013e8426121e0"
+  }
+}

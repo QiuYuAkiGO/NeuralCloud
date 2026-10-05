@@ -1,0 +1,20 @@
+{
+  "source": "https://platform.kimi.com/docs/pricing/chat.md",
+  "read_date": "2026-10-06",
+  "currency": "CNY",
+  "per_million_tokens": {
+    "kimi-k3": {
+      "cache_write_5m": 20,
+      "cache_write_1h": 40,
+      "cache_hit": 2,
+      "cache_miss_input": 20,
+      "output": 100
+    },
+    "kimi-k2.6": {
+      "cache_hit": 1.1,
+      "cache_miss_input": 6.5,
+      "output": 27
+    }
+  },
+  "estimate_policy": "All K2.6 usage conservatively bounded at the higher K3 rates; all uncached K3 inputs also reserved for 5m cache write; completion includes reasoning."
+}

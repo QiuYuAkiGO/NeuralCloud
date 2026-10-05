@@ -15,6 +15,7 @@ import sqlite3
 import time
 
 from harness.llm.client import OpenAICompatClient
+from harness.llm.structured import build_structured_client
 from harness.core.error_notice import ERROR_FALLBACK_SEND_SECONDS
 from harness.qq.decision import (QQVerifiedSelfAlias, _frozen_decision, effective_reply_segments,
     get_qq_delivery, get_qq_segment_deliveries,
@@ -68,8 +69,9 @@ class DirectQQActor:
         self.client_factory = client_factory
         self.client = None
         self.cognition = cognition or QQSharedCognitiveClient(settings.shared_runtime_url, settings.shared_control_token_file)
-        self.llm = llm or (None if settings.qq_image_mode == "off" else
-            OpenAICompatClient(load_vision_settings(settings.model_config_path, model=settings.vision_model)))
+        self.llm = llm or (None if settings.qq_image_mode == "off" or settings.qq_image_analysis == "on_demand" else
+            build_structured_client(load_vision_settings(settings.model_config_path, model=settings.vision_model))
+            or OpenAICompatClient(load_vision_settings(settings.model_config_path, model=settings.vision_model)))
         self.stop = asyncio.Event()
         self.wakeup = asyncio.Event()
         self._delivery_lock = asyncio.Lock()
@@ -90,6 +92,7 @@ class DirectQQActor:
             qq_media_cache_enabled=settings.qq_media_cache_enabled,
             qq_media_parallel_enabled=settings.qq_media_parallel_enabled,
             qq_image_mode=settings.qq_image_mode, qq_image_mode_source="direct_persisted",
+            qq_image_analysis=settings.qq_image_analysis,
             qq_latency_conversations=settings.qq_latency_conversations,
             last_received_at=None, last_delivery_at=None, last_decision_action=None)
 
@@ -378,6 +381,7 @@ class DirectQQActor:
                 cache_enabled=policy["media_cache"],
                 reserve_seconds=0.0 if observation_only else REPLY_RESERVE_SECONDS,
                 defer_analysis=defer_image_analysis,
+                acquire_only=self.settings.qq_image_analysis == "on_demand",
                 priority=10 if event["historical"] or event["own"] else 0)
         indexed_images = list(enumerate(event["images"], 1))
         values = (await asyncio.gather(*(read_image(index, image) for index, image in indexed_images))

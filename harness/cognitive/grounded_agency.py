@@ -16,6 +16,7 @@ from harness.contracts.experimental_decisions import (
 )
 from harness.core.inference import ModelContext, TokenUsage
 from harness.llm.client import LLMClient, estimate_chat_usage
+from harness.llm.deepseek_structured import decision_format
 from harness.research.grounded_agency.hashes import canonical_json, content_hash
 from harness.research.grounded_agency.neutrality import (
     NEUTRALITY_RULES_DIGEST, NEUTRALITY_RULES_VERSION, NeutralityReport, NeutralityScanner,
@@ -124,7 +125,9 @@ class GroundedAgencyDecisionModel:
                 result_fn = getattr(self.llm, "complete_chat_result", None)
                 call_messages = json.loads(canonical_json(messages))
                 if callable(result_fn):
-                    result = result_fn(call_messages, stream=False)
+                    format_ = decision_format(self.llm, directive["decision_schema"], "grounded_agency_decision")
+                    options = {"response_format": format_} if format_["type"] == "json_schema" else {}
+                    result = result_fn(call_messages, stream=False, **options)
                     raw = result.text
                     call_usage = result.usage
                     if not call_usage.total_tokens and not call_usage.prompt_tokens:

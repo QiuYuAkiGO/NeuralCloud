@@ -104,7 +104,7 @@ def test_multimember_speak_uses_user_side_history_and_is_replayable(setup):
     assert result.automatic_send is False and result.new_decision is True
     assert set(result.source_record_ids) == {item.record_id for item in records}
     assert result.model == "synthetic-model" and result.persona_version
-    assert result.prompt_version == "qq-group-turn-taking-v24-humanization"
+    assert result.prompt_version == "qq-group-turn-taking-v25-persona-voice"
     assert result.usage.calls >= 2
     assert builds[0].call_log_enabled is False and builds[0].record_interaction is False
     all_messages = client.gate_messages + client.chat_calls
@@ -733,6 +733,57 @@ def test_caught_persona_helper_error_is_not_silently_a_ready_reply(setup, monkey
     assert trace.snapshot()["counters"]["failed_model_calls"] == 2
     assert trace.snapshot()["counters"]["model_retries"] == 1
     assert "PRIVATE_BODY" not in result.model_dump_json() + json.dumps(trace.snapshot())
+
+
+@pytest.mark.parametrize("body_failure", [None, "invalid", "http"])
+def test_recovered_static_parser_json_does_not_discard_valid_body(setup, monkeypatch, body_failure):
+    monkeypatch.setenv("NC_QQ_BODY_PIPELINE", "legacy")
+    monkeypatch.setenv("NC_VALIDATOR_ENABLED", "false")
+    _, client, _, kwargs, _ = setup
+    original_json = client.complete_json
+    original_chat = client.complete_chat_result
+
+    def helper(**options):
+        if options["system"] == decision.parser_module._SYSTEM:
+            raise ValueError("synthetic malformed parser JSON")
+        return original_json(**options)
+
+    def body(messages, **options):
+        if not decision.is_qq_gate_messages(messages):
+            if body_failure == "http":
+                raise httpx.ConnectError("synthetic body transport failure")
+            if body_failure == "invalid":
+                return ChatResult(text='{"action":"speak","reason":"leaked decision"}')
+            return ChatResult(text="在的，刚看到消息[END]")
+        return original_chat(messages, **options)
+
+    monkeypatch.setattr(client, "complete_json", helper)
+    monkeypatch.setattr(client, "complete_chat_result", body)
+    trace = QQTurnTrace()
+    result = decision.decide_qq_reply(**kwargs, trigger_member_id="20002", trace=trace)
+    assert trace.snapshot()["counters"]["static_parse_recovered_invalid_json"] == 1
+    assert not decision._STATIC_PARSE_CACHE
+    if body_failure is None:
+        assert result.outcome == "ready" and result.error_type is None
+        assert result.reply_segments == ["在的，刚看到消息"]
+    else:
+        assert result.outcome == "error_fallback" and result.reply == decision.ERROR_FALLBACK_REPLY
+        assert result.error_type == ("model_http" if body_failure == "http" else "model_invalid")
+
+
+def test_static_parser_recovery_preserves_an_earlier_failure(setup):
+    parser, _, _, llm, _ = parser_cache_case(setup)
+    llm.failed_error_type = "model_http"
+
+    def recovered(event):
+        llm.failed_error_type = "model_invalid"
+        return decision.parser_module.rule_parse(event)
+
+    parser.delegate.parse = recovered
+    parser.parse(static_event())
+    assert llm.failed_error_type is not None
+    assert not decision._STATIC_PARSE_CACHE
+    assert not llm.trace.snapshot()["counters"].get("static_parse_recovered_invalid_json")
 
 
 @pytest.mark.parametrize("failure,expected", [

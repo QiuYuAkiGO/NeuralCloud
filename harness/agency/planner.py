@@ -162,7 +162,9 @@ class AgencyService:
             try:
                 report = NeutralityScanner().assert_neutral(messages, opaque=opaque)
                 trace["neutrality_report"] = report.model_dump(mode="json")
-                self._inflight = asyncio.create_task(asyncio.to_thread(self.llm.complete_chat_result, messages, stream=False))
+                from harness.llm.structured import helper_options
+                self._inflight = asyncio.create_task(asyncio.to_thread(self.llm.complete_chat_result, messages, stream=False,
+                    **helper_options(self.llm, AgencyModelOutput, "agency_plan")))
                 response = await asyncio.wait_for(asyncio.shield(self._inflight), timeout=self.config.model_timeout_seconds)
                 raw = response.text
                 trace.update(raw_output=raw, raw_output_hash=content_hash(raw))

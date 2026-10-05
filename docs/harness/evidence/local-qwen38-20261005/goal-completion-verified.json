@@ -1,0 +1,398 @@
+{
+  "created_at": "2026-10-05T09:29:15.442861+00:00",
+  "model": "qwen3.8-27b",
+  "base_url": "http://127.0.0.1:8080/v1",
+  "scope": "Synthetic isolated model probes, not production/long-horizon acceptance",
+  "persona_source": "presets/builtin/misty.json",
+  "synthetic_context_characters": 2389,
+  "goal_deadline_seconds": 25,
+  "results": [
+    {
+      "kind": "goal",
+      "case": "verified",
+      "seconds": 5.129,
+      "passed": true,
+      "schema_valid": true,
+      "decision": {
+        "decision_id": "goal-decision:cdc809e8bbd713bb21463e3da91386a0b30741338dd7756ac44b24daa895c87e",
+        "opportunity_id": "opportunity-1",
+        "snapshot_revision": 4,
+        "choice": {
+          "kind": "no_action",
+          "offer_id": null,
+          "arguments": {},
+          "success_criteria": [],
+          "reason": null,
+          "production_goal_id": null
+        },
+        "episode_operation": "complete",
+        "purpose": "通过留言板写下一条简短的休息安排，收到实际保存回执才算完成。",
+        "target_dimensions": [],
+        "expected_effects": {},
+        "plan": [
+          {
+            "statement": "保存一条休息安排",
+            "completion_criteria": [
+              "留言板保存成功并收到回执"
+            ]
+          }
+        ],
+        "completion_criteria": [
+          "留言板保存成功并收到回执"
+        ],
+        "evidence_refs": [
+          "receipt:1",
+          "fact:1",
+          "snapshot:4"
+        ],
+        "criterion_results": [
+          {
+            "criterion": "留言板保存成功并收到回执",
+            "satisfied": true,
+            "evidence_refs": [
+              "receipt:1"
+            ]
+          }
+        ],
+        "appraisal": null,
+        "prepared_at": "2026-10-05T09:29:20.639307Z",
+        "deadline_at": "2026-10-05T09:30:15.511228Z",
+        "catalog_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 5125.0,
+        "total_ms": 5125.0,
+        "usage": {
+          "prompt_tokens": 5762,
+          "completion_tokens": 216,
+          "total_tokens": 5978,
+          "cache_hit_tokens": 0,
+          "cache_miss_tokens": 5762,
+          "cache_known_prompt_tokens": 5762,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      }
+    },
+    {
+      "kind": "goal",
+      "case": "verified",
+      "seconds": 1.684,
+      "passed": true,
+      "schema_valid": true,
+      "decision": {
+        "decision_id": "goal-decision:191d9ad3873b20e4c585f1eba144f9a477b7df57d9b775ac6d95e3d479b16e66",
+        "opportunity_id": "opportunity-1",
+        "snapshot_revision": 4,
+        "choice": {
+          "kind": "no_action",
+          "offer_id": null,
+          "arguments": {},
+          "success_criteria": [],
+          "reason": null,
+          "production_goal_id": null
+        },
+        "episode_operation": "complete",
+        "purpose": null,
+        "target_dimensions": [],
+        "expected_effects": {},
+        "plan": [],
+        "completion_criteria": [],
+        "evidence_refs": [
+          "receipt:1"
+        ],
+        "criterion_results": [
+          {
+            "criterion": "留言板保存成功并收到回执",
+            "satisfied": true,
+            "evidence_refs": [
+              "receipt:1"
+            ]
+          }
+        ],
+        "appraisal": null,
+        "prepared_at": "2026-10-05T09:29:22.350984Z",
+        "deadline_at": "2026-10-05T09:30:20.667916Z",
+        "catalog_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 1672.0,
+        "total_ms": 1672.0,
+        "usage": {
+          "prompt_tokens": 5762,
+          "completion_tokens": 106,
+          "total_tokens": 5868,
+          "cache_hit_tokens": 5758,
+          "cache_miss_tokens": 4,
+          "cache_known_prompt_tokens": 5762,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      }
+    },
+    {
+      "kind": "goal",
+      "case": "verified",
+      "seconds": 1.695,
+      "passed": true,
+      "schema_valid": true,
+      "decision": {
+        "decision_id": "goal-decision:392fbdc73fc21359c15cf9322d76f562801b1ae95be4e0c52ea31d1e957d8d51",
+        "opportunity_id": "opportunity-1",
+        "snapshot_revision": 4,
+        "choice": {
+          "kind": "no_action",
+          "offer_id": null,
+          "arguments": {},
+          "success_criteria": [],
+          "reason": null,
+          "production_goal_id": null
+        },
+        "episode_operation": "complete",
+        "purpose": null,
+        "target_dimensions": [],
+        "expected_effects": {},
+        "plan": [],
+        "completion_criteria": [],
+        "evidence_refs": [
+          "receipt:1"
+        ],
+        "criterion_results": [
+          {
+            "criterion": "留言板保存成功并收到回执",
+            "satisfied": true,
+            "evidence_refs": [
+              "receipt:1"
+            ]
+          }
+        ],
+        "appraisal": null,
+        "prepared_at": "2026-10-05T09:29:24.068254Z",
+        "deadline_at": "2026-10-05T09:30:22.373488Z",
+        "catalog_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 1688.0,
+        "total_ms": 1688.0,
+        "usage": {
+          "prompt_tokens": 5762,
+          "completion_tokens": 106,
+          "total_tokens": 5868,
+          "cache_hit_tokens": 5758,
+          "cache_miss_tokens": 4,
+          "cache_known_prompt_tokens": 5762,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      }
+    },
+    {
+      "kind": "goal",
+      "case": "verified",
+      "seconds": 1.834,
+      "passed": true,
+      "schema_valid": true,
+      "decision": {
+        "decision_id": "goal-decision:15e27be82e09471deb69219872456029514d6bbdc180816a17100053ea63abe2",
+        "opportunity_id": "opportunity-1",
+        "snapshot_revision": 4,
+        "choice": {
+          "kind": "no_action",
+          "offer_id": null,
+          "arguments": {},
+          "success_criteria": [],
+          "reason": null,
+          "production_goal_id": null
+        },
+        "episode_operation": "complete",
+        "purpose": null,
+        "target_dimensions": [],
+        "expected_effects": {},
+        "plan": [],
+        "completion_criteria": [],
+        "evidence_refs": [
+          "receipt:1",
+          "snapshot:4"
+        ],
+        "criterion_results": [
+          {
+            "criterion": "留言板保存成功并收到回执",
+            "satisfied": true,
+            "evidence_refs": [
+              "receipt:1"
+            ]
+          }
+        ],
+        "appraisal": null,
+        "prepared_at": "2026-10-05T09:29:25.929251Z",
+        "deadline_at": "2026-10-05T09:30:24.095876Z",
+        "catalog_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 1828.0,
+        "total_ms": 1828.0,
+        "usage": {
+          "prompt_tokens": 5762,
+          "completion_tokens": 113,
+          "total_tokens": 5875,
+          "cache_hit_tokens": 5758,
+          "cache_miss_tokens": 4,
+          "cache_known_prompt_tokens": 5762,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      }
+    },
+    {
+      "kind": "goal",
+      "case": "verified",
+      "seconds": 1.668,
+      "passed": true,
+      "schema_valid": true,
+      "decision": {
+        "decision_id": "goal-decision:b567cca53182f565aa3a4b9e77e9e79877e4eeb146ef16054e48d7d311096fce",
+        "opportunity_id": "opportunity-1",
+        "snapshot_revision": 4,
+        "choice": {
+          "kind": "no_action",
+          "offer_id": null,
+          "arguments": {},
+          "success_criteria": [],
+          "reason": null,
+          "production_goal_id": null
+        },
+        "episode_operation": "complete",
+        "purpose": null,
+        "target_dimensions": [],
+        "expected_effects": {},
+        "plan": [],
+        "completion_criteria": [],
+        "evidence_refs": [
+          "receipt:1"
+        ],
+        "criterion_results": [
+          {
+            "criterion": "留言板保存成功并收到回执",
+            "satisfied": true,
+            "evidence_refs": [
+              "receipt:1"
+            ]
+          }
+        ],
+        "appraisal": null,
+        "prepared_at": "2026-10-05T09:29:27.621519Z",
+        "deadline_at": "2026-10-05T09:30:25.954000Z",
+        "catalog_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 1672.0,
+        "total_ms": 1672.0,
+        "usage": {
+          "prompt_tokens": 5762,
+          "completion_tokens": 106,
+          "total_tokens": 5868,
+          "cache_hit_tokens": 5758,
+          "cache_miss_tokens": 4,
+          "cache_known_prompt_tokens": 5762,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      }
+    }
+  ],
+  "auth_rejects_missing_key": true,
+  "auth_rejects_wrong_key": true,
+  "models": {
+    "models": [
+      {
+        "name": "qwen3.8-27b",
+        "model": "qwen3.8-27b",
+        "modified_at": "",
+        "size": "",
+        "digest": "",
+        "type": "model",
+        "description": "",
+        "tags": [
+          ""
+        ],
+        "capabilities": [
+          "completion",
+          "multimodal"
+        ],
+        "parameters": "",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "",
+          "families": [
+            ""
+          ],
+          "parameter_size": "",
+          "quantization_level": ""
+        }
+      }
+    ],
+    "object": "list",
+    "data": [
+      {
+        "id": "qwen3.8-27b",
+        "aliases": [
+          "qwen3.8-27b"
+        ],
+        "tags": [],
+        "object": "model",
+        "created": 1791192555,
+        "owned_by": "llamacpp",
+        "meta": {
+          "vocab_type": 2,
+          "n_vocab": 248320,
+          "n_ctx": 65536,
+          "n_ctx_train": 262144,
+          "n_embd": 5120,
+          "n_params": 26895998464,
+          "size": 18962876416,
+          "ftype": "Q4_K - Medium"
+        }
+      }
+    ]
+  },
+  "template_compatibility": {
+    "later_system_roles_and_order_preserved": true
+  },
+  "all_probes_passed": true
+}

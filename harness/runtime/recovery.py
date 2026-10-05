@@ -359,6 +359,45 @@ class RecoveryStore:
         sequence = self.projector.cursor if sequence is None else sequence
         return {"seq": sequence, "checksum": self.read(sequence).checksum if sequence else ""}
 
+    def command_intent_for_result(self, record):
+        """Resolve old short-ID collisions using the receipt's request hash."""
+        from harness.contracts.envelope import DomainCommandEnvelope
+
+        candidates = []
+        if record.idempotency_key:
+            candidates.append(self.mapping("command_intents").get(record.idempotency_key))
+        with self.lock:
+            row = self.db.execute("SELECT intent FROM commands WHERE id=?", (record.command_id,)).fetchone()
+        if row:
+            candidates.append(row[0])
+        result = record.data["result"]
+
+        def matching(sequence):
+            if not sequence or sequence >= record.record_seq:
+                return None
+            intent = self.read(sequence)
+            envelope = DomainCommandEnvelope.model_validate(intent.data["envelope"])
+            if (intent.command_id == record.command_id
+                    and intent.data.get("service") == record.data.get("service")
+                    and envelope.effective_request_hash() == result["request_hash"]):
+                return intent
+            return None
+
+        for sequence in dict.fromkeys(candidates):
+            if intent := matching(sequence):
+                return intent
+        # Older/reconciled records may omit the journal idempotency key. Only
+        # inspect this event's prior intents; never pair with a newer collision.
+        event_id = result.get("acknowledged_event_id") or record.event_id
+        if event_id:
+            for sequence, in self.rows(
+                "SELECT seq FROM catalog WHERE type='domain_command_intent' AND event_id=? AND seq<? ORDER BY seq DESC",
+                (event_id, record.record_seq),
+            ):
+                if intent := matching(sequence):
+                    return intent
+        raise ValueError("homeostasis recovery receipt has no matching command intent")
+
     def validated_cursor(self, token):
         if not isinstance(token, dict):
             return 0

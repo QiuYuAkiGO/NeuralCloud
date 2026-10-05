@@ -1,0 +1,164 @@
+{
+  "release_id": "20261005-refactor-130601",
+  "activated_at": 1791207417.8447306,
+  "verified_runtime_files": 419,
+  "verified_all_source_files": 1410,
+  "private_configurations_unchanged": [
+    "deploy.json",
+    "gui-settings.json",
+    "main-fallback.json",
+    "manifest.json",
+    "homeostasis-profile.json"
+  ],
+  "source_delta_since_full_regression": [
+    "harness/cognitive/service.py",
+    "harness/deploy/systemd.py",
+    "tests/test_linux_deploy.py",
+    "tests/test_production_model_candidates.py",
+    "tests/test_shared_cognitive.py",
+    "tools/production_acceptance/evidence_v2.py",
+    "tools/production_acceptance/model_candidates.py"
+  ],
+  "full_regression": {
+    "passed": 7129,
+    "skipped": 498,
+    "failed_logging_assertions_before_fix": 5,
+    "duration_seconds": 500.63,
+    "release": "20261005-refactor-121727"
+  },
+  "ordered_regression_after_fixes": {
+    "summary": "174 passed, 2 warnings in 25.90s"
+  },
+  "distinct_covered_cases": 7635,
+  "production_tool_tests": {
+    "passed": 11,
+    "skipped": 2
+  },
+  "ruff": "passed",
+  "backup": {
+    "phase": "backup_verified",
+    "stop_error": "gui did not stop cleanly; activation blocked",
+    "stopped_units": {
+      "cognitive": {
+        "MainPID": "0",
+        "Result": "success",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "homeostasis": {
+        "MainPID": "0",
+        "Result": "success",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "runtime": {
+        "MainPID": "0",
+        "Result": "success",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "gui": {
+        "MainPID": "0",
+        "Result": "signal",
+        "ActiveState": "failed",
+        "SubState": "failed"
+      },
+      "board": {
+        "MainPID": "0",
+        "Result": "success",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "qq_direct": {
+        "MainPID": "0",
+        "Result": "success",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      }
+    },
+    "extra_units": {
+      "neuralcloud-napcat.service": "active",
+      "neuralcloud-aux-ollama.service": "active"
+    },
+    "backup": "/var/backups/neuralcloud/20261005-refactor-130601-state",
+    "files": 10528,
+    "verification": {
+      "ok": true,
+      "files": 10528,
+      "bytes": 9931212819,
+      "sqlite_databases": 21,
+      "journals": {
+        "state/runtime/journal": {
+          "records": 749099,
+          "last_hash": "0e79b5bd6a162cfe8dc2ebc8fcc3aad690b79344d9c91315374caba451db8dec"
+        }
+      },
+      "manifest_sha256": "f9e35a763c00553444408d68b53a305c142256bf2349c042853846b173547205"
+    },
+    "acknowledged_boot_failures": [
+      "neuralcloud-gui.service"
+    ]
+  },
+  "rollback_release": "20261005-refactor-113933-previous",
+  "snapshot_restored": false,
+  "manual_qq_test_messages_sent": 0,
+  "qq-upgrade-status": {
+    "phase": "prepared",
+    "version": "3.2.34",
+    "url": "https://qqdl.gtimg.cn/qqfile/QQNT/9.9.36/beta/9ee04bef/linuxqq_3.2.34-53644_amd64.deb",
+    "bytes": 187185496,
+    "sha256": "436c65e1dd28422e128a21cbddb5fe4e2e6c079d7f27fec2541e014d38cc336e",
+    "checksum_source": "https://github.com/flathub/com.qq.QQ/blob/master/com.qq.QQ.yaml",
+    "release": "/opt/neuralcloud-napcat/releases/napcat-v4.18.28-qq-3.2.34-53644",
+    "original_main": "./application.asar/app_launcher/index.js"
+  },
+  "qq-upgrade-activation": {
+    "phase": "started",
+    "backup": "/var/backups/neuralcloud/qq-version-upgrade-20261005",
+    "backup_sha256": "51e8b8f18da9a833b5c478303636a5799a5be0beeac667b624b968d4bf950e2b",
+    "backup_bytes": 1139069566,
+    "release": "/opt/neuralcloud-napcat/releases/napcat-v4.18.28-qq-3.2.34-53644",
+    "profile_restored": false
+  },
+  "ui-responsiveness": {
+    "full_gui_status": {
+      "http_status": 200,
+      "duration_seconds": 10.295,
+      "runtime_lifecycle": "RUNNING",
+      "main_model": {
+        "mode": "live",
+        "base_url": "http://192.168.1.105:8080/v1",
+        "model": "qwen3.8-27b",
+        "reachable": true,
+        "api_key_configured": true,
+        "fallback": {
+          "enabled": true,
+          "model": "deepseek-v4-flash",
+          "base_url": "https://api.deepseek.com/v1",
+          "primary_timeout_seconds": 20.0
+        },
+        "aux": {
+          "base_url": "http://127.0.0.1:11435/v1",
+          "model": "qwen3:4b-instruct-2507-q4_K_M",
+          "reachable": true,
+          "preloaded": true,
+          "active": true
+        },
+        "qq_memory": {
+          "base_url": "https://api.deepseek.com",
+          "model": "deepseek-v4-flash"
+        },
+        "embedding": {
+          "backend": "mock",
+          "reachable": false,
+          "base_url": "http://127.0.0.1:8080/v1",
+          "model": "bge-m3"
+        }
+      }
+    },
+    "cognitive_health_during_gui_read": {
+      "http_status": 200,
+      "duration_seconds": 0.057
+    }
+  }
+}

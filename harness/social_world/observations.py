@@ -102,7 +102,9 @@ class SocialWorldService:
         current = self.current_observation()
         messages = [{"role": "system", "content": system}, {"role": "user", "content": context.text + "\n" + current.text}]
         NeutralityScanner().assert_neutral(messages)
-        raw = llm.complete_chat_result(messages, temperature=0, max_tokens=2048).text
+        from harness.llm.structured import helper_options
+        raw = llm.complete_chat_result(messages, temperature=0, max_tokens=2048,
+            **helper_options(llm, EntityAppraisalProposal, "entity_appraisal")).text
         accepted, rejected = [], []
         try:
             if len(raw.encode("utf-8")) > 65536:

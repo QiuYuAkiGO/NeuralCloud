@@ -340,6 +340,26 @@ def test_discovery_includes_private_references_and_explicit_board_extra(tmp_path
         discover_shared_sources(repo, {"NC_RUNTIME_STATE_DIR": "relative/path"})
 
 
+@pytest.mark.parametrize("binding,filename,role", [
+    ("NC_LLM_FALLBACK_CONFIG", "main-fallback.json", "main-fallback-config"),
+    ("NC_QQ_VISION_TOOL_CONFIG", "qq-vision-tool.json", "qq-vision-tool-config"),
+])
+def test_private_model_config_is_discovered_and_its_binding_is_rewritten(tmp_path,binding,filename,role):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    profile = tmp_path / "private" / filename
+    profile.parent.mkdir()
+    profile.write_text(json.dumps({"base_url": "https://api.deepseek.com/v1",
+        "model": "deepseek-v4-flash", "api_key": "private-fixture"}))
+    sources = discover_shared_sources(repo, {binding: str(profile)})
+    fallback = next(item for item in sources if item.role == role)
+    assert Path(fallback.path) == profile and fallback.rewrite_config
+    assert fallback.target == "config/" + filename
+    rewritten = rewrite_config_paths({binding: str(profile)},
+        {str(profile): "/etc/neuralcloud/" + filename})
+    assert rewritten[binding] == "/etc/neuralcloud/" + filename
+
+
 def test_reference_only_status_and_parent_paths_are_mapped_but_not_copied(tmp_path):
     source = tmp_path / "source"
     domain = source / "homeostasis/domain"

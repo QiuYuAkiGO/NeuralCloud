@@ -152,13 +152,18 @@ def test_environment_config_is_authoritative_and_missing_files_are_compatible(vi
 
 
 def test_qq_binding_never_reads_group_views(views, monkeypatch):
+    from gui.presets import load_builtin
+
     shared, write, _, _, _ = views
     write("10002", ["OTHER_SOURCE"])
     copyable = SimpleNamespace()
     copyable.model_copy = lambda **kwargs: copyable
+    preset = load_builtin("misty")
     shared.host = SimpleNamespace(chat=SimpleNamespace(
         library=SimpleNamespace(load=lambda _: copyable), active_preset_id="test", settings=copyable,
-        llm=object(), memory=SimpleNamespace(get_persona=lambda: object())))
+        _active_builtin_id=preset.builtin_id, _active_preset_name=preset.name,
+        active_session_id=preset.session_id, user_name=preset.user_name,
+        llm=object(), memory=SimpleNamespace(get_persona=lambda: preset.persona)))
     copyable.qq_memory_recall_max_items = 8
     copyable.qq_memory_recall_max_characters = 1200
     monkeypatch.setattr(shared, "sync_local", lambda: None)

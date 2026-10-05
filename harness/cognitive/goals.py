@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from harness.llm.deepseek_structured import decision_format
+
 import asyncio
 from datetime import datetime, timedelta, timezone
 import hashlib
@@ -34,6 +36,7 @@ plan 每项是含 statement 和 completion_criteria 的对象；不能用字符�
 用 expected_effects 分维度描述本次活动预期帮助及不确定性；它只是待复查的预测，不能代替实际证据。
 常驻目标不会被一次表达永久完成；complete 仅建议当前有限 episode 结束，Runtime 还要独立核验。
 complete 必须填写 criterion_results，每项对应原完成条件、satisfied 与实际回执证据引用；自评不属于独立完成证据。
+complete/abandon 还必须在顶层 evidence_refs 填入已知复查依据；criterion_results 内的引用不能代替顶层引用。
 只有所有必要步骤 executed（废弃步骤为 superseded），且 completed/committed 结果有独立回执时才能 complete。
 wait/error 结果、心理快照、goal-request 都不能证明步骤完成；尚未执行时选择继续、改计划、放弃或等待。
 每个计划步骤必须写明可观察的 completion_criteria。预测不是事实；动作完成不证明心理目标达成。
@@ -179,7 +182,7 @@ async def prepare(host: Any, command: Any) -> dict[str, Any]:
         try:
             response = await asyncio.wait_for(asyncio.to_thread(host.chat.llm.complete_chat_result,
                 messages, stream=False, max_tokens=MAX_OUTPUT_TOKENS, timeout_seconds=timeout,
-                response_format={"type": "json_object"},
+                response_format=decision_format(host.chat.llm, GoalChoice.model_json_schema(), "goal_choice"),
                 **reasoning_options), timeout=timeout)
         except TimeoutError:
             raise TimeoutError("goal_decision_expired") from None

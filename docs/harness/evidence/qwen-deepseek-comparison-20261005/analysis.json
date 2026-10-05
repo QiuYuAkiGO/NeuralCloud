@@ -1,0 +1,113 @@
+{
+  "completed": true,
+  "rows": 80,
+  "persona_sha256": "22ea23baa2e65b2a2289ca544fa35185598328bd6148112c0f2c18d258009b04",
+  "conservative_cost_upper_cny": "0.41",
+  "peak_usage_estimate_unrounded_cny": 0.06489072,
+  "api_calls": {
+    "qwen": 40,
+    "deepseek": 40
+  },
+  "http_200": 80,
+  "reasoning_leaked": 0,
+  "source_report_sha256": "261d1eea73bc291b69871de329039b7a1f3168da77916ce3cef93462715ad332",
+  "analyzer_sha256": "87c2cd5442a2760a876b1d8396790e5e1ac9b7dd69abd2374af9ac31a9e511d6",
+  "groups": {
+    "deepseek:after:reply": {
+      "n": 16,
+      "median_seconds": 0.7651,
+      "sample_p95_seconds": 1.0548,
+      "min_seconds": 0.5175,
+      "max_seconds": 1.3811,
+      "visible_bodies": 16,
+      "brief_n": 14,
+      "brief_over_60": 0,
+      "brief_over_2_sentences": 1,
+      "median_brief_characters": 22.5
+    },
+    "deepseek:after:stream": {
+      "n": 2,
+      "median_seconds": 0.9601,
+      "sample_p95_seconds": 1.3036,
+      "min_seconds": 0.5783,
+      "max_seconds": 1.3418,
+      "median_first_content_seconds": 0.5015
+    },
+    "deepseek:before:reply": {
+      "n": 16,
+      "median_seconds": 0.6653,
+      "sample_p95_seconds": 0.8358,
+      "min_seconds": 0.4073,
+      "max_seconds": 0.8975,
+      "visible_bodies": 16,
+      "brief_n": 14,
+      "brief_over_60": 0,
+      "brief_over_2_sentences": 0,
+      "median_brief_characters": 30.0
+    },
+    "deepseek:before:stream": {
+      "n": 2,
+      "median_seconds": 0.9945,
+      "sample_p95_seconds": 1.3097,
+      "min_seconds": 0.6443,
+      "max_seconds": 1.3447,
+      "median_first_content_seconds": 0.571
+    },
+    "deepseek:goal:goal": {
+      "n": 4,
+      "median_seconds": 1.0877,
+      "sample_p95_seconds": 1.4078,
+      "min_seconds": 0.596,
+      "max_seconds": 1.4167,
+      "goal_passed": 4
+    },
+    "qwen:after:reply": {
+      "n": 16,
+      "median_seconds": 1.1488,
+      "sample_p95_seconds": 1.875,
+      "min_seconds": 0.4844,
+      "max_seconds": 1.897,
+      "visible_bodies": 15,
+      "brief_n": 14,
+      "brief_over_60": 3,
+      "brief_over_2_sentences": 5,
+      "median_brief_characters": 29.0
+    },
+    "qwen:after:stream": {
+      "n": 2,
+      "median_seconds": 1.407,
+      "sample_p95_seconds": 1.4899,
+      "min_seconds": 1.3149,
+      "max_seconds": 1.4991,
+      "median_first_content_seconds": 0.6864
+    },
+    "qwen:before:reply": {
+      "n": 16,
+      "median_seconds": 1.2056,
+      "sample_p95_seconds": 2.2594,
+      "min_seconds": 0.6433,
+      "max_seconds": 2.3586,
+      "visible_bodies": 16,
+      "brief_n": 14,
+      "brief_over_60": 2,
+      "brief_over_2_sentences": 5,
+      "median_brief_characters": 42.0
+    },
+    "qwen:before:stream": {
+      "n": 2,
+      "median_seconds": 1.0161,
+      "sample_p95_seconds": 1.5988,
+      "min_seconds": 0.3687,
+      "max_seconds": 1.6635,
+      "median_first_content_seconds": 0.2109
+    },
+    "qwen:goal:goal": {
+      "n": 4,
+      "median_seconds": 2.2157,
+      "sample_p95_seconds": 5.5543,
+      "min_seconds": 1.6692,
+      "max_seconds": 6.1414,
+      "goal_passed": 4
+    }
+  }
+}

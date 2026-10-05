@@ -205,7 +205,10 @@ def inspect_qq_frame(llm: OpenAICompatClient, png: bytes, *, frame_id: str, evid
         ]},
     ]
     try:
-        response = llm.complete_chat_result(messages, temperature=0, max_tokens=16384)
+        from harness.llm.deepseek_structured import decision_format
+        format_ = decision_format(llm, ScreenReading.model_json_schema(), "qq_screen")
+        response = llm.complete_chat_result(messages, temperature=0, max_tokens=16384,
+            **({"response_format": format_} if format_["type"] == "json_schema" else {}))
         if len(response.text) > 128000:
             raise ValueError("oversized response")
         reading = ScreenReading.model_validate_json(response.text)

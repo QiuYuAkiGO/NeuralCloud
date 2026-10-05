@@ -1,0 +1,35 @@
+{
+  "checked_at": "2026-10-05T18:11:32.392406+00:00",
+  "official_docs": [
+    {
+      "url": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+      "observed": {
+        "model": "deepseek-flash",
+        "version": "DeepSeek-V4.1-Flash",
+        "vision_supported": true,
+        "legacy_aliases": [
+          "deepseek-v4-flash",
+          "deepseek-v4-flash-vision-exp"
+        ],
+        "cny_per_million_peak": {
+          "input_cache_hit": 0.04,
+          "input_cache_miss": 2,
+          "output": 8
+        },
+        "off_peak_multiplier": 0.5
+      }
+    },
+    {
+      "url": "https://api-docs.deepseek.com/zh-cn/guides/thinking_mode/",
+      "observed": {
+        "default_thinking": "high",
+        "thinking_switch_supported": true,
+        "nonthinking_top_p_fixed": 1.0
+      }
+    }
+  ],
+  "observed_response_models": [
+    "deepseek-flash"
+  ],
+  "cost_method": "Use returned token/cache usage with peak list prices as a conservative estimate. Not account-billed amounts. Search excluded."
+}

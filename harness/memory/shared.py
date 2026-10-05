@@ -376,7 +376,7 @@ class SharedMemoryStore:
             connection.execute("CREATE TABLE IF NOT EXISTS shared_memory_identity (singleton INTEGER PRIMARY KEY CHECK(singleton=1), preset_id TEXT NOT NULL)")
             # An unlabelled pre-upgrade database belongs to the historical Misty
             # preset. It must never be relabelled as another character's history.
-            existing = connection.execute("SELECT COUNT(*) FROM shared_memory_entries").fetchone()[0]
+            existing = connection.execute("SELECT 1 FROM shared_memory_entries LIMIT 1").fetchone()
             connection.execute("INSERT OR IGNORE INTO shared_memory_identity VALUES (1, ?)",
                                ("misty" if existing else self.preset_id,))
             self._check_preset(connection)
@@ -432,10 +432,16 @@ class SharedMemoryStore:
         except (ValueError, TypeError, KeyError) as exc:
             raise SharedMemoryStorageError("persisted shared memory binding is invalid") from exc
 
-    def _write(self, records: list[SharedMemoryRecord], *, cursors=()) -> tuple[SharedWriteResult, ...]:
+    def _write(self, records: list[SharedMemoryRecord], *, cursors=(), checkpoint=None) -> tuple[SharedWriteResult, ...]:
         results = []
         with closing(self._connect(write=True)) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
+            if checkpoint is not None:
+                stream, previous, current = checkpoint
+                connection.execute("CREATE TABLE IF NOT EXISTS shared_qq_checkpoints (stream TEXT PRIMARY KEY, state_json TEXT NOT NULL)")
+                saved = connection.execute("SELECT state_json FROM shared_qq_checkpoints WHERE stream=?", (stream,)).fetchone()
+                if (saved[0] if saved else None) != previous:
+                    raise SharedMemoryConflict("QQ import checkpoint advanced concurrently; retry")
             for record in records:
                 if record.owner_id != self.owner_id:
                     raise SharedMemoryConflict("source belongs to a different owner or preset")
@@ -454,12 +460,22 @@ class SharedMemoryStore:
             for stream, table, cursor in cursors:
                 connection.execute("""INSERT INTO shared_memory_import_cursors VALUES(?,?,?)
                     ON CONFLICT(stream,source_table) DO UPDATE SET cursor=MAX(cursor,excluded.cursor)""", (stream, table, cursor))
+            if checkpoint is not None:
+                connection.execute("""INSERT INTO shared_qq_checkpoints VALUES(?,?)
+                    ON CONFLICT(stream) DO UPDATE SET state_json=excluded.state_json""", (checkpoint[0], checkpoint[2]))
         return tuple(results)
 
     def record_local(self, event: SharedLocalEvent) -> SharedWriteResult:
-        event = SharedLocalEvent.model_validate_json(event.model_dump_json())
-        kind = "local_incoming" if event.role == "user" else "local_outgoing"
-        return self._write([self._prepare(kind, event.event_id, event, event.visibility)])[0]
+        return self.record_local_batch([event])[0]
+
+    def record_local_batch(self, events: list[SharedLocalEvent]) -> tuple[SharedWriteResult, ...]:
+        """Validate every source before committing one immutable-source batch."""
+        records = []
+        for event in events:
+            event = SharedLocalEvent.model_validate_json(event.model_dump_json())
+            kind = "local_incoming" if event.role == "user" else "local_outgoing"
+            records.append(self._prepare(kind, event.event_id, event, event.visibility))
+        return self._write(records) if records else ()
 
     def record_action(self, event: SharedActionOutcome) -> SharedWriteResult:
         event = SharedActionOutcome.model_validate_json(event.model_dump_json())
@@ -584,12 +600,18 @@ class SharedMemoryStore:
     def import_qq_database(self, path: Path | str, *, allowed_group_ids: tuple[str, ...] | list[str],
                            self_member_id: str,
                            allowed_private_peer_ids: tuple[str, ...] | list[str] = (),
-                           incremental: bool = False, batch_size: int = 256) -> SharedMigrationReport:
+                           incremental: bool = False, batch_size: int = 256,
+                           track_changes: bool = False) -> SharedMigrationReport:
         """Mirror ALL selected historical originals, not a recent query window.
 
         The source is one read-only SQLite snapshot. Invalid selected rows abort
         the entire import; excluded groups/accounts and exact source hashes are
         reported separately. Nothing is submitted as a new QQ observation.
+
+        track_changes reuses a guarded, transactionally committed append prefix;
+        its report describes only rows visited in this call. First use, source
+        replacement or mutation audits the full archive. Legacy sources without
+        writer-installed guards retain the full read-only validation path.
         """
         from harness.qq.decision import (
             QQDeliveryReceipt, QQSegmentDeliveryReceipt, _check_aggregate, _check_sources,
@@ -605,6 +627,8 @@ class SharedMemoryStore:
                 or not allowed_group_ids and not allowed_private_peer_ids):
             raise ValueError("explicit numeric group or private peer scopes are required")
         source_path = Path(path)
+        if incremental and track_changes:
+            raise ValueError("choose bounded backfill or transactional change tracking")
         if type(batch_size) is not int or not 1 <= batch_size <= 1000:
             raise ValueError("invalid QQ ingestion batch size")
         if source_path.absolute() == self.path.absolute() or (source_path.exists() and self.path.exists() and source_path.samefile(self.path)):
@@ -617,11 +641,17 @@ class SharedMemoryStore:
                    *(private_scope_id(self_member_id, peer) for peer in allowed_private_peer_ids)}
         stream = _hash(_json([str(source_path.absolute()), sorted(allowed), self_member_id]))
         cursors, next_cursors, has_more = {}, [], False
+        checkpoint, previous = None, None
         if incremental:
             with closing(self._connect(write=True)) as target:
                 target.execute("CREATE TABLE IF NOT EXISTS shared_memory_import_cursors (stream TEXT, source_table TEXT, cursor INTEGER, PRIMARY KEY(stream,source_table))")
                 target.commit()
                 cursors = dict(target.execute("SELECT source_table,cursor FROM shared_memory_import_cursors WHERE stream=?", (stream,)))
+        if track_changes and self.path.is_file():
+            with closing(self._connect(write=False)) as target:
+                if target.execute("SELECT 1 FROM sqlite_master WHERE name='shared_qq_checkpoints'").fetchone():
+                    row = target.execute("SELECT state_json FROM shared_qq_checkpoints WHERE stream=?", (stream,)).fetchone()
+                    previous = row[0] if row else None
         try:
             if not source_path.is_file() or source_path.is_symlink():
                 raise ValueError("original database is unavailable")
@@ -632,11 +662,22 @@ class SharedMemoryStore:
                 tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
                 if not {"qq_visual_profiles", "qq_visual_observations"}.issubset(tables):
                     raise ValueError("original QQ tables are missing")
+                if track_changes:
+                    from harness.qq.source_index import append_cursors, read_source_index
+                    state = read_source_index(connection, tables)
+                    if state is not None:
+                        stat = source_path.stat()
+                        state['file_identity'] = [stat.st_dev, stat.st_ino]
+                        cursors = append_cursors(previous, state)
+                        checkpoint = (stream, previous, _json(state))
                 profiles = {}
                 for table, kind in kinds.items():
                     if table not in tables:
                         continue
-                    if incremental:
+                    if checkpoint is not None and cursors:
+                        rows = connection.execute(f"SELECT * FROM {table} WHERE rowid>? AND rowid<=? ORDER BY rowid",
+                            (cursors.get(table, 0), state['watermarks'][table]))
+                    elif incremental:
                         batch = connection.execute(f"SELECT rowid AS source_cursor,* FROM {table} WHERE rowid>? ORDER BY rowid LIMIT ?",
                             (cursors.get(table, 0), batch_size + 1)).fetchall()
                         has_more = has_more or len(batch) > batch_size
@@ -664,7 +705,7 @@ class SharedMemoryStore:
                                     row["record_id"], row["group_id"], row["member_id"], row["profile_record_id"], row["capture_id"], row["capture_item_id"], datetime.fromisoformat(row["observed_at"])):
                                     raise ValueError("observation index mismatch")
                                 profile = profiles.get(item.profile_record_id)
-                                if profile is None and incremental:
+                                if profile is None and (incremental or checkpoint is not None):
                                     profile_row = connection.execute("SELECT * FROM qq_visual_profiles WHERE record_id=?", (item.profile_record_id,)).fetchone()
                                     if profile_row is not None:
                                         profile = QQVerifiedProfile.model_validate_json(profile_row["record_json"])
@@ -700,9 +741,9 @@ class SharedMemoryStore:
         except (sqlite3.Error, OSError, ValueError, TypeError, KeyError, IndexError):
             issues.append(SharedMigrationIssue(kind="database", code="invalid_database"))
         writes = ()
-        if not issues and (records or next_cursors):
+        if not issues and (records or next_cursors or checkpoint is not None and checkpoint[1] != checkpoint[2]):
             try:
-                writes = self._write(records, cursors=next_cursors)
+                writes = self._write(records, cursors=next_cursors, checkpoint=checkpoint)
             except SharedMemoryConflict:
                 issues.append(SharedMigrationIssue(kind="database", code="source_conflict"))
             except (sqlite3.Error, OSError, SharedMemoryStorageError):

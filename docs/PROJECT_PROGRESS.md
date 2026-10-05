@@ -1,5 +1,19 @@
 # NeuralCloud 项目模块进度表
 
+**2026-10-05 JSON 独立 DeepSeek 迁移（已上线）**：解析/路由/记忆/情绪及 typed decision 使用独立 `deepseek-flash` Responses JSON Schema 通道，reasoning=none；普通 QQ 正文保留 Qwen3.8-27B。稳定提示与历史前置、实时状态后置，保留完整输入和证据约束。25 类协议及 36 次缓存对照共 61/61 通过；三类场景预热后按输入 token 加权命中率 70.63% → 90.24%，对应合成测试费用约降 50.9%，不代表线上固定命中率。Linux 4,341 passed/155 skipped，最终 186 项回归与 Ruff 通过。发布 `20261005-structured-routing-v1`，六服务 active、Runtime RUNNING、QQ connected；原私聊隔离生成 4.273 秒，未发送测试消息。见 [迁移与验收记录](refactor/json-deepseek-migration-20261005.md)。
+
+**2026-10-05 私聊错误兜底修复（已上线）**：修复固定内部指令的辅助 JSON 解析已恢复后仍遗留失败标记、导致正常正文被故障提示替换的问题；将 `2285027817` 私聊加入既有 compact/direct 策略。协议校验器复用与本地记忆批量事务减少重复开销，真实副本 QQ 同步从 8.640 秒降至 4.478 秒，完整导入报告一致。Linux 391 项组合回归、Ruff 及真实模型隔离生成通过。发布 `20261005-qq-parser-recovery-v2` 的六个服务 active、Runtime RUNNING、QQ connected；首次单次健康读取超时触发回滚后，已用有界重试重新部署并通过最终核验。未发送 QQ 测试消息，完整线上回复延迟仍待新入站消息验证。见 [修复与发布记录](milestones/qq-private-parser-recovery-20261005.md)。
+
+**2026-10-05 完整 Linux 重构发布**：1,410 个完整源码文件及 419 个运行文件已冻结部署为 `20261005-refactor-130601`。修复历史 goal 贡献恢复反复解析大型 episode、旧记忆 UI 读取阻塞事件循环及 GUI 就绪检查开销；六个服务 active、Runtime RUNNING、QQ worker 已连接，Qwen 主回复与 DeepSeek fallback 生效。停止态快照、21 个 SQLite 数据库和完整日志链已校验，五份私有配置哈希保持一致。完整 Linux 回归记录 7,129 passed、498 skipped、5 项日志断言失败；修复工具全局日志污染后，最终 174 项有顺序的关联回归通过，独立工具 11 passed、2 skipped，Ruff 通过。独立 QQ 客户端旧版本被拒绝登录，升级并由用户扫码恢复；未人工发送 QQ 测试消息。见 [完整发布与验收记录](refactor/linux-refactor-deployment-20261005.md)。
+
+**2026-10-05 主回复切换与备用通道**：Windows 和 Linux 的主回复配置已改用本机 llama.cpp `qwen3.8-27b`，Linux 运行中认知服务已确认 Qwen 可达、DeepSeek Flash 备用启用，QQ 输入预算 60K；保留当前人设、辅助、记忆及情绪配置。主通道故障或空白正文时，在同一次总时限内追加一次 DeepSeek 请求，物理请求分别计量，不绕过生产预算或校验错误。72 项模型回归、32 项启动器检查通过；真实 Linux Qwen 当前人设回复约 1.402 秒，隔离断连后真实 DeepSeek 备用约 0.702 秒。维护前 Runtime 的启动恢复问题已在完整重构发布中修复，QQ 连接已恢复；端到端回复质量仍按独立证据判断。见 [连接与备用说明](LOCAL_QWEN38_LLAMA.md)。
+
+**2026-10-05 四模型对照扩展（部分完成）**：总预算调至 10 元，继续使用原冻结人设和两版请求。Kimi K3 官方中国区完成 40 次，聊天两版各 16/16 非空，耗时中位数 4.871/4.260 秒；goal 结构 4/4、冻结语义 3/4（无机会时 wait 动作但启动目标），均在 25 秒内。API易指定 Sonnet 4.5 的 7 次有界诊断均 HTTP 500，包含无人格的最小健康请求，尚无质量样本；认证目录含该模型仍不代表通道可用。已生成四模型阅读页，缺失位置明确标记；已知费用保守记录及失败未释放预留共 6.93 元，未超预算，本轮未切换线上模型。见 [扩展对照与诊断](refactor/four-model-frozen-comparison-20261005.md)。
+
+**2026-10-05 Qwen / DeepSeek 冻结对照**：按 1 元预算完成 80 次真实调用；唯一冻结人设、前后两版正文提示词、每模型每版 16 条回复，另有 SSE 与 goal 样例。保守费用记录 0.41 元，按回传 token 与高峰费率估算约 0.065 元。DeepSeek 完整回复中位耗时 0.665/0.765 秒，Qwen 1.206/1.149 秒；后者修改后组有一次仅结束标记的空正文。两模型 goal 各 4/4 通过。源码、请求、失败和原始输出已归档，未做独立人工评分、未切换线上模型，见 [冻结对照报告](refactor/qwen-deepseek-frozen-comparison-20261005.md)。
+
+**2026-10-05 本机 Qwen3.8 部署**：在 Windows RTX 5090 上部署 Qwen3.8-27B Q4_K_M 与视觉投影，固定 llama.cpp b11146 CUDA 13.4，权重 SHA-256 校验通过。独立 API Key 与仅限 Linux `192.168.1.103` 的防火墙规则已配置，Linux 健康/模型/中文生成接口实测通过。兼容模板支持后置 system；补齐 goal 完成复查的顶层证据引用提示。46 项 goal 工程回归、短输入真实模型决策/聊天/图片/并发探针通过。每槽 65,536 tokens，输入预算建议 60,000；原 96K 预算、超长输入时限和长期自主能力未验收。现有 Linux 线上实例尚未切换主模型，详见 [部署说明与证据](LOCAL_QWEN38_LLAMA.md)。
+
 **2026-09-17 正文单换行分段**：正文两句之间只有单个换行时，按段拆成独立气泡发送，不再因此失败关闭。空段或超过三条仍拒绝。发布 `20260917-line-break-v1`，相关回归 133 passed。见 [简短回复约定](QQ_BRIEF_REPLIES.md) 与 [修改记录](milestones/qq-line-break-2026-09-17.md)。
 
 **2026-09-17 正文 JSON 泄漏拦截**：正文若整体是 speak/wait 决策对象，发送前失败关闭并改用错误兜底，不把 JSON 改写成口语。历史回执仍接受已存 JSON。提示词要求正文只输出自然语言。发布 `20260917-json-body-guard-v1`，相关回归 285 passed。见 [拦截记录](milestones/qq-gate-json-body-guard-2026-09-17.md)。

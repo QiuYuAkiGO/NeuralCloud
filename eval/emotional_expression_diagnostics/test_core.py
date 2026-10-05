@@ -6,6 +6,7 @@ import hashlib
 import json
 import threading
 from pathlib import Path
+from types import SimpleNamespace
 
 import httpx
 import pytest
@@ -235,25 +236,29 @@ def test_budget_reserves_unsettled_cost_across_instances_and_stops_at_45(tmp_pat
 
 
 def test_windows_transient_ledger_replace_is_retried_without_torn_write(tmp_path, monkeypatch):
-    original = Path.replace
+    from harness import files
+
+    original = files.os.replace
     attempts = []
     def intermittent(self, target):
-        if self.name == "ledger.json.tmp":
+        if Path(self).name == "ledger.json.tmp":
             attempts.append(1)
             if len(attempts) < 3:
                 raise PermissionError("synthetic Windows sharing violation")
         return original(self, target)
-    monkeypatch.setattr(Path, "replace", intermittent)
+    monkeypatch.setattr(files, "os", SimpleNamespace(fspath=files.os.fspath, replace=intermittent))
     ledger = BudgetLedger(tmp_path / "ledger.json", BudgetSpec(), PriceSpec())
     ledger.reserve("request", max_output_tokens=10)
     assert len(attempts) == 3 and ledger.snapshot()["requests"] == 1
 
 
 def test_persistent_ledger_replace_failure_stops_before_reservation(tmp_path, monkeypatch):
+    from harness import files
+
     def unavailable(self, target):
         raise PermissionError("synthetic sharing violation")
-    monkeypatch.setattr(Path, "replace", unavailable)
-    monkeypatch.setattr("eval.emotional_expression_diagnostics.budget.time.sleep", lambda _: None)
+    monkeypatch.setattr(files, "os", SimpleNamespace(fspath=files.os.fspath, replace=unavailable))
+    monkeypatch.setattr(files, "time", SimpleNamespace(sleep=lambda _: None))
     ledger = BudgetLedger(tmp_path / "ledger.json", BudgetSpec(), PriceSpec())
     with pytest.raises(BudgetStopped, match="atomic_write_unavailable"):
         ledger.reserve("request", max_output_tokens=10)

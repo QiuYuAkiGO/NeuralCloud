@@ -233,6 +233,8 @@ LLM / embedding 走 OpenAI 兼容 HTTP 端点：`RoutingLLMClient` 把 `complete
 
 ## 评测
 
+DeepSeek 结构化决策已接入：配置官方 `https://api.deepseek.com/v1` 与 `deepseek-flash` 后，生产决策、QQ gate、能力/目标/网页选择、告示板/日记、Grounded Agency 和终端决策通过 Responses API 的 JSON Schema 输出，默认关闭思考。已有 `deepseek-v4-flash` 配置兼容；其他后端和普通角色正文保持原有路径。配置、验证与回滚见 [DeepSeek 结构化输出接入定稿](docs/refactor/deepseek-structured-integration-20261005.md)。
+
 ```bash
 pytest eval/scenarios
 pytest eval/rp/test_rp_smoke.py

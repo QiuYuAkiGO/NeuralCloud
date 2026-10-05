@@ -421,6 +421,10 @@ class QQMemoryProposer:
             raise
 
     def _proposal_client(self):
+        from harness.llm.structured import structured_target
+        structured = structured_target(self.llm)
+        if structured is not None:
+            return structured
         # RoutingLLMClient already sends complete_chat* to the character-model
         # endpoint. Memory proposals must use that path, not _aux (local Ollama).
         return getattr(self.llm, "_main", self.llm)
@@ -429,6 +433,15 @@ class QQMemoryProposer:
         from harness.llm.client import OpenAICompatClient, parse_json_object
 
         client = self._proposal_client()
+        from harness.llm.structured import structured_target
+        if structured_target(self.llm) is not None:
+            from harness.llm.deepseek_structured import decision_format
+            content = {key: value for key, value in payload.items() if key != "schema"}
+            response = client.complete_chat_result(
+                [{"role": "system", "content": _SYSTEM}, {"role": "user", "content": _json(content)}],
+                temperature=0, max_tokens=self.max_tokens, timeout_seconds=self.timeout_seconds,
+                response_format=decision_format(client, payload["schema"], "qq_memory_proposal"))
+            return parse_json_object(response.text)
         if self.reasoning_options or isinstance(client, OpenAICompatClient):
             messages = [{"role": "system", "content": _SYSTEM}, {"role": "user", "content": _json(payload)}]
             options = {"response_format": {"type": "json_object"}} if self.reasoning_options else {}

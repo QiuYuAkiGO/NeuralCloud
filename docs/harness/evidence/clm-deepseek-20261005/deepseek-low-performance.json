@@ -1,0 +1,4079 @@
+{
+  "schema_version": "deepseek-clm-comparison-v1",
+  "started_at": "2026-10-05T08:44:26.300632+00:00",
+  "completed": true,
+  "model_requested": "deepseek-flash",
+  "effort": "low",
+  "format": "json_schema",
+  "endpoint": "https://api.deepseek.com/responses",
+  "network": "direct HTTPS; trust_env=False; reused client",
+  "case_sha256": "76eae06c9395582ed9bd3e355753e3811dfd47513a9cc5a1dd8cffbcd752f573",
+  "runner_sha256": "9e1d515f3a513e59375e3682ac26e5638e1425e2d8073b661e2013e8426121e0",
+  "synthetic": true,
+  "live_qq": false,
+  "automatic_retries": 0,
+  "cache_caveat": "Provider KV cache is automatic; repeated requests still generate output, unlike CLM full-result vector cache.",
+  "quality": [],
+  "performance": {
+    "unique_state": {
+      "summary": {
+        "attempts": 16,
+        "usable": 16,
+        "failures": 0,
+        "p50_ms": 1025.6584000017028,
+        "p95_ms": 1419.5908000110649,
+        "p99_ms": 1419.5908000110649,
+        "ttft_p50_ms": 1003.1444000196643,
+        "note": "nearest-rank; complete schema-valid outputs only, failures retained",
+        "wall_seconds": 16.910347199998796,
+        "usable_requests_per_second": 0.9461662620387321
+      },
+      "rows": [
+        {
+          "phase": "unique_state",
+          "case_id": "unique_state-0",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n记录序号：0。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 944.5283000241034,
+          "headers_ms": 85.68119999836199,
+          "response_model": "deepseek-flash",
+          "response_id": "911fbf32-e02c-4dc5-a76b-02982bc4e3f2",
+          "usage": {
+            "input_tokens": 296,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 142,
+            "output_tokens_details": {
+              "reasoning_tokens": 135
+            },
+            "total_tokens": 438
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 961.7261000094004
+        },
+        {
+          "phase": "unique_state",
+          "case_id": "unique_state-1",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n记录序号：1。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1261.1037999740802,
+          "headers_ms": 134.67689999379218,
+          "response_model": "deepseek-flash",
+          "response_id": "6162a079-0ec8-43c9-8d0f-ab1c058ef961",
+          "usage": {
+            "input_tokens": 296,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 127,
+            "output_tokens_details": {
+              "reasoning_tokens": 119
+            },
+            "total_tokens": 423
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\": \"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1261.9760999805294
+        },
+        {
+          "phase": "unique_state",
+          "case_id": "unique_state-2",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n记录序号：2。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1154.7105999779887,
+          "headers_ms": 104.93139998288825,
+          "response_model": "deepseek-flash",
+          "response_id": "b5a84539-563b-41ac-81a0-be0aff1cd462",
+          "usage": {
+            "input_tokens": 296,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 76,
+            "output_tokens_details": {
+              "reasoning_tokens": 69
+            },
+            "total_tokens": 372
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1168.221200001426
+        },
+        {
+          "phase": "unique_state",
+          "case_id": "unique_state-3",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n记录序号：3。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1200.5719000007957,
+          "headers_ms": 98.03430002648383,
+          "response_model": "deepseek-flash",
+          "response_id": "6e3304cb-62a1-4e2c-98de-0221a327ce18",
+          "usage": {
+            "input_tokens": 296,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 97,
+            "output_tokens_details": {
+              "reasoning_tokens": 90
+            },
+            "total_tokens": 393
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1203.7763000116684
+        },
+        {
+          "phase": "unique_state",
+          "case_id": "unique_state-4",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n记录序号：4。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1009.5492000109516,
+          "headers_ms": 79.19770001899451,
+          "response_model": "deepseek-flash",
+          "response_id": "b0cf567d-c991-4d24-a6f5-6ef2aaee8226",
+          "usage": {
+            "input_tokens": 296,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 143,
+            "output_tokens_details": {
+              "reasoning_tokens": 136
+            },
+            "total_tokens": 439
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1025.6584000017028
+        },
+        {
+          "phase": "unique_state",
+          "case_id": "unique_state-5",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n记录序号：5。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1001.4961000124458,
+          "headers_ms": 86.19949998683296,
+          "response_model": "deepseek-flash",
+          "response_id": "03bdb520-03cc-41da-9ca1-851552556c18",
+          "usage": {
+            "input_tokens": 296,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 129,
+            "output_tokens_details": {
+              "reasoning_tokens": 122
+            },
+            "total_tokens": 425
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1015.9313000040129
+        },
+        {
+          "phase": "unique_state",
+          "case_id": "unique_state-6",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n记录序号：6。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1419.060600019293,
+          "headers_ms": 84.72290000645444,
+          "response_model": "deepseek-flash",
+          "response_id": "6e9966b0-cbe5-4e2b-b8c2-77be25c1ca2f",
+          "usage": {
+            "input_tokens": 296,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 154,
+            "output_tokens_details": {
+              "reasoning_tokens": 147
+            },
+            "total_tokens": 450
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1419.5908000110649
+        },
+        {
+          "phase": "unique_state",
+          "case_id": "unique_state-7",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n记录序号：7。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1003.1444000196643,
+          "headers_ms": 85.58970000012778,
+          "response_model": "deepseek-flash",
+          "response_id": "16c17fd3-fb88-4ff4-b80e-e79eaa7e0e3f",
+          "usage": {
+            "input_tokens": 296,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 172,
+            "output_tokens_details": {
+              "reasoning_tokens": 164
+            },
+            "total_tokens": 468
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\": \"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1030.1864999928512
+        },
+        {
+          "phase": "unique_state",
+          "case_id": "unique_state-8",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n记录序号：8。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 947.2046000009868,
+          "headers_ms": 76.20909999241121,
+          "response_model": "deepseek-flash",
+          "response_id": "795f0c7a-4e21-4a1a-9623-f9d7a6a1c393",
+          "usage": {
+            "input_tokens": 296,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 152,
+            "output_tokens_details": {
+              "reasoning_tokens": 145
+            },
+            "total_tokens": 448
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 962.7819999877829
+        },
+        {
+          "phase": "unique_state",
+          "case_id": "unique_state-9",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n记录序号：9。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 929.2932000244036,
+          "headers_ms": 97.4918000283651,
+          "response_model": "deepseek-flash",
+          "response_id": "8551a2fe-625b-4e78-9677-6f27926b5390",
+          "usage": {
+            "input_tokens": 296,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 54,
+            "output_tokens_details": {
+              "reasoning_tokens": 47
+            },
+            "total_tokens": 350
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 943.6124000058044
+        },
+        {
+          "phase": "unique_state",
+          "case_id": "unique_state-10",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n记录序号：10。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1010.6936999945901,
+          "headers_ms": 83.4403999906499,
+          "response_model": "deepseek-flash",
+          "response_id": "be4c135f-fb06-4091-b4c8-b91688f8087b",
+          "usage": {
+            "input_tokens": 296,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 57,
+            "output_tokens_details": {
+              "reasoning_tokens": 50
+            },
+            "total_tokens": 353
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1028.7161000014748
+        },
+        {
+          "phase": "unique_state",
+          "case_id": "unique_state-11",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n记录序号：11。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 926.9537999934983,
+          "headers_ms": 166.07780000776984,
+          "response_model": "deepseek-flash",
+          "response_id": "49eb90c2-f12e-4fe7-9277-3c523a5bc1d0",
+          "usage": {
+            "input_tokens": 296,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 54,
+            "output_tokens_details": {
+              "reasoning_tokens": 47
+            },
+            "total_tokens": 350
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 928.7820000026841
+        },
+        {
+          "phase": "unique_state",
+          "case_id": "unique_state-12",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n记录序号：12。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1015.9831000200938,
+          "headers_ms": 96.11320000840351,
+          "response_model": "deepseek-flash",
+          "response_id": "0eb50b6d-e42e-4fb2-b94d-70f9c6eb6a2c",
+          "usage": {
+            "input_tokens": 296,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 129,
+            "output_tokens_details": {
+              "reasoning_tokens": 122
+            },
+            "total_tokens": 425
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1042.6195000181906
+        },
+        {
+          "phase": "unique_state",
+          "case_id": "unique_state-13",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n记录序号：13。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 865.4901999980211,
+          "headers_ms": 76.10949999070726,
+          "response_model": "deepseek-flash",
+          "response_id": "fe1ecb16-4040-4f38-bae0-4e544a61253e",
+          "usage": {
+            "input_tokens": 296,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 81,
+            "output_tokens_details": {
+              "reasoning_tokens": 74
+            },
+            "total_tokens": 377
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 880.2439999999478
+        },
+        {
+          "phase": "unique_state",
+          "case_id": "unique_state-14",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n记录序号：14。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 829.7956000023987,
+          "headers_ms": 76.62690000142902,
+          "response_model": "deepseek-flash",
+          "response_id": "a3913f05-cd6f-4cd1-ba83-f291e1a0267e",
+          "usage": {
+            "input_tokens": 296,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 75,
+            "output_tokens_details": {
+              "reasoning_tokens": 68
+            },
+            "total_tokens": 371
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 846.8288999865763
+        },
+        {
+          "phase": "unique_state",
+          "case_id": "unique_state-15",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n记录序号：15。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1129.415900009917,
+          "headers_ms": 69.1806000249926,
+          "response_model": "deepseek-flash",
+          "response_id": "4d78dd37-5d21-4d1d-9517-bef1dbe93280",
+          "usage": {
+            "input_tokens": 296,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 88,
+            "output_tokens_details": {
+              "reasoning_tokens": 81
+            },
+            "total_tokens": 384
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1142.9833000001963
+        }
+      ]
+    },
+    "repeated_state": {
+      "summary": {
+        "attempts": 30,
+        "usable": 30,
+        "failures": 0,
+        "p50_ms": 987.7945000189357,
+        "p95_ms": 1330.4267000057735,
+        "p99_ms": 1341.0755000077188,
+        "ttft_p50_ms": 971.2933000118937,
+        "note": "nearest-rank; complete schema-valid outputs only, failures retained",
+        "wall_seconds": 30.71327680000104,
+        "usable_requests_per_second": 0.9767762715568983
+      },
+      "rows": [
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-0",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 682.5652999978047,
+          "headers_ms": 113.45679999794811,
+          "response_model": "deepseek-flash",
+          "response_id": "7d408884-d019-48ed-82c0-f0f98f3a5046",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 58,
+            "output_tokens_details": {
+              "reasoning_tokens": 51
+            },
+            "total_tokens": 347
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 707.5795000127982
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-1",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 971.2933000118937,
+          "headers_ms": 95.01850002561696,
+          "response_model": "deepseek-flash",
+          "response_id": "e74249cc-29e6-4c9c-91ae-b061f60ded9c",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 96,
+            "output_tokens_details": {
+              "reasoning_tokens": 89
+            },
+            "total_tokens": 385
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 987.7945000189357
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-2",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1312.4758999911137,
+          "headers_ms": 83.6107999784872,
+          "response_model": "deepseek-flash",
+          "response_id": "626f0ce3-9130-48ec-8b44-5f05041562cd",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 140,
+            "output_tokens_details": {
+              "reasoning_tokens": 133
+            },
+            "total_tokens": 429
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1327.5283999973908
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-3",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 729.1307999985293,
+          "headers_ms": 87.67919999081641,
+          "response_model": "deepseek-flash",
+          "response_id": "934ef1ca-f2fd-4558-8558-5a8f46bfe636",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 63,
+            "output_tokens_details": {
+              "reasoning_tokens": 56
+            },
+            "total_tokens": 352
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 743.4142999991309
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-4",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 775.9725000069011,
+          "headers_ms": 99.11490001832135,
+          "response_model": "deepseek-flash",
+          "response_id": "c567f0f3-fccd-4e08-87f8-7527f2b14ce6",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 49,
+            "output_tokens_details": {
+              "reasoning_tokens": 42
+            },
+            "total_tokens": 338
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 788.6335999937728
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-5",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1270.081399998162,
+          "headers_ms": 93.7504000030458,
+          "response_model": "deepseek-flash",
+          "response_id": "252c0a0e-afad-4557-968d-f1a04a551f09",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 110,
+            "output_tokens_details": {
+              "reasoning_tokens": 103
+            },
+            "total_tokens": 399
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1286.2040000036359
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-6",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1017.1451000205707,
+          "headers_ms": 121.75120000028983,
+          "response_model": "deepseek-flash",
+          "response_id": "c7786cad-434a-4a49-97b7-6e0ba4b4a691",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 108,
+            "output_tokens_details": {
+              "reasoning_tokens": 101
+            },
+            "total_tokens": 397
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1027.933600009419
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-7",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 806.3212000124622,
+          "headers_ms": 86.71090001007542,
+          "response_model": "deepseek-flash",
+          "response_id": "3a5b16b2-10fd-4bdd-99d9-c9f4f00f7ce9",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 123,
+            "output_tokens_details": {
+              "reasoning_tokens": 116
+            },
+            "total_tokens": 412
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 821.85509998817
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-8",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 776.6755999764428,
+          "headers_ms": 96.76909999689087,
+          "response_model": "deepseek-flash",
+          "response_id": "5408b7e0-3e79-4220-ab84-9f0d914e136a",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 102,
+            "output_tokens_details": {
+              "reasoning_tokens": 95
+            },
+            "total_tokens": 391
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 780.24419999565
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-9",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 669.2172999901231,
+          "headers_ms": 82.19129999633878,
+          "response_model": "deepseek-flash",
+          "response_id": "b96540df-0494-4573-9e97-ddf97d6cc072",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 77,
+            "output_tokens_details": {
+              "reasoning_tokens": 70
+            },
+            "total_tokens": 366
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 670.207199989818
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-10",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1055.7509000063874,
+          "headers_ms": 72.8501999983564,
+          "response_model": "deepseek-flash",
+          "response_id": "1473f434-9287-4b8c-bf3a-862d7568fac7",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 98,
+            "output_tokens_details": {
+              "reasoning_tokens": 91
+            },
+            "total_tokens": 387
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1071.07740000356
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-11",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 922.0163999998476,
+          "headers_ms": 76.1832999996841,
+          "response_model": "deepseek-flash",
+          "response_id": "33152524-9925-4dc2-8c1b-01f46484c9c3",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 73,
+            "output_tokens_details": {
+              "reasoning_tokens": 66
+            },
+            "total_tokens": 362
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 943.8271000108216
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-12",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1071.2936000199988,
+          "headers_ms": 76.54150002053939,
+          "response_model": "deepseek-flash",
+          "response_id": "a98f9679-df3a-4872-af97-d30a08309dd7",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 89,
+            "output_tokens_details": {
+              "reasoning_tokens": 82
+            },
+            "total_tokens": 378
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1133.4734999982174
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-13",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1197.1278999990318,
+          "headers_ms": 76.07940002344549,
+          "response_model": "deepseek-flash",
+          "response_id": "42bf3216-1941-4867-9f71-6077cd1f78da",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 89,
+            "output_tokens_details": {
+              "reasoning_tokens": 82
+            },
+            "total_tokens": 378
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1214.3768000241835
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-14",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 893.0959999852348,
+          "headers_ms": 89.71319999545813,
+          "response_model": "deepseek-flash",
+          "response_id": "4d9b7c0c-ca37-4a4d-99ad-394877910d6b",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 103,
+            "output_tokens_details": {
+              "reasoning_tokens": 96
+            },
+            "total_tokens": 392
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 910.798099997919
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-15",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1083.4419000020716,
+          "headers_ms": 108.40199998347089,
+          "response_model": "deepseek-flash",
+          "response_id": "45f06c78-88b3-40c6-aa63-414b3cf68fe0",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 112,
+            "output_tokens_details": {
+              "reasoning_tokens": 105
+            },
+            "total_tokens": 401
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1098.7229000020307
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-16",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1176.5642999962438,
+          "headers_ms": 85.13220000895672,
+          "response_model": "deepseek-flash",
+          "response_id": "9ecc9fe6-3029-4f68-8353-a0760340379b",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 113,
+            "output_tokens_details": {
+              "reasoning_tokens": 106
+            },
+            "total_tokens": 402
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1209.8196000151802
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-17",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1315.591399994446,
+          "headers_ms": 105.51620001206174,
+          "response_model": "deepseek-flash",
+          "response_id": "8b9a7846-7709-4f6a-b321-124c50c5570f",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 108,
+            "output_tokens_details": {
+              "reasoning_tokens": 101
+            },
+            "total_tokens": 397
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1330.4267000057735
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-18",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 925.5409000033978,
+          "headers_ms": 81.1835000058636,
+          "response_model": "deepseek-flash",
+          "response_id": "5d483c80-7664-4f1a-91b5-ba391de9f23a",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 89,
+            "output_tokens_details": {
+              "reasoning_tokens": 82
+            },
+            "total_tokens": 378
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 926.3113999913912
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-19",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1327.952199993888,
+          "headers_ms": 249.79490000987425,
+          "response_model": "deepseek-flash",
+          "response_id": "9abd2b75-3f57-4ec8-bd66-4212ed022684",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 110,
+            "output_tokens_details": {
+              "reasoning_tokens": 103
+            },
+            "total_tokens": 399
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1341.0755000077188
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-20",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1145.538899989333,
+          "headers_ms": 69.22039997880347,
+          "response_model": "deepseek-flash",
+          "response_id": "4e18a8cf-436b-4ac6-8a51-fb1121d92bd6",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 181,
+            "output_tokens_details": {
+              "reasoning_tokens": 173
+            },
+            "total_tokens": 470
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\": \"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1186.214299988933
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-21",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 651.2783000071067,
+          "headers_ms": 126.98359999922104,
+          "response_model": "deepseek-flash",
+          "response_id": "205640ef-ec27-435c-8287-2907eb2b72e1",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 74,
+            "output_tokens_details": {
+              "reasoning_tokens": 67
+            },
+            "total_tokens": 363
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 651.704099989729
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-22",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1274.7084999864455,
+          "headers_ms": 117.90949999704026,
+          "response_model": "deepseek-flash",
+          "response_id": "d6158982-bd20-4114-8e6d-9cf1ad1cc6ac",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 103,
+            "output_tokens_details": {
+              "reasoning_tokens": 96
+            },
+            "total_tokens": 392
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1289.2379999975674
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-23",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1309.1524000046775,
+          "headers_ms": 148.93140000640415,
+          "response_model": "deepseek-flash",
+          "response_id": "d7a499f4-6097-43a4-8a02-e922933b9c2a",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 91,
+            "output_tokens_details": {
+              "reasoning_tokens": 84
+            },
+            "total_tokens": 380
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1320.9305999916978
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-24",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 801.5837999992073,
+          "headers_ms": 118.64270002115518,
+          "response_model": "deepseek-flash",
+          "response_id": "b11c9dee-ee2d-4655-9210-2ea97735daca",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 49,
+            "output_tokens_details": {
+              "reasoning_tokens": 42
+            },
+            "total_tokens": 338
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 817.9501999984495
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-25",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1046.9581999932416,
+          "headers_ms": 84.70559999113902,
+          "response_model": "deepseek-flash",
+          "response_id": "ae943551-0607-4cde-b317-254e85e862bd",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 100,
+            "output_tokens_details": {
+              "reasoning_tokens": 93
+            },
+            "total_tokens": 389
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1060.8049999864306
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-26",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 944.1264999913983,
+          "headers_ms": 73.58699999167584,
+          "response_model": "deepseek-flash",
+          "response_id": "2173c76e-e486-4dea-b687-9eda5709d066",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 60,
+            "output_tokens_details": {
+              "reasoning_tokens": 53
+            },
+            "total_tokens": 349
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 954.245400003856
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-27",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1222.2345999907702,
+          "headers_ms": 75.76969999354333,
+          "response_model": "deepseek-flash",
+          "response_id": "9a621705-dc23-4db5-ae44-9811e6e32649",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 87,
+            "output_tokens_details": {
+              "reasoning_tokens": 80
+            },
+            "total_tokens": 376
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1222.7430999919306
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-28",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 874.7176000033505,
+          "headers_ms": 93.95219999714755,
+          "response_model": "deepseek-flash",
+          "response_id": "4966fdd8-7416-4dc2-bf22-13f5a7a7b169",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 93,
+            "output_tokens_details": {
+              "reasoning_tokens": 86
+            },
+            "total_tokens": 382
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 909.4770000083372
+        },
+        {
+          "phase": "repeated_state",
+          "case_id": "repeated_state-29",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 851.695599994855,
+          "headers_ms": 77.27830001385882,
+          "response_model": "deepseek-flash",
+          "response_id": "0fc0644b-f975-47a2-b3e6-5bbcd35fe64f",
+          "usage": {
+            "input_tokens": 289,
+            "input_tokens_details": {
+              "cached_tokens": 128
+            },
+            "output_tokens": 129,
+            "output_tokens_details": {
+              "reasoning_tokens": 122
+            },
+            "total_tokens": 418
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 875.2744999947026
+        }
+      ]
+    },
+    "concurrency2": {
+      "summary": {
+        "attempts": 16,
+        "usable": 16,
+        "failures": 0,
+        "p50_ms": 859.9717000033706,
+        "p95_ms": 1261.2339000042994,
+        "p99_ms": 1261.2339000042994,
+        "ttft_p50_ms": 833.0583999922965,
+        "note": "nearest-rank; complete schema-valid outputs only, failures retained",
+        "wall_seconds": 7.292477799986955,
+        "usable_requests_per_second": 2.1940416465893966
+      },
+      "rows": [
+        {
+          "phase": "concurrency2",
+          "case_id": "concurrency2-0",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n本轮观测编号：并发-0。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 810.0362000113819,
+          "headers_ms": 99.05720001552254,
+          "response_model": "deepseek-flash",
+          "response_id": "ed19939c-a9f5-404f-9352-32b000708bcb",
+          "usage": {
+            "input_tokens": 299,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 88,
+            "output_tokens_details": {
+              "reasoning_tokens": 81
+            },
+            "total_tokens": 387
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 810.3879000118468
+        },
+        {
+          "phase": "concurrency2",
+          "case_id": "concurrency2-1",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n本轮观测编号：并发-1。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 996.9986000214703,
+          "headers_ms": 155.66860002581961,
+          "response_model": "deepseek-flash",
+          "response_id": "5f6f9abf-a5bf-430b-802b-8307e1c36b5f",
+          "usage": {
+            "input_tokens": 299,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 96,
+            "output_tokens_details": {
+              "reasoning_tokens": 89
+            },
+            "total_tokens": 395
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1011.1216000223067
+        },
+        {
+          "phase": "concurrency2",
+          "case_id": "concurrency2-2",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n本轮观测编号：并发-2。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 585.3227000043262,
+          "headers_ms": 84.52659999602474,
+          "response_model": "deepseek-flash",
+          "response_id": "e273c0b8-6a97-45c1-a4d4-12029b4319b6",
+          "usage": {
+            "input_tokens": 299,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 24,
+            "output_tokens_details": {
+              "reasoning_tokens": 16
+            },
+            "total_tokens": 323
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\": \"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 586.2919999926817
+        },
+        {
+          "phase": "concurrency2",
+          "case_id": "concurrency2-3",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n本轮观测编号：并发-3。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1043.752300000051,
+          "headers_ms": 68.56740001239814,
+          "response_model": "deepseek-flash",
+          "response_id": "998e5498-c391-46a7-a030-735d7be94f6e",
+          "usage": {
+            "input_tokens": 299,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 139,
+            "output_tokens_details": {
+              "reasoning_tokens": 132
+            },
+            "total_tokens": 438
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1057.6040000014473
+        },
+        {
+          "phase": "concurrency2",
+          "case_id": "concurrency2-4",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n本轮观测编号：并发-4。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 761.1000000033528,
+          "headers_ms": 79.42960000946186,
+          "response_model": "deepseek-flash",
+          "response_id": "22b38662-eb0f-44f0-bab8-d33f43d107bf",
+          "usage": {
+            "input_tokens": 299,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 93,
+            "output_tokens_details": {
+              "reasoning_tokens": 86
+            },
+            "total_tokens": 392
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 775.3199000144377
+        },
+        {
+          "phase": "concurrency2",
+          "case_id": "concurrency2-5",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n本轮观测编号：并发-5。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1260.2994000189938,
+          "headers_ms": 65.58850000146776,
+          "response_model": "deepseek-flash",
+          "response_id": "8c1da429-1bc7-4849-a3c8-e2e91d526db8",
+          "usage": {
+            "input_tokens": 299,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 61,
+            "output_tokens_details": {
+              "reasoning_tokens": 54
+            },
+            "total_tokens": 360
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1261.2339000042994
+        },
+        {
+          "phase": "concurrency2",
+          "case_id": "concurrency2-6",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n本轮观测编号：并发-6。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 760.8784000040032,
+          "headers_ms": 81.16560001508333,
+          "response_model": "deepseek-flash",
+          "response_id": "3f2b7e88-88b8-484f-a45d-a8b30c51a30d",
+          "usage": {
+            "input_tokens": 299,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 77,
+            "output_tokens_details": {
+              "reasoning_tokens": 70
+            },
+            "total_tokens": 376
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 774.1345000104047
+        },
+        {
+          "phase": "concurrency2",
+          "case_id": "concurrency2-7",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n本轮观测编号：并发-7。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1076.719700009562,
+          "headers_ms": 130.78970002243295,
+          "response_model": "deepseek-flash",
+          "response_id": "5296b945-9f6b-4e0e-a269-f411cf878187",
+          "usage": {
+            "input_tokens": 299,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 92,
+            "output_tokens_details": {
+              "reasoning_tokens": 85
+            },
+            "total_tokens": 391
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1090.586100006476
+        },
+        {
+          "phase": "concurrency2",
+          "case_id": "concurrency2-8",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n本轮观测编号：并发-8。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 851.8818000156898,
+          "headers_ms": 62.47910001548007,
+          "response_model": "deepseek-flash",
+          "response_id": "bfb391b5-4194-4b0f-a954-e7c2b181101a",
+          "usage": {
+            "input_tokens": 299,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 53,
+            "output_tokens_details": {
+              "reasoning_tokens": 46
+            },
+            "total_tokens": 352
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 868.0830000084825
+        },
+        {
+          "phase": "concurrency2",
+          "case_id": "concurrency2-9",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n本轮观测编号：并发-9。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 800.7225000183098,
+          "headers_ms": 83.73030001530424,
+          "response_model": "deepseek-flash",
+          "response_id": "131703fc-3cc3-4836-b04e-fe34e1e88b00",
+          "usage": {
+            "input_tokens": 299,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 87,
+            "output_tokens_details": {
+              "reasoning_tokens": 80
+            },
+            "total_tokens": 386
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 824.214899999788
+        },
+        {
+          "phase": "concurrency2",
+          "case_id": "concurrency2-10",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n本轮观测编号：并发-10。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 1095.8307999826502,
+          "headers_ms": 70.1788000005763,
+          "response_model": "deepseek-flash",
+          "response_id": "16502693-95af-4ecf-acc7-fa0594f81bb1",
+          "usage": {
+            "input_tokens": 299,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 94,
+            "output_tokens_details": {
+              "reasoning_tokens": 87
+            },
+            "total_tokens": 393
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 1099.3722999992315
+        },
+        {
+          "phase": "concurrency2",
+          "case_id": "concurrency2-11",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n本轮观测编号：并发-11。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 833.0583999922965,
+          "headers_ms": 85.32959999865852,
+          "response_model": "deepseek-flash",
+          "response_id": "f12f1f18-efe7-4af4-a318-59824a4ab0fb",
+          "usage": {
+            "input_tokens": 299,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 79,
+            "output_tokens_details": {
+              "reasoning_tokens": 72
+            },
+            "total_tokens": 378
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 859.9717000033706
+        },
+        {
+          "phase": "concurrency2",
+          "case_id": "concurrency2-12",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n本轮观测编号：并发-12。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 736.7530000046827,
+          "headers_ms": 173.5880000051111,
+          "response_model": "deepseek-flash",
+          "response_id": "b8e634d2-51a6-4078-8bc4-fad1ba6caccb",
+          "usage": {
+            "input_tokens": 299,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 57,
+            "output_tokens_details": {
+              "reasoning_tokens": 50
+            },
+            "total_tokens": 356
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 750.9050000226125
+        },
+        {
+          "phase": "concurrency2",
+          "case_id": "concurrency2-13",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n本轮观测编号：并发-13。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 900.65379999578,
+          "headers_ms": 509.2087000084575,
+          "response_model": "deepseek-flash",
+          "response_id": "70d0197d-00f3-45ad-b301-5f9ad8346269",
+          "usage": {
+            "input_tokens": 299,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 53,
+            "output_tokens_details": {
+              "reasoning_tokens": 46
+            },
+            "total_tokens": 352
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 915.6511999899521
+        },
+        {
+          "phase": "concurrency2",
+          "case_id": "concurrency2-14",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n本轮观测编号：并发-14。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 888.7321000220254,
+          "headers_ms": 62.80549999792129,
+          "response_model": "deepseek-flash",
+          "response_id": "7dc8ec8e-cff0-493b-b9a6-bd48d749bc3a",
+          "usage": {
+            "input_tokens": 299,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 54,
+            "output_tokens_details": {
+              "reasoning_tokens": 47
+            },
+            "total_tokens": 353
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 901.5017000201624
+        },
+        {
+          "phase": "concurrency2",
+          "case_id": "concurrency2-15",
+          "payload": {
+            "model": "deepseek-flash",
+            "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+            "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\\n本轮观测编号：并发-15。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+            "reasoning": {
+              "effort": "low"
+            },
+            "temperature": 0,
+            "max_output_tokens": 1024,
+            "stream": true,
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "decision",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "speak",
+                        "wait",
+                        "defer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "decision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "schema_valid": true,
+          "completed": true,
+          "status": 200,
+          "ttft_ms": 634.9394000135362,
+          "headers_ms": 84.30819999193773,
+          "response_model": "deepseek-flash",
+          "response_id": "a94b67db-cc8e-4dfd-9503-79c38800b24c",
+          "usage": {
+            "input_tokens": 299,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens": 65,
+            "output_tokens_details": {
+              "reasoning_tokens": 58
+            },
+            "total_tokens": 364
+          },
+          "incomplete_details": null,
+          "text": "{\"decision\":\"speak\"}",
+          "parsed": {
+            "decision": "speak"
+          },
+          "elapsed_ms": 635.6424000114202
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "event": "start",
+      "utc": "2026-10-05T08:44:26.337795+00:00"
+    },
+    {
+      "event": "first_request",
+      "utc": "2026-10-05T08:44:27.112060+00:00",
+      "status": 200,
+      "valid": true
+    },
+    {
+      "event": "performance_phase",
+      "utc": "2026-10-05T08:44:44.029139+00:00",
+      "phase": "unique_state",
+      "attempts": 16,
+      "usable": 16,
+      "failures": 0,
+      "p50_ms": 1025.6584000017028,
+      "p95_ms": 1419.5908000110649,
+      "p99_ms": 1419.5908000110649,
+      "ttft_p50_ms": 1003.1444000196643,
+      "note": "nearest-rank; complete schema-valid outputs only, failures retained"
+    },
+    {
+      "event": "performance_phase",
+      "utc": "2026-10-05T08:45:14.749327+00:00",
+      "phase": "repeated_state",
+      "attempts": 30,
+      "usable": 30,
+      "failures": 0,
+      "p50_ms": 987.7945000189357,
+      "p95_ms": 1330.4267000057735,
+      "p99_ms": 1341.0755000077188,
+      "ttft_p50_ms": 971.2933000118937,
+      "note": "nearest-rank; complete schema-valid outputs only, failures retained"
+    },
+    {
+      "event": "performance_phase",
+      "utc": "2026-10-05T08:45:22.050138+00:00",
+      "phase": "concurrency2",
+      "attempts": 16,
+      "usable": 16,
+      "failures": 0,
+      "p50_ms": 859.9717000033706,
+      "p95_ms": 1261.2339000042994,
+      "p99_ms": 1261.2339000042994,
+      "ttft_p50_ms": 833.0583999922965,
+      "note": "nearest-rank; complete schema-valid outputs only, failures retained"
+    },
+    {
+      "event": "complete",
+      "utc": "2026-10-05T08:45:22.056468+00:00",
+      "correct": 0,
+      "total": 0
+    }
+  ],
+  "quality_skipped": true,
+  "first_request": {
+    "phase": "first_request",
+    "case_id": "gate-01",
+    "payload": {
+      "model": "deepseek-flash",
+      "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+      "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+      "reasoning": {
+        "effort": "low"
+      },
+      "temperature": 0,
+      "max_output_tokens": 1024,
+      "stream": true,
+      "text": {
+        "format": {
+          "type": "json_schema",
+          "name": "decision",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "decision": {
+                "type": "string",
+                "enum": [
+                  "speak",
+                  "wait",
+                  "defer"
+                ]
+              }
+            },
+            "required": [
+              "decision"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "schema_valid": true,
+    "completed": true,
+    "status": 200,
+    "ttft_ms": 753.2329999958165,
+    "headers_ms": 142.4049999914132,
+    "response_model": "deepseek-flash",
+    "response_id": "131ecb3a-19c9-4db8-8bfe-8290cd2d926b",
+    "usage": {
+      "input_tokens": 289,
+      "input_tokens_details": {
+        "cached_tokens": 128
+      },
+      "output_tokens": 44,
+      "output_tokens_details": {
+        "reasoning_tokens": 36
+      },
+      "total_tokens": 333
+    },
+    "incomplete_details": null,
+    "text": "{\"decision\": \"speak\"}",
+    "parsed": {
+      "decision": "speak"
+    },
+    "elapsed_ms": 768.1794000091031
+  },
+  "quality_summary": {
+    "attribution": {
+      "correct": 0,
+      "total": 0,
+      "confusion": {}
+    },
+    "evidence": {
+      "correct": 0,
+      "total": 0,
+      "confusion": {}
+    },
+    "gate": {
+      "correct": 0,
+      "total": 0,
+      "confusion": {}
+    },
+    "noul": {
+      "correct": 0,
+      "total": 0,
+      "confusion": {}
+    },
+    "retrieval": {
+      "correct": 0,
+      "total": 0,
+      "confusion": {}
+    },
+    "score": {
+      "correct": 0,
+      "total": 0,
+      "confusion": {}
+    },
+    "tool": {
+      "correct": 0,
+      "total": 0,
+      "confusion": {}
+    }
+  },
+  "quality_latency": {
+    "attempts": 0,
+    "usable": 0,
+    "failures": 0,
+    "p50_ms": null,
+    "p95_ms": null,
+    "p99_ms": null,
+    "ttft_p50_ms": null,
+    "note": "nearest-rank; complete schema-valid outputs only, failures retained"
+  },
+  "ended_at": "2026-10-05T08:45:22.063518+00:00"
+}

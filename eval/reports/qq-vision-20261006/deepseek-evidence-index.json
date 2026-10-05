@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-06 Asia/Shanghai",
+  "raw_report_sha256": {
+    "deepseek-direct.json": "6941a136f89fb1f57de826ad1047608f2f2b53ec9d5fe869c8fecf0c3288a6f4",
+    "deepseek-search-auto.json": "fb60a9bd277897597fe85571e326a85381cd023224359cee2319d6daa952a4ea",
+    "deepseek-search-verify.json": "2bf7d9e7f3202e436d9d2822f82ff25e9a63e8d45e09e303185002bba2671bbf",
+    "deepseek-context-12k-nonstream.json": "9b4d5616cb939a3acace49032f69ab618681f26eff2dd800243ffd95ca5c03e4",
+    "deepseek-high-direct.json": "b5aaa8812881cdf89521f0d3083f5b65d3d068a170ad266a80c5102e73fdbc90",
+    "deepseek-high-budget4096.json": "efa4ba21b6863475c0400b5edb9ff3e4b99fc30d18c2b2c9bbdef72ffce7cc21"
+  },
+  "source_sha256": {
+    "tools/production_acceptance/qq_vision_reply_benchmark.py": "6f9037f6fd7e79709eda460d7da5b04a23a65e25cd21928ad6cbe70eebc98f43",
+    "tests/test_qq_vision_reply_benchmark.py": "046abedee5a02b72ab4a8dd3d080e4552e245cef0ff39e5d0f0f4cca1034be3b",
+    "eval/reports/qq-vision-20261006/adapter_smoke.py": "dffeb45794fbe78685532ecf53be50c68d3a85767df2dda66a97a4c369d17fe1",
+    "eval/reports/qq-vision-20261006/build_deepseek_report.py": "d21aa910c86875afce2b2ece3e57e9ad8326badb680db8632889ca5a2ed23e9d"
+  },
+  "frozen_input_checks": [
+    {
+      "report": "deepseek-direct.json",
+      "reference": "direct.json",
+      "matching_messages_and_pixels": 14
+    },
+    {
+      "report": "deepseek-search-auto.json",
+      "reference": "search-auto.json",
+      "matching_messages_and_pixels": 5
+    },
+    {
+      "report": "deepseek-search-verify.json",
+      "reference": "search-verify.json",
+      "matching_messages_and_pixels": 4
+    },
+    {
+      "report": "deepseek-context-12k-nonstream.json",
+      "reference": "context-12k-nonstream.json",
+      "matching_messages_and_pixels": 3
+    },
+    {
+      "report": "deepseek-high-direct.json",
+      "reference": "direct.json",
+      "matching_messages_and_pixels": 14
+    },
+    {
+      "report": "deepseek-high-budget4096.json",
+      "reference": "direct.json",
+      "matching_messages_and_pixels": 2
+    }
+  ],
+  "original_metrics_unchanged": true,
+  "runtime_configuration_changed": false,
+  "qq_messages_sent": 0,
+  "source_note": "Existing unrelated worktree changes were preserved. Original evidence was not regenerated."
+}

@@ -266,6 +266,16 @@ class DailyRevisionProvider:
                 "name": "daily_revision_" + model.__name__.lstrip("_"),
                 "strict": True, "schema": strict_json_schema(model)}},
         }
+        from harness.config import Settings
+        from harness.llm import deepseek_structured
+        from harness.llm.structured import cache_messages
+        endpoint = self.config.base_url.rstrip("/") + "/chat/completions"
+        provider_settings = Settings(_env_file=None, llm_model=self.config.model, llm_base_url=self.config.base_url)
+        response_schema = None
+        if deepseek_structured.supported(provider_settings):
+            payload["messages"] = cache_messages(payload["messages"])
+            payload, response_schema = deepseek_structured.request_payload(payload, provider_settings)
+            endpoint = "https://api.deepseek.com/responses"
         input_tokens = _size(payload)
         if input_tokens > self.config.max_input_tokens:
             raise RevisionProviderError("daily_revision_stage_input_too_large", retryable=False)
@@ -295,7 +305,7 @@ class DailyRevisionProvider:
                 # Every actual transmission, including a retry, gets a distinct
                 # production attempt. Cached stages above do not spend budget.
                 with production_attempt(model=self.config.model, defer_on_reserve_failure=True) as metering:
-                    response = self.client.post(self.config.base_url.rstrip("/") + "/chat/completions",
+                    response = self.client.post(endpoint,
                         headers={"Authorization": "Bearer " + api_key}, json=payload,
                         timeout=min(remaining, self.config.request_timeout_seconds))
                     try:
@@ -303,7 +313,8 @@ class DailyRevisionProvider:
                     except ValueError:
                         body = None
                     _record_production_response(metering, body)
-                    usage = body.get("usage") if isinstance(body, dict) else None
+                    normalized = deepseek_structured.chat_body(body) if response_schema is not None else body
+                    usage = normalized.get("usage") if isinstance(normalized, dict) else None
                     self.queue.account(reservation, usage, status="response_received")
                     status = response.status_code
                     if status in {401, 402, 403}:
@@ -317,7 +328,12 @@ class DailyRevisionProvider:
                         continue
                     if not 200 <= status < 300:
                         raise RevisionProviderError("daily_revision_provider_request_rejected", retryable=False)
-                    parsed = self._parse(body, model)
+                    if response_schema is not None:
+                        try:
+                            deepseek_structured.validate_response(body, response_schema)
+                        except ValueError:
+                            raise RevisionProviderError("daily_revision_provider_response_invalid", retryable=False) from None
+                    parsed = self._parse(normalized, model)
                     if time.monotonic() >= deadline:
                         raise RevisionProviderError("daily_revision_job_timeout")
                     if validate is not None:

@@ -14,6 +14,7 @@ import time
 from typing import Any
 
 from pydantic import TypeAdapter, ValidationError
+from harness.llm.deepseek_structured import decision_format
 
 from harness.cognitive.action_planner import _INTENT_PROFILES
 from harness.cognitive.decision_parser import ExperimentalDecisionParser
@@ -348,7 +349,7 @@ async def prepare(host: Any, command: Any) -> dict[str, Any]:
             try:
                 response = await asyncio.wait_for(asyncio.to_thread(host.chat.llm.complete_chat_result,
                     messages, stream=False, max_tokens=MAX_OUTPUT_TOKENS, timeout_seconds=timeout,
-                    response_format={"type": "json_object"}), timeout=timeout)
+                    response_format=decision_format(host.chat.llm, CapabilityChoice.model_json_schema(), "capability_choice")), timeout=timeout)
             except TimeoutError:
                 raise TimeoutError("capability_selection_expired") from None
             except Exception:

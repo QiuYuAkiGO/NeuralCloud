@@ -1,0 +1,109 @@
+{
+  "schema_version": "openai-clm-comparison-v1",
+  "started_at": "2026-10-05T09:06:21.872442+00:00",
+  "completed": false,
+  "model_requested": "gpt-6.1-sol",
+  "effort": "low",
+  "endpoint": "https://api.openai.com/v1/responses",
+  "network": "environment-proxy",
+  "automatic_retries": 0,
+  "case_sha256": "76eae06c9395582ed9bd3e355753e3811dfd47513a9cc5a1dd8cffbcd752f573",
+  "synthetic": true,
+  "quality": [],
+  "performance": {},
+  "reply": [],
+  "events": [
+    {
+      "event": "start",
+      "utc": "2026-10-05T09:06:21.927086+00:00"
+    },
+    {
+      "event": "first_request",
+      "utc": "2026-10-05T09:06:24.672118+00:00",
+      "status": 200,
+      "valid": false
+    },
+    {
+      "event": "failed",
+      "utc": "2026-10-05T09:06:24.677555+00:00",
+      "error_type": "RuntimeError"
+    }
+  ],
+  "source_sha256": {
+    "openai_structured_benchmark.py": "310e782fbd6ea1e987fffa550fa0d9d919a5522926f5b8634d45a27bf7726df4",
+    "deepseek_structured_benchmark.py": "9e1d515f3a513e59375e3682ac26e5638e1425e2d8073b661e2013e8426121e0",
+    "clm_benchmark.py": "654a4e08773c9204c47af2ce3ac3f72eed873a81bb41a2bc9d2dfb1b1c09e437"
+  },
+  "first_request": {
+    "phase": "first_request",
+    "case_id": "gate-01",
+    "payload": {
+      "model": "gpt-6.1-sol",
+      "instructions": "根据给出的状态和问题作出判断。choice 返回候选键；noul 返回布尔值；score 返回最合适的等级序号。只输出一个 JSON 对象，不输出解释。\nJSON Schema：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}}, \"required\": [\"decision\"], \"additionalProperties\": false}",
+      "input": "{\"state\": \"私聊用户刚问：小雾，你在吗？目前没有其他任务，用户正在等待答复。\", \"question\": {\"type\": \"choice\", \"instructions\": \"按用户当前明确的交流要求，小雾现在应选择哪种回应时机？\", \"criteria\": {\"speak\": \"现在向用户作出回复。\", \"wait\": \"现在保持安静，不向用户发言。\", \"defer\": \"用户要求等到稍后的明确时机再回复，现在保留请求并延后回复。\"}}}",
+      "reasoning": {
+        "effort": "low"
+      },
+      "max_output_tokens": 1024,
+      "stream": true,
+      "text": {
+        "format": {
+          "type": "json_schema",
+          "name": "decision",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "decision": {
+                "type": "string",
+                "enum": [
+                  "speak",
+                  "wait",
+                  "defer"
+                ]
+              }
+            },
+            "required": [
+              "decision"
+            ],
+            "additionalProperties": false
+          },
+          "strict": true
+        }
+      },
+      "store": false
+    },
+    "completed": false,
+    "schema_valid": false,
+    "status": 200,
+    "ttft_ms": null,
+    "headers_ms": 2445.6329999957234,
+    "request_id": "req_40cdf4056fed47b78816e40b4a2c9f42",
+    "rate_limits": {},
+    "terminal_event_type": "response.failed",
+    "terminal_event_keys": [
+      "type",
+      "response",
+      "sequence_number"
+    ],
+    "terminal_ms": 2723.062700009905,
+    "response_status": "failed",
+    "provider_error": {
+      "type": null,
+      "code": "credit_balance_exhausted",
+      "param": null
+    },
+    "response_model": "gpt-6.1-sol",
+    "response_id": "resp_0b0cbd3602e73bc8016ac3688f856887d094b1275efc6fb78c",
+    "usage": null,
+    "service_tier": "auto",
+    "incomplete_details": null,
+    "text": "",
+    "refused": false,
+    "validation_error_type": "JSONDecodeError",
+    "elapsed_ms": 2723.2112000056077
+  },
+  "failure": {
+    "type": "RuntimeError"
+  },
+  "ended_at": "2026-10-05T09:06:24.682978+00:00"
+}

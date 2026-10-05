@@ -51,6 +51,27 @@ def test_private_scope_has_distinct_message_evidence_and_only_two_accounts():
         QQPersonContext(group_id=f"private:{SELF}:{SELF}", member_id=SELF, profiles=[], observations=[])
 
 
+@pytest.mark.parametrize("pipeline", ["legacy", "direct"])
+def test_private_reply_survives_invalid_optional_static_parser(setup, monkeypatch, pipeline):
+    monkeypatch.setenv("NC_QQ_BODY_PIPELINE", pipeline)
+    monkeypatch.setenv("NC_VALIDATOR_ENABLED", "false")
+    client = setup[1]
+    original = client.complete_json
+    parser_calls = []
+
+    def helper(**options):
+        if options["system"] == decision.parser_module._SYSTEM:
+            parser_calls.append(options)
+            raise ValueError("synthetic malformed static parser JSON")
+        return original(**options)
+
+    monkeypatch.setattr(client, "complete_json", helper)
+    result, _, _ = prepare_private(setup, monkeypatch)
+    assert result.outcome == "ready" and result.error_type is None
+    assert result.reply and result.reply != decision.ERROR_FALLBACK_REPLY
+    assert len(parser_calls) == (1 if pipeline == "legacy" else 0)
+
+
 @pytest.mark.parametrize("updates", [
     {"member_id": "77777"},
     {"verification": "qq_ui_verified", "display_name_source": "qq_profile"},
@@ -96,7 +117,7 @@ def test_private_images_and_text_reach_same_persona_without_group_recall(setup, 
     assert result.outcome == "ready", result.reason
     assert result.addressing == "direct" and result.addressing_source == "verified_private_message"
     assert result.addressing_source_record_ids == [observation.record_id]
-    assert result.prompt_version == "qq-private-turn-taking-v10-humanization"
+    assert result.prompt_version == "qq-private-turn-taking-v11-persona-voice"
     assert result.participants == [PEER]
     assert result.source_record_ids == [observation.record_id]
     client = setup[1]

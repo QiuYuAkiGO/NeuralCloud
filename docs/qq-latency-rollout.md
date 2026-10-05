@@ -1,5 +1,9 @@
 # QQ 延迟改造：兼容部署、自然灰度与回退
 
+2026-10-06 识图更新：Linux 已启用 `20261006-qq-vision-kimi-on-demand-v2`。Direct 恢复图片获取，主模型仍是 Qwen3.8-27B，由它自主选择调用 Kimi K2.6 非思考识图工具及后续联网。六个业务服务运行，QQ 已连接；服务账号公开 OCR 样本整条回复 8.381 秒，明确不用看图的对照 2.464 秒、零识图调用。部署同时修复了旧 32 位命令 ID 碰撞造成的启动恢复失败，保留原日志与不可变记录。详见 [发布与验证记录](refactor/qq-vision-kimi-rollout-20261006.md)。下方图片关闭和旧版本信息均为历史记录。
+
+2026-10-06 更新：有界历史选择成为代码默认值，并独立于 `qq_latency_conversations` 生效；名单外群聊和私聊也采用所配置的历史选择模式。已有持久化配置中的 `shadow` 需要显式改为 `bounded`，不能只升级代码。当前请求、补充消息及已验证引用保持完整，未呈现的历史不标记为已处理。本次不调整记忆准备、正文管线、联网或调度策略。下方 2026-09-16 上线记录保留为历史背景。
+
 当前线上为 `20260916-qq-reply-v4`（北京时间 2026-09-16 22:22 激活，22:23 核验）：整个 Direct 已关闭新图片处理，两个故障群启用 compact/direct，Cognitive 启用 SQLite 增量持久化；510 项候选回归及真实状态副本迁移验证通过。六个服务与 QQ 收发正常，线上性能验收仍待自然样本。详见 [后续超时修复记录](qq-reply-followup-20260916.md)。当前观测脚本位于 `.tmp/qq-reply-followup-20260916/`。以下 v3/v2 内容保留为历史基线，不再表示当前配置。
 
 当前线上已于北京时间 20:47 更新为 `20260916-qq-response-v3`：从下述 v2 清单仅迁入 gate JSON 输出约束/脱敏校验诊断及失效 ambient 图片任务延后识图三项文件修复，735 项相关回归通过，六个服务及 QQ 收发状态核验正常。现有配置和灰度开关未变；详情与限制见 [两次未返回故障记录](qq-response-incident-20260916.md)。自然观测改用 `.tmp/qq-two-failures-20260916/verify.sh` 与 `export_metrics.sh`，不再使用硬编码 v2 的旧脚本。下文 v2 部署及统计保留为历史基线。
@@ -23,11 +27,11 @@
 `qq_latency_conversations` 使用账户限定的会话键：
 
 - `null` / Python `None`：所选策略适用于全部获准会话。
-- `[]`：会话内优化采用兼容路径，适合作为第一次部署的显式设置。字段缺省是 `None`，不是 `[]`。
+- `[]`：除历史选择外，会话内优化采用兼容路径。字段缺省是 `None`，不是 `[]`。
 - `["12345/67890"]`：只对账户 `12345` 的群 `67890` 启用所选策略。
 - `["12345/private:12345:67890"]`：只对这个账户与这个联系人的私聊启用；私聊键内的自身账户必须一致。
 
-名单不授予收发权限，仍须满足原 roster、private contacts、协议证据和 send guard。Cognitive/Runtime 与 Direct 的持久化配置必须使用相同名单。名单外会话使用 `legacy` projection/body/web、`shadow` history/scheduler，阶段预算关闭。`shadow` 会计算候选统计，不能当成行为加速已生效。
+名单不授予收发权限，仍须满足原 roster、private contacts、协议证据和 send guard。Cognitive/Runtime 与 Direct 的持久化配置必须使用相同名单。名单外会话使用 `legacy` projection/body/web、`shadow` scheduler，阶段预算关闭；历史选择保持配置值，默认为 `bounded`。显式选择 `shadow` 仍只计算候选统计，不能当成行为加速已生效。
 
 SQLite 持久化是共享 owner 级设置，不受会话名单隔离。情绪输入布局、计量、前台命令优先等共享改动也不能宣称由这份名单完全隔离。
 
@@ -37,7 +41,7 @@ SQLite 持久化是共享 owner 级设置，不受会话名单隔离。情绪输
 
 - `qq_context_projection="compact"`：紧凑的模型输入投影；`legacy` 保留兼容投影。完整证据仍保存在来源记录中。
 - `qq_body_pipeline="direct"`：gate 已准入后直接进入普通 compiler/character/validator，跳过再次解析固定适配指令、复杂度判断和召回；`legacy` 保留原 pipeline。正文不因此新增一次情绪观察。
-- `qq_history_selection="shadow"`：`legacy` 保留原选择；`shadow` 仅计量；`bounded` 才采用整条历史预算。gate 默认软目标 `qq_gate_history_soft_characters=24000`，body 为 `qq_body_history_soft_characters=64000`。这两个数是字符数；当前请求、补充消息及已验证引用必须保留，不能靠截断必需证据满足目标。
+- `qq_history_selection="bounded"`：默认采用整条历史预算，适用于名单内外会话；`legacy` 显式保留原选择，`shadow` 显式仅计量。gate 默认软目标 `qq_gate_history_soft_characters=24000`，body 为 `qq_body_history_soft_characters=64000`。这两个数是字符数；当前请求、补充消息及已验证引用必须保留，不能靠截断必需证据满足目标。
 - `qq_web_policy="legacy"`：`after_gate` 启用 PrepareQQTurn → 可选 Web → ResumeQQResponse；`off` 使用新链路但不执行自动联网。自然灰度应选 `after_gate` 以保留自动联网。沉默决定不启动 Web 或正文。
 - `qq_reply_scheduler="shadow"`：`coalesced` 才启用修订请求及合并调度。Direct 的同名配置决定实际 ingress/worker 行为，不能只改模型侧。
 - `qq_stage_budgets_enabled=false`：启用后 gate 上限默认 `qq_gate_timeout_seconds=15`，正文至少预留 `qq_body_reserve_seconds=10`，发送预留 `qq_delivery_reserve_seconds=3`。Web 上限 `qq_web_timeout_seconds=10`，可用时间不足 2 秒时跳过；Web 本身即使不开主模型阶段预算也使用其有限预算。所有阶段从最初 60 秒窗口扣减，不重开计时。
@@ -55,7 +59,7 @@ Direct 配置另外提供 `qq_media_cache_enabled=false`、`qq_media_parallel_en
 3. 确认 Cognitive snapshot 广告 `PrepareQQTurn`、`ResumeQQResponse`，Runtime 客户端/路由也支持相同接口；确认两端配置来源和名单一致。Runtime 会在启用新 Web 策略时检查服务能力。
 4. 单独切换 owner 级 SQLite 存储并重启，先验收新结果重放、保留 reservation、重启恢复及关闭开关导出路径。该阶段收益看持久化分段，不能混入模型耗时。
 5. 选少量已授权会话灰度 `compact` + `direct` + `after_gate`，保持情绪两步和主人格不变。gate 只输出联网意图，Runtime 对每一步重新确认能力、范围、来源与预算；不确定的外部请求结果不重发。
-6. 在上述链路稳定后逐项开启 `bounded` history、阶段预算、Direct `coalesced` scheduler、媒体缓存/并行。每次固定配置版本重新累计样本，避免多个开关同时变化后无法归因。合并请求必须继续校验修订号和所有 source IDs，新增补充产生新的当前情绪输入，不重复刺激已处理 anchor。
+6. 历史选择默认采用 `bounded`；旧部署若仍显式保存 `shadow`，需单独迁移并回放验证。阶段预算、Direct `coalesced` scheduler、媒体缓存/并行仍逐项开启。每次固定配置版本重新累计样本，避免多个开关同时变化后无法归因。合并请求必须继续校验修订号和所有 source IDs，新增补充产生新的当前情绪输入，不重复刺激已处理 anchor。
 7. 满足下节证据和人工质量条件后再扩大会话名单。变更期间保持送达核验与结构化终止原因完整；不要因为延迟下降就跳过遗漏/错误回复审查。
 
 兼容模式控制的是新请求。已经 journaled 的新命令使用冻结 policy；切换名单或开关不能改写其原 TTL，也不能把未完成外部动作当作安全重试。变更前应排空或按现有取消/过期协议终止在途请求。

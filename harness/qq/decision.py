@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from harness.llm.deepseek_structured import decision_format
+
 import argparse
 from collections import OrderedDict
 from contextlib import closing
@@ -54,13 +56,14 @@ from harness.qq.reply_context import (
 from harness.qq.memory_evidence import build_qq_memory_evidence, current_qq_burst_ids
 from harness.qq.policy import QQLatencyOptions
 from harness.qq.web_plan import QQWebPlan
+from harness.qq.vision_tool import QQVisionRequest, QQVisionTool, TOOL_RULES as VISION_TOOL_RULES
 from harness.qq.turn_checkpoints import QQTurnStateError
 from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace, classify_error
 from infra.trace.request_spans import trace_scope
 
 
-PROMPT_VERSION = "qq-group-turn-taking-v24-humanization"
-PRIVATE_PROMPT_VERSION = "qq-private-turn-taking-v10-humanization"
+PROMPT_VERSION = "qq-group-turn-taking-v25-persona-voice"
+PRIVATE_PROMPT_VERSION = "qq-private-turn-taking-v11-persona-voice"
 MAX_GROUP_CONTEXT_CHARACTERS = DEFAULT_QQ_INPUT_TOKEN_BUDGET * 2
 _CONTEXT_BUDGET_REASON = "context_budget_exceeded：模型上下文超过字符预算，本次未生成可发送正文；这不是网络故障或模型 JSON 解析失败。"
 _SENDABLE_SPEAK_OUTCOMES = frozenset({"ready", "error_fallback"})
@@ -297,14 +300,24 @@ class _GateDecision(_StrictModel):
     reply_style_reason: str = Field(default="默认简短口语。", min_length=1, max_length=256)
     reply_plan: QQReplyPlan | None = None
     web_plan: QQWebPlan | None = None
+    vision_request: QQVisionRequest | None = None
     _reply_plan_invalid: bool = PrivateAttr(default=False)
     _web_plan_invalid: bool = PrivateAttr(default=False)
+    _vision_request_invalid: bool = PrivateAttr(default=False)
 
     @model_validator(mode="wrap")
     @classmethod
     def optional_plan_does_not_invalidate_gate(cls, value, handler):
         invalid = False
         web_invalid = False
+        vision_invalid = False
+        if isinstance(value, dict) and value.get("vision_request") is not None:
+            value = dict(value)
+            try:
+                value["vision_request"] = QQVisionRequest.model_validate(value["vision_request"])
+            except ValidationError:
+                value["vision_request"] = None
+                vision_invalid = True
         if isinstance(value, dict) and value.get("web_plan") is not None:
             value = dict(value)
             try:
@@ -322,6 +335,7 @@ class _GateDecision(_StrictModel):
         result = handler(value)
         result._reply_plan_invalid = invalid
         result._web_plan_invalid = web_invalid
+        result._vision_request_invalid = vision_invalid
         return result
 
     @model_validator(mode="after")
@@ -688,13 +702,14 @@ class _QQContextBudgetExceeded(QQDraftError):
     """A local input-budget failure, distinct from transport and model output."""
 
 
-def _assessment_reserve(*, include_web_plan: bool = False, production=False) -> int:
+def _assessment_reserve(*, include_web_plan: bool = False, include_vision_request: bool = False, production=False) -> int:
     """Worst serialized assessment allowed by the gate DTO, including escapes."""
     schema = (_ProductionGateDecision if production else _GateDecision).model_json_schema()
     # Web plans are bounded by validators as well as JSON-schema fields. Their
     # separate finite reserve avoids treating pattern-only source refs as free
     # strings, and leaves historical legacy budgets unchanged.
     schema["properties"].pop("web_plan", None)
+    schema["properties"].pop("vision_request", None)
 
     def largest_value(field):
         if "$ref" in field:
@@ -716,8 +731,10 @@ def _assessment_reserve(*, include_web_plan: bool = False, production=False) -> 
 
     largest = largest_value(schema)
     largest["web_plan"] = None
+    largest["vision_request"] = None
     # The persona receives this as a separate user message, with its own braces.
-    return len(_canonical({"assessment": largest})) + (22_000 if include_web_plan else 0)
+    return (len(_canonical({"assessment": largest})) + (22_000 if include_web_plan else 0)
+            + (4000 if include_vision_request else 0))
 
 
 def _checked_model_payload(value: dict, *, trace: QQTurnTrace, stage: Literal["base", "final", "persona"],
@@ -771,6 +788,9 @@ def _connect(path: Path) -> sqlite3.Connection:
         record_json TEXT NOT NULL, UNIQUE(decision_id,segment_index))""")
     connection.execute("""CREATE TABLE IF NOT EXISTS qq_context_windows (
         group_id TEXT PRIMARY KEY, start_key TEXT NOT NULL)""")
+    from harness.qq.source_index import ensure_source_index
+    ensure_source_index(connection)
+    connection.commit()
     return connection
 
 
@@ -1133,9 +1153,22 @@ class _StaticInstructionParser:
                 return cached[1].model_copy(deep=True, update={"parse_id": new_id("parse")})
         if self.trace is not None:
             self.trace.add_counter("static_parse_cache_miss")
+        previous_failure = getattr(self.llm, "failed_error_type", None)
         parsed = self.delegate.parse(event)
+        # This parser sees only our fixed adapter instruction. ContextParser
+        # deliberately recovers invalid JSON with a deterministic rule parse;
+        # acknowledge that recovery without clearing earlier or fatal failures.
+        # Actual QQ messages, gate decisions and body validation are unaffected.
+        if (previous_failure is None
+                and getattr(self.llm, "failed_error_type", None) == "model_invalid"
+                and isinstance(parsed, ParsedInteraction) and parsed.gate_vote is None
+                and not (deadline is not None and deadline.expired)):
+            self.llm.failed_error_type = None
+            if self.trace is not None:
+                self.trace.add_counter("static_parse_recovered_invalid_json")
+                self.trace.record("persona.static_parse_recovered", outcome="ok")
         # A caught parser failure returns a rule fallback without a gate vote.
-        # A caught transport/JSON error also leaves the scoped client's marker.
+        # Recovered rule parses are not cached as successful model parses.
         if (isinstance(parsed, ParsedInteraction) and parsed.gate_vote in {"fast", "deep"}
                 and getattr(self.llm, "failed_error_type", None) is None
                 and not (deadline is not None and deadline.expired)):
@@ -1541,6 +1574,9 @@ def decide_qq_reply(
             raise QQDraftError("qq_current_authority_invalid")
     source_ids = sorted({item.record_id for item in observations})
     evidence_refs = sorted({ref for member in context.members for ref in _evidence_refs(member)})
+    vision_tool = (QQVisionTool.for_turn(settings, observations, group_id=group_id, self_member_id=self_member_id,
+        current_ids=set(request_observation_ids or ([trigger_latest_id] if trigger_latest_id else [])))
+        if idle_intent is None else None)
     base_payload = {"coverage": "partial_verified_observations",
                     "group_context": context.model_dump(mode="json"), "request": request,
                     "query_source": query_source, "effective_query": effective_query,
@@ -1554,6 +1590,8 @@ def decide_qq_reply(
                     }}
     if request_observation_ids:
         base_payload["current_request_observation_ids"] = request_observation_ids
+    if vision_tool is not None:
+        base_payload["vision_tool"] = vision_tool.public()
     if _request_authority_record_id is not None:
         base_payload["current_request_authority_observation_id"] = _request_authority_record_id
     if _reply_reference_record_ids:
@@ -1705,6 +1743,7 @@ def decide_qq_reply(
         # above. Selection must budget every eventual model-message field.
         payload["emotion_guidance_text"] = trusted_fingerprint["emotion_guidance"]["text"]
     assessment_reserve = _assessment_reserve(include_web_plan=_turn_preparation is not None,
+                                            include_vision_request=vision_tool is not None,
                                               production=production_store is not None)
     input_character_budget = settings.qq_input_token_budget * 2
     projection = getattr(settings, "qq_context_projection", "compact")
@@ -1717,7 +1756,7 @@ def decide_qq_reply(
         assessment_reserve=assessment_reserve,
         projection=projection,
     )
-    history_mode = getattr(settings, "qq_history_selection", "shadow")
+    history_mode = getattr(settings, "qq_history_selection", "bounded")
     body_selection = selection
     body_extra_messages = []
     if history_mode in {"shadow", "bounded"}:
@@ -1860,6 +1899,7 @@ def decide_qq_reply(
                                               "evidence_refs": evidence_refs, "delivery_refs": list(selection.delivery_ids)})
             messages = [{"role": "system", "content": persona_prefix(preset.persona)
                         + (_PRIVATE_RULES if private else _RULES) + web_rules
+                        + (VISION_TOOL_RULES if vision_tool is not None else "")
                         + (_PRODUCTION_MEMORY_USE_RULES if production_store is not None else "")
                         + ((_PRODUCTION_IDLE_RULES if production_idle else _IDLE_RULES) if idle_intent is not None else "")},
                         *({"role": "user", "content": content} for content in encoded_messages)]
@@ -1872,10 +1912,44 @@ def decide_qq_reply(
             try:
                 with trace.stage("gate"), trace_scope(phase="qq_gate", stage="qq_gate"):
                     response = llm.complete_chat_result(messages, temperature=0.2, stream=False,
-                        max_tokens=gate_token_budget, response_format={"type": "json_object"})
+                        max_tokens=gate_token_budget, response_format=decision_format(raw_llm,
+                            (_ProductionGateDecision if production_store is not None else _GateDecision).model_json_schema(), "qq_gate"))
                     reported_usage = response.usage if response.usage.total_tokens else estimate_chat_usage(messages, response.text)
                     usage = usage.add(reported_usage.for_call())
                     choice = _parse_gate_response(response, trace, production=production_store is not None)
+                    if choice.action == "speak" and (choice.vision_request is not None or choice._vision_request_invalid):
+                        validator = (_turn_preparation or {}).get("request_validator")
+                        if validator is not None:
+                            validator()
+                        if vision_tool is None or choice._vision_request_invalid:
+                            visual, vision_usage = ({"tool": "inspect_qq_images", "status": "unavailable",
+                                "untrusted": True, "images": [], "error": "image_selection_invalid"}, TokenUsage())
+                        else:
+                            presented = set(selection.observation_ids) & set(body_selection.observation_ids)
+                            if any(image.observation_id not in presented for image in vision_tool.images
+                                   if image.image_id in choice.vision_request.image_ids):
+                                raise QQDraftError("qq_vision_source_not_presented")
+                            visual, vision_usage = vision_tool.invoke(choice.vision_request, deadline=deadline,
+                                trace=trace, request_validator=validator)
+                        usage = usage.add(vision_usage)
+                        tool_message = _checked_model_payload({"vision_tool_result": visual,
+                            "continuation": "识图工具结果已返回。本轮不再调用识图；结合结果完成参与判断与回复计划。"
+                                "需要外部资料时自主给出web_plan，否则为null。vision_request必须为null。"
+                                "失败或不确定的结果不能补成确定事实。"}, trace=trace, stage="final",
+                            reserve=sum(len(item["content"]) for item in messages if item["role"] != "system")
+                                + len(response.text) + assessment_reserve
+                                + sum(len(item["content"]) for item in body_extra_messages),
+                            max_characters=input_character_budget)
+                        messages = [*messages, {"role": "assistant", "content": response.text},
+                                    {"role": "user", "content": tool_message}]
+                        response = llm.complete_chat_result(messages, temperature=0.2, stream=False,
+                            max_tokens=gate_token_budget, response_format=decision_format(raw_llm,
+                                (_ProductionGateDecision if production_store is not None else _GateDecision).model_json_schema(), "qq_gate"))
+                        reported_usage = response.usage if response.usage.total_tokens else estimate_chat_usage(messages, response.text)
+                        usage = usage.add(reported_usage.for_call())
+                        choice = _parse_gate_response(response, trace, production=production_store is not None)
+                        if choice.vision_request is not None:
+                            trace.add_counter("vision_repeated_request_ignored")
             finally:
                 timings["gate"] = round(max(0.0, trace.clock() - gate_started) * 1000, 3)
             if self_member_id is not None:
@@ -1982,7 +2056,8 @@ def decide_qq_reply(
     if not counters.get("gate_model_calls", 0) and result.outcome != "error_fallback":
         result = result.model_copy(update={"source_record_ids": [], "evidence_refs": [], "shared_memory_source_ids": []})
     result = result.model_copy(update={"completed_at": datetime.now(timezone.utc), "timings_ms": timings,
-        "model_call_counts": {name: counters.get(f"{name}_model_calls", 0) for name in ("gate", "persona")}})
+        "model_call_counts": {name: counters.get(f"{name}_model_calls", 0)
+                              for name in (("gate", "persona", "vision") if counters.get("vision_model_calls") else ("gate", "persona"))}})
     trace.record("decision", started_mono=started_mono,
                  outcome="expired" if result.outcome == "expired" else ("error" if result.error_type else "ok"),
                  error_type=result.error_type)

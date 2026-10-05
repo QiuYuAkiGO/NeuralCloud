@@ -14,7 +14,12 @@
       "embodiment_provider": "auto",
       "mistyai_base_url": "http://127.0.0.1:8787",
       "mistyai_token_file": null,
-      "ports": { "gui": 8790, "runtime": 8770, "cognitive": 8771, "homeostasis": 8772 },
+      "ports": {
+        "gui": 8790,
+        "runtime": 8770,
+        "cognitive": 8771,
+        "homeostasis": 8772
+      },
       "bindings": {
         "NC_GUI_CONFIG": "data/gui_settings.json",
         "NC_GUI_PRESETS": "data/presets",
@@ -27,10 +32,15 @@
         "NC_CONTROL_TOKEN_FILE": "%LOCALAPPDATA%/NeuralCloud/QQDesktop/shared-runtime-control.token",
         "NC_SERVICE_TOKEN_FILE": "%LOCALAPPDATA%/NeuralCloud/QQDesktop/shared-runtime-service.token",
         "NC_BOARD_CONFIG": "%LOCALAPPDATA%/NeuralCloud/Board/board-client.json",
-        "NC_QQ_INPUT_TOKEN_BUDGET": 96000,
-        "NC_QQ_MEMORY_RECALL_MAX_CHARACTERS": 16000
+        "NC_QQ_INPUT_TOKEN_BUDGET": 60000,
+        "NC_QQ_MEMORY_RECALL_MAX_CHARACTERS": 16000,
+        "NC_LLM_FALLBACK_CONFIG": "C:/Users/22850/AppData/Local/NeuralCloud/llama.cpp/main-fallback.json"
       },
-      "mistyai": { "enabled": false, "source_path": "../MistyAI", "distro": "Ubuntu-24.04" }
+      "mistyai": {
+        "enabled": false,
+        "source_path": "../MistyAI",
+        "distro": "Ubuntu-24.04"
+      }
     },
     "local": {
       "mode": "demo",
@@ -42,9 +52,18 @@
       "embodiment_provider": "none",
       "mistyai_base_url": "http://127.0.0.1:8787",
       "mistyai_token_file": null,
-      "ports": { "gui": 18890, "runtime": 18870, "cognitive": 18871, "homeostasis": 18872 },
+      "ports": {
+        "gui": 18890,
+        "runtime": 18870,
+        "cognitive": 18871,
+        "homeostasis": 18872
+      },
       "bindings": {},
-      "mistyai": { "enabled": false, "source_path": "../MistyAI", "distro": "Ubuntu-24.04" }
+      "mistyai": {
+        "enabled": false,
+        "source_path": "../MistyAI",
+        "distro": "Ubuntu-24.04"
+      }
     }
   }
 }

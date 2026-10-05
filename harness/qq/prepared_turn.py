@@ -337,7 +337,9 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
     result = qq._deadline_override(result, deadline)
     result = qq.QQReplyDecision.model_validate(result.model_copy(update={"usage": usage,
         "completed_at": datetime.now(timezone.utc), "timings_ms": timings,
-        "model_call_counts": {"gate": gate_calls, "persona": trace.snapshot()["counters"].get("persona_model_calls", 0)}}).model_dump())
+        "model_call_counts": {"gate": gate_calls, "persona": trace.snapshot()["counters"].get("persona_model_calls", 0),
+            **({"vision": snapshot["trace"]["counters"]["vision_model_calls"]}
+               if snapshot["trace"]["counters"].get("vision_model_calls") else {})}}).model_dump())
     try:
         if request_validator is not None:
             request_validator()

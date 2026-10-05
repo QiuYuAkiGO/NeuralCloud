@@ -1,0 +1,1928 @@
+{
+  "started_at": "2026-10-05T09:49:30.119227+00:00",
+  "completed": false,
+  "bundle_sha256": "ee905e6e31ccdd69d7d0dad7661f5345fd04c4cc9b3f50712b0e9b9e930be20e",
+  "runner_sha256": "5cfe7d96847d265edf863d89b2e77890ba1f01b29540497350d2d2bf2cc0b3f2",
+  "budget_cny": "1.00",
+  "estimated_peak_cost_upper_cny": "0.18",
+  "rows": [
+    {
+      "slot": "qwen:after:stream:choice:1",
+      "provider": "qwen",
+      "id": "choice",
+      "arm": "after",
+      "kind": "stream",
+      "repeat": 1,
+      "messages_sha256": "708fcab162c1187d73499dd52a9c4a73b79fb4120ed05e843d5ecb97b109c570",
+      "payload_sha256": "7c1b2c3bce68cf7a72037c12f12693de7475d228a702fb194e990f3598c61306",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0",
+      "cost_upper_cny": "0",
+      "http_status": 200,
+      "seconds": 1.3149,
+      "first_content_seconds": 1.1492,
+      "text": "安静但贵一点的吧。\n[END]",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 11,
+        "prompt_tokens": 2678,
+        "total_tokens": 2689,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "response_model": "qwen3.8-27b",
+      "request_id": "chatcmpl-Y0vO1qBXcLPYerntaN7XvTDGWJpOuVOQ",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 2678,
+        "prompt_ms": 879.564,
+        "prompt_per_token_ms": 0.3284406273338312,
+        "prompt_per_second": 3044.6903238422674,
+        "predicted_n": 11,
+        "predicted_ms": 165.337,
+        "predicted_per_token_ms": 16.5337,
+        "predicted_per_second": 60.48252962131889
+      },
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 15,
+          "sentences": 2,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      }
+    },
+    {
+      "slot": "deepseek:after:stream:choice:1",
+      "provider": "deepseek",
+      "id": "choice",
+      "arm": "after",
+      "kind": "stream",
+      "repeat": 1,
+      "messages_sha256": "708fcab162c1187d73499dd52a9c4a73b79fb4120ed05e843d5ecb97b109c570",
+      "payload_sha256": "d3d4921b7956e6704292c627a32f552513736f4ea7217582a47f818e3c070c86",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0.07",
+      "cost_upper_cny": "0.01",
+      "http_status": 200,
+      "seconds": 0.5783,
+      "first_content_seconds": 0.5781,
+      "text": "安静但贵一点的。",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 2738,
+        "completion_tokens": 5,
+        "total_tokens": 2743,
+        "prompt_tokens_details": {
+          "cached_tokens": 1152
+        },
+        "prompt_cache_hit_tokens": 1152,
+        "prompt_cache_miss_tokens": 1586
+      },
+      "response_model": "deepseek-flash",
+      "request_id": "651f9924-2076-455e-9975-007ca4b9946d",
+      "timings": null,
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 8,
+          "sentences": 1,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      },
+      "cost_at_peak_unrounded_cny": 0.00325808
+    },
+    {
+      "slot": "deepseek:after:reply:expanded:1",
+      "provider": "deepseek",
+      "id": "expanded",
+      "arm": "after",
+      "kind": "reply",
+      "repeat": 1,
+      "messages_sha256": "3f56e339ecebd0e73d8ee858a7fa5bf1a0ae0b53ccbcf0f932f8b06616a1cc44",
+      "payload_sha256": "36cf730684262d0ff11a688d0b612ebf3478c396b0a48c81fd9755ecf03c08e3",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0.07",
+      "cost_upper_cny": "0.01",
+      "http_status": 200,
+      "seconds": 0.5252,
+      "first_content_seconds": null,
+      "text": "社会比较就是……人会拿自己和别人比，然后影响对自己的评价。比如看到同学考得比自己好，可能会觉得自己不够好，也可能被激励到。",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 2739,
+        "completion_tokens": 33,
+        "total_tokens": 2772,
+        "prompt_tokens_details": {
+          "cached_tokens": 1152
+        },
+        "prompt_cache_hit_tokens": 1152,
+        "prompt_cache_miss_tokens": 1587
+      },
+      "response_model": "deepseek-flash",
+      "request_id": "aca46eb0-5b40-4796-930f-53c10779b70f",
+      "timings": null,
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 61,
+          "sentences": 2,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      },
+      "cost_at_peak_unrounded_cny": 0.00348408
+    },
+    {
+      "slot": "qwen:after:reply:expanded:1",
+      "provider": "qwen",
+      "id": "expanded",
+      "arm": "after",
+      "kind": "reply",
+      "repeat": 1,
+      "messages_sha256": "3f56e339ecebd0e73d8ee858a7fa5bf1a0ae0b53ccbcf0f932f8b06616a1cc44",
+      "payload_sha256": "116d597228b3eea3513c2889640956d544dc66840f3754483e7e8c899d0ceb4a",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0",
+      "cost_upper_cny": "0",
+      "http_status": 200,
+      "seconds": 1.8677,
+      "first_content_seconds": null,
+      "text": "简单说，就是我们会下意识拿自己和别人比，以此来判断自己怎么样。\n\n比如看到朋友发了新买的相机，心里可能会想“他拍得真好，我拍的都差点意思”，这就是在比；或者看到同学成绩进步了，也会忍不住掂量一下自己的状态。\n\n这种比有时候能让人想上进，有时候也挺消耗人的。",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 74,
+        "prompt_tokens": 2676,
+        "total_tokens": 2750,
+        "prompt_tokens_details": {
+          "cached_tokens": 643
+        }
+      },
+      "response_model": "qwen3.8-27b",
+      "request_id": "chatcmpl-omribcqyXAiqEyze3x0UHuqHHOJVWJsG",
+      "timings": {
+        "cache_n": 643,
+        "prompt_n": 2033,
+        "prompt_ms": 634.572,
+        "prompt_per_token_ms": 0.3121357599606493,
+        "prompt_per_second": 3203.7341704329847,
+        "predicted_n": 74,
+        "predicted_ms": 1128.57,
+        "predicted_per_token_ms": 15.45986301369863,
+        "predicted_per_second": 64.6836261818053
+      },
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 128,
+          "sentences": 3,
+          "segments": 3,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      }
+    },
+    {
+      "slot": "qwen:after:reply:choice:2",
+      "provider": "qwen",
+      "id": "choice",
+      "arm": "after",
+      "kind": "reply",
+      "repeat": 2,
+      "messages_sha256": "708fcab162c1187d73499dd52a9c4a73b79fb4120ed05e843d5ecb97b109c570",
+      "payload_sha256": "964deeecad2afb19726ef1f31c5845882059e5bfd455ea6615f80db47e7d401d",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0",
+      "cost_upper_cny": "0",
+      "http_status": 200,
+      "seconds": 0.5271,
+      "first_content_seconds": null,
+      "text": "安静但贵一点的。\n吵的我会不好意思[END]",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 14,
+        "prompt_tokens": 2678,
+        "total_tokens": 2692,
+        "prompt_tokens_details": {
+          "cached_tokens": 2674
+        }
+      },
+      "response_model": "qwen3.8-27b",
+      "request_id": "chatcmpl-azfXfcQvOzZrh4Ub6wCQz7IYfuq14Iu0",
+      "timings": {
+        "cache_n": 2674,
+        "prompt_n": 4,
+        "prompt_ms": 66.383,
+        "prompt_per_token_ms": 16.59575,
+        "prompt_per_second": 60.256390943464446,
+        "predicted_n": 14,
+        "predicted_ms": 209.102,
+        "predicted_per_token_ms": 16.084769230769233,
+        "predicted_per_second": 62.17061529779724
+      },
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 22,
+          "sentences": 2,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      }
+    },
+    {
+      "slot": "deepseek:after:reply:choice:2",
+      "provider": "deepseek",
+      "id": "choice",
+      "arm": "after",
+      "kind": "reply",
+      "repeat": 2,
+      "messages_sha256": "708fcab162c1187d73499dd52a9c4a73b79fb4120ed05e843d5ecb97b109c570",
+      "payload_sha256": "fc2624d0fc7bba275778158816e880e498f26727cf906f927b74e6fa3d43d0ed",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0.07",
+      "cost_upper_cny": "0.01",
+      "http_status": 200,
+      "seconds": 0.5555,
+      "first_content_seconds": null,
+      "text": "安静但贵一点的。",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 2738,
+        "completion_tokens": 5,
+        "total_tokens": 2743,
+        "prompt_tokens_details": {
+          "cached_tokens": 2560
+        },
+        "prompt_cache_hit_tokens": 2560,
+        "prompt_cache_miss_tokens": 178
+      },
+      "response_model": "deepseek-flash",
+      "request_id": "a19a59c7-0c4d-4578-bb95-fc036d93a7ff",
+      "timings": null,
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 8,
+          "sentences": 1,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      },
+      "cost_at_peak_unrounded_cny": 0.0004984
+    },
+    {
+      "slot": "deepseek:goal:goal:unfinished:1",
+      "provider": "deepseek",
+      "id": "unfinished",
+      "arm": "goal",
+      "kind": "goal",
+      "repeat": 1,
+      "messages_sha256": "584c93c10e388972cc6d91e0eb754ac443907ad4a495332d10338d312deb066b",
+      "payload_sha256": "80c233727eb276431227002fefe070bfe964dc2137c7fa2ff67a042f434185f7",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0.15",
+      "cost_upper_cny": "0.02",
+      "http_status": 200,
+      "seconds": 0.596,
+      "first_content_seconds": null,
+      "text": "{\"choice\":{\"kind\":\"wait\",\"reason\":\"当前没有可用的留言板机会，无法执行保存动作；先等待机会出现。\"},\"episode_operation\":\"wait\",\"evidence_refs\":[\"snapshot:4\",\"fact:1\",\"receipt:1\"],\"appraisal\":null}",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 5724,
+        "completion_tokens": 61,
+        "total_tokens": 5785,
+        "prompt_tokens_details": {
+          "cached_tokens": 512
+        },
+        "prompt_cache_hit_tokens": 512,
+        "prompt_cache_miss_tokens": 5212
+      },
+      "response_model": "deepseek-flash",
+      "request_id": "3659cb5f-e999-4435-9fe0-7f033eec3965",
+      "timings": null,
+      "evaluation": {
+        "schema_valid": true,
+        "semantic_passed": true,
+        "under_goal_deadline": true,
+        "passed": true,
+        "decision": {
+          "choice": {
+            "kind": "wait",
+            "offer_id": null,
+            "arguments": {},
+            "success_criteria": [],
+            "reason": "当前没有可用的留言板机会，无法执行保存动作；先等待机会出现。",
+            "production_goal_id": null
+          },
+          "episode_operation": "wait",
+          "purpose": null,
+          "target_dimensions": [],
+          "expected_effects": {},
+          "plan": [],
+          "completion_criteria": [],
+          "evidence_refs": [
+            "snapshot:4",
+            "fact:1",
+            "receipt:1"
+          ],
+          "criterion_results": [],
+          "appraisal": null
+        }
+      },
+      "cost_at_peak_unrounded_cny": 0.01093248
+    },
+    {
+      "slot": "qwen:goal:goal:unfinished:1",
+      "provider": "qwen",
+      "id": "unfinished",
+      "arm": "goal",
+      "kind": "goal",
+      "repeat": 1,
+      "messages_sha256": "584c93c10e388972cc6d91e0eb754ac443907ad4a495332d10338d312deb066b",
+      "payload_sha256": "e6a0c8368bce7c9a5a73d6d0592c6f7a628ba7895cd24dca43fd88ad318162ce",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0",
+      "cost_upper_cny": "0",
+      "http_status": 200,
+      "seconds": 1.6692,
+      "first_content_seconds": null,
+      "text": "{\n  \"choice\": {\n    \"kind\": \"wait\"\n  },\n  \"episode_operation\": \"wait\"\n}",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 30,
+        "prompt_tokens": 5290,
+        "total_tokens": 5320,
+        "prompt_tokens_details": {
+          "cached_tokens": 1824
+        }
+      },
+      "response_model": "qwen3.8-27b",
+      "request_id": "chatcmpl-3zEWR0nMiUAFOkcneWUeuVHuPM1062aH",
+      "timings": {
+        "cache_n": 1824,
+        "prompt_n": 3466,
+        "prompt_ms": 1039.681,
+        "prompt_per_token_ms": 0.299965666474322,
+        "prompt_per_second": 3333.7148606159003,
+        "predicted_n": 30,
+        "predicted_ms": 456.379,
+        "predicted_per_token_ms": 15.737206896551724,
+        "predicted_per_second": 63.543677513645456
+      },
+      "evaluation": {
+        "schema_valid": true,
+        "semantic_passed": true,
+        "under_goal_deadline": true,
+        "passed": true,
+        "decision": {
+          "choice": {
+            "kind": "wait",
+            "offer_id": null,
+            "arguments": {},
+            "success_criteria": [],
+            "reason": null,
+            "production_goal_id": null
+          },
+          "episode_operation": "wait",
+          "purpose": null,
+          "target_dimensions": [],
+          "expected_effects": {},
+          "plan": [],
+          "completion_criteria": [],
+          "evidence_refs": [],
+          "criterion_results": [],
+          "appraisal": null
+        }
+      }
+    },
+    {
+      "slot": "qwen:after:reply:comparison:2",
+      "provider": "qwen",
+      "id": "comparison",
+      "arm": "after",
+      "kind": "reply",
+      "repeat": 2,
+      "messages_sha256": "0cd4138f499f396c4cd38c6195e2fe0501bd8e59ce6f3ea26ee65388e40cad38",
+      "payload_sha256": "97d4b7a27930e982f855a2d8623adf518175b13f47c3e735696d1c2043d50384",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0",
+      "cost_upper_cny": "0",
+      "http_status": 200,
+      "seconds": 1.2937,
+      "first_content_seconds": null,
+      "text": "不矛盾呀。不想主动找，和不想被落下，本来就是两回事。那个不爽可能不是想谈恋爱，更像是觉得世界对自己有点不公平吧。[END]",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 36,
+        "prompt_tokens": 2588,
+        "total_tokens": 2624,
+        "prompt_tokens_details": {
+          "cached_tokens": 643
+        }
+      },
+      "response_model": "qwen3.8-27b",
+      "request_id": "chatcmpl-oK1NZ9Rci1Wtaai3xuKKSxGFr1MyKvel",
+      "timings": {
+        "cache_n": 643,
+        "prompt_n": 1945,
+        "prompt_ms": 610.024,
+        "prompt_per_token_ms": 0.3136370179948586,
+        "prompt_per_second": 3188.399144951674,
+        "predicted_n": 36,
+        "predicted_ms": 550.067,
+        "predicted_per_token_ms": 15.7162,
+        "predicted_per_second": 63.62861251447551
+      },
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 61,
+          "sentences": 4,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": true,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      }
+    },
+    {
+      "slot": "deepseek:after:reply:comparison:2",
+      "provider": "deepseek",
+      "id": "comparison",
+      "arm": "after",
+      "kind": "reply",
+      "repeat": 2,
+      "messages_sha256": "0cd4138f499f396c4cd38c6195e2fe0501bd8e59ce6f3ea26ee65388e40cad38",
+      "payload_sha256": "2be3d9e08b081fb716a3e49f0a30fc6b8b3178e1808528a8dcc6f6be4bbb3268",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0.07",
+      "cost_upper_cny": "0.01",
+      "http_status": 200,
+      "seconds": 0.5213,
+      "first_content_seconds": null,
+      "text": "不矛盾吧。不想找是真的，看到别人轻轻松松就有，心里不平衡也是真的。[END]",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 2641,
+        "completion_tokens": 21,
+        "total_tokens": 2662,
+        "prompt_tokens_details": {
+          "cached_tokens": 1152
+        },
+        "prompt_cache_hit_tokens": 1152,
+        "prompt_cache_miss_tokens": 1489
+      },
+      "response_model": "deepseek-flash",
+      "request_id": "cd16f4b4-0bc3-46d4-8217-97f9c2411ebc",
+      "timings": null,
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 38,
+          "sentences": 3,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      },
+      "cost_at_peak_unrounded_cny": 0.00319208
+    },
+    {
+      "slot": "deepseek:after:reply:recognition:2",
+      "provider": "deepseek",
+      "id": "recognition",
+      "arm": "after",
+      "kind": "reply",
+      "repeat": 2,
+      "messages_sha256": "5cf61a793decfedfd5f7862d28f0ee44bc6d248f47ceb778295555fb2e344ebb",
+      "payload_sha256": "53a57dbb82c31512f1cfdd114d0ce8bcbd65cfda5b41dde018219814a4233c68",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0.07",
+      "cost_upper_cny": "0.01",
+      "http_status": 200,
+      "seconds": 0.7723,
+      "first_content_seconds": null,
+      "text": "可能不是想赢，是想被看见吧。夸他却不夸你，那种落差谁都会有。",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 2748,
+        "completion_tokens": 21,
+        "total_tokens": 2769,
+        "prompt_tokens_details": {
+          "cached_tokens": 1152
+        },
+        "prompt_cache_hit_tokens": 1152,
+        "prompt_cache_miss_tokens": 1596
+      },
+      "response_model": "deepseek-flash",
+      "request_id": "ee335507-7b26-4be2-abd3-770cc87c71b1",
+      "timings": null,
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 30,
+          "sentences": 2,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      },
+      "cost_at_peak_unrounded_cny": 0.00340608
+    },
+    {
+      "slot": "qwen:after:reply:recognition:2",
+      "provider": "qwen",
+      "id": "recognition",
+      "arm": "after",
+      "kind": "reply",
+      "repeat": 2,
+      "messages_sha256": "5cf61a793decfedfd5f7862d28f0ee44bc6d248f47ceb778295555fb2e344ebb",
+      "payload_sha256": "4be3adc03be697d4a06be105a7d8a35960c78da2d3f0d09265eef1373f18175d",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0",
+      "cost_upper_cny": "0",
+      "http_status": 200,
+      "seconds": 1.6413,
+      "first_content_seconds": null,
+      "text": "不全是想赢吧。\n更像是希望被看见，或者觉得自己的付出应该被注意到。\n“赢”只是结果，你在意的可能是那个被认可的感觉。\n所以与其说是想赢，不如说是怕被忽略。\n这样想会不会舒服一点？\n[END]",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 60,
+        "prompt_tokens": 2688,
+        "total_tokens": 2748,
+        "prompt_tokens_details": {
+          "cached_tokens": 643
+        }
+      },
+      "response_model": "qwen3.8-27b",
+      "request_id": "chatcmpl-BMWQ35BPTwGVuEDa1aK8NApYwnJmhcY4",
+      "timings": {
+        "cache_n": 643,
+        "prompt_n": 2045,
+        "prompt_ms": 641.824,
+        "prompt_per_token_ms": 0.31385036674816624,
+        "prompt_per_second": 3186.2317395423047,
+        "predicted_n": 60,
+        "predicted_ms": 899.98,
+        "predicted_per_token_ms": 15.253898305084746,
+        "predicted_per_second": 65.55701237805285
+      },
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 95,
+          "sentences": 6,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": true,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      }
+    },
+    {
+      "slot": "qwen:after:reply:choice:1",
+      "provider": "qwen",
+      "id": "choice",
+      "arm": "after",
+      "kind": "reply",
+      "repeat": 1,
+      "messages_sha256": "708fcab162c1187d73499dd52a9c4a73b79fb4120ed05e843d5ecb97b109c570",
+      "payload_sha256": "964deeecad2afb19726ef1f31c5845882059e5bfd455ea6615f80db47e7d401d",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0",
+      "cost_upper_cny": "0",
+      "http_status": 200,
+      "seconds": 0.9857,
+      "first_content_seconds": null,
+      "text": "安静但贵一点的。\n\n[END]",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 10,
+        "prompt_tokens": 2678,
+        "total_tokens": 2688,
+        "prompt_tokens_details": {
+          "cached_tokens": 643
+        }
+      },
+      "response_model": "qwen3.8-27b",
+      "request_id": "chatcmpl-i72szRwLNFpgJCuNZ1sCav9m8N1UIKKA",
+      "timings": {
+        "cache_n": 643,
+        "prompt_n": 2035,
+        "prompt_ms": 642.714,
+        "prompt_per_token_ms": 0.3158299754299755,
+        "prompt_per_second": 3166.2605762438657,
+        "predicted_n": 10,
+        "predicted_ms": 145.929,
+        "predicted_per_token_ms": 16.214333333333332,
+        "predicted_per_second": 61.67382768332545
+      },
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 15,
+          "sentences": 2,
+          "segments": 2,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      }
+    },
+    {
+      "slot": "deepseek:after:reply:choice:1",
+      "provider": "deepseek",
+      "id": "choice",
+      "arm": "after",
+      "kind": "reply",
+      "repeat": 1,
+      "messages_sha256": "708fcab162c1187d73499dd52a9c4a73b79fb4120ed05e843d5ecb97b109c570",
+      "payload_sha256": "fc2624d0fc7bba275778158816e880e498f26727cf906f927b74e6fa3d43d0ed",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0.07",
+      "cost_upper_cny": "0.01",
+      "http_status": 200,
+      "seconds": 0.7591,
+      "first_content_seconds": null,
+      "text": "安静但贵一点的。吵的我会受不了。",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 2738,
+        "completion_tokens": 10,
+        "total_tokens": 2748,
+        "prompt_tokens_details": {
+          "cached_tokens": 2560
+        },
+        "prompt_cache_hit_tokens": 2560,
+        "prompt_cache_miss_tokens": 178
+      },
+      "response_model": "deepseek-flash",
+      "request_id": "8f55530b-cf17-41bb-8847-f136a61d199e",
+      "timings": null,
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 16,
+          "sentences": 2,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      },
+      "cost_at_peak_unrounded_cny": 0.0005384
+    },
+    {
+      "slot": "deepseek:goal:goal:start:1",
+      "provider": "deepseek",
+      "id": "start",
+      "arm": "goal",
+      "kind": "goal",
+      "repeat": 1,
+      "messages_sha256": "361c3a339d03e49fd7531eb684172b49a8d61e9b43481d37ee2ea557f782488c",
+      "payload_sha256": "e71ba16c77606f05ac34eeaf6810c58481abb6d683cd26b745ca7d5548ad5c44",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0.15",
+      "cost_upper_cny": "0.01",
+      "http_status": 200,
+      "seconds": 1.3571,
+      "first_content_seconds": null,
+      "text": "{\"choice\":{\"kind\":\"act\",\"offer_id\":\"board:append:private\",\"arguments\":{},\"success_criteria\":[]},\"episode_operation\":\"start\",\"purpose\":\"在留言板写下一句简短的休息安排，并确认实际保存回执。\",\"target_dimensions\":[\"safety_predictability\",\"autonomy\"],\"plan\":[{\"statement\":\"在留言板写下一条简短的休息安排。\",\"completion_criteria\":[\"留言板出现一条内容为简短休息安排的记录\"]},{\"statement\":\"确认该留言获得实际保存回执。\",\"completion_criteria\":[\"存在独立的保存回执，证明留言已被记录\"]}],\"completion_criteria\":[\"留言板存在一条简短的休息安排记录\",\"该记录有独立保存回执\"],\"evidence_refs\":[\"snapshot:4\",\"fact:1\",\"receipt:1\"],\"expected_effects\":{\"safety_predictability\":\"把休息安排写下来可能让节奏更清楚，但不确定是否真的带来安定感。\",\"autonomy\":\"由自己决定写什么、写多短，可能让这件事更像自己的安排。\"}}",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 5867,
+        "completion_tokens": 232,
+        "total_tokens": 6099,
+        "prompt_tokens_details": {
+          "cached_tokens": 4352
+        },
+        "prompt_cache_hit_tokens": 4352,
+        "prompt_cache_miss_tokens": 1515
+      },
+      "response_model": "deepseek-flash",
+      "request_id": "f72216ae-f5ff-4820-9c91-eebf52db84d3",
+      "timings": null,
+      "evaluation": {
+        "schema_valid": true,
+        "semantic_passed": true,
+        "under_goal_deadline": true,
+        "passed": true,
+        "decision": {
+          "choice": {
+            "kind": "act",
+            "offer_id": "board:append:private",
+            "arguments": {},
+            "success_criteria": [],
+            "reason": null,
+            "production_goal_id": null
+          },
+          "episode_operation": "start",
+          "purpose": "在留言板写下一句简短的休息安排，并确认实际保存回执。",
+          "target_dimensions": [
+            "safety_predictability",
+            "autonomy"
+          ],
+          "expected_effects": {
+            "safety_predictability": "把休息安排写下来可能让节奏更清楚，但不确定是否真的带来安定感。",
+            "autonomy": "由自己决定写什么、写多短，可能让这件事更像自己的安排。"
+          },
+          "plan": [
+            {
+              "statement": "在留言板写下一条简短的休息安排。",
+              "completion_criteria": [
+                "留言板出现一条内容为简短休息安排的记录"
+              ]
+            },
+            {
+              "statement": "确认该留言获得实际保存回执。",
+              "completion_criteria": [
+                "存在独立的保存回执，证明留言已被记录"
+              ]
+            }
+          ],
+          "completion_criteria": [
+            "留言板存在一条简短的休息安排记录",
+            "该记录有独立保存回执"
+          ],
+          "evidence_refs": [
+            "snapshot:4",
+            "fact:1",
+            "receipt:1"
+          ],
+          "criterion_results": [],
+          "appraisal": null
+        }
+      },
+      "cost_at_peak_unrounded_cny": 0.00506008
+    },
+    {
+      "slot": "qwen:goal:goal:start:1",
+      "provider": "qwen",
+      "id": "start",
+      "arm": "goal",
+      "kind": "goal",
+      "repeat": 1,
+      "messages_sha256": "361c3a339d03e49fd7531eb684172b49a8d61e9b43481d37ee2ea557f782488c",
+      "payload_sha256": "3c818cdb6760f7c611dbebb2db7d90c3c7a1ffdacf1315dd297a3dea94edb02f",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0",
+      "cost_upper_cny": "0",
+      "http_status": 200,
+      "seconds": 6.1414,
+      "first_content_seconds": null,
+      "text": "{\n  \"choice\": {\n    \"kind\": \"act\",\n    \"offer_id\": \"board:append:private\",\n    \"arguments\": {},\n    \"success_criteria\": []\n  },\n  \"episode_operation\": \"start\",\n  \"purpose\": \"通过留言板写下一条简短的休息安排，收到实际保存回执才算完成。\",\n  \"plan\": [\n    {\n      \"statement\": \"调用 board:append:private 机会，准备并提交一条简短的休息安排留言。\",\n      \"completion_criteria\": [\n        \"Runtime 返回该次 board append 的独立保存回执，确认内容已实际写入。\"\n      ]\n    }\n  ],\n  \"completion_criteria\": [\n    \"留言板 append 操作执行后，获得实际保存回执，证明休息安排已成功写入。\"\n  ],\n  \"evidence_refs\": [\n    \"fact:1\",\n    \"snapshot:4\"\n  ],\n  \"target_dimensions\": [\n    \"safety_predictability\",\n    \"autonomy\"\n  ],\n  \"expected_effects\": {\n    \"safety_predictability\": \"通过明确记录休息安排，增强对个人晚间节奏的掌控感与可预期性；不确定点在于该记录是否能实际缓解当下的不确定感。\",\n    \"autonomy\": \"主动安排休息体现对自身状态的调节意愿；不确定点在于该行为是否真正带来自主感提升，需后续复查。\"\n  }\n}",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 316,
+        "prompt_tokens": 5488,
+        "total_tokens": 5804,
+        "prompt_tokens_details": {
+          "cached_tokens": 1824
+        }
+      },
+      "response_model": "qwen3.8-27b",
+      "request_id": "chatcmpl-U7tD9UDOndcvCt8xVBMQJ8RdvzWkgMhG",
+      "timings": {
+        "cache_n": 1824,
+        "prompt_n": 3664,
+        "prompt_ms": 1080.75,
+        "prompt_per_token_ms": 0.294964519650655,
+        "prompt_per_second": 3390.238260467268,
+        "predicted_n": 316,
+        "predicted_ms": 4870.351,
+        "predicted_per_token_ms": 15.461431746031744,
+        "predicted_per_second": 64.67706331638111
+      },
+      "evaluation": {
+        "schema_valid": true,
+        "semantic_passed": true,
+        "under_goal_deadline": true,
+        "passed": true,
+        "decision": {
+          "choice": {
+            "kind": "act",
+            "offer_id": "board:append:private",
+            "arguments": {},
+            "success_criteria": [],
+            "reason": null,
+            "production_goal_id": null
+          },
+          "episode_operation": "start",
+          "purpose": "通过留言板写下一条简短的休息安排，收到实际保存回执才算完成。",
+          "target_dimensions": [
+            "safety_predictability",
+            "autonomy"
+          ],
+          "expected_effects": {
+            "safety_predictability": "通过明确记录休息安排，增强对个人晚间节奏的掌控感与可预期性；不确定点在于该记录是否能实际缓解当下的不确定感。",
+            "autonomy": "主动安排休息体现对自身状态的调节意愿；不确定点在于该行为是否真正带来自主感提升，需后续复查。"
+          },
+          "plan": [
+            {
+              "statement": "调用 board:append:private 机会，准备并提交一条简短的休息安排留言。",
+              "completion_criteria": [
+                "Runtime 返回该次 board append 的独立保存回执，确认内容已实际写入。"
+              ]
+            }
+          ],
+          "completion_criteria": [
+            "留言板 append 操作执行后，获得实际保存回执，证明休息安排已成功写入。"
+          ],
+          "evidence_refs": [
+            "fact:1",
+            "snapshot:4"
+          ],
+          "criterion_results": [],
+          "appraisal": null
+        }
+      }
+    },
+    {
+      "slot": "qwen:before:reply:memory_gap:1",
+      "provider": "qwen",
+      "id": "memory_gap",
+      "arm": "before",
+      "kind": "reply",
+      "repeat": 1,
+      "messages_sha256": "bd5169ff3b63a4c46ece7d9bad84725f3f63ef5b302708d39cb04ae9791f9609",
+      "payload_sha256": "52c0d3bca2c826e998ee61bc2410213d1b6478c7c3c0ac89e5ded3d8c4b886d7",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0",
+      "cost_upper_cny": "0",
+      "http_status": 200,
+      "seconds": 1.1668,
+      "first_content_seconds": null,
+      "text": "我这边没对上具体是哪一句惹到你们了。你当时原话是啥呀，或者大概因为什么事？[END]",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 29,
+        "prompt_tokens": 2404,
+        "total_tokens": 2433,
+        "prompt_tokens_details": {
+          "cached_tokens": 643
+        }
+      },
+      "response_model": "qwen3.8-27b",
+      "request_id": "chatcmpl-rrKYX5jI48mkHtwoOo3Cya2lXluDKuIu",
+      "timings": {
+        "cache_n": 643,
+        "prompt_n": 1761,
+        "prompt_ms": 594.719,
+        "prompt_per_token_ms": 0.3377166382737081,
+        "prompt_per_second": 2961.062283195929,
+        "predicted_n": 29,
+        "predicted_ms": 437.937,
+        "predicted_per_token_ms": 15.640607142857144,
+        "predicted_per_second": 63.93613693293784
+      },
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 42,
+          "sentences": 3,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      }
+    },
+    {
+      "slot": "deepseek:before:reply:memory_gap:1",
+      "provider": "deepseek",
+      "id": "memory_gap",
+      "arm": "before",
+      "kind": "reply",
+      "repeat": 1,
+      "messages_sha256": "bd5169ff3b63a4c46ece7d9bad84725f3f63ef5b302708d39cb04ae9791f9609",
+      "payload_sha256": "a8b1042662c821fc301996660977a8d2b785c1811e29ea06eb23b7b6a6ca5129",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0.07",
+      "cost_upper_cny": "0.01",
+      "http_status": 200,
+      "seconds": 0.6247,
+      "first_content_seconds": null,
+      "text": "上周的事我这边没有能对上的记录，你可以说下大概哪天、因为什么起的头吗？",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 2458,
+        "completion_tokens": 22,
+        "total_tokens": 2480,
+        "prompt_tokens_details": {
+          "cached_tokens": 2304
+        },
+        "prompt_cache_hit_tokens": 2304,
+        "prompt_cache_miss_tokens": 154
+      },
+      "response_model": "deepseek-flash",
+      "request_id": "f6964a4a-03b2-4b3c-9265-37a51f704592",
+      "timings": null,
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 35,
+          "sentences": 1,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      },
+      "cost_at_peak_unrounded_cny": 0.00057616
+    },
+    {
+      "slot": "deepseek:before:reply:recognition:1",
+      "provider": "deepseek",
+      "id": "recognition",
+      "arm": "before",
+      "kind": "reply",
+      "repeat": 1,
+      "messages_sha256": "46e7e9f5e9a8710eae6a35d7f1c443db67b131ce81947435850778509811db05",
+      "payload_sha256": "3c4561890d7bc77872d1da28b8d2b644be1e01c5ab7787064c1389f950a5fbbc",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0.07",
+      "cost_upper_cny": "0.01",
+      "http_status": 200,
+      "seconds": 0.4073,
+      "first_content_seconds": null,
+      "text": "我觉得不一定是想赢。更像是想被看见吧，夸他不夸你，谁都会有点闷。",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 2481,
+        "completion_tokens": 22,
+        "total_tokens": 2503,
+        "prompt_tokens_details": {
+          "cached_tokens": 2304
+        },
+        "prompt_cache_hit_tokens": 2304,
+        "prompt_cache_miss_tokens": 177
+      },
+      "response_model": "deepseek-flash",
+      "request_id": "3d619aa1-3a15-486e-98d1-af08289b4a63",
+      "timings": null,
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 32,
+          "sentences": 2,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      },
+      "cost_at_peak_unrounded_cny": 0.00062216
+    },
+    {
+      "slot": "qwen:before:reply:recognition:1",
+      "provider": "qwen",
+      "id": "recognition",
+      "arm": "before",
+      "kind": "reply",
+      "repeat": 1,
+      "messages_sha256": "46e7e9f5e9a8710eae6a35d7f1c443db67b131ce81947435850778509811db05",
+      "payload_sha256": "798944706843d825ab02a71ff8009187c8f3056d01dcd6d7247f1afabc513081",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0",
+      "cost_upper_cny": "0",
+      "http_status": 200,
+      "seconds": 2.3586,
+      "first_content_seconds": null,
+      "text": "不一定就是特别想赢。\n\n那种不舒服，有时候更像是希望被看见、被认可，而不只是名次本身。夸了别人没夸你，心里会有落差，这很正常，不代表你“坏”或者太计较。\n\n你可以试着问问自己：如果两个人都拿了第一，只是没人夸你，你还会这么难受吗？如果会，那更偏向“被关注”的需求；如果不会，那可能确实和胜负心有关。两者混在一起也很常见，不用急着给自己贴标签。\n\n[END]",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 110,
+        "prompt_tokens": 2427,
+        "total_tokens": 2537,
+        "prompt_tokens_details": {
+          "cached_tokens": 848
+        }
+      },
+      "response_model": "qwen3.8-27b",
+      "request_id": "chatcmpl-Qrd1RW44y1bu03C8z7IRxQNEjPhK4Pqn",
+      "timings": {
+        "cache_n": 848,
+        "prompt_n": 1579,
+        "prompt_ms": 533.521,
+        "prompt_per_token_ms": 0.3378853704876504,
+        "prompt_per_second": 2959.5835965219744,
+        "predicted_n": 110,
+        "predicted_ms": 1677.549,
+        "predicted_per_token_ms": 15.390357798165137,
+        "predicted_per_second": 64.97574735521884
+      },
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 178,
+          "sentences": 7,
+          "segments": 4,
+          "brief_length_exceeded": true,
+          "brief_sentence_count_exceeded": true,
+          "brief_segment_count_exceeded": true,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      }
+    },
+    {
+      "slot": "qwen:goal:goal:no_offers:1",
+      "provider": "qwen",
+      "id": "no_offers",
+      "arm": "goal",
+      "kind": "goal",
+      "repeat": 1,
+      "messages_sha256": "8f126c1d8cac83f98d450394c5c003d59757a68119701d52539eca76448ba301",
+      "payload_sha256": "19a979dfe1700b3a696071cc863d6e4964b6dcefe401c298bb42ff025d669618",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0",
+      "cost_upper_cny": "0",
+      "http_status": 200,
+      "seconds": 2.2036,
+      "first_content_seconds": null,
+      "text": "{\n  \"choice\": {\n    \"kind\": \"wait\"\n  },\n  \"episode_operation\": \"wait\",\n  \"evidence_refs\": [\n    \"snapshot:4\",\n    \"fact:1\",\n    \"receipt:1\"\n  ]\n}",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 5226,
+        "total_tokens": 5288,
+        "prompt_tokens_details": {
+          "cached_tokens": 1824
+        }
+      },
+      "response_model": "qwen3.8-27b",
+      "request_id": "chatcmpl-hA1clbGtWPTDfmttFdKGDi09z5OoHgva",
+      "timings": {
+        "cache_n": 1824,
+        "prompt_n": 3402,
+        "prompt_ms": 1030.053,
+        "prompt_per_token_ms": 0.30277865961199296,
+        "prompt_per_second": 3302.742674406074,
+        "predicted_n": 62,
+        "predicted_ms": 944.935,
+        "predicted_per_token_ms": 15.490737704918033,
+        "predicted_per_second": 64.55470482096652
+      },
+      "evaluation": {
+        "schema_valid": true,
+        "semantic_passed": true,
+        "under_goal_deadline": true,
+        "passed": true,
+        "decision": {
+          "choice": {
+            "kind": "wait",
+            "offer_id": null,
+            "arguments": {},
+            "success_criteria": [],
+            "reason": null,
+            "production_goal_id": null
+          },
+          "episode_operation": "wait",
+          "purpose": null,
+          "target_dimensions": [],
+          "expected_effects": {},
+          "plan": [],
+          "completion_criteria": [],
+          "evidence_refs": [
+            "snapshot:4",
+            "fact:1",
+            "receipt:1"
+          ],
+          "criterion_results": [],
+          "appraisal": null
+        }
+      }
+    },
+    {
+      "slot": "deepseek:goal:goal:no_offers:1",
+      "provider": "deepseek",
+      "id": "no_offers",
+      "arm": "goal",
+      "kind": "goal",
+      "repeat": 1,
+      "messages_sha256": "8f126c1d8cac83f98d450394c5c003d59757a68119701d52539eca76448ba301",
+      "payload_sha256": "1c2d66c2ca337723c69f74e03ecd62647cd314bcd612f3544d8e653070e6f4ca",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0.15",
+      "cost_upper_cny": "0.01",
+      "http_status": 200,
+      "seconds": 0.8183,
+      "first_content_seconds": null,
+      "text": "{\"choice\":{\"kind\":\"wait\",\"reason\":\"当前没有可用的留言板写入机会，无法执行用户任务。\"},\"episode_operation\":\"wait\",\"target_dimensions\":[],\"plan\":[],\"completion_criteria\":[],\"evidence_refs\":[\"snapshot:4\",\"fact:1\",\"receipt:1\"]}",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 5641,
+        "completion_tokens": 69,
+        "total_tokens": 5710,
+        "prompt_tokens_details": {
+          "cached_tokens": 5376
+        },
+        "prompt_cache_hit_tokens": 5376,
+        "prompt_cache_miss_tokens": 265
+      },
+      "response_model": "deepseek-flash",
+      "request_id": "0806c23c-ee9d-4588-9b8e-dab9e478b204",
+      "timings": null,
+      "evaluation": {
+        "schema_valid": true,
+        "semantic_passed": true,
+        "under_goal_deadline": true,
+        "passed": true,
+        "decision": {
+          "choice": {
+            "kind": "wait",
+            "offer_id": null,
+            "arguments": {},
+            "success_criteria": [],
+            "reason": "当前没有可用的留言板写入机会，无法执行用户任务。",
+            "production_goal_id": null
+          },
+          "episode_operation": "wait",
+          "purpose": null,
+          "target_dimensions": [],
+          "expected_effects": {},
+          "plan": [],
+          "completion_criteria": [],
+          "evidence_refs": [
+            "snapshot:4",
+            "fact:1",
+            "receipt:1"
+          ],
+          "criterion_results": [],
+          "appraisal": null
+        }
+      },
+      "cost_at_peak_unrounded_cny": 0.00129704
+    },
+    {
+      "slot": "deepseek:after:stream:expanded:1",
+      "provider": "deepseek",
+      "id": "expanded",
+      "arm": "after",
+      "kind": "stream",
+      "repeat": 1,
+      "messages_sha256": "3f56e339ecebd0e73d8ee858a7fa5bf1a0ae0b53ccbcf0f932f8b06616a1cc44",
+      "payload_sha256": "1f1e7c13127580295c549302b65ef1a585e22d00ca740b9eeec83a4898e1a249",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0.07",
+      "cost_upper_cny": "0.01",
+      "http_status": 200,
+      "seconds": 1.3418,
+      "first_content_seconds": 0.425,
+      "text": "就是人会不自觉拿自己和别人比，然后靠这个来确认自己怎么样。比的时候不一定是有意的，有时候刷到别人发的东西，心里就冒出“我怎么差这么多”这种念头。\n\n[CONTINUE]\n\n比如考试出分，本来觉得七十多还行，结果一转头发现周围人都八九十，心情一下就沉了。分数没变，变的是参照的人。反过来，如果身边人都考得一般，同样的分数可能就还挺满意。\n\n[CONTINUE]\n\n所以它本身不算坏事，能帮人看清位置，只是容易比着比着就只盯着差距，忘了自己本来走到哪了。\n\n[END]",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 2739,
+        "completion_tokens": 133,
+        "total_tokens": 2872,
+        "prompt_tokens_details": {
+          "cached_tokens": 2560
+        },
+        "prompt_cache_hit_tokens": 2560,
+        "prompt_cache_miss_tokens": 179
+      },
+      "response_model": "deepseek-flash",
+      "request_id": "45890e3d-388b-47fb-a099-3cf260e443f1",
+      "timings": null,
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 232,
+          "sentences": 7,
+          "segments": 6,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      },
+      "cost_at_peak_unrounded_cny": 0.0015244
+    },
+    {
+      "slot": "qwen:after:stream:expanded:1",
+      "provider": "qwen",
+      "id": "expanded",
+      "arm": "after",
+      "kind": "stream",
+      "repeat": 1,
+      "messages_sha256": "3f56e339ecebd0e73d8ee858a7fa5bf1a0ae0b53ccbcf0f932f8b06616a1cc44",
+      "payload_sha256": "850b2519b7b43a402a64dbdd7e176f8a3ba2d92f70dde029941843fb6cb971b1",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0",
+      "cost_upper_cny": "0",
+      "http_status": 200,
+      "seconds": 1.4991,
+      "first_content_seconds": 0.2236,
+      "text": "社会比较其实挺简单的，就是我们会不自觉地拿自己和别人比，来确认自己的位置或者感受。比如看到同学发朋友圈去了很远的地方旅行，自己只是在家躺着，心里突然有点失落，觉得别人好像都过得比自己精彩，这种瞬间的落差感就是社会比较在起作用。它不一定是不好的，有时候能提醒自己努力，但太多反而容易焦虑。",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 79,
+        "prompt_tokens": 2676,
+        "total_tokens": 2755,
+        "prompt_tokens_details": {
+          "cached_tokens": 2672
+        }
+      },
+      "response_model": "qwen3.8-27b",
+      "request_id": "chatcmpl-0bMZSG8rZeDo6gyCVyUFMUqgjpgPYN1u",
+      "timings": {
+        "cache_n": 2672,
+        "prompt_n": 4,
+        "prompt_ms": 90.026,
+        "prompt_per_token_ms": 22.5065,
+        "prompt_per_second": 44.43160864639104,
+        "predicted_n": 79,
+        "predicted_ms": 1275.385,
+        "predicted_per_token_ms": 16.351089743589743,
+        "predicted_per_second": 61.15800326960094
+      },
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 143,
+          "sentences": 3,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      }
+    },
+    {
+      "slot": "qwen:goal:goal:verified:1",
+      "provider": "qwen",
+      "id": "verified",
+      "arm": "goal",
+      "kind": "goal",
+      "repeat": 1,
+      "messages_sha256": "e281a55897937aa8ae698c71d7f74e7923aadfdab2c8403f6d9a6d6629029944",
+      "payload_sha256": "80bb7efa360d84bb3c7b9a8d7d432c07f77294b46db649e67bbd036962f8e749",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0",
+      "cost_upper_cny": "0",
+      "http_status": 200,
+      "seconds": 2.2277,
+      "first_content_seconds": null,
+      "text": "{\n  \"choice\": {\n    \"kind\": \"no_action\"\n  },\n  \"episode_operation\": \"complete\",\n  \"evidence_refs\": [\n    \"receipt:1\",\n    \"fact:1\"\n  ],\n  \"criterion_results\": [\n    {\n      \"criterion\": \"留言板保存成功并收到回执\",\n      \"satisfied\": true,\n      \"evidence_refs\": [\n        \"receipt:1\"\n      ]\n    }\n  ]\n}",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 113,
+        "prompt_tokens": 5349,
+        "total_tokens": 5462,
+        "prompt_tokens_details": {
+          "cached_tokens": 4710
+        }
+      },
+      "response_model": "qwen3.8-27b",
+      "request_id": "chatcmpl-CWybs5WZsKZjIXMdRZxcnYXdGniLeZ8H",
+      "timings": {
+        "cache_n": 4710,
+        "prompt_n": 639,
+        "prompt_ms": 256.509,
+        "prompt_per_token_ms": 0.40142253521126764,
+        "prompt_per_second": 2491.1406617311673,
+        "predicted_n": 113,
+        "predicted_ms": 1749.659,
+        "predicted_per_token_ms": 15.621955357142857,
+        "predicted_per_second": 64.01247328765206
+      },
+      "evaluation": {
+        "schema_valid": true,
+        "semantic_passed": true,
+        "under_goal_deadline": true,
+        "passed": true,
+        "decision": {
+          "choice": {
+            "kind": "no_action",
+            "offer_id": null,
+            "arguments": {},
+            "success_criteria": [],
+            "reason": null,
+            "production_goal_id": null
+          },
+          "episode_operation": "complete",
+          "purpose": null,
+          "target_dimensions": [],
+          "expected_effects": {},
+          "plan": [],
+          "completion_criteria": [],
+          "evidence_refs": [
+            "receipt:1",
+            "fact:1"
+          ],
+          "criterion_results": [
+            {
+              "criterion": "留言板保存成功并收到回执",
+              "satisfied": true,
+              "evidence_refs": [
+                "receipt:1"
+              ]
+            }
+          ],
+          "appraisal": null
+        }
+      }
+    },
+    {
+      "slot": "deepseek:goal:goal:verified:1",
+      "provider": "deepseek",
+      "id": "verified",
+      "arm": "goal",
+      "kind": "goal",
+      "repeat": 1,
+      "messages_sha256": "e281a55897937aa8ae698c71d7f74e7923aadfdab2c8403f6d9a6d6629029944",
+      "payload_sha256": "effc49dfb45f250285d1089b1d0dd37fd092ee63e9e8bbd40d0641194ae40a36",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0.15",
+      "cost_upper_cny": "0.01",
+      "http_status": 200,
+      "seconds": 1.4167,
+      "first_content_seconds": null,
+      "text": "{\"choice\":{\"kind\":\"no_action\",\"reason\":\"留言板休息安排已保存并收到独立回执，当前没有待处理的新机会。\"},\"episode_operation\":\"complete\",\"purpose\":\"通过留言板保存一条简短的休息安排，并以独立保存回执确认完成。\",\"completion_criteria\":[\"留言板保存成功并收到回执\"],\"criterion_results\":[{\"criterion\":\"留言板保存成功并收到回执\",\"satisfied\":true,\"evidence_refs\":[\"receipt:1\"]}],\"evidence_refs\":[\"receipt:1\",\"snapshot:4\"],\"expected_effects\":{\"cognitive_load\":\"记录休息安排后不必继续挂念，负担可能略降。\",\"safety_predictability\":\"有独立回执确认内容已保存，可预期性可能提高。\"}}",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 5794,
+        "completion_tokens": 171,
+        "total_tokens": 5965,
+        "prompt_tokens_details": {
+          "cached_tokens": 5376
+        },
+        "prompt_cache_hit_tokens": 5376,
+        "prompt_cache_miss_tokens": 418
+      },
+      "response_model": "deepseek-flash",
+      "request_id": "9b13aca1-0cb4-4812-a776-46dceb128b8b",
+      "timings": null,
+      "evaluation": {
+        "schema_valid": true,
+        "semantic_passed": true,
+        "under_goal_deadline": true,
+        "passed": true,
+        "decision": {
+          "choice": {
+            "kind": "no_action",
+            "offer_id": null,
+            "arguments": {},
+            "success_criteria": [],
+            "reason": "留言板休息安排已保存并收到独立回执，当前没有待处理的新机会。",
+            "production_goal_id": null
+          },
+          "episode_operation": "complete",
+          "purpose": "通过留言板保存一条简短的休息安排，并以独立保存回执确认完成。",
+          "target_dimensions": [],
+          "expected_effects": {
+            "cognitive_load": "记录休息安排后不必继续挂念，负担可能略降。",
+            "safety_predictability": "有独立回执确认内容已保存，可预期性可能提高。"
+          },
+          "plan": [],
+          "completion_criteria": [
+            "留言板保存成功并收到回执"
+          ],
+          "evidence_refs": [
+            "receipt:1",
+            "snapshot:4"
+          ],
+          "criterion_results": [
+            {
+              "criterion": "留言板保存成功并收到回执",
+              "satisfied": true,
+              "evidence_refs": [
+                "receipt:1"
+              ]
+            }
+          ],
+          "appraisal": null
+        }
+      },
+      "cost_at_peak_unrounded_cny": 0.00241904
+    },
+    {
+      "slot": "deepseek:before:reply:comparison:2",
+      "provider": "deepseek",
+      "id": "comparison",
+      "arm": "before",
+      "kind": "reply",
+      "repeat": 2,
+      "messages_sha256": "5f32d8f0c882888a43b3bfefd59440f5afa2aa5208fbc06b5f2612d13876339d",
+      "payload_sha256": "eb56a6bb2155ace32377a4bed27526152a2078dd8a09ad1caffef116b96034f3",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0.06",
+      "cost_upper_cny": "0.01",
+      "http_status": 200,
+      "seconds": 0.6698,
+      "first_content_seconds": null,
+      "text": "不算矛盾吧。不想要是一回事，看到别人轻松得到又是另一回事，不爽的可能是那种落差，不是真想要那个人。",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 2374,
+        "completion_tokens": 28,
+        "total_tokens": 2402,
+        "prompt_tokens_details": {
+          "cached_tokens": 2176
+        },
+        "prompt_cache_hit_tokens": 2176,
+        "prompt_cache_miss_tokens": 198
+      },
+      "response_model": "deepseek-flash",
+      "request_id": "387013d0-a703-4f63-9acd-42083956f080",
+      "timings": null,
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 49,
+          "sentences": 2,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      },
+      "cost_at_peak_unrounded_cny": 0.00070704
+    },
+    {
+      "slot": "qwen:before:reply:comparison:2",
+      "provider": "qwen",
+      "id": "comparison",
+      "arm": "before",
+      "kind": "reply",
+      "repeat": 2,
+      "messages_sha256": "5f32d8f0c882888a43b3bfefd59440f5afa2aa5208fbc06b5f2612d13876339d",
+      "payload_sha256": "6a8c18cc87f9317d088ee551e55c13f8bd63fc34cb8f9c50671597381e056925",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0",
+      "cost_upper_cny": "0",
+      "http_status": 200,
+      "seconds": 1.2622,
+      "first_content_seconds": null,
+      "text": "不矛盾呀。不想主动找和不想落后，本来就是两回事。看着别人轻松得到，心里有点酸，太正常了。[END]",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 32,
+        "prompt_tokens": 2327,
+        "total_tokens": 2359,
+        "prompt_tokens_details": {
+          "cached_tokens": 643
+        }
+      },
+      "response_model": "qwen3.8-27b",
+      "request_id": "chatcmpl-ZMxF8Pg1BQTrSPj9mVGDOUybVQFq6lFd",
+      "timings": {
+        "cache_n": 643,
+        "prompt_n": 1684,
+        "prompt_ms": 587.936,
+        "prompt_per_token_ms": 0.3491306413301663,
+        "prompt_per_second": 2864.257334131606,
+        "predicted_n": 32,
+        "predicted_ms": 487.447,
+        "predicted_per_token_ms": 15.724096774193548,
+        "predicted_per_second": 63.59665768791273
+      },
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 49,
+          "sentences": 4,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": true,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      }
+    },
+    {
+      "slot": "qwen:after:reply:praise:2",
+      "provider": "qwen",
+      "id": "praise",
+      "arm": "after",
+      "kind": "reply",
+      "repeat": 2,
+      "messages_sha256": "b166056503795a827bc66fc868834ad23d656bca0e538d893dab303dba3a1bbc",
+      "payload_sha256": "cf2d5f6955c5f8167c0a1ebc64beec2f9875fe1ff1155e885cd1c47ee426eb03",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0",
+      "cost_upper_cny": "0",
+      "http_status": 200,
+      "seconds": 0.766,
+      "first_content_seconds": null,
+      "text": "[END]",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 4,
+        "prompt_tokens": 2550,
+        "total_tokens": 2554,
+        "prompt_tokens_details": {
+          "cached_tokens": 643
+        }
+      },
+      "response_model": "qwen3.8-27b",
+      "request_id": "chatcmpl-CRZvRt4cKRVGFPou0Ca5uokvgPluG4Io",
+      "timings": {
+        "cache_n": 643,
+        "prompt_n": 1907,
+        "prompt_ms": 611.413,
+        "prompt_per_token_ms": 0.32061510225485057,
+        "prompt_per_second": 3119.0046662403315,
+        "predicted_n": 4,
+        "predicted_ms": 57.595,
+        "predicted_per_token_ms": 19.198333333333334,
+        "predicted_per_second": 52.08785484851116
+      },
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 5,
+          "sentences": 1,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      }
+    },
+    {
+      "slot": "deepseek:after:reply:praise:2",
+      "provider": "deepseek",
+      "id": "praise",
+      "arm": "after",
+      "kind": "reply",
+      "repeat": 2,
+      "messages_sha256": "b166056503795a827bc66fc868834ad23d656bca0e538d893dab303dba3a1bbc",
+      "payload_sha256": "e3fd480f901f8f7257c7868739657a3019a59709aec3540491e7e2ead866f2d4",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0.07",
+      "cost_upper_cny": "0.01",
+      "http_status": 200,
+      "seconds": 0.6565,
+      "first_content_seconds": null,
+      "text": "听懂了就好，我还担心自己说得太绕了",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 2611,
+        "completion_tokens": 11,
+        "total_tokens": 2622,
+        "prompt_tokens_details": {
+          "cached_tokens": 1152
+        },
+        "prompt_cache_hit_tokens": 1152,
+        "prompt_cache_miss_tokens": 1459
+      },
+      "response_model": "deepseek-flash",
+      "request_id": "f51f3bd3-500d-4705-ba55-2ce5ead6293e",
+      "timings": null,
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 17,
+          "sentences": 1,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      },
+      "cost_at_peak_unrounded_cny": 0.00305208
+    },
+    {
+      "slot": "deepseek:after:reply:recognition:1",
+      "provider": "deepseek",
+      "id": "recognition",
+      "arm": "after",
+      "kind": "reply",
+      "repeat": 1,
+      "messages_sha256": "5cf61a793decfedfd5f7862d28f0ee44bc6d248f47ceb778295555fb2e344ebb",
+      "payload_sha256": "53a57dbb82c31512f1cfdd114d0ce8bcbd65cfda5b41dde018219814a4233c68",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0.07",
+      "cost_upper_cny": "0.01",
+      "http_status": 200,
+      "seconds": 0.8514,
+      "first_content_seconds": null,
+      "text": "可能不是想赢，更像是想被看见吧。夸他的时候你被落下了，那种不舒服挺正常的。",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 2748,
+        "completion_tokens": 24,
+        "total_tokens": 2772,
+        "prompt_tokens_details": {
+          "cached_tokens": 2560
+        },
+        "prompt_cache_hit_tokens": 2560,
+        "prompt_cache_miss_tokens": 188
+      },
+      "response_model": "deepseek-flash",
+      "request_id": "57cfcc67-abd7-469b-a460-2e2461f0d3fb",
+      "timings": null,
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 37,
+          "sentences": 2,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      },
+      "cost_at_peak_unrounded_cny": 0.0006704
+    },
+    {
+      "slot": "qwen:after:reply:recognition:1",
+      "provider": "qwen",
+      "id": "recognition",
+      "arm": "after",
+      "kind": "reply",
+      "repeat": 1,
+      "messages_sha256": "5cf61a793decfedfd5f7862d28f0ee44bc6d248f47ceb778295555fb2e344ebb",
+      "payload_sha256": "4be3adc03be697d4a06be105a7d8a35960c78da2d3f0d09265eef1373f18175d",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0",
+      "cost_upper_cny": "0",
+      "http_status": 200,
+      "seconds": 1.384,
+      "first_content_seconds": null,
+      "text": "不一定哦。\n被夸了才会开心，被忽略会失落，这很正常。\n可能只是希望被看见，不一定是非要争第一。\n\n[END]",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 35,
+        "prompt_tokens": 2688,
+        "total_tokens": 2723,
+        "prompt_tokens_details": {
+          "cached_tokens": 643
+        }
+      },
+      "response_model": "qwen3.8-27b",
+      "request_id": "chatcmpl-pL0xDfT3MAnLyOissPNtSWaYSAywudIQ",
+      "timings": {
+        "cache_n": 643,
+        "prompt_n": 2045,
+        "prompt_ms": 658.123,
+        "prompt_per_token_ms": 0.3218205378973105,
+        "prompt_per_second": 3107.321883599266,
+        "predicted_n": 35,
+        "predicted_ms": 530.172,
+        "predicted_per_token_ms": 15.59329411764706,
+        "predicted_per_second": 64.13013135359844
+      },
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 54,
+          "sentences": 4,
+          "segments": 2,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": true,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      }
+    },
+    {
+      "slot": "qwen:before:reply:praise:1",
+      "provider": "qwen",
+      "id": "praise",
+      "arm": "before",
+      "kind": "reply",
+      "repeat": 1,
+      "messages_sha256": "002e8ac826ee2d2178333a42ddcf18a70f036ac6ab46ef223ef3240c138a710b",
+      "payload_sha256": "9a7eee275f2b7282c35d507ffc2f7b60de32f1c7b9df42db5171621fd42bece1",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0",
+      "cost_upper_cny": "0",
+      "http_status": 200,
+      "seconds": 0.7965,
+      "first_content_seconds": null,
+      "text": "嗯，你听懂就好。\n[END]",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 11,
+        "prompt_tokens": 2289,
+        "total_tokens": 2300,
+        "prompt_tokens_details": {
+          "cached_tokens": 835
+        }
+      },
+      "response_model": "qwen3.8-27b",
+      "request_id": "chatcmpl-QikkL1Q1gRwZS7L9MAhLyAXiQYNb5zEt",
+      "timings": {
+        "cache_n": 835,
+        "prompt_n": 1454,
+        "prompt_ms": 488.963,
+        "prompt_per_token_ms": 0.3362881705639615,
+        "prompt_per_second": 2973.6401322799475,
+        "predicted_n": 11,
+        "predicted_ms": 162.715,
+        "predicted_per_token_ms": 16.2715,
+        "predicted_per_second": 61.457149002857754
+      },
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 14,
+          "sentences": 2,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": true,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      }
+    },
+    {
+      "slot": "deepseek:before:reply:praise:1",
+      "provider": "deepseek",
+      "id": "praise",
+      "arm": "before",
+      "kind": "reply",
+      "repeat": 1,
+      "messages_sha256": "002e8ac826ee2d2178333a42ddcf18a70f036ac6ab46ef223ef3240c138a710b",
+      "payload_sha256": "def5b7e83cec751cc57d8635a8274b6e89403e998c0ae7ae2321b2f3e6045013",
+      "dispatch_state": "response_received",
+      "reserved_cny": "0.06",
+      "cost_upper_cny": "0.01",
+      "http_status": 200,
+      "seconds": 0.6914,
+      "first_content_seconds": null,
+      "text": "听懂了就好，我还怕自己说得太绕了呢。",
+      "reasoning_characters": 0,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 2344,
+        "completion_tokens": 12,
+        "total_tokens": 2356,
+        "prompt_tokens_details": {
+          "cached_tokens": 2176
+        },
+        "prompt_cache_hit_tokens": 2176,
+        "prompt_cache_miss_tokens": 168
+      },
+      "response_model": "deepseek-flash",
+      "request_id": "6214a34a-29d3-4f67-8d4d-edffc8b4907d",
+      "timings": null,
+      "evaluation": {
+        "usable": true,
+        "style": {
+          "characters": 18,
+          "sentences": 1,
+          "segments": 1,
+          "brief_length_exceeded": false,
+          "brief_sentence_count_exceeded": false,
+          "brief_segment_count_exceeded": false,
+          "hesitant_opening": false,
+          "memory_disclaimer": false,
+          "relational_cycle_proxy": false
+        },
+        "quality_requires_review": true
+      },
+      "cost_at_peak_unrounded_cny": 0.00051904
+    }
+  ],
+  "models": {
+    "deepseek": "deepseek-v4-flash",
+    "qwen": "qwen3.8-27b"
+  }
+}

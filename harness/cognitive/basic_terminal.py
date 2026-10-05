@@ -7,6 +7,8 @@ terminal; completion requires a task-specific exit marker in provider evidence.
 
 from __future__ import annotations
 
+from harness.llm.deepseek_structured import decision_format
+
 import hashlib
 import json
 import re
@@ -233,7 +235,11 @@ class BasicTerminalActionPlanner:
             },
         ]
         try:
-            raw = self.llm.complete_chat(messages, temperature=0, stream=False)
+            format_ = decision_format(self.llm, _DECISION.json_schema(), "terminal_decision")
+            if format_["type"] == "json_schema":
+                raw = self.llm.complete_chat_result(messages, temperature=0, stream=False, response_format=format_).text
+            else:
+                raw = self.llm.complete_chat(messages, temperature=0, stream=False)
             if len(raw) > 32_768:
                 return self._defer("终端规划输出超过安全长度上限。")
             selected = _DECISION.validate_python(json.loads(raw))

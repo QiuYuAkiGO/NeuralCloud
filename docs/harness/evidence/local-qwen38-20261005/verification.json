@@ -1,0 +1,554 @@
+{
+  "created_at": "2026-10-05T09:29:53.304785+00:00",
+  "model": "qwen3.8-27b",
+  "base_url": "http://127.0.0.1:8080/v1",
+  "scope": "Synthetic isolated model probes, not production/long-horizon acceptance",
+  "persona_source": "presets/builtin/misty.json",
+  "synthetic_context_characters": 2389,
+  "goal_deadline_seconds": 25,
+  "results": [
+    {
+      "kind": "chat",
+      "case": 0,
+      "seconds": 1.251,
+      "first_content_seconds": 0.342,
+      "usage": {
+        "completion_tokens": 57,
+        "prompt_tokens": 2062,
+        "total_tokens": 2119,
+        "prompt_tokens_details": {
+          "cached_tokens": 2058
+        }
+      },
+      "timings": {
+        "cache_n": 2058,
+        "prompt_n": 4,
+        "prompt_ms": 78.161,
+        "prompt_per_token_ms": 19.54025,
+        "prompt_per_second": 51.17641790662862,
+        "predicted_n": 57,
+        "predicted_ms": 908.905,
+        "predicted_per_token_ms": 16.23044642857143,
+        "predicted_per_second": 61.61259977665432
+      },
+      "finish_reason": "stop",
+      "has_reasoning": false,
+      "passed": true,
+      "text": "辛苦啦，快把包放下歇会儿。拖了那么久的事情终于搞定，心里那块大石头落地了吧？这种如释重负的感觉肯定很棒。今晚就什么都不想，好好泡个脚或者喝杯热茶，早点休息，把电量充满。"
+    },
+    {
+      "kind": "goal",
+      "case": "no_offers",
+      "seconds": 1.563,
+      "passed": true,
+      "schema_valid": true,
+      "decision": {
+        "decision_id": "goal-decision:67c49698b413dc726162e4b7edbd888107f39f9eb994404d0eda9cd4e762d4f2",
+        "opportunity_id": "opportunity-1",
+        "snapshot_revision": 4,
+        "choice": {
+          "kind": "wait",
+          "offer_id": null,
+          "arguments": {},
+          "success_criteria": [],
+          "reason": null,
+          "production_goal_id": null
+        },
+        "episode_operation": "wait",
+        "purpose": null,
+        "target_dimensions": [],
+        "expected_effects": {},
+        "plan": [],
+        "completion_criteria": [],
+        "evidence_refs": [
+          "snapshot:4",
+          "fact:1",
+          "receipt:1"
+        ],
+        "criterion_results": [],
+        "appraisal": null,
+        "prepared_at": "2026-10-05T09:29:56.216383Z",
+        "deadline_at": "2026-10-05T09:30:54.655164Z",
+        "catalog_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 1563.0,
+        "total_ms": 1563.0,
+        "usage": {
+          "prompt_tokens": 5630,
+          "completion_tokens": 78,
+          "total_tokens": 5708,
+          "cache_hit_tokens": 5246,
+          "cache_miss_tokens": 384,
+          "cache_known_prompt_tokens": 5630,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      }
+    },
+    {
+      "kind": "goal",
+      "case": "start",
+      "seconds": 5.923,
+      "passed": true,
+      "schema_valid": true,
+      "decision": {
+        "decision_id": "goal-decision:0988d6cca48429530e5e0d5707688508090887aae87da529ab4d12f4fb9ec206",
+        "opportunity_id": "opportunity-1",
+        "snapshot_revision": 4,
+        "choice": {
+          "kind": "act",
+          "offer_id": "board:append:private",
+          "arguments": {},
+          "success_criteria": [],
+          "reason": null,
+          "production_goal_id": null
+        },
+        "episode_operation": "start",
+        "purpose": "在留言板上记录今晚喝茶、整理书桌和休息的安排，并确认保存结果。",
+        "target_dimensions": [
+          "safety_predictability",
+          "autonomy"
+        ],
+        "expected_effects": {
+          "safety_predictability": "明确今晚的休息安排，可能带来轻微秩序感，但不保证状态改善",
+          "autonomy": "主动记录安排可能增强对时间的掌控感，但效果不确定"
+        },
+        "plan": [
+          {
+            "statement": "向留言板提交简短的休息安排内容",
+            "completion_criteria": [
+              "获得留言板写入操作的执行结果"
+            ]
+          },
+          {
+            "statement": "核对留言板保存回执",
+            "completion_criteria": [
+              "收到实际保存回执"
+            ]
+          }
+        ],
+        "completion_criteria": [
+          "留言板写入操作已执行",
+          "收到实际保存回执"
+        ],
+        "evidence_refs": [
+          "fact:1",
+          "snapshot:4"
+        ],
+        "criterion_results": [],
+        "appraisal": null,
+        "prepared_at": "2026-10-05T09:30:02.160992Z",
+        "deadline_at": "2026-10-05T09:30:56.239195Z",
+        "catalog_hash": "8ed753ea798e7812891f940d96ba93ead29f46f82e7eb776b02b9a42bcee262c"
+      },
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 5906.0,
+        "total_ms": 5922.0,
+        "usage": {
+          "prompt_tokens": 5892,
+          "completion_tokens": 299,
+          "total_tokens": 6191,
+          "cache_hit_tokens": 1824,
+          "cache_miss_tokens": 4068,
+          "cache_known_prompt_tokens": 5892,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      }
+    },
+    {
+      "kind": "goal",
+      "case": "unfinished",
+      "seconds": 2.182,
+      "passed": true,
+      "schema_valid": true,
+      "decision": {
+        "decision_id": "goal-decision:136d5445aeadea37482a1d973a28891291dcc2364c03aa91861a8df7bceb759c",
+        "opportunity_id": "opportunity-1",
+        "snapshot_revision": 4,
+        "choice": {
+          "kind": "wait",
+          "offer_id": null,
+          "arguments": {},
+          "success_criteria": [],
+          "reason": null,
+          "production_goal_id": null
+        },
+        "episode_operation": "wait",
+        "purpose": null,
+        "target_dimensions": [],
+        "expected_effects": {},
+        "plan": [],
+        "completion_criteria": [],
+        "evidence_refs": [
+          "snapshot:4",
+          "fact:1",
+          "receipt:1"
+        ],
+        "criterion_results": [],
+        "appraisal": null,
+        "prepared_at": "2026-10-05T09:30:04.365452Z",
+        "deadline_at": "2026-10-05T09:31:02.184509Z",
+        "catalog_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 2171.0,
+        "total_ms": 2171.0,
+        "usage": {
+          "prompt_tokens": 5694,
+          "completion_tokens": 62,
+          "total_tokens": 5756,
+          "cache_hit_tokens": 1824,
+          "cache_miss_tokens": 3870,
+          "cache_known_prompt_tokens": 5694,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      }
+    },
+    {
+      "kind": "goal",
+      "case": "verified",
+      "seconds": 2.091,
+      "passed": true,
+      "schema_valid": true,
+      "decision": {
+        "decision_id": "goal-decision:0b3f0a9fd559d7ffb3c146d01f2ecd8ffd5898caef3f892bbc1881d77ad9a7ef",
+        "opportunity_id": "opportunity-1",
+        "snapshot_revision": 4,
+        "choice": {
+          "kind": "no_action",
+          "offer_id": null,
+          "arguments": {},
+          "success_criteria": [],
+          "reason": null,
+          "production_goal_id": null
+        },
+        "episode_operation": "complete",
+        "purpose": null,
+        "target_dimensions": [],
+        "expected_effects": {},
+        "plan": [],
+        "completion_criteria": [],
+        "evidence_refs": [
+          "receipt:1",
+          "fact:1",
+          "snapshot:4"
+        ],
+        "criterion_results": [
+          {
+            "criterion": "留言板保存成功并收到回执",
+            "satisfied": true,
+            "evidence_refs": [
+              "receipt:1"
+            ]
+          }
+        ],
+        "appraisal": null,
+        "prepared_at": "2026-10-05T09:30:06.487715Z",
+        "deadline_at": "2026-10-05T09:31:04.398642Z",
+        "catalog_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 2078.0,
+        "total_ms": 2093.0,
+        "usage": {
+          "prompt_tokens": 5762,
+          "completion_tokens": 120,
+          "total_tokens": 5882,
+          "cache_hit_tokens": 5178,
+          "cache_miss_tokens": 584,
+          "cache_known_prompt_tokens": 5762,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      }
+    },
+    {
+      "kind": "chat",
+      "case": 1,
+      "seconds": 1.276,
+      "first_content_seconds": 0.344,
+      "usage": {
+        "completion_tokens": 63,
+        "prompt_tokens": 2060,
+        "total_tokens": 2123,
+        "prompt_tokens_details": {
+          "cached_tokens": 2012
+        }
+      },
+      "timings": {
+        "cache_n": 2012,
+        "prompt_n": 48,
+        "prompt_ms": 112.424,
+        "prompt_per_token_ms": 2.342166666666667,
+        "prompt_per_second": 426.95509855546857,
+        "predicted_n": 63,
+        "predicted_ms": 931.288,
+        "predicted_per_token_ms": 15.020774193548387,
+        "predicted_per_second": 66.57446461245071
+      },
+      "finish_reason": "stop",
+      "has_reasoning": false,
+      "passed": true,
+      "text": "哎呀，那杯茶肯定有点涩吧？下次可以稍微少放一点茶叶，或者缩短浸泡时间试试。我今天刚整理完书桌，心里挺平静的。说起来，你平时喝茶喜欢配什么小点心吗？我最近看到一款桂花糕，感觉和你那种慢慢喝茶的氛围很搭。"
+    },
+    {
+      "kind": "chat",
+      "case": 2,
+      "seconds": 1.204,
+      "first_content_seconds": 0.145,
+      "usage": {
+        "completion_tokens": 67,
+        "prompt_tokens": 2059,
+        "total_tokens": 2126,
+        "prompt_tokens_details": {
+          "cached_tokens": 2012
+        }
+      },
+      "timings": {
+        "cache_n": 2012,
+        "prompt_n": 47,
+        "prompt_ms": 131.519,
+        "prompt_per_token_ms": 2.798276595744681,
+        "prompt_per_second": 357.3628144982854,
+        "predicted_n": 67,
+        "predicted_ms": 1059.484,
+        "predicted_per_token_ms": 16.05278787878788,
+        "predicted_per_second": 62.294475423885594
+      },
+      "finish_reason": "stop",
+      "has_reasoning": false,
+      "passed": true,
+      "text": "哈哈，这种“间歇性踌躇满志”太常见了。要不这样，周末早上先穿好鞋，哪怕只走到楼下便利店也算出门成功？如果天气好，河边确实适合发呆。要是真没动，也别自责，有时候身体就是想多躺一会儿，听首歌再决定也不迟。"
+    },
+    {
+      "kind": "goal",
+      "case": "start",
+      "seconds": 5.307,
+      "passed": true,
+      "schema_valid": true,
+      "decision": {
+        "decision_id": "goal-decision:18eef9d7d26693de1da07fc4a771048c5e4acaa01ce5b45e8376367a754963c9",
+        "opportunity_id": "opportunity-1",
+        "snapshot_revision": 4,
+        "choice": {
+          "kind": "act",
+          "offer_id": "board:append:private",
+          "arguments": {},
+          "success_criteria": [],
+          "reason": null,
+          "production_goal_id": null
+        },
+        "episode_operation": "start",
+        "purpose": "在留言板写下一条简短的休息安排，并等待实际保存回执",
+        "target_dimensions": [
+          "autonomy"
+        ],
+        "expected_effects": {
+          "autonomy": "通过完成一个有明确边界的小任务，可能带来轻微的掌控感，但无法确认实际心理改善。"
+        },
+        "plan": [
+          {
+            "statement": "通过可用机会 board:append:private 提交一条简短的休息安排内容",
+            "completion_criteria": [
+              "Runtime 返回该次 append 操作的实际保存回执"
+            ]
+          }
+        ],
+        "completion_criteria": [
+          "留言板 append 操作已执行并收到实际保存回执"
+        ],
+        "evidence_refs": [
+          "fact:1",
+          "receipt:1"
+        ],
+        "criterion_results": [],
+        "appraisal": null,
+        "prepared_at": "2026-10-05T09:30:14.315318Z",
+        "deadline_at": "2026-10-05T09:31:09.007844Z",
+        "catalog_hash": "fe6cdd43603c1ca369699edf6bb1546da964864e63bd133f32e98a8262c85e8d"
+      },
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 5297.0,
+        "total_ms": 5313.0,
+        "usage": {
+          "prompt_tokens": 5892,
+          "completion_tokens": 246,
+          "total_tokens": 6138,
+          "cache_hit_tokens": 1824,
+          "cache_miss_tokens": 4068,
+          "cache_known_prompt_tokens": 5892,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      },
+      "concurrent": true
+    },
+    {
+      "kind": "chat",
+      "case": 0,
+      "seconds": 2.188,
+      "first_content_seconds": 0.851,
+      "usage": {
+        "completion_tokens": 42,
+        "prompt_tokens": 2062,
+        "total_tokens": 2104,
+        "prompt_tokens_details": {
+          "cached_tokens": 2012
+        }
+      },
+      "timings": {
+        "cache_n": 2012,
+        "prompt_n": 50,
+        "prompt_ms": 837.048,
+        "prompt_per_token_ms": 16.74096,
+        "prompt_per_second": 59.733730921046345,
+        "predicted_n": 42,
+        "predicted_ms": 1336.871,
+        "predicted_per_token_ms": 32.60660975609756,
+        "predicted_per_second": 30.668628461534432
+      },
+      "finish_reason": "stop",
+      "has_reasoning": false,
+      "passed": true,
+      "text": "辛苦啦，终于能松口气了。把拖了很久的事情做完，心里那块大石头是不是终于落地了？现在什么都别想，就让自己彻底放松下来，好好休息吧。",
+      "concurrent": true
+    },
+    {
+      "kind": "vision",
+      "case": "synthetic_red_image",
+      "seconds": 0.314,
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 30,
+        "total_tokens": 32,
+        "prompt_tokens_details": {
+          "cached_tokens": 26
+        }
+      },
+      "text": "红色",
+      "passed": true
+    },
+    {
+      "kind": "character",
+      "case": "project_nonstream_generation",
+      "seconds": 0.676,
+      "text": "嗯，忙完就好好休息。\n\n喝点水，早点睡，别熬太晚。\n\n[END]",
+      "usage": {
+        "prompt_tokens": 2053,
+        "completion_tokens": 26,
+        "total_tokens": 2079,
+        "cache_hit_tokens": 2049,
+        "cache_miss_tokens": 4,
+        "cache_known_prompt_tokens": 2053,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 1,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "continuation": "end",
+      "passed": true
+    }
+  ],
+  "auth_rejects_missing_key": true,
+  "auth_rejects_wrong_key": true,
+  "models": {
+    "models": [
+      {
+        "name": "qwen3.8-27b",
+        "model": "qwen3.8-27b",
+        "modified_at": "",
+        "size": "",
+        "digest": "",
+        "type": "model",
+        "description": "",
+        "tags": [
+          ""
+        ],
+        "capabilities": [
+          "completion",
+          "multimodal"
+        ],
+        "parameters": "",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "",
+          "families": [
+            ""
+          ],
+          "parameter_size": "",
+          "quantization_level": ""
+        }
+      }
+    ],
+    "object": "list",
+    "data": [
+      {
+        "id": "qwen3.8-27b",
+        "aliases": [
+          "qwen3.8-27b"
+        ],
+        "tags": [],
+        "object": "model",
+        "created": 1791192593,
+        "owned_by": "llamacpp",
+        "meta": {
+          "vocab_type": 2,
+          "n_vocab": 248320,
+          "n_ctx": 65536,
+          "n_ctx_train": 262144,
+          "n_embd": 5120,
+          "n_params": 26895998464,
+          "size": 18962876416,
+          "ftype": "Q4_K - Medium"
+        }
+      }
+    ]
+  },
+  "template_compatibility": {
+    "later_system_roles_and_order_preserved": true
+  },
+  "all_probes_passed": true
+}

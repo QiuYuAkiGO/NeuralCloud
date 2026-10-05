@@ -50,6 +50,7 @@ class DirectQQSettings(BaseModel):
     qq_media_cache_enabled: StrictBool = False
     qq_media_parallel_enabled: StrictBool = False
     qq_image_mode: Literal["all", "one", "off"] = "all"
+    qq_image_analysis: Literal["eager", "on_demand"] = "eager"
     qq_latency_conversations: list[str] | None = Field(default=None, max_length=128)
 
     @field_validator("qq_latency_conversations")

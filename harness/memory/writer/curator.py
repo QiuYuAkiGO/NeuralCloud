@@ -16,6 +16,7 @@ from harness.core.models import (
     PersonaCore,
 )
 from harness.llm.client import LLMClient, MockLLM
+from harness.llm.structured import helper_options
 
 
 class CuratorBackend(Protocol):
@@ -58,7 +59,8 @@ class LLMCurator:
             ],
         }
         try:
-            raw = self.llm.complete_json(system=_CURATOR_SYSTEM, user=str(user))
+            raw = self.llm.complete_json(system=_CURATOR_SYSTEM, user=str(user),
+                **helper_options(self.llm, CuratorOutput, "memory_curator"))
             return sanitize_curator_output(
                 _coerce_curator_output(raw),
                 open_candidates=open_candidates,

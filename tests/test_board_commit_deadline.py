@@ -73,7 +73,12 @@ def test_expired_commit_cannot_start_memory_but_receipt_recovery_can(tmp_path, m
             monkeypatch.setattr(sup.board, "_command", short_commit)
             result = await sup.dispatch(board_event)
             assert result.detail["status"] == "written_pending_memory"
-            await asyncio.sleep(0.25)  # The shielded command has finished, including a late transport response.
+            # Await the shielded command's actual completion. Slow CI persistence
+            # may outlast a fixed sleep even though its commit deadline is enforced.
+            tasks = tuple(host.adapter.command_tasks)
+            if tasks:
+                _, pending = await asyncio.wait(tasks, timeout=3)
+                assert not pending
             assert not host.adapter.command_tasks
             assert delayed == [delay]
             assert not host.shared.store.query(SharedReadScope(audience="local:main", kinds=("board_entry",))).records

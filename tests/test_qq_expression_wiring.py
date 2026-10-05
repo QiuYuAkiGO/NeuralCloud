@@ -22,7 +22,7 @@ from harness.qq.shared import QQSharedPrepareRequest
 from harness.qq.telemetry import QQTurnTrace
 from harness.research.manifest import load_experiment_manifest
 from harness.runtime.adapters import DomainSnapshot
-from harness.runtime.models import RuntimeEvent, RuntimeEventPriority, RuntimeEventType
+from harness.runtime.models import RuntimeEvent, RuntimeEventPriority, RuntimeEventType, RuntimeLifecycle
 from harness.runtime.supervisor import RuntimeSupervisor
 from infra.trace.request_spans import current_trace_context
 from infra.trace.diagnostics import observation_scope
@@ -53,7 +53,7 @@ def install_summary(runtime, value):
 
 async def exercise(tmp_path, monkeypatch, *, transport="onebot", private=False, mode="responses",
                    supplied=None, idle_intent=None, trusted=None, replay=False, reply=None,
-                   deadline_seconds=55):
+                   deadline_seconds=55, replay_critical=False):
     """Do not create a body actor, socket, live model request, or delivery.
 
     The production Runtime dispatch/host/decision/pipeline/client run unchanged.
@@ -107,6 +107,8 @@ async def exercise(tmp_path, monkeypatch, *, transport="onebot", private=False, 
         manifest.homeostatic_expression.model_copy(update={"mode": mode})})
     runtime = RuntimeSupervisor(manifest=manifest, cognitive=host, homeostasis=object(),
                                 state_dir=tmp_path / "runtime", command_timeout_seconds=60)
+    # This fixture bypasses startup; results still require a running Runtime.
+    runtime.lifecycle = RuntimeLifecycle.RUNNING
     state = trusted or summary()
     install_summary(runtime, state)
     runtime._cognitive_snapshot = await host.get_snapshot()
@@ -134,10 +136,13 @@ async def exercise(tmp_path, monkeypatch, *, transport="onebot", private=False, 
         intents = [row.data["envelope"] for row in runtime.journal.iter_records()
                    if row.record_type == "domain_command_intent"]
         if replay:
-            install_summary(runtime, summary(snapshot_revision=8, salience="critical"))
+            install_summary(runtime, summary(snapshot_revision=8,
+                salience="critical" if replay_critical else "marked", episode_signature="changed-synthetic-episode"))
             count = len(http_calls)
             again = await runtime._dispatch_qq_turn(event, 2)
-            assert again.detail == result.detail and len(http_calls) == count
+            assert len(http_calls) == count
+            if not replay_critical:
+                assert again.detail == result.detail
             repeated = [row.data["envelope"] for row in runtime.journal.iter_records()
                         if row.record_type == "domain_command_intent"][-1]
             assert repeated["payload"] == intents[0]["payload"]
@@ -147,6 +152,7 @@ async def exercise(tmp_path, monkeypatch, *, transport="onebot", private=False, 
                 "runtime_command": intents[0], "http_calls": http_calls,
                 "diagnostics": diagnostics,
                 "decision": result.detail["decision"], "source_checks_stubbed": True,
+                "replay_detail": again.detail if replay else None,
                 "owner_persona_unchanged": True, "psych_scope_filter_retained": True,
                 "external_side_effects": 0}
     finally:
@@ -160,6 +166,13 @@ async def exercise(tmp_path, monkeypatch, *, transport="onebot", private=False, 
 def test_synthetic_path_reaches_final_http(tmp_path, monkeypatch, transport):
     captured = asyncio.run(exercise(tmp_path, monkeypatch, transport=transport,
         supplied=summary() if transport == "desktop" else None))
+    assert [call["stage"] for call in captured["http_calls"]] == ["qq_gate", "character_expression"]
+
+
+def test_critical_state_fences_replay_without_new_model_calls(tmp_path, monkeypatch):
+    captured = asyncio.run(exercise(tmp_path, monkeypatch, replay=True, replay_critical=True))
+    assert captured["replay_detail"] == {
+        "error_type": "qq_turn_rejected", "reason": "critical_homeostasis_before_effect"}
     assert [call["stage"] for call in captured["http_calls"]] == ["qq_gate", "character_expression"]
     final = captured["http_calls"][-1]["payload"]
     assert final["model"] == "synthetic-expression-model"

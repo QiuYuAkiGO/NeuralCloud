@@ -1,0 +1,144 @@
+{
+  "kimi_official": {
+    "host": "https://api.moonshot.cn",
+    "model_ids": [
+      "kimi-k2.6",
+      "kimi-k2.7-code-highspeed",
+      "kimi-k2.7-code",
+      "kimi-k3"
+    ],
+    "http_status": 200
+  },
+  "apiyi_access_fixed": {
+    "http_status": 200,
+    "key_fingerprint": "0572570df0b54982586188c7b0591de9d3c499644b297d9dcf4e8ad69cf34cce",
+    "model_count": 1,
+    "models_present": {
+      "claude-sonnet-4-5-20250929": true,
+      "kimi-k3": false
+    }
+  },
+  "kimi_pricing": {
+    "source": "https://platform.kimi.com/docs/pricing/chat",
+    "source_html_sha256": "39892e3d5a21ea52d67a534c140f4bfeff39c5ae3e7ae418fe54269460ab4645",
+    "currency": "CNY",
+    "per_million": {
+      "input_miss": 20,
+      "input_hit": 2,
+      "cache_write_5min": 20,
+      "cache_write_1h": 40,
+      "output": 100
+    },
+    "verified_from": "Server-provided pricing component columns and row; web text extraction omits this component"
+  },
+  "apiyi_list": {
+    "source": "https://docs.apiyi.com/model-registry.json",
+    "sha256": "03e5e375ca8b869cd1c014a9e7fbf8868af477d66edee93675697531d1a78785",
+    "models": [
+      {
+        "id": "claude-sonnet-4-5-20250929",
+        "vendor_en": "Anthropic",
+        "category": "text",
+        "endpoints": [
+          "chat",
+          "messages"
+        ],
+        "recommended_endpoint": null,
+        "groups": [
+          "ClaudeCode",
+          "default",
+          "svip"
+        ],
+        "billing": {
+          "type": "per_token",
+          "input_usd_per_m": 3,
+          "output_usd_per_m": 15,
+          "cache_read_usd_per_m": 0.30000000000000004,
+          "per_call_usd": null,
+          "per_second_usd": null,
+          "tiered": false
+        },
+        "docs_url": null
+      },
+      {
+        "id": "kimi-k3",
+        "vendor_en": "Moonshot",
+        "category": "text",
+        "endpoints": [
+          "chat"
+        ],
+        "recommended_endpoint": null,
+        "groups": [
+          "default",
+          "svip"
+        ],
+        "billing": {
+          "type": "per_token",
+          "input_usd_per_m": 3,
+          "output_usd_per_m": 15,
+          "cache_read_usd_per_m": 0.3,
+          "per_call_usd": null,
+          "per_second_usd": null,
+          "tiered": false
+        },
+        "docs_url": "https://docs.apiyi.com/models/kimi-k3"
+      }
+    ]
+  },
+  "apiyi_final_catalog": {
+    "http_status": 200,
+    "model_ids": [
+      "claude-fable-5",
+      "claude-fable-5-1",
+      "claude-fable-5-1-thinking",
+      "claude-fable-5-thinking",
+      "claude-haiku-4-5-20251001",
+      "claude-haiku-4-5-20251001-thinking",
+      "claude-opus-4-20250514",
+      "claude-opus-4-20250514-thinking",
+      "claude-opus-4-5-20251101",
+      "claude-opus-4-5-20251101-thinking",
+      "claude-opus-4-6",
+      "claude-opus-4-6-thinking",
+      "claude-opus-4-7",
+      "claude-opus-4-7-thinking",
+      "claude-opus-4-8",
+      "claude-opus-4-8-thinking",
+      "claude-opus-5",
+      "claude-opus-5-5",
+      "claude-opus-5-5-thinking",
+      "claude-opus-5-thinking",
+      "claude-sonnet-4-20250514",
+      "claude-sonnet-4-20250514-thinking",
+      "claude-sonnet-4-5-20250929",
+      "claude-sonnet-4-5-20250929-thinking",
+      "claude-sonnet-4-6",
+      "claude-sonnet-4-6-thinking",
+      "claude-sonnet-5",
+      "claude-sonnet-5-5",
+      "claude-sonnet-5-5-thinking",
+      "claude-sonnet-5-thinking",
+      "deepseek-flash",
+      "deepseek-v4-flash",
+      "deepseek-v4-flash-0731",
+      "deepseek-v4-flash-vision-exp",
+      "deepseek-v4-pro",
+      "deepseek-v4-pro-0813",
+      "deepseek-v4.1-flash",
+      "glm-4.7",
+      "glm-5",
+      "glm-5.1",
+      "glm-5.2",
+      "kimi-k2.5",
+      "kimi-k2.6",
+      "kimi-k2.7-code",
+      "MiniMax-M2.7",
+      "MiniMax-M2.7-highspeed",
+      "MiniMax-M3",
+      "qwen3.6-plus",
+      "qwen3.7-max",
+      "qwen3.7-plus",
+      "qwen3.8-max"
+    ]
+  }
+}

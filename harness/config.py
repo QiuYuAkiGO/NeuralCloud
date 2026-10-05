@@ -60,9 +60,20 @@ class Settings(BaseSettings, QQLatencyOptions):
     llm_api_key: str = "not-needed"
     llm_model: str = "qwen"
     llm_timeout: float = 60.0
+    # Private endpoint/key file for a single alternate main reply attempt.
+    llm_fallback_config: Path | None = None
+    # Independent typed decisions/helpers; ordinary character text keeps llm_*.
+    structured_llm_config: Path | None = None
+    # Private Kimi endpoint/key and local attachment cache for model-requested QQ vision.
+    qq_vision_tool_config: Path | None = None
     # Caps generation length for JSON-producing helper calls (parser / gate);
     # uncapped small models tend to ramble prose before the JSON object.
     llm_json_max_tokens: int = 512
+    # Official DeepSeek Flash typed decisions use Responses JSON Schema, no thinking.
+    # Other providers and free-form character replies keep their existing transport.
+    deepseek_structured_outputs: bool = True
+    deepseek_cache_friendly_inputs: bool = True
+    deepseek_structured_max_output_tokens: int = Field(default=4096, ge=128, le=16_384)
     # Optional auxiliary endpoint for complete_json helpers (parser / gate /
     # interpreter / validator / planner / curator). None falls back to llm_*.
     aux_llm_base_url: str | None = None

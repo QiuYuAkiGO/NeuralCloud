@@ -768,6 +768,14 @@ class CognitiveServiceHost:
     async def start(self) -> None:
         self.owner_lease.acquire()
         try:
+            if self.shared.qq_settings is not None and self.shared.qq_settings.memory_db.is_file():
+                # One-time source schema upgrade and mirror bootstrap precede
+                # readiness. Later foreground turns only validate new rows.
+                from harness.qq.memory import QQVisualMemoryStore
+                def initialize_qq_archive():
+                    connection = QQVisualMemoryStore(self.shared.qq_settings.memory_db)._connect()
+                    connection.close()
+                await asyncio.to_thread(initialize_qq_archive)
             if self.chat.settings.production_memory_enabled:
                 from harness.production.metering import get_production_meter
                 if not hasattr(self.adapter, "production_meter"):
@@ -783,8 +791,9 @@ class CognitiveServiceHost:
 
     async def ui_snapshot(self) -> dict[str, Any]:
         self._sync_transcript()
+        memory = await asyncio.to_thread(self.shared.ui)
         if not self.shared.production_enabled:
-            return {**self.chat.status(), **self.shared.ui(), "qq_memory": self.qq_memory.status(),
+            return {**self.chat.status(), **memory, "qq_memory": self.qq_memory.status(),
                     "daily_revision": self.daily_revision.status()}
         from itertools import islice
 
@@ -793,7 +802,6 @@ class CognitiveServiceHost:
             snapshot.pop(legacy, None)
         # UI access is authenticated at /v1/ui/snapshot. This operator view
         # never enters a model prompt or changes its scope capability.
-        memory = await asyncio.to_thread(self.shared.ui)
         affects = getattr(self.adapter, "production_affect", {})
         current = list(islice((value for key, value in affects.items() if not key.startswith("history:")), 32))
         current.sort(key=lambda value: value.get("observed_at", ""), reverse=True)

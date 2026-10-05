@@ -1,0 +1,783 @@
+{
+  "scope": "isolated public/synthetic fixtures; no QQ sends; no production memory",
+  "main_model": "qwen3.8-27b",
+  "vision_model": "kimi-k2.6",
+  "thinking": "disabled",
+  "created_at": "2026-10-05T18:51:02.759040+00:00",
+  "rows": [
+    {
+      "case": "c02",
+      "question": "小雾，这是谁？感觉衣服和平时不一样。",
+      "expected": "蔚蓝档案 / 杏山和纱或杏山千纱 / 乐队 Kazusa (Band), Sugar Rush",
+      "seconds": 9.107,
+      "action": "speak",
+      "outcome": "ready",
+      "reply": "是《蔚蓝档案》里的和纱呀\n\n这套看起来像乐队或街头风的换装，黑粉配色加猫耳发饰，T恤上还印着SUGAR RUSH，所以确实和平时不一样",
+      "model_call_counts": {
+        "gate": 2,
+        "persona": 1,
+        "vision": 1
+      },
+      "web_executed": false,
+      "web_plan": null,
+      "web_context": null,
+      "vision": [
+        {
+          "seconds": 3.108,
+          "result": {
+            "tool": "inspect_qq_images",
+            "status": "ok",
+            "untrusted": true,
+            "images": [
+              {
+                "image_id": "image_1",
+                "description": "一位女性动漫角色，黑色短发带粉色挑染/内层，齐刘海，头顶有白色光环，佩戴粉色猫耳发饰（或头饰），红色眼瞳，眼下有浅色妆容，左耳戴有多个耳钉和耳骨夹，颈部有黑色项圈带银色环扣。身穿白色宽松T恤，胸前印有黑粉色卡通猫咪图案，下方有\"SUGAR RUSH\"字样，猫咪图案旁有绿色小装饰。整体配色以黑、粉、白为主，风格偏向街头潮流与可爱结合。",
+                "ocr_text": "SUGAR RUSH",
+                "characters": [
+                  {
+                    "work": "Blue Archive",
+                    "name": "Kazusa",
+                    "variant": "band/街头乐队换装",
+                    "confidence": "confident"
+                  }
+                ],
+                "uncertainties": [
+                  "variant名称可能非官方精确命名，但猫耳发饰、光环、黑粉配色及T恤风格与Blue Archive中Kazusa的乐队/街头风格换装高度吻合"
+                ]
+              }
+            ],
+            "model": "kimi-k2.6",
+            "thinking": "disabled",
+            "evidence": [
+              {
+                "image_id": "image_1",
+                "observation_id": "qq-visual:8f47a6de01114d70a0ddd2b93a14126a",
+                "image_index": 1,
+                "evidence_ref": "qq-direct-image:sha256:f146c56db9aab6d9a033dd948d762bc1d31bebf0452485b58c3f5d8764c8fb03",
+                "sampled_frame_indices": [
+                  0
+                ],
+                "frame_count": 1,
+                "frame_sha256": [
+                  "4b7f0b6fdf96ab2e81ae9931d046f5f81b8514372d5d15e64fc91c401c9a3607"
+                ]
+              }
+            ]
+          },
+          "usage": {
+            "prompt_tokens": 669,
+            "completion_tokens": 212,
+            "total_tokens": 881,
+            "cache_hit_tokens": 0,
+            "cache_miss_tokens": 0,
+            "cache_known_prompt_tokens": 0,
+            "cache_unknown_prompt_tokens": 669,
+            "cache_status": "unknown",
+            "prompt_tokens_source": "api",
+            "completion_tokens_source": "api",
+            "calls": 1,
+            "revision_calls": 0,
+            "revision_tokens": 0,
+            "source": "api"
+          }
+        }
+      ],
+      "trace": {
+        "schema_version": "qq-turn-trace-v1",
+        "trace_id": "qq-trace:015820a4670a4d0e80ec6c994beebbdf",
+        "event_id": null,
+        "decision_id": "qq-decision:913d78bdd43349efb02b0d9290396d6f",
+        "first_seen_at": "2026-10-05T18:51:02.967377+00:00",
+        "first_seen_mono": 62445.519341758,
+        "recorded_at": "2026-10-05T18:51:12.074817+00:00",
+        "elapsed_ms": 9107.445,
+        "stages": [
+          {
+            "name": "context.history_selection",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 42.771,
+            "end_offset_ms": 44.882,
+            "duration_ms": 2.111
+          },
+          {
+            "name": "gate.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 89.983,
+            "end_offset_ms": 1825.501,
+            "duration_ms": 1735.518
+          },
+          {
+            "name": "vision.tool_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 1837.529,
+            "end_offset_ms": 4933.931,
+            "duration_ms": 3096.402
+          },
+          {
+            "name": "gate.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 4936.159,
+            "end_offset_ms": 6333.745,
+            "duration_ms": 1397.586
+          },
+          {
+            "name": "gate",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 87.894,
+            "end_offset_ms": 6333.869,
+            "duration_ms": 6245.975
+          },
+          {
+            "name": "persona.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 6400.559,
+            "end_offset_ms": 9096.025,
+            "duration_ms": 2695.466
+          },
+          {
+            "name": "persona",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 6399.872,
+            "end_offset_ms": 9096.7,
+            "duration_ms": 2696.828
+          }
+        ],
+        "counters": {
+          "context_source_characters": 4865,
+          "context_base_characters": 4236,
+          "context_input_token_budget": 96000,
+          "context_input_character_budget": 192000,
+          "context_gate_history_candidate_observations": 1,
+          "context_gate_history_candidate_characters": 1860,
+          "context_gate_history_candidate_omitted": 0,
+          "context_gate_history_candidate_fits": 1,
+          "context_body_history_candidate_observations": 1,
+          "context_body_history_candidate_characters": 1860,
+          "context_body_history_candidate_omitted": 0,
+          "context_body_history_candidate_fits": 1,
+          "context_assessment_reserved_characters": 42249,
+          "context_selected_observations": 1,
+          "context_omitted_observations": 0,
+          "context_wire_characters": 4924,
+          "context_compact_projection": 1,
+          "context_history_wire_characters": 1860,
+          "context_gate_history_soft_target_exceeded": 0,
+          "context_body_history_soft_target_exceeded": 0,
+          "context_final_characters": 5956,
+          "context_final_estimated_tokens": 2978,
+          "model_calls": 4,
+          "gate_model_calls": 2,
+          "gate_cache_hit_tokens": 6528,
+          "gate_cache_miss_tokens": 5828,
+          "gate_prompt_tokens": 12356,
+          "gate_completion_tokens": 488,
+          "gate_cache_known_prompt_tokens": 12356,
+          "gate_cache_unknown_prompt_tokens": 0,
+          "gate_usage_calls": 2,
+          "gate_cache_known_calls": 2,
+          "gate_input_api_calls": 2,
+          "gate_output_api_calls": 2,
+          "gate_api_usage_calls": 2,
+          "gate_estimated_prompt_tokens": 0,
+          "gate_estimated_completion_tokens": 0,
+          "gate_response_validated": 2,
+          "vision_model_calls": 1,
+          "vision_cache_hit_tokens": 0,
+          "vision_cache_miss_tokens": 0,
+          "vision_prompt_tokens": 669,
+          "vision_completion_tokens": 212,
+          "vision_cache_known_prompt_tokens": 0,
+          "vision_cache_unknown_prompt_tokens": 669,
+          "vision_usage_calls": 1,
+          "vision_cache_known_calls": 0,
+          "vision_input_api_calls": 1,
+          "vision_output_api_calls": 1,
+          "vision_api_usage_calls": 1,
+          "vision_estimated_prompt_tokens": 0,
+          "vision_estimated_completion_tokens": 0,
+          "context_persona_characters": 580,
+          "context_persona_estimated_tokens": 290,
+          "persona_model_calls": 1,
+          "persona_cache_hit_tokens": 2885,
+          "persona_cache_miss_tokens": 4084,
+          "persona_prompt_tokens": 6969,
+          "persona_completion_tokens": 49,
+          "persona_cache_known_prompt_tokens": 6969,
+          "persona_cache_unknown_prompt_tokens": 0,
+          "persona_usage_calls": 1,
+          "persona_cache_known_calls": 1,
+          "persona_input_api_calls": 1,
+          "persona_output_api_calls": 1,
+          "persona_api_usage_calls": 1,
+          "persona_estimated_prompt_tokens": 0,
+          "persona_estimated_completion_tokens": 0,
+          "line_segmentation": 1,
+          "decision_outcome_ready": 1
+        }
+      }
+    },
+    {
+      "case": "c04",
+      "question": "这张是哪个角色的什么形态呀？",
+      "expected": "崩坏：星穹铁道 / 三月七 / 巡猎·虚数（仙舟学剑形态）",
+      "seconds": 10.898,
+      "action": "speak",
+      "outcome": "ready",
+      "reply": "嗯……我看着像《崩坏：星穹铁道》的三月七？\n\n不过这个红白黑的武侠风衣服，还有双剑，跟平时印象里的不太一样，具体是哪个形态我也没把握",
+      "model_call_counts": {
+        "gate": 2,
+        "persona": 1,
+        "vision": 1
+      },
+      "web_executed": false,
+      "web_plan": null,
+      "web_context": null,
+      "vision": [
+        {
+          "seconds": 4.709,
+          "result": {
+            "tool": "inspect_qq_images",
+            "status": "ok",
+            "untrusted": true,
+            "images": [
+              {
+                "image_id": "image_1",
+                "description": "一名粉发少女角色，发型为短发带双丸子头造型，头顶有花朵发饰。眼睛为蓝紫渐变色，表情活泼。服装以红白黑为主色调：上身是红色短袖外套配白色内衬，肩部有黑色护甲细节；腰间系蓝色腰带，下身是黑色短裙配粉色装饰；腿部为白色过膝袜/紧身裤，脚穿黑色短靴。双手各持一把剑，主手长剑带有金色装饰，副手短剑。角色跃起踩在木桶/木桩上，周围有樱花花瓣、蓝色水流特效和淡紫色飘带，背景有星形光效。整体风格为日式武侠/仙侠题材。",
+                "ocr_text": "",
+                "characters": [
+                  {
+                    "work": "崩坏：星穹铁道",
+                    "name": "三月七",
+                    "variant": "null",
+                    "confidence": "uncertain"
+                  }
+                ],
+                "uncertainties": [
+                  "角色身份基于粉发、蓝紫眼、活泼气质及双剑武器推测，可能与《崩坏：星穹铁道》三月七的某个形态相关，但服装风格（武侠/仙侠风）与该角色通常的粉蓝现代服装差异较大，无法确认为官方确认的特定variant",
+                  "无可见文字或标志可供进一步确认",
+                  "无法确定是否为官方立绘、同人创作或其他作品的原创角色"
+                ]
+              }
+            ],
+            "model": "kimi-k2.6",
+            "thinking": "disabled",
+            "evidence": [
+              {
+                "image_id": "image_1",
+                "observation_id": "qq-visual:94e166119e77409ca1ddfd1a1e034571",
+                "image_index": 1,
+                "evidence_ref": "qq-direct-image:sha256:8cca80985a55730bc2569a78811b30130f59456e4c6c9634eac8846eb63cf60b",
+                "sampled_frame_indices": [
+                  0
+                ],
+                "frame_count": 1,
+                "frame_sha256": [
+                  "722791fa15b7c5bee8e6bd7de7f9fa019f2311e96dc3fb803ea6730db3c918bc"
+                ]
+              }
+            ]
+          },
+          "usage": {
+            "prompt_tokens": 1375,
+            "completion_tokens": 274,
+            "total_tokens": 1649,
+            "cache_hit_tokens": 512,
+            "cache_miss_tokens": 863,
+            "cache_known_prompt_tokens": 1375,
+            "cache_unknown_prompt_tokens": 0,
+            "cache_status": "known",
+            "prompt_tokens_source": "api",
+            "completion_tokens_source": "api",
+            "calls": 1,
+            "revision_calls": 0,
+            "revision_tokens": 0,
+            "source": "api"
+          }
+        }
+      ],
+      "trace": {
+        "schema_version": "qq-turn-trace-v1",
+        "trace_id": "qq-trace:870145d8193841978d502519eb224ed4",
+        "event_id": null,
+        "decision_id": "qq-decision:5675ffe7486c4cea9e929e2c546deea0",
+        "first_seen_at": "2026-10-05T18:51:12.233330+00:00",
+        "first_seen_mono": 62454.785296319,
+        "recorded_at": "2026-10-05T18:51:23.131344+00:00",
+        "elapsed_ms": 10898.018,
+        "stages": [
+          {
+            "name": "context.history_selection",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 26.667,
+            "end_offset_ms": 28.748,
+            "duration_ms": 2.081
+          },
+          {
+            "name": "gate.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 71.227,
+            "end_offset_ms": 1982.844,
+            "duration_ms": 1911.617
+          },
+          {
+            "name": "vision.tool_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 2114.781,
+            "end_offset_ms": 6691.459,
+            "duration_ms": 4576.678
+          },
+          {
+            "name": "gate.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 6694.067,
+            "end_offset_ms": 8433.979,
+            "duration_ms": 1739.912
+          },
+          {
+            "name": "gate",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 69.148,
+            "end_offset_ms": 8434.18,
+            "duration_ms": 8365.032
+          },
+          {
+            "name": "persona.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 8491.533,
+            "end_offset_ms": 10889.608,
+            "duration_ms": 2398.075
+          },
+          {
+            "name": "persona",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 8490.287,
+            "end_offset_ms": 10890.11,
+            "duration_ms": 2399.823
+          }
+        ],
+        "counters": {
+          "context_source_characters": 4847,
+          "context_base_characters": 4218,
+          "context_input_token_budget": 96000,
+          "context_input_character_budget": 192000,
+          "context_gate_history_candidate_observations": 1,
+          "context_gate_history_candidate_characters": 1849,
+          "context_gate_history_candidate_omitted": 0,
+          "context_gate_history_candidate_fits": 1,
+          "context_body_history_candidate_observations": 1,
+          "context_body_history_candidate_characters": 1849,
+          "context_body_history_candidate_omitted": 0,
+          "context_body_history_candidate_fits": 1,
+          "context_assessment_reserved_characters": 42249,
+          "context_selected_observations": 1,
+          "context_omitted_observations": 0,
+          "context_wire_characters": 4909,
+          "context_compact_projection": 1,
+          "context_history_wire_characters": 1849,
+          "context_gate_history_soft_target_exceeded": 0,
+          "context_body_history_soft_target_exceeded": 0,
+          "context_final_characters": 6023,
+          "context_final_estimated_tokens": 3012,
+          "model_calls": 4,
+          "gate_model_calls": 2,
+          "gate_cache_hit_tokens": 10240,
+          "gate_cache_miss_tokens": 2089,
+          "gate_prompt_tokens": 12329,
+          "gate_completion_tokens": 454,
+          "gate_cache_known_prompt_tokens": 12329,
+          "gate_cache_unknown_prompt_tokens": 0,
+          "gate_usage_calls": 2,
+          "gate_cache_known_calls": 2,
+          "gate_input_api_calls": 2,
+          "gate_output_api_calls": 2,
+          "gate_api_usage_calls": 2,
+          "gate_estimated_prompt_tokens": 0,
+          "gate_estimated_completion_tokens": 0,
+          "gate_response_validated": 2,
+          "vision_model_calls": 1,
+          "vision_cache_hit_tokens": 512,
+          "vision_cache_miss_tokens": 863,
+          "vision_prompt_tokens": 1375,
+          "vision_completion_tokens": 274,
+          "vision_cache_known_prompt_tokens": 1375,
+          "vision_cache_unknown_prompt_tokens": 0,
+          "vision_usage_calls": 1,
+          "vision_cache_known_calls": 1,
+          "vision_input_api_calls": 1,
+          "vision_output_api_calls": 1,
+          "vision_api_usage_calls": 1,
+          "vision_estimated_prompt_tokens": 0,
+          "vision_estimated_completion_tokens": 0,
+          "context_persona_characters": 568,
+          "context_persona_estimated_tokens": 284,
+          "persona_model_calls": 1,
+          "persona_cache_hit_tokens": 2885,
+          "persona_cache_miss_tokens": 4096,
+          "persona_prompt_tokens": 6981,
+          "persona_completion_tokens": 51,
+          "persona_cache_known_prompt_tokens": 6981,
+          "persona_cache_unknown_prompt_tokens": 0,
+          "persona_usage_calls": 1,
+          "persona_cache_known_calls": 1,
+          "persona_input_api_calls": 1,
+          "persona_output_api_calls": 1,
+          "persona_api_usage_calls": 1,
+          "persona_estimated_prompt_tokens": 0,
+          "persona_estimated_completion_tokens": 0,
+          "sentence_segmentation": 1,
+          "decision_outcome_ready": 1
+        }
+      }
+    },
+    {
+      "case": "c05",
+      "question": "更新又失败了，这图里到底说什么？该怎么弄？",
+      "expected": "E-204；剩余2.3GB、需要8.0GB；至少再腾5.7GB并留余量；不能误判为网络问题",
+      "seconds": 8.58,
+      "action": "speak",
+      "outcome": "ready",
+      "reply": "图里写的是更新失败，错误码E-204，主要是磁盘空间不够，现在只剩2.3GB，但这次更新要8GB\n\n先把不用的东西删一删，腾出至少8GB再试",
+      "model_call_counts": {
+        "gate": 2,
+        "persona": 1,
+        "vision": 1
+      },
+      "web_executed": false,
+      "web_plan": null,
+      "web_context": null,
+      "vision": [
+        {
+          "seconds": 2.292,
+          "result": {
+            "tool": "inspect_qq_images",
+            "status": "ok",
+            "untrusted": true,
+            "images": [
+              {
+                "image_id": "image_1",
+                "description": "一个圆角矩形的白色提示框，显示游戏更新失败的错误信息。提示框有灰色细边框，背景为浅蓝色。这是一个典型的软件/游戏启动器或更新程序的磁盘空间不足报错界面。",
+                "ocr_text": "游戏更新失败\n错误码：E-204\n磁盘可用空间：2.3 GB\n本次更新需要：8.0 GB\n\n请释放空间后重试",
+                "characters": [],
+                "uncertainties": []
+              }
+            ],
+            "model": "kimi-k2.6",
+            "thinking": "disabled",
+            "evidence": [
+              {
+                "image_id": "image_1",
+                "observation_id": "qq-visual:15b6198696cf4f64acc37a4e3a8f30d3",
+                "image_index": 1,
+                "evidence_ref": "qq-direct-image:sha256:84d7a8e02d7ba79b8ffd00444dade089c5a1e843cb48aadd1a3681632ad4e31d",
+                "sampled_frame_indices": [
+                  0
+                ],
+                "frame_count": 1,
+                "frame_sha256": [
+                  "4112702c14843712333337b1bb0829ea8eb2535223bd34d890ba0c9b02b4c6c1"
+                ]
+              }
+            ]
+          },
+          "usage": {
+            "prompt_tokens": 981,
+            "completion_tokens": 107,
+            "total_tokens": 1088,
+            "cache_hit_tokens": 512,
+            "cache_miss_tokens": 469,
+            "cache_known_prompt_tokens": 981,
+            "cache_unknown_prompt_tokens": 0,
+            "cache_status": "known",
+            "prompt_tokens_source": "api",
+            "completion_tokens_source": "api",
+            "calls": 1,
+            "revision_calls": 0,
+            "revision_tokens": 0,
+            "source": "api"
+          }
+        }
+      ],
+      "trace": {
+        "schema_version": "qq-turn-trace-v1",
+        "trace_id": "qq-trace:7ec3391e235e47b9aa7bba050a05f484",
+        "event_id": null,
+        "decision_id": "qq-decision:b8d3018ea9174c19a8c06a91437697f1",
+        "first_seen_at": "2026-10-05T18:51:23.164835+00:00",
+        "first_seen_mono": 62465.716801136,
+        "recorded_at": "2026-10-05T18:51:31.745161+00:00",
+        "elapsed_ms": 8580.33,
+        "stages": [
+          {
+            "name": "context.history_selection",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 29.819,
+            "end_offset_ms": 31.949,
+            "duration_ms": 2.13
+          },
+          {
+            "name": "gate.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 73.81,
+            "end_offset_ms": 1720.599,
+            "duration_ms": 1646.789
+          },
+          {
+            "name": "vision.tool_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 1734.822,
+            "end_offset_ms": 4012.272,
+            "duration_ms": 2277.45
+          },
+          {
+            "name": "gate.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 4014.83,
+            "end_offset_ms": 5180.846,
+            "duration_ms": 1166.015
+          },
+          {
+            "name": "gate",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 71.781,
+            "end_offset_ms": 5180.969,
+            "duration_ms": 5109.188
+          },
+          {
+            "name": "persona.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 5243.992,
+            "end_offset_ms": 8571.873,
+            "duration_ms": 3327.882
+          },
+          {
+            "name": "persona",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 5241.773,
+            "end_offset_ms": 8572.135,
+            "duration_ms": 3330.362
+          }
+        ],
+        "counters": {
+          "context_source_characters": 4920,
+          "context_base_characters": 4291,
+          "context_input_token_budget": 96000,
+          "context_input_character_budget": 192000,
+          "context_gate_history_candidate_observations": 1,
+          "context_gate_history_candidate_characters": 1889,
+          "context_gate_history_candidate_omitted": 0,
+          "context_gate_history_candidate_fits": 1,
+          "context_body_history_candidate_observations": 1,
+          "context_body_history_candidate_characters": 1889,
+          "context_body_history_candidate_omitted": 0,
+          "context_body_history_candidate_fits": 1,
+          "context_assessment_reserved_characters": 42249,
+          "context_selected_observations": 1,
+          "context_omitted_observations": 0,
+          "context_wire_characters": 4956,
+          "context_compact_projection": 1,
+          "context_history_wire_characters": 1889,
+          "context_gate_history_soft_target_exceeded": 0,
+          "context_body_history_soft_target_exceeded": 0,
+          "context_final_characters": 5783,
+          "context_final_estimated_tokens": 2892,
+          "model_calls": 4,
+          "gate_model_calls": 2,
+          "gate_cache_hit_tokens": 10368,
+          "gate_cache_miss_tokens": 1915,
+          "gate_prompt_tokens": 12283,
+          "gate_completion_tokens": 451,
+          "gate_cache_known_prompt_tokens": 12283,
+          "gate_cache_unknown_prompt_tokens": 0,
+          "gate_usage_calls": 2,
+          "gate_cache_known_calls": 2,
+          "gate_input_api_calls": 2,
+          "gate_output_api_calls": 2,
+          "gate_api_usage_calls": 2,
+          "gate_estimated_prompt_tokens": 0,
+          "gate_estimated_completion_tokens": 0,
+          "gate_response_validated": 2,
+          "vision_model_calls": 1,
+          "vision_cache_hit_tokens": 512,
+          "vision_cache_miss_tokens": 469,
+          "vision_prompt_tokens": 981,
+          "vision_completion_tokens": 107,
+          "vision_cache_known_prompt_tokens": 981,
+          "vision_cache_unknown_prompt_tokens": 0,
+          "vision_usage_calls": 1,
+          "vision_cache_known_calls": 1,
+          "vision_input_api_calls": 1,
+          "vision_output_api_calls": 1,
+          "vision_api_usage_calls": 1,
+          "vision_estimated_prompt_tokens": 0,
+          "vision_estimated_completion_tokens": 0,
+          "context_persona_characters": 536,
+          "context_persona_estimated_tokens": 268,
+          "persona_model_calls": 1,
+          "persona_cache_hit_tokens": 2885,
+          "persona_cache_miss_tokens": 3926,
+          "persona_prompt_tokens": 6811,
+          "persona_completion_tokens": 56,
+          "persona_cache_known_prompt_tokens": 6811,
+          "persona_cache_unknown_prompt_tokens": 0,
+          "persona_usage_calls": 1,
+          "persona_cache_known_calls": 1,
+          "persona_input_api_calls": 1,
+          "persona_output_api_calls": 1,
+          "persona_api_usage_calls": 1,
+          "persona_estimated_prompt_tokens": 0,
+          "persona_estimated_completion_tokens": 0,
+          "line_segmentation": 1,
+          "sentence_segmentation": 1,
+          "decision_outcome_ready": 1
+        }
+      }
+    },
+    {
+      "case": "no_vision",
+      "question": "这张图只是先存一下，不用看图，也不用评价。回复一句收到就行。",
+      "expected": "针对实际蓝围巾、白外套等自然短评；不必强行介绍角色或搜索",
+      "seconds": 2.93,
+      "action": "speak",
+      "outcome": "ready",
+      "reply": "收到",
+      "model_call_counts": {
+        "gate": 1,
+        "persona": 1
+      },
+      "web_executed": false,
+      "web_plan": null,
+      "web_context": null,
+      "vision": [],
+      "trace": {
+        "schema_version": "qq-turn-trace-v1",
+        "trace_id": "qq-trace:311c0831c6d74f18bf0a03992a891fc9",
+        "event_id": null,
+        "decision_id": "qq-decision:f9bb72e565914638b9cdf5b9fcb9dbc0",
+        "first_seen_at": "2026-10-05T18:51:31.778719+00:00",
+        "first_seen_mono": 62474.330685774,
+        "recorded_at": "2026-10-05T18:51:34.708440+00:00",
+        "elapsed_ms": 2929.725,
+        "stages": [
+          {
+            "name": "context.history_selection",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 30.526,
+            "end_offset_ms": 32.624,
+            "duration_ms": 2.098
+          },
+          {
+            "name": "gate.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 74.447,
+            "end_offset_ms": 1528.582,
+            "duration_ms": 1454.135
+          },
+          {
+            "name": "gate",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 72.428,
+            "end_offset_ms": 1528.797,
+            "duration_ms": 1456.369
+          },
+          {
+            "name": "persona.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 1587.772,
+            "end_offset_ms": 2920.756,
+            "duration_ms": 1332.984
+          },
+          {
+            "name": "persona",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 1586.559,
+            "end_offset_ms": 2921.18,
+            "duration_ms": 1334.621
+          }
+        ],
+        "counters": {
+          "context_source_characters": 5029,
+          "context_base_characters": 4400,
+          "context_input_token_budget": 96000,
+          "context_input_character_budget": 192000,
+          "context_gate_history_candidate_observations": 1,
+          "context_gate_history_candidate_characters": 1948,
+          "context_gate_history_candidate_omitted": 0,
+          "context_gate_history_candidate_fits": 1,
+          "context_body_history_candidate_observations": 1,
+          "context_body_history_candidate_characters": 1948,
+          "context_body_history_candidate_omitted": 0,
+          "context_body_history_candidate_fits": 1,
+          "context_assessment_reserved_characters": 42249,
+          "context_selected_observations": 1,
+          "context_omitted_observations": 0,
+          "context_wire_characters": 5024,
+          "context_compact_projection": 1,
+          "context_history_wire_characters": 1948,
+          "context_gate_history_soft_target_exceeded": 0,
+          "context_body_history_soft_target_exceeded": 0,
+          "context_final_characters": 5024,
+          "context_final_estimated_tokens": 2512,
+          "model_calls": 2,
+          "gate_model_calls": 1,
+          "gate_cache_hit_tokens": 4352,
+          "gate_cache_miss_tokens": 1491,
+          "gate_prompt_tokens": 5843,
+          "gate_completion_tokens": 167,
+          "gate_cache_known_prompt_tokens": 5843,
+          "gate_cache_unknown_prompt_tokens": 0,
+          "gate_usage_calls": 1,
+          "gate_cache_known_calls": 1,
+          "gate_input_api_calls": 1,
+          "gate_output_api_calls": 1,
+          "gate_api_usage_calls": 1,
+          "gate_estimated_prompt_tokens": 0,
+          "gate_estimated_completion_tokens": 0,
+          "gate_response_validated": 1,
+          "context_persona_characters": 485,
+          "context_persona_estimated_tokens": 243,
+          "persona_model_calls": 1,
+          "persona_cache_hit_tokens": 2885,
+          "persona_cache_miss_tokens": 3255,
+          "persona_prompt_tokens": 6140,
+          "persona_completion_tokens": 5,
+          "persona_cache_known_prompt_tokens": 6140,
+          "persona_cache_unknown_prompt_tokens": 0,
+          "persona_usage_calls": 1,
+          "persona_cache_known_calls": 1,
+          "persona_input_api_calls": 1,
+          "persona_output_api_calls": 1,
+          "persona_api_usage_calls": 1,
+          "persona_estimated_prompt_tokens": 0,
+          "persona_estimated_completion_tokens": 0,
+          "decision_outcome_ready": 1
+        }
+      }
+    }
+  ]
+}

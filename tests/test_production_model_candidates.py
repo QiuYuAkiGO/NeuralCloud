@@ -2,6 +2,7 @@
 from datetime import datetime, timezone
 import hashlib
 import json
+import logging
 import os
 from pathlib import Path
 import sqlite3
@@ -20,6 +21,19 @@ MODEL = "claude-sonnet-4-6"
 KEY = "SYNTHETIC_MAIN_KEY_ONLY"
 CONTENT = '{"kind":"reply","reason":"Synthetic test","text":"test","used_memory_ids":[]}'
 USAGE = {"prompt_tokens": 7, "completion_tokens": 9, "total_tokens": 16}
+
+
+def test_setup_failure_restores_callers_logging_state(monkeypatch):
+    previous = logging.root.manager.disable
+
+    def fail(_):
+        assert logging.root.manager.disable == logging.CRITICAL
+        raise ValueError("synthetic setup failure")
+
+    monkeypatch.setattr(runner, "_main", fail)
+    with pytest.raises(ValueError, match="setup failure"):
+        runner.main([])
+    assert logging.root.manager.disable == previous
 
 
 @pytest.fixture(autouse=True)

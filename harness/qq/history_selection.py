@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import json
 
-from harness.qq.context_budget import ModelContextSelection, select_model_context
+from harness.qq.context_budget import ModelContextSelection, project_group_context, select_model_context
 from harness.qq.context_window import encode_model_payload
 from harness.qq.conversation import conversation_scope
 from harness.qq.memory import QQPersonContext, QQVerifiedProfile, QQVisualObservation
@@ -141,7 +141,7 @@ def _bounded(payload, *, required_ids: set[str], target: int, max_characters: in
         return _subset(payload, retained - removed, original_ids=original_ids)
 
     # Whole-record sizes are monotonic. Avoid repeatedly projecting the entire
-    # 128-record window for every record during the default shadow run.
+    # 128-record window for every record during history selection.
     low, high = 0, len(groups)
     while low < high:
         middle = (low + high) // 2
@@ -185,6 +185,9 @@ class QQHistorySelections:
 
 def select_bounded_history(payload, *, required_ids: set[str], gate_target: int, body_target: int,
                            max_characters: int, assessment_reserve: int, projection: str) -> QQHistorySelections:
+    # Soft targets measure model-visible history. Large private proof attachments
+    # are retained in the source store, but must not evict dialogue from prompts.
+    payload = {**payload, "group_context": project_group_context(payload["group_context"])}
     original_ids = [item["record_id"] for item in _records(payload)]
     if not required_ids and original_ids:
         latest = max(_records(payload), key=lambda item: (datetime.fromisoformat(item["observed_at"]),

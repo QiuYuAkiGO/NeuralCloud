@@ -72,14 +72,17 @@ def select_model_context(
     all_ids = {item["record_id"] for item in observations}
     if not required_observation_ids.issubset(all_ids):
         raise ValueError("Required QQ observations are outside the selected group context")
+    prior_selection = selected.get("model_context_selection", {})
     metadata = {
         "proof_refs_stored_outside_model": True,
         "selection_scope": "whole_verified_records_not_complete_chat_history",
         "retrieved_observation_count": len(observations),
         "included_observation_count": len(observations),
         "omitted_observation_record_ids": [],
-        "omitted_prior_decision_ids": [],
-        "omitted_delivery_receipt_ids": [],
+        # Bounded selection applies this guard to body, then gate. Keep the
+        # first pass's omissions visible and budgeted on the second pass too.
+        "omitted_prior_decision_ids": list(prior_selection.get("omitted_prior_decision_ids", [])),
+        "omitted_delivery_receipt_ids": list(prior_selection.get("omitted_delivery_receipt_ids", [])),
     }
     selected["model_context_selection"] = metadata
     latest_profiles = {

@@ -1,0 +1,41 @@
+{
+  "full_gui_status": {
+    "http_status": 200,
+    "duration_seconds": 10.295,
+    "runtime_lifecycle": "RUNNING",
+    "main_model": {
+      "mode": "live",
+      "base_url": "http://192.168.1.105:8080/v1",
+      "model": "qwen3.8-27b",
+      "reachable": true,
+      "api_key_configured": true,
+      "fallback": {
+        "enabled": true,
+        "model": "deepseek-v4-flash",
+        "base_url": "https://api.deepseek.com/v1",
+        "primary_timeout_seconds": 20.0
+      },
+      "aux": {
+        "base_url": "http://127.0.0.1:11435/v1",
+        "model": "qwen3:4b-instruct-2507-q4_K_M",
+        "reachable": true,
+        "preloaded": true,
+        "active": true
+      },
+      "qq_memory": {
+        "base_url": "https://api.deepseek.com",
+        "model": "deepseek-v4-flash"
+      },
+      "embedding": {
+        "backend": "mock",
+        "reachable": false,
+        "base_url": "http://127.0.0.1:8080/v1",
+        "model": "bge-m3"
+      }
+    }
+  },
+  "cognitive_health_during_gui_read": {
+    "http_status": 200,
+    "duration_seconds": 0.057
+  }
+}

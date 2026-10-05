@@ -46,6 +46,9 @@ _BINDING_PATHS = {
     "NC_COGNITIVE_MANIFEST_PATH", "NC_HOMEOSTASIS_PROFILE_PATH", "NC_EXPERIMENT_MANIFEST",
     "NC_PROFILE_REVISION_DIR", "NC_MANIFEST_REVISION_DIR",
     "NC_DAILY_REVISION_CONFIG",
+    "NC_LLM_FALLBACK_CONFIG",
+    "NC_STRUCTURED_LLM_CONFIG",
+    "NC_QQ_VISION_TOOL_CONFIG",
 }
 _TRANSIENT_NAMES = {
     ".neuralcloud.pids.json", ".neuralcloud.pids.json.launch.json", ".gui.pid",
@@ -543,6 +546,9 @@ def discover_shared_sources(
     ):
         add(role, bindings.get(key), "config/" + name, config=name.endswith(".json"))
     for binding, role, filename in (
+        ("NC_LLM_FALLBACK_CONFIG", "main-fallback", "main-fallback.json"),
+        ("NC_STRUCTURED_LLM_CONFIG", "structured-llm", "structured-llm.json"),
+        ("NC_QQ_VISION_TOOL_CONFIG", "qq-vision-tool", "qq-vision-tool.json"),
         ("NC_QQ_SESSION_CONFIG", "qq-session", "session.json"),
         ("NC_QQ_WATCHER_CONFIG", "qq-watcher", "watcher.json"),
         ("NC_QQ_DIRECT_CONFIG", "qq-direct", "direct.json"),

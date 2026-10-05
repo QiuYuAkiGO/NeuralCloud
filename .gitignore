@@ -1,4 +1,4 @@
-    .venv/
+.venv/
 venv/
 __pycache__/
 *.py[cod]
@@ -48,9 +48,19 @@ eval/reports/emotional_expression_diagnostics/private/
 /data/evaluations/qq-brief-*/
 kimi-official-api-key.txt
 apiyi-api-key.txt
+/apiyi-key.txt
+/kimi-k3-official-api-key.txt
 apiyi-claude-api-key.txt
 remote-linux-server-login.txt
 Deepseek-api-key-affect.txt
 
 # Local Chinese reply evaluation evidence, blind maps and human ratings.
 /data/evaluations/chinese-reply-review-*/
+
+# Machine credentials, personal workspace, and private QQ runtime reports.
+/Linux-server-user-password.txt
+/openai-api-key.txt
+/秋语/
+/eval/reports/qq-group-*/
+/eval/reports/qq-memory-prepare-*/
+/eval/reports/qq-voice-*/

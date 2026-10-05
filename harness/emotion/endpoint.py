@@ -17,6 +17,8 @@ class EmotionEndpoint(BaseModel):
 
 class DeepSeekEmotionClient(OpenAICompatClient):
     def complete_json(self, *, system, user, response_format=None, **kwargs):
+        if self.settings.structured_llm_config is not None:
+            return super().complete_json(system=system, user=user, response_format=response_format, **kwargs)
         # Chat Completions JSON mode does not enforce a JSON Schema. Supply it
         # explicitly; EmotionService validates the resulting typed payload.
         if response_format and response_format.get("type") == "json_schema":
@@ -28,6 +30,9 @@ class DeepSeekEmotionClient(OpenAICompatClient):
 
 
 def build_emotion_client(settings):
+    if getattr(settings, "structured_llm_config", None) is not None:
+        from harness.llm.structured import build_structured_client
+        return build_structured_client(settings)
     path = getattr(settings, "emotion_llm_config", None)
     if not path:
         return None

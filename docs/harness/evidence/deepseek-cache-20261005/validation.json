@@ -1,0 +1,73 @@
+{
+  "pytest": {
+    "passed": 201,
+    "test_files": 15,
+    "warnings": 2,
+    "elapsed_seconds": 34.33
+  },
+  "ruff": "passed",
+  "diff_check": "passed with core.whitespace=cr-at-eol",
+  "paired_payloads_equal": true,
+  "revoked_memory_removed": true,
+  "api_schema_valid": 48,
+  "synthetic_wait_correct": 48,
+  "new_benchmark_session_isolation_offline": "passed",
+  "summary": {
+    "baseline": {
+      "all": {
+        "attempts": 24,
+        "valid": 24,
+        "cache_known_requests": 24,
+        "input_tokens": 273464,
+        "cache_hit_tokens": 12288,
+        "cache_miss_tokens": 261176,
+        "token_weighted_hit_rate": 0.044934616622297634,
+        "latency_p50_ms": 846.2352000060491,
+        "latency_max_ms": 1386.4963999949396
+      },
+      "warm": {
+        "attempts": 18,
+        "valid": 18,
+        "cache_known_requests": 18,
+        "input_tokens": 205224,
+        "cache_hit_tokens": 9216,
+        "cache_miss_tokens": 196008,
+        "token_weighted_hit_rate": 0.04490702841772892,
+        "latency_p50_ms": 844.6872999775223,
+        "latency_max_ms": 1386.4963999949396
+      }
+    },
+    "optimized": {
+      "all": {
+        "attempts": 24,
+        "valid": 24,
+        "cache_known_requests": 24,
+        "input_tokens": 162776,
+        "cache_hit_tokens": 150528,
+        "cache_miss_tokens": 12248,
+        "token_weighted_hit_rate": 0.9247554922101539,
+        "latency_p50_ms": 907.4620000028517,
+        "latency_max_ms": 1075.845700019272
+      },
+      "warm": {
+        "attempts": 18,
+        "valid": 18,
+        "cache_known_requests": 18,
+        "input_tokens": 122208,
+        "cache_hit_tokens": 113280,
+        "cache_miss_tokens": 8928,
+        "token_weighted_hit_rate": 0.9269442262372348,
+        "latency_p50_ms": 907.4620000028517,
+        "latency_max_ms": 1075.845700019272
+      }
+    }
+  },
+  "sources_at_verification": {
+    "harness/cognitive/production.py": "215573d302a19236624fe07312384d8c02790eb18ea0ca1c7624d32a0c67effa",
+    "harness/llm/client.py": "095c705a2108b5a949c04274ca4aa5a92a7f38371b3a96381ebec39212611570",
+    "harness/llm/deepseek_structured.py": "9c33bf579c762fc87593cb183dcd3089dc2d8396a77094f9795a658e83ccb866",
+    "harness/config.py": "ed3ff89b27c41b6a562289c903a4213ca728d686cd2cac20208c56991d1e30b7",
+    "tests/test_deepseek_cache_inputs.py": "08276dbc0c20ae2deb5fdcaeb2ea1c53923e79c20d921a13c019752eeb53b4fb",
+    "tools/production_acceptance/deepseek_cache_benchmark.py": "564a75cd8b6a34094d70444e514fc90547a63df63f2a02785f4b474d26ff3ba5"
+  }
+}

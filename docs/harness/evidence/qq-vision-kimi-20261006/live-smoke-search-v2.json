@@ -1,0 +1,430 @@
+{
+  "scope": "isolated public/synthetic fixtures; no QQ sends; no production memory",
+  "main_model": "qwen3.8-27b",
+  "vision_model": "kimi-k2.6",
+  "thinking": "disabled",
+  "created_at": "2026-10-05T18:57:44.379448+00:00",
+  "rows": [
+    {
+      "case": "c04",
+      "question": "这张是哪个角色的什么形态呀？ 请联网核实官方角色和换装名称。",
+      "expected": "崩坏：星穹铁道 / 三月七 / 巡猎·虚数（仙舟学剑形态）",
+      "seconds": 11.855,
+      "action": "speak",
+      "outcome": "ready",
+      "reply": "是《崩坏：星穹铁道》里的三月七\n\n这个形态官方叫“三月七·巡猎”，是仙舟剧情里解锁的新命途，不是普通换装",
+      "model_call_counts": {
+        "gate": 2,
+        "persona": 1,
+        "vision": 1
+      },
+      "web_executed": true,
+      "web_plan": {
+        "steps": [
+          {
+            "step_id": "search1",
+            "action": "search",
+            "query": "崩坏星穹铁道 三月七 巡猎 形态 官方名称",
+            "max_results": 5,
+            "time_range": null
+          }
+        ]
+      },
+      "web_context": {
+        "status": "completed",
+        "sources": [
+          {
+            "source_ref": "web-source:68c705fc646b2cd3384975cc647cbb2e",
+            "origin": "search",
+            "title": "【V2.4攻略】「三月七.巡猎」培养攻略速成",
+            "url": "https://www.taptap.cn/moment/571992508028947689",
+            "snippet": "Sep 10, 2024 — uid:104719728「三月七.巡猎」追击队辅C/副C击破队主C/辅C/副C不错的输出与增伤加之2魂补充的追击机制使其可以在主推双C的追击队中有着良好的表现自身",
+            "content": "",
+            "retrieved_at": "2026-10-05T18:57:53.596926Z",
+            "published_at": null,
+            "truncated": false
+          },
+          {
+            "source_ref": "web-source:abe73b8f18dab48b69d96678adae86d9",
+            "origin": "search",
+            "title": "隨著「黑夜」的揭曉，三月七是唯一一個可以切換命途（巡獵） ...",
+            "url": "https://www.reddit.com/r/HonkaiStarRail/comments/1mg9u82/with_the_reveal_of_evernight_march_7th_is_the?tl=zh-hant",
+            "snippet": "隨著「黑夜」的揭曉，三月七是唯一一個可以切換命途（巡獵），擁有替換服裝（萌芽之春），並且同時出現在兩種稀有度（黑夜）的角色。Read more",
+            "content": "",
+            "retrieved_at": "2026-10-05T18:57:53.596898Z",
+            "published_at": null,
+            "truncated": false
+          },
+          {
+            "source_ref": "web-source:c44aea36253ea8039f199e098522c843",
+            "origin": "search",
+            "title": "星穹铁道三月七新命途形态怎么样 ...",
+            "url": "https://www.jiaoyimao.com/news/213223.html",
+            "snippet": "Jul 31, 2024 — 为了解锁三月七的新命途形态，玩家需参与仙舟的演武仪典活动。在活动中，玩家不仅可以体验到丰富多彩的剧情内容，还可以通过完成任务获得解锁新形态的道具 ...Read more",
+            "content": "",
+            "retrieved_at": "2026-10-05T18:57:53.596864Z",
+            "published_at": null,
+            "truncated": false
+          },
+          {
+            "source_ref": "web-source:0ffbcfb9563d9d7e339cfe4d1d606e59",
+            "origin": "search",
+            "title": "崩坏星穹铁道仙舟三月七：技能详解与最佳配队策略",
+            "url": "https://cg.163.com/static/content/66acc9086d08ea295c956e9a",
+            "snippet": "Jul 31, 2024 — 崩坏星穹铁道仙舟三月七是虚数属性角色，技能提供速度加成和高额伤害。技能包括荡涤妖邪琉璃剑、师父请喝茶、盖世女侠三月七和一气化三餐。",
+            "content": "",
+            "retrieved_at": "2026-10-05T18:57:53.596832Z",
+            "published_at": null,
+            "truncated": false
+          },
+          {
+            "source_ref": "web-source:b4edb4a9893bec41a15c3bd05914baaf",
+            "origin": "search",
+            "title": "崩坏星穹铁道三月七新命途什么时候获取",
+            "url": "https://www.9game.cn/bhxqtd/10294125.html",
+            "snippet": "Jul 23, 2024 — 1、三月七(巡猎·虚数)与三月七(存护·冰)可通过命途切换系统进行切换。 · 2、三月七(巡猎·虚数)的角色等级和晋阶等级与三月七(存护·冰)互相继承，但行迹与星 ...Read more",
+            "content": "",
+            "retrieved_at": "2026-10-05T18:57:53.596773Z",
+            "published_at": null,
+            "truncated": false
+          }
+        ],
+        "failures": [],
+        "evidence_refs": [
+          "web-source:68c705fc646b2cd3384975cc647cbb2e",
+          "web-source:abe73b8f18dab48b69d96678adae86d9",
+          "web-source:c44aea36253ea8039f199e098522c843",
+          "web-source:0ffbcfb9563d9d7e339cfe4d1d606e59",
+          "web-source:b4edb4a9893bec41a15c3bd05914baaf"
+        ]
+      },
+      "vision": [
+        {
+          "seconds": 4.367,
+          "result": {
+            "tool": "inspect_qq_images",
+            "status": "ok",
+            "untrusted": true,
+            "images": [
+              {
+                "image_id": "image_1",
+                "description": "一位粉发少女角色，呈跃起挥剑的动态姿态。发色为淡粉色，短发带有一些翘起的发丝，头顶两侧有类似兽耳的粉色突起（或发饰造型），发间点缀小花。瞳色为粉紫色渐变。服装以红白黑为主色调：红色短款外套配白色泡泡袖，黑色腰封与短裙，白色过膝袜，黑色短靴。腰间有粉色花朵装饰，背后飘带为蓝紫色。手持一柄长剑，剑身修长。脚下有木桶与木桩元素，周围环绕粉色樱花、花瓣、淡紫色飘带与蓝色光效，整体氛围轻盈灵动。画风为典型的二次元手游精建立绘风格，线条细腻，色彩明快，特效层次丰富。",
+                "ocr_text": null,
+                "characters": [
+                  {
+                    "work": "崩坏：星穹铁道",
+                    "name": "三月七",
+                    "variant": "仙舟/巡猎形态（疑似「巡猎·三月七」）",
+                    "confidence": "confident"
+                  }
+                ],
+                "uncertainties": [
+                  "兽耳状突起是否为真实耳朵或仅为发饰造型",
+                  "variant官方名称是否为「巡猎·三月七」或类似命名需以官方为准"
+                ]
+              }
+            ],
+            "model": "kimi-k2.6",
+            "thinking": "disabled",
+            "evidence": [
+              {
+                "image_id": "image_1",
+                "observation_id": "qq-visual:9bcc912e626044acb944c97aeacfb6a6",
+                "image_index": 1,
+                "evidence_ref": "qq-direct-image:sha256:8cca80985a55730bc2569a78811b30130f59456e4c6c9634eac8846eb63cf60b",
+                "sampled_frame_indices": [
+                  0
+                ],
+                "frame_count": 1,
+                "frame_sha256": [
+                  "722791fa15b7c5bee8e6bd7de7f9fa019f2311e96dc3fb803ea6730db3c918bc"
+                ]
+              }
+            ]
+          },
+          "usage": {
+            "prompt_tokens": 1386,
+            "completion_tokens": 252,
+            "total_tokens": 1638,
+            "cache_hit_tokens": 0,
+            "cache_miss_tokens": 0,
+            "cache_known_prompt_tokens": 0,
+            "cache_unknown_prompt_tokens": 1386,
+            "cache_status": "unknown",
+            "prompt_tokens_source": "api",
+            "completion_tokens_source": "api",
+            "calls": 1,
+            "revision_calls": 0,
+            "revision_tokens": 0,
+            "source": "api"
+          }
+        }
+      ],
+      "trace": {
+        "schema_version": "qq-turn-trace-v1",
+        "trace_id": "qq-trace:7c233d5caf5d4ad59b47959ca0bfcfe4",
+        "event_id": null,
+        "decision_id": "qq-decision:7a184058a811460b966b1c3032380cbd",
+        "first_seen_at": "2026-10-05T18:57:44.592164+00:00",
+        "first_seen_mono": 62847.144130305,
+        "recorded_at": "2026-10-05T18:57:56.447228+00:00",
+        "elapsed_ms": 11855.068,
+        "stages": [
+          {
+            "name": "context.history_selection",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 30.139,
+            "end_offset_ms": 32.406,
+            "duration_ms": 2.268
+          },
+          {
+            "name": "gate.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 76.743,
+            "end_offset_ms": 2223.466,
+            "duration_ms": 2146.724
+          },
+          {
+            "name": "vision.tool_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 2354.419,
+            "end_offset_ms": 6586.638,
+            "duration_ms": 4232.219
+          },
+          {
+            "name": "gate.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 6592.906,
+            "end_offset_ms": 8184.033,
+            "duration_ms": 1591.127
+          },
+          {
+            "name": "gate",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 74.643,
+            "end_offset_ms": 8184.157,
+            "duration_ms": 8109.514
+          },
+          {
+            "name": "persona.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 9057.671,
+            "end_offset_ms": 11848.336,
+            "duration_ms": 2790.665
+          },
+          {
+            "name": "persona",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 9057.039,
+            "end_offset_ms": 11848.727,
+            "duration_ms": 2791.689
+          }
+        ],
+        "counters": {
+          "context_source_characters": 5049,
+          "context_base_characters": 4420,
+          "context_input_token_budget": 96000,
+          "context_input_character_budget": 192000,
+          "context_gate_history_candidate_observations": 1,
+          "context_gate_history_candidate_characters": 1958,
+          "context_gate_history_candidate_omitted": 0,
+          "context_gate_history_candidate_fits": 1,
+          "context_body_history_candidate_observations": 1,
+          "context_body_history_candidate_characters": 1958,
+          "context_body_history_candidate_omitted": 0,
+          "context_body_history_candidate_fits": 1,
+          "context_assessment_reserved_characters": 42249,
+          "context_selected_observations": 1,
+          "context_omitted_observations": 0,
+          "context_wire_characters": 5034,
+          "context_compact_projection": 1,
+          "context_history_wire_characters": 1958,
+          "context_gate_history_soft_target_exceeded": 0,
+          "context_body_history_soft_target_exceeded": 0,
+          "context_final_characters": 6102,
+          "context_final_estimated_tokens": 3051,
+          "model_calls": 4,
+          "gate_model_calls": 2,
+          "gate_cache_hit_tokens": 10496,
+          "gate_cache_miss_tokens": 2030,
+          "gate_prompt_tokens": 12526,
+          "gate_completion_tokens": 578,
+          "gate_cache_known_prompt_tokens": 12526,
+          "gate_cache_unknown_prompt_tokens": 0,
+          "gate_usage_calls": 2,
+          "gate_cache_known_calls": 2,
+          "gate_input_api_calls": 2,
+          "gate_output_api_calls": 2,
+          "gate_api_usage_calls": 2,
+          "gate_estimated_prompt_tokens": 0,
+          "gate_estimated_completion_tokens": 0,
+          "gate_response_validated": 2,
+          "vision_model_calls": 1,
+          "vision_cache_hit_tokens": 0,
+          "vision_cache_miss_tokens": 0,
+          "vision_prompt_tokens": 1386,
+          "vision_completion_tokens": 252,
+          "vision_cache_known_prompt_tokens": 0,
+          "vision_cache_unknown_prompt_tokens": 1386,
+          "vision_usage_calls": 1,
+          "vision_cache_known_calls": 0,
+          "vision_input_api_calls": 1,
+          "vision_output_api_calls": 1,
+          "vision_api_usage_calls": 1,
+          "vision_estimated_prompt_tokens": 0,
+          "vision_estimated_completion_tokens": 0,
+          "context_persona_characters": 2945,
+          "context_persona_estimated_tokens": 1473,
+          "persona_model_calls": 1,
+          "persona_cache_hit_tokens": 2885,
+          "persona_cache_miss_tokens": 5438,
+          "persona_prompt_tokens": 8323,
+          "persona_completion_tokens": 45,
+          "persona_cache_known_prompt_tokens": 8323,
+          "persona_cache_unknown_prompt_tokens": 0,
+          "persona_usage_calls": 1,
+          "persona_cache_known_calls": 1,
+          "persona_input_api_calls": 1,
+          "persona_output_api_calls": 1,
+          "persona_api_usage_calls": 1,
+          "persona_estimated_prompt_tokens": 0,
+          "persona_estimated_completion_tokens": 0,
+          "decision_outcome_ready": 1
+        }
+      }
+    },
+    {
+      "case": "no_vision",
+      "question": "这张图只是先存一下，不用看图，也不用评价。回复一句收到就行。",
+      "expected": "针对实际蓝围巾、白外套等自然短评；不必强行介绍角色或搜索",
+      "seconds": 2.369,
+      "action": "speak",
+      "outcome": "ready",
+      "reply": "收到",
+      "model_call_counts": {
+        "gate": 1,
+        "persona": 1
+      },
+      "web_executed": false,
+      "web_plan": null,
+      "web_context": null,
+      "vision": [],
+      "trace": {
+        "schema_version": "qq-turn-trace-v1",
+        "trace_id": "qq-trace:212f9e0c226746bab62c4f64e8f9b3f3",
+        "event_id": null,
+        "decision_id": "qq-decision:6f76049b9d254c069ba22e91887a8bae",
+        "first_seen_at": "2026-10-05T18:57:56.512715+00:00",
+        "first_seen_mono": 62859.064679968,
+        "recorded_at": "2026-10-05T18:57:58.882199+00:00",
+        "elapsed_ms": 2369.49,
+        "stages": [
+          {
+            "name": "context.history_selection",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 30.403,
+            "end_offset_ms": 32.551,
+            "duration_ms": 2.148
+          },
+          {
+            "name": "gate.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 74.122,
+            "end_offset_ms": 1087.947,
+            "duration_ms": 1013.826
+          },
+          {
+            "name": "gate",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 72.109,
+            "end_offset_ms": 1088.128,
+            "duration_ms": 1016.019
+          },
+          {
+            "name": "persona.model_call",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 1157.848,
+            "end_offset_ms": 2361.254,
+            "duration_ms": 1203.406
+          },
+          {
+            "name": "persona",
+            "outcome": "ok",
+            "error_type": null,
+            "start_offset_ms": 1155.093,
+            "end_offset_ms": 2361.508,
+            "duration_ms": 1206.415
+          }
+        ],
+        "counters": {
+          "context_source_characters": 5029,
+          "context_base_characters": 4400,
+          "context_input_token_budget": 96000,
+          "context_input_character_budget": 192000,
+          "context_gate_history_candidate_observations": 1,
+          "context_gate_history_candidate_characters": 1948,
+          "context_gate_history_candidate_omitted": 0,
+          "context_gate_history_candidate_fits": 1,
+          "context_body_history_candidate_observations": 1,
+          "context_body_history_candidate_characters": 1948,
+          "context_body_history_candidate_omitted": 0,
+          "context_body_history_candidate_fits": 1,
+          "context_assessment_reserved_characters": 42249,
+          "context_selected_observations": 1,
+          "context_omitted_observations": 0,
+          "context_wire_characters": 5024,
+          "context_compact_projection": 1,
+          "context_history_wire_characters": 1948,
+          "context_gate_history_soft_target_exceeded": 0,
+          "context_body_history_soft_target_exceeded": 0,
+          "context_final_characters": 5024,
+          "context_final_estimated_tokens": 2512,
+          "model_calls": 2,
+          "gate_model_calls": 1,
+          "gate_cache_hit_tokens": 4352,
+          "gate_cache_miss_tokens": 1503,
+          "gate_prompt_tokens": 5855,
+          "gate_completion_tokens": 165,
+          "gate_cache_known_prompt_tokens": 5855,
+          "gate_cache_unknown_prompt_tokens": 0,
+          "gate_usage_calls": 1,
+          "gate_cache_known_calls": 1,
+          "gate_input_api_calls": 1,
+          "gate_output_api_calls": 1,
+          "gate_api_usage_calls": 1,
+          "gate_estimated_prompt_tokens": 0,
+          "gate_estimated_completion_tokens": 0,
+          "gate_response_validated": 1,
+          "context_persona_characters": 478,
+          "context_persona_estimated_tokens": 239,
+          "persona_model_calls": 1,
+          "persona_cache_hit_tokens": 2885,
+          "persona_cache_miss_tokens": 3231,
+          "persona_prompt_tokens": 6116,
+          "persona_completion_tokens": 5,
+          "persona_cache_known_prompt_tokens": 6116,
+          "persona_cache_unknown_prompt_tokens": 0,
+          "persona_usage_calls": 1,
+          "persona_cache_known_calls": 1,
+          "persona_input_api_calls": 1,
+          "persona_output_api_calls": 1,
+          "persona_api_usage_calls": 1,
+          "persona_estimated_prompt_tokens": 0,
+          "persona_estimated_completion_tokens": 0,
+          "decision_outcome_ready": 1
+        }
+      }
+    }
+  ]
+}

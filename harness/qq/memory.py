@@ -16,7 +16,7 @@ from typing import Annotated, Literal, TypeVar
 import unicodedata
 from uuid import uuid4
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstraints, ValidationError, field_validator, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstraints, TypeAdapter, ValidationError, field_validator, model_validator
 
 from harness.qq.conversation import QQConversationID, conversation_scope
 from harness.qq.context_window import WINDOW_CANDIDATE_LIMIT
@@ -28,15 +28,15 @@ Label = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=2
 ObservedText = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=32768)]
 Evidence = Annotated[list[Reference], Field(min_length=1, max_length=16)]
 ProtocolMessageID = Annotated[str, StringConstraints(strict=True, pattern=r"^-?[0-9]{1,20}$")]
+_QQ_ID_ADAPTER = TypeAdapter(QQID)
+_PROTOCOL_MESSAGE_ID_ADAPTER = TypeAdapter(ProtocolMessageID)
 
 
 def protocol_message_evidence_ref(group_id: str, member_id: str, message_id: str) -> str:
     """A protocol identity reference, separate from the retained JSON hash."""
-    from pydantic import TypeAdapter
-
     scope = conversation_scope(group_id)
-    member_id = TypeAdapter(QQID).validate_python(member_id)
-    message_id = TypeAdapter(ProtocolMessageID).validate_python(message_id)
+    member_id = _QQ_ID_ADAPTER.validate_python(member_id)
+    message_id = _PROTOCOL_MESSAGE_ID_ADAPTER.validate_python(message_id)
     if scope["kind"] == "private":
         if member_id not in {scope["self_member_id"], scope["peer_id"]}:
             raise ValueError("private message author is outside its conversation")
@@ -392,6 +392,9 @@ class QQVisualMemoryStore:
                 """CREATE INDEX IF NOT EXISTS qq_visual_person_context
                    ON qq_visual_observations (group_id, member_id, observed_at DESC)"""
             )
+            from harness.qq.source_index import ensure_source_index
+            ensure_source_index(connection)
+            connection.commit()
             return connection
         except BaseException:
             connection.close()

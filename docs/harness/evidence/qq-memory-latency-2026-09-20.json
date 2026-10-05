@@ -1,0 +1,58 @@
+{
+  "reported_at": "2026-09-20T16:25:00+08:00",
+  "baseline_release": "20260920-qq-style-reason-v1",
+  "candidate_release": "20260920-qq-memory-latency-v1",
+  "package_sha256": "0611fcf9ff794aa6b1054b21b97cea1f9308e3ebf2feddbe01a8d9a19dcd2267",
+  "verified_files": 370,
+  "failure": {
+    "trace_ids": [
+      "qq-trace:2cd63dc87f174322a652f8a2ab88c966",
+      "qq-trace:72e612c0da0b451da0906ec3bb2d3964",
+      "qq-trace:1ea62f9707144c8893d02f000d396df7"
+    ],
+    "type": "deadline_expired",
+    "gate_error": "model_timeout",
+    "body_calls": 0,
+    "fallback_deliveries": 2,
+    "source": "production QQ turn traces and verified delivery receipts"
+  },
+  "isolated_database_benchmark": {
+    "source": "SQLite backup snapshots of production databases",
+    "qq_selected_sources": 10009,
+    "before_seconds": 6.237962122999306,
+    "after_seconds": 3.1326273059967207,
+    "both_imports_succeeded": true,
+    "both_created_count": 2,
+    "local_existing_count": 18,
+    "local_before_seconds": 0.012368371993943583,
+    "local_after_seconds": 0.003209627997421194,
+    "both_local_created_count": 0,
+    "production_end_to_end_measurement": false
+  },
+  "model_smoke_tests": [
+    {"seconds": 8.451407464999647, "action": "wait", "outcome": "natural_wait", "error_type": null, "calls": 1},
+    {"seconds": 16.626951346006535, "action": "speak", "outcome": "ready", "error_type": null, "calls": 2}
+  ],
+  "smoke_scope": "Current model settings and copied QQ source database; additional diagnostic requests, not exact replay or production delivery",
+  "test_messages_sent_to_qq": 0,
+  "local_tests_passed": 238,
+  "ruff_passed": true,
+  "diff_check_passed": true,
+  "activation_verification": {
+    "verified_at": "2026-09-20T09:29:28.906613+00:00",
+    "all_six_services_active": true,
+    "runtime_lifecycle": "RUNNING",
+    "journal_cognitive_homeostasis_llm_healthy": true,
+    "degraded_reasons": [],
+    "qq_running": true,
+    "qq_connected": true,
+    "new_release_processes": ["cognitive", "runtime", "gui", "qq_direct"],
+    "retained_unchanged_processes": ["homeostasis", "board"],
+    "runtime_startup_seconds_approximate": 1566,
+    "gui_status_seconds": 10.064938955001708,
+    "last_send_unchanged": "qq-direct-send:6b28e1ead3b64330bad1f248c8e838ef",
+    "original_fallback_send_counts": [1, 1],
+    "snapshot_restored": false,
+    "production_reply_end_to_end_test": false
+  }
+}

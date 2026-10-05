@@ -75,6 +75,26 @@ def test_independent_three_stage_content_only_and_durable_cache(tmp_path):
     assert queue.status()["usage"][0]["day"] != "2026-09-01"
 
 
+def test_deepseek_responses_preserves_three_stage_cache_and_usage(tmp_path):
+    config, queue, records, run_id = setup(tmp_path, base_url="https://api.deepseek.com", model="deepseek-flash", reasoning_effort="none")
+    requests = []
+    def handler(request):
+        payload = json.loads(request.content)
+        requests.append(payload)
+        assert str(request.url) == "https://api.deepseek.com/responses"
+        assert payload["reasoning"] == {"effort": "none"}
+        old = {"messages": payload["input"], "response_format": {"json_schema": {"name": payload["text"]["format"]["name"]}}}
+        result = answer(httpx.Request("POST", "https://synthetic.invalid", json=old)).json()
+        return httpx.Response(200, json={"status": "completed", "usage": {"input_tokens": 50, "output_tokens": 100, "total_tokens": 150},
+            "output": [{"type": "message", "content": [{"type": "output_text", "text": result["choices"][0]["message"]["content"]}]}]})
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        provider = DailyRevisionProvider(config, queue, client)
+        first = provider.propose(run_id, records, {})
+        assert provider.propose(run_id, records, {}) == first
+    assert len(requests) == 3
+    assert queue.status()["usage"][0]["charged_tokens"] == 450
+
+
 @pytest.mark.parametrize("bad", ["length", "null", "fence", "tool", "schema"])
 def test_incomplete_or_invalid_response_cannot_become_a_proposal(tmp_path, bad):
     config, queue, records, run_id = setup(tmp_path)

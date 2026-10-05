@@ -98,7 +98,7 @@ def status(cfg: DeploymentConfig) -> dict:
 def _health(cfg: DeploymentConfig, service: str, *, timeout: float = 5) -> dict:
     bindings = cfg.effective_bindings()
     if service == "gui":
-        path, token = "/api/status", None
+        path, token = "/api/ops/availability", None
     elif service == "runtime":
         path, token = "/v1/status", read_token(bindings["NC_CONTROL_TOKEN_FILE"])
     elif service in {"cognitive", "homeostasis"}:

@@ -24,6 +24,19 @@ def config_file(tmp_path, **overrides):
     return path
 
 
+def test_gui_health_uses_runtime_availability_without_rendering_memory(tmp_path, monkeypatch):
+    cfg = load_config(config_file(tmp_path))
+    requests = []
+
+    def respond(request, *, timeout):
+        requests.append(request.full_url)
+        return io.BytesIO(b'{"available":true,"runtime":{"lifecycle":"RUNNING"}}')
+
+    monkeypatch.setattr(systemd, "urlopen", respond)
+    assert systemd._health(cfg, "gui")["runtime"]["lifecycle"] == "RUNNING"
+    assert requests == [f"http://127.0.0.1:{cfg.ports['gui']}/api/ops/availability"]
+
+
 def test_config_requires_explicit_isolated_development(tmp_path):
     cfg = load_config(config_file(tmp_path, mode="demo"))
     assert not cfg.development

@@ -1,0 +1,14 @@
+{
+  "tests": {
+    "file": "tests/test_qq_vision_reply_benchmark.py",
+    "passed": 17
+  },
+  "ruff": "passed",
+  "identical_direct_messages": true,
+  "credential_pattern_scan": "no matches",
+  "html_render": "Microsoft Edge headless; screenshot visually inspected",
+  "production_mutations": false,
+  "qq_test_messages_sent": 0,
+  "model_calls": 102,
+  "search_calls": 21
+}

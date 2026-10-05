@@ -1,0 +1,126 @@
+"""Paid, opt-in baseline/candidate prefix-cache measurement on synthetic turns.
+
+Uses actual production message builders and Schema, with no tools or business
+writes. First two requests per window are separately reported as warmup.
+"""
+from __future__ import annotations
+
+import argparse
+from copy import deepcopy
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import sys
+import time
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from harness.config import Settings  # noqa: E402
+from harness.cognitive.production import ProductionChoice, augment_messages, bounded_payload, decision_messages  # noqa: E402
+from harness.llm.client import OpenAICompatClient  # noqa: E402
+from harness.llm.deepseek_structured import decision_format, supported  # noqa: E402
+
+
+def cache_summary(rows):
+    known = [r for r in rows if r.get("usage", {}).get("cache_status") == "known"]
+    inputs = sum(r["usage"]["prompt_tokens"] for r in known)
+    hits = sum(r["usage"]["cache_hit_tokens"] for r in known)
+    elapsed = sorted(r["elapsed_ms"] for r in rows if r["ok"])
+    return {"attempts": len(rows), "valid": sum(r["ok"] for r in rows), "cache_known_requests": len(known),
+            "input_tokens": inputs, "cache_hit_tokens": hits, "cache_miss_tokens": inputs - hits,
+            "token_weighted_hit_rate": hits / inputs if inputs else None,
+            "latency_p50_ms": elapsed[(len(elapsed)-1)//2] if elapsed else None,
+            "latency_max_ms": max(elapsed) if elapsed else None}
+
+
+def fixture(persona, i, *, scenario):
+    context = {"schema_version": "production-context-v1", "scope": "local:main", "restricted_dialogue": False,
+               "body": {"available": True, "snapshot": {"captured_at": f"2026-10-05T10:00:{i:02d}Z",
+                         "resting": False, "evidence_refs": [f"synthetic-body-{i}"]}},
+               "budget": {"used": i, "remaining": 100-i}, "goals": [], "affect": None}
+    memory = [{"kind": "user", "text": "用户在这段合成对话中说，自己的猫叫团团。此记忆仅适用于本地会话。",
+               "source_ids": ["synthetic-memory-cat"], "why": "用户曾明确提供的猫名"}]
+    history = [{"role": "user", "text": "我会连续发送观察记录，在我说结束之前先不要回复。"}]
+    if scenario == "growing_history":
+        history += [{"role": "user", "text": f"第 {j+1} 条观察：窗台上的植物今天有 {j+2} 片新叶，记录还没结束。"}
+                    for j in range(i)]
+    if scenario == "memory_revision" and i >= 4:
+        memory = []  # Realistic invalidation boundary; never retain revoked memory for cache.
+    payload = {"persona": persona, "authorized_actions": [], "memories": memory, "recent_conversation": history,
+               "current_event": {"event_id": f"synthetic-event-{i}", "timestamp": f"2026-10-05T10:00:{i:02d}Z",
+                                 "raw_text": f"这是第 {i+1} 条观察，目前还没有结束，请继续保持安静。", "speaker": "用户"},
+               "production": context, "current_source_id": f"synthetic-source-{i}",
+               "source_refs": (["synthetic-memory-cat"] if memory else []) + [f"synthetic-source-{i}"]}
+    return bounded_payload(payload), context
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--config", type=Path, required=True)
+    p.add_argument("--output", type=Path, required=True)
+    p.add_argument("--turns", type=int, default=8)
+    p.add_argument("--interval", type=float, default=2)
+    args = p.parse_args()
+    if not 4 <= args.turns <= 16 or not 0 <= args.interval <= 10:
+        raise ValueError("bounded_benchmark_parameters_required")
+    config = json.loads(args.config.read_text(encoding="utf-8-sig"))
+    settings = Settings(_env_file=None, llm_model=config["model"], llm_base_url=config["base_url"],
+                        llm_api_key=config["api_key"], model_request_log_enabled=False, call_log_enabled=False, llm_timeout=60)
+    if not supported(settings):
+        raise ValueError("official_deepseek_flash_required")
+    del config
+    args.output.mkdir(parents=True, exist_ok=False)
+    persona = json.loads(Path("presets/builtin/misty.json").read_text(encoding="utf-8"))["persona"]
+    report = {"started_at": datetime.now(timezone.utc).isoformat(), "completed": False, "synthetic": True,
+              "turns": args.turns, "inter_request_seconds": args.interval, "warmup_requests_per_window": 2,
+              "cold_caveat": "First request is not guaranteed cold; provider caching is best effort.",
+              "no_padding": True, "network": "project HTTP client, environment settings inherited", "rows": [], "windows": {},
+              "sources": {str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in [Path(__file__),
+                          Path("harness/cognitive/production.py"), Path("harness/llm/deepseek_structured.py"), Path("presets/builtin/misty.json")]}}
+    client = OpenAICompatClient(settings)
+
+    def save():
+        (args.output / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    try:
+        for scenario in ["changing_state", "growing_history", "memory_revision"]:
+            for variant in ["baseline", "optimized"]:
+                rows = []
+                for i in range(args.turns):
+                    payload, context = fixture(deepcopy(persona), i, scenario=scenario)
+                    optimized = variant == "optimized"
+                    messages = augment_messages(decision_messages(payload, ProductionChoice, cache_friendly=optimized),
+                                                context, cache_friendly=optimized)
+                    row = {"scenario": scenario, "variant": variant, "turn": i, "warmup": i < 2,
+                           "messages": messages, "ok": False, "expected_kinds": ["wait", "defer"]}
+                    start = time.perf_counter()
+                    try:
+                        result = client.complete_chat_result(messages, max_tokens=512,
+                            response_format=decision_format(client, ProductionChoice.model_json_schema(), "production_decision"))
+                        parsed = ProductionChoice.model_validate_json(result.text)
+                        row.update(ok=True, decision_kind=parsed.kind,
+                                   task_correct=parsed.kind in {"wait", "defer"} and not parsed.text,
+                                   text=result.text, usage=result.usage.model_dump(mode="json"), response_metadata=result.response_metadata())
+                    except Exception as exc:
+                        row["error_type"] = type(exc).__name__
+                    row["elapsed_ms"] = (time.perf_counter()-start)*1000
+                    rows.append(row)
+                    report["rows"].append(row)
+                    save()
+                    print(json.dumps({"scenario": scenario, "variant": variant, "turn": i, "ok": row["ok"],
+                        "input": row.get("usage", {}).get("prompt_tokens"), "hit": row.get("usage", {}).get("cache_hit_tokens"),
+                        "ms": row["elapsed_ms"]}), flush=True)
+                    if not row["ok"]:
+                        raise RuntimeError("probe_failed_no_retry")
+                    time.sleep(args.interval)
+                report["windows"][scenario + ":" + variant] = {"all": cache_summary(rows), "warm": cache_summary(rows[2:])}
+                save()
+        report["completed"] = True
+    finally:
+        client.close()
+        report["ended_at"] = datetime.now(timezone.utc).isoformat()
+        save()
+
+
+if __name__ == "__main__":
+    main()

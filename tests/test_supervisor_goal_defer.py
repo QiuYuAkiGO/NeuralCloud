@@ -133,6 +133,8 @@ def test_goal_without_embodied_action_commits_defer_once_and_returns(tmp_path) -
             prompt_version="fixture",
         )
 
+        # Exercise the internal handler under its normal running precondition.
+        supervisor.lifecycle = RuntimeLifecycle.RUNNING
         detail = await supervisor._handle_decision(event, prepared, prepared.decision)
 
         assert detail == {

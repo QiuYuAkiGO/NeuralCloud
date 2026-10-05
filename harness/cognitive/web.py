@@ -1,6 +1,8 @@
 """One shared-owner web decision, with no provider or conversation side effects."""
 from __future__ import annotations
 
+from harness.llm.deepseek_structured import decision_format
+
 import asyncio
 from contextlib import closing, nullcontext
 from datetime import datetime, timedelta, timezone
@@ -388,7 +390,7 @@ async def prepare(host, command) -> dict[str, Any]:
         try:
             response = await asyncio.wait_for(asyncio.to_thread(host.chat.llm.complete_chat_result,
                 messages, stream=False, max_tokens=2048, timeout_seconds=remaining(),
-                response_format={"type": "json_object"}), timeout=remaining())
+                response_format=decision_format(host.chat.llm, WebStepChoice.model_json_schema(), "web_step")), timeout=remaining())
         except TimeoutError:
             raise TimeoutError("web_step_expired") from None
         except Exception:

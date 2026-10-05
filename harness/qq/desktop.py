@@ -230,7 +230,8 @@ class DesktopBackend:
             payload = ({"reasoning_effort": "low", "response_format": {"type": "json_object"}}
                        if urlsplit(settings.llm_base_url).hostname == "api.deepseek.com"
                        and settings.llm_model.startswith("deepseek") else {})
-            self.llm = OpenAICompatClient(settings, extra_payload=payload)
+            from harness.llm.structured import build_structured_client
+            self.llm = build_structured_client(settings) or OpenAICompatClient(settings, extra_payload=payload)
         else:
             self.llm = llm
 

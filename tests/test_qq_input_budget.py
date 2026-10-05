@@ -28,8 +28,11 @@ PEER = "2285027817"
 
 @pytest.fixture(autouse=True)
 def use_default_input_budget(monkeypatch):
-    monkeypatch.delenv("NC_QQ_INPUT_TOKEN_BUDGET", raising=False)
-    monkeypatch.delenv("NC_QQ_MEMORY_RECALL_MAX_CHARACTERS", raising=False)
+    # Exercise the hard input limit independently of optional-history targets
+    # and the operator's local .env overrides.
+    monkeypatch.setenv("NC_QQ_INPUT_TOKEN_BUDGET", "96000")
+    monkeypatch.setenv("NC_QQ_MEMORY_RECALL_MAX_CHARACTERS", "16000")
+    monkeypatch.setenv("NC_QQ_HISTORY_SELECTION", "legacy")
 
 
 def _observations(setup, monkeypatch, *, private, count, body_length):
@@ -74,8 +77,10 @@ def _shared_binding(setup, args, *, large_memory):
     return binding, memory
 
 
-def test_defaults_raise_only_qq_input_and_recall_budget_fourfold():
-    settings = Settings()
+def test_defaults_raise_only_qq_input_and_recall_budget_fourfold(monkeypatch):
+    monkeypatch.delenv("NC_QQ_INPUT_TOKEN_BUDGET", raising=False)
+    monkeypatch.delenv("NC_QQ_MEMORY_RECALL_MAX_CHARACTERS", raising=False)
+    settings = Settings(_env_file=None)
     assert settings.qq_input_token_budget == 96_000
     assert settings.qq_memory_recall_max_characters == 16_000
     assert settings.qq_memory_recall_max_items == 8

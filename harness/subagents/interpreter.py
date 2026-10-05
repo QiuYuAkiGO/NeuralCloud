@@ -14,6 +14,7 @@ from harness.core.inference import (
 )
 from harness.core.models import ScoredMemory
 from harness.llm.client import LLMClient, MockLLM
+from harness.llm.structured import InterpreterOutput, helper_options
 
 _SYSTEM = """You are Social Interpreter for a character AI.
 Input includes up to 5 retrieved memories: episodic events carry an objective
@@ -41,6 +42,7 @@ class SocialInterpreter:
             return rule_interpret(situation)
         try:
             raw = self.llm.complete_json(
+                **helper_options(self.llm, InterpreterOutput, "social_interpreter"),
                 system=_SYSTEM,
                 user=str(
                     {

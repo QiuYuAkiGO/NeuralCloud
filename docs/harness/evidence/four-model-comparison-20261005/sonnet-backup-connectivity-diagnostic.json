@@ -1,0 +1,31 @@
+{
+  "scope": "Documented APIyi backup node connectivity only; excluded from quality comparison",
+  "endpoint": "https://b.apiyi.com/v1/messages",
+  "at": "2026-10-05T10:51:14.878807+00:00",
+  "payload": {
+    "model": "claude-sonnet-4-5-20250929",
+    "max_tokens": 32,
+    "messages": [
+      {
+        "role": "user",
+        "content": "请用中文回复一个简短问候。"
+      }
+    ],
+    "stream": false
+  },
+  "payload_sha256": "cbaac5f7af444367c8a246ecb68f88832e85357089eda5bdc3187f4629a6f0c3",
+  "reserved_cny": "0.12",
+  "cost_upper_cny": "0.12",
+  "dispatch_state": "response_received",
+  "prior_total_upper_cny": "6.81",
+  "http_status": 500,
+  "seconds": 5.824595599988243,
+  "provider_error": {
+    "message": "Internal server error, Please contact the administrator (request id: 2026100510511654712777396e93ae3BUc4kyef)",
+    "localized_message": "Unknown error",
+    "type": "<nil>",
+    "param": "",
+    "code": null
+  },
+  "usage": {}
+}

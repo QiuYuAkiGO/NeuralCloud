@@ -259,6 +259,15 @@ def choice_checks(item, choice):
 
 
 def main(argv=None):
+    previous_logging_disable = logging.root.manager.disable
+    try:
+        logging.disable(logging.CRITICAL)
+        return _main(argv)
+    finally:
+        logging.disable(previous_logging_disable)
+
+
+def _main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--nc-source", type=Path, default=Path(__file__).resolve().parents[2])
     parser.add_argument("--acceptance-root", type=Path, required=True)
@@ -296,7 +305,6 @@ def main(argv=None):
     from harness.production.store import ProductionStore
     import httpx
 
-    logging.disable(logging.CRITICAL)
     secret = ""
 
     def write(path, value):

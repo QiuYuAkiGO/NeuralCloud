@@ -3,6 +3,7 @@ from datetime import UTC, datetime, timedelta
 from eval.grounded_agency.social.metrics import EntityPredictionFact, SocialDecisionFact, SocialEvaluationTrial, evaluate_social_trials
 from eval.grounded_agency.social.report import write_social_report
 from eval.grounded_agency.social.scenarios import NEGATIVE_CONTROLS
+from harness.social_world.contracts import EntityPrediction
 
 NOW = datetime(2026, 1, 1, tzinfo=UTC)
 
@@ -23,10 +24,11 @@ def test_high_message_frequency_or_always_assistance_cannot_establish_a_social_p
 
 
 def test_objective_prediction_calibration_boundaries_reversal_and_resume_metrics_are_exact():
+    predicate = EntityPrediction(event_type="response_observed", field="response", expected="accepted")
     predictions = (
-        EntityPredictionFact(actor_ref="actor-K", probability=0.8, outcome=True, occurred_at=NOW, supporting_event_refs=("E1",)),
-        EntityPredictionFact(actor_ref="actor-M", probability=0.2, outcome=False, occurred_at=NOW, supporting_event_refs=("E2",)),
-        EntityPredictionFact(actor_ref="actor-K", probability=0.4, outcome=False, occurred_at=NOW+timedelta(seconds=10), contradicting_event_refs=("E3",)),
+        EntityPredictionFact(actor_ref="actor-K", prediction=predicate, probability=0.8, outcome=True, occurred_at=NOW, supporting_event_refs=("E1",)),
+        EntityPredictionFact(actor_ref="actor-M", prediction=predicate, probability=0.2, outcome=False, occurred_at=NOW, supporting_event_refs=("E2",)),
+        EntityPredictionFact(actor_ref="actor-K", prediction=predicate, probability=0.4, outcome=False, occurred_at=NOW+timedelta(seconds=10), contradicting_event_refs=("E3",)),
     )
     decisions = (
         SocialDecisionFact(step=0, actor_ref="actor-K", operation="assist", externally_verified=True, occurred_at=NOW,

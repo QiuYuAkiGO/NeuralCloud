@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 from harness.config import Settings
 from harness.core.models import EpisodicEvent, MemoryTier, PersonaCore, ScoredMemory
 from harness.llm.client import LLMClient, MockLLM
+from harness.llm.structured import helper_options
 from harness.memory.store.protocols import MemoryStores
 
 TZ = ZoneInfo("Asia/Shanghai")
@@ -86,7 +87,8 @@ class TierClassifier:
             "on_expiry": on_expiry,
         }
         try:
-            raw = self.llm.complete_json(system=_SYSTEM, user=str(user))
+            raw = self.llm.complete_json(system=_SYSTEM, user=str(user),
+                **helper_options(self.llm, TierVerdict, "memory_tier"))
             verdict = TierVerdict.model_validate(raw)
             if on_expiry and verdict.tier == "short":
                 return verdict.model_copy(

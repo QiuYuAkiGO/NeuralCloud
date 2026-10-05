@@ -1,0 +1,10 @@
+{
+  "phase": "prepared",
+  "version": "3.2.34",
+  "url": "https://qqdl.gtimg.cn/qqfile/QQNT/9.9.36/beta/9ee04bef/linuxqq_3.2.34-53644_amd64.deb",
+  "bytes": 187185496,
+  "sha256": "436c65e1dd28422e128a21cbddb5fe4e2e6c079d7f27fec2541e014d38cc336e",
+  "checksum_source": "https://github.com/flathub/com.qq.QQ/blob/master/com.qq.QQ.yaml",
+  "release": "/opt/neuralcloud-napcat/releases/napcat-v4.18.28-qq-3.2.34-53644",
+  "original_main": "./application.asar/app_launcher/index.js"
+}

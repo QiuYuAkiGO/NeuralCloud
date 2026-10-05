@@ -135,7 +135,7 @@ def test_offline_multiturn_evidence_is_not_release_or_quality_evidence(compariso
     assert saved_hash != json_hash(manifest)
     assert summary["records"] == summary["main_calls"] == summary["successful_guidance_records"] == 40
     assert summary["auxiliary_requests"] == 80 and summary["auxiliary_delegate_calls"] == 60
-    assert summary["main_truncated_calls"] == 0 and summary["main_finish_reason_unavailable_calls"] == 40
+    assert summary["main_truncated_calls"] == 0 and summary["main_finish_reason_unavailable_calls"] == 0
     assert "role and quality may still be wrong" in summary["metric_definitions"]["successful_guidance_records"]
     assert summary["director_role_review"] == "not_scored"
     assert manifest["metric_definitions"] == summary["metric_definitions"]

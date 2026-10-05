@@ -1,0 +1,8 @@
+{
+  "phase": "started",
+  "backup": "/var/backups/neuralcloud/qq-version-upgrade-20261005",
+  "backup_sha256": "51e8b8f18da9a833b5c478303636a5799a5be0beeac667b624b968d4bf950e2b",
+  "backup_bytes": 1139069566,
+  "release": "/opt/neuralcloud-napcat/releases/napcat-v4.18.28-qq-3.2.34-53644",
+  "profile_restored": false
+}

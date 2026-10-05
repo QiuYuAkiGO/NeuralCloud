@@ -117,6 +117,27 @@ def test_prepared_gate_is_not_wait_and_resumes_exact_prefix_once(setup, monkeypa
     assert len(client.gate_messages) == 1 and len(client.chat_calls) == 1
 
 
+def test_prepared_legacy_body_recovers_static_parser_json(setup, monkeypatch):
+    monkeypatch.setenv("NC_QQ_BODY_PIPELINE", "legacy")
+    client = setup[1]
+    original = client.complete_json
+
+    def helper(**options):
+        if options["system"] == decision.parser_module._SYSTEM:
+            raise ValueError("synthetic malformed parser JSON")
+        return original(**options)
+
+    monkeypatch.setattr(client, "complete_json", helper)
+    binding, prepared = _prepare(setup)
+    trace = QQTurnTrace()
+    result = _resume(setup, binding, prepared, trace=trace)
+    assert result.outcome == "ready" and result.error_type is None
+    assert result.reply and result.reply != decision.ERROR_FALLBACK_REPLY
+    assert trace.snapshot()["counters"]["static_parse_recovered_invalid_json"] == 1
+    replay = _resume(setup, binding, prepared)
+    assert replay.replayed and replay.reply == result.reply
+
+
 def test_wait_never_prepares_web_or_body(setup):
     _, client, _, _, _ = setup
     _, prepared = _prepare(setup, choice={"action": "wait", "reason": "他们正在互相说话。",

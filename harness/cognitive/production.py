@@ -23,6 +23,7 @@ from harness.production.models import ProductionGoalUpdate
 from harness.memory.orientation import OrientationInterpretation, OrientationStore
 from harness.memory.evidence_models import MemoryUpdateGroup
 from harness.cognitive.action_planner import StructuredActionRequest
+from harness.llm.deepseek_structured import decision_format
 
 
 def canonical(value):
@@ -113,10 +114,35 @@ def visible_context(context):
             if key in context}
 
 
-def augment_messages(messages, context):
+def augment_messages(messages, context, *, cache_friendly=False):
     if context is None:
         return messages
+    if cache_friendly:
+        # Keep the current runtime state authoritative and fresh, but place it
+        # after the reusable input. Never retain prior state to obtain a hit.
+        prefix = [] if messages and messages[0].get("role") == "system" and messages[0].get("content", "").startswith(_PRINCIPLES) else [
+            {"role": "system", "content": _PRINCIPLES}]
+        return [*prefix, *messages, {"role": "system", "content": "Current production state: " + canonical(visible_context(context))}]
     return [{"role": "system", "content": _PRINCIPLES + "\nCurrent production state: " + canonical(visible_context(context))}, *messages]
+
+
+def decision_messages(payload, schema, *, cache_friendly=False):
+    """Reorder fields, never source contents, arrays, authority or admission."""
+    if cache_friendly:
+        from harness.cognitive.prompts import ordered_payload_json
+        stable = ("persona", "authorized_actions", "instruction", "memories", "recent_conversation", "evidence_views")
+        tail = ("production", "current_source", "current_event", "current_source_id", "source_refs")
+        keys = [key for key in stable if key in payload]
+        keys += sorted(payload.keys() - set(stable) - set(tail))
+        keys += [key for key in tail if key in payload]
+        user = ordered_payload_json({key: payload[key] for key in keys})
+        # The API already includes the complete schema. Repeating it in the
+        # prompt adds billable input and is not a legitimate cache improvement.
+        directive = "Return one JSON object conforming to the supplied output schema."
+    else:
+        user = canonical(payload)
+        directive = "Return one JSON object conforming to this schema: " + canonical(schema.model_json_schema())
+    return [{"role": "system", "content": _PRINCIPLES + directive}, {"role": "user", "content": user}]
 
 
 def bounded_payload(payload, *, maximum_characters=96_000):
@@ -198,9 +224,9 @@ def _ask(llm, payload, schema, *, context, command_id, autonomous, meter=None, r
     shown_memory.update(view["canonical_source_id"] for view in bounded.get("evidence_views", []))
     shown_refs = set(bounded.get("source_refs", [])) | shown_memory
     # Explicitly use the character model even though this response is JSON.
-    messages = [{"role": "system", "content": _PRINCIPLES +
-                 "Return one JSON object conforming to this schema: " + canonical(schema.model_json_schema())},
-                {"role": "user", "content": canonical(bounded)}]
+    format_ = decision_format(llm, schema.model_json_schema(), "production_decision")
+    from harness.llm.deepseek_structured import cache_friendly_enabled
+    messages = decision_messages(bounded, schema, cache_friendly=format_["type"] == "json_schema" and cache_friendly_enabled(llm))
     def exposure():
         if callable(record_use) and shown_memory:
             record_use(sorted(shown_memory), event_id="exposure:" + command_id, kind="context_exposure")
@@ -212,7 +238,7 @@ def _ask(llm, payload, schema, *, context, command_id, autonomous, meter=None, r
         method = getattr(llm, "complete_chat_result", None)
         if callable(method):
             result = method(messages, temperature=0.3, stream=False,
-                response_format={"type": "json_object"})
+                response_format=format_)
             # Provider usage is already durable at the HTTP boundary. A valid
             # JSON fragment must not turn a truncated, refused or tool-bearing
             # response into a production decision.

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "comparison",
+    "text": "我是真的不想找对象，也没努力找。但看到别人什么都不用做就有对象，还是会有点不爽。你觉得这矛盾吗？",
+    "intent": "stance",
+    "must_address": "回应恋爱意愿与比较失落是否矛盾",
+    "detail": "brief"
+  },
+  {
+    "id": "recognition",
+    "text": "我不想当第一，可别人一夸他不夸我，我就不舒服。我是不是其实特别想赢？",
+    "intent": "stance",
+    "must_address": "回应想赢是否足以解释当前感受",
+    "detail": "brief",
+    "private": true
+  },
+  {
+    "id": "worldview",
+    "text": "我觉得一个人变成什么样，都是经历和自己没意识到的选择决定的，你怎么看？",
+    "intent": "stance",
+    "must_address": "表达对经历和选择塑造人的看法",
+    "detail": "brief"
+  },
+  {
+    "id": "choice",
+    "text": "只按你的偏好选：安静但贵一点的键盘，还是便宜但特别吵的？别列优缺点。",
+    "intent": "answer",
+    "must_address": "直接选择一种键盘",
+    "detail": "brief",
+    "private": true
+  },
+  {
+    "id": "praise",
+    "text": "小雾，刚才那句说得挺清楚的，我终于听懂了。",
+    "intent": "acknowledge",
+    "must_address": "承接对方对本次表达的称赞",
+    "detail": "brief"
+  },
+  {
+    "id": "joke",
+    "text": "今天计划干十件事，最后认真完成了给计划表改颜色。属于是大进展。",
+    "intent": "acknowledge",
+    "must_address": "承接改计划表颜色的自嘲玩笑",
+    "detail": "brief"
+  },
+  {
+    "id": "expanded",
+    "text": "你说的社会比较具体是什么意思？展开讲讲，再给个生活里的例子。",
+    "intent": "answer",
+    "must_address": "解释社会比较并给出一个生活例子",
+    "detail": "expanded",
+    "private": true
+  },
+  {
+    "id": "memory_gap",
+    "text": "你还记得我上周为什么和朋友吵架吗？",
+    "intent": "clarify",
+    "must_address": "询问上周争吵的原话或必要线索",
+    "detail": "brief",
+    "private": true
+  }
+]

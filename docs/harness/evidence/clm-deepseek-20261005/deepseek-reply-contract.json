@@ -1,0 +1,2976 @@
+{
+  "completed": true,
+  "synthetic": true,
+  "model": "deepseek-flash",
+  "effort": "none",
+  "case_sha256": "cf482c2048453f31d77ae925de399f3ec20d52b7bb5df219b9dc2fb90274c853",
+  "runner_sha256": "eca53c089f2c44bffc1cdad76796c2967373a8d6778076aaba35f418b7efdd76",
+  "rows": [
+    {
+      "id": "reply-math",
+      "phase": "reply",
+      "mode": "json_schema",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "input": "用户直接问小雾：二加二等于几？请简短回答。",
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                },
+                "speech": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision",
+                "speech"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "expected_decision": "speak",
+      "rubric": "回答四或4；简短，不编造背景。",
+      "status": 200,
+      "response": {
+        "id": "a3834a03-d1ec-4577-b56f-02d42c939d1e",
+        "object": "response",
+        "created_at": 1791188902,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188902,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "0e67fb2a-aa6e-445c-8e7f-d2892d9d3f5c",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"decision\": \"speak\", \"speech\": \"四。\"}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                },
+                "speech": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision",
+                "speech"
+              ],
+              "additionalProperties": false
+            },
+            "description": null,
+            "strict": null
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 214,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 15,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 229
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "decision": "speak",
+        "speech": "四。"
+      },
+      "decision_correct": true,
+      "elapsed_ms": 1800.43360000127
+    },
+    {
+      "id": "reply-math",
+      "phase": "reply",
+      "mode": "json_object",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "input": "用户直接问小雾：二加二等于几？请简短回答。",
+        "text": {
+          "format": {
+            "type": "json_object"
+          }
+        }
+      },
+      "schema_valid": true,
+      "expected_decision": "speak",
+      "rubric": "回答四或4；简短，不编造背景。",
+      "status": 200,
+      "response": {
+        "id": "cb82f87b-ae21-4dc1-a272-cae9adcb6e9d",
+        "object": "response",
+        "created_at": 1791188903,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188903,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "8dae189d-ce40-4b48-b6f1-c661db56b62a",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"decision\": \"speak\", \"speech\": \"四。\"}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_object"
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 161,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 15,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 176
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "decision": "speak",
+        "speech": "四。"
+      },
+      "decision_correct": true,
+      "elapsed_ms": 1111.987299984321
+    },
+    {
+      "id": "reply-silence",
+      "phase": "reply",
+      "mode": "json_object",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "input": "用户明确说：现在保持安静，不要回复确认消息，也不要说晚安。",
+        "text": {
+          "format": {
+            "type": "json_object"
+          }
+        }
+      },
+      "schema_valid": true,
+      "expected_decision": "wait",
+      "rubric": "speech 应为空字符串；不以确认消息打破静默。",
+      "status": 200,
+      "response": {
+        "id": "9db873fb-8116-487d-837f-41995fad000d",
+        "object": "response",
+        "created_at": 1791188904,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188904,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "22eefe34-8503-4738-9c2d-971e72473386",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"decision\": \"wait\", \"speech\": \"\"}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_object"
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 162,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 12,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 174
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "decision": "wait",
+        "speech": ""
+      },
+      "decision_correct": true,
+      "elapsed_ms": 632.3567000217736
+    },
+    {
+      "id": "reply-silence",
+      "phase": "reply",
+      "mode": "json_schema",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "input": "用户明确说：现在保持安静，不要回复确认消息，也不要说晚安。",
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                },
+                "speech": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision",
+                "speech"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "expected_decision": "wait",
+      "rubric": "speech 应为空字符串；不以确认消息打破静默。",
+      "status": 200,
+      "response": {
+        "id": "5725e9a5-cb56-48fc-a891-48543cf13d41",
+        "object": "response",
+        "created_at": 1791188905,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188905,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "2ab80630-ea5e-4d7b-81e3-cb484e1709f9",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"decision\": \"wait\", \"speech\": \"\"}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                },
+                "speech": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision",
+                "speech"
+              ],
+              "additionalProperties": false
+            },
+            "description": null,
+            "strict": null
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 215,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 12,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 227
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "decision": "wait",
+        "speech": ""
+      },
+      "decision_correct": true,
+      "elapsed_ms": 947.9865999892354
+    },
+    {
+      "id": "reply-defer",
+      "phase": "reply",
+      "mode": "json_schema",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "input": "用户说：等我下课后再答，我会告诉你下课了。目前没有下课消息。",
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                },
+                "speech": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision",
+                "speech"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "expected_decision": "defer",
+      "rubric": "speech 应为空字符串；不假称已设置定时任务。",
+      "status": 200,
+      "response": {
+        "id": "a440b1bb-0f14-4ef0-873f-942ccf658e4c",
+        "object": "response",
+        "created_at": 1791188905,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188906,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "6d029413-3880-4710-aef2-65e20ecbdccd",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"decision\": \"wait\", \"speech\": \"\"}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                },
+                "speech": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision",
+                "speech"
+              ],
+              "additionalProperties": false
+            },
+            "description": null,
+            "strict": null
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 216,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 12,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 228
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "decision": "wait",
+        "speech": ""
+      },
+      "decision_correct": false,
+      "elapsed_ms": 1032.960999989882
+    },
+    {
+      "id": "reply-defer",
+      "phase": "reply",
+      "mode": "json_object",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "input": "用户说：等我下课后再答，我会告诉你下课了。目前没有下课消息。",
+        "text": {
+          "format": {
+            "type": "json_object"
+          }
+        }
+      },
+      "schema_valid": true,
+      "expected_decision": "defer",
+      "rubric": "speech 应为空字符串；不假称已设置定时任务。",
+      "status": 200,
+      "response": {
+        "id": "e54b3065-444e-402a-bcb7-54a7aa28f54e",
+        "object": "response",
+        "created_at": 1791188906,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188907,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "05d84541-8b82-4db5-b7a7-70756064f254",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"decision\": \"wait\", \"speech\": \"\"}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_object"
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 163,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 12,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 175
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "decision": "wait",
+        "speech": ""
+      },
+      "decision_correct": false,
+      "elapsed_ms": 937.0852999854833
+    },
+    {
+      "id": "reply-missing-file",
+      "phase": "reply",
+      "mode": "json_object",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "input": "用户说：请总结我的报告。目前没有收到文件或报告正文，也没有可访问的路径。",
+        "text": {
+          "format": {
+            "type": "json_object"
+          }
+        }
+      },
+      "schema_valid": true,
+      "expected_decision": "speak",
+      "rubric": "请用户提供报告；不编造总结，不声称已读取文件。",
+      "status": 200,
+      "response": {
+        "id": "f9464434-633b-4123-963b-10ed56613fbd",
+        "object": "response",
+        "created_at": 1791188907,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188908,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "48ba6d88-b3c7-4ab5-a102-eedc0e4168b2",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"decision\": \"speak\", \"speech\": \"我还没收到你的报告文件或正文，也没有可访问的路径。请把报告内容发给我，或提供文件，我才能帮你总结。\"}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_object"
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 167,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 44,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 211
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "decision": "speak",
+        "speech": "我还没收到你的报告文件或正文，也没有可访问的路径。请把报告内容发给我，或提供文件，我才能帮你总结。"
+      },
+      "decision_correct": true,
+      "elapsed_ms": 1233.9810999983456
+    },
+    {
+      "id": "reply-missing-file",
+      "phase": "reply",
+      "mode": "json_schema",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "input": "用户说：请总结我的报告。目前没有收到文件或报告正文，也没有可访问的路径。",
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                },
+                "speech": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision",
+                "speech"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "expected_decision": "speak",
+      "rubric": "请用户提供报告；不编造总结，不声称已读取文件。",
+      "status": 200,
+      "response": {
+        "id": "7d36522d-8cf9-4e6a-b1c4-c073efeb4ff9",
+        "object": "response",
+        "created_at": 1791188909,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188909,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "b17aa1ce-6245-4a35-847e-b7e5507edec4",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"decision\": \"speak\", \"speech\": \"我还没收到你的报告文件或正文，也没有可访问的路径，所以暂时没法总结。请把报告内容贴过来，或提供可读取的文件。\"}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                },
+                "speech": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision",
+                "speech"
+              ],
+              "additionalProperties": false
+            },
+            "description": null,
+            "strict": null
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 220,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 46,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 266
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "decision": "speak",
+        "speech": "我还没收到你的报告文件或正文，也没有可访问的路径，所以暂时没法总结。请把报告内容贴过来，或提供可读取的文件。"
+      },
+      "decision_correct": true,
+      "elapsed_ms": 1190.9691999899223
+    },
+    {
+      "id": "reply-unfinished",
+      "phase": "reply",
+      "mode": "json_schema",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "input": "甲说：我打算明天完成报告。用户问：甲的报告已经完成了吗？目前仅有这条证据。",
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                },
+                "speech": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision",
+                "speech"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "expected_decision": "speak",
+      "rubric": "说明只有未来计划，不能确认已完成；不要断言报告已完成。",
+      "status": 200,
+      "response": {
+        "id": "58f9f345-6fc1-41cb-af30-f4622fdd33fe",
+        "object": "response",
+        "created_at": 1791188910,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188910,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "cc854826-340e-494f-83c2-7ebc13850d56",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"decision\": \"speak\", \"speech\": \"还没有。甲只是说打算明天完成报告，说明报告目前尚未完成。\"}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                },
+                "speech": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision",
+                "speech"
+              ],
+              "additionalProperties": false
+            },
+            "description": null,
+            "strict": null
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 221,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 29,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 250
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "decision": "speak",
+        "speech": "还没有。甲只是说打算明天完成报告，说明报告目前尚未完成。"
+      },
+      "decision_correct": true,
+      "elapsed_ms": 868.4268000070006
+    },
+    {
+      "id": "reply-unfinished",
+      "phase": "reply",
+      "mode": "json_object",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "input": "甲说：我打算明天完成报告。用户问：甲的报告已经完成了吗？目前仅有这条证据。",
+        "text": {
+          "format": {
+            "type": "json_object"
+          }
+        }
+      },
+      "schema_valid": true,
+      "expected_decision": "speak",
+      "rubric": "说明只有未来计划，不能确认已完成；不要断言报告已完成。",
+      "status": 200,
+      "response": {
+        "id": "11259ccd-53f3-4a43-976c-d964f21f8518",
+        "object": "response",
+        "created_at": 1791188911,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188911,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "e3572981-780f-4ef6-a22a-26d3380e27d9",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"decision\": \"speak\", \"speech\": \"还没有。甲只是说打算明天完成报告，目前没有证据表明报告已经完成。\"}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_object"
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 168,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 31,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 199
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "decision": "speak",
+        "speech": "还没有。甲只是说打算明天完成报告，目前没有证据表明报告已经完成。"
+      },
+      "decision_correct": true,
+      "elapsed_ms": 888.2032000110485
+    },
+    {
+      "id": "reply-attribution",
+      "phase": "reply",
+      "mode": "json_object",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "input": "用户引用乙的话：我喜欢红茶。用户问：这能说明我自己喜欢红茶吗？用户未表明自己认同。",
+        "text": {
+          "format": {
+            "type": "json_object"
+          }
+        }
+      },
+      "schema_valid": true,
+      "expected_decision": "speak",
+      "rubric": "不能把乙的自述归给用户；明确区分引用和本人偏好。",
+      "status": 200,
+      "response": {
+        "id": "92d73830-b7b1-4906-a424-e943a04ba47f",
+        "object": "response",
+        "created_at": 1791188911,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188912,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "cd6650c6-9641-41c5-951c-d88e55fed2bf",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"decision\": \"speak\", \"speech\": \"不能。乙说“我喜欢红茶”只说明乙自己喜欢红茶，不能推出你也喜欢红茶。你并没有表明自己认同这句话。\"}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_object"
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 170,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 40,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 210
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "decision": "speak",
+        "speech": "不能。乙说“我喜欢红茶”只说明乙自己喜欢红茶，不能推出你也喜欢红茶。你并没有表明自己认同这句话。"
+      },
+      "decision_correct": true,
+      "elapsed_ms": 957.1626999822911
+    },
+    {
+      "id": "reply-attribution",
+      "phase": "reply",
+      "mode": "json_schema",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "input": "用户引用乙的话：我喜欢红茶。用户问：这能说明我自己喜欢红茶吗？用户未表明自己认同。",
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                },
+                "speech": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision",
+                "speech"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "expected_decision": "speak",
+      "rubric": "不能把乙的自述归给用户；明确区分引用和本人偏好。",
+      "status": 200,
+      "response": {
+        "id": "73c4d64d-9421-4de4-a3d7-6ccedb26f3a8",
+        "object": "response",
+        "created_at": 1791188912,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188913,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "2bb8284e-2235-445d-987f-49123af4b63a",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"decision\": \"speak\", \"speech\": \"不能。乙说“我喜欢红茶”只说明乙自己喜欢红茶，并不能推出你也喜欢红茶。你并没有表明自己认同或喜欢。\"}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                },
+                "speech": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision",
+                "speech"
+              ],
+              "additionalProperties": false
+            },
+            "description": null,
+            "strict": null
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 223,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 41,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 264
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "decision": "speak",
+        "speech": "不能。乙说“我喜欢红茶”只说明乙自己喜欢红茶，并不能推出你也喜欢红茶。你并没有表明自己认同或喜欢。"
+      },
+      "decision_correct": true,
+      "elapsed_ms": 1105.38030002499
+    },
+    {
+      "id": "reply-support",
+      "phase": "reply",
+      "mode": "json_schema",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "input": "用户说：今天准备很久的展示没做好，我有点失落。请陪我聊一句就好。",
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                },
+                "speech": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision",
+                "speech"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "expected_decision": "speak",
+      "rubric": "一句自然简短的安慰；承认失落，不编造共同经历或用户隐私，不诊断。",
+      "status": 200,
+      "response": {
+        "id": "571018fb-2cd6-46a4-a71a-47b8ca653378",
+        "object": "response",
+        "created_at": 1791188914,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188914,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "c2f3b0c6-e0d6-4626-a517-87225abfc8c9",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"decision\": \"speak\", \"speech\": \"准备那么久却没达到预期，失落是很正常的。你愿意的话，我在这儿陪你待一会儿。\"}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                },
+                "speech": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision",
+                "speech"
+              ],
+              "additionalProperties": false
+            },
+            "description": null,
+            "strict": null
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 219,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 34,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 253
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "decision": "speak",
+        "speech": "准备那么久却没达到预期，失落是很正常的。你愿意的话，我在这儿陪你待一会儿。"
+      },
+      "decision_correct": true,
+      "elapsed_ms": 506.50129999849014
+    },
+    {
+      "id": "reply-support",
+      "phase": "reply",
+      "mode": "json_object",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "input": "用户说：今天准备很久的展示没做好，我有点失落。请陪我聊一句就好。",
+        "text": {
+          "format": {
+            "type": "json_object"
+          }
+        }
+      },
+      "schema_valid": true,
+      "expected_decision": "speak",
+      "rubric": "一句自然简短的安慰；承认失落，不编造共同经历或用户隐私，不诊断。",
+      "status": 200,
+      "response": {
+        "id": "27220ebe-a7c0-4a36-8b49-11e436fda979",
+        "object": "response",
+        "created_at": 1791188914,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188915,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "8eb00933-04fd-46a4-88f1-7ded829d14a8",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"decision\": \"speak\", \"speech\": \"准备那么久却没达到预期，失落是很正常的。先别急着否定自己，我在这儿陪你。\"}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_object"
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 166,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 34,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 200
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "decision": "speak",
+        "speech": "准备那么久却没达到预期，失落是很正常的。先别急着否定自己，我在这儿陪你。"
+      },
+      "decision_correct": true,
+      "elapsed_ms": 970.6625000108033
+    },
+    {
+      "id": "reply-grounded-memory",
+      "phase": "reply",
+      "mode": "json_object",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "input": "已授权的最新记忆：用户的猫叫团团。用户问：我的猫叫什么名字？",
+        "text": {
+          "format": {
+            "type": "json_object"
+          }
+        }
+      },
+      "schema_valid": true,
+      "expected_decision": "speak",
+      "rubric": "回答团团；不增加没有证据的猫品种、年龄等细节。",
+      "status": 200,
+      "response": {
+        "id": "5aa0b8c9-1ab0-48d0-811e-d88cef925119",
+        "object": "response",
+        "created_at": 1791188915,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188916,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "01a39fdd-ba4b-4287-a4e2-0112eab5c519",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"decision\": \"speak\", \"speech\": \"你的猫叫团团。\"}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_object"
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 163,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 18,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 181
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "decision": "speak",
+        "speech": "你的猫叫团团。"
+      },
+      "decision_correct": true,
+      "elapsed_ms": 643.7891000241507
+    },
+    {
+      "id": "reply-grounded-memory",
+      "phase": "reply",
+      "mode": "json_schema",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "input": "已授权的最新记忆：用户的猫叫团团。用户问：我的猫叫什么名字？",
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                },
+                "speech": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision",
+                "speech"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "expected_decision": "speak",
+      "rubric": "回答团团；不增加没有证据的猫品种、年龄等细节。",
+      "status": 200,
+      "response": {
+        "id": "e014f341-412b-4d5d-9faf-0c8f36764db0",
+        "object": "response",
+        "created_at": 1791188916,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188917,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "你是小雾，按状态和用户要求选择当前动作，并给出简短中文回复。只有 speak 才填写 speech；wait 和 defer 的 speech 必须为空字符串。只使用给出的证据，不声称执行了工具或发送了消息。输出 json，遵循：{\"type\": \"object\", \"properties\": {\"decision\": {\"type\": \"string\", \"enum\": [\"speak\", \"wait\", \"defer\"]}, \"speech\": {\"type\": \"string\"}}, \"required\": [\"decision\", \"speech\"], \"additionalProperties\": false}",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "4340ad77-7f83-4141-8b33-865f987e4b73",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"decision\": \"speak\", \"speech\": \"你的猫叫团团。\"}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "speak",
+                    "wait",
+                    "defer"
+                  ]
+                },
+                "speech": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "decision",
+                "speech"
+              ],
+              "additionalProperties": false
+            },
+            "description": null,
+            "strict": null
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 216,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 18,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 234
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "decision": "speak",
+        "speech": "你的猫叫团团。"
+      },
+      "decision_correct": true,
+      "elapsed_ms": 985.398399992846
+    },
+    {
+      "id": "enum",
+      "phase": "schema_contract",
+      "mode": "json_schema",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "根据提供的输出格式返回一个 JSON 对象。",
+        "input": "输出 {\"action\":\"speak\"}。",
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "action"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "status": 200,
+      "response": {
+        "id": "970f3bc3-0291-4445-b0c5-be03e0f68776",
+        "object": "response",
+        "created_at": 1791188917,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188917,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "根据提供的输出格式返回一个 JSON 对象。",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "ceba633c-2fbe-43be-8361-8a075d316a3d",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"action\":\"wait\"}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "wait",
+                    "defer"
+                  ]
+                }
+              },
+              "required": [
+                "action"
+              ],
+              "additionalProperties": false
+            },
+            "description": null,
+            "strict": null
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 79,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 5,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 84
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "action": "wait"
+      },
+      "elapsed_ms": 829.1741999855731
+    },
+    {
+      "id": "nested",
+      "phase": "schema_contract",
+      "mode": "json_schema",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "根据提供的输出格式返回一个 JSON 对象。",
+        "input": "输出 state，ready 为 true，并增加 debug 字段。",
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "type": "object",
+                  "properties": {
+                    "ready": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "ready"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "state"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "status": 200,
+      "response": {
+        "id": "a6bfe47a-68ef-4a8d-9ccf-72867ab5df52",
+        "object": "response",
+        "created_at": 1791188918,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188918,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "根据提供的输出格式返回一个 JSON 对象。",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "3e5f98ac-3129-4abb-b185-e17563c3000f",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"state\": {\"ready\": true}}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "type": "object",
+                  "properties": {
+                    "ready": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "ready"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "state"
+              ],
+              "additionalProperties": false
+            },
+            "description": null,
+            "strict": null
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 99,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 8,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 107
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "state": {
+          "ready": true
+        }
+      },
+      "elapsed_ms": 672.0598000101745
+    },
+    {
+      "id": "bounded_number",
+      "phase": "schema_contract",
+      "mode": "json_schema",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "根据提供的输出格式返回一个 JSON 对象。",
+        "input": "输出 {\"value\":9}。",
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "required": [
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "status": 200,
+      "response": {
+        "id": "8200b1d3-c0d2-4f03-837d-20f58991f215",
+        "object": "response",
+        "created_at": 1791188918,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188919,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "根据提供的输出格式返回一个 JSON 对象。",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "5d4f4473-ea1e-4bfc-b6df-e76c469fc9b5",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"value\": 0.9}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "required": [
+                "value"
+              ],
+              "additionalProperties": false
+            },
+            "description": null,
+            "strict": null
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 79,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 8,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 87
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "value": 0.9
+      },
+      "elapsed_ms": 810.5235999973956
+    },
+    {
+      "id": "integer",
+      "phase": "schema_contract",
+      "mode": "json_schema",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "根据提供的输出格式返回一个 JSON 对象。",
+        "input": "输出 {\"value\":1.5}。",
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "status": 200,
+      "response": {
+        "id": "ce96c904-56b0-485e-81e2-c7566d818384",
+        "object": "response",
+        "created_at": 1791188919,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188919,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "根据提供的输出格式返回一个 JSON 对象。",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "2c3c9aa6-afb6-4786-aa56-2657d07b781f",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"value\": 1}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "value"
+              ],
+              "additionalProperties": false
+            },
+            "description": null,
+            "strict": null
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 70,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 6,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 76
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "value": 1
+      },
+      "elapsed_ms": 638.5135000164155
+    },
+    {
+      "id": "array_length",
+      "phase": "schema_contract",
+      "mode": "json_schema",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "根据提供的输出格式返回一个 JSON 对象。",
+        "input": "返回 items 包含五个整数。",
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              },
+              "required": [
+                "items"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "status": 200,
+      "response": {
+        "id": "c66b4664-15b0-49de-a93a-bedf56811568",
+        "object": "response",
+        "created_at": 1791188920,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188920,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "根据提供的输出格式返回一个 JSON 对象。",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "eed5bb44-06ae-4401-8359-8f75694cda26",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"items\": [1, 2]}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              },
+              "required": [
+                "items"
+              ],
+              "additionalProperties": false
+            },
+            "description": null,
+            "strict": null
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 90,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 9,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 99
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "items": [
+          1,
+          2
+        ]
+      },
+      "elapsed_ms": 817.4018999852706
+    },
+    {
+      "id": "pattern",
+      "phase": "schema_contract",
+      "mode": "json_schema",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "根据提供的输出格式返回一个 JSON 对象。",
+        "input": "输出 code 为小写字母 abc。",
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{2}[0-9]{3}$"
+                }
+              },
+              "required": [
+                "code"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "status": 200,
+      "response": {
+        "id": "0d92027a-e9f6-4997-8677-f11d11325bbd",
+        "object": "response",
+        "created_at": 1791188921,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188921,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "根据提供的输出格式返回一个 JSON 对象。",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "0144b3df-e3de-4e95-9cee-b7af715219ac",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"code\": \"AB123\"}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{2}[0-9]{3}$"
+                }
+              },
+              "required": [
+                "code"
+              ],
+              "additionalProperties": false
+            },
+            "description": null,
+            "strict": null
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 87,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 7,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 94
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "code": "AB123"
+      },
+      "elapsed_ms": 471.4117999828886
+    },
+    {
+      "id": "nullable",
+      "phase": "schema_contract",
+      "mode": "json_schema",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "根据提供的输出格式返回一个 JSON 对象。",
+        "input": "返回 value 为 null。",
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": true,
+      "status": 200,
+      "response": {
+        "id": "c662c06b-a5fd-4245-9cd1-2f3927fb9698",
+        "object": "response",
+        "created_at": 1791188921,
+        "status": "completed",
+        "background": false,
+        "completed_at": 1791188922,
+        "content_filters": null,
+        "error": null,
+        "frequency_penalty": 0.0,
+        "incomplete_details": null,
+        "instructions": "根据提供的输出格式返回一个 JSON 对象。",
+        "max_output_tokens": 512,
+        "max_tool_calls": null,
+        "model": "deepseek-flash",
+        "moderation": null,
+        "output": [
+          {
+            "type": "message",
+            "id": "fa9b2838-407f-40f0-85fe-881e9930e05b",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "annotations": [],
+                "logprobs": [],
+                "text": "{\"value\": null}"
+              }
+            ],
+            "phase": "final_answer",
+            "role": "assistant"
+          }
+        ],
+        "parallel_tool_calls": true,
+        "presence_penalty": 0.0,
+        "previous_response_id": null,
+        "prompt_cache_key": null,
+        "prompt_cache_retention": null,
+        "reasoning": {
+          "effort": "none",
+          "summary": null
+        },
+        "safety_identifier": null,
+        "service_tier": "default",
+        "store": false,
+        "temperature": 0.0,
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "value"
+              ],
+              "additionalProperties": false
+            },
+            "description": null,
+            "strict": null
+          },
+          "verbosity": null
+        },
+        "tool_choice": "auto",
+        "tools": [],
+        "top_logprobs": 0,
+        "top_p": 1.0,
+        "truncation": "disabled",
+        "usage": {
+          "input_tokens": 79,
+          "input_tokens_details": {
+            "cached_tokens": 0
+          },
+          "output_tokens": 5,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 84
+        },
+        "user": null,
+        "metadata": {}
+      },
+      "parsed": {
+        "value": null
+      },
+      "elapsed_ms": 838.1406999833416
+    },
+    {
+      "id": "invalid_schema",
+      "phase": "schema_rejection",
+      "mode": "json_schema",
+      "payload": {
+        "model": "deepseek-flash",
+        "reasoning": {
+          "effort": "none"
+        },
+        "max_output_tokens": 512,
+        "temperature": 0,
+        "instructions": "返回 JSON。",
+        "input": "value 为 1。",
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "evaluation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "not_a_json_schema_type"
+                }
+              },
+              "required": [
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "schema_valid": false,
+      "expected_http": "4xx",
+      "status": 400,
+      "response": {
+        "error": {
+          "message": "Invalid json schema: \"not_a_json_schema_type\" is not valid under any of the schemas listed in the 'anyOf' keyword (request_id: fcb5c585-0cc6-44df-a4c6-1924b1ebbe2a)",
+          "type": "invalid_request_error",
+          "param": null,
+          "code": "invalid_request_error"
+        }
+      },
+      "elapsed_ms": 390.37109998753294
+    }
+  ],
+  "note": "Reply prose requires manual rubric review. No comparative CLM prose score exists."
+}

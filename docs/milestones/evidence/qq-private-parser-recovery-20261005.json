@@ -1,0 +1,265 @@
+{
+  "recorded_at": "2026-10-05T14:10:22.764530+00:00",
+  "plan": {
+    "release_id": "20261005-qq-parser-recovery-v2",
+    "previous_release": "20261005-refactor-130601",
+    "configs": {
+      "gui-settings.json": {
+        "before_sha256": "ce2cefebdd8c03b3e7031f44e73a82c33036094f07d9695241f91766925dd4fd",
+        "after_sha256": "1d7b252da5896dbffc951f5b87a1a7f22ce644db9154d53a8f1c59a9cf99691b"
+      },
+      "direct.json": {
+        "before_sha256": "290678e57e6b1a6429ac2bf9c9fa6c8175ba1b76efe40a07f0fbfd1aeccf1a14",
+        "after_sha256": "93289acc347e7664c2ae1b184a828d32ec8dcd5620ad6c3af3e687dddb42408a"
+      }
+    },
+    "files": [
+      {
+        "path": "harness/qq/decision.py",
+        "before_sha256": "7760fbee225f229e0067aa38ea183f6cc2f34e8302c8cd94e5778ea50f4024b9",
+        "after_sha256": "70d643c462c63d0d1e735630efe50ba2b74ae6ab9365cf4061631b3ab79c3b0b"
+      },
+      {
+        "path": "tests/test_qq_decision.py",
+        "before_sha256": "906865bc786ee7c0f53acfe779be83d828d04990936487334015be7d6d3322f4",
+        "after_sha256": "adae78195fb6c2814600f6c0d720e2eac0b32e8afbad148576535aec3c7f41cb"
+      },
+      {
+        "path": "tests/test_qq_private_contracts.py",
+        "before_sha256": "feb746e60eddf4bd5edbd53160caf63673e35a26b95dc270c82c72596393eb94",
+        "after_sha256": "63116c8326b5aaa525b39b354f65e8f66d31bfecf6d84a192dea9ede8c788c94"
+      },
+      {
+        "path": "tests/test_qq_prepared_turn.py",
+        "before_sha256": "94968d64cd4bd2ced989fbd0977c99183bb32afe7c6f0dd763b1be306cea005f",
+        "after_sha256": "6aa180d9414252b5d2ae269e0103c863a206141348d09b6d9e7a95755f5b477b"
+      },
+      {
+        "path": "harness/qq/memory.py",
+        "before_sha256": "c258ae93cebb4ece2438c18583697c96adc99dc11a5abac40b7d4927e7efdf04",
+        "after_sha256": "d6f43213cf5292008502c0eb352bae6d3ddc32dfd032aaa3c942e4bd454b9122"
+      },
+      {
+        "path": "harness/memory/shared.py",
+        "before_sha256": "c5f6a4387c50ef617ceddedc4a9d4be2de61b755c90b506940aa7bf446930f2c",
+        "after_sha256": "802163b57ad37634e8f4ee869425ea9491832ad1228258c0de3cbaaeb4a28b32"
+      },
+      {
+        "path": "harness/cognitive/shared_memory.py",
+        "before_sha256": "1d3fdee8fa43e43f9bf3904a38c3df0807e0aa72c6d8ce62bf6a878b025c0cde",
+        "after_sha256": "d4c729960377ca581df47566619dc599b3d9506350f05c62f9a81b03ff226632"
+      },
+      {
+        "path": "tests/test_shared_memory.py",
+        "before_sha256": "6071d39a3a8f4b23240f6c7fcbb541a3b8e55ca155cf7b2984515bbc16592b80",
+        "after_sha256": "03e6832b5a740677a38b29f3e8d832a2d47bf986a72993ed78b627444874a224"
+      },
+      {
+        "path": "tests/test_qq_protocol_memory.py",
+        "before_sha256": "935017033fc4c0db7beb86f3317f7de5944994c3651696d6bcd2139bb0d0aefa",
+        "after_sha256": "3ea032b06f44e0d1516fada359b1368e24935d80e48ba21f3ff4421b3f13f135"
+      }
+    ]
+  },
+  "activation": {
+    "phase": "passed",
+    "release": "20261005-qq-parser-recovery-v2",
+    "recorded_at": 1791209404.8645096,
+    "previous_release": "20261005-refactor-130601"
+  },
+  "tests": {
+    "phase": "passed",
+    "release_id": "20261005-qq-parser-recovery-v2",
+    "regression_summary": "391 passed, 2 warnings in 13.48s"
+  },
+  "benchmark": {
+    "before": {
+      "label": "before",
+      "qq_seconds": 8.639747264001926,
+      "local_seconds": 0.015708790000644512,
+      "local_events": 18,
+      "local_created": 0,
+      "record_count": 13884,
+      "import_report": {
+        "success": true,
+        "selected_count": 13857,
+        "created_count": 0,
+        "existing_count": 13857,
+        "excluded_count": 0,
+        "counts_by_kind": {
+          "qq_profile": 6488,
+          "qq_observation": 6545,
+          "qq_delivery": 372,
+          "qq_segment_delivery": 452
+        },
+        "issues": [],
+        "source_readonly": true,
+        "partial_import": false,
+        "has_more": false
+      },
+      "import_sources_digest": "16d9297fbf8ccc0722ae1b1ba8bcea8b9daa1531d1c8ec3cb732535a4d568c35"
+    },
+    "after": {
+      "label": "after",
+      "qq_seconds": 4.477791409000929,
+      "local_seconds": 0.0037603809978463687,
+      "local_events": 18,
+      "local_created": 0,
+      "record_count": 13884,
+      "import_report": {
+        "success": true,
+        "selected_count": 13857,
+        "created_count": 0,
+        "existing_count": 13857,
+        "excluded_count": 0,
+        "counts_by_kind": {
+          "qq_profile": 6488,
+          "qq_observation": 6545,
+          "qq_delivery": 372,
+          "qq_segment_delivery": 452
+        },
+        "issues": [],
+        "source_readonly": true,
+        "partial_import": false,
+        "has_more": false
+      },
+      "import_sources_digest": "16d9297fbf8ccc0722ae1b1ba8bcea8b9daa1531d1c8ec3cb732535a4d568c35"
+    }
+  },
+  "probe": {
+    "release": "20261005-qq-parser-recovery-v2",
+    "seconds": 8.490852638002252,
+    "decision": {
+      "decision_id": "qq-decision:14fa9a4b8b5b431f84c01ea9fa969c89",
+      "created_at": "2026-10-05T13:59:51.208714Z",
+      "reply": "在的，能看见",
+      "model": "qwen3.8-27b",
+      "persona_version": "misty-digitalbody-0.2.1",
+      "automatic_send": false,
+      "outcome": "ready",
+      "completed_at": "2026-10-05T13:59:58.746483Z",
+      "timings_ms": {
+        "gate": 6548.122,
+        "persona": 866.639,
+        "total": 8466.691
+      },
+      "model_call_counts": {
+        "gate": 1,
+        "persona": 1
+      },
+      "trace_id": "qq-trace:e62ca205596e4e009b2a199832d5be3a",
+      "error_type": null
+    },
+    "isolated": true,
+    "qq_messages_sent": 0
+  },
+  "health": {
+    "release": "20261005-qq-parser-recovery-v2",
+    "services": {
+      "cognitive": {
+        "MainPID": "132973",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "MainPID": "133012",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "MainPID": "133049",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "MainPID": "133579",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "MainPID": "133040",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq_direct": {
+        "MainPID": "133605",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-05T14:10:18.275969Z",
+        "last_journal_append_at": "2026-10-05T14:10:21.577802Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "pending_actions": 0,
+      "pending_events": 0
+    },
+    "qq_direct": {
+      "running": true,
+      "connected": true,
+      "repository_root": "/opt/neuralcloud/releases/20261005-qq-parser-recovery-v2",
+      "heartbeat_at": "2026-10-05T14:10:20.908690+00:00"
+    },
+    "private_policy": {
+      "qq_context_projection": "compact",
+      "qq_body_pipeline": "direct",
+      "qq_history_selection": "shadow",
+      "qq_gate_history_soft_characters": 24000,
+      "qq_body_history_soft_characters": 64000,
+      "qq_web_policy": "legacy",
+      "qq_reply_scheduler": "shadow",
+      "qq_stage_budgets_enabled": false,
+      "qq_gate_timeout_seconds": 15.0,
+      "qq_web_timeout_seconds": 10.0,
+      "qq_body_reserve_seconds": 10.0,
+      "qq_delivery_reserve_seconds": 3.0,
+      "cognitive_incremental_persistence_enabled": true,
+      "qq_latency_conversations": [
+        "2015188508/1044946257",
+        "2015188508/1060979317",
+        "2015188508/private:2015188508:2285027817"
+      ]
+    },
+    "backup": "/var/backups/neuralcloud/qq-parser-recovery-20261005",
+    "config_hashes": {
+      "gui-settings.json": "1d7b252da5896dbffc951f5b87a1a7f22ce644db9154d53a8f1c59a9cf99691b",
+      "direct.json": "93289acc347e7664c2ae1b184a828d32ec8dcd5620ad6c3af3e687dddb42408a"
+    },
+    "verified_process_release": true
+  },
+  "live_incident_receipts": 1,
+  "probe_decisions_in_live_db": 0,
+  "limitations": [
+    "The real model probe used copied QQ history and the current persona with in-memory cognitive state; it did not exercise full live runtime state or QQ delivery.",
+    "Benchmark timings are isolated runs, not a production latency percentile."
+  ],
+  "private_evidence_directory": "/home/qiuyu/.config/neuralcloud/qq-parser-recovery-20261005",
+  "deployment_retry": {
+    "phase": "passed",
+    "first_attempt": "Post-start runtime status read exceeded a single 5-second timeout; original release/config were restored.",
+    "change": "Bounded retries of the final health read, 30 seconds per request, 120 seconds overall."
+  }
+}

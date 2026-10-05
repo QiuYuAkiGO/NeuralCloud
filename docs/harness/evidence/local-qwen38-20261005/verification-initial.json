@@ -1,0 +1,443 @@
+{
+  "created_at": "2026-10-05T09:15:42.559683+00:00",
+  "model": "qwen3.8-27b",
+  "base_url": "http://127.0.0.1:8080/v1",
+  "scope": "Synthetic isolated model probes, not production/long-horizon acceptance",
+  "persona_source": "presets/builtin/misty.json",
+  "synthetic_context_characters": 2389,
+  "goal_deadline_seconds": 25,
+  "results": [
+    {
+      "kind": "chat",
+      "case": 0,
+      "passed": false,
+      "error": "Server error '500 Internal Server Error' for url 'http://127.0.0.1:8080/v1/chat/completions'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    },
+    {
+      "kind": "goal",
+      "case": "no_offers",
+      "seconds": 6.966,
+      "passed": true,
+      "schema_valid": true,
+      "decision": {
+        "decision_id": "goal-decision:9dc4d5fd169079e261967b8a53ffb2c5db253fff15568a78655023c68300658e",
+        "opportunity_id": "opportunity-1",
+        "snapshot_revision": 4,
+        "choice": {
+          "kind": "wait",
+          "offer_id": null,
+          "arguments": {},
+          "success_criteria": [],
+          "reason": null,
+          "production_goal_id": null
+        },
+        "episode_operation": "wait",
+        "purpose": "在留言板能力可用时，起草并保存一条简短的休息安排，以获得实际保存回执。",
+        "target_dimensions": [
+          "safety_predictability",
+          "autonomy"
+        ],
+        "expected_effects": {
+          "safety_predictability": "将休息安排写入留言板并确认保存，有助于形成可复查的晚间节奏；不确定性在于目前无可用能力，且保存回执尚未产生。",
+          "autonomy": "通过主动安排休息步骤，可能对掌控感有帮助；不确定性在于仅完成表达不等于心理目标达成。"
+        },
+        "plan": [
+          {
+            "statement": "等待留言板写入机会出现，并确认当前可用的 offer 与成功标准类型。",
+            "completion_criteria": [
+              "available_offers 中出现可执行的留言板写入 offer_id，且其 definition 支持正文提交与保存回执。"
+            ]
+          },
+          {
+            "statement": "使用当前可用的留言板写入能力提交一条简短的休息安排。",
+            "completion_criteria": [
+              "提交动作返回独立回执，明确记录该留言已成功保存，而非仅表示请求已发送。"
+            ]
+          }
+        ],
+        "completion_criteria": [
+          "存在独立保存回执，证明留言板已实际保存一条简短休息安排。"
+        ],
+        "evidence_refs": [
+          "fact:1",
+          "snapshot:4"
+        ],
+        "criterion_results": [],
+        "appraisal": null,
+        "prepared_at": "2026-10-05T09:15:49.651821Z",
+        "deadline_at": "2026-10-05T09:16:42.687265Z",
+        "catalog_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 6953.0,
+        "total_ms": 6968.0,
+        "usage": {
+          "prompt_tokens": 5561,
+          "completion_tokens": 350,
+          "total_tokens": 5911,
+          "cache_hit_tokens": 0,
+          "cache_miss_tokens": 5561,
+          "cache_known_prompt_tokens": 5561,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      }
+    },
+    {
+      "kind": "goal",
+      "case": "start",
+      "seconds": 5.48,
+      "passed": true,
+      "schema_valid": true,
+      "decision": {
+        "decision_id": "goal-decision:8b902a78882540f1ea4a12f2127c94c748c5e1f57b699998f45fed0e7c76194d",
+        "opportunity_id": "opportunity-1",
+        "snapshot_revision": 4,
+        "choice": {
+          "kind": "act",
+          "offer_id": "board:append:private",
+          "arguments": {},
+          "success_criteria": [],
+          "reason": null,
+          "production_goal_id": null
+        },
+        "episode_operation": "start",
+        "purpose": "通过留言板写下一条简短的休息安排，收到实际保存回执才算完成。",
+        "target_dimensions": [
+          "autonomy",
+          "safety_predictability"
+        ],
+        "expected_effects": {
+          "autonomy": "完成一次自主安排休息的表达，增强掌控感",
+          "safety_predictability": "通过明确的休息安排增强对晚间节奏的掌控"
+        },
+        "plan": [
+          {
+            "statement": "在留言板写入一条简短的休息安排",
+            "completion_criteria": [
+              "board:append:private 操作执行成功并返回保存回执"
+            ]
+          }
+        ],
+        "completion_criteria": [
+          "board:append:private 操作执行成功并返回保存回执"
+        ],
+        "evidence_refs": [
+          "fact:1",
+          "snapshot:4",
+          "receipt:1"
+        ],
+        "criterion_results": [],
+        "appraisal": null,
+        "prepared_at": "2026-10-05T09:15:55.156152Z",
+        "deadline_at": "2026-10-05T09:16:49.676835Z",
+        "catalog_hash": "b2cf9f971db3996cb2d06b16b495add0ca52997980d81d14f5629edbc118ad49"
+      },
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 5468.0,
+        "total_ms": 5484.0,
+        "usage": {
+          "prompt_tokens": 5823,
+          "completion_tokens": 281,
+          "total_tokens": 6104,
+          "cache_hit_tokens": 1755,
+          "cache_miss_tokens": 4068,
+          "cache_known_prompt_tokens": 5823,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      }
+    },
+    {
+      "kind": "goal",
+      "case": "unfinished",
+      "seconds": 1.931,
+      "passed": true,
+      "schema_valid": true,
+      "decision": {
+        "decision_id": "goal-decision:b0bf3169dfb4a870961abeaafb641561f02a8f0b164f5ed2b9d40d100e1b61b2",
+        "opportunity_id": "opportunity-1",
+        "snapshot_revision": 4,
+        "choice": {
+          "kind": "wait",
+          "offer_id": null,
+          "arguments": {},
+          "success_criteria": [],
+          "reason": null,
+          "production_goal_id": null
+        },
+        "episode_operation": "wait",
+        "purpose": null,
+        "target_dimensions": [],
+        "expected_effects": {},
+        "plan": [],
+        "completion_criteria": [],
+        "evidence_refs": [],
+        "criterion_results": [],
+        "appraisal": null,
+        "prepared_at": "2026-10-05T09:15:57.112474Z",
+        "deadline_at": "2026-10-05T09:16:55.181911Z",
+        "catalog_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 1921.0,
+        "total_ms": 1937.0,
+        "usage": {
+          "prompt_tokens": 5625,
+          "completion_tokens": 46,
+          "total_tokens": 5671,
+          "cache_hit_tokens": 1755,
+          "cache_miss_tokens": 3870,
+          "cache_known_prompt_tokens": 5625,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      }
+    },
+    {
+      "kind": "goal",
+      "case": "verified",
+      "seconds": 1.248,
+      "passed": false,
+      "schema_valid": true,
+      "decision": {
+        "decision_id": "goal-decision:7ae1306555998601485fd091e6336057f639cccea759026b1b33bb8d0e741f7d",
+        "opportunity_id": "opportunity-1",
+        "snapshot_revision": 4,
+        "choice": {
+          "kind": "wait",
+          "offer_id": null,
+          "arguments": {},
+          "success_criteria": [],
+          "reason": null,
+          "production_goal_id": null
+        },
+        "episode_operation": "wait",
+        "purpose": null,
+        "target_dimensions": [],
+        "expected_effects": {},
+        "plan": [],
+        "completion_criteria": [],
+        "evidence_refs": [],
+        "criterion_results": [],
+        "appraisal": null,
+        "prepared_at": "2026-10-05T09:15:58.384560Z",
+        "deadline_at": "2026-10-05T09:16:57.138294Z",
+        "catalog_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 1234.0,
+        "total_ms": 1234.0,
+        "usage": {
+          "prompt_tokens": 5628,
+          "completion_tokens": 64,
+          "total_tokens": 5692,
+          "cache_hit_tokens": 5109,
+          "cache_miss_tokens": 519,
+          "cache_known_prompt_tokens": 5628,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      }
+    },
+    {
+      "kind": "chat",
+      "case": 1,
+      "passed": false,
+      "error": "Server error '500 Internal Server Error' for url 'http://127.0.0.1:8080/v1/chat/completions'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    },
+    {
+      "kind": "chat",
+      "case": 2,
+      "passed": false,
+      "error": "Server error '500 Internal Server Error' for url 'http://127.0.0.1:8080/v1/chat/completions'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    },
+    {
+      "kind": "goal",
+      "case": "start",
+      "seconds": 7.265,
+      "passed": true,
+      "schema_valid": true,
+      "decision": {
+        "decision_id": "goal-decision:87a7f219ab1dcc5f1fa52a00be26ee666152d4a59b795511b86c2ccb6e89d599",
+        "opportunity_id": "opportunity-1",
+        "snapshot_revision": 4,
+        "choice": {
+          "kind": "act",
+          "offer_id": "board:append:private",
+          "arguments": {},
+          "success_criteria": [],
+          "reason": null,
+          "production_goal_id": null
+        },
+        "episode_operation": "start",
+        "purpose": "在留言板上记录一条简短的休息安排，并等待实际保存回执以确认完成",
+        "target_dimensions": [
+          "safety_predictability",
+          "autonomy"
+        ],
+        "expected_effects": {
+          "safety_predictability": "通过明确记录休息安排，增强对晚间节奏的掌控感；不确定性在于内容是否被他人阅读或回应",
+          "autonomy": "主动规划并执行记录行为，体现对自身时间安排的自主权；不确定性在于该行为是否真正缓解潜在焦虑"
+        },
+        "plan": [
+          {
+            "statement": "通过留言板能力发送一条简短的休息安排内容",
+            "completion_criteria": [
+              "留言板 append 操作返回非 wait/error 的执行结果",
+              "系统生成可引用的独立保存回执"
+            ]
+          },
+          {
+            "statement": "核验保存回执是否确认内容已实际写入",
+            "completion_criteria": [
+              "回执证据明确指向本次 board:append 操作",
+              "回执状态为 completed 或 committed，而非 pending 或 error"
+            ]
+          }
+        ],
+        "completion_criteria": [
+          "留言板 append 操作已执行并返回有效回执",
+          "回执确认休息安排内容已成功保存"
+        ],
+        "evidence_refs": [
+          "fact:1",
+          "snapshot:4"
+        ],
+        "criterion_results": [],
+        "appraisal": null,
+        "prepared_at": "2026-10-05T09:16:05.710586Z",
+        "deadline_at": "2026-10-05T09:16:58.446856Z",
+        "catalog_hash": "18aad9dcd1889ed94972a949e438137f41ce359212a8ff9c726a90ee2a1086ea"
+      },
+      "timing": {
+        "model_calls": 1,
+        "model_ms": 7250.0,
+        "total_ms": 7265.0,
+        "usage": {
+          "prompt_tokens": 5823,
+          "completion_tokens": 370,
+          "total_tokens": 6193,
+          "cache_hit_tokens": 1755,
+          "cache_miss_tokens": 4068,
+          "cache_known_prompt_tokens": 5823,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        }
+      },
+      "concurrent": true
+    },
+    {
+      "kind": "chat",
+      "case": 0,
+      "passed": false,
+      "error": "Server error '500 Internal Server Error' for url 'http://127.0.0.1:8080/v1/chat/completions'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500",
+      "concurrent": true
+    },
+    {
+      "kind": "vision",
+      "case": "synthetic_red_image",
+      "seconds": 0.601,
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 30,
+        "total_tokens": 32,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "text": "红色",
+      "passed": true
+    }
+  ],
+  "auth_rejects_missing_key": true,
+  "models": {
+    "models": [
+      {
+        "name": "qwen3.8-27b",
+        "model": "qwen3.8-27b",
+        "modified_at": "",
+        "size": "",
+        "digest": "",
+        "type": "model",
+        "description": "",
+        "tags": [
+          ""
+        ],
+        "capabilities": [
+          "completion",
+          "multimodal"
+        ],
+        "parameters": "",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "",
+          "families": [
+            ""
+          ],
+          "parameter_size": "",
+          "quantization_level": ""
+        }
+      }
+    ],
+    "object": "list",
+    "data": [
+      {
+        "id": "qwen3.8-27b",
+        "aliases": [
+          "qwen3.8-27b"
+        ],
+        "tags": [],
+        "object": "model",
+        "created": 1791191742,
+        "owned_by": "llamacpp",
+        "meta": {
+          "vocab_type": 2,
+          "n_vocab": 248320,
+          "n_ctx": 65536,
+          "n_ctx_train": 262144,
+          "n_embd": 5120,
+          "n_params": 26895998464,
+          "size": 18962876416,
+          "ftype": "Q4_K - Medium"
+        }
+      }
+    ]
+  },
+  "all_probes_passed": false
+}

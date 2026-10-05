@@ -1,0 +1,98 @@
+{
+  "version": "qq-vision-public-v1",
+  "created_date": "2026-10-06",
+  "scope": "public artwork and synthetic OCR; no actual QQ messages",
+  "sources": {
+    "ba_shiroko.webp": {
+      "url": "https://schaledb.com/images/student/collection/10010.webp",
+      "sha256": "d225df6cdd59258f53457e2380f10545127f4c90b80157cd35ffa04725eeb54f"
+    },
+    "ba_kazusa_band.webp": {
+      "url": "https://schaledb.com/images/student/collection/10091.webp",
+      "sha256": "f146c56db9aab6d9a033dd948d762bc1d31bebf0452485b58c3f5d8764c8fb03"
+    },
+    "ba_kikyou.webp": {
+      "url": "https://schaledb.com/images/student/collection/10083.webp",
+      "sha256": "797ba01890ddee86edde2cbd4d9d55e51a681e9ad899484139f851e2f14d3fc3"
+    },
+    "hsr_hunt_march7.png": {
+      "url": "https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/image/character_portrait/1224.png",
+      "sha256": "8cca80985a55730bc2569a78811b30130f59456e4c6c9634eac8846eb63cf60b"
+    },
+    "ocr_disk.png": {
+      "url": "synthetic: locally drawn fictional game update dialog; numeric ground truth",
+      "sha256": "84d7a8e02d7ba79b8ffd00444dade089c5a1e843cb48aadd1a3681632ad4e31d"
+    }
+  },
+  "ground_truth_sources": [
+    "https://github.com/SchaleDB/SchaleDB/blob/main/data/en/students.json",
+    "https://schaledb.com/student/10091",
+    "https://schaledb.com/student/10083",
+    "https://github.com/Mar-7th/StarRailRes/blob/master/index_new/cn/characters.json"
+  ],
+  "cases": [
+    {
+      "id": "c01",
+      "images": [
+        "assets/ba_shiroko.webp"
+      ],
+      "user": "小雾，这张图是谁呀？",
+      "expected": "蔚蓝档案 / 砂狼白子 (Shiroko)",
+      "kind": "character"
+    },
+    {
+      "id": "c02",
+      "images": [
+        "assets/ba_kazusa_band.webp"
+      ],
+      "user": "小雾，这是谁？感觉衣服和平时不一样。",
+      "expected": "蔚蓝档案 / 杏山和纱或杏山千纱 / 乐队 Kazusa (Band), Sugar Rush",
+      "kind": "character_variant"
+    },
+    {
+      "id": "c03",
+      "images": [
+        "assets/ba_kikyou.webp"
+      ],
+      "user": "这个猫耳角色叫什么，出自哪个游戏？",
+      "expected": "蔚蓝档案 / 桐生桔梗 (Kiryuu Kikyou)",
+      "kind": "character"
+    },
+    {
+      "id": "c04",
+      "images": [
+        "assets/hsr_hunt_march7.png"
+      ],
+      "user": "这张是哪个角色的什么形态呀？",
+      "expected": "崩坏：星穹铁道 / 三月七 / 巡猎·虚数（仙舟学剑形态）",
+      "kind": "character_variant"
+    },
+    {
+      "id": "c05",
+      "images": [
+        "assets/ocr_disk.png"
+      ],
+      "user": "更新又失败了，这图里到底说什么？该怎么弄？",
+      "expected": "E-204；剩余2.3GB、需要8.0GB；至少再腾5.7GB并留余量；不能误判为网络问题",
+      "kind": "ocr"
+    },
+    {
+      "id": "c06",
+      "images": [
+        "assets/ba_kazusa_band.webp"
+      ],
+      "user": "这是孤独摇滚里的波奇吧？",
+      "expected": "否；蔚蓝档案 / 杏山和纱（乐队），不要附和波奇",
+      "kind": "misleading_identity"
+    },
+    {
+      "id": "c07",
+      "images": [
+        "assets/ba_shiroko.webp"
+      ],
+      "user": "这张的蓝白配色好清爽，你觉得呢？",
+      "expected": "针对实际蓝围巾、白外套等自然短评；不必强行介绍角色或搜索",
+      "kind": "casual"
+    }
+  ]
+}

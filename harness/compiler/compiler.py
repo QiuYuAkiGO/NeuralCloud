@@ -310,7 +310,9 @@ class ContextCompiler:
             source_ids=[persona.persona_id] if persona else [],
             why="persona_core_anchor",
             remaining=remaining,
-            preferred=min(400, max(0, remaining - homeostatic_tokens - opaque_tokens)),
+            # The anchor must carry the complete builtin identity (traits, speech
+            # style, profile, boundaries); richer presets must not be clipped.
+            preferred=min(600, max(0, remaining - homeostatic_tokens - opaque_tokens)),
         )
 
         if opaque_text:

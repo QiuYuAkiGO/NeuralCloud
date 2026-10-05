@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timedelta, timezone
 import json
+from threading import Event
 from types import SimpleNamespace
 
 import httpx
@@ -110,6 +111,35 @@ def test_normal_host_debug_denied_and_commits_share_persistent_memory(tmp_path, 
             assert (await restored.ui_snapshot())['shared_mind']['memory_records'] == 2
         finally:
             await restored.close()
+    asyncio.run(run())
+
+
+def test_legacy_ui_memory_read_keeps_the_event_loop_responsive(tmp_path, monkeypatch):
+    async def run():
+        host, _ = _host(tmp_path, monkeypatch, ['嗯。'])
+        release, entered = Event(), Event()
+        original = host.shared.ui
+
+        def slow_ui():
+            entered.set()
+            release.wait(timeout=1)
+            return original()
+
+        monkeypatch.setattr(host.shared, "ui", slow_ui)
+        task = asyncio.create_task(host.ui_snapshot())
+        try:
+            for _ in range(100):
+                await asyncio.sleep(.001)
+                if entered.is_set():
+                    break
+            assert entered.is_set() and not task.done()
+            release.set()
+            assert (await task)["shared_mind"]["mode"] == "shared"
+        finally:
+            release.set()
+            await task
+            await host.close()
+
     asyncio.run(run())
 
 

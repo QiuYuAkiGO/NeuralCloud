@@ -1,0 +1,30 @@
+{
+  "scope": "Minimal connectivity diagnostic only; excluded from persona/quality comparison",
+  "at": "2026-10-05T10:40:54.195174+00:00",
+  "payload": {
+    "model": "claude-sonnet-4-5-20250929",
+    "max_tokens": 32,
+    "messages": [
+      {
+        "role": "user",
+        "content": "请用中文回复一个简短问候。"
+      }
+    ],
+    "stream": false
+  },
+  "payload_sha256": "cbaac5f7af444367c8a246ecb68f88832e85357089eda5bdc3187f4629a6f0c3",
+  "reserved_cny": "0.12",
+  "cost_upper_cny": "0.12",
+  "dispatch_state": "response_received",
+  "prior_total_upper_cny": "6.69",
+  "http_status": 500,
+  "seconds": 3.9313509999774396,
+  "provider_error": {
+    "message": "Internal server error, Please contact the administrator (request id: 2026100510405434661588296e93ae3KxXzoNrH)",
+    "localized_message": "Unknown error",
+    "type": "<nil>",
+    "param": "",
+    "code": null
+  },
+  "usage": {}
+}

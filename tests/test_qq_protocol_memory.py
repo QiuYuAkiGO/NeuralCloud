@@ -31,6 +31,13 @@ EVIDENCE = "qq-protocol://sha256/" + "a" * 64
 IMAGE = "qq-direct-image:sha256:" + "b" * 64
 
 
+@pytest.mark.parametrize("member,message", [(123, "1"), ("0", "1"), ("20003", 123),
+                                            ("20003", ""), ("20003", "1\n"), ("20003", "x")])
+def test_reused_protocol_id_validators_remain_strict(member, message):
+    with pytest.raises(ValueError):
+        protocol_message_evidence_ref("10001", member, message)
+
+
 def protocol_profile(store, *, group="10001", member="20003"):
     incoming = QQVerifiedProfileInput(group_id=group, member_id=member, display_name="协议成员",
         display_name_source="qq_metadata", verification="qq_protocol_verified", capture_id="protocol-profile:1",

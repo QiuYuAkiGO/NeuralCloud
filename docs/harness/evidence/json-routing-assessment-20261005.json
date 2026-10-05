@@ -1,0 +1,157 @@
+{
+  "release": "20261005-qq-parser-recovery-v2",
+  "environment": {
+    "NC_EMOTION_LLM_CONFIG": "/etc/neuralcloud/emotion-deepseek.json",
+    "NC_LLM_FALLBACK_CONFIG": "/etc/neuralcloud/main-fallback.json"
+  },
+  "gui": {
+    "aux_base_url": "http://127.0.0.1:11435/v1",
+    "aux_model": "qwen3:4b-instruct-2507-q4_K_M",
+    "base_url": "http://192.168.1.105:8080/v1",
+    "model": "qwen3.8-27b",
+    "validator_enabled": false,
+    "qq_latency": {
+      "qq_stage_budgets_enabled": false,
+      "cognitive_incremental_persistence_enabled": true
+    }
+  },
+  "loaded_settings": {
+    "parser_llm_enabled": true,
+    "planner_llm_enabled": false,
+    "validator_enabled": false,
+    "tier_llm_enabled": true,
+    "emotion_mode": "off",
+    "qq_memory_enabled": false,
+    "qq_memory_recall_enabled": false,
+    "qq_memory_llm_base_url": "https://api.deepseek.com",
+    "qq_memory_llm_model": "deepseek-v4-flash",
+    "production_memory_enabled": false,
+    "deepseek_structured_outputs": true,
+    "aux_llm_num_ctx": 8192
+  },
+  "related_path_env": {
+    "NC_PROFILE_REVISION_DIR": "/var/lib/neuralcloud/homeostasis/profiles",
+    "NC_MANIFEST_REVISION_DIR": "/var/lib/neuralcloud/runtime/manifests",
+    "NC_RUNTIME_MANIFEST_PATH": "/etc/neuralcloud/manifest.json",
+    "NC_COGNITIVE_MANIFEST_PATH": "/etc/neuralcloud/manifest.json"
+  },
+  "manifest_switches": {
+    "autonomous_capabilities.enabled": true,
+    "autonomous_capabilities.qq_send_enabled": true,
+    "autonomous_chat_enabled": false,
+    "embodiment.mode": "off",
+    "embodiment.required_for_runtime": false,
+    "goal_regulation.autonomous_enabled": true,
+    "goal_regulation.enabled": true,
+    "homeostatic_expression.mode": "responses",
+    "emotion_mode": "on"
+  },
+  "direct_media": {
+    "enabled": true,
+    "qq_image_mode": "off"
+  },
+  "daily-revision.config.json": {
+    "enabled": false,
+    "base_url": "https://api.moonshot.cn/v1",
+    "model": "kimi-k3",
+    "reasoning_effort": "high",
+    "request_timeout_seconds": 180.0,
+    "max_completion_tokens": 32768
+  },
+  "qq-memory.control.json": {
+    "enabled": true,
+    "recall_enabled": true
+  },
+  "dedicated": {
+    "NC_EMOTION_LLM_CONFIG": {
+      "model": "deepseek-v4-flash"
+    },
+    "NC_LLM_FALLBACK_CONFIG": {
+      "base_url": "https://api.deepseek.com/v1",
+      "model": "deepseek-v4-flash"
+    }
+  },
+  "audit_at": "2026-10-05T14:18:26.085306+00:00",
+  "scope": "Read-only repository/configuration/log metadata audit; no new paid API requests or production changes.",
+  "configuration_layers_note": "loaded_settings are GUI/environment defaults; manifest enables emotion and qq-memory.control.json enables memory/recall at runtime.",
+  "recent_finished_route_counts": [
+    {
+      "phase": null,
+      "model_role": null,
+      "model": "deepseek-v4-flash",
+      "status": "success",
+      "count": 23
+    },
+    {
+      "phase": null,
+      "model_role": null,
+      "model": "deepseek-v4-flash",
+      "status": "error",
+      "count": 1
+    },
+    {
+      "phase": "web_selection",
+      "model_role": "main",
+      "model": "qwen3.8-27b",
+      "status": "success",
+      "count": 2
+    },
+    {
+      "phase": "qq_gate",
+      "model_role": "main",
+      "model": "qwen3.8-27b",
+      "status": "success",
+      "count": 2
+    },
+    {
+      "phase": "qq_persona",
+      "model_role": "main",
+      "model": "qwen3.8-27b",
+      "status": "success",
+      "count": 2
+    },
+    {
+      "phase": "emotion_appraisal",
+      "model_role": "aux",
+      "model": "deepseek-v4-flash",
+      "status": "success",
+      "count": 3
+    },
+    {
+      "phase": "emotion_guidance",
+      "model_role": "aux",
+      "model": "deepseek-v4-flash",
+      "status": "success",
+      "count": 3
+    },
+    {
+      "phase": "qq_gate",
+      "model_role": "main",
+      "model": "qwen3.8-27b",
+      "status": "error",
+      "count": 1
+    },
+    {
+      "phase": "qq_gate",
+      "model_role": "main",
+      "model": "deepseek-v4-flash",
+      "status": "success",
+      "count": 1
+    },
+    {
+      "phase": "qq_persona",
+      "model_role": "main",
+      "model": "qwen3.8-27b",
+      "status": "error",
+      "count": 1
+    },
+    {
+      "phase": "qq_persona",
+      "model_role": "main",
+      "model": "deepseek-v4-flash",
+      "status": "error",
+      "count": 1
+    }
+  ],
+  "sample_note": "Last 80 request log records from a bounded file tail, containing started/finished pairs; not a daily total or a quality benchmark."
+}

@@ -56,6 +56,7 @@ ImageError = Literal[
     "image_frame_limit", "invalid_image", "unsupported_image", "invalid_base64",
     "bridge_image_failed", "storage_failed", "deadline_expired", "vision_failed",
     "vision_invalid", "vision_unavailable", "vision_deferred",
+    "vision_on_demand",
 ]
 CallAPI = Callable[[str, dict[str, Any], float], Awaitable[dict[str, Any]]]
 _FORMATS = {"PNG": ("image/png", "png"), "JPEG": ("image/jpeg", "jpg"),
@@ -399,10 +400,11 @@ def _describe(llm: OpenAICompatClient, frames: list[bytes], deadline: QQDeadline
         contents.extend({"type": "image_url", "image_url": {
             "url": "data:image/jpeg;base64," + base64.b64encode(frame).decode("ascii"), "detail": detail,
         }} for frame in frames)
+        from harness.llm.deepseek_structured import decision_format
         result = (private_client or llm).complete_chat_result(
             [{"role": "system", "content": _PROMPT}, {"role": "user", "content": contents}],
             temperature=0.0, max_tokens=3072, timeout_seconds=timeout_seconds,
-            response_format={"type": "json_object"},
+            response_format=decision_format(private_client or llm, _Description.model_json_schema(), "qq_image"),
         )
         deadline.check()
         return result
@@ -444,6 +446,7 @@ async def load_and_describe_image(
     cache_enabled=True,
     priority=0,
     defer_analysis: Callable[[], bool] | None = None,
+    acquire_only: bool = False,
 ) -> DirectImageObservation:
     """Load one attachment and return a description or an explicit unknown.
 
@@ -477,7 +480,7 @@ async def load_and_describe_image(
                 data = await _acquire(segment_data, call_api=call_api, client=client,
                     roots=allowed_local_roots, hosts=allowed_hosts, deadline=deadline)
             digest = hashlib.sha256(data).hexdigest()
-            key = analysis_key(llm, digest, prompt=_PROMPT, processing=_processing_version()) if cache_enabled else None
+            key = analysis_key(llm, digest, prompt=_PROMPT, processing=_processing_version()) if cache_enabled and not acquire_only else None
             with stage(trace, "image.cache_read"):
                 cached = _cached_observation(await asyncio.to_thread(load_analysis, cache_dir, key, digest), digest)
             if cached is not None:
@@ -505,6 +508,10 @@ async def load_and_describe_image(
         async with asyncio.timeout(deadline.check()):
             observation, frames, key = await work.limited(work.acquisition, acquire, deadline, trace, "image.acquire_queue", priority=priority)
             deadline.check()
+            if acquire_only:
+                count(trace, "image_acquired_for_tool")
+                return observation.model_copy(update={"error": "vision_on_demand", "uncertainties": [
+                    "图片已保存，主模型可按需调用识图工具；此记录尚未识别内容。"]})
             if frames is None:
                 return observation.model_copy(deep=True)
             skipped = deferred()

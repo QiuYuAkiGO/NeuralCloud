@@ -1,0 +1,21 @@
+{
+  "analysis.json": "a87fab9d500fae2dfe049b4c1881e42ade94c02562ef5d1f0674cd921cea3b39",
+  "analyzer.py": "87c2cd5442a2760a876b1d8396790e5e1ac9b7dd69abd2374af9ac31a9e511d6",
+  "blind-map.json": "e86f415da29edf55fff80a32e4e81407d6c90bd4449b6d45075b19bbafdc1ed2",
+  "comparison.html": "d4bfe5a96ff043e6b0bddd3f637e0ef185e38b47f8a1c449d8c4ed8338cfc338",
+  "comparison.md": "0a205ec9635d307c867311fb78d6266eeeb430821bf834ebad1152d40015be4d",
+  "deepseek-models.json": "9cf8b3e62e222ef4b8d84158579aef760e7978eea89b83f361d81b5d56951d5c",
+  "freeze-manifest.json": "078212b39745dc8fcba31950ef5c010dece0762aebac158e98284ee5219a8217",
+  "frozen-sources.zip": "0848e35715460e34eb4a14a5fe2ce8a2555180b22d88a0b1cd5477ff91682fe5",
+  "normalized-results.json": "6cfc887524234f932082501e742f97c6d46f87021d4a7312f5a6b6b0d9c744c4",
+  "persona.json": "22ea23baa2e65b2a2289ca544fa35185598328bd6148112c0f2c18d258009b04",
+  "preflight.json": "c3e067a98ffa6a1f732cb0cdc8017409a5026c45b6a17923c11d372b9cab4c8a",
+  "reference-baseline.json": "5625dc674ae489bbcbf221014f4e1abf5b4e03a578346dbae61fe6d8d5479a60",
+  "reference-candidate.json": "0de97684468e5cf9f3afb9a11139cdd19083d04523b7d17a35f3396406c5b72d",
+  "reference-cases.json": "5b34f452386e1996763e9f479c3b4fc964f9bcebd567145f34539b89a2f5f7a5",
+  "report-before-filesystem-resume.json": "4d92139ce8b5d2b1349916afec57eeb49cde9a3be3deb18773aa3b165c039359",
+  "report.json": "261d1eea73bc291b69871de329039b7a1f3168da77916ce3cef93462715ad332",
+  "requests.json": "278479b1d73c7d3fc260b713001517902a53a7f93ffd8ee9f8efc51c7d66a935",
+  "runner-initial.py": "5cfe7d96847d265edf863d89b2e77890ba1f01b29540497350d2d2bf2cc0b3f2",
+  "runner.py": "ca7e605a641ae984eb0800dce61b5d19efb51b5e402a60bfefce92ddc2d57cb9"
+}

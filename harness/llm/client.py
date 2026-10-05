@@ -302,10 +302,17 @@ class OpenAICompatClient:
         if stream:
             raise NotImplementedError("streaming is reserved for a later milestone")
         from harness.production.metering import current_production_context
+        from harness.llm import deepseek_structured
+        if (deepseek_structured.supported(self.settings) and self.settings.deepseek_cache_friendly_inputs
+                and (response_format or {}).get("type") == "json_schema"):
+            from harness.llm.structured import cache_messages
+            messages = cache_messages(messages)
         production_context = current_production_context()
         if production_context is not None:
             from harness.cognitive.production import augment_messages
-            messages = augment_messages(messages, production_context)
+            messages = augment_messages(messages, production_context,
+                cache_friendly=deepseek_structured.cache_friendly_enabled(self)
+                and (response_format or {}).get("type") == "json_schema")
         from harness.llm.deadline import remaining_model_seconds
 
         remaining = remaining_model_seconds()
@@ -330,15 +337,24 @@ class OpenAICompatClient:
             payload["reasoning_effort"] = reasoning_effort
         if thinking is not None:
             payload["thinking"] = thinking
+        response_schema = None
+        endpoint = f"{self.settings.llm_base_url.rstrip('/')}/chat/completions"
+        if (deepseek_structured.supported(self.settings)
+                and (response_format or {}).get("type") == "json_schema"):
+            payload, response_schema = deepseek_structured.request_payload(payload, self.settings)
+            endpoint = "https://api.deepseek.com/responses"
         headers = {"Authorization": f"Bearer {self.settings.llm_api_key}"}
+        trace_settings = (self.settings.model_copy(update={"llm_model": payload["model"], "llm_base_url": endpoint})
+                          if response_schema is not None else self.settings)
         from harness.production.metering import mark_production_dispatch, production_attempt
-        with production_attempt(model=self.settings.llm_model) as metering, model_request_span(self.settings, role="main", messages=messages) as span:
+        with production_attempt(model=payload["model"]) as metering, model_request_span(trace_settings, role="main", messages=messages) as span:
             if diagnostic_observer(self._request_observer) is not None:
-                result = self._complete_observed(payload, headers, request_options, messages, span, metering)
+                result = self._complete_observed(payload, headers, request_options, messages, span, metering,
+                                                 endpoint=endpoint, response_schema=response_schema)
                 return result
             mark_production_dispatch(metering)
             response = self._client.post(
-                f"{self.settings.llm_base_url.rstrip('/')}/chat/completions",
+                endpoint,
                 json=payload,
                 headers=headers,
                 **request_options,
@@ -349,19 +365,24 @@ class OpenAICompatClient:
             except (ValueError, UnicodeError):
                 body = None
             _record_production_response(metering, body)
-            _record_provider_response(span, body, messages)
+            normalized = deepseek_structured.chat_body(body) if response_schema is not None else body
+            _record_provider_response(span, normalized, messages)
             remaining_model_seconds()
             response.raise_for_status()
             if not isinstance(body, dict):
                 raise ValueError("llm_response_invalid_json_object")
-            result = _chat_result(body, messages)
+            if response_schema is not None:
+                deepseek_structured.validate_response(body, response_schema)
+            result = _chat_result(normalized, messages)
             span.update(usage=result.usage.model_dump(mode="json"), usage_source=result.usage.source,
                         **result.response_metadata())
             return result
 
-    def _complete_observed(self, payload, headers, request_options, messages, span, metering=None) -> ChatResult:
+    def _complete_observed(self, payload, headers, request_options, messages, span, metering=None,
+                           *, endpoint=None, response_schema=None) -> ChatResult:
         """Opt-in evidence at the serialization boundary, with no production log content."""
         from harness.llm.deadline import remaining_model_seconds
+        from harness.llm import deepseek_structured
 
         observer = diagnostic_observer(self._request_observer)
         # Hooks/auth flows can change the request after validation, including
@@ -369,7 +390,7 @@ class OpenAICompatClient:
         if any(self._client.event_hooks.values()) or self._client.auth is not None:
             raise ValueError("diagnostic_http_hooks_or_auth_unsupported")
         request = self._client.build_request("POST",
-            f"{self.settings.llm_base_url.rstrip('/')}/chat/completions",
+            endpoint or f"{self.settings.llm_base_url.rstrip('/')}/chat/completions",
             json=payload, headers=headers, **request_options)
         request_id = f"diagnostic-request-{uuid4().hex}"
         before = request_evidence(request)
@@ -390,17 +411,20 @@ class OpenAICompatClient:
             except (ValueError, UnicodeError):
                 body = None
             _record_production_response(metering if metering is not None else {}, body)
-            _record_provider_response(span, body, messages)
+            normalized = deepseek_structured.chat_body(body) if response_schema is not None else body
+            _record_provider_response(span, normalized, messages)
             emit_diagnostic({"record_type": "http_response_received", "request_id": request_id,
                 "http_status": response.status_code, "payload_verified": True, **actual,
                 "request_changed_after_prepare": actual["request_body_sha256"] != before["request_body_sha256"],
                 "elapsed_ms": round((time.perf_counter() - started) * 1000, 3),
-                **response_evidence(body)}, observer)
+                **response_evidence(normalized)}, observer)
             remaining_model_seconds()
             response.raise_for_status()
             if not isinstance(body, dict):
                 raise ValueError("llm_response_invalid_json_object")
-            result = _chat_result(body, messages)
+            if response_schema is not None:
+                deepseek_structured.validate_response(body, response_schema)
+            result = _chat_result(normalized, messages)
             span.update(usage=result.usage.model_dump(mode="json"), usage_source=result.usage.source,
                         **result.response_metadata())
             return result
@@ -516,9 +540,10 @@ def ollama_native_root(base_url: str) -> str | None:
 class RoutingLLMClient:
     """Send complete_json to the aux client and complete_chat* to the character-model client."""
 
-    def __init__(self, main: LLMClient, aux: LLMClient) -> None:
+    def __init__(self, main: LLMClient, aux: LLMClient, structured: LLMClient | None = None) -> None:
         self._main = main
         self._aux = aux
+        self._structured = structured
 
     @property
     def production_dispatch_aware(self) -> bool:
@@ -529,6 +554,13 @@ class RoutingLLMClient:
         timeout_seconds: float | None = None,
         response_format: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        if self._structured is not None:
+            format_ = response_format or {"type": "json_schema", "json_schema": {
+                "name": "legacy_helper", "schema": {"type": "object"}}}
+            return parse_json_object(self.complete_chat_result(
+                [{"role": "system", "content": system}, {"role": "user", "content": user}],
+                temperature=0, max_tokens=max_tokens,
+                timeout_seconds=timeout_seconds, response_format=format_).text)
         with trace_scope(model_role="aux"):
             options = {} if timeout_seconds is None else {"timeout_seconds": timeout_seconds}
             if response_format is not None:
@@ -544,6 +576,11 @@ class RoutingLLMClient:
         otherwise use UTF-8 bytes as a conservative input bound. Keep template
         and output reserves in either case. This policy is specific to validation.
         """
+        if self._structured is not None:
+            from harness.core.inference import ValidationResult
+            from harness.llm.structured import helper_options
+            return self.complete_json(system=system, user=user, max_tokens=1024,
+                timeout_seconds=timeout_seconds, **helper_options(self, ValidationResult, "response_validation"))
         output_tokens = 1024
         template_tokens = 256
         aux_settings = getattr(self._aux, "settings", None)
@@ -599,6 +636,15 @@ class RoutingLLMClient:
         reasoning_effort: str | None = None,
         thinking: dict[str, str] | None = None,
     ) -> ChatResult:
+        if self._structured is not None and (response_format or {}).get("type") in {"json_schema", "json_object"}:
+            if response_format["type"] == "json_object":
+                response_format = {"type": "json_schema", "json_schema": {
+                    "name": "legacy_object", "schema": {"type": "object"}}}
+            with trace_scope(model_role="structured"):
+                return self._structured.complete_chat_result(
+                    messages,
+                    temperature=0, stream=stream, max_tokens=max_tokens, timeout_seconds=timeout_seconds,
+                    response_format=response_format)
         with trace_scope(model_role="main"):
             options = {} if timeout_seconds is None else {"timeout_seconds": timeout_seconds}
             if response_format is not None:
@@ -641,6 +687,8 @@ class RoutingLLMClient:
             )
 
     def close(self) -> None:
+        if self._structured is not None:
+            self._structured.close()
         if self._aux is not self._main:
             closer = getattr(self._aux, "close", None)
             if callable(closer):
@@ -652,17 +700,20 @@ class RoutingLLMClient:
 
 def build_llm_client(settings: Settings) -> LLMClient:
     """Live-mode client: route helpers to aux when configured, otherwise a single endpoint."""
-    main = OpenAICompatClient(settings)
+    from harness.llm.fallback import build_main_client
+    from harness.llm.structured import build_structured_client
+    main = build_main_client(settings)
+    structured = build_structured_client(settings)
     if not (aux_explicitly_configured(settings) or aux_endpoint_distinct(settings)):
-        return main
+        return RoutingLLMClient(main, main, structured) if structured is not None else main
     if not aux_endpoint_distinct(settings):
-        return RoutingLLMClient(main, main)
+        return RoutingLLMClient(main, main, structured)
     base_url, model, api_key = resolve_aux_endpoint(settings)
     aux_settings = settings.model_copy(
         update={"llm_base_url": base_url, "llm_model": model, "llm_api_key": api_key}
     )
     return RoutingLLMClient(
-        main, OpenAICompatClient(aux_settings, extra_payload=aux_runtime_payload(settings))
+        main, OpenAICompatClient(aux_settings, extra_payload=aux_runtime_payload(settings)), structured
     )
 
 

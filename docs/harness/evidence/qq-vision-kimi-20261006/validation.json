@@ -1,0 +1,73 @@
+{
+  "baseline_commit": "884779180a049a0cb92398a8de63cdf892ca9e58",
+  "runtime_source_archive_sha256": "38e25dca28e30480f3f5d8db16c94f7c9c32b4a8a2317c3d256665ed204d004b",
+  "runtime_source_files": 424,
+  "windows_checks": {
+    "expanded": {
+      "passed": 361,
+      "skipped": 2
+    },
+    "final_reply_flow": {
+      "passed": 174
+    },
+    "vision_tool_final": {
+      "passed": 21
+    },
+    "fixture_fixes": {
+      "passed": 38
+    },
+    "legacy_collision_recovery": {
+      "passed": 50,
+      "failed": 0
+    }
+  },
+  "limitations": [
+    "Final validation combines complete suite runs and targeted regression of the test-only timing repair; no fresh all-green complete rerun is claimed.",
+    "Live model fixtures use isolated databases; timings exclude real QQ acquisition, runtime scheduling and delivery.",
+    "An early standalone web smoke failed while closing its temporary controller; the fixed search probe and offline regression passed."
+  ],
+  "runtime_initial_source_archive_sha256": "c6f38e80da020ae2bccc7763729e5615344cc1ce200e36c15fe3be87755c60f1",
+  "runtime_release": "20261006-qq-vision-kimi-on-demand-v2",
+  "linux_initial_full_suite": {
+    "passed": 7241,
+    "failed": 16,
+    "skipped": 499,
+    "seconds": 471.73,
+    "failed_files": [
+      "tests/test_qq_expression_wiring.py",
+      "tests/test_shared_qq_group_views.py",
+      "tests/test_supervisor_goal_defer.py"
+    ],
+    "resolution": "Updated stale test fixtures to use running lifecycle and current persona fields; safe replay retains frozen summary, critical replay remains fenced. No production guard weakened."
+  },
+  "linux_before_recovery_fix_regression": {
+    "passed": 242,
+    "failed": 0,
+    "seconds": 17.77,
+    "includes_all_initial_failures": true,
+    "new_tests": 2
+  },
+  "linux_final_full_suite": {
+    "scope": "tests",
+    "passed": 6989,
+    "failed": 1,
+    "skipped": 499,
+    "seconds": 477.0,
+    "failed_tests": [
+      "tests/test_board_commit_deadline.py::test_expired_commit_cannot_start_memory_but_receipt_recovery_can[close]"
+    ],
+    "resolution": "Replace a fixed test sleep with bounded waiting for the actual shielded command. Production deadlines unchanged. All four delay cases passed in final regression."
+  },
+  "linux_eval_suite": {
+    "scope": "eval",
+    "passed": 274,
+    "failed": 0,
+    "seconds": 45.16
+  },
+  "linux_final_regression": {
+    "passed": 75,
+    "failed": 0,
+    "seconds": 9.88,
+    "includes_all_final_failures": true
+  }
+}

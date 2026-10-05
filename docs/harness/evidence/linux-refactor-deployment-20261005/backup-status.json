@@ -1,0 +1,64 @@
+{
+  "phase": "backup_verified",
+  "stop_error": "gui did not stop cleanly; activation blocked",
+  "stopped_units": {
+    "cognitive": {
+      "MainPID": "0",
+      "Result": "success",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    "homeostasis": {
+      "MainPID": "0",
+      "Result": "success",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    "runtime": {
+      "MainPID": "0",
+      "Result": "success",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    "gui": {
+      "MainPID": "0",
+      "Result": "signal",
+      "ActiveState": "failed",
+      "SubState": "failed"
+    },
+    "board": {
+      "MainPID": "0",
+      "Result": "success",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    "qq_direct": {
+      "MainPID": "0",
+      "Result": "success",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    }
+  },
+  "extra_units": {
+    "neuralcloud-napcat.service": "active",
+    "neuralcloud-aux-ollama.service": "active"
+  },
+  "backup": "/var/backups/neuralcloud/20261005-refactor-130601-state",
+  "files": 10528,
+  "verification": {
+    "ok": true,
+    "files": 10528,
+    "bytes": 9931212819,
+    "sqlite_databases": 21,
+    "journals": {
+      "state/runtime/journal": {
+        "records": 749099,
+        "last_hash": "0e79b5bd6a162cfe8dc2ebc8fcc3aad690b79344d9c91315374caba451db8dec"
+      }
+    },
+    "manifest_sha256": "f9e35a763c00553444408d68b53a305c142256bf2349c042853846b173547205"
+  },
+  "acknowledged_boot_failures": [
+    "neuralcloud-gui.service"
+  ]
+}

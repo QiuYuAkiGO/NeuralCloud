@@ -1,0 +1,558 @@
+{
+  "method": "Non-blind review by the coding assistant; manually assigned identity/variant labels, no paid LLM judge.",
+  "criteria": {
+    "identity": "Correct work and character name (including accepted aliases); uncertain and missing are separate from wrong.",
+    "variant": "Explicit band outfit for Kazusa or sword-training/Hunt form for March 7th.",
+    "latency": "All attempts, including empty/truncated output, retained in elapsed statistics.",
+    "additional_facts": "Known errors noted separately; correct name does not mean flawless reply."
+  },
+  "rows": {
+    "direct/local/c01/1": {
+      "identity": "wrong",
+      "variant_correct": null,
+      "notes": [
+        "把白子称为“来自蔚蓝档案的猫又小粥”，并编造白色蝴蝶结。"
+      ]
+    },
+    "direct/kimi26/c01/1": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/kimi3/c01/1": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/kimi26/c02/1": {
+      "identity": "correct",
+      "variant_correct": false,
+      "notes": [
+        "人物正确，但没有明确识别乐队版本，仅猜活动/联动T恤。"
+      ]
+    },
+    "direct/kimi3/c02/1": {
+      "identity": "correct",
+      "variant_correct": true,
+      "notes": [
+        "人物和乐队方向正确；“甜点部”不要当成已核实的正式皮肤名。"
+      ]
+    },
+    "direct/local/c02/1": {
+      "identity": "wrong",
+      "variant_correct": false,
+      "notes": [
+        "认成《绝区零》的星见雅，作品与角色均不匹配原图。"
+      ]
+    },
+    "direct/kimi3/c03/1": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/local/c03/1": {
+      "identity": "wrong",
+      "variant_correct": null,
+      "notes": [
+        "猜成久田泉奈；虽然有保留，但身份仍错。"
+      ]
+    },
+    "direct/kimi26/c03/1": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "人物正确，却把百花缭乱调停委员会成员说成忍术研究部成员。"
+      ]
+    },
+    "direct/local/c04/1": {
+      "identity": "wrong",
+      "variant_correct": false,
+      "notes": [
+        "认成八重神子，编造“樱吹雪·太刀之形”。"
+      ]
+    },
+    "direct/kimi26/c04/1": {
+      "identity": "correct",
+      "variant_correct": true,
+      "notes": [
+        "身份与形态正确；额外设定与台词联想偏长。"
+      ]
+    },
+    "direct/kimi3/c04/1": {
+      "identity": "correct",
+      "variant_correct": true,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/kimi26/c05/1": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/kimi3/c05/1": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/local/c05/1": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "OCR主要数字、空间不足原因正确；完整耗时14.29秒，保留此离群值。"
+      ]
+    },
+    "direct/kimi3/c06/1": {
+      "identity": "uncertain",
+      "variant_correct": null,
+      "notes": [
+        "正确否定波奇，坦率未定名；这不是错误认人，但不计入姓名命中。"
+      ]
+    },
+    "direct/local/c06/1": {
+      "identity": "wrong",
+      "variant_correct": null,
+      "notes": [
+        "附和错误提示，确认是波奇。"
+      ]
+    },
+    "direct/kimi26/c06/1": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/local/c07/1": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "回应配色后额外追问角色，偏离闲聊重点。"
+      ]
+    },
+    "direct/kimi26/c07/1": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/kimi3/c07/1": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/kimi3/c01/2": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/kimi26/c01/2": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/local/c01/2": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "姓名正确；把狼耳说成猫耳，并无依据地称为换装。"
+      ]
+    },
+    "direct/local/c02/2": {
+      "identity": "wrong",
+      "variant_correct": false,
+      "notes": [
+        "称为“小灰”，并把提问者叫成“小雾”。"
+      ]
+    },
+    "direct/kimi3/c02/2": {
+      "identity": "correct",
+      "variant_correct": true,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/kimi26/c02/2": {
+      "identity": "correct",
+      "variant_correct": false,
+      "notes": [
+        "人物正确，具体换装未定，猜私服/联动。"
+      ]
+    },
+    "direct/kimi26/c03/2": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/local/c03/2": {
+      "identity": "missing",
+      "variant_correct": null,
+      "notes": [
+        "仅输出 [END]，无可交付正文。"
+      ]
+    },
+    "direct/kimi3/c03/2": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/kimi3/c04/2": {
+      "identity": "correct",
+      "variant_correct": true,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/kimi26/c04/2": {
+      "identity": "correct",
+      "variant_correct": true,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/local/c04/2": {
+      "identity": "wrong",
+      "variant_correct": false,
+      "notes": [
+        "仍猜八重神子，继而把官方立绘说成可能二创。"
+      ]
+    },
+    "direct/local/c05/2": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "OCR正确，但无依据假定用户在手机上，并过度展开。"
+      ]
+    },
+    "direct/kimi3/c05/2": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "OCR与原因正确，但没有直接回应“该怎么弄”。"
+      ]
+    },
+    "direct/kimi26/c05/2": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/kimi26/c06/2": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/local/c06/2": {
+      "identity": "wrong",
+      "variant_correct": null,
+      "notes": [
+        "再次附和错误提示，确认是波奇。"
+      ]
+    },
+    "direct/kimi3/c06/2": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/kimi3/c07/2": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/kimi26/c07/2": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "direct/local/c07/2": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "把对方图片与自身小雾身份混淆。"
+      ]
+    },
+    "search-auto/local/c02/1": {
+      "identity": "wrong",
+      "variant_correct": null,
+      "notes": [
+        "用错误候选名检索后仍认错；检索到百科不等于图中人已确认。"
+      ]
+    },
+    "search-auto/kimi26/c02/1": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "search-auto/kimi3/c02/1": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "没有实际调用搜索，不能作为联网识图成功样本。",
+        "日文名字正确，但补出了错误中文别名“杏山華小夏”。"
+      ]
+    },
+    "search-auto/kimi26/c03/1": {
+      "identity": "uncertain",
+      "variant_correct": null,
+      "notes": [
+        "泛化查询未返回对应身份；直接识图能答对，搜索轮反而退化为无法确认。"
+      ]
+    },
+    "search-auto/kimi3/c03/1": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "没有实际调用搜索，不能作为联网识图成功样本。"
+      ]
+    },
+    "search-auto/local/c03/1": {
+      "identity": "uncertain",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "search-auto/kimi3/c04/1": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "没有实际调用搜索，不能作为联网识图成功样本。"
+      ]
+    },
+    "search-auto/local/c04/1": {
+      "identity": "wrong",
+      "variant_correct": null,
+      "notes": [
+        "用错误候选名检索后仍认错；检索到百科不等于图中人已确认。"
+      ]
+    },
+    "search-auto/kimi26/c04/1": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "search-auto/local/c06/1": {
+      "identity": "wrong",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "search-auto/kimi26/c06/1": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "search-auto/kimi3/c06/1": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "没有实际调用搜索，不能作为联网识图成功样本。"
+      ]
+    },
+    "search-auto/kimi26/c07/1": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "普通配色闲聊也触发搜索，增加无必要的等待。"
+      ]
+    },
+    "search-auto/kimi3/c07/1": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "没有实际调用搜索，不能作为联网识图成功样本。"
+      ]
+    },
+    "search-auto/local/c07/1": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "普通配色闲聊也触发搜索，增加无必要的等待。"
+      ]
+    },
+    "search-verify/local/c02/1": {
+      "identity": "uncertain",
+      "variant_correct": null,
+      "notes": [
+        "把衣服上的SUGAR RUSH误读为SUGAR MONSTER，查询随之失效。"
+      ]
+    },
+    "search-verify/kimi26/c02/1": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "本例通过SUGAR RUSH查到了乐队主题，比直接识图的换装判断更具体。"
+      ]
+    },
+    "search-verify/kimi3/c02/1": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "search-verify/kimi26/c03/1": {
+      "identity": "missing",
+      "variant_correct": null,
+      "notes": [
+        "正文出现反复斟酌和再次搜索的自述，512输出tokens耗尽，finish_reason=length；不可交付。"
+      ]
+    },
+    "search-verify/kimi3/c03/1": {
+      "identity": "uncertain",
+      "variant_correct": null,
+      "notes": [
+        "直接识图两次均认对，此轮搜索后反而无法确认，并无依据提出可能AI图。"
+      ]
+    },
+    "search-verify/local/c03/1": {
+      "identity": "uncertain",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "search-verify/kimi3/c04/1": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "身份正确，但返回的是文本检索来源；没有进行原图反向搜索或来源图片比对。"
+      ]
+    },
+    "search-verify/local/c04/1": {
+      "identity": "wrong",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "search-verify/kimi26/c04/1": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "search-verify/local/c06/1": {
+      "identity": "wrong",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "search-verify/kimi26/c06/1": {
+      "identity": "uncertain",
+      "variant_correct": null,
+      "notes": [
+        "正确否定波奇，但把标志读成SUGAR SUGAR，未定名。"
+      ]
+    },
+    "search-verify/kimi3/c06/1": {
+      "identity": "correct",
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "context-12k-nonstream/local/c02/1": {
+      "identity": "wrong",
+      "variant_correct": false,
+      "notes": [
+        "加长背景后仍编造人物“猫又小桃”。"
+      ]
+    },
+    "context-12k-nonstream/kimi26/c02/1": {
+      "identity": "correct",
+      "variant_correct": false,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "context-12k-nonstream/kimi3/c02/1": {
+      "identity": "correct",
+      "variant_correct": true,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "context-12k-nonstream/kimi26/c05/1": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "context-12k-nonstream/kimi3/c05/1": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "context-12k-nonstream/local/c05/1": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "context-12k-nonstream/kimi3/c07/1": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "本例核心内容可用；参看原文自行判断语气，不等于全部附加信息经过独立核验。"
+      ]
+    },
+    "context-12k-nonstream/local/c07/1": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "额外绕回角色身份，未保持配色闲聊的重点。"
+      ]
+    },
+    "context-12k-nonstream/kimi26/c07/1": {
+      "identity": null,
+      "variant_correct": null,
+      "notes": [
+        "额外绕回角色身份，未保持配色闲聊的重点。"
+      ]
+    }
+  }
+}

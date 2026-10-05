@@ -10,6 +10,7 @@ from harness.config import Settings, get_settings
 from harness.core.inference import Hypothesis, ParsedInteraction, Reference
 from harness.core.models import InteractionEvent
 from harness.llm.client import LLMClient, MockLLM
+from harness.llm.structured import ParserOutput, helper_options
 from harness.memory.retrieval.planner import _match_time_scope
 
 _SYSTEM = """Parse a character-AI user utterance. Do not declare facts about the speaker's feelings.
@@ -59,6 +60,7 @@ class ContextParser:
                 system=_SYSTEM,
                 user=str({"text": event.raw_text, "speaker": event.speaker}),
                 max_tokens=self.settings.llm_json_max_tokens,
+                **helper_options(self.llm, ParserOutput, "context_parser"),
             )
             parsed = _coerce_parsed(raw)
             if not parsed.entities:

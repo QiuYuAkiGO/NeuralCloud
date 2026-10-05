@@ -7,6 +7,7 @@ from pydantic import ValidationError
 
 from harness.core.models import DualMemoryRecord, EpisodicEvent, PersonaCore
 from harness.llm.client import LLMClient, MockLLM
+from harness.llm.structured import InsightOutput, helper_options
 
 _SYSTEM = """You produce Dual Memory for a character.
 Return JSON: {"persona_conditioned_insight": string|null, "insight_confidence": number 0-1}
@@ -36,7 +37,8 @@ class DualMemoryWriter:
             "emotional_valence": event.emotional_valence,
         }
         try:
-            raw = self.llm.complete_json(system=_SYSTEM, user=str(user))
+            raw = self.llm.complete_json(system=_SYSTEM, user=str(user),
+                **helper_options(self.llm, InsightOutput, "memory_insight"))
             insight = raw.get("persona_conditioned_insight")
             confidence = raw.get("insight_confidence")
             record = DualMemoryRecord(

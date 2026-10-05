@@ -1,0 +1,107 @@
+{
+  "schema_version": "memory-cache-research-v1",
+  "date": "2026-09-20",
+  "data": "synthetic fixtures only",
+  "live_model_calls": 0,
+  "metric_warning": "Character-level structural comparisons only; not provider tokens or actual hit rates.",
+  "qq": {
+    "current_top_level_key_order": [
+      "conversation_id",
+      "conversation_kind",
+      "frozen_sources",
+      "group_id",
+      "old_impressions",
+      "persona",
+      "schema",
+      "self_id"
+    ],
+    "candidate_top_level_key_order": [
+      "persona",
+      "conversation_kind",
+      "conversation_id",
+      "group_id",
+      "self_id",
+      "schema",
+      "old_impressions",
+      "frozen_sources"
+    ],
+    "system_characters": 2504,
+    "baseline_user_characters": 3943,
+    "current_two_job_user_common_prefix_characters": 366,
+    "candidate_two_job_user_common_prefix_characters": 542,
+    "candidate_preserves_all_values": true,
+    "schema_split_user_common_prefix_characters": 3380,
+    "schema_split_user_characters": 3899,
+    "schema_split_static_schema_characters": 2770,
+    "schema_split_static_schema_equal": true,
+    "schema_split_reconstructs_original_schema": true,
+    "current_repair_user_common_prefix_characters": 894,
+    "append_repair_preserves_original_messages": true,
+    "dynamic_schema_identical_across_jobs": false
+  },
+  "daily": {
+    "stage_shapes": [
+      {
+        "stage": "clean:0",
+        "system_characters": 1287,
+        "user_characters": 250,
+        "user_key_order": [
+          "sources"
+        ],
+        "schema_characters": 808
+      },
+      {
+        "stage": "clean:1",
+        "system_characters": 1287,
+        "user_characters": 250,
+        "user_key_order": [
+          "sources"
+        ],
+        "schema_characters": 808
+      },
+      {
+        "stage": "synthesize",
+        "system_characters": 2253,
+        "user_characters": 852,
+        "user_key_order": [
+          "cleaned",
+          "context",
+          "sources"
+        ],
+        "schema_characters": 3349
+      },
+      {
+        "stage": "review:0",
+        "system_characters": 1674,
+        "user_characters": 657,
+        "user_key_order": [
+          "context",
+          "current_source_ids",
+          "proposal",
+          "sources"
+        ],
+        "schema_characters": 350
+      },
+      {
+        "stage": "review:1",
+        "system_characters": 1674,
+        "user_characters": 657,
+        "user_key_order": [
+          "context",
+          "current_source_ids",
+          "proposal",
+          "sources"
+        ],
+        "schema_characters": 350
+      }
+    ],
+    "clean_synthesize_system_common_prefix_characters": 721,
+    "schedule_only_change_invalidates_current_stage_cache": true,
+    "usage_retained_after_input_with_80_hit_20_miss": {
+      "completion_tokens": 10,
+      "prompt_tokens": 100,
+      "total_tokens": 110
+    },
+    "provider_cache_fields_retained": false
+  }
+}
