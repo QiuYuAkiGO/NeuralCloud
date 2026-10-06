@@ -58,6 +58,28 @@ def test_runtime_presets_enable_full_homeostatic_expression() -> None:
         assert manifest.prompt_version == "homeostatic-interoception-v1"
 
 
+def test_production_manifest_accepts_staged_shadow_profile_revision() -> None:
+    from harness.homeostasis.profiles import load_profile
+
+    profile = load_profile(ROOT / "presets/homeostasis/qq-cognitive-dynamics-shadow-v3.json")
+    current = load_experiment_manifest(ROOT / "presets/runtime/shared-misty-emotion-on-v1.json")
+    candidate = ExperimentManifest.model_validate({
+        **current.model_dump(mode="json"),
+        "revision": current.revision + 1,
+        "homeostatic_profile": profile.profile_ref,
+        "schema_version": "homeostasis-state-v3",
+    })
+    assert candidate.homeostatic_profile == "qq-social-drive-v1@2"
+    assert candidate.homeostatic_expression == current.homeostatic_expression
+
+
+@pytest.mark.parametrize("profile_ref", ["qq-social-drive-v1@0", "qq-social-drive-v1@invalid", "unknown@2"])
+def test_social_profile_exception_does_not_accept_invalid_revisions(profile_ref: str) -> None:
+    current = load_experiment_manifest(ROOT / "presets/runtime/shared-misty-emotion-on-v1.json")
+    with pytest.raises(ValueError, match="revision 3"):
+        ExperimentManifest.model_validate({**current.model_dump(mode="json"), "homeostatic_profile": profile_ref})
+
+
 @pytest.mark.parametrize(
     ("mode", "overrides", "error"),
     [

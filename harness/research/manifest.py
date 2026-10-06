@@ -272,10 +272,12 @@ class ExperimentManifest(BaseModel):
                 profile_revision = int(revision_text) if separator else 0
             except ValueError:
                 profile_revision = 0
-            supported_social_profile = self.homeostatic_profile == "qq-social-drive-v1@1"
+            # This lineage supported interoception from revision 1. Parameter
+            # revisions (including the v3 shadow profile) retain that contract.
+            supported_social_profile = _profile_id == "qq-social-drive-v1" and profile_revision >= 1
             if not _profile_id.strip() or (profile_revision < 3 and not supported_social_profile):
                 raise ValueError(
-                    "homeostatic expression requires a revision 3 profile or qq-social-drive-v1@1"
+                    "homeostatic expression requires a revision 3 profile or qq-social-drive-v1 revision >= 1"
                 )
             if self.schema_version not in {"homeostasis-state-v2", "homeostasis-state-v3"}:
                 raise ValueError(
