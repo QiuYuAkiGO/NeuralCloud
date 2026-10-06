@@ -399,6 +399,7 @@ def build_commit(preset, job, proposal, settings, *, now=None, embeddings=None):
         events[event_id] = event
         new_ids.append(event_id)
     updated_impressions = set()
+    deferred_impressions = []
     for item in proposal.impressions:
         if item.stance == "uncertain":
             continue
@@ -430,6 +431,15 @@ def build_commit(preset, job, proposal, settings, *, now=None, embeddings=None):
             stance="contradict" if item.stance == "counter" else "support",
             rationale=("来自所列私聊原始观察的暂定解释；保留其作者归属。" if channel == "qq_private"
                        else "来自所列群聊原始观察的暂定解释；保留其作者归属。"), statement=item.statement)
+        if previous is not None and evidence.time < max(
+                entry.time for entry in (*previous.evidence, *previous.continuation_evidence)):
+            # A recovered historical window must still retain its episodes,
+            # without replaying older belief updates over newer observations.
+            # Keep the rejected increment auditable in the frozen proposal and
+            # receipt; chronological impression validation remains unchanged.
+            deferred_impressions.append({"impression_id": previous.impression_id,
+                "source_ids": list(item.source_ids), "reason": "historical_evidence_before_latest_impression"})
+            continue
         change = ImpressionProposal(kind=item.kind, subject_refs=subject_refs,
             topic=topic, context=context, statement=item.statement, evidence=evidence,
             contrast=item.stance == "counter", continues_episode_id=item.continues_episode_id)
@@ -480,6 +490,8 @@ def build_commit(preset, job, proposal, settings, *, now=None, embeddings=None):
         "source_ids": sorted(sources), "episode_ids": new_ids,
         "proposal_digest": _hash(proposal.model_dump(mode="json")),
         "processing_version": job.processing_version, "committed_at": moment.isoformat()}
+    if deferred_impressions:
+        state["receipts"][job.job_id]["deferred_impressions"] = deferred_impressions
     state["ruleset_version"] = "qq-memory-continuation-v1"
     state["revision"] += 1
     return preset.model_copy(update={"episodic": maintained, "candidates": list(candidates.values()),

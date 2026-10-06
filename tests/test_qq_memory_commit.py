@@ -99,6 +99,26 @@ def _impression(preset):
     return next(iter(preset.qq_memory_state["impressions"].values()))
 
 
+@pytest.mark.parametrize("stance", ["support", "counter"])
+def test_recovered_older_window_keeps_episode_without_rewinding_newer_belief(sources, stance):
+    sources.add(at=NOW)
+    sources.add(at=NOW + timedelta(days=1))
+    old, new = sources.jobs()
+    preset = _commit(_preset(), new)
+    before = deepcopy(preset.qq_memory_state["impressions"])
+    target = _impression(preset)["impression_id"]
+    recovered = _commit(preset, old, stance=stance, target=target)
+    assert len(recovered.episodic) == len(preset.episodic) + 1
+    assert recovered.qq_memory_state["impressions"] == before
+    assert recovered.candidates == preset.candidates
+    assert recovered.semantic == preset.semantic
+    receipt = recovered.qq_memory_state["receipts"][old.job_id]
+    assert receipt["deferred_impressions"] == [{"impression_id": target,
+        "source_ids": [source.source_id for source in old.sources],
+        "reason": "historical_evidence_before_latest_impression"}]
+    assert _commit(recovered, old, stance=stance, target=target) == recovered
+
+
 def _four_day_commit(sources):
     for day in range(4):
         sources.add(at=NOW + timedelta(days=day))
