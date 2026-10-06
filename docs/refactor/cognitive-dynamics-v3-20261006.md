@@ -2,7 +2,13 @@
 
 本次实现将实际加工记录、被动时间推进、语义评价和群接收策略分开。七维主界面保持不变，新增变量放在内部状态与诊断面板中。默认配置仍为 `off`；提供独立的 `shadow` 配置与受条件约束的 `active` 配置生成入口。
 
-**当前发布状态：2026-10-06 21:54:31（北京时间）修复版已上线，六个服务 active、Runtime RUNNING、QQ 已连接、独立被动推进器无错误。** 当前 release 为 `20261006-cognitive-dynamics-v3-shadow-v3`，代码提交 `47f9da9`，profile 为 `qq-social-drive-v1@3`，manifest revision 为 `4`，仍为 `shadow`。新数学规则与公平输入预算尚未转为 active。[修复与验证证据](../harness/evidence/cognitive-dynamics-v3-20261006/shadow-repair.json)。
+**2026-10-07 03:24–03:26（北京时间）检测：** 发布、profile 和 manifest 保持下述修复版本，六个服务及 QQ 连接正常，Runtime RUNNING，watchdog 为空。服务器连续影子时长为 **19,820.73 秒（约 5 小时 30 分钟）**，实际加工记录 **377 条且全部应用**，独立被动推进器无错误；尚未满足 24 小时门槛，未切换 active，也未重启或修改生产配置。[本轮检测证据](../harness/evidence/cognitive-dynamics-v3-20261006/shadow-check-20261007-0324.json)。
+
+按阶段关联，10 次成功的 `qq_gate` 调用已有 2 条有效注意评价；总计 2/377 混入后台记忆、情绪等不同任务，不能作为正常决策失败率。46 次 `goal_decision` 尚无该类记录，需继续核查覆盖，不能将缺失评价直接视为模型调用失败。
+
+**后续验收注意：后台记忆仍有任务被跳过。** 修复后更新的任务中，88 个 applied，10 个因 `StructuredResponseError` 达到 8 次重试上限而 skipped，另有 1 个因 `ValueError` skipped。当前 pending/preparing/retry 均为 0、worker 最近错误为空，但这不代表所有任务成功。请求日志确认前者发生在 HTTP 200 后的结构化响应校验；现有日志只保留异常类别，本轮没有证据进一步确定具体字段或拒绝原因。切换 active 前须复核跳过数量是否继续增长及其对经历/评价覆盖的影响，不能只看服务健康和时长。
+
+**修复发布记录：2026-10-06 21:54:31（北京时间）修复版已上线，六个服务 active、Runtime RUNNING、QQ 已连接、独立被动推进器无错误。** 当前 release 为 `20261006-cognitive-dynamics-v3-shadow-v3`，代码提交 `47f9da9`，profile 为 `qq-social-drive-v1@3`，manifest revision 为 `4`，仍为 `shadow`。新数学规则与公平输入预算尚未转为 active。[修复与验证证据](../harness/evidence/cognitive-dynamics-v3-20261006/shadow-repair.json)。
 
 本轮复核发现 20:59 又出现旧边界 watchdog 自动暂停：新增 15 条群消息事实后，旧负荷和新奇度触界，而影子候选值在暂停期间持续正常恢复。核查自动暂停后的控制事件，没有用户暂停或紧急停止；停止 writer 后再次核查，随后备份并校验 12,237 个文件、23 个 SQLite 库、953,286 条 journal 记录（10.946 GB）。新备份为 `/var/backups/neuralcloud/20261006-shadow-watchdog-repair`，原首次发布备份继续保留。
 

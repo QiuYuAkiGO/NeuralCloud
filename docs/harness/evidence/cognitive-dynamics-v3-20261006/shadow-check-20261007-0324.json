@@ -1,0 +1,459 @@
+{
+  "schema_version": "cognitive-dynamics-shadow-check-v1",
+  "checked_at": "2026-10-06T19:28:04.381914+00:00",
+  "snapshot_check": {
+    "at": "2026-10-06T19:24:33.315514+00:00",
+    "release": "20261006-cognitive-dynamics-v3-shadow-v3",
+    "manifest_revision": 4,
+    "manifest_profile": "qq-social-drive-v1@3",
+    "services": {
+      "cognitive": {
+        "MainPID": "199236",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "MainPID": "199269",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "MainPID": "199305",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "MainPID": "199915",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "MainPID": "199296",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq_direct": {
+        "MainPID": "199954",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-06T19:24:27.773412Z",
+        "last_journal_append_at": "2026-10-06T19:24:33.293001Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "pending_events": 0,
+      "background": {
+        "heartbeat": {
+          "active": true,
+          "pending": 0,
+          "running": true,
+          "coalesced": 8,
+          "thread_jobs": 0,
+          "last_duration_ms": 5486.257,
+          "last_error": null
+        },
+        "passive_state": {
+          "active": true,
+          "pending": 0,
+          "running": true,
+          "coalesced": 0,
+          "thread_jobs": 0,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "affect": {
+          "pending": 0,
+          "running": 0,
+          "scopes": 0,
+          "degraded": false
+        }
+      }
+    },
+    "direct": {
+      "running": true,
+      "connected": true,
+      "repository_root": "/opt/neuralcloud/releases/20261006-cognitive-dynamics-v3-shadow-v3",
+      "heartbeat_at": "2026-10-06T19:24:31.918471+00:00"
+    },
+    "watchdog": [],
+    "dynamics": {
+      "mode": "shadow",
+      "fatigue": 0.08144947599454566,
+      "boredom": 0.9100413718130305,
+      "wants_engagement": true,
+      "latent_confidence": 0.8,
+      "baselines": {
+        "autonomy": 0.6749992824438109,
+        "competence": 0.6250000152600026,
+        "safety_predictability": 0.6651600000000001,
+        "social_connection": 0.38068496909056737
+      },
+      "short_term_responses": {
+        "autonomy": 0.0,
+        "competence": 0.0,
+        "safety_predictability": 0.0,
+        "social_connection": 0.0021623905590260413
+      },
+      "regulation_pressure": {
+        "level": "elevated",
+        "suggest_reduce_input": false,
+        "suggest_reopen": false
+      },
+      "assessment_coverage": {
+        "exposures": 377,
+        "assessed": 2,
+        "unassessed": 375,
+        "work_units": 3609198,
+        "last_work_at": "2026-10-06T19:23:40.845353+00:00"
+      },
+      "shadow_observation": {
+        "continuous_seconds": 19820.732134999966,
+        "samples": 8765,
+        "maximum_gap_seconds": 175.078063,
+        "last_sample_at": "2026-10-06T19:24:27.748354+00:00"
+      },
+      "shadow_values": {
+        "cognitive_load": 0.9274353418925977,
+        "novelty": 0.4999999999999903,
+        "safety_predictability": 0.6651600000000001,
+        "competence": 0.6250000152600026,
+        "autonomy": 0.6749992824438109,
+        "social_connection": 0.38284735964959343
+      },
+      "started_at": "2026-10-06T12:24:08.049492+00:00",
+      "updated_at": "2026-10-06T19:24:27.748354+00:00"
+    },
+    "display_values": {
+      "energy_reserve": 0.6650089922783333,
+      "cognitive_load": 0.8670180785545637,
+      "safety_predictability": 0.6650095917635556,
+      "competence": 0.625000047037919,
+      "autonomy": 0.6749991695626127,
+      "social_connection": 0.5621475594572338,
+      "novelty": 0.9495247947910888
+    },
+    "gate": {
+      "schema_version": "cognitive-dynamics-shadow-gate-v1",
+      "ready": false,
+      "reasons": [
+        "continuous_shadow_observation_less_than_24_hours"
+      ],
+      "observation": {
+        "continuous_seconds": 19820.732134999966,
+        "samples": 8765,
+        "maximum_gap_seconds": 175.078063,
+        "last_sample_at": "2026-10-06T19:24:27.748354+00:00"
+      },
+      "assessment_coverage": {
+        "exposures": 377,
+        "assessed": 2,
+        "unassessed": 375,
+        "work_units": 3609198,
+        "last_work_at": "2026-10-06T19:23:40.845353+00:00"
+      },
+      "snapshot_revision": 140818,
+      "profile_ref": "qq-social-drive-v1@3",
+      "checked_at": "2026-10-06T19:24:33.344050+00:00"
+    },
+    "work": {
+      "total": 377,
+      "pending": 0,
+      "by_context_category": {
+        "qq": {
+          "total": 284,
+          "assessed": 2,
+          "applied": 284,
+          "units": 1991048,
+          "last_at": "2026-10-06T19:23:40.845353Z"
+        },
+        "emotion_guidance": {
+          "total": 46,
+          "assessed": 0,
+          "applied": 46,
+          "units": 20015,
+          "last_at": "2026-10-06T19:23:03.845701Z"
+        },
+        "goal_decision": {
+          "total": 46,
+          "assessed": 0,
+          "applied": 46,
+          "units": 1576273,
+          "last_at": "2026-10-06T19:23:14.723816Z"
+        },
+        "diary_prepare": {
+          "total": 1,
+          "assessed": 0,
+          "applied": 1,
+          "units": 3302,
+          "last_at": "2026-10-06T16:01:01.315040Z"
+        }
+      }
+    },
+    "attention": {
+      "policies": [
+        {
+          "group_id": "1044946257",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "1060979317",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "712342021",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        }
+      ],
+      "dispositions": {
+        "admitted": 4
+      },
+      "outcomes": {
+        "model_wait": 0,
+        "runtime_failure": 0,
+        "guard_wait": 0
+      },
+      "review_error": null
+    }
+  },
+  "request_phases": {
+    "checked_at": "2026-10-06T19:24:42.142271+00:00",
+    "receipts": 377,
+    "matched": 377,
+    "unmatched": 0,
+    "phases": {
+      "legacy_unlabelled_shared_memory": {
+        "total": 55,
+        "assessed": 0,
+        "success": 43,
+        "error": 12,
+        "last_at": "2026-10-06T12:58:52.741584Z"
+      },
+      "qq_memory_consolidation": {
+        "total": 199,
+        "assessed": 0,
+        "success": 103,
+        "error": 96,
+        "last_at": "2026-10-06T19:23:40.845353Z"
+      },
+      "emotion_guidance": {
+        "total": 55,
+        "assessed": 0,
+        "success": 55,
+        "error": 0,
+        "last_at": "2026-10-06T19:23:03.845701Z"
+      },
+      "goal_decision": {
+        "total": 46,
+        "assessed": 0,
+        "success": 46,
+        "error": 0,
+        "last_at": "2026-10-06T19:23:14.723816Z"
+      },
+      "emotion_appraisal": {
+        "total": 9,
+        "assessed": 0,
+        "success": 9,
+        "error": 0,
+        "last_at": "2026-10-06T17:09:48.910370Z"
+      },
+      "qq_gate": {
+        "total": 10,
+        "assessed": 2,
+        "success": 10,
+        "error": 0,
+        "last_at": "2026-10-06T17:09:55.756464Z"
+      },
+      "qq_persona": {
+        "total": 2,
+        "assessed": 0,
+        "success": 2,
+        "error": 0,
+        "last_at": "2026-10-06T14:40:31.410234Z"
+      },
+      "diary_prepare": {
+        "total": 1,
+        "assessed": 0,
+        "success": 1,
+        "error": 0,
+        "last_at": "2026-10-06T16:01:01.315040Z"
+      }
+    }
+  },
+  "memory_worker": {
+    "at": "2026-10-06T19:25:56.823005+00:00",
+    "healthy": true,
+    "worker_keys": [
+      "enabled",
+      "recall_enabled",
+      "private_enabled",
+      "private_recall_enabled",
+      "owner_private_full_recall_enabled",
+      "processing",
+      "input_budget",
+      "queue",
+      "tiers",
+      "episodes",
+      "impressions",
+      "impression_states",
+      "stable_judgments",
+      "processed_observations",
+      "committed_windows",
+      "last_error_type",
+      "last_completed_at",
+      "last_duration_ms",
+      "last_recall_ms",
+      "channels"
+    ],
+    "worker": {
+      "enabled": true,
+      "processing": false,
+      "queue": {
+        "pending": 0,
+        "preparing": 0,
+        "retry": 0,
+        "applied": 2239,
+        "skipped": 624,
+        "total_jobs": 2863,
+        "assigned_sources": 7708,
+        "oldest_pending_seconds": 0.0
+      },
+      "processed_observations": 5872,
+      "committed_windows": 2239,
+      "last_error_type": null,
+      "last_completed_at": "2026-10-06T19:23:47.649144+00:00",
+      "last_duration_ms": 9329.818
+    }
+  },
+  "memory_job_outcomes": {
+    "at": "2026-10-06T19:26:25.483544+00:00",
+    "since": "2026-10-06T13:51:00Z",
+    "jobs_updated_since_repair": [
+      {
+        "status": "applied",
+        "error_code": null,
+        "count": 88,
+        "max_attempts": 4,
+        "last_updated_at": "2026-10-06T19:23:47.646060+00:00"
+      },
+      {
+        "status": "skipped",
+        "error_code": "StructuredResponseError",
+        "count": 10,
+        "max_attempts": 8,
+        "last_updated_at": "2026-10-06T18:03:22.931885+00:00"
+      },
+      {
+        "status": "skipped",
+        "error_code": "ValueError",
+        "count": 1,
+        "max_attempts": 1,
+        "last_updated_at": "2026-10-06T17:00:24.277013+00:00"
+      }
+    ]
+  },
+  "request_errors": {
+    "checked_at": "2026-10-06T19:25:56.075859+00:00",
+    "errors": [
+      {
+        "period": "before_repair",
+        "phase": "unlabelled",
+        "type": "StructuredResponseError",
+        "http_status": 200,
+        "count": 11
+      },
+      {
+        "period": "after_repair",
+        "phase": "qq_memory_consolidation",
+        "type": "StructuredResponseError",
+        "http_status": 200,
+        "count": 96
+      },
+      {
+        "period": "after_repair",
+        "phase": "qq_persona",
+        "type": "ConnectTimeout",
+        "http_status": null,
+        "count": 2
+      },
+      {
+        "period": "after_repair",
+        "phase": "emotion_appraisal",
+        "type": "ReadTimeout",
+        "http_status": null,
+        "count": 1
+      },
+      {
+        "period": "after_repair",
+        "phase": "qq_memory_consolidation",
+        "type": "ConnectError",
+        "http_status": null,
+        "count": 1
+      }
+    ]
+  },
+  "offline_replay_fixture_verified": true,
+  "continuous_window_start": "2026-10-06T13:54:07.016219+00:00",
+  "earliest_24_hours_if_no_further_gap": "2026-10-07T13:54:07.016219+00:00",
+  "findings": [
+    "Six services remain active with the same process IDs as the repaired release. Runtime is RUNNING; QQ is connected; watchdog is empty; passive sampling and processing receipts continue.",
+    "The current gate rejects promotion because real continuous sampling is still less than 24 hours.",
+    "QQ gate has 2 assessed receipts out of 10 successful calls. The 2/377 aggregate includes many tasks that do not request this assessment and is not a decision failure rate.",
+    "46 goal_decision receipts have no recorded attention assessment. No model response text was inspected; omission must not be equated with provider failure.",
+    "Since repair, updated memory jobs include 88 applied and 11 skipped: 10 StructuredResponseError reaching 8 attempts, and 1 ValueError. Empty pending/retry queues therefore do not mean every job succeeded.",
+    "StructuredResponseError occurs after an HTTP 200 in provider-response validation. Existing logs retain only the exception class, not the particular schema violation; the exact rejection cause is not established by this check.",
+    "Before active promotion, recheck memory skip growth and the impact on experience/appraisal coverage, in addition to the time and service-health gate."
+  ],
+  "production_changes": false,
+  "test_messages_sent": false
+}
