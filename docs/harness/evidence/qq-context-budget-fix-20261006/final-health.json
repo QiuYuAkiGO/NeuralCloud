@@ -1,0 +1,49 @@
+{
+  "verified_at": "2026-10-06T01:24:37.904053+00:00",
+  "release": "20261006-qq-context-budget-fix-v2",
+  "runtime_lifecycle": "RUNNING",
+  "health": {
+    "lifecycle": "RUNNING",
+    "journal_writable": true,
+    "cognitive_healthy": true,
+    "homeostasis_healthy": true,
+    "llm_healthy": true,
+    "body_healthy": true,
+    "degraded_reasons": [],
+    "last_heartbeat_at": "2026-10-06T01:24:33.147780Z",
+    "last_journal_append_at": "2026-10-06T01:24:37.550666Z",
+    "embodiment": {
+      "state": "disabled",
+      "provider_id": null,
+      "body_instance_id": null,
+      "activated_capabilities": [],
+      "effective_capabilities": [],
+      "negotiated": null,
+      "health": null,
+      "reason": "embodiment disabled by manifest"
+    },
+    "agency_state": "AVAILABLE",
+    "body_episode_id": null,
+    "body_revision": null,
+    "body_state_age_seconds": null
+  },
+  "main_model": "qwen3.8-27b",
+  "vision_model": "kimi-k2.6",
+  "vision_mode": "model_requested_non_thinking",
+  "qq_web_policy": "after_gate",
+  "service_account_verified": true,
+  "direct": {
+    "running": true,
+    "connected": true,
+    "automatic_send": true,
+    "qq_image_mode": "all",
+    "qq_image_analysis": "on_demand",
+    "last_error_type": null,
+    "heartbeat_at": "2026-10-06T01:24:36.360493+00:00"
+  },
+  "affected_group_new_event_states_after_activation": {},
+  "source_hashes": {
+    "harness/qq/history_selection.py": "b16134d93d90ad50cc60539e35ca27f94c1d3063463ffc48b1f5b3034cfdd3d3",
+    "harness/qq/decision.py": "e18eda476c12e478ebdc54420a7c1def20c8892765388fa22501cb178ca225bc"
+  }
+}

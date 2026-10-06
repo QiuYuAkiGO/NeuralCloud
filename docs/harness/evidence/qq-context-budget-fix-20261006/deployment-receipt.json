@@ -1,0 +1,56 @@
+{
+  "release": "20261006-qq-context-budget-fix-v2",
+  "previous_release": "20261006-qq-vision-kimi-on-demand-v2",
+  "verified_at_unix": 1791249843.3369753,
+  "verified_source_files": 424,
+  "configuration_unchanged": true,
+  "persistent_data_preserved": true,
+  "archive_sha256": "6898e985e7d5dbc6dc568941e780b1ce2c53f0446bcd76c9fa2635b3ae51af75",
+  "services": {
+    "cognitive": {
+      "ActiveState": "active",
+      "SubState": "running",
+      "Result": "success"
+    },
+    "homeostasis": {
+      "ActiveState": "active",
+      "SubState": "running",
+      "Result": "success"
+    },
+    "runtime": {
+      "ActiveState": "active",
+      "SubState": "running",
+      "Result": "success"
+    },
+    "gui": {
+      "ActiveState": "active",
+      "SubState": "running",
+      "Result": "success"
+    },
+    "board": {
+      "ActiveState": "active",
+      "SubState": "running",
+      "Result": "success"
+    },
+    "qq_direct": {
+      "ActiveState": "active",
+      "SubState": "running",
+      "Result": "success"
+    }
+  },
+  "runtime_lifecycle": "RUNNING",
+  "runtime_health": {
+    "journal_writable": true,
+    "cognitive_healthy": true,
+    "homeostasis_healthy": true
+  },
+  "direct": {
+    "running": true,
+    "connected": true,
+    "automatic_send": true,
+    "qq_image_mode": "all",
+    "qq_image_analysis": "on_demand",
+    "last_error_type": null,
+    "heartbeat_at": "2026-10-06T01:23:52.274870+00:00"
+  }
+}

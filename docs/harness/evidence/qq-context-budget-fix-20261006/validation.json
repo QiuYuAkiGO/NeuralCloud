@@ -1,0 +1,16 @@
+{
+  "scope": "QQ context selection, prepared response, source validation, vision, cognitive and emotion pipeline regression",
+  "environment": "Linux Python 3.12",
+  "passed": 273,
+  "failed": 0,
+  "errors": 0,
+  "warnings": 2,
+  "seconds": 24.91,
+  "full_repository_suite": false,
+  "production_package_sha256": "6898e985e7d5dbc6dc568941e780b1ce2c53f0446bcd76c9fa2635b3ae51af75",
+  "notes": [
+    "Acceptance packaging was corrected to include root conftest.py and test utility modules.",
+    "The new response-count fixture explicitly disables the optional sampled validator in its persisted test configuration.",
+    "Ruff and git diff --check passed for the changed code."
+  ]
+}

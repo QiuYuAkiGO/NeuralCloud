@@ -16,7 +16,7 @@ from harness.llm.client import ChatResult
 from harness.qq import decision, direct_images, vision_tool
 from harness.qq.memory import QQVerifiedProfileInput, QQVisualObservationInput, protocol_message_evidence_ref
 from harness.qq.telemetry import QQDeadline, QQTurnTrace
-from tests.test_qq_decision import NOW, setup as setup
+from tests.test_qq_decision import NOW, add_member, setup as setup
 from tests.test_qq_direct_images import picture
 from tests.test_qq_prepared_turn import _binding, _resume
 
@@ -323,13 +323,21 @@ def test_gate_can_decline_vision_and_wait_never_runs_tools(setup, tmp_path, monk
     assert len(setup[1].gate_messages) == 1
 
 
-@pytest.mark.parametrize("continuation", ["done", "search", "repeated_request"])
+@pytest.mark.parametrize("continuation,crowded", [("done", False), ("search", False),
+                                                ("repeated_request", False), ("search", True)])
 def test_selected_vision_returns_to_main_and_checkpoint_replay_does_not_repeat_tool(
-    setup, tmp_path, monkeypatch, continuation
+    setup, tmp_path, monkeypatch, continuation, crowded
 ):
+    if crowded:
+        for index in range(102):
+            add_member(setup[0], "20002", capture=f"crowded-{index}",
+                moment=NOW - timedelta(seconds=200 - index), text=f"历史消息{index}，今日天气晴朗。")
+        monkeypatch.setenv("NC_QQ_INPUT_TOKEN_BUDGET", "52000")
     capture, _ = install_attachment(setup, tmp_path, monkeypatch)
     calls = []
-    monkeypatch.setattr(vision_tool, "OpenAICompatClient", lambda settings: VisionClient(settings, calls))
+    large_answer = {"images": [{"image_id": "image_1", "description": "描" * 2500,
+        "ocr_text": "文" * 6000, "characters": [], "uncertainties": []}]} if crowded else None
+    monkeypatch.setattr(vision_tool, "OpenAICompatClient", lambda settings: VisionClient(settings, calls, answer=large_answer))
     client = setup[1]
     original = client.complete_chat_result
     after = {"action": "speak", "reason": "识图结果已返回"}
@@ -357,6 +365,11 @@ def test_selected_vision_returns_to_main_and_checkpoint_replay_does_not_repeat_t
 
     monkeypatch.setattr(client, "complete_chat_result", main)
     binding = _binding()
+    trace = QQTurnTrace()
+    presented_sources = []
+    def capture_sources(payload):
+        presented_sources.append({item["record_id"] for member in payload["group_context"]["members"]
+                                  for item in member["observations"]})
     prepared = decision.prepare_qq_turn(
         **setup[3],
         trigger_member_id="20002",
@@ -364,6 +377,9 @@ def test_selected_vision_returns_to_main_and_checkpoint_replay_does_not_repeat_t
         _request_source_event_ids=[capture],
         web_capabilities={"enabled": True},
         deadline=QQDeadline.after(60),
+        trace=trace,
+        used_sources_provider=capture_sources if crowded else None,
+        **({"request": "测" * 4000} if crowded else {}),
     )
     assert prepared["kind"] == "prepared" and len(calls) == 1 and len(client.gate_messages) == 2, (
         prepared,
@@ -372,11 +388,24 @@ def test_selected_vision_returns_to_main_and_checkpoint_replay_does_not_repeat_t
     )
     assert bool(prepared["web_plan"]) == (continuation == "search")
     assert '"vision_tool"' in json.dumps(client.gate_messages[0], ensure_ascii=False).replace('\\"', '"')
-    assert "绿色矩形" in client.gate_messages[1][-1]["content"]
+    description = "描" * 2500 if crowded else "绿色矩形"
+    assert description in client.gate_messages[1][-1]["content"]
     assert "data:image" not in json.dumps(client.gate_messages)
     decision.prepare_qq_turn(**setup[3], trigger_member_id="20002", turn_binding=binding)
     result = _resume(setup, binding, prepared)
     replay = _resume(setup, binding, prepared)
     assert result.action == "speak" and result.model == "synthetic-model" and replay.replayed
     assert result.model_call_counts == {"gate": 2, "persona": 1, "vision": 1} and len(calls) == 1
-    assert "绿色矩形" in json.dumps(client.chat_calls, ensure_ascii=False)
+    assert description in json.dumps(client.chat_calls, ensure_ascii=False)
+    if crowded:
+        actual = sum(len(item["content"]) for item in client.chat_calls[0] if item["role"] != "system")
+        assert actual <= 104_000
+        assert len(result.source_record_ids) < 105
+        counters = trace.snapshot()["counters"]
+        assert counters["context_vision_history_pruned"] > 0
+        assert counters["context_vision_combined_characters"] + counters["context_assessment_reserved_characters"] <= 104_000
+        frozen = decision.get_qq_turn_checkpoint(memory_db=setup[0].path, prepare_id=prepared["prepare_id"])["snapshot"]
+        assert set(frozen["source_records"]["qq_visual_observations"]) == set(result.source_record_ids)
+        assert set(frozen["presentation"]["gate_observation_ids"]) <= set(result.source_record_ids)
+        assert presented_sources[-1] == set(result.source_record_ids) < presented_sources[0]
+        assert client.chat_calls[0][:len(frozen["messages"])] == frozen["messages"]

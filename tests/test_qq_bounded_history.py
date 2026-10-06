@@ -12,6 +12,7 @@ from harness.qq.history_selection import (
     additional_body_messages, history_wire_characters, include_trusted_reply_references, select_bounded_history,
 )
 from harness.qq.memory_evidence import build_qq_memory_evidence
+from harness.qq.memory import QQVisualMemoryStore
 from harness.qq.policy import QQLatencyOptions, settings_with_policy
 from harness.qq.telemetry import QQTurnTrace
 from harness.qq.turn_checkpoints import QQTurnStateError
@@ -96,6 +97,68 @@ def test_hard_budget_can_trim_more_optional_history_than_the_soft_target(setup):
     assert records[-1].record_id in selected.gate.observation_ids
     assert selected.body.characters + 1000 <= 14_000
     assert len(selected.body.observation_ids) < len(_select(payload, {records[-1].record_id}).body.observation_ids)
+
+
+@pytest.mark.parametrize("vision_available", [False, True])
+def test_combined_body_budget_counts_extra_history_metadata_and_tool_reserve(tmp_path, vision_available):
+    store = QQVisualMemoryStore(tmp_path / "crowded.sqlite3")
+    records = []
+    for index in range(105):
+        _, item = add_member(store, "20002", capture=f"synthetic-{index}",
+            moment=NOW + timedelta(seconds=index), text=f"历史消息{index}，今日天气晴朗。")
+        records.append(item)
+    _, payload = _payload(store)
+    payload["request"] = "测" * 20_000
+    original = deepcopy(payload)
+    reserve = decision._assessment_reserve(include_web_plan=True, include_vision_request=vision_available)
+    mandatory = {records[0].record_id, records[-1].record_id}
+    selected = select_bounded_history(payload, required_ids=mandatory, gate_target=24_000, body_target=64_000,
+        max_characters=120_000, assessment_reserve=reserve, projection="compact")
+    extra = additional_body_messages(selected.body, selected.gate, projection="compact")
+    assert selected.gate.fits and selected.body.fits
+    assert selected.gate.characters + sum(len(item["content"]) for item in extra) + reserve <= 120_000
+    assert mandatory <= set(selected.gate.observation_ids) < set(selected.body.observation_ids)
+    assert len(selected.body.observation_ids) < len(records)
+    assert payload == original
+    for stage in (selected.gate, selected.body):
+        rendered = _wire_records(stage.payload)
+        assert rendered[records[-1].record_id]["text"] == records[-1].text
+        omitted = set(stage.payload["model_context_selection"]["omitted_observation_record_ids"])
+        assert omitted == {item.record_id for item in records} - set(stage.observation_ids)
+    # The extra message must neither reintroduce evicted sources nor lose the
+    # original identity/record contents of the history still presented.
+    extra_records = {item["record_id"] for block in map(json.loads, [m["content"] for m in extra])
+        for item in [*block.get("closed_observations", []),
+                     *(item for member in block.get("group_context", {}).get("members", [])
+                       for item in member["observations"]) ]}
+    assert extra_records == set(selected.body.observation_ids) - set(selected.gate.observation_ids)
+
+
+def test_crowded_context_prepares_and_resumes_without_budget_fallback(setup, monkeypatch):
+    for index in range(103):
+        _, latest = add_member(setup[0], "20002", capture=f"crowded-{index}",
+            moment=NOW + timedelta(seconds=index + 1), text=f"历史消息{index}，今日天气晴朗。")
+    monkeypatch.setenv("NC_QQ_INPUT_TOKEN_BUDGET", "52000")
+    monkeypatch.setenv("NC_VALIDATOR_ENABLED", "false")
+    config = setup[3]["config_path"]
+    config.write_text(json.dumps({**json.loads(config.read_text()), "validator_enabled": False}))
+    binding, trace = _binding(), QQTurnTrace()
+    prepared = decision.prepare_qq_turn(**setup[3], trigger_member_id="20002", turn_binding=binding,
+        request="测" * 4000, web_capabilities={"enabled": True}, trace=trace,
+        _reply_reference_record_ids=[setup[4][0].record_id])
+    assert prepared["kind"] == "prepared"
+    counters = trace.snapshot()["counters"]
+    assert counters["context_combined_characters"] + counters["context_assessment_reserved_characters"] <= 104_000
+    assert "context_budget_exceeded" not in counters
+    frozen = decision.get_qq_turn_checkpoint(memory_db=setup[0].path, prepare_id=prepared["prepare_id"])["snapshot"]
+    body_ids = set(frozen["presentation"]["body_observation_ids"])
+    assert {setup[4][0].record_id, latest.record_id} <= body_ids
+    assert len(body_ids) < 105
+    result = _resume(setup, binding, prepared)
+    assert result.outcome == "ready" and result.model_call_counts == {"gate": 1, "persona": 1}
+    assert set(result.source_record_ids) == set(result.seen_observation_record_ids) == body_ids
+    actual = sum(len(item["content"]) for item in setup[1].chat_calls[0] if item["role"] != "system")
+    assert actual <= 104_000
 
 
 def test_shadow_keeps_all_actual_history_while_reporting_bounded_candidate(setup, monkeypatch):

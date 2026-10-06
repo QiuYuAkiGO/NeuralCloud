@@ -1,0 +1,43 @@
+{
+  "scope": "synthetic pure context-selection fixture; no model calls or QQ sends",
+  "rows": [
+    {
+      "vision_available": false,
+      "hard_limit": 120000,
+      "reserve": 38249,
+      "before": {
+        "gate_observations": 42,
+        "body_observations": 105,
+        "individual_selections_fit": true,
+        "combined_characters_including_reserve": 122696,
+        "fits": false
+      },
+      "after": {
+        "gate_observations": 42,
+        "body_observations": 74,
+        "individual_selections_fit": true,
+        "combined_characters_including_reserve": 107184,
+        "fits": true
+      }
+    },
+    {
+      "vision_available": true,
+      "hard_limit": 120000,
+      "reserve": 42249,
+      "before": {
+        "gate_observations": 42,
+        "body_observations": 105,
+        "individual_selections_fit": true,
+        "combined_characters_including_reserve": 126696,
+        "fits": false
+      },
+      "after": {
+        "gate_observations": 42,
+        "body_observations": 74,
+        "individual_selections_fit": true,
+        "combined_characters_including_reserve": 111184,
+        "fits": true
+      }
+    }
+  ]
+}

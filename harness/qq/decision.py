@@ -1543,7 +1543,8 @@ def decide_qq_reply(
             raise QQDraftError("The emotion guidance must match the current QQ conversation.")
     context, closed_items, open_items, retrieval_hints = _apply_append_window(path, group_id, context, trace=trace)
     from harness.qq.history_selection import (
-        additional_body_messages, history_wire_characters, include_trusted_reply_references, select_bounded_history,
+        additional_body_messages, fit_body_history, history_wire_characters,
+        include_trusted_reply_references, select_bounded_history,
     )
 
     context, referenced_items = include_trusted_reply_references(path, context, _reply_reference_record_ids)
@@ -1874,8 +1875,14 @@ def decide_qq_reply(
             encoded_messages = _checked_model_payloads(
                 payload, trace=trace, stage="final",
                 reserve=assessment_reserve, max_characters=input_character_budget, projection=projection)
-            if (sum(map(len, encoded_messages)) + sum(len(item["content"]) for item in body_extra_messages)
-                    + assessment_reserve > input_character_budget):
+            extra_characters = sum(len(item["content"]) for item in body_extra_messages)
+            combined_characters = sum(map(len, encoded_messages)) + extra_characters
+            trace.add_counter("context_body_extra_characters", extra_characters)
+            trace.add_counter("context_combined_characters", combined_characters)
+            if combined_characters + assessment_reserve > input_character_budget:
+                trace.add_counter("context_budget_exceeded")
+                trace.add_counter("context_budget_exceeded_combined")
+                trace.record("decision.context_budget", outcome="error", error_type="model_invalid")
                 raise _QQContextBudgetExceeded(_CONTEXT_BUDGET_REASON)
             user_payload = "".join(encoded_messages)
             # The same reasoning model serves the persona parser and gate.
@@ -1932,12 +1939,31 @@ def decide_qq_reply(
                             visual, vision_usage = vision_tool.invoke(choice.vision_request, deadline=deadline,
                                 trace=trace, request_validator=validator)
                         usage = usage.add(vision_usage)
-                        tool_message = _checked_model_payload({"vision_tool_result": visual,
+                        tool_payload = {"vision_tool_result": visual,
                             "continuation": "识图工具结果已返回。本轮不再调用识图；结合结果完成参与判断与回复计划。"
                                 "需要外部资料时自主给出web_plan，否则为null。vision_request必须为null。"
-                                "失败或不确定的结果不能补成确定事实。"}, trace=trace, stage="final",
-                            reserve=sum(len(item["content"]) for item in messages if item["role"] != "system")
-                                + len(response.text) + assessment_reserve
+                                "失败或不确定的结果不能补成确定事实。"}
+                        prefix_characters = sum(len(item["content"]) for item in messages if item["role"] != "system")
+                        tool_prefix_characters = prefix_characters + len(response.text) + len(_canonical(tool_payload))
+                        if history_mode == "bounded":
+                            previous_body_count = len(body_selection.observation_ids)
+                            body_selection = fit_body_history(body_selection, selection,
+                                prefix_characters=tool_prefix_characters, max_characters=input_character_budget,
+                                assessment_reserve=assessment_reserve, projection=projection, original_ids=source_ids)
+                            body_extra_messages = additional_body_messages(body_selection, selection, projection=projection)
+                            body_ids, body_profile_ids = set(body_selection.observation_ids), set(body_selection.profile_ids)
+                            body_evidence_refs = sorted({ref for member in context.members for ref in _evidence_refs(member.model_copy(update={
+                                "observations": [item for item in member.observations if item.record_id in body_ids],
+                                "profiles": [item for item in member.profiles if item.record_id in body_profile_ids],
+                            }))})
+                            trace.add_counter("context_vision_history_pruned", previous_body_count - len(body_ids))
+                            provider = (_turn_preparation or {}).get("used_sources_provider")
+                            if provider is not None:
+                                _turn_preparation["used_sources"] = provider(body_selection.payload)
+                        trace.add_counter("context_vision_combined_characters", tool_prefix_characters
+                            + sum(len(item["content"]) for item in body_extra_messages))
+                        tool_message = _checked_model_payload(tool_payload, trace=trace, stage="final",
+                            reserve=prefix_characters + len(response.text) + assessment_reserve
                                 + sum(len(item["content"]) for item in body_extra_messages),
                             max_characters=input_character_budget)
                         messages = [*messages, {"role": "assistant", "content": response.text},

@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from collections.abc import Callable
 from contextlib import closing
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 import json
 
@@ -122,7 +123,8 @@ def _subset(payload, retained: set[str], *, original_ids: list[str]):
 
 
 def _bounded(payload, *, required_ids: set[str], target: int, max_characters: int,
-             assessment_reserve: int, projection: str, original_ids: list[str]) -> ModelContextSelection:
+             assessment_reserve: int, projection: str, original_ids: list[str],
+             accept: Callable[[ModelContextSelection], bool] | None = None) -> ModelContextSelection:
     records = sorted(_records(payload), key=lambda item: (datetime.fromisoformat(item["observed_at"]),
                      datetime.fromisoformat(item["stored_at"]), item["record_id"]))
     retained = {item["record_id"] for item in records}
@@ -159,8 +161,9 @@ def _bounded(payload, *, required_ids: set[str], target: int, max_characters: in
             omitted_observation_record_ids=[item for item in original_ids if item not in included])
         # The final omission manifest is part of the actual wire budget too.
         characters = sum(map(len, encode_model_payload(result.payload, projection=projection)))
-        return ModelContextSelection(result.payload, result.observation_ids, result.profile_ids, result.delivery_ids,
-                                     characters, characters + assessment_reserve <= max_characters)
+        result = ModelContextSelection(result.payload, result.observation_ids, result.profile_ids, result.delivery_ids,
+                                       characters, characters + assessment_reserve <= max_characters)
+        return replace(result, fits=result.fits and (accept is None or accept(result)))
 
     selected = finalize(low)
     if selected.fits:
@@ -197,7 +200,30 @@ def select_bounded_history(payload, *, required_ids: set[str], gate_target: int,
                    projection=projection, original_ids=original_ids)
     body = _bounded(payload, target=max(gate_target, body_target), **options)
     gate = _bounded(body.payload, target=gate_target, **options)
+    body = fit_body_history(body, gate, prefix_characters=gate.characters, max_characters=max_characters,
+        assessment_reserve=assessment_reserve, projection=projection, original_ids=original_ids)
     return QQHistorySelections(gate, body)
+
+
+def fit_body_history(body: ModelContextSelection, gate: ModelContextSelection, *, prefix_characters: int,
+                     max_characters: int, assessment_reserve: int, projection: str,
+                     original_ids: list[str]) -> ModelContextSelection:
+    """Fit appended history around an immutable gate/tool prefix and reserves.
+
+    Additional messages repeat profile/omission metadata. They must fit as
+    serialized together, both before the gate and after a vision tool returns.
+    Every source already shown to the gate remains pinned; no source text or
+    tool result is shortened to make room.
+    """
+    def combined_fits(candidate):
+        extra = additional_body_messages(candidate, gate, projection=projection)
+        return prefix_characters + sum(len(item["content"]) for item in extra) + assessment_reserve <= max_characters
+
+    if gate.fits and body.fits and not combined_fits(body):
+        return _bounded(body.payload, target=history_wire_characters(body.payload, projection=projection),
+            required_ids=set(gate.observation_ids), max_characters=max_characters,
+            assessment_reserve=assessment_reserve, projection=projection, original_ids=original_ids, accept=combined_fits)
+    return body
 
 
 def additional_body_messages(body: ModelContextSelection, gate: ModelContextSelection, *, projection: str):

@@ -1,0 +1,134 @@
+{
+  "scope": "isolated snapshots of this group QQ history; real main/optional vision; no shared cognitive state, emotion RPC or QQ delivery",
+  "qq_sends": 0,
+  "rows": [
+    {
+      "case": "today_image",
+      "seconds": 20.865,
+      "outcome": "ready",
+      "error_type": null,
+      "reply_characters": 27,
+      "model_call_counts": {
+        "gate": 2,
+        "persona": 1,
+        "vision": 1
+      },
+      "selection": [
+        {
+          "before": {
+            "gate_observations": 42,
+            "body_observations": 106,
+            "gate_characters": 53066,
+            "extra_characters": 38342,
+            "reserved_characters": 42249,
+            "combined_characters_including_reserve": 133657,
+            "hard_limit": 120000,
+            "fits": false
+          },
+          "after": {
+            "gate_observations": 42,
+            "body_observations": 74,
+            "gate_characters": 53066,
+            "extra_characters": 23283,
+            "reserved_characters": 42249,
+            "combined_characters_including_reserve": 118598,
+            "hard_limit": 120000,
+            "fits": true
+          }
+        }
+      ],
+      "budget_counters": {
+        "context_assessment_reserved_characters": 42249,
+        "context_gate_history_soft_target_exceeded": 0,
+        "context_body_history_soft_target_exceeded": 0,
+        "context_body_extra_characters": 23283,
+        "context_combined_characters": 76349,
+        "context_vision_combined_characters": 54559
+      }
+    },
+    {
+      "case": "today_text",
+      "seconds": 2.755,
+      "outcome": "natural_wait",
+      "error_type": null,
+      "reply_characters": 0,
+      "model_call_counts": {
+        "gate": 1,
+        "persona": 0
+      },
+      "selection": [
+        {
+          "before": {
+            "gate_observations": 42,
+            "body_observations": 106,
+            "gate_characters": 48785,
+            "extra_characters": 38338,
+            "reserved_characters": 38249,
+            "combined_characters_including_reserve": 125372,
+            "hard_limit": 120000,
+            "fits": false
+          },
+          "after": {
+            "gate_observations": 42,
+            "body_observations": 74,
+            "gate_characters": 48785,
+            "extra_characters": 23279,
+            "reserved_characters": 38249,
+            "combined_characters_including_reserve": 110313,
+            "hard_limit": 120000,
+            "fits": true
+          }
+        }
+      ],
+      "budget_counters": {
+        "context_assessment_reserved_characters": 38249,
+        "context_gate_history_soft_target_exceeded": 0,
+        "context_body_history_soft_target_exceeded": 0,
+        "context_body_extra_characters": 23279,
+        "context_combined_characters": 72064
+      }
+    },
+    {
+      "case": "synthetic_new_text_on_group_history",
+      "seconds": 17.364,
+      "outcome": "ready",
+      "error_type": null,
+      "reply_characters": 3,
+      "model_call_counts": {
+        "gate": 1,
+        "persona": 1
+      },
+      "selection": [
+        {
+          "before": {
+            "gate_observations": 43,
+            "body_observations": 107,
+            "gate_characters": 54335,
+            "extra_characters": 38662,
+            "reserved_characters": 38249,
+            "combined_characters_including_reserve": 131246,
+            "hard_limit": 120000,
+            "fits": false
+          },
+          "after": {
+            "gate_observations": 43,
+            "body_observations": 75,
+            "gate_characters": 54335,
+            "extra_characters": 23603,
+            "reserved_characters": 38249,
+            "combined_characters_including_reserve": 116187,
+            "hard_limit": 120000,
+            "fits": true
+          }
+        }
+      ],
+      "budget_counters": {
+        "context_assessment_reserved_characters": 38249,
+        "context_gate_history_soft_target_exceeded": 0,
+        "context_body_history_soft_target_exceeded": 0,
+        "context_body_extra_characters": 23603,
+        "context_combined_characters": 77938
+      }
+    }
+  ]
+}
