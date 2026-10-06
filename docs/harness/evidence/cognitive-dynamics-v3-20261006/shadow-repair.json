@@ -1,0 +1,1303 @@
+{
+  "schema_version": "cognitive-dynamics-shadow-repair-v1",
+  "captured_at": "2026-10-06T13:55:02.818284+00:00",
+  "problem": "Legacy psychological boundary counter paused Runtime during shadow observation while candidate recovery remained healthy.",
+  "before": {
+    "at": "2026-10-06T13:30:07.874980+00:00",
+    "release": "20261006-cognitive-dynamics-v3-shadow-v2",
+    "manifest_revision": 3,
+    "manifest_profile": "qq-social-drive-v1@2",
+    "services": {
+      "cognitive": {
+        "MainPID": "195757",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "MainPID": "195796",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "MainPID": "195834",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "MainPID": "196519",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "MainPID": "195825",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq_direct": {
+        "MainPID": "196542",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "runtime": {
+      "lifecycle": "PAUSED",
+      "health": {
+        "lifecycle": "PAUSED",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": false,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [
+          "homeostasis"
+        ],
+        "last_heartbeat_at": "2026-10-06T12:58:55.083339Z",
+        "last_journal_append_at": "2026-10-06T13:30:06.025145Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "pending_events": 0,
+      "background": {
+        "heartbeat": {
+          "active": true,
+          "pending": 0,
+          "running": false,
+          "coalesced": 1,
+          "thread_jobs": 0,
+          "last_duration_ms": 963.195,
+          "last_error": null
+        },
+        "passive_state": {
+          "active": true,
+          "pending": 0,
+          "running": false,
+          "coalesced": 0,
+          "thread_jobs": 0,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "affect": {
+          "pending": 0,
+          "running": 0,
+          "scopes": 0,
+          "degraded": false
+        }
+      }
+    },
+    "direct": {
+      "running": true,
+      "connected": true,
+      "repository_root": "/opt/neuralcloud/releases/20261006-cognitive-dynamics-v3-shadow-v2",
+      "heartbeat_at": "2026-10-06T13:30:07.659114+00:00"
+    },
+    "watchdog": [
+      "cognitive_load:hard_bound_sustained",
+      "novelty:hard_bound_sustained"
+    ],
+    "dynamics": {
+      "mode": "shadow",
+      "fatigue": 0.0714732064161717,
+      "boredom": 0.0,
+      "wants_engagement": false,
+      "latent_confidence": 0.8,
+      "baselines": {
+        "safety_predictability": 0.6651600000000001,
+        "competence": 0.6250000152600026,
+        "autonomy": 0.6749992824438109,
+        "social_connection": 0.38068496909056737
+      },
+      "short_term_responses": {
+        "safety_predictability": 0.0,
+        "competence": 0.0,
+        "autonomy": 0.0,
+        "social_connection": 0.0
+      },
+      "regulation_pressure": {
+        "level": "normal",
+        "suggest_reduce_input": false,
+        "suggest_reopen": true
+      },
+      "assessment_coverage": {
+        "exposures": 55,
+        "assessed": 0,
+        "unassessed": 55,
+        "work_units": 366174,
+        "last_work_at": "2026-10-06T12:58:52.741584+00:00"
+      },
+      "shadow_observation": {
+        "continuous_seconds": 3560.735410000001,
+        "samples": 1045,
+        "maximum_gap_seconds": 9.045134,
+        "last_sample_at": "2026-10-06T13:30:06.007102+00:00"
+      },
+      "shadow_values": {
+        "cognitive_load": 0.10003584823402764,
+        "novelty": 0.5006133511979329,
+        "safety_predictability": 0.6651600000000001,
+        "competence": 0.6250000152600026,
+        "autonomy": 0.6749992824438109,
+        "social_connection": 0.38068496909056737
+      },
+      "started_at": "2026-10-06T12:24:08.049492+00:00",
+      "updated_at": "2026-10-06T13:30:06.007102+00:00"
+    },
+    "display_values": {
+      "energy_reserve": 0.6650083377383333,
+      "cognitive_load": 0.9499260805843702,
+      "safety_predictability": 0.6650088935875555,
+      "competence": 0.6249998335051166,
+      "autonomy": 0.6750010166396482,
+      "social_connection": 0.3955163650405676,
+      "novelty": 0.9499674041574432
+    },
+    "gate": {
+      "schema_version": "cognitive-dynamics-shadow-gate-v1",
+      "ready": false,
+      "reasons": [
+        "continuous_shadow_observation_less_than_24_hours"
+      ],
+      "observation": {
+        "continuous_seconds": 3560.735410000001,
+        "samples": 1045,
+        "maximum_gap_seconds": 9.045134,
+        "last_sample_at": "2026-10-06T13:30:06.007102+00:00"
+      },
+      "assessment_coverage": {
+        "exposures": 55,
+        "assessed": 0,
+        "unassessed": 55,
+        "work_units": 366174,
+        "last_work_at": "2026-10-06T12:58:52.741584+00:00"
+      },
+      "snapshot_revision": 132651,
+      "profile_ref": "qq-social-drive-v1@2",
+      "checked_at": "2026-10-06T13:30:07.906282+00:00"
+    },
+    "work": {
+      "total": 55,
+      "pending": 0,
+      "by_context_category": {
+        "qq": {
+          "total": 55,
+          "assessed": 0,
+          "applied": 55,
+          "units": 363998,
+          "last_at": "2026-10-06T12:58:52.741584Z"
+        }
+      }
+    },
+    "attention": {
+      "policies": [
+        {
+          "group_id": "1044946257",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "1060979317",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "712342021",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        }
+      ],
+      "dispositions": {
+        "admitted": 20
+      },
+      "outcomes": {
+        "model_wait": 0,
+        "runtime_failure": 0,
+        "guard_wait": 0
+      },
+      "review_error": null
+    }
+  },
+  "diagnosis": {
+    "at": "2026-10-06T13:49:12.059189+00:00",
+    "request_categories": [
+      {
+        "role": "main",
+        "phase": null,
+        "stage": null,
+        "status": "success",
+        "shape": [
+          false,
+          false,
+          false,
+          [
+            "shared-memory"
+          ]
+        ],
+        "count": 43
+      },
+      {
+        "role": "main",
+        "phase": null,
+        "stage": null,
+        "status": "error",
+        "shape": [
+          false,
+          false,
+          false,
+          [
+            "shared-memory"
+          ]
+        ],
+        "count": 12
+      }
+    ],
+    "matched_work_receipts": 55,
+    "work_receipts": 55,
+    "transition_counts": [
+      {
+        "command": "ApplyHeartbeat",
+        "source": "scheduler",
+        "count": 337
+      },
+      {
+        "command": "ApplyEvent",
+        "source": "runtime",
+        "count": 55
+      },
+      {
+        "command": "ApplyHeartbeat",
+        "source": "runtime.passive_state",
+        "count": 935
+      },
+      {
+        "command": "ApplyEvent",
+        "source": "verified_outcome",
+        "count": 15
+      }
+    ],
+    "new_qq_facts": 15,
+    "first_watchdog": [
+      {
+        "revision": 132278,
+        "occurred_at": "2026-10-06T12:59:00.033730Z",
+        "command_type": "ApplyHeartbeat",
+        "watchdog": [
+          "cognitive_load:hard_bound_sustained",
+          "novelty:hard_bound_sustained"
+        ],
+        "suggested_impacts": {},
+        "applied_impacts": {
+          "autonomy": -1.7582750752032084e-06,
+          "cognitive_load": -7.39194156297307e-05,
+          "competence": -1.8452905869992264e-11,
+          "energy_reserve": 3.514691123474023e-05,
+          "novelty": -3.259584255677073e-05,
+          "safety_predictability": 2.13934876194255e-05,
+          "social_connection": 4.1688691666652566e-05
+        }
+      }
+    ],
+    "last_normal": {
+      "revision": 132277,
+      "occurred_at": "2026-10-06T12:59:00.032005Z",
+      "command_type": "ApplyHeartbeat"
+    },
+    "boundary_heartbeat_threshold": 3
+  },
+  "deployment": {
+    "started_at": "2026-10-06T13:48:50.903726+00:00",
+    "phase": "shadow_running",
+    "release_id": "20261006-cognitive-dynamics-v3-shadow-v3",
+    "code_commit": "47f9da9c804f6d6b7a37004a490f45297d93dd72",
+    "archive_sha256": "c0269dfe4fc8be8b148d45e82ed9693cdb47490f219fa97bb326d3aa3c8af719",
+    "manual_pause_audit": {
+      "checked_at": "2026-10-06T13:48:51.022112+00:00",
+      "control_events": [],
+      "transitions": [
+        {
+          "at": "2026-10-06T12:59:00.067102Z",
+          "current": "PAUSING",
+          "previous": "RUNNING",
+          "automatic_boundary_pause": true
+        },
+        {
+          "at": "2026-10-06T12:59:00.996806Z",
+          "current": "PAUSED",
+          "previous": "PAUSING",
+          "automatic_boundary_pause": true
+        }
+      ]
+    },
+    "stopped_services": {
+      "cognitive": {
+        "MainPID": "0",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "inactive",
+        "SubState": "dead",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-cognitive.service"
+      },
+      "homeostasis": {
+        "MainPID": "0",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "inactive",
+        "SubState": "dead",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-homeostasis.service"
+      },
+      "runtime": {
+        "MainPID": "0",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "inactive",
+        "SubState": "dead",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-runtime.service"
+      },
+      "gui": {
+        "MainPID": "0",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "inactive",
+        "SubState": "dead",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-gui.service"
+      },
+      "board": {
+        "MainPID": "0",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "inactive",
+        "SubState": "dead",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-board.service"
+      },
+      "qq_direct": {
+        "MainPID": "0",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "inactive",
+        "SubState": "dead",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-qq-direct.service"
+      }
+    },
+    "manual_pause_audit_after_stop": {
+      "checked_at": "2026-10-06T13:49:01.160400+00:00",
+      "control_events": [],
+      "transitions": [
+        {
+          "at": "2026-10-06T12:59:00.067102Z",
+          "current": "PAUSING",
+          "previous": "RUNNING",
+          "automatic_boundary_pause": true
+        },
+        {
+          "at": "2026-10-06T12:59:00.996806Z",
+          "current": "PAUSED",
+          "previous": "PAUSING",
+          "automatic_boundary_pause": true
+        },
+        {
+          "at": "2026-10-06T13:48:57.071151Z",
+          "current": "STOPPING",
+          "previous": "PAUSED",
+          "automatic_boundary_pause": false
+        },
+        {
+          "at": "2026-10-06T13:48:57.081456Z",
+          "current": "STOPPED",
+          "previous": "STOPPING",
+          "automatic_boundary_pause": false
+        }
+      ]
+    },
+    "backup": {
+      "path": "/var/backups/neuralcloud/20261006-shadow-watchdog-repair",
+      "verification": {
+        "ok": true,
+        "files": 12237,
+        "bytes": 10946002329,
+        "sqlite_databases": 23,
+        "journals": {
+          "state/runtime/journal": {
+            "records": 953286,
+            "last_hash": "1ea4752d7009bb554f2487cdd1c3170c02699a964dd932dc71db6b363b96554b"
+          }
+        },
+        "manifest_sha256": "9c0a6d17a87185f901c7f0291ce998209d33c25f7887c46e5fd1a10ed8b5620f"
+      }
+    },
+    "configuration": {
+      "profile_before": "qq-social-drive-v1@2",
+      "profile_after": "qq-social-drive-v1@3",
+      "manifest_before": 3,
+      "manifest_after": 4,
+      "mode": "shadow",
+      "watchdog_boundary_heartbeats": null,
+      "direct_budget_enabled": false,
+      "schema_version": "homeostasis-state-v3"
+    },
+    "recovery": {
+      "at": "2026-10-06T13:51:11.938156+00:00",
+      "method": "legacy_engine_apply_heartbeat_with_empty_appraisal",
+      "profile_ref": "qq-social-drive-v1@3",
+      "revision_before": 132878,
+      "revision_after": 132879,
+      "values_before": {
+        "energy_reserve": 0.6650083377383333,
+        "cognitive_load": 0.9499260805843702,
+        "safety_predictability": 0.6650088935875555,
+        "competence": 0.6249998335051166,
+        "autonomy": 0.6750010166396482,
+        "social_connection": 0.3955163650405676,
+        "novelty": 0.9499674041574432
+      },
+      "values_after": {
+        "energy_reserve": 0.66515,
+        "cognitive_load": 0.9486698312451203,
+        "safety_predictability": 0.6651600000000001,
+        "competence": 0.6249999390016211,
+        "autonomy": 0.674999305162484,
+        "social_connection": 0.39626636504056756,
+        "novelty": 0.9493417371383766
+      },
+      "watchdog_before": [
+        "cognitive_load:hard_bound_sustained",
+        "novelty:hard_bound_sustained"
+      ],
+      "watchdog_after": [],
+      "cursor_preserved": true,
+      "no_model_calls": true,
+      "no_work_or_interaction_replayed": true,
+      "request": {
+        "schema_version": "service-contract-v1",
+        "command_id": "cmd_54ab929db7c39d3d45c0b4a8dc1e1b0f",
+        "command_type": "ApplyHeartbeat",
+        "event_id": "evt_d2e83fbef024b45cb59902f1accc4912",
+        "receive_seq": 135133,
+        "correlation_id": "deployment-shadow-boundary-repair-20261006",
+        "character_id": "character",
+        "runtime_instance_id": "operator_20261006_shadow_boundary_repair",
+        "manifest_revision": 4,
+        "idempotency_key": "maintenance:shadow-boundary-repair:20261006",
+        "deadline": "2026-10-06T13:52:11.938156Z",
+        "issued_at": "2026-10-06T13:51:11.938156Z",
+        "expected_revision": 132878,
+        "version_vector": null,
+        "payload": {
+          "event": {
+            "event_type": "heartbeat",
+            "source": "scheduler",
+            "source_time": "2026-10-06T13:51:11.938156+00:00",
+            "payload": {
+              "appraisal": {
+                "source": "scheduler",
+                "precision": 0.95,
+                "suggested_impacts": {}
+              }
+            }
+          },
+          "maintenance": {
+            "reason": "Apply the approved shadow profile without the legacy psychological boundary pause.",
+            "authorization": "Existing user push/deploy authorization and approved non-faulting psychological regulation.",
+            "cursor_binding": "Preserve last acknowledged event and sequence; no work or interaction replay."
+          }
+        },
+        "request_hash": null
+      },
+      "request_hash": "f0426ff394397a26f0d9938018a47da3de6a5b776192479b4a42736af5660d02",
+      "transition_trace": {
+        "revision": 132879,
+        "command_type": "ApplyHeartbeat",
+        "event_id": "evt_d2e83fbef024b45cb59902f1accc4912",
+        "receive_seq": 135133,
+        "occurred_at": "2026-10-06T13:51:11.938156Z",
+        "source": "scheduler",
+        "precision": 0.95,
+        "suggested_impacts": {},
+        "applied_impacts": {
+          "energy_reserve": 0.00014166226166667517,
+          "cognitive_load": -0.0012562493392499485,
+          "safety_predictability": 0.00015110641244453493,
+          "competence": 1.0549650453217652e-07,
+          "autonomy": -1.7114771642123827e-06,
+          "social_connection": 0.0007499999999999729,
+          "novelty": -0.0006256670190666336
+        },
+        "coupling_impacts": {
+          "energy_reserve": 0.00014999999999998348,
+          "cognitive_load": -6.249339249975172e-06,
+          "safety_predictability": 0.000160000000000049,
+          "competence": -6.099837890349846e-08,
+          "autonomy": -6.948375160797937e-07,
+          "social_connection": 0.0,
+          "novelty": -6.670190666469011e-07
+        },
+        "watchdog": [],
+        "observed_values": {},
+        "assimilation_gain": null,
+        "values_before": {},
+        "values_after": {},
+        "body_instance_id": null,
+        "episode_id": null,
+        "body_revision": null,
+        "evidence_refs": [],
+        "experiment_mode": null,
+        "salience": "marked",
+        "dominant_needs": [
+          "novelty",
+          "cognitive_load",
+          "social_connection"
+        ],
+        "affect_valence": -0.05726582653314115,
+        "affect_arousal": 0.8554809071848162,
+        "affect_dominance": 0.6550530813880351
+      }
+    },
+    "attention_db_preserved_before_restart": {
+      "sha256": "4d4c9f9d1d7e4207b112a0523e97ce77bdb0980c16c3dd4b5b75e534d785113e",
+      "unchanged": true
+    },
+    "activation": {
+      "release": "20261006-cognitive-dynamics-v3-shadow-v3",
+      "previous_release": "20261006-cognitive-dynamics-v3-shadow-v2",
+      "services": [
+        "cognitive",
+        "homeostasis",
+        "runtime",
+        "gui",
+        "board",
+        "qq_direct"
+      ]
+    },
+    "verification": {
+      "release_id": "20261006-cognitive-dynamics-v3-shadow-v3",
+      "verified_files": 433,
+      "configuration_valid": true,
+      "business_services_started": false
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-06T13:54:12.056493Z",
+        "last_journal_append_at": "2026-10-06T13:54:12.195920Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "pending_events": 0,
+      "background": {
+        "heartbeat": {
+          "active": true,
+          "pending": 0,
+          "running": true,
+          "coalesced": 0,
+          "thread_jobs": 2,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "passive_state": {
+          "active": true,
+          "pending": 0,
+          "running": false,
+          "coalesced": 0,
+          "thread_jobs": 0,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "affect": {
+          "pending": 0,
+          "running": 0,
+          "scopes": 0,
+          "degraded": false
+        }
+      }
+    },
+    "direct": {
+      "running": true,
+      "connected": true,
+      "heartbeat_at": "2026-10-06T13:54:12.367926+00:00"
+    },
+    "services": {
+      "cognitive": {
+        "MainPID": "199236",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-cognitive.service"
+      },
+      "homeostasis": {
+        "MainPID": "199269",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-homeostasis.service"
+      },
+      "runtime": {
+        "MainPID": "199305",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-runtime.service"
+      },
+      "gui": {
+        "MainPID": "199915",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-gui.service"
+      },
+      "board": {
+        "MainPID": "199296",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-board.service"
+      },
+      "qq_direct": {
+        "MainPID": "199954",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-qq-direct.service"
+      }
+    },
+    "finished_at": "2026-10-06T13:54:13.907658+00:00"
+  },
+  "verification": {
+    "at": "2026-10-06T13:54:31.596730+00:00",
+    "release": "20261006-cognitive-dynamics-v3-shadow-v3",
+    "manifest_revision": 4,
+    "manifest_profile": "qq-social-drive-v1@3",
+    "services": {
+      "cognitive": {
+        "MainPID": "199236",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "MainPID": "199269",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "MainPID": "199305",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "MainPID": "199915",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "MainPID": "199296",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq_direct": {
+        "MainPID": "199954",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-06T13:54:12.056493Z",
+        "last_journal_append_at": "2026-10-06T13:54:31.522698Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "pending_events": 0,
+      "background": {
+        "heartbeat": {
+          "active": true,
+          "pending": 1,
+          "running": true,
+          "coalesced": 2,
+          "thread_jobs": 0,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "passive_state": {
+          "active": true,
+          "pending": 0,
+          "running": true,
+          "coalesced": 0,
+          "thread_jobs": 0,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "affect": {
+          "pending": 0,
+          "running": 0,
+          "scopes": 0,
+          "degraded": false
+        }
+      }
+    },
+    "direct": {
+      "running": true,
+      "connected": true,
+      "repository_root": "/opt/neuralcloud/releases/20261006-cognitive-dynamics-v3-shadow-v3",
+      "heartbeat_at": "2026-10-06T13:54:30.244826+00:00"
+    },
+    "watchdog": [],
+    "dynamics": {
+      "mode": "shadow",
+      "fatigue": 0.08691355699253167,
+      "boredom": 0.0,
+      "wants_engagement": false,
+      "latent_confidence": 0.8,
+      "baselines": {
+        "autonomy": 0.6749992824438109,
+        "competence": 0.6250000152600026,
+        "safety_predictability": 0.6651600000000001,
+        "social_connection": 0.38068496909056737
+      },
+      "short_term_responses": {
+        "autonomy": 0.0,
+        "competence": 0.0,
+        "safety_predictability": 0.0,
+        "social_connection": 0.0
+      },
+      "regulation_pressure": {
+        "level": "overloaded",
+        "suggest_reduce_input": true,
+        "suggest_reopen": false
+      },
+      "assessment_coverage": {
+        "exposures": 63,
+        "assessed": 0,
+        "unassessed": 63,
+        "work_units": 425661,
+        "last_work_at": "2026-10-06T13:53:52.715733+00:00"
+      },
+      "shadow_observation": {
+        "continuous_seconds": 15.033650000000002,
+        "samples": 1277,
+        "maximum_gap_seconds": 175.078063,
+        "last_sample_at": "2026-10-06T13:54:22.049869+00:00"
+      },
+      "shadow_values": {
+        "cognitive_load": 0.9477578143770944,
+        "novelty": 0.5000541739271374,
+        "safety_predictability": 0.6651600000000001,
+        "competence": 0.6250000152600026,
+        "autonomy": 0.6749992824438109,
+        "social_connection": 0.38068496909056737
+      },
+      "started_at": "2026-10-06T12:24:08.049492+00:00",
+      "updated_at": "2026-10-06T13:54:22.049869+00:00"
+    },
+    "display_values": {
+      "energy_reserve": 0.66515,
+      "cognitive_load": 0.9474348312451203,
+      "safety_predictability": 0.6651600000000001,
+      "competence": 0.6250000416902509,
+      "autonomy": 0.674987206099838,
+      "social_connection": 0.39701636504056753,
+      "novelty": 0.9487047371383766
+    },
+    "gate": {
+      "schema_version": "cognitive-dynamics-shadow-gate-v1",
+      "ready": false,
+      "reasons": [
+        "continuous_shadow_observation_less_than_24_hours"
+      ],
+      "observation": {
+        "continuous_seconds": 15.033650000000002,
+        "samples": 1277,
+        "maximum_gap_seconds": 175.078063,
+        "last_sample_at": "2026-10-06T13:54:22.049869+00:00"
+      },
+      "assessment_coverage": {
+        "exposures": 63,
+        "assessed": 0,
+        "unassessed": 63,
+        "work_units": 425661,
+        "last_work_at": "2026-10-06T13:53:52.715733+00:00"
+      },
+      "snapshot_revision": 132892,
+      "profile_ref": "qq-social-drive-v1@3",
+      "checked_at": "2026-10-06T13:54:31.624447+00:00"
+    },
+    "work": {
+      "total": 63,
+      "pending": 0,
+      "by_context_category": {
+        "qq": {
+          "total": 63,
+          "assessed": 0,
+          "applied": 63,
+          "units": 423485,
+          "last_at": "2026-10-06T13:53:52.715733Z"
+        }
+      }
+    },
+    "attention": {
+      "policies": [
+        {
+          "group_id": "1044946257",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "1060979317",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "712342021",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        }
+      ],
+      "dispositions": {
+        "admitted": 39
+      },
+      "outcomes": {
+        "model_wait": 0,
+        "runtime_failure": 0,
+        "guard_wait": 0
+      },
+      "review_error": null
+    }
+  },
+  "web_verification": {
+    "checked_at": "2026-10-06T13:54:29.664940+00:00",
+    "attention_asset": {
+      "status": 200,
+      "matches_release": true
+    },
+    "attention_panel_api": {
+      "status": 200,
+      "policy_count": 3
+    }
+  },
+  "request_phase_coverage": {
+    "checked_at": "2026-10-06T13:54:29.761406+00:00",
+    "receipts": 63,
+    "matched": 63,
+    "unmatched": 0,
+    "phases": {
+      "legacy_unlabelled_shared_memory": {
+        "total": 55,
+        "assessed": 0,
+        "success": 43,
+        "error": 12,
+        "last_at": "2026-10-06T12:58:52.741584Z"
+      },
+      "qq_memory_consolidation": {
+        "total": 8,
+        "assessed": 0,
+        "success": 4,
+        "error": 4,
+        "last_at": "2026-10-06T13:53:52.715733Z"
+      }
+    }
+  },
+  "coverage_interpretation": "The initial 55 receipts match unlabelled background shared-memory work, not 55 failed optional decision appraisals. New memory calls now explicitly identify qq_memory_consolidation.",
+  "rollout": {
+    "active_rules_deployed": false,
+    "fair_input_budget_enabled": false,
+    "continuous_start_derived_from_persisted_samples": "2026-10-06T13:54:07.016219+00:00",
+    "earliest_24_hour_acceptance_if_no_further_gap": "2026-10-07T13:54:07.016219+00:00",
+    "rule": "Recompute using live persisted duration and recent work; stopping and startup time are not counted.",
+    "automation_id": "v3"
+  },
+  "confirmation": {
+    "at": "2026-10-06T13:55:52.481289+00:00",
+    "release": "20261006-cognitive-dynamics-v3-shadow-v3",
+    "manifest_revision": 4,
+    "manifest_profile": "qq-social-drive-v1@3",
+    "services": {
+      "cognitive": {
+        "MainPID": "199236",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "MainPID": "199269",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "MainPID": "199305",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "MainPID": "199915",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "MainPID": "199296",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq_direct": {
+        "MainPID": "199954",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-06T13:55:47.606568Z",
+        "last_journal_append_at": "2026-10-06T13:55:52.416814Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "pending_events": 0,
+      "background": {
+        "heartbeat": {
+          "active": true,
+          "pending": 0,
+          "running": false,
+          "coalesced": 2,
+          "thread_jobs": 0,
+          "last_duration_ms": 4828.932,
+          "last_error": null
+        },
+        "passive_state": {
+          "active": true,
+          "pending": 0,
+          "running": false,
+          "coalesced": 0,
+          "thread_jobs": 0,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "affect": {
+          "pending": 0,
+          "running": 0,
+          "scopes": 0,
+          "degraded": false
+        }
+      }
+    },
+    "direct": {
+      "running": true,
+      "connected": true,
+      "repository_root": "/opt/neuralcloud/releases/20261006-cognitive-dynamics-v3-shadow-v3",
+      "heartbeat_at": "2026-10-06T13:55:52.424180+00:00"
+    },
+    "watchdog": [],
+    "dynamics": {
+      "mode": "shadow",
+      "fatigue": 0.1154093572728433,
+      "boredom": 0.0,
+      "wants_engagement": false,
+      "latent_confidence": 0.8,
+      "baselines": {
+        "autonomy": 0.6749992824438109,
+        "competence": 0.6250000152600026,
+        "safety_predictability": 0.6651600000000001,
+        "social_connection": 0.38068496909056737
+      },
+      "short_term_responses": {
+        "autonomy": 0.0,
+        "competence": 0.0,
+        "safety_predictability": 0.0,
+        "social_connection": 0.0
+      },
+      "regulation_pressure": {
+        "level": "overloaded",
+        "suggest_reduce_input": true,
+        "suggest_reopen": false
+      },
+      "assessment_coverage": {
+        "exposures": 66,
+        "assessed": 0,
+        "unassessed": 66,
+        "work_units": 459343,
+        "last_work_at": "2026-10-06T13:55:29.979303+00:00"
+      },
+      "shadow_observation": {
+        "continuous_seconds": 100.63868599999998,
+        "samples": 1311,
+        "maximum_gap_seconds": 175.078063,
+        "last_sample_at": "2026-10-06T13:55:47.654905+00:00"
+      },
+      "shadow_values": {
+        "cognitive_load": 0.9498707555989547,
+        "novelty": 0.5000469707319641,
+        "safety_predictability": 0.6651600000000001,
+        "competence": 0.6250000152600026,
+        "autonomy": 0.6749992824438109,
+        "social_connection": 0.38068496909056737
+      },
+      "started_at": "2026-10-06T12:24:08.049492+00:00",
+      "updated_at": "2026-10-06T13:55:47.654905+00:00"
+    },
+    "display_values": {
+      "energy_reserve": 0.66500833469,
+      "cognitive_load": 0.9491215984500022,
+      "safety_predictability": 0.6650088903360001,
+      "competence": 0.6250000429300532,
+      "autonomy": 0.6749992845044387,
+      "social_connection": 0.3978128863405676,
+      "novelty": 0.9496041794817914
+    },
+    "gate": {
+      "schema_version": "cognitive-dynamics-shadow-gate-v1",
+      "ready": false,
+      "reasons": [
+        "continuous_shadow_observation_less_than_24_hours"
+      ],
+      "observation": {
+        "continuous_seconds": 100.63868599999998,
+        "samples": 1311,
+        "maximum_gap_seconds": 175.078063,
+        "last_sample_at": "2026-10-06T13:55:47.654905+00:00"
+      },
+      "assessment_coverage": {
+        "exposures": 66,
+        "assessed": 0,
+        "unassessed": 66,
+        "work_units": 459343,
+        "last_work_at": "2026-10-06T13:55:29.979303+00:00"
+      },
+      "snapshot_revision": 132930,
+      "profile_ref": "qq-social-drive-v1@3",
+      "checked_at": "2026-10-06T13:55:52.512458+00:00"
+    },
+    "work": {
+      "total": 66,
+      "pending": 0,
+      "by_context_category": {
+        "qq": {
+          "total": 64,
+          "assessed": 0,
+          "applied": 64,
+          "units": 431680,
+          "last_at": "2026-10-06T13:55:29.979303Z"
+        },
+        "emotion_guidance": {
+          "total": 1,
+          "assessed": 0,
+          "applied": 1,
+          "units": 379,
+          "last_at": "2026-10-06T13:54:36.621840Z"
+        },
+        "goal_decision": {
+          "total": 1,
+          "assessed": 0,
+          "applied": 1,
+          "units": 24724,
+          "last_at": "2026-10-06T13:54:47.647416Z"
+        }
+      }
+    },
+    "attention": {
+      "policies": [
+        {
+          "group_id": "1044946257",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "1060979317",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "712342021",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        }
+      ],
+      "dispositions": {
+        "admitted": 36
+      },
+      "outcomes": {
+        "model_wait": 0,
+        "runtime_failure": 0,
+        "guard_wait": 0
+      },
+      "review_error": null
+    }
+  },
+  "natural_processing_validation": {
+    "work_receipts_before": 55,
+    "work_receipts_after": 66,
+    "pending_receipts": 0,
+    "intake_admitted_before": 20,
+    "intake_admitted_after": 36,
+    "attention_policies_preserved": true,
+    "test_messages_sent": false,
+    "continuous_sampling_growing": true
+  },
+  "request_error_types": {
+    "checked_at": "2026-10-06T13:55:50.114446+00:00",
+    "errors": [
+      {
+        "period": "before_repair",
+        "phase": "unlabelled",
+        "type": "StructuredResponseError",
+        "http_status": 200,
+        "count": 11
+      },
+      {
+        "period": "after_repair",
+        "phase": "qq_memory_consolidation",
+        "type": "StructuredResponseError",
+        "http_status": 200,
+        "count": 5
+      }
+    ]
+  },
+  "request_error_interpretation": "HTTP 200 StructuredResponseError occurs in background memory before and after repair; this is response-schema parsing, not QQ connectivity or optional appraisal failure. Existing memory retry/completion behavior remains under observation.",
+  "follow_up": {
+    "automation_id": "v3",
+    "status": "ACTIVE",
+    "interval_hours": 1,
+    "prompt_updated_for_release": "20261006-cognitive-dynamics-v3-shadow-v3",
+    "stop_after_active_acceptance": true
+  }
+}

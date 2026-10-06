@@ -1,7 +1,7 @@
 {
-  "release_id": "20261006-cognitive-dynamics-v3-shadow-v2",
-  "archive": "D:\\GameDev\\NeuralCloud\\.tmp\\cognitive-dynamics-v3-shadow-v2.tar.gz",
-  "sha256": "d6e82b002449e10005e94d137120534d9090f4d0d656dc091988b37628970991",
+  "release_id": "20261006-cognitive-dynamics-v3-shadow-v3",
+  "archive": "D:\\GameDev\\NeuralCloud\\.tmp\\cognitive-dynamics-v3-shadow-v3.tar.gz",
+  "sha256": "c0269dfe4fc8be8b148d45e82ed9693cdb47490f219fa97bb326d3aa3c8af719",
   "files": 433,
   "state": "deployed_shadow",
   "changed_from_production": [
@@ -59,7 +59,14 @@
     "presets/homeostasis/qq-cognitive-dynamics-shadow-v3.json",
     "tools/deploy/export_shared.py"
   ],
-  "code_commit": "9882b5f8ecca7fb65a7bca02991af14c969015d0",
-  "deployed_at": "2026-10-06T12:30:51.150342+00:00",
-  "evidence": "deployment.json"
+  "code_commit": "47f9da9c804f6d6b7a37004a490f45297d93dd72",
+  "deployed_at": "2026-10-06T13:54:13.907658+00:00",
+  "evidence": "shadow-repair.json",
+  "previous_release": {
+    "release_id": "20261006-cognitive-dynamics-v3-shadow-v2",
+    "sha256": "d6e82b002449e10005e94d137120534d9090f4d0d656dc091988b37628970991",
+    "code_commit": "9882b5f8ecca7fb65a7bca02991af14c969015d0",
+    "deployed_at": "2026-10-06T12:30:51.150342+00:00",
+    "evidence": "deployment.json"
+  }
 }

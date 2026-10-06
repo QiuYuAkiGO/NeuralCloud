@@ -1,8 +1,8 @@
 {
   "schema_version": "cognitive-dynamics-validation-v1",
-  "checked_at": "2026-10-06T12:34:17.785493+00:00",
+  "checked_at": "2026-10-06T13:50:22.776529+00:00",
   "latest_result_per_case": {
-    "passed": 4411,
+    "passed": 4419,
     "failed": 0,
     "skipped": 2
   },
@@ -62,6 +62,20 @@
       "passed": 250,
       "failed": 0,
       "skipped": 0
+    },
+    {
+      "report": "cognitive-shadow-reliability-tests.xml",
+      "sha256": "f5632029e02374d23b642ac518d0ff90f4edf526526d4f429098b1f4231fdd63",
+      "passed": 50,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "report": "cognitive-shadow-memory-tests.xml",
+      "sha256": "cd2154a83e58f18a4dcc28e2bb684e5b84a2f27cdccbdd5961307eeff30f920d",
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0
     }
   ],
   "remaining_failures": [],
@@ -69,7 +83,8 @@
   "corrected_regressions": [
     "optional assessment serialized reserve",
     "clock fallback for legacy bridge construction",
-    "QQ profile revision 2 now validates with the production interoceptive manifest; invalid revisions remain rejected."
+    "QQ profile revision 2 now validates with the production interoceptive manifest; invalid revisions remain rejected.",
+    "Shadow staging disables the legacy psychological boundary pause while retaining scalar control mathematics and numeric/storage fault checks."
   ],
   "timing_recheck": "One 200 ms deadline test expired before reaching its stub during concurrent replay/regression; its full 40-test file passed when run alone, without changing deadline code or the test.",
   "static_checks": {
@@ -82,8 +97,8 @@
     "live_shadow_started": true,
     "live_24_hours_passed": false,
     "active_rules_deployed": false,
-    "reason": "Shadow release deployed and Runtime RUNNING after verified stopped-writer backup and an audited legacy passive heartbeat. Gate is waiting for continuous real observation.",
-    "evidence": "deployment.json"
+    "reason": "Repaired shadow deployment is RUNNING. Legacy psychological boundary pause is disabled; passive candidate computation is still shadow and the real continuous 24-hour gate restarted after deployment.",
+    "evidence": "shadow-repair.json"
   },
   "limitations": [
     "Historical raw timeline has no processing receipts; no token measurements or appraisals were fabricated.",
@@ -97,7 +112,7 @@
     "harness/cognitive/capabilities.py": "1a2edb569e5eda0495506f6b7e5566386784fdf600375bf6c44f3e652369fcf9",
     "harness/cognitive/daily_revision.py": "27f144b051b17d876f191e31cf49ac5a62812858ec5068d2769554f54b1ad4a9",
     "harness/cognitive/goals.py": "9cd7efb40d0186711e280249a9812baf25ba83a3492d86f2aa22516ad786d13e",
-    "harness/cognitive/qq_memory.py": "db2464087ef2b1e3bd41744b7ac6200167fb588c14e60c40ea53b6b4cdcefa2d",
+    "harness/cognitive/qq_memory.py": "5bd2eb5c178693673fd6954a3d4a1da4842974fce5b73396591a2aa8c42a7132",
     "harness/cognitive/qq_turn.py": "20a74c20805b9f21927794d5ca890fb1a59cd84d7a4cb515414a074855546720",
     "harness/cognitive/service.py": "bb561c9c79b01aff6095d74074054669f6888689f5eb6c31ac56602762319016",
     "harness/cognitive/shared_memory.py": "4188ca0e8db59d3f84ae0e245e2384cf6b37452dbc733723c11786244786e7bc",
@@ -109,7 +124,7 @@
     "harness/homeostasis/engine.py": "1e0a9fb61f67ead3b66d9ee56dc056ab43091945faf1e80f2975df5e1e35ae1b",
     "harness/homeostasis/ledger.py": "334d26d89ea156ac67cdd8ddc6a9380077f5601067048e876fdf84b90079081e",
     "harness/homeostasis/models.py": "d0bf08f1d5224ca5449e2bebe520c391d7b2a8a16147dc89ab412ee68439dc90",
-    "harness/homeostasis/rollout.py": "a9a83dbc803ba8e09a5c2abfe7e760daa9ec26362245d48a40a460b1284021ac",
+    "harness/homeostasis/rollout.py": "5354882aeba4b4cb4d39c6771c55c32956caa322a8e6e2b2bdedc102116006bd",
     "harness/homeostasis/work.py": "a4c68c556888c6b72bfe71e908562d88727a58ed437ea8fa5f790b35ace5e1b0",
     "harness/llm/client.py": "9b2c0a387345aa19e3621c54e64092ad2844edc570895b0c92a46b77c0556687",
     "harness/memory/production.py": "fcac79bfed2d261c0bbc1ee1d0c2a250193f4ed96b27a5c71a03d249ee247c9b",
@@ -143,7 +158,7 @@
     "harness/runtime/supervisor.py": "6879e86bf814146461409f7b30f2eeed48873265c1fcb4e6337afad55954c43c",
     "infra/trace/request_spans.py": "7c3161ac7de9d2177be4e12dd4f39586725b657936f7b47ffe36e5b9893869f9",
     "tests/test_cognitive_dynamics.py": "13ec9c84afe55b74e41a1749f4378fbb98138930d71a4540211a148ffaa21b31",
-    "tests/test_cognitive_rollout.py": "1fd33062697882eeacfca486606a9e666e4a768bf56d4c7f622e6c7ed4afc02e",
+    "tests/test_cognitive_rollout.py": "7dacccc2528d87d09a8bf7894415fee72385ffa037e8b8f1f9192482a2f72503",
     "tests/test_cognitive_work.py": "136a8f4b1252d1c00d64d728bacba7aa540b40be58e227660f6fa861f4e72f68",
     "tests/test_goal_cognition.py": "73f40ab1d3406d7eae87504d9a224243e1562cd530a20f58203c1d89228b1d88",
     "tests/test_psychological_appraisal.py": "e8c0d8adcf980ffd7da8d19a76537b8e3b1c6cae9cf2d1112143f4d60e284aa4",
