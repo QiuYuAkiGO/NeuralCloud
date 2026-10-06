@@ -6,6 +6,7 @@ This module only maps wire formats and validates complete, unmodified output.
 from __future__ import annotations
 
 from copy import deepcopy
+from itertools import islice
 import json
 from typing import Any
 from urllib.parse import urlsplit
@@ -17,6 +18,11 @@ from harness.config import Settings
 
 class StructuredResponseError(ValueError):
     """Content-free failure codes; never reflect provider messages or reasoning."""
+
+    def __init__(self, code: str, *, diagnostics=()):
+        super().__init__(code)
+        self.error_code = code
+        self.diagnostics = list(diagnostics)
 
 
 def supported(settings: Settings) -> bool:
@@ -149,8 +155,32 @@ def validate_response(body, schema):
         raise StructuredResponseError("deepseek_structured_nontext_response")
     try:
         value = json.loads(message["content"], object_pairs_hook=_unique, parse_constant=_constant)
-        if not isinstance(value, dict):
-            raise ValueError("object required")
-        Draft202012Validator(schema).validate(value)
-    except Exception:
-        raise StructuredResponseError("deepseek_structured_schema_invalid") from None
+    except StructuredResponseError:
+        raise
+    except (ValueError, TypeError, RecursionError):
+        raise StructuredResponseError("deepseek_structured_json_invalid") from None
+    if not isinstance(value, dict):
+        raise StructuredResponseError("deepseek_structured_schema_invalid")
+    errors = list(islice(Draft202012Validator(schema).iter_errors(value), 8))
+    if errors:
+        # Only names defined by the host's schema may enter diagnostics. Never
+        # include jsonschema's message, instance, enum values or unknown keys.
+        names = set()
+
+        def collect(node):
+            if isinstance(node, dict):
+                names.update(node.get("properties", {}))
+                for child in node.values():
+                    collect(child)
+            elif isinstance(node, list):
+                for child in node:
+                    collect(child)
+
+        collect(schema)
+        diagnostics = [{"validator": error.validator,
+            "path": [part if isinstance(part, int) or part in names else "*"
+                     for part in list(error.absolute_path)[:16]],
+            "missing_fields": [name for name in error.validator_value if name in names and name not in error.instance][:8]
+                if error.validator == "required" and isinstance(error.instance, dict) else []}
+            for error in errors]
+        raise StructuredResponseError("deepseek_structured_schema_invalid", diagnostics=diagnostics)

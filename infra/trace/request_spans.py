@@ -142,6 +142,9 @@ def model_request_span(settings: Settings, *, role: str,
     except BaseException as exc:
         status = "error"
         error = {"type": type(exc).__name__, "message": "model request failed"}
+        from harness.llm.deepseek_structured import StructuredResponseError
+        if isinstance(exc, StructuredResponseError):
+            error.update(code=exc.error_code, diagnostics=exc.diagnostics)
         raise
     finally:
         assessment = result.pop("attention_assessment", None)

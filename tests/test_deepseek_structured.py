@@ -91,6 +91,32 @@ def test_refusal_or_empty_output_is_not_a_decision(wire, part):
         wire.client.complete_chat_result([], response_format=decision_format(wire.client, SCHEMA, "decision"))
 
 
+def test_schema_diagnostics_preserve_required_field_without_private_content(wire):
+    wire.body = body('{"PRIVATE_UNKNOWN_FIELD":"PRIVATE_VALUE"}')
+    with pytest.raises(StructuredResponseError) as caught:
+        wire.client.complete_chat_result([], response_format=decision_format(wire.client, SCHEMA, "decision"))
+    assert caught.value.error_code == "deepseek_structured_schema_invalid"
+    assert any(item["missing_fields"] == ["decision"] for item in caught.value.diagnostics)
+    trace = (wire.path / "model_requests.jsonl").read_text(encoding="utf-8")
+    assert "PRIVATE" not in trace
+    error = json.loads(trace.splitlines()[-1])["error"]
+    assert error["code"] == "deepseek_structured_schema_invalid"
+    assert error["diagnostics"] == caught.value.diagnostics
+
+
+@pytest.mark.parametrize("text,code", [
+    ('not JSON', 'deepseek_structured_json_invalid'),
+    ('{"decision":"wait","decision":"wait"}', 'deepseek_structured_duplicate_key'),
+    ('{"decision":NaN}', 'deepseek_structured_nonfinite_number'),
+])
+def test_invalid_json_diagnostics_keep_distinct_content_free_codes(wire, text, code):
+    wire.body = body(text)
+    with pytest.raises(StructuredResponseError) as caught:
+        wire.client.complete_chat_result([], response_format=decision_format(wire.client, SCHEMA, "decision"))
+    assert caught.value.error_code == code
+    assert caught.value.diagnostics == []
+
+
 def test_actual_production_choice_stays_main_and_preserves_raw_metering(wire):
     wire.body = body('{"kind":"wait","reason":"no current action"}')
     aux = MockLLM()

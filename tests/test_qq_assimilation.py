@@ -521,6 +521,36 @@ def test_live_model_must_explicitly_classify_evidence_kind(setup):
         QQMemoryProposer(Model()).propose(job)
 
 
+def test_live_subject_binding_is_explicit_without_relaxing_evidence(setup):
+    from copy import deepcopy
+    from jsonschema import Draft202012Validator
+    job = make_job(setup)
+    raw = proposal(job, impressions=[impression(job)]).model_dump(mode="json")
+
+    class Model:
+        def complete_json(self, *, system, user, **kwargs):
+            schema = json.loads(user)["schema"]
+            definition = schema["$defs"]["QQImpressionProposal"]
+            assert "subject_refs" in definition["required"]
+            assert "default" not in definition["properties"]["subject_refs"]
+            validator = Draft202012Validator(schema)
+            assert validator.is_valid(raw)
+            for kind in ("person", "topic", "group"):
+                missing = deepcopy(raw)
+                missing["impressions"][0]["kind"] = kind
+                del missing["impressions"][0]["subject_refs"]
+                assert not validator.is_valid(missing)
+            topic = deepcopy(raw)
+            topic["impressions"][0].update(kind="topic", subject_refs=[])
+            assert validator.is_valid(topic)
+            forged = deepcopy(raw)
+            forged["impressions"][0]["subject_refs"] = ["qq:member:987654"]
+            assert not validator.is_valid(forged)
+            return raw
+
+    assert QQMemoryProposer(Model()).propose(job).impressions[0].subject_refs == ("qq:member:200",)
+
+
 def test_persona_is_separate_from_immutable_evidence_in_model_input(setup):
     job = make_job(setup)
 

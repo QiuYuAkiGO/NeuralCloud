@@ -314,6 +314,7 @@ conversation_kind=private 时仅处理 Misty 与指定 peer 的私聊；不能�
 第三方给人的标签、调侃、玩笑、转述不能当成被提及者的事实，不能靠重复标签固化性格。
 图片描述和 OCR 是 model_inference，不是作者原话；status=unknown 的图片保持未知，禁止猜测。
 每条 impression 必须明确输出 evidence_kind：observed_behavior/self_report/third_party/image_interpretation/inference。
+每条 impression 必须明确输出 subject_refs：person 为一个来源参与者身份，relationship 为至少两个；topic/group 为 []，不得省略。
 只有 observed_behavior 可用 support/counter/context；其余必须 stance=uncertain，只作为情景中的未核验内容保留。
 例如“作者自称很有钱”不能证明作者有钱；“作者反复强调自己有钱”可以是对其实际措辞行为的暂定印象。
 实际开玩笑、逐步解释、作出承诺都是发言者可观察行为；不能从承诺推断已兑现，或把玩笑对象的属性当真。
@@ -377,7 +378,11 @@ class QQMemoryProposer:
             "non_thinking_proposal_invalid", "QQNonThinkingProposalInvalid"}
         old = [dict(item) for item in old_impressions if _impression_group(item) == job.group_id]
         schema = QQMemoryProposal.model_json_schema()
-        schema["$defs"]["QQImpressionProposal"]["required"].append("evidence_kind")
+        # Wire output must explicitly bind every impression to its subjects.
+        # Keep the model's default for historical saved proposals, but do not
+        # rely on conditional required/default handling by the provider.
+        schema["$defs"]["QQImpressionProposal"]["required"].extend(["evidence_kind", "subject_refs"])
+        schema["$defs"]["QQImpressionProposal"]["properties"]["subject_refs"].pop("default", None)
         schema["$defs"]["QQImpressionProposal"]["allOf"] = [{"if": {"properties": {"kind": {"const": "person"}}},
             "then": {"required": ["subject_refs"], "properties": {"subject_refs": {"minItems": 1, "maxItems": 1}}}}]
         schema["$defs"]["QQImpressionProposal"]["allOf"].append({
