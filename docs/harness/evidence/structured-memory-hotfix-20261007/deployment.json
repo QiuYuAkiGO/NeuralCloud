@@ -1,0 +1,1662 @@
+{
+  "schema_version": "structured-memory-hotfix-v1",
+  "captured_at": "2026-10-06T19:56:32.666136+00:00",
+  "phase_coverage": {
+    "checked_at": "2026-10-06T19:56:26.551169+00:00",
+    "receipts": 404,
+    "matched": 404,
+    "unmatched": 0,
+    "phases": {
+      "legacy_unlabelled_shared_memory": {
+        "total": 55,
+        "assessed": 0,
+        "success": 43,
+        "error": 12,
+        "last_at": "2026-10-06T12:58:52.741584Z"
+      },
+      "qq_memory_consolidation": {
+        "total": 219,
+        "assessed": 0,
+        "success": 119,
+        "error": 100,
+        "last_at": "2026-10-06T19:55:04.452417Z"
+      },
+      "emotion_guidance": {
+        "total": 56,
+        "assessed": 0,
+        "success": 56,
+        "error": 0,
+        "last_at": "2026-10-06T19:56:25.661624Z"
+      },
+      "goal_decision": {
+        "total": 46,
+        "assessed": 0,
+        "success": 46,
+        "error": 0,
+        "last_at": "2026-10-06T19:23:14.723816Z"
+      },
+      "emotion_appraisal": {
+        "total": 9,
+        "assessed": 0,
+        "success": 9,
+        "error": 0,
+        "last_at": "2026-10-06T17:09:48.910370Z"
+      },
+      "qq_gate": {
+        "total": 10,
+        "assessed": 2,
+        "success": 10,
+        "error": 0,
+        "last_at": "2026-10-06T17:09:55.756464Z"
+      },
+      "qq_persona": {
+        "total": 2,
+        "assessed": 0,
+        "success": 2,
+        "error": 0,
+        "last_at": "2026-10-06T14:40:31.410234Z"
+      },
+      "diary_prepare": {
+        "total": 1,
+        "assessed": 0,
+        "success": 1,
+        "error": 0,
+        "last_at": "2026-10-06T16:01:01.315040Z"
+      },
+      "diagnostic_memory_schema": {
+        "total": 6,
+        "assessed": 0,
+        "success": 5,
+        "error": 1,
+        "last_at": "2026-10-06T19:36:39.712807Z"
+      }
+    }
+  },
+  "initial_deployment": {
+    "started_at": "2026-10-06T19:38:34.372519+00:00",
+    "phase": "running",
+    "release_id": "20261007-structured-memory-hotfix-v1",
+    "code_commit": "2a2943f",
+    "archive_sha256": "9629ac9cd4df3ba2da9cbbae1f2de356139c40f275e4d1c131bbf301b1f73024",
+    "control_audit": [
+      {
+        "at": "2026-10-06T19:38:43.449847Z",
+        "type": "pause",
+        "authorized_maintenance": true
+      }
+    ],
+    "backup": {
+      "path": "/var/backups/neuralcloud/20261007-before-structured-memory-hotfix",
+      "verification": {
+        "ok": true,
+        "files": 12545,
+        "bytes": 11322864058,
+        "sqlite_databases": 23,
+        "journals": {
+          "state/runtime/journal": {
+            "records": 1042615,
+            "last_hash": "88a46de723838a2b82c779085d783b4fecfcc7b7d387d9d7355eece43956cfa6"
+          }
+        },
+        "manifest_sha256": "ba30673fefee7a8ded17c8e25af0ff4bd41f517cb1f23538d8c0e2355858bf21"
+      }
+    },
+    "requeued": {
+      "count": 10,
+      "jobs": [
+        {
+          "job_digest": "95182a2c30174eb9f495d972ad5079d5ae8618b0f21bc14134c298ab7c5332be",
+          "attempts_before": 8,
+          "attempts_after": 0,
+          "attention_revision": 0,
+          "frozen_sources_unchanged": true
+        },
+        {
+          "job_digest": "b3088770bdbbd8bfac0d6cf585590c07db89ded012fe3d94daf685e12aa48091",
+          "attempts_before": 8,
+          "attempts_after": 0,
+          "attention_revision": 0,
+          "frozen_sources_unchanged": true
+        },
+        {
+          "job_digest": "d05a9e5e0d4620e63df82ec56a8a7be1b937245fb6d1567d423c0f772aeb5a47",
+          "attempts_before": 8,
+          "attempts_after": 0,
+          "attention_revision": 0,
+          "frozen_sources_unchanged": true
+        },
+        {
+          "job_digest": "9d751a21f3b11b3a8c03291fd584643a7e8cf952fb72d92f8c8ce66e55293647",
+          "attempts_before": 8,
+          "attempts_after": 0,
+          "attention_revision": 0,
+          "frozen_sources_unchanged": true
+        },
+        {
+          "job_digest": "6206021f905edea117769bcc449e36dee52bf6494c7f9166be798a1093109da5",
+          "attempts_before": 8,
+          "attempts_after": 0,
+          "attention_revision": 0,
+          "frozen_sources_unchanged": true
+        },
+        {
+          "job_digest": "adbac0fbed18a14443a265555ead6f089c4e7bf14edc73cdc1bb01c6db35f6ce",
+          "attempts_before": 8,
+          "attempts_after": 0,
+          "attention_revision": 0,
+          "frozen_sources_unchanged": true
+        },
+        {
+          "job_digest": "ef13fba0944b7c371150a9d5d922e9e29d4a4d852370651fbfa4c964c16beeee",
+          "attempts_before": 8,
+          "attempts_after": 0,
+          "attention_revision": 0,
+          "frozen_sources_unchanged": true
+        },
+        {
+          "job_digest": "730bef6147ac91ab457284c363e7f3e15b8b3659efae961d688e10e8954c6567",
+          "attempts_before": 8,
+          "attempts_after": 0,
+          "attention_revision": 0,
+          "frozen_sources_unchanged": true
+        },
+        {
+          "job_digest": "d1e40bd0ab032371f5b1458619128169c01886186ebe82de7922436b1d6d5717",
+          "attempts_before": 8,
+          "attempts_after": 0,
+          "attention_revision": 0,
+          "frozen_sources_unchanged": true
+        },
+        {
+          "job_digest": "71a1da0780e7c6cdcc1acd6818580746a8486552289a9a7e09219e4de172e40c",
+          "attempts_before": 8,
+          "attempts_after": 0,
+          "attention_revision": 0,
+          "frozen_sources_unchanged": true
+        }
+      ],
+      "reset_policy": "One audited requeue of the affected skipped set; existing per-job 8-attempt maximum still applies. Prior attempts retained in this audit and stopped backup."
+    },
+    "preservation": {
+      "profile_manifest_direct_unchanged": true,
+      "attention_sha256": "a8fcf7bd558427ea1d472e061f3fcf26d849cfd6e4a941b8e550a0af7a572d29",
+      "attention_unchanged_before_restart": true
+    },
+    "activation": {
+      "release": "20261007-structured-memory-hotfix-v1",
+      "previous_release": "20261006-cognitive-dynamics-v3-shadow-v3",
+      "services": [
+        "cognitive",
+        "homeostasis",
+        "runtime",
+        "gui",
+        "board",
+        "qq_direct"
+      ]
+    },
+    "verification": {
+      "release_id": "20261007-structured-memory-hotfix-v1",
+      "verified_files": 433,
+      "configuration_valid": true,
+      "business_services_started": false
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-06T19:44:18.281307Z",
+        "last_journal_append_at": "2026-10-06T19:44:18.511521Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "pending_events": 0,
+      "background": {
+        "heartbeat": {
+          "active": true,
+          "pending": 0,
+          "running": true,
+          "coalesced": 0,
+          "thread_jobs": 2,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "passive_state": {
+          "active": true,
+          "pending": 0,
+          "running": false,
+          "coalesced": 0,
+          "thread_jobs": 0,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "affect": {
+          "pending": 0,
+          "running": 0,
+          "scopes": 0,
+          "degraded": false
+        }
+      }
+    },
+    "direct": {
+      "running": true,
+      "connected": true,
+      "heartbeat_at": "2026-10-06T19:44:17.569763+00:00"
+    },
+    "services": {
+      "cognitive": {
+        "MainPID": "205469",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-cognitive.service"
+      },
+      "homeostasis": {
+        "MainPID": "205565",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-homeostasis.service"
+      },
+      "runtime": {
+        "MainPID": "205603",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-runtime.service"
+      },
+      "gui": {
+        "MainPID": "206420",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-gui.service"
+      },
+      "board": {
+        "MainPID": "205595",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-board.service"
+      },
+      "qq_direct": {
+        "MainPID": "206446",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-qq-direct.service"
+      }
+    },
+    "finished_at": "2026-10-06T19:44:19.126891+00:00"
+  },
+  "late_recovery_before": [
+    {
+      "job_digest": "b3088770bdbbd8bfac0d6cf585590c07db89ded012fe3d94daf685e12aa48091",
+      "error_code": "ValueError",
+      "has_proposal": true,
+      "commit_replay": "ValueError",
+      "known_error": "unclassified",
+      "frames": [
+        {
+          "file": "<string>",
+          "function": "<module>",
+          "line": 26
+        },
+        {
+          "file": "qq_memory.py",
+          "function": "build_commit",
+          "line": 436
+        },
+        {
+          "file": "impressions.py",
+          "function": "apply_impression",
+          "line": 200
+        }
+      ]
+    },
+    {
+      "job_digest": "d05a9e5e0d4620e63df82ec56a8a7be1b937245fb6d1567d423c0f772aeb5a47",
+      "error_code": "ValueError",
+      "has_proposal": true,
+      "commit_replay": "ValueError",
+      "known_error": "unclassified",
+      "frames": [
+        {
+          "file": "<string>",
+          "function": "<module>",
+          "line": 26
+        },
+        {
+          "file": "qq_memory.py",
+          "function": "build_commit",
+          "line": 436
+        },
+        {
+          "file": "impressions.py",
+          "function": "apply_impression",
+          "line": 200
+        }
+      ]
+    },
+    {
+      "job_digest": "9d751a21f3b11b3a8c03291fd584643a7e8cf952fb72d92f8c8ce66e55293647",
+      "error_code": "ValueError",
+      "has_proposal": true,
+      "commit_replay": "ValueError",
+      "known_error": "unclassified",
+      "frames": [
+        {
+          "file": "<string>",
+          "function": "<module>",
+          "line": 26
+        },
+        {
+          "file": "qq_memory.py",
+          "function": "build_commit",
+          "line": 436
+        },
+        {
+          "file": "impressions.py",
+          "function": "apply_impression",
+          "line": 200
+        }
+      ]
+    },
+    {
+      "job_digest": "6206021f905edea117769bcc449e36dee52bf6494c7f9166be798a1093109da5",
+      "error_code": "ValueError",
+      "has_proposal": true,
+      "commit_replay": "ValueError",
+      "known_error": "unclassified",
+      "frames": [
+        {
+          "file": "<string>",
+          "function": "<module>",
+          "line": 26
+        },
+        {
+          "file": "qq_memory.py",
+          "function": "build_commit",
+          "line": 436
+        },
+        {
+          "file": "impressions.py",
+          "function": "apply_impression",
+          "line": 200
+        }
+      ]
+    },
+    {
+      "job_digest": "adbac0fbed18a14443a265555ead6f089c4e7bf14edc73cdc1bb01c6db35f6ce",
+      "error_code": "ValueError",
+      "has_proposal": true,
+      "commit_replay": "ValueError",
+      "known_error": "unclassified",
+      "frames": [
+        {
+          "file": "<string>",
+          "function": "<module>",
+          "line": 26
+        },
+        {
+          "file": "qq_memory.py",
+          "function": "build_commit",
+          "line": 436
+        },
+        {
+          "file": "impressions.py",
+          "function": "apply_impression",
+          "line": 200
+        }
+      ]
+    },
+    {
+      "job_digest": "ef13fba0944b7c371150a9d5d922e9e29d4a4d852370651fbfa4c964c16beeee",
+      "error_code": "ValueError",
+      "has_proposal": true,
+      "commit_replay": "ValueError",
+      "known_error": "unclassified",
+      "frames": [
+        {
+          "file": "<string>",
+          "function": "<module>",
+          "line": 26
+        },
+        {
+          "file": "qq_memory.py",
+          "function": "build_commit",
+          "line": 436
+        },
+        {
+          "file": "impressions.py",
+          "function": "apply_impression",
+          "line": 200
+        }
+      ]
+    },
+    {
+      "job_digest": "730bef6147ac91ab457284c363e7f3e15b8b3659efae961d688e10e8954c6567",
+      "error_code": "ValueError",
+      "has_proposal": true,
+      "commit_replay": "ValueError",
+      "known_error": "unclassified",
+      "frames": [
+        {
+          "file": "<string>",
+          "function": "<module>",
+          "line": 26
+        },
+        {
+          "file": "qq_memory.py",
+          "function": "build_commit",
+          "line": 436
+        },
+        {
+          "file": "impressions.py",
+          "function": "apply_impression",
+          "line": 200
+        }
+      ]
+    },
+    {
+      "job_digest": "71a1da0780e7c6cdcc1acd6818580746a8486552289a9a7e09219e4de172e40c",
+      "error_code": "ValueError",
+      "has_proposal": true,
+      "commit_replay": "ValueError",
+      "known_error": "unclassified",
+      "frames": [
+        {
+          "file": "<string>",
+          "function": "<module>",
+          "line": 26
+        },
+        {
+          "file": "qq_memory.py",
+          "function": "build_commit",
+          "line": 436
+        },
+        {
+          "file": "impressions.py",
+          "function": "apply_impression",
+          "line": 200
+        }
+      ]
+    }
+  ],
+  "late_recovery_fixed": [
+    {
+      "job_digest": "b3088770bdbbd8bfac0d6cf585590c07db89ded012fe3d94daf685e12aa48091",
+      "error_code": "ValueError",
+      "has_proposal": true,
+      "commit_replay": "passed",
+      "deferred_impressions": 1
+    },
+    {
+      "job_digest": "d05a9e5e0d4620e63df82ec56a8a7be1b937245fb6d1567d423c0f772aeb5a47",
+      "error_code": "ValueError",
+      "has_proposal": true,
+      "commit_replay": "passed",
+      "deferred_impressions": 1
+    },
+    {
+      "job_digest": "9d751a21f3b11b3a8c03291fd584643a7e8cf952fb72d92f8c8ce66e55293647",
+      "error_code": "ValueError",
+      "has_proposal": true,
+      "commit_replay": "passed",
+      "deferred_impressions": 1
+    },
+    {
+      "job_digest": "6206021f905edea117769bcc449e36dee52bf6494c7f9166be798a1093109da5",
+      "error_code": "ValueError",
+      "has_proposal": true,
+      "commit_replay": "passed",
+      "deferred_impressions": 1
+    },
+    {
+      "job_digest": "adbac0fbed18a14443a265555ead6f089c4e7bf14edc73cdc1bb01c6db35f6ce",
+      "error_code": "ValueError",
+      "has_proposal": true,
+      "commit_replay": "passed",
+      "deferred_impressions": 1
+    },
+    {
+      "job_digest": "ef13fba0944b7c371150a9d5d922e9e29d4a4d852370651fbfa4c964c16beeee",
+      "error_code": "ValueError",
+      "has_proposal": true,
+      "commit_replay": "passed",
+      "deferred_impressions": 1
+    },
+    {
+      "job_digest": "730bef6147ac91ab457284c363e7f3e15b8b3659efae961d688e10e8954c6567",
+      "error_code": "ValueError",
+      "has_proposal": true,
+      "commit_replay": "passed",
+      "deferred_impressions": 1
+    },
+    {
+      "job_digest": "71a1da0780e7c6cdcc1acd6818580746a8486552289a9a7e09219e4de172e40c",
+      "error_code": "ValueError",
+      "has_proposal": true,
+      "commit_replay": "passed",
+      "deferred_impressions": 2
+    }
+  ],
+  "baseline_reproduction": {
+    "at": "2026-10-06T19:31:49.893923+00:00",
+    "job_digest": "71a1da0780e7c6cdcc1acd6818580746a8486552289a9a7e09219e4de172e40c",
+    "source_count": 3,
+    "original_attempts": 8,
+    "checks": [
+      {
+        "status": "completed",
+        "has_error": false,
+        "text_length": 1453,
+        "schema_errors": [
+          {
+            "validator": "required",
+            "path": [
+              "impressions",
+              0
+            ]
+          },
+          {
+            "validator": "required",
+            "path": [
+              "impressions",
+              1
+            ]
+          }
+        ],
+        "code": "deepseek_structured_schema_invalid"
+      }
+    ],
+    "valid": false,
+    "exception_type": "StructuredResponseError"
+  },
+  "offline_validation": {
+    "fixture_sha256": "a57245b6c0a43833bdc3df72727ca78817f81309141d34507059230c61804f07",
+    "old_invalid_response_still_rejected": true,
+    "code": "deepseek_structured_schema_invalid",
+    "diagnostics": [
+      {
+        "validator": "required",
+        "path": [
+          "impressions",
+          0
+        ],
+        "missing_fields": [
+          "subject_refs"
+        ]
+      },
+      {
+        "validator": "required",
+        "path": [
+          "impressions",
+          1
+        ],
+        "missing_fields": [
+          "subject_refs"
+        ]
+      }
+    ],
+    "network_calls": 0,
+    "state_writes": 0
+  },
+  "fixed_probes": [
+    {
+      "at": "2026-10-06T19:35:32.451606+00:00",
+      "job_digest": "71a1da0780e7c6cdcc1acd6818580746a8486552289a9a7e09219e4de172e40c",
+      "source_count": 3,
+      "original_attempts": 8,
+      "checks": [
+        {
+          "status": "completed",
+          "has_error": false,
+          "text_length": 1027,
+          "schema_errors": []
+        }
+      ],
+      "valid": true
+    },
+    {
+      "at": "2026-10-06T19:36:29.341903+00:00",
+      "job_digest": "d1e40bd0ab032371f5b1458619128169c01886186ebe82de7922436b1d6d5717",
+      "source_count": 2,
+      "original_attempts": 8,
+      "checks": [
+        {
+          "status": "completed",
+          "has_error": false,
+          "text_length": 1301,
+          "schema_errors": []
+        }
+      ],
+      "valid": true
+    },
+    {
+      "at": "2026-10-06T19:36:35.865683+00:00",
+      "job_digest": "730bef6147ac91ab457284c363e7f3e15b8b3659efae961d688e10e8954c6567",
+      "source_count": 7,
+      "original_attempts": 8,
+      "checks": [
+        {
+          "status": "completed",
+          "has_error": false,
+          "text_length": 1992,
+          "schema_errors": []
+        }
+      ],
+      "valid": true
+    }
+  ],
+  "tests": [
+    {
+      "report": "structured-memory-hotfix-tests.xml",
+      "passed": 98,
+      "sha256": "788752d01b7bc028a33b4563eddc63618106cefa3c1c6b0c94f39f9c0953cbf2"
+    },
+    {
+      "report": "structured-memory-hotfix-regression.xml",
+      "passed": 83,
+      "sha256": "34d7a57d84852227dfbe7e64f802c3cb2811d07bbda9282244a5e70cbab63056"
+    },
+    {
+      "report": "structured-memory-late-recovery-tests.xml",
+      "passed": 126,
+      "sha256": "5fde645d9493567a19a6a43d770258d7db6d28193d97f48411fac5ab49d079b6"
+    }
+  ],
+  "deployment": {
+    "started_at": "2026-10-06T19:50:22.566108+00:00",
+    "phase": "running",
+    "release_id": "20261007-structured-memory-hotfix-v2",
+    "code_commit": "60dc1a5add1d54959bc86c447dc6a4709ca6e781",
+    "archive_sha256": "bbedd66dbfdd5dcb8c111cc8785c72e8c84c6ab758442bd858fdb224c6b84b8f",
+    "control_audit": [
+      {
+        "at": "2026-10-06T19:50:29.538658Z",
+        "type": "pause",
+        "authorized_maintenance": true
+      }
+    ],
+    "backup": {
+      "path": "/var/backups/neuralcloud/20261007-before-memory-late-recovery",
+      "verification": {
+        "ok": true,
+        "files": 12577,
+        "bytes": 11329613742,
+        "sqlite_databases": 23,
+        "journals": {
+          "state/runtime/journal": {
+            "records": 1045245,
+            "last_hash": "fd5db48aaf53c1601ebb36331526c97a8e70da5be34b4f95cd6f8663260c4832"
+          }
+        },
+        "manifest_sha256": "2890a016fb3b9f8ad504c82bf97fd14f8215b735dc18c31f7d9e77e4d7c85ae3"
+      }
+    },
+    "requeued": {
+      "count": 8,
+      "jobs": [
+        {
+          "job_digest": "b3088770bdbbd8bfac0d6cf585590c07db89ded012fe3d94daf685e12aa48091",
+          "attempts_before": 1,
+          "attempts_after": 0,
+          "attention_revision": 0,
+          "frozen_sources_unchanged": true
+        },
+        {
+          "job_digest": "d05a9e5e0d4620e63df82ec56a8a7be1b937245fb6d1567d423c0f772aeb5a47",
+          "attempts_before": 1,
+          "attempts_after": 0,
+          "attention_revision": 0,
+          "frozen_sources_unchanged": true
+        },
+        {
+          "job_digest": "9d751a21f3b11b3a8c03291fd584643a7e8cf952fb72d92f8c8ce66e55293647",
+          "attempts_before": 1,
+          "attempts_after": 0,
+          "attention_revision": 0,
+          "frozen_sources_unchanged": true
+        },
+        {
+          "job_digest": "6206021f905edea117769bcc449e36dee52bf6494c7f9166be798a1093109da5",
+          "attempts_before": 1,
+          "attempts_after": 0,
+          "attention_revision": 0,
+          "frozen_sources_unchanged": true
+        },
+        {
+          "job_digest": "adbac0fbed18a14443a265555ead6f089c4e7bf14edc73cdc1bb01c6db35f6ce",
+          "attempts_before": 1,
+          "attempts_after": 0,
+          "attention_revision": 0,
+          "frozen_sources_unchanged": true
+        },
+        {
+          "job_digest": "ef13fba0944b7c371150a9d5d922e9e29d4a4d852370651fbfa4c964c16beeee",
+          "attempts_before": 1,
+          "attempts_after": 0,
+          "attention_revision": 0,
+          "frozen_sources_unchanged": true
+        },
+        {
+          "job_digest": "730bef6147ac91ab457284c363e7f3e15b8b3659efae961d688e10e8954c6567",
+          "attempts_before": 1,
+          "attempts_after": 0,
+          "attention_revision": 0,
+          "frozen_sources_unchanged": true
+        },
+        {
+          "job_digest": "71a1da0780e7c6cdcc1acd6818580746a8486552289a9a7e09219e4de172e40c",
+          "attempts_before": 1,
+          "attempts_after": 0,
+          "attention_revision": 0,
+          "frozen_sources_unchanged": true
+        }
+      ],
+      "reset_policy": "One audited requeue of the affected skipped set; existing per-job 8-attempt maximum still applies. Prior attempts retained in this audit and stopped backup."
+    },
+    "preservation": {
+      "profile_manifest_direct_unchanged": true,
+      "attention_sha256": "a8fcf7bd558427ea1d472e061f3fcf26d849cfd6e4a941b8e550a0af7a572d29",
+      "attention_unchanged_before_restart": true
+    },
+    "activation": {
+      "release": "20261007-structured-memory-hotfix-v2",
+      "previous_release": "20261007-structured-memory-hotfix-v1",
+      "services": [
+        "cognitive",
+        "homeostasis",
+        "runtime",
+        "gui",
+        "board",
+        "qq_direct"
+      ]
+    },
+    "verification": {
+      "release_id": "20261007-structured-memory-hotfix-v2",
+      "verified_files": 433,
+      "configuration_valid": true,
+      "business_services_started": false
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-06T19:56:01.086628Z",
+        "last_journal_append_at": "2026-10-06T19:56:01.203186Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "pending_events": 0,
+      "background": {
+        "heartbeat": {
+          "active": true,
+          "pending": 0,
+          "running": true,
+          "coalesced": 0,
+          "thread_jobs": 2,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "passive_state": {
+          "active": true,
+          "pending": 0,
+          "running": false,
+          "coalesced": 0,
+          "thread_jobs": 0,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "affect": {
+          "pending": 0,
+          "running": 0,
+          "scopes": 0,
+          "degraded": false
+        }
+      }
+    },
+    "direct": {
+      "running": true,
+      "connected": true,
+      "heartbeat_at": "2026-10-06T19:56:01.200049+00:00"
+    },
+    "services": {
+      "cognitive": {
+        "MainPID": "207922",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-cognitive.service"
+      },
+      "homeostasis": {
+        "MainPID": "207961",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-homeostasis.service"
+      },
+      "runtime": {
+        "MainPID": "207998",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-runtime.service"
+      },
+      "gui": {
+        "MainPID": "208713",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-gui.service"
+      },
+      "board": {
+        "MainPID": "207990",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-board.service"
+      },
+      "qq_direct": {
+        "MainPID": "208738",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-qq-direct.service"
+      }
+    },
+    "finished_at": "2026-10-06T19:56:03.024115+00:00"
+  },
+  "monitor": {
+    "at": "2026-10-06T19:56:27.434240+00:00",
+    "release": "20261007-structured-memory-hotfix-v2",
+    "manifest_revision": 4,
+    "manifest_profile": "qq-social-drive-v1@3",
+    "services": {
+      "cognitive": {
+        "MainPID": "207922",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "MainPID": "207961",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "MainPID": "207998",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "MainPID": "208713",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "MainPID": "207990",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq_direct": {
+        "MainPID": "208738",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-06T19:56:24.415821Z",
+        "last_journal_append_at": "2026-10-06T19:56:27.252893Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "pending_events": 0,
+      "background": {
+        "heartbeat": {
+          "active": true,
+          "pending": 0,
+          "running": false,
+          "coalesced": 3,
+          "thread_jobs": 0,
+          "last_duration_ms": 2883.423,
+          "last_error": null
+        },
+        "passive_state": {
+          "active": true,
+          "pending": 0,
+          "running": false,
+          "coalesced": 0,
+          "thread_jobs": 0,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "affect": {
+          "pending": 0,
+          "running": 0,
+          "scopes": 0,
+          "degraded": false
+        }
+      }
+    },
+    "direct": {
+      "running": true,
+      "connected": true,
+      "repository_root": "/opt/neuralcloud/releases/20261007-structured-memory-hotfix-v2",
+      "heartbeat_at": "2026-10-06T19:56:27.253340+00:00"
+    },
+    "watchdog": [],
+    "dynamics": {
+      "mode": "shadow",
+      "fatigue": 0.1670415571118846,
+      "boredom": 0.8619766089489502,
+      "wants_engagement": true,
+      "latent_confidence": 0.8,
+      "baselines": {
+        "autonomy": 0.6749992824438109,
+        "competence": 0.6250000152600026,
+        "safety_predictability": 0.6651600000000001,
+        "social_connection": 0.38068496909056737
+      },
+      "short_term_responses": {
+        "autonomy": 0.0,
+        "competence": 0.0,
+        "safety_predictability": 0.0,
+        "social_connection": 0.0016571959999868186
+      },
+      "regulation_pressure": {
+        "level": "overloaded",
+        "suggest_reduce_input": true,
+        "suggest_reopen": false
+      },
+      "assessment_coverage": {
+        "exposures": 403,
+        "assessed": 2,
+        "unassessed": 401,
+        "work_units": 3789621,
+        "last_work_at": "2026-10-06T19:55:04.452417+00:00"
+      },
+      "shadow_observation": {
+        "continuous_seconds": 27.537701999999996,
+        "samples": 9256,
+        "maximum_gap_seconds": 329.777824,
+        "last_sample_at": "2026-10-06T19:56:23.577148+00:00"
+      },
+      "shadow_values": {
+        "cognitive_load": 0.8431076857322424,
+        "novelty": 0.49999999999999784,
+        "safety_predictability": 0.6651600000000001,
+        "competence": 0.6250000152600026,
+        "autonomy": 0.6749992824438109,
+        "social_connection": 0.3823421650905542
+      },
+      "started_at": "2026-10-06T12:24:08.049492+00:00",
+      "updated_at": "2026-10-06T19:56:23.577148+00:00"
+    },
+    "display_values": {
+      "energy_reserve": 0.6650375808933333,
+      "cognitive_load": 0.8608385282533424,
+      "safety_predictability": 0.6650434992306667,
+      "competence": 0.625000043380998,
+      "autonomy": 0.6749874687423885,
+      "social_connection": 0.5740604600655682,
+      "novelty": 0.9425737955448222
+    },
+    "gate": {
+      "schema_version": "cognitive-dynamics-shadow-gate-v1",
+      "ready": false,
+      "reasons": [
+        "continuous_shadow_observation_less_than_24_hours"
+      ],
+      "observation": {
+        "continuous_seconds": 27.537701999999996,
+        "samples": 9256,
+        "maximum_gap_seconds": 329.777824,
+        "last_sample_at": "2026-10-06T19:56:23.577148+00:00"
+      },
+      "assessment_coverage": {
+        "exposures": 403,
+        "assessed": 2,
+        "unassessed": 401,
+        "work_units": 3789621,
+        "last_work_at": "2026-10-06T19:55:04.452417+00:00"
+      },
+      "snapshot_revision": 141338,
+      "profile_ref": "qq-social-drive-v1@3",
+      "checked_at": "2026-10-06T19:56:27.464098+00:00"
+    },
+    "work": {
+      "total": 404,
+      "pending": 1,
+      "by_context_category": {
+        "qq": {
+          "total": 310,
+          "assessed": 2,
+          "applied": 310,
+          "units": 2171471,
+          "last_at": "2026-10-06T19:55:04.452417Z"
+        },
+        "emotion_guidance": {
+          "total": 47,
+          "assessed": 0,
+          "applied": 46,
+          "units": 20385,
+          "last_at": "2026-10-06T19:56:25.661624Z"
+        },
+        "goal_decision": {
+          "total": 46,
+          "assessed": 0,
+          "applied": 46,
+          "units": 1576273,
+          "last_at": "2026-10-06T19:23:14.723816Z"
+        },
+        "diary_prepare": {
+          "total": 1,
+          "assessed": 0,
+          "applied": 1,
+          "units": 3302,
+          "last_at": "2026-10-06T16:01:01.315040Z"
+        }
+      }
+    },
+    "attention": {
+      "policies": [
+        {
+          "group_id": "1044946257",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "1060979317",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "712342021",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        }
+      ],
+      "dispositions": {
+        "admitted": 6
+      },
+      "outcomes": {
+        "model_wait": 0,
+        "runtime_failure": 0,
+        "guard_wait": 0
+      },
+      "review_error": null
+    }
+  },
+  "requeued_outcomes": {
+    "at": "2026-10-06T19:55:29.282915+00:00",
+    "release": "20261007-structured-memory-hotfix-v2",
+    "requeued_outcomes": [
+      {
+        "job_digest": "95182a2c30174eb9f495d972ad5079d5ae8618b0f21bc14134c298ab7c5332be",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:41:25.360735+00:00"
+      },
+      {
+        "job_digest": "b3088770bdbbd8bfac0d6cf585590c07db89ded012fe3d94daf685e12aa48091",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:53:14.761428+00:00"
+      },
+      {
+        "job_digest": "d05a9e5e0d4620e63df82ec56a8a7be1b937245fb6d1567d423c0f772aeb5a47",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:53:37.755387+00:00"
+      },
+      {
+        "job_digest": "9d751a21f3b11b3a8c03291fd584643a7e8cf952fb72d92f8c8ce66e55293647",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:53:51.683551+00:00"
+      },
+      {
+        "job_digest": "6206021f905edea117769bcc449e36dee52bf6494c7f9166be798a1093109da5",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:54:05.759378+00:00"
+      },
+      {
+        "job_digest": "adbac0fbed18a14443a265555ead6f089c4e7bf14edc73cdc1bb01c6db35f6ce",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:54:19.413675+00:00"
+      },
+      {
+        "job_digest": "ef13fba0944b7c371150a9d5d922e9e29d4a4d852370651fbfa4c964c16beeee",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:54:31.848569+00:00"
+      },
+      {
+        "job_digest": "730bef6147ac91ab457284c363e7f3e15b8b3659efae961d688e10e8954c6567",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:54:43.907920+00:00"
+      },
+      {
+        "job_digest": "d1e40bd0ab032371f5b1458619128169c01886186ebe82de7922436b1d6d5717",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:43:11.951835+00:00"
+      },
+      {
+        "job_digest": "71a1da0780e7c6cdcc1acd6818580746a8486552289a9a7e09219e4de172e40c",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:55:07.788950+00:00"
+      }
+    ],
+    "receipts": [
+      {
+        "job_digest": "95182a2c30174eb9f495d972ad5079d5ae8618b0f21bc14134c298ab7c5332be",
+        "deferred_impressions": 0,
+        "reasons": []
+      },
+      {
+        "job_digest": "b3088770bdbbd8bfac0d6cf585590c07db89ded012fe3d94daf685e12aa48091",
+        "deferred_impressions": 1,
+        "reasons": [
+          "historical_evidence_before_latest_impression"
+        ]
+      },
+      {
+        "job_digest": "d05a9e5e0d4620e63df82ec56a8a7be1b937245fb6d1567d423c0f772aeb5a47",
+        "deferred_impressions": 1,
+        "reasons": [
+          "historical_evidence_before_latest_impression"
+        ]
+      },
+      {
+        "job_digest": "9d751a21f3b11b3a8c03291fd584643a7e8cf952fb72d92f8c8ce66e55293647",
+        "deferred_impressions": 1,
+        "reasons": [
+          "historical_evidence_before_latest_impression"
+        ]
+      },
+      {
+        "job_digest": "6206021f905edea117769bcc449e36dee52bf6494c7f9166be798a1093109da5",
+        "deferred_impressions": 1,
+        "reasons": [
+          "historical_evidence_before_latest_impression"
+        ]
+      },
+      {
+        "job_digest": "adbac0fbed18a14443a265555ead6f089c4e7bf14edc73cdc1bb01c6db35f6ce",
+        "deferred_impressions": 1,
+        "reasons": [
+          "historical_evidence_before_latest_impression"
+        ]
+      },
+      {
+        "job_digest": "ef13fba0944b7c371150a9d5d922e9e29d4a4d852370651fbfa4c964c16beeee",
+        "deferred_impressions": 1,
+        "reasons": [
+          "historical_evidence_before_latest_impression"
+        ]
+      },
+      {
+        "job_digest": "730bef6147ac91ab457284c363e7f3e15b8b3659efae961d688e10e8954c6567",
+        "deferred_impressions": 1,
+        "reasons": [
+          "historical_evidence_before_latest_impression"
+        ]
+      },
+      {
+        "job_digest": "d1e40bd0ab032371f5b1458619128169c01886186ebe82de7922436b1d6d5717",
+        "deferred_impressions": 0,
+        "reasons": []
+      },
+      {
+        "job_digest": "71a1da0780e7c6cdcc1acd6818580746a8486552289a9a7e09219e4de172e40c",
+        "deferred_impressions": 2,
+        "reasons": [
+          "historical_evidence_before_latest_impression"
+        ]
+      }
+    ],
+    "request_counts": [
+      {
+        "status": "success",
+        "type": null,
+        "code": null,
+        "count": 3
+      }
+    ],
+    "recent_safe_diagnostics": [],
+    "memory_worker": {
+      "processing": false,
+      "queue": {
+        "pending": 0,
+        "preparing": 0,
+        "retry": 0,
+        "applied": 2251,
+        "skipped": 614,
+        "total_jobs": 2865,
+        "assigned_sources": 7711,
+        "oldest_pending_seconds": 0.0
+      },
+      "last_error_type": null,
+      "last_completed_at": "2026-10-06T19:55:07.791661+00:00"
+    }
+  },
+  "pre_patch_failed_requests": {
+    "count": 96,
+    "min_output_tokens": 271,
+    "max_output_tokens": 2369
+  },
+  "diagnosis": {
+    "reproduced_rejection": "required subject_refs missing from person impressions",
+    "rejection_path": [
+      "impressions",
+      0
+    ],
+    "response_status": "completed",
+    "validation_enforced": true,
+    "scope": "One historical failed job reproduced with frozen sources and current context. Three previously skipped jobs passed fixed-schema regeneration and business validation. This does not prove every historical generic exception had the same cause.",
+    "retry_amplifier": "Transport schema validation fails before the proposer business-validation repair loop, so ordinary queue retries can repeat the unchanged request up to 8 attempts."
+  },
+  "change": {
+    "live_schema_requires_subject_refs_for_all_impressions": true,
+    "historical_model_defaults_preserved": true,
+    "identity_source_and_business_validation_preserved": true,
+    "no_response_field_synthesis": true,
+    "content_free_error_code_and_schema_diagnostics": true
+  },
+  "privacy": {
+    "no_chat_bodies_or_credentials_in_evidence": true,
+    "raw_probe_response_retained_only_in_private_server_fixture": true,
+    "no_test_group_messages": true
+  },
+  "shadow": {
+    "mode": "shadow",
+    "profile_ref": "qq-social-drive-v1@3",
+    "manifest_revision": 4,
+    "continuous_window_start": "2026-10-06T19:55:56.039446+00:00",
+    "earliest_acceptance_if_no_further_gap": "2026-10-07T19:55:56.039446+00:00",
+    "active_promoted": false
+  },
+  "followup_health": {
+    "at": "2026-10-06T19:57:02.410291+00:00",
+    "release": "20261007-structured-memory-hotfix-v2",
+    "manifest_revision": 4,
+    "manifest_profile": "qq-social-drive-v1@3",
+    "services": {
+      "cognitive": {
+        "MainPID": "207922",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "MainPID": "207961",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "MainPID": "207998",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "MainPID": "208713",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "MainPID": "207990",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq_direct": {
+        "MainPID": "208738",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-06T19:56:56.534710Z",
+        "last_journal_append_at": "2026-10-06T19:57:02.369701Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "pending_events": 0,
+      "background": {
+        "heartbeat": {
+          "active": true,
+          "pending": 0,
+          "running": true,
+          "coalesced": 3,
+          "thread_jobs": 0,
+          "last_duration_ms": 5786.779,
+          "last_error": null
+        },
+        "passive_state": {
+          "active": true,
+          "pending": 0,
+          "running": true,
+          "coalesced": 0,
+          "thread_jobs": 0,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "affect": {
+          "pending": 0,
+          "running": 0,
+          "scopes": 0,
+          "degraded": false
+        }
+      }
+    },
+    "direct": {
+      "running": true,
+      "connected": true,
+      "repository_root": "/opt/neuralcloud/releases/20261007-structured-memory-hotfix-v2",
+      "heartbeat_at": "2026-10-06T19:57:01.327945+00:00"
+    },
+    "watchdog": [],
+    "dynamics": {
+      "mode": "shadow",
+      "fatigue": 0.17102516281775304,
+      "boredom": 0.8462076109900061,
+      "wants_engagement": true,
+      "latent_confidence": 0.8,
+      "baselines": {
+        "autonomy": 0.6749992824438109,
+        "competence": 0.6250000152600026,
+        "safety_predictability": 0.6651600000000001,
+        "social_connection": 0.38068496909056737
+      },
+      "short_term_responses": {
+        "autonomy": 0.0,
+        "competence": 0.0,
+        "safety_predictability": 0.0,
+        "social_connection": 0.0016496366311912253
+      },
+      "regulation_pressure": {
+        "level": "overloaded",
+        "suggest_reduce_input": true,
+        "suggest_reopen": false
+      },
+      "assessment_coverage": {
+        "exposures": 405,
+        "assessed": 2,
+        "unassessed": 403,
+        "work_units": 3823873,
+        "last_work_at": "2026-10-06T19:56:33.648055+00:00"
+      },
+      "shadow_observation": {
+        "continuous_seconds": 60.455939,
+        "samples": 9268,
+        "maximum_gap_seconds": 329.777824,
+        "last_sample_at": "2026-10-06T19:56:56.495385+00:00"
+      },
+      "shadow_values": {
+        "cognitive_load": 0.8617420051090227,
+        "novelty": 0.49999999999999784,
+        "safety_predictability": 0.6651600000000001,
+        "competence": 0.6250000152600026,
+        "autonomy": 0.6749992824438109,
+        "social_connection": 0.3823346057217586
+      },
+      "started_at": "2026-10-06T12:24:08.049492+00:00",
+      "updated_at": "2026-10-06T19:56:56.495385+00:00"
+    },
+    "display_values": {
+      "energy_reserve": 0.66500979063,
+      "cognitive_load": 0.8603910058482312,
+      "safety_predictability": 0.6650104433386667,
+      "competence": 0.6250000548890903,
+      "autonomy": 0.6749991942822269,
+      "social_connection": 0.5743347663072348,
+      "novelty": 0.9423385948891665
+    },
+    "gate": {
+      "schema_version": "cognitive-dynamics-shadow-gate-v1",
+      "ready": false,
+      "reasons": [
+        "continuous_shadow_observation_less_than_24_hours"
+      ],
+      "observation": {
+        "continuous_seconds": 60.455939,
+        "samples": 9268,
+        "maximum_gap_seconds": 329.777824,
+        "last_sample_at": "2026-10-06T19:56:56.495385+00:00"
+      },
+      "assessment_coverage": {
+        "exposures": 405,
+        "assessed": 2,
+        "unassessed": 403,
+        "work_units": 3823873,
+        "last_work_at": "2026-10-06T19:56:33.648055+00:00"
+      },
+      "snapshot_revision": 141352,
+      "profile_ref": "qq-social-drive-v1@3",
+      "checked_at": "2026-10-06T19:57:02.439663+00:00"
+    },
+    "work": {
+      "total": 405,
+      "pending": 0,
+      "by_context_category": {
+        "qq": {
+          "total": 310,
+          "assessed": 2,
+          "applied": 310,
+          "units": 2171471,
+          "last_at": "2026-10-06T19:55:04.452417Z"
+        },
+        "emotion_guidance": {
+          "total": 47,
+          "assessed": 0,
+          "applied": 47,
+          "units": 20385,
+          "last_at": "2026-10-06T19:56:25.661624Z"
+        },
+        "goal_decision": {
+          "total": 47,
+          "assessed": 0,
+          "applied": 47,
+          "units": 1609899,
+          "last_at": "2026-10-06T19:56:33.648055Z"
+        },
+        "diary_prepare": {
+          "total": 1,
+          "assessed": 0,
+          "applied": 1,
+          "units": 3302,
+          "last_at": "2026-10-06T16:01:01.315040Z"
+        }
+      }
+    },
+    "attention": {
+      "policies": [
+        {
+          "group_id": "1044946257",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "1060979317",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "712342021",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        }
+      ],
+      "dispositions": {
+        "admitted": 5
+      },
+      "outcomes": {
+        "model_wait": 0,
+        "runtime_failure": 0,
+        "guard_wait": 0
+      },
+      "review_error": null
+    }
+  },
+  "passive_sampling_verified": {
+    "continuous_seconds_before": 27.537701999999996,
+    "continuous_seconds_after": 60.455939,
+    "sample_advanced": true
+  },
+  "automation": {
+    "id": "v3",
+    "status": "ACTIVE",
+    "expected_release_updated": true
+  }
+}
