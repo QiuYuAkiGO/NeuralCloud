@@ -1,8 +1,8 @@
 {
   "schema_version": "cognitive-dynamics-validation-v1",
-  "checked_at": "2026-10-06T11:39:37.129604+00:00",
+  "checked_at": "2026-10-06T12:34:17.785493+00:00",
   "latest_result_per_case": {
-    "passed": 4182,
+    "passed": 4411,
     "failed": 0,
     "skipped": 2
   },
@@ -55,13 +55,21 @@
       "passed": 110,
       "failed": 0,
       "skipped": 2
+    },
+    {
+      "report": "cognitive-deploy-manifest-tests.xml",
+      "sha256": "a08d48b4de25d13538be24d91cf72081aeead3c777e38962aaeb2c8223f7283e",
+      "passed": 250,
+      "failed": 0,
+      "skipped": 0
     }
   ],
   "remaining_failures": [],
   "coverage_note": "Incremental runs during implementation; latest result per case is aggregated coverage, not a single full-suite run.",
   "corrected_regressions": [
     "optional assessment serialized reserve",
-    "clock fallback for legacy bridge construction"
+    "clock fallback for legacy bridge construction",
+    "QQ profile revision 2 now validates with the production interoceptive manifest; invalid revisions remain rejected."
   ],
   "timing_recheck": "One 200 ms deadline test expired before reaching its stub during concurrent replay/regression; its full 40-test file passed when run alone, without changing deadline code or the test.",
   "static_checks": {
@@ -71,10 +79,11 @@
   },
   "rollout": {
     "offline_replay": "passed",
-    "live_shadow_started": false,
+    "live_shadow_started": true,
     "live_24_hours_passed": false,
     "active_rules_deployed": false,
-    "reason": "Read-only preflight: existing production Runtime is PAUSED with legacy homeostasis unhealthy. No production configuration or state was changed."
+    "reason": "Shadow release deployed and Runtime RUNNING after verified stopped-writer backup and an audited legacy passive heartbeat. Gate is waiting for continuous real observation.",
+    "evidence": "deployment.json"
   },
   "limitations": [
     "Historical raw timeline has no processing receipts; no token measurements or appraisals were fabricated.",
@@ -119,7 +128,7 @@
     "harness/qq/vision_tool.py": "7688b362f54458ecc381ccd2aacebcb4103f65220ce35a3ce92e918a7a1ba0d8",
     "harness/regulation/config.py": "5d43d9d1c3e150c2cd81875331f43085f5c2b3dda6488893ea6bc4e7fe9348a6",
     "harness/regulation/store.py": "a423dcf6369b83a867f030aaf9018496011b93df8cc341cf411ed6195dfaeac9",
-    "harness/research/manifest.py": "e32436d5ac345f5bc00aac293de324108fe9c87e7ac48649a2915c645e013b31",
+    "harness/research/manifest.py": "1f0998fbe8a5b6b1fa9a792487fe652bb8186a3aa50a481e06d3cd08dcd7f2ba",
     "harness/runtime/adapters.py": "a89799a7d6b0462bc89278627041e44bb9fcff8cf32e734e5b5e6bac224ae898",
     "harness/runtime/attention.py": "ab7e6d2ea55e92cbed32237d09205fbd4bd051b297ee9d725e7010ad45365336",
     "harness/runtime/background.py": "6332a2dfd5f839ce89c8ca8bd66ce00319124a8c7277b63ac99302a9ab303e4d",
@@ -139,6 +148,7 @@
     "tests/test_goal_cognition.py": "73f40ab1d3406d7eae87504d9a224243e1562cd530a20f58203c1d89228b1d88",
     "tests/test_psychological_appraisal.py": "e8c0d8adcf980ffd7da8d19a76537b8e3b1c6cae9cf2d1112143f4d60e284aa4",
     "tests/test_qq_attention.py": "d6f4a9e6d6722596593c0ea0c5a130b3b8752cba337ac777290ab18923b14b33",
-    "tools/deploy/export_shared.py": "03330f44439a598bb160e4489bcb658355efa0e637fa38a0dc9925733b548a0c"
+    "tools/deploy/export_shared.py": "03330f44439a598bb160e4489bcb658355efa0e637fa38a0dc9925733b548a0c",
+    "tests/test_homeostatic_expression_manifest.py": "02b65f478a07da91be2e66b3875c746c56ecd79267e118a82151f17080668ab4"
   }
 }

@@ -1,9 +1,9 @@
 {
-  "release_id": "20261006-cognitive-dynamics-v3-shadow",
-  "archive": "D:\\GameDev\\NeuralCloud\\.tmp\\cognitive-dynamics-v3-shadow-verified.tar.gz",
-  "sha256": "b3adbe65d7a7a38109a8abbd08669302522637f1af420180ee3a500249e70cfe",
+  "release_id": "20261006-cognitive-dynamics-v3-shadow-v2",
+  "archive": "D:\\GameDev\\NeuralCloud\\.tmp\\cognitive-dynamics-v3-shadow-v2.tar.gz",
+  "sha256": "d6e82b002449e10005e94d137120534d9090f4d0d656dc091988b37628970991",
   "files": 433,
-  "state": "prepared_not_deployed",
+  "state": "deployed_shadow",
   "changed_from_production": [
     "deploy/linux.example.json",
     "gui/runtime_server.py",
@@ -58,5 +58,8 @@
     "infra/trace/request_spans.py",
     "presets/homeostasis/qq-cognitive-dynamics-shadow-v3.json",
     "tools/deploy/export_shared.py"
-  ]
+  ],
+  "code_commit": "9882b5f8ecca7fb65a7bca02991af14c969015d0",
+  "deployed_at": "2026-10-06T12:30:51.150342+00:00",
+  "evidence": "deployment.json"
 }
