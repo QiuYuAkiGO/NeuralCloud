@@ -832,7 +832,7 @@ class QQMemoryWorker:
                 from harness.cognitive.production import maintenance_scope
                 async with maintenance_scope(self.host, command_id="qq-memory:" + job.job_id):
                     from infra.trace.request_spans import trace_scope
-                    with trace_scope(attention_context="qq:" + job.group_id,
+                    with trace_scope(phase="qq_memory_consolidation", attention_context="qq:" + job.group_id,
                                      attention_revision=attention_revision, attention_reread=True,
                                      attention_evidence_refs=[source.source_id for source in job.sources]):
                         require_attention(job.group_id, revision=attention_revision)

@@ -152,6 +152,11 @@ def main():
         result = profile.model_dump(mode="json")
         result["revision"] += 1
         result["cognitive_dynamics"]["mode"] = "shadow" if args.command == "stage-shadow" else "active"
+        if args.command == "stage-shadow":
+            # Legacy scalar calculations remain the control, but their boundary
+            # counter must not pause Runtime and stop representative traffic.
+            # Numeric validity, persistence and service watchdogs still apply.
+            result["watchdog_boundary_heartbeats"] = None
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
     if output.exists() and args.command in {"stage-shadow", "promote"}:

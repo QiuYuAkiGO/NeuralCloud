@@ -6,9 +6,51 @@ import pytest
 
 from harness.homeostasis.engine import HomeostasisEngine
 from harness.homeostasis.rollout import shadow_report
+from harness.homeostasis.profiles import load_profile
 from tests.test_cognitive_dynamics import active_profile, command, NOW, receipt
 from harness.homeostasis.dynamics import AttentionAssessment
 from tests.test_capability_cognition import host, FakeLLM, offer, command as model_command, run
+
+
+def test_staging_shadow_keeps_scalar_math_but_disables_legacy_boundary_pause(tmp_path, monkeypatch):
+    from harness.homeostasis.rollout import main
+    original = load_profile("presets/homeostasis/qq-social-drive-v1.json")
+    output = tmp_path / "shadow.json"
+    monkeypatch.setattr("sys.argv", ["rollout", "stage-shadow", "--profile",
+        "presets/homeostasis/qq-social-drive-v1.json", "--output", str(output)])
+    main()
+    staged = load_profile(output)
+    assert staged.cognitive_dynamics.mode == "shadow"
+    assert staged.watchdog_boundary_heartbeats is None
+    assert staged.dimensions == original.dimensions
+    assert staged.observation_model == original.observation_model
+    assert staged.qq_social_drive == original.qq_social_drive
+
+
+def test_shadow_preset_repeated_bounds_stay_healthy_and_real_fault_checks_remain(tmp_path):
+    async def scenario():
+        profile = load_profile("presets/homeostasis/qq-cognitive-dynamics-shadow-v3.json")
+        clock = [NOW]
+        engine = HomeostasisEngine(profile, state_dir=tmp_path, clock=lambda: clock[0])
+        for index in range(1, 5):
+            # Reproduce every ordinary heartbeat arriving at the legacy bound.
+            factors = dict(engine.snapshot.dimensions)
+            for key in ("cognitive_load", "novelty"):
+                factors[key] = factors[key].model_copy(update={"value": profile.dimensions[key].hard_bounds[1]})
+            engine.snapshot = engine.snapshot.model_copy(update={"dimensions": factors})
+            clock[0] = NOW + timedelta(seconds=5 * index)
+            result = await engine.apply_heartbeat(command(engine, index, clock[0], {}, heartbeat=True))
+            assert result.status == "applied"
+            assert not engine.snapshot.watchdog and (await engine.health()).healthy
+            assert engine.snapshot.dimensions["cognitive_load"].value > .94  # Still legacy mathematics.
+        invalid = dict(engine.snapshot.dimensions)
+        invalid["cognitive_load"] = invalid["cognitive_load"].model_copy(update={"value": float("nan")})
+        assert "cognitive_load:non_finite" in engine._watchdog(invalid, {})
+        engine._projection_errors["snapshot"] = "simulated storage failure"
+        assert not (await engine.health()).healthy
+        engine._projection_errors.clear()
+        await engine.close()
+    asyncio.run(scenario())
 
 
 def test_shadow_ticks_do_not_change_legacy_values_evidence_clocks_or_watchdog(tmp_path):

@@ -180,7 +180,7 @@
   "emotion_threshold": 0.35,
   "emotion_minimum_hold_seconds": 180,
   "max_heartbeat_step_seconds": 90,
-  "watchdog_boundary_heartbeats": 3,
+  "watchdog_boundary_heartbeats": null,
   "interoception_profile_version": "interoception-v1",
   "salience_noticeable_enter": 0.25,
   "salience_marked_enter": 0.5,
