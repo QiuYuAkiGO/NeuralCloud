@@ -57,7 +57,7 @@ class PriorityEventQueue:
 
     @staticmethod
     def _coalescing_key(event: RuntimeEvent) -> tuple[str, str] | None:
-        if event.event_type == RuntimeEventType.HEARTBEAT:
+        if event.event_type in {RuntimeEventType.HEARTBEAT, RuntimeEventType.HOMEOSTASIS_TICK}:
             return event.event_type.value, "runtime"
         if event.event_type == RuntimeEventType.PERCEPTION:
             return event.event_type.value, event.source

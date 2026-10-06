@@ -25,6 +25,10 @@ def validate_direct_source(config, request, *, completed_replay=False):
     if not path:
         raise ValueError("direct_qq_not_configured")
     settings = DirectQQSettings.read(Path(path))
+    from harness.qq.attention import AttentionStore, attention_path
+    denied = AttentionStore(attention_path(settings)).check(request.group_id)
+    if denied:
+        raise ValueError(denied)
     if request.idle_intent is not None and request.idle_intent.origin == "production":
         from harness.qq.direct_contacts import validate_shared
         return validate_shared(settings, config, request, completed_replay=completed_replay)
@@ -71,6 +75,10 @@ def validate_direct_source(config, request, *, completed_replay=False):
                               and sent is None and request.deadline_at <= moment)
         if not expired_unprepared:
             raise ValueError("direct_qq_source_not_pending")
+    denied = AttentionStore(attention_path(settings)).check(request.group_id,
+        revision=value.get("_attention_revision"), received_at=first_seen)
+    if denied:
+        raise ValueError(denied)
     message_time = datetime.fromisoformat(value["message_time"])
     if not -5 <= (first_seen - message_time).total_seconds() <= 60:
         raise ValueError("direct_qq_message_stale")

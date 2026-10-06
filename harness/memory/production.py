@@ -626,6 +626,15 @@ class ProductionMemoryStore:
 
     @classmethod
     def _visible(cls, db, identifier, audience, *, now=None):
+        from harness.qq.attention import attention_visible
+        if not attention_visible(audience):
+            return False
+        # Include every supporting source, so a local/private recall cannot
+        # indirectly read a currently closed group through a derived belief.
+        scopes = db.execute("""SELECT json_extract(payload,'$.scope.conversation_id') FROM pm_sources WHERE id=? OR id IN
+            (SELECT source FROM pm_evidence WHERE id=?)""", (identifier, identifier))
+        if any(not attention_visible(row[0]) for row in scopes):
+            return False
         indexed = db.execute("""SELECT r.kind FROM pm_records r JOIN pm_visibility v ON v.id=r.id
             WHERE r.id=? AND v.audience=? AND r.active=1
               AND NOT EXISTS(SELECT 1 FROM pm_sources s WHERE s.id=r.id AND s.revoked=1)

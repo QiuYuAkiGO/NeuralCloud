@@ -81,6 +81,7 @@ class RuntimeEventType(StrEnum):
     AGENCY_TERMINAL = "agency_terminal"
     RESUME_OBSERVATION = "resume_observation"
     HEARTBEAT = "heartbeat"
+    HOMEOSTASIS_TICK = "homeostasis_tick"
     MAINTENANCE = "maintenance"
     IDLE = "idle"
     RECONCILIATION = "reconciliation"
@@ -98,6 +99,7 @@ CONTROL_EVENT_TYPES = frozenset(
         RuntimeEventType.PERMISSION_REVOKED,
         RuntimeEventType.WATCHDOG,
         RuntimeEventType.DIAGNOSTIC,
+        RuntimeEventType.HOMEOSTASIS_TICK,
         RuntimeEventType.AGENCY_TERMINAL,
     }
 )

@@ -13,12 +13,14 @@ from typing import Annotated, Any, Literal
 from pydantic import AwareDatetime, BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
 from harness.embodiment.voice_contracts import Seed, VoiceScript
+from harness.homeostasis.dynamics import AttentionAssessment
 
 
 BOARD_READ = "expression.board.read.v1"
 BOARD_EXPRESS = "expression.board.append.v1"
 QQ_READ = "communication.qq.read.v1"
 QQ_EXPRESS = "communication.qq.send.v1"
+QQ_ATTENTION = "communication.qq.attention.set.v1"
 VOICE_PROFILES = "expression.voice.profiles.v1"
 VOICE_RENDER = "expression.voice.render.v1"
 WEB_SEARCH = "web.search.v1"
@@ -27,7 +29,7 @@ SERVER_OBSERVE = "server.observe.v1"
 SERVER_EXECUTE = "server.execute.v1"
 CHANNEL_CAPABILITIES = {
     "board": {BOARD_READ: "observe", BOARD_EXPRESS: "act"},
-    "qq": {QQ_READ: "observe", QQ_EXPRESS: "act"},
+    "qq": {QQ_READ: "observe", QQ_EXPRESS: "act", QQ_ATTENTION: "act"},
     "voice": {VOICE_PROFILES: "observe", VOICE_RENDER: "act"},
     "web": {WEB_SEARCH: "observe", WEB_READ: "observe"},
     "server": {SERVER_OBSERVE: "observe", SERVER_EXECUTE: "act"},
@@ -106,6 +108,18 @@ class CapabilityChoice(_Strict):
     success_criteria: list[dict[str, Any]] = Field(default_factory=list, max_length=16, repr=False)
     reason: str | None = Field(default=None, max_length=256, repr=False)
     production_goal_id: Identifier | None = None
+    attention_assessment: AttentionAssessment | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def optional_assessment(cls, value):
+        if isinstance(value, dict) and value.get("attention_assessment") is not None:
+            value = dict(value)
+            try:
+                value["attention_assessment"] = AttentionAssessment.model_validate(value["attention_assessment"])
+            except (ValueError, TypeError):
+                value["attention_assessment"] = None
+        return value
 
     @model_validator(mode="after")
     def _choice(self) -> CapabilityChoice:

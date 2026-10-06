@@ -76,10 +76,21 @@ class QQTurnIngress:
             config.watcher_status_file.parent / "watcher.json" if config and config.watcher_status_file else None)
         self._lock = asyncio.Lock()
         self._waiters = {}
+        self._groups = {}
         control.supervisor.add_listener(self._completed)
+        control.supervisor.qq_turn_ingress = self
+
+    def close_group(self, group_id):
+        for event_id, group in list(self._groups.items()):
+            if group == group_id:
+                self._groups.pop(event_id, None)
+                for waiter in self._waiters.pop(event_id, ()):
+                    if not waiter.done():
+                        waiter.set_exception(ValueError("attention_closed"))
 
     async def _completed(self, topic, value):
         if topic == "event.completed":
+            self._groups.pop(value.get("event_id"), None)
             for waiter in self._waiters.pop(value.get("event_id"), ()):
                 if not waiter.done():
                     waiter.set_result(value)
@@ -91,6 +102,7 @@ class QQTurnIngress:
             subscribers.discard(waiter)
             if not subscribers:
                 self._waiters.pop(event_id, None)
+                self._groups.pop(event_id, None)
         if not waiter.done():
             waiter.cancel()
 
@@ -161,6 +173,10 @@ class QQTurnIngress:
                 # admission time, transport cancellation and grace may differ.
                 waiter = asyncio.get_running_loop().create_future()
                 self._waiters.setdefault(event_id, set()).add(waiter)
+                self._groups[event_id] = request.group_id
+                if request.transport == "onebot":
+                    from harness.qq.attention import require_attention
+                    require_attention(request.group_id)
                 if prior is None:
                     event = await self.control.supervisor.submit_event(event_type=RuntimeEventType.QQ_TURN,
                         priority=RuntimeEventPriority.USER, source="qq_body", event_id=event_id,
@@ -201,6 +217,10 @@ class QQTurnIngress:
     @staticmethod
     def _result(value):
         if value.get("status") != "completed" or value.get("decision_kind") != "qq_prepare":
+            from harness.qq.attention import ATTENTION_DENIALS
+            code = (value.get("detail") or {}).get("error_code")
+            if code in ATTENTION_DENIALS:
+                raise ValueError(code)
             raise ValueError("qq_turn_not_completed")
         detail = value.get("detail")
         if not isinstance(detail, dict) or set(detail) != {"decision", "trace"}:
@@ -225,5 +245,7 @@ def add_qq_turn_route(router, control, config):
             return await ingress.prepare(request)
         except TimeoutError:
             raise HTTPException(status_code=408, detail="qq_turn_expired") from None
-        except (ValueError, OSError, KeyError):
+        except (ValueError, OSError, KeyError) as exc:
+            if str(exc) in {"attention_closed", "attention_policy_changed", "attention_backlog", "attention_deferred"}:
+                raise HTTPException(status_code=409, detail=str(exc)) from None
             raise HTTPException(status_code=409, detail="qq_turn_source_or_state_invalid") from None

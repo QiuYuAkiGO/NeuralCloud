@@ -277,9 +277,9 @@ class ExperimentManifest(BaseModel):
                 raise ValueError(
                     "homeostatic expression requires a revision 3 profile or qq-social-drive-v1@1"
                 )
-            if self.schema_version != "homeostasis-state-v2":
+            if self.schema_version not in {"homeostasis-state-v2", "homeostasis-state-v3"}:
                 raise ValueError(
-                    "homeostatic expression requires schema_version=homeostasis-state-v2"
+                    "homeostatic expression requires schema_version=homeostasis-state-v2 or homeostasis-state-v3"
                 )
         if expression_mode in {"responses", "full"} and (
             self.prompt_version != ("qwen-emotion-v1" if self.emotion_mode == "on" else "homeostatic-interoception-v1")

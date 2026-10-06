@@ -466,6 +466,13 @@ function renderHomeostasisCards(home) {
     <h2>Homeostasis <span class="badge">rev ${esc(home.revision)}</span></h2>
     <p class="hint">${esc(home.profile_id)}@${esc(home.profile_revision)} · ${esc(home.updated_at)}</p>
     ${factors}
+    ${home.dynamics ? `<div class="kv homeo-affect">
+      <div class="kv-row"><span>计算模式</span><span>${home.dynamics.mode === "shadow" ? "影子计算（七维仍使用旧版）" : "新版"}</span></div>
+      <div class="kv-row"><span>疲劳 / 无聊</span><span>${Number(home.dynamics.fatigue).toFixed(3)} / ${Number(home.dynamics.boredom).toFixed(3)}</span></div>
+      <div class="kv-row"><span>调节压力</span><span>${esc(home.regulation_pressure?.level || "normal")}</span></div>
+      <div class="kv-row"><span>语义评价覆盖</span><span>${esc(home.dynamics.assessment_coverage?.assessed || 0)} / ${esc(home.dynamics.assessment_coverage?.exposures || 0)}</span></div>
+      <div class="kv-row"><span>新增变量置信度</span><span>${Number(home.dynamics.latent_confidence || 0).toFixed(2)}</span></div>
+    </div>` : ""}
     <div class="kv homeo-affect">
       <div class="kv-row"><span>affect</span><span>V ${Number(affect.valence || 0).toFixed(2)} · A ${Number(affect.arousal || 0).toFixed(2)} · D ${Number(affect.dominance || 0).toFixed(2)}</span></div>
       <div class="kv-row"><span>emotion</span><span>${esc(emotion.label || "—")} · ${Number(emotion.intensity || 0).toFixed(2)}</span></div>

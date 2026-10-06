@@ -21,6 +21,7 @@ from gui.presets import atomic_write_json, snapshot_memory
 from harness.config import DEFAULT_QQ_INPUT_TOKEN_BUDGET, DEFAULT_QQ_MEMORY_RECALL_CHARACTERS
 from harness.core.models import CandidateMemory, EpisodicEvent, MemoryScope, SemanticFact
 from harness.qq.conversation import conversation_audience, conversation_scope, private_scope_id
+from harness.qq.attention import ATTENTION_DENIALS, attention_visible, guarded_group_read, require_attention
 from harness.production.maintenance import ProductionMaintenanceDeferred
 
 
@@ -166,7 +167,7 @@ def select_recall(memory, *, group_id, member_id=None, query=None,
 
     moment = now or now_utc()
     conversation = conversation_scope(group_id)
-    allowed = tuple(dict.fromkeys((group_id, *allowed_conversation_ids)))
+    allowed = tuple(key for key in dict.fromkeys((group_id, *allowed_conversation_ids)) if attention_visible(key))
     for key in allowed:
         conversation_scope(key)
     expanded = bool(allowed_conversation_ids or include_owner_local)
@@ -561,6 +562,7 @@ class QQMemoryWorker:
             result["receipts"] = list(state["receipts"].values())
         return result
 
+    @guarded_group_read
     def recall(self, *, group_id, member_id=None, query=None):
         if not self.control.recall_enabled or self.host.chat.active_preset_id != "misty":
             return {}
@@ -597,7 +599,7 @@ class QQMemoryWorker:
         qq = self.host.shared.qq_settings
         if qq is None:
             return ()
-        return (*qq.allowed_group_ids, *(private_scope_id(qq.self_member_id, peer)
+        return (*(group for group in qq.allowed_group_ids if attention_visible(group)), *(private_scope_id(qq.self_member_id, peer)
                 for peer in getattr(qq, "allowed_private_peer_ids", ())))
 
     def _conversation_authorized(self, conversation_id, *, for_recall=False):
@@ -609,7 +611,7 @@ class QQMemoryWorker:
         except ValueError:
             return False
         if scope["kind"] == "group":
-            return conversation_id in qq.allowed_group_ids
+            return conversation_id in qq.allowed_group_ids and attention_visible(conversation_id)
         enabled = self.control.private_recall_enabled if for_recall else self.control.private_enabled
         return (enabled and scope["self_member_id"] == qq.self_member_id
                 and scope["peer_id"] in getattr(qq, "allowed_private_peer_ids", ()))
@@ -642,6 +644,8 @@ class QQMemoryWorker:
         return event.scope.owner_id == "misty" and "local:main" in event.scope.visibility
 
     def note_recall(self, decision):
+        if not attention_visible(decision.group_id):
+            return
         production = getattr(getattr(self.host, "shared", None), "production_enabled", False)
         if ((self.control.recall_enabled or production) and decision.decision_source == "model"
                 and decision.outcome in {"ready", "natural_wait"}
@@ -756,13 +760,16 @@ class QQMemoryWorker:
         if qq is None or self.host.chat.active_preset_id != "misty":
             return
         private_peers = tuple(sorted(getattr(qq, "allowed_private_peer_ids", ()))) if self.control.private_enabled else ()
+        groups = tuple(sorted(group for group in qq.allowed_group_ids if attention_visible(group)))
+        if not groups and not private_peers:
+            return
         queue_scope = (self.host.chat.active_preset_id, str(qq.self_member_id),
-                       tuple(sorted(qq.allowed_group_ids)), private_peers)
+                       groups, private_peers)
         if (self.queue is None or self._queue_owner is not self.host.chat.memory
                 or self._queue_scope != queue_scope):
             self.queue = QQAssimilationQueue(self.host.shared.store.path, owner_id="misty",
                 preset_id=self.host.chat.active_preset_id, self_id=qq.self_member_id,
-                allowed_group_ids=qq.allowed_group_ids,
+                allowed_group_ids=groups,
                 allowed_private_peer_ids=queue_scope[3],
                 idle_seconds=self.host.chat.settings.qq_memory_window_idle_seconds,
                 max_seconds=self.host.chat.settings.qq_memory_window_max_seconds,
@@ -788,6 +795,7 @@ class QQMemoryWorker:
         started = time.perf_counter()
         self.processing = True
         try:
+            attention_revision = require_attention(job.group_id)
             if not await self._wait_foreground():
                 raise ValueError("qq_memory_owner_changed")
             async with self.host.adapter._lock:
@@ -823,7 +831,13 @@ class QQMemoryWorker:
                     raise ValueError("qq_memory_owner_changed")
                 from harness.cognitive.production import maintenance_scope
                 async with maintenance_scope(self.host, command_id="qq-memory:" + job.job_id):
-                    proposal = await asyncio.to_thread(self.make_proposal, job, old, preset.persona)
+                    from infra.trace.request_spans import trace_scope
+                    with trace_scope(attention_context="qq:" + job.group_id,
+                                     attention_revision=attention_revision, attention_reread=True,
+                                     attention_evidence_refs=[source.source_id for source in job.sources]):
+                        require_attention(job.group_id, revision=attention_revision)
+                        proposal = await asyncio.to_thread(self.make_proposal, job, old, preset.persona)
+                require_attention(job.group_id, revision=attention_revision)
                 await asyncio.to_thread(self.queue.store_proposal, job.job_id, proposal,
                                         old_impressions=old, basis_digest=_hash(old))
             # Validate every proposal again at commit, including recovered output.
@@ -854,6 +868,7 @@ class QQMemoryWorker:
                 raise ValueError("qq_memory_owner_changed")
             async with self.host._control_lock:
                 async with self.host.adapter._lock:
+                    require_attention(job.group_id, revision=attention_revision)
                     if self.stopping.is_set() or self.host.adapter._maintenance_paused:
                         raise ProductionMaintenanceDeferred("qq_memory_maintenance_paused")
                     if (not self.control.enabled or self.host.chat.memory is not memory_identity
@@ -885,6 +900,10 @@ class QQMemoryWorker:
             await asyncio.to_thread(self.queue.defer, job.job_id, exc.error_code,
                                     retry_after_seconds=exc.retry_after_seconds)
         except Exception as exc:
+            if isinstance(exc, ValueError) and str(exc) in ATTENTION_DENIALS:
+                self.last_error = str(exc)
+                await asyncio.to_thread(self.queue.defer, job.job_id, str(exc), retry_after_seconds=900)
+                return
             self.last_error = getattr(exc, "error_code", type(exc).__name__)
             await asyncio.to_thread(self.queue.fail, job.job_id, self.last_error)
         finally:

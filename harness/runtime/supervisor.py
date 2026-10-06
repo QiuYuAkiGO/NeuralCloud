@@ -216,6 +216,8 @@ class RuntimeIngress:
         target_queue = (self.supervisor.heartbeat.queue
             if event.event_type == RuntimeEventType.HEARTBEAT and self.supervisor.heartbeat.active
             else self.supervisor.queue)
+        if event.event_type == RuntimeEventType.HOMEOSTASIS_TICK and self.supervisor.passive_state.active:
+            target_queue = self.supervisor.passive_state.queue
         queued = await target_queue.put(event)
         if event.event_type == RuntimeEventType.USER_MESSAGE:
             # Queue insertion has now produced an authoritative outcome: the
@@ -307,9 +309,10 @@ class RuntimeSupervisor:
         from harness.runtime.affect import AffectWorker
 
         self.affect = AffectWorker(self)
-        from harness.runtime.background import HeartbeatWorker
+        from harness.runtime.background import HeartbeatWorker, PassiveStateWorker
 
         self.heartbeat = HeartbeatWorker(self)
+        self.passive_state = PassiveStateWorker(self)
         self._homeostasis_command_lock = asyncio.Lock()
         self._foreground_dispatches: set[str] = set()
         self._agency_decision_bindings: dict[str, dict[str, str]] = {}
@@ -957,6 +960,7 @@ class RuntimeSupervisor:
     async def run(self) -> None:
         await self.boot_and_recover()
         self._run_task = asyncio.current_task()
+        self.passive_state.start()
         try:
             if self.production_runtime is not None:
                 await self.production_runtime.run()
@@ -994,7 +998,7 @@ class RuntimeSupervisor:
             self._run_task = None
 
     async def dispatch(self, event: RuntimeEvent) -> EventDispatchResult:
-        if event.event_type == RuntimeEventType.HEARTBEAT:
+        if event.event_type in {RuntimeEventType.HEARTBEAT, RuntimeEventType.HOMEOSTASIS_TICK}:
             return await self._dispatch_event(event)
         self._foreground_dispatches.add(event.event_id)
         try:
@@ -1047,7 +1051,7 @@ class RuntimeSupervisor:
             )
             retryable = isinstance(exc, (DomainCommandError, TimeoutError, ConnectionError))
             heartbeat_rpc = (
-                event.event_type == RuntimeEventType.HEARTBEAT
+                event.event_type in {RuntimeEventType.HEARTBEAT, RuntimeEventType.HOMEOSTASIS_TICK}
                 and isinstance(exc, DomainRpcError)
             )
             if heartbeat_rpc:
@@ -1313,6 +1317,11 @@ class RuntimeSupervisor:
                 await self_check.close()
             if not await self.heartbeat.close(self.maintenance_drain_seconds):
                 raise RuntimeStateError("heartbeat maintenance did not drain during shutdown")
+            if not await self.passive_state.close(self.maintenance_drain_seconds):
+                raise RuntimeStateError("passive state worker did not drain during shutdown")
+            attention = getattr(self, "attention_controller", None)
+            if attention is not None:
+                await attention.close()
             daily_report = getattr(self, "daily_report", None)
             if daily_report is not None:
                 await daily_report.close()
@@ -1484,6 +1493,11 @@ class RuntimeSupervisor:
     def status(self) -> RuntimeStatus:
         embodiment_status = self.embodiment.status()
         degraded_reasons = list(self._degraded_reasons)
+        if self.goals.enabled and self.goals.health()["status"] == "degraded":
+            degraded_reasons.append("goal_request_contract")
+        feedback = getattr(self, "qq_direct_feedback", None)
+        if feedback is not None and feedback.last_error:
+            degraded_reasons.append("qq_homeostatic_feedback")
         if (
             self.manifest.embodiment.mode != "off"
             and embodiment_status.state
@@ -1534,7 +1548,7 @@ class RuntimeSupervisor:
             embodiment=embodiment_status,
             agency_state=self._agency_state,
             affect=self.affect.status(),
-            background={"heartbeat": self.heartbeat.status(), "affect": self.affect.queue_status()},
+            background={"heartbeat": self.heartbeat.status(), "passive_state": self.passive_state.status(), "affect": self.affect.queue_status()},
             recovery=self.recovery_status(),
         )
 
@@ -1566,7 +1580,37 @@ class RuntimeSupervisor:
             await self._publish("journal.recovered", {"buffered_records": 0})
         return recovered
 
+    async def _advance_passive_state(self, event, process_seq):
+        from harness.homeostasis.work import configured_work_ledger
+        ledger = configured_work_ledger()
+        async with self._homeostasis_command_lock:
+            for receipt in ledger.pending() if ledger is not None else []:
+                exposure_event = event.model_copy(update={"source_time": receipt.attended_at,
+                    "payload": {"cognitive_exposure": receipt.model_dump(mode="json")}})
+                command = self._make_command(exposure_event, command_type="ApplyEvent",
+                    idempotency_key="work:" + receipt.exposure_id,
+                    expected_revision=self._homeostasis_snapshot.revision,
+                    payload={"event": exposure_event.model_dump(mode="json")})
+                result = await self._invoke_domain(service="homeostasis", envelope=command,
+                    method=self.homeostasis.apply_event, event=exposure_event)
+                await self._update_homeostasis(result, event=exposure_event, schedule_marked=False)
+                ledger.acknowledge(receipt.exposure_id)
+            command = self._make_command(event, command_type="ApplyHeartbeat",
+                idempotency_key="passive:" + event.event_id,
+                expected_revision=self._homeostasis_snapshot.revision,
+                payload={"event": event.model_dump(mode="json"), "passive_only": True})
+            result = await self._invoke_domain(service="homeostasis", envelope=command,
+                method=self.homeostasis.apply_heartbeat, event=event)
+            await self._update_homeostasis(result, event=event, schedule_marked=False)
+        attention = getattr(self, "attention_controller", None)
+        if attention is not None and self.lifecycle == RuntimeLifecycle.RUNNING:
+            attention.schedule(event)
+        return EventDispatchResult(event_id=event.event_id, receive_seq=event.receive_seq,
+            process_seq=process_seq, status="completed", decision_kind="passive_state")
+
     async def _dispatch_control(self, event: RuntimeEvent, process_seq: int) -> EventDispatchResult:
+        if event.event_type == RuntimeEventType.HOMEOSTASIS_TICK:
+            return await self._advance_passive_state(event, process_seq)
         if self.production_runtime is not None and event.event_type == RuntimeEventType.AGENCY_TERMINAL:
             return await self.production_runtime.dispatch(event, process_seq)
         if (
@@ -1617,6 +1661,16 @@ class RuntimeSupervisor:
     async def _dispatch_domain_event(
         self, event: RuntimeEvent, process_seq: int
     ) -> EventDispatchResult:
+        if event.event_type == RuntimeEventType.QQ_FACT:
+            from harness.qq.attention import require_attention
+            try:
+                require_attention(str(event.payload.get("qq_fact", {}).get("group_id", "")))
+            except ValueError as exc:
+                if str(exc) not in {"attention_closed", "attention_policy_changed", "attention_backlog"}:
+                    raise
+                return EventDispatchResult(event_id=event.event_id, receive_seq=event.receive_seq,
+                    process_seq=process_seq, status="completed", decision_kind="attention_closed",
+                    detail={"reason":str(exc)})
         if self.production_runtime is not None and event.event_type in {
             RuntimeEventType.USER_MESSAGE, RuntimeEventType.IDLE, RuntimeEventType.BODY_STATE,
             RuntimeEventType.HEARTBEAT, RuntimeEventType.PERCEPTION, RuntimeEventType.ENVIRONMENT_CHANGE,
@@ -3625,7 +3679,7 @@ class RuntimeSupervisor:
         if self.lifecycle != RuntimeLifecycle.RUNNING:
             return "runtime_result_fenced"
         summary = self._response_homeostatic_interoception()
-        if summary is not None and summary.get("salience") == "critical":
+        if summary is not None and summary.get("salience") == "critical" and (summary.get("schema_version") == "homeostatic-interoception-v1" or summary.get("watchdog")):
             return "critical_homeostasis_before_effect"
         return None
 
@@ -3713,7 +3767,7 @@ class RuntimeSupervisor:
             # Freeze it with the first command's VersionVector; retries below
             # reuse the durable envelope, even after Homeostasis advances.
             summary = self._response_homeostatic_interoception()
-            if summary is not None and summary["salience"] == "critical":
+            if summary is not None and summary["salience"] == "critical" and (summary.get("schema_version") == "homeostatic-interoception-v1" or summary.get("watchdog")):
                 raise DomainCommandError("critical homeostatic state must pause before QQ cognition")
             if request.idle_intent is not None:
                 if summary is None:
@@ -3823,6 +3877,10 @@ class RuntimeSupervisor:
             raise exhausted()
         if (event.event_type == RuntimeEventType.QQ_TURN and envelope.command_type != "AppraiseAffect"
                 and result.status not in {"applied", "idempotent_replay"}):
+            from harness.qq.attention import ATTENTION_DENIALS
+            if result.error in ATTENTION_DENIALS:
+                from harness.runtime.qq_pipeline import QQTurnRejected
+                raise QQTurnRejected(result.error, failure_category="cancelled", error_code=result.error)
             if service == "cognitive" and envelope.command_type in {"PrepareQQTurn", "ResumeQQResponse"}:
                 from harness.runtime.qq_pipeline import QQTurnRejected
                 from harness.qq.failures import safe_failure_detail
@@ -3916,7 +3974,7 @@ class RuntimeSupervisor:
             )
         if self.manifest.homeostatic_expression.mode != "off":
             summary = self._validated_homeostatic_interoception(required=True)
-            if (summary or {}).get("salience") == "critical" and not snapshot_watchdog:
+            if (summary or {}).get("schema_version") == "homeostatic-interoception-v1" and (summary or {}).get("salience") == "critical" and not snapshot_watchdog:
                 raise DomainCommandError(
                     "critical homeostatic interoception has no watchdog evidence"
                 )
@@ -4030,7 +4088,8 @@ class RuntimeSupervisor:
                     raise DomainCommandError(
                         "homeostasis result snapshot profile does not match the manifest"
                     )
-                if state.get("schema_version") != self.manifest.schema_version:
+                if (state.get("schema_version") != self.manifest.schema_version
+                        and (self.manifest.schema_version, state.get("schema_version")) != ("homeostasis-state-v2", "homeostasis-state-v3")):
                     raise DomainCommandError(
                         "homeostasis result snapshot schema does not match the manifest"
                     )
@@ -4062,6 +4121,7 @@ class RuntimeSupervisor:
             f"{field}={getattr(self.manifest, field)!r}, profile={value!r}"
             for field, value in contracts.items()
             if getattr(self.manifest, field) != value
+            and not (field == "schema_version" and (getattr(self.manifest, field), value) == ("homeostasis-state-v2", "homeostasis-state-v3"))
         ]
         if mismatches:
             raise DomainCommandError(
@@ -4136,7 +4196,7 @@ class RuntimeSupervisor:
         if mode != "off":
             summary = self._validated_homeostatic_interoception(required=True)
             assert summary is not None
-            if (summary or {}).get("salience") == "critical" and not reasons:
+            if (summary or {}).get("schema_version") == "homeostatic-interoception-v1" and (summary or {}).get("salience") == "critical" and not reasons:
                 raise DomainCommandError(
                     "critical homeostatic interoception has no watchdog evidence"
                 )
@@ -4266,7 +4326,7 @@ class RuntimeSupervisor:
                     "homeostasis response is missing homeostatic interoception"
                 )
             return None
-        if summary.get("schema_version") != "homeostatic-interoception-v1":
+        if summary.get("schema_version") not in {"homeostatic-interoception-v1", "homeostatic-interoception-v2"}:
             raise DomainCommandError("homeostatic interoception schema is incompatible")
         if summary.get("profile_ref") != self.manifest.homeostatic_profile:
             raise DomainCommandError(

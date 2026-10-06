@@ -19,6 +19,7 @@ from uuid import uuid4
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstraints, TypeAdapter, ValidationError, field_validator, model_validator
 
 from harness.qq.conversation import QQConversationID, conversation_scope
+from harness.qq.attention import guarded_group_read
 from harness.qq.context_window import WINDOW_CANDIDATE_LIMIT
 
 
@@ -519,6 +520,7 @@ class QQVisualMemoryStore:
         )
         return QQVisualWriteResult(created=True, observation=observation)
 
+    @guarded_group_read
     def reply_context(self, *, group_id: str, member_id: str, limit: int = 20) -> QQPersonContext:
         query = _ContextQuery(group_id=group_id, member_id=member_id, limit=limit)
         with closing(self._connect()) as connection, connection:
@@ -560,6 +562,7 @@ class QQVisualMemoryStore:
             observations=decoded_observations,
         )
 
+    @guarded_group_read
     def group_context(
         self,
         *,

@@ -152,9 +152,18 @@ class OfferedImage:
 class QQVisionTool:
     def __init__(self, config, settings, images):
         self.config, self.settings, self.images = config, settings, images
+        self.group_id = None
+        self.attention_revision = None
+
+    def check_attention(self):
+        if self.group_id is not None:
+            from harness.qq.attention import require_attention
+            require_attention(self.group_id, revision=self.attention_revision)
 
     @classmethod
     def for_turn(cls, settings, observations, *, group_id, self_member_id, current_ids):
+        from harness.qq.attention import require_attention
+        revision = require_attention(group_id)
         path = getattr(settings, "qq_vision_tool_config", None)
         if path is None:
             return None
@@ -179,7 +188,11 @@ class QQVisionTool:
         if not images:
             return None
         config = read_config(path)
-        return cls(config, settings, images) if config.enabled else None
+        if not config.enabled:
+            return None
+        tool = cls(config, settings, images)
+        tool.group_id, tool.attention_revision = group_id, revision
+        return tool
 
     def public(self):
         return {
@@ -192,6 +205,7 @@ class QQVisionTool:
         }
 
     def _frames(self, image, deadline):
+        self.check_attention()
         digest = image.evidence_ref.rsplit(":", 1)[-1]
         matches = [self.config.image_cache_dir / (digest + "." + ext) for ext in ("png", "jpg", "webp", "gif")]
         matches = [path for path in matches if path.is_file()]
@@ -222,6 +236,7 @@ class QQVisionTool:
         selected = [offered[image_id] for image_id in request.image_ids]
         deadline = deadline or QQDeadline.after(self.settings.llm_timeout)
         try:
+            self.check_attention()
             if request_validator is not None:
                 request_validator()
             # Leave time for the main model's actual reply and its delivery.
@@ -280,6 +295,7 @@ class QQVisionTool:
             if timeout <= 0:
                 return {**base, "error": "vision_budget_unavailable"}, usage
             trace.add_counter("model_calls")
+            self.check_attention()
             trace.add_counter("vision_model_calls")
             client = (client_factory or OpenAICompatClient)(private)
             try:
@@ -295,6 +311,7 @@ class QQVisionTool:
             finally:
                 client.close()
             usage = result.usage.for_call()
+            self.check_attention()
             trace.add_cache_usage("vision", result.usage)
             deadline.check()
             if (

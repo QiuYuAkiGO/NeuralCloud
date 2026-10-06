@@ -41,6 +41,10 @@ _GOAL_PREPARE_ERROR_CODES = frozenset({
     "goal_context_too_large",
     "goal_revision_conflict",
     "goal_invalid_request",
+    "goal_invalid_appraisal_evidence",
+    "goal_invalid_known_evidence",
+    "goal_active_episode_binding_mismatch",
+    "goal_snapshot_binding_mismatch",
     "goal_decision_expired",
     "goal_prepare_failed",
     "goal_invalid_schema",
@@ -155,6 +159,13 @@ class CapabilityController:
         self.generation = self.calls.configure(digest(self.settings.model_dump(mode="json")))
         return self.settings.owners.get(channel, "off")
 
+    def allowed_capabilities(self):
+        allowed = set(self.settings.allowed_capabilities)
+        attention = getattr(self.supervisor, "attention_controller", None)
+        if attention is not None and attention.enabled and self.owner("qq") == "shared":
+            allowed.add("communication.qq.attention.set.v1")
+        return allowed
+
     async def on_event(self, topic, value):
         if topic != "event.accepted":
             return
@@ -208,7 +219,7 @@ class CapabilityController:
         if row["runtime_instance_id"] != self.supervisor.runtime_instance_id or row["activity_revision"] != self.activity_revision:
             return "superseded"
         offer = row.get("offer")
-        if offer and (self.owner(offer["channel"]) != "shared" or offer["capability_id"] not in self.settings.allowed_capabilities):
+        if offer and (self.owner(offer["channel"]) != "shared" or offer["capability_id"] not in self.allowed_capabilities()):
             return "superseded"
         return None
 
@@ -222,7 +233,7 @@ class CapabilityController:
         from harness.embodiment.board_contracts import BoardReadRequest
         from harness.cognitive.action_planner import _INTENT_PROFILES
         sup, now, offers = self.supervisor, utc_now(), []
-        allowed = set(self.settings.allowed_capabilities)
+        allowed = self.allowed_capabilities()
         web = getattr(sup, "web", None)
         if web is not None and self.owner("web") == "shared":
             try:
@@ -354,6 +365,9 @@ class CapabilityController:
             raise
 
     async def heartbeat(self):
+        feedback = getattr(self.supervisor, "qq_direct_feedback", None)
+        if feedback is not None:
+            await feedback.heartbeat()
         if getattr(self.supervisor, "production_runtime", None) is not None:
             return await self.production_heartbeat()
         current = self.calls.configure(digest(self.settings.model_dump(mode="json")))
@@ -518,13 +532,16 @@ class CapabilityController:
         row.update(channel="web", status="dispatching", web_call_id=identity)
         self.calls.put(row)
         try:
+            previous = web.context(offer.scope["context_id"]).get("sources", [])
             result = await web.execute(identity, offer, selected.choice.arguments,
                 deadline=datetime.fromisoformat(row["deadline_at"]), autonomous=True,
                 guard=lambda: self.invalid_reason(row))
             context = web.context(offer.scope["context_id"], failures=result.failures)
+            from harness.regulation.context import web_information_feedback
             self._finish(row, "completed", evidence_refs=result.evidence_refs,
                 channel_result={"status": "completed", "web_call_id": identity,
-                    "effect": "external_information_only", "evidence_refs": result.evidence_refs, "observation": context})
+                    "effect": "external_information_only", "evidence_refs": result.evidence_refs, "observation": context,
+                    "information_feedback": web_information_feedback(result, previous)})
         except Exception as exc:
             self._finish(row, "error", error_type=exc.code if isinstance(exc, WebError) else "web_dispatch_failed")
 
@@ -565,7 +582,7 @@ class CapabilityController:
             if row["generation"] != self.generation or not self.settings.enabled:
                 return "superseded"
             offer = row.get("offer")
-            if offer and (self.owner(offer["channel"]) != "shared" or offer["capability_id"] not in self.settings.allowed_capabilities):
+            if offer and (self.owner(offer["channel"]) != "shared" or offer["capability_id"] not in self.allowed_capabilities()):
                 return "superseded"
             return None
         return self.invalid_reason(row)

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import httpx
 
+from harness.qq.attention import ATTENTION_DENIALS
 from harness.qq.telemetry import QQDeadlineExpired
 
 
@@ -21,7 +22,7 @@ _CODES = {
         "production_memory_manifest_required", "production_memory_superseded", "production_snapshot_superseded",
     },
     "cancelled": {"qq_turn_cancelled", "qq_turn_interrupted", "qq_turn_in_progress_or_interrupted",
-                  "production_runtime_fenced", "production_runtime_fence_missing"},
+                  "production_runtime_fenced", "production_runtime_fence_missing", *ATTENTION_DENIALS},
     "model_error": {"qq_model_http_error", "qq_model_error"},
     "internal_error": {"qq_turn_internal_error"},
     "transport_error": {"qq_transport_error", "shared_cognitive_unavailable"},

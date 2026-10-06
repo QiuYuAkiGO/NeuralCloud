@@ -27,7 +27,27 @@ def _outcome_projection(row):
     """Keep status and evidence refs; drop receipt bodies from the model context."""
     if not isinstance(row, dict):
         return row
-    return {key: row[key] for key in _OUTCOME_CONTEXT_FIELDS if key in row}
+    projected = {key: row[key] for key in _OUTCOME_CONTEXT_FIELDS if key in row}
+    feedback = (row.get("channel_result") or {}).get("information_feedback")
+    if feedback is not None:
+        projected["information_feedback"] = feedback
+    return projected
+
+
+def _review_outcomes(episode):
+    """Keep recent results and one independent receipt for each executed step."""
+    episode = episode or {}
+    results = episode.get("results", [])
+    indices = set(range(max(0, len(results) - 16), len(results)))
+    for step in episode.get("steps", []):
+        if step.get("status") != "executed":
+            continue
+        refs = set(step.get("evidence_refs", [])[:1])
+        for i, outcome in enumerate(results):
+            if outcome.get("status") in {"completed", "committed"} and refs.intersection(outcome.get("evidence_refs", [])):
+                indices.add(i)
+                break
+    return [_outcome_projection(results[i]) for i in sorted(indices)]
 
 
 def _episode_context(episode):
@@ -36,10 +56,10 @@ def _episode_context(episode):
         return None
     projected = {}
     for key, value in episode.items():
-        if key in {"seen_calls", "baseline", "last_evaluation"}:
+        if key in {"seen_calls", "baseline", "last_evaluation", "last_observation"}:
             continue
         if key == "results":
-            projected[key] = [_outcome_projection(item) for item in (value or [])[-16:]]
+            projected[key] = _review_outcomes(episode)
         elif key == "appraisals":
             projected[key] = list(value or [])[-8:]
         elif key == "predictions":
@@ -104,15 +124,62 @@ class GoalController:
     def _put_state(self, state):
         self.store.put("state", "scheduler", state)
 
+    def _request_version(self, goal):
+        from harness.regulation.context import REQUEST_CONTEXT_VERSION
+        return digest([REQUEST_CONTEXT_VERSION, self.config.model_dump(mode="json"), goal["revision"]])
+
+    def request_fault(self, goal):
+        fault = self.store.get("request_fault", goal["id"])
+        return fault if fault and fault["version"] == self._request_version(goal) else None
+
+    def _record_request_fault(self, call, goal):
+        if goal and call.get("error_code") in {"goal_invalid_request", "goal_context_too_large", "goal_invalid_appraisal_evidence",
+                "goal_invalid_known_evidence", "goal_active_episode_binding_mismatch", "goal_snapshot_binding_mismatch"}:
+            self.store.put("request_fault", goal["id"], {"goal_id": goal["id"], "code": call["error_code"],
+                "at": call.get("completed_at", self.clock().isoformat()), "version": self._request_version(goal),
+                "recovery": "request_contract_or_configuration_change"})
+
+    def health(self):
+        faults = [fault for goal in [self.store.get("goal", STANDING_ID), *self._goals()]
+                  if goal and goal["status"] not in FINISHED and (fault := self.request_fault(goal))]
+        return {"status": "degraded" if faults else "available", "request_faults": faults}
+
+    def _expire_autonomous_episode(self, episode, now):
+        if (episode["goal_id"] != STANDING_ID or episode["status"] in FINISHED | {"paused"}
+                or episode.get("unresolved_call")):
+            return False
+        if any(c.get("goal_binding", {}).get("episode_id") == episode["id"] and c["status"] not in TERMINAL
+               for c in self.supervisor.capabilities.calls.all()):
+            return False
+        expired = (now - _when(episode["created_at"])).total_seconds() >= self.config.maximum_autonomous_episode_seconds
+        exhausted = len(episode.get("seen_calls", [])) >= self.config.maximum_autonomous_episode_attempts
+        if not expired and not exhausted:
+            return False
+        episode.update(status="abandoned", ended_at=now.isoformat(), blocked_reason=None,
+            end_reason="episode_time_limit" if expired else "episode_attempt_limit", causal_effect_verified=False)
+        goal = self.store.get("goal", STANDING_ID)
+        goal.update(status="observing", next_review_at=(now + timedelta(
+            seconds=self.supervisor.capabilities.settings.opportunity_seconds)).isoformat())
+        with self.store.objects.atomic():
+            self._save("episode", episode)
+            self._save("goal", goal)
+        return True
+
     def budget(self, *, now=None):
         now = now or self.clock()
         calls = [_when(v) for v in self._state()["calls"] if (now - _when(v)).total_seconds() < 3600]
         next_at = now
         if calls:
             next_at = max(next_at, calls[-1] + timedelta(seconds=self.config.minimum_reconsideration_interval))
-        if len(calls) >= self.config.maximum_model_calls_per_hour:
+        attention = getattr(self.supervisor, "attention_controller", None)
+        maximum = self.config.maximum_model_calls_per_hour
+        if attention is not None and attention.enabled:
+            maximum = max(0, min(12, maximum) - 4)
+        if maximum == 0:
+            next_at = max(next_at, now + timedelta(hours=1))
+        elif len(calls) >= maximum:
             next_at = max(next_at, calls[0] + timedelta(hours=1))
-        return {"calls_last_hour": len(calls), "maximum_calls_per_hour": self.config.maximum_model_calls_per_hour,
+        return {"calls_last_hour": len(calls), "maximum_calls_per_hour": maximum,
             "next_available_at": next_at.isoformat()}
 
     async def on_event(self, topic, payload):
@@ -217,6 +284,8 @@ class GoalController:
             return
         cap, now = self.supervisor.capabilities, self.clock()
         self.reconcile()
+        for episode in self._episodes():
+            self._expire_autonomous_episode(episode, now)
         self.observe(self.supervisor._homeostasis_snapshot.payload)
         self._observe_salience()
         if (self.supervisor.lifecycle != RuntimeLifecycle.RUNNING or cap.active
@@ -231,6 +300,8 @@ class GoalController:
             if not self.config.autonomous_enabled or goal["status"] in FINISHED | {"paused"}:
                 return
         episode = self._active(goal["id"])
+        if self.request_fault(goal):
+            return
         state = self._state()
         if (not episode and goal.get("blocked_reason") == "no_progress"
                 and goal.get("blocked_signal_revision") == state["signal_revision"]):
@@ -271,16 +342,15 @@ class GoalController:
             return
         identity, episode_id = "capability:" + uuid4().hex, episode["id"] if episode else "episode:" + uuid4().hex
         snapshot = self.supervisor._homeostasis_snapshot
-        appraisal_refs = list(dict.fromkeys([*state["evidence_refs"],
-            *[ref for r in (episode or {}).get("results", []) if r.get("status") in {"completed", "committed"}
-              for ref in r.get("evidence_refs", [])]]))[-64:]
         used_appraisal_refs = {ref for e in self._episodes() for a in e.get("appraisals", []) for ref in a["evidence_refs"]}
-        appraisal_refs = [r for r in appraisal_refs if r not in used_appraisal_refs]
         state_snapshot = snapshot.payload.get("snapshot", snapshot.payload)
-        snapshot_ref = "homeostasis-snapshot:" + digest(state_snapshot)
-        refs = list(dict.fromkeys([*appraisal_refs, *[ref for o in offers for ref in o.observation_refs],
-            *[ref for r in (episode or {}).get("results", []) for ref in r.get("evidence_refs", [])],
-            snapshot_ref, "goal-request:" + digest(goal)]))[-128:]
+        from harness.regulation.context import select_evidence
+        try:
+            refs, appraisal_refs = select_evidence(snapshot=state_snapshot, goal=goal, episode=episode, offers=offers,
+                fresh_refs=state["evidence_refs"], used_refs=used_appraisal_refs)
+        except ValueError:
+            self._record_request_fault({"error_code": "goal_context_too_large"}, goal)
+            return
         binding = {"goal_id": goal["id"], "goal_revision": goal["revision"], "episode_id": episode_id}
         row = dict(opportunity_id=identity, event_id="capability-event:" + uuid4().hex, status="queued", created_at=now.isoformat(),
             deadline_at=(now + timedelta(seconds=cap.settings.deadline_seconds)).isoformat(), generation=cap.generation,
@@ -290,8 +360,19 @@ class GoalController:
             goal_request={"snapshot_revision": snapshot.revision, "goal_context": {
                 "episode_id": episode_id, "standing_goal": self.store.get("goal", STANDING_ID), "requested_goal": goal,
                 "active_episode": _episode_context(episode), "known_evidence_refs": refs, "appraisal_evidence_refs": appraisal_refs,
-                "outcomes": [_outcome_projection(item) for item in (episode or {}).get("results", [])[-16:]],
+                "outcomes": _review_outcomes(episode),
                 "budget": self.budget(), "snapshot": state_snapshot}})
+        # Catch broken envelopes locally before consuming Cognitive capacity.
+        from harness.contracts.goals import GoalDecisionRequest
+        from pydantic import ValidationError
+        try:
+            GoalDecisionRequest.model_validate({k: row[k] for k in (
+                "opportunity_id", "generation", "deadline_at", "homeostatic_summary", "offers")} | row["goal_request"])
+        except ValidationError:
+            row.update(status="error", error_code="goal_invalid_request", completed_at=now.isoformat())
+            cap.calls.put(row)
+            self._record_request_fault(row, goal)
+            return
         # Reserve rate budget before accepting an event, including failed attempts.
         with self.store.objects.atomic():
             state["calls"] = [v for v in state["calls"] if (now - _when(v)).total_seconds() < 3600] + [now.isoformat()]
@@ -329,6 +410,7 @@ class GoalController:
                 raise ValueError("goal decision identity conflict")
             return result.result["prepared_capability_choice"]
         operation = decision.episode_operation
+        prior_window = None
         if episode is None and operation not in {"start", "wait"}:
             raise ValueError("goal episode does not exist")
         snapshot = row["goal_request"]["goal_context"]["snapshot"]
@@ -344,6 +426,17 @@ class GoalController:
             if episode.get("unresolved_call"):
                 raise ValueError("unknown effects require reconciliation before replanning")
             if operation in {"start", "replan"}:
+                if operation == "replan":
+                    prior_window = (episode["id"] + ":" + str(episode["revision"]),
+                        {"episode_id": episode["id"], "target_dimensions": episode["target_dimensions"],
+                         "baseline": episode["baseline"], "last_evaluation": episode.get("last_evaluation"),
+                         "ended_at": now.isoformat()})
+                    episode.update(target_dimensions=list(decision.target_dimensions), baseline=snapshot,
+                        evaluation_started_at=now.isoformat(), stable_since=None)
+                    for key in ("last_observed_at", "last_snapshot_revision", "last_evaluation", "last_observation"):
+                        episode.pop(key, None)
+                    if goal["id"] == STANDING_ID:
+                        episode["success_criteria"] = list(decision.completion_criteria)
                 retained = [s for s in episode["steps"] if s["status"] != "planned"]
                 for step in retained:
                     if step["status"] == "failed":
@@ -372,6 +465,9 @@ class GoalController:
                 episode.update(status="abandoned", ended_at=now.isoformat(), end_reason="model_abandoned")
                 if goal["id"] != STANDING_ID:
                     goal.update(status="abandoned", revision=goal["revision"] + 1)
+                else:
+                    goal.update(status="observing", next_review_at=(now + timedelta(
+                        seconds=self.supervisor.capabilities.settings.opportunity_seconds)).isoformat())
             elif decision.choice.kind in {"act", "observe"}:
                 step = next((s for s in episode["steps"] if s["status"] == "planned"), None)
                 if step is None:
@@ -382,6 +478,8 @@ class GoalController:
             else:
                 episode.update(status="waiting", next_review_at=(now + timedelta(seconds=self.config.review_seconds)).isoformat())
             with self.store.objects.atomic():
+                if prior_window is not None:
+                    self.store.put("evaluation_window", *prior_window, immutable=True)
                 self._save("episode", episode)
                 self._save("goal", goal)
         else:
@@ -417,10 +515,28 @@ class GoalController:
         # All binding fields and evidence authority come from the reserved request.
         if appraisal.episode_id != episode["id"] or appraisal.basis_snapshot_revision != row["goal_request"]["snapshot_revision"]:
             raise ValueError("goal appraisal binding mismatch")
+        verified = set(row["goal_request"]["goal_context"].get("appraisal_evidence_refs", []))
+        outcomes = set()
+        # Only the action verifier's observed effects establish longitudinal
+        # evidence. HTTP success, plan completion and attention toggles do not.
+        for prior in episode.get("results", []):
+            raw = prior.get("outcome")
+            if prior.get("channel") != "desktop" or not isinstance(raw, dict):
+                continue
+            try:
+                from harness.runtime.models import ActionBackendResult
+                observed = ActionBackendResult.model_validate(raw)
+                if not observed.unknown and observed.external_effect_ref and observed.evidence_refs:
+                    outcomes.update(ref.ref for ref in observed.evidence_refs)
+            except ValueError:
+                continue
         envelope = self.supervisor._make_command(event, command_type="ApplyAppraisal",
             idempotency_key="goal-appraisal:" + decision.decision_id,
             expected_revision=appraisal.basis_snapshot_revision,
             payload={"episode_id": episode["id"], "appraisal": appraisal.model_dump(mode="json"),
+                "allow_heartbeat_rebase": True,
+                "basis_snapshot_at": row["goal_request"]["goal_context"]["snapshot"].get("updated_at"),
+                "verified_outcome_refs": sorted(outcomes & verified),
                 "verified_evidence_refs": row["goal_request"]["goal_context"].get("appraisal_evidence_refs", [])})
         envelope = envelope.model_copy(update={"deadline": min(envelope.deadline, decision.deadline_at)})
         try:
@@ -551,7 +667,9 @@ class GoalController:
                 if goal is None or call["opportunity_id"] in goal.get("seen_preparations", []):
                     continue
                 goal.setdefault("seen_preparations", []).append(call["opportunity_id"])
-                goal["no_progress"] = goal.get("no_progress", 0) + 1
+                self._record_request_fault(call, goal)
+                if call["status"] not in {"wait", "defer", "no_action"}:
+                    goal["no_progress"] = goal.get("no_progress", 0) + 1
                 if goal["no_progress"] >= self.config.maximum_no_progress and goal["status"] not in FINISHED | {"paused"}:
                     goal.update(blocked_reason="no_progress", blocked_signal_revision=self._state()["signal_revision"])
                 self._save("goal", goal)
@@ -565,6 +683,7 @@ class GoalController:
                         episode.update(blocked_reason="unknown_effect", status="waiting")
                     self._save("episode", episode)
                 continue
+            self._record_request_fault(call, self.store.get("goal", binding["goal_id"]))
             step = next((s for s in episode["steps"] if s.get("call_id") == call["opportunity_id"]), None)
             evidence = _refs(call)
             successful = call["status"] in {"completed", "committed"} and bool(evidence)
@@ -581,14 +700,15 @@ class GoalController:
             episode["seen_calls"].append(call["opportunity_id"])
             if episode.get("unresolved_call") == call["opportunity_id"]:
                 episode.pop("unresolved_call", None)
-            episode["no_progress"] = 0 if successful else episode["no_progress"] + 1
+            waiting = call["status"] in {"wait", "defer", "no_action"}
+            episode["no_progress"] = 0 if successful or waiting else episode["no_progress"] + 1
             if episode["status"] not in FINISHED | {"paused"}:
                 episode.update(status="waiting", next_review_at=(self.clock() + timedelta(seconds=
                     self.config.minimum_reconsideration_interval if successful else self.config.review_seconds)).isoformat())
                 if episode["no_progress"] >= self.config.maximum_no_progress:
                     episode.update(blocked_reason="no_progress", blocked_signal_revision=self._state()["signal_revision"])
                 else:
-                    episode["blocked_reason"] = "effect_pending" if successful else "activity_not_completed"
+                    episode["blocked_reason"] = "effect_pending" if successful else "model_wait" if waiting else "activity_not_completed"
             self._save("episode", episode)
 
     def observe(self, snapshot):
@@ -612,9 +732,13 @@ class GoalController:
             within = after == 0
             episode["stable_since"] = episode.get("stable_since") or now.isoformat() if within else None
             stable = within and (now - _when(episode["stable_since"])).total_seconds() >= self.config.stability_seconds
-            facts = list(dict.fromkeys(ref for r in episode["results"] for ref in r["evidence_refs"]))
-            appraisals = [a["id"] for a in episode["appraisals"]]
-            contributions = [c for c in self.store.all("contribution") if c["episode_id"] == episode["id"]]
+            window_start = _when(episode.get("evaluation_started_at"))
+            def in_window(item):
+                return window_start is None or bool(item.get("at") and _when(item["at"]) >= window_start)
+            facts = list(dict.fromkeys(ref for r in episode["results"] if in_window(r) for ref in r["evidence_refs"]))
+            appraisals = [a["id"] for a in episode["appraisals"] if in_window(a)]
+            contributions = self.store.contributions(episode["id"],
+                after_revision=episode["baseline"].get("revision") if episode.get("evaluation_started_at") else None)
             amounts = {source: {dim: 0.0 for dim in dimensions} for source in ("fact", "self_report", "drift", "legacy_event", "coupling")}
             for c in contributions:
                 t = c["trace"]
@@ -630,6 +754,9 @@ class GoalController:
                 abs(c["trace"].get("applied_impacts", {}).get(dim, 0.0)) > 1e-9 for dim in dimensions)}
             if outcome in {"improved", "stable"} and supporting_sources == {"self_report"}:
                 outcome = "self_report_only"
+            previous_snapshot = episode.get("last_observation", episode["baseline"])
+            interval_change = deviation(previous_snapshot, dimensions) - after
+            interval_outcome = "improved" if interval_change > 1e-9 else "worsened" if interval_change < -1e-9 else "unchanged"
             evaluation = dict(id="review:" + digest([episode["id"], snapshot.get("revision"), now.isoformat()])[:32],
                 episode_id=episode["id"], at=now.isoformat(), outcome=outcome,
                 before={k: episode["baseline"]["dimensions"][k]["value"] for k in dimensions},
@@ -638,8 +765,13 @@ class GoalController:
                 sources={"fact": facts, "self_report": appraisals, "drift": any(c["source"] == "drift" for c in contributions)},
                 contributions=amounts, contributing_sources=sorted(supporting_sources), evidence_refs=facts,
                 causal_effect_verified=False, snapshot_revision=snapshot.get("revision"))
+            evaluation.update(comparison_basis="plan_baseline", baseline_at=episode["baseline"].get("updated_at"),
+                interval_outcome=interval_outcome, previous_observed_at=episode.get("last_observed_at"),
+                target_dimensions=dimensions)
             self._save("evaluation", evaluation)
-            episode.update(last_observed_at=now.isoformat(), last_evaluation=evaluation["id"], last_snapshot_revision=snapshot.get("revision"))
+            episode.update(last_observed_at=now.isoformat(), last_evaluation=evaluation["id"],
+                last_snapshot_revision=snapshot.get("revision"),
+                last_observation={"dimensions": {k: snapshot["dimensions"][k] for k in dimensions}})
             if stable and episode["goal_id"] == STANDING_ID and not episode.get("unresolved_call") and episode["status"] != "paused":
                 episode.update(status="completed", ended_at=now.isoformat(), end_reason="stability_observed",
                     regulation_effect=outcome, causal_effect_verified=False)
@@ -655,7 +787,19 @@ class GoalController:
         active = next((e for e in episodes if e["status"] not in FINISHED | {"paused"} and e["goal_id"] != STANDING_ID), None)
         active = active or next((e for e in episodes if e["status"] not in FINISHED | {"paused"}), None)
         evaluations = sorted(self.store.all("evaluation"), key=lambda e: e["at"])[-120:]
-        return {"enabled": self.enabled, "standing_goal": self.store.get("goal", STANDING_ID), "goals": self._goals(),
+        from collections import Counter
+        recent = [c for c in self.supervisor.capabilities.calls.all() if c.get("goal_binding") and c.get("created_at")
+                  and (self.clock() - _when(c["created_at"])).total_seconds() < 3600]
+        metrics = {"window_seconds": 3600, "attempts": len(recent),
+            "valid_decisions": sum(bool(c.get("goal_decision")) for c in recent),
+            "statuses": dict(Counter(c["status"] for c in recent)),
+            "executed_capabilities": dict(Counter(c.get("offer", {}).get("capability_id") for c in recent
+                if c["status"] in {"completed", "committed"} and c.get("offer"))),
+            "errors": dict(Counter(c.get("error_code", c.get("error_type", "unspecified")) for c in recent if c["status"] == "error"))}
+        feedback = getattr(self.supervisor, "qq_direct_feedback", None)
+        return {"enabled": self.enabled, "health": self.health(), "activity_metrics": metrics,
+            "qq_feedback": feedback.status() if feedback else None,
+            "standing_goal": self.store.get("goal", STANDING_ID), "goals": self._goals(),
             "active_episode": active, "episodes": episodes[-30:], "evaluations": evaluations,
             "budget": self.budget(), "next_review_at": (active or {}).get("next_review_at")}
 

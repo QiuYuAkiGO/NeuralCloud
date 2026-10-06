@@ -140,6 +140,9 @@ class DailyRevisionWorker:
                 self_member_id=getattr(self.host.shared.qq_settings, "self_member_id", None))
             groups = defaultdict(list)
             for source in window.records:
+                from harness.qq.attention import attention_visible
+                if not attention_visible(source.scope.conversation_id):
+                    continue
                 groups[source.scope.model_dump_json()].append(source)
             async with self.host.adapter._lock:
                 if self.host.chat.memory is not memory or self.host.chat.active_preset_id != preset_id:
@@ -267,6 +270,11 @@ class DailyRevisionWorker:
                     return
                 memory = self.host.chat.memory
                 sources = [FrozenSource.model_validate(row) for row in job["sources"]]
+                from harness.qq.attention import ATTENTION_DENIALS, require_attention
+                attention_revisions = {source.scope.conversation_id.removeprefix("qq:group:"): None
+                    for source in sources if source.scope.channel == "qq_group"}
+                for group in attention_revisions:
+                    attention_revisions[group] = require_attention(group)
                 if not await wait_foreground_idle(self.host, self.stopping):
                     raise ProductionMaintenanceDeferred("daily_revision_maintenance_paused")
                 async with self.host.adapter._lock:
@@ -284,7 +292,12 @@ class DailyRevisionWorker:
                     try:
                         from harness.cognitive.production import maintenance_scope
                         async with maintenance_scope(self.host, command_id="daily-memory:" + run_id):
-                            proposal = await asyncio.to_thread(provider.propose, run_id, sources, context)
+                            from infra.trace.request_spans import trace_scope
+                            group = next(iter(attention_revisions), None)
+                            with trace_scope(attention_context="qq:" + group if group else "daily-memory:" + run_id,
+                                             attention_revision=attention_revisions.get(group), attention_reread=True,
+                                             attention_evidence_refs=[source.source_id for source in sources]):
+                                proposal = await asyncio.to_thread(provider.propose, run_id, sources, context)
                     finally:
                         if self.provider is None:
                             await asyncio.to_thread(provider.close)
@@ -299,6 +312,8 @@ class DailyRevisionWorker:
                     async with self.host.adapter._lock:
                         if self.stopping.is_set() or self.host.adapter._maintenance_paused:
                             raise ProductionMaintenanceDeferred("daily_revision_maintenance_paused")
+                        for group, revision in attention_revisions.items():
+                            require_attention(group, revision=revision)
                         if self.host.chat.memory is not memory or self.host.chat.active_preset_id != job["preset_id"]:
                             raise ValueError("daily_revision_owner_changed")
                         current = snapshot_owner(self.host)
@@ -333,6 +348,11 @@ class DailyRevisionWorker:
                                         retry_after_seconds=exc.retry_after_seconds)
                 return False
             except Exception as exc:
+                from harness.qq.attention import ATTENTION_DENIALS
+                if isinstance(exc, ValueError) and str(exc) in ATTENTION_DENIALS:
+                    self.last_error = str(exc)
+                    await asyncio.to_thread(self.queue.defer, run_id, str(exc), retry_after_seconds=900)
+                    return False
                 code = getattr(exc, "error_code", None) or (str(exc) if isinstance(exc, ValueError)
                     and str(exc).startswith("daily_revision_") else type(exc).__name__)
                 self.last_error = code

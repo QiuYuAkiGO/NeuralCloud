@@ -82,6 +82,7 @@ class DeploymentConfig:
         values = {
             "NC_RUNTIME_STATE_DIR": str(state / "runtime"),
             "NC_COGNITIVE_STATE_PATH": str(state / "cognitive" / "state.json"),
+            "NC_COGNITIVE_WORK_DB": str(state / "cognitive-work.sqlite3"),
             "NC_HOMEOSTASIS_STATE_DIR": str(state / "homeostasis" / "domain"),
             "NC_SHARED_MEMORY_DB": str(state / "shared-memory.sqlite3"),
             "NC_GUI_CONFIG": str(conf / "gui-settings.json"),

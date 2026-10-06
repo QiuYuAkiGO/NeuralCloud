@@ -12,4 +12,6 @@ class RegulationConfig(BaseModel):
     maximum_no_progress: int = Field(default=3, ge=1, le=10)
     review_seconds: float = Field(default=300, ge=60, le=86400)
     stability_seconds: float = Field(default=180, ge=180, le=3600)
+    maximum_autonomous_episode_seconds: float = Field(default=3600, ge=600, le=86400)
+    maximum_autonomous_episode_attempts: int = Field(default=12, ge=3, le=128)
 

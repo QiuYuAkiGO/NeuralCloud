@@ -59,6 +59,17 @@ class RegulationStore:
     def get(self, kind, key):
         return self.objects.get("regulation_" + kind, key)
 
+    def contributions(self, episode_id, *, after_revision=None):
+        # Filter in SQLite; old finished activities must not be decoded on each review.
+        import json
+        sql = "SELECT payload FROM agency_objects WHERE kind='regulation_contribution' AND json_extract(payload,'$.episode_id')=?"
+        args = [episode_id]
+        if after_revision is not None:
+            sql += " AND json_extract(payload,'$.trace.revision')>?"
+            args.append(after_revision)
+        with self.objects._lock:
+            return [json.loads(row[0]) for row in self.objects._db.execute(sql, args)]
+
     def put(self, kind, key, value, *, immutable=False):
         return self.objects.put("regulation_" + kind, key, value, immutable=immutable)
 

@@ -757,6 +757,7 @@ class SharedMemoryStore:
 
     def read_exact(self, scope: SharedReadScope, record_ids: list[str]) -> tuple[SharedMemoryRecord, ...]:
         """Read only named records through the same immutable-source/scope guard."""
+        from harness.qq.attention import attention_visible
         scope = SharedReadScope.model_validate_json(scope.model_dump_json())
         if scope.owner_id != self.owner_id or len(record_ids) > 256 or len(set(record_ids)) != len(record_ids):
             raise ValueError("invalid exact shared-memory read")
@@ -773,6 +774,8 @@ class SharedMemoryStore:
                 if row is None:
                     continue
                 record = self._decode(row)
+                if record.channel == "qq_group" and not attention_visible(record.session_id):
+                    continue
                 if (scope.audience not in record.visibility
                         or scope.channels is not None and record.channel not in scope.channels
                         or scope.session_ids is not None and record.session_id not in scope.session_ids
@@ -784,6 +787,7 @@ class SharedMemoryStore:
 
     @measure_stage("memory.shared_query")
     def query(self, scope: SharedReadScope, *, text: str | None = None, limit: int = 20) -> SharedMemoryContext:
+        from harness.qq.attention import attention_visible
         scope = SharedReadScope.model_validate_json(scope.model_dump_json())
         if type(limit) is not int or not 1 <= limit <= 100:
             raise ValueError("query limit must be an integer from 1 to 100")
@@ -821,6 +825,8 @@ class SharedMemoryStore:
                 rows = connection.execute(sql, parameters) if exists else ()
                 for row in rows:
                     record = self._decode(row)
+                    if record.channel == "qq_group" and not attention_visible(record.session_id):
+                        continue
                     if (scope.audience not in record.visibility
                             or scope.channels is not None and record.channel not in scope.channels
                             or scope.session_ids is not None and record.session_id not in scope.session_ids

@@ -34,6 +34,10 @@ class _FactVerifier:
 
 
 def _validate_evidence(config: QQSessionSettings, fact: QQHomeostaticFact, now: datetime) -> None:
+    # Protocol facts are collected inside Runtime against raw protocol hashes.
+    # The legacy external ingress must not bypass that stronger validation.
+    if fact.verification != "qq_ui_verified":
+        raise ValueError("qq_fact_verification_route_invalid")
     if not -5 <= (now - fact.occurred_at).total_seconds() <= 300:
         raise ValueError("qq_fact_not_recent")
     if fact.group_id not in config.allowed_group_ids:
@@ -80,6 +84,8 @@ class QQFactIngress:
             self._accepted = {}
 
     async def submit(self, fact: QQHomeostaticFact):
+        from harness.qq.attention import require_attention
+        require_attention(fact.group_id)
         if fact.group_id not in self.config.allowed_group_ids:
             raise ValueError("qq_fact_scope_mismatch")
         async with self._lock:

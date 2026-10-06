@@ -244,7 +244,8 @@ class CognitiveServiceHost:
             from harness.cognitive.production import activate_host
             activate_host(self)
             await self.recover_production_memory()
-        return await self.adapter.prepare_response(command)
+        with trace_scope(attention_context="local:" + str(command.payload.get("session_id", "main"))):
+            return await self.adapter.prepare_response(command)
 
     async def observe_emotion(self, command):
         source = command.payload.get("source_payload") or {}
@@ -255,8 +256,21 @@ class CognitiveServiceHost:
         trace = QQTurnTrace(event_id=origin.get("event_id"))
         if origin.get("trace_id"):
             trace.trace_id = origin["trace_id"]
-        with qq_trace_scope(trace), trace.stage("emotion.observe"):
-            result = await self.adapter.observe_emotion(command)
+        from harness.qq.attention import ATTENTION_DENIALS, processing_evidence, require_attention
+        from harness.qq.failures import failure_detail
+        group = str(source.get("group_id", ""))
+        try:
+            revision = require_attention(group, received_at=origin.get("first_seen_at"))
+            with qq_trace_scope(trace), trace.stage("emotion.observe"), trace_scope(
+                    attention_context="qq:"+group, attention_revision=revision,
+                    attention_evidence_refs=processing_evidence(source)):
+                result = await self.adapter.observe_emotion(command)
+            require_attention(group, revision=revision)
+        except ValueError as exc:
+            if str(exc) not in ATTENTION_DENIALS:
+                raise
+            return self.adapter._failure(command, str(exc), status="rejected").model_copy(
+                update={"result": failure_detail(exc)})
         if isinstance(result.result, dict):
             return result.model_copy(update={"result": {**result.result, "qq_emotion_trace": trace.snapshot()}})
         return result
@@ -307,8 +321,27 @@ class CognitiveServiceHost:
 
     async def prepare_qq_response(self, command):
         """Prepare through the same lock/ledger; only QQ's body commits delivery."""
+        from harness.qq.attention import ATTENTION_DENIALS, require_attention
+        from harness.qq.failures import failure_detail
+        group = str(command.payload.get("group_id", ""))
+        try:
+            revision = require_attention(group, received_at=(command.payload.get("trace") or {}).get("first_seen_at"))
+            with trace_scope(attention_revision=revision):
+                result = await self._attended_qq_response(command)
+            require_attention(group, revision=revision)
+            return result
+        except ValueError as exc:
+            if str(exc) not in ATTENTION_DENIALS:
+                raise
+            return self.adapter._failure(command, str(exc), status="rejected").model_copy(
+                update={"result": failure_detail(exc)})
+
+    async def _attended_qq_response(self, command):
+        from harness.qq.attention import processing_evidence
         with trace_scope(correlation_id=command.correlation_id, event_id=command.event_id,
                          command_id=command.command_id, phase="qq_prepare", span_id=command.command_id,
+                         attention_context="qq:" + str(command.payload.get("group_id", "unknown")),
+                         attention_evidence_refs=processing_evidence(command.payload),
                          qq_trace_id=(command.payload.get("trace") or {}).get("trace_id")):
             return await self.adapter._run_command(lambda: self._prepare_qq_response(command))
 

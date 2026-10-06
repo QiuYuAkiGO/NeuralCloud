@@ -262,7 +262,7 @@ def test_snapshot_revision_and_bounded_goal_context_are_validated_before_model()
     request = goal_command()
     payload = deepcopy(request.payload)
     payload["homeostatic_summary"]["snapshot_revision"] = 3
-    with pytest.raises(goals.GoalDecisionError, match="goal_invalid_request"):
+    with pytest.raises(goals.GoalDecisionError, match="goal_snapshot_binding_mismatch"):
         run(start_choice(), request.model_copy(update={"payload": payload}))
     payload = deepcopy(request.payload)
     payload["goal_context"]["outcomes"] = ["x"] * 65

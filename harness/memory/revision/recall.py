@@ -29,6 +29,9 @@ def select_daily_recall(memory, *, audience: str, query: str | None = None,
     A destination QQ conversation must supply its exact conversation_id. Local
     owner recall can use any record whose visibility includes local:main.
     """
+    from harness.qq.attention import attention_visible
+    if not attention_visible(audience):
+        return {}
     if audience.startswith("qq:") and conversation_id != audience:
         return {}
     state = getattr(memory, "daily_revision_state", {})
@@ -40,6 +43,8 @@ def select_daily_recall(memory, *, audience: str, query: str | None = None,
     sources = state.get("sources", {})
     by_evidence = {}
     for source_id, source in sources.items():
+        if not attention_visible(source.get("scope", {}).get("conversation_id")):
+            continue
         for ref in (source_id, *source.get("evidence_keys", []), *source.get("source_refs", [])):
             by_evidence.setdefault(ref, []).append(source)
     objects = []

@@ -1,0 +1,112 @@
+{
+  "captured_at": "2026-10-06T11:28:43.131413+00:00",
+  "release": "/opt/neuralcloud/releases/20261006-homeostatic-autonomy-repair-v1",
+  "profile_path": "/etc/neuralcloud/homeostasis-profile.json",
+  "profile": {
+    "profile_id": "qq-social-drive-v1",
+    "revision": 1,
+    "cognitive_dynamics": null
+  },
+  "manifest_path": "/etc/neuralcloud/manifest.json",
+  "manifest": {
+    "manifest_id": null,
+    "revision": 2,
+    "homeostatic_profile": "qq-social-drive-v1@1",
+    "homeostasis_state_schema_version": null
+  },
+  "services": {
+    "cognitive": {
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "homeostasis": {
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "runtime": {
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "gui": {
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "board": {
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "qq_direct": {
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running"
+    }
+  },
+  "runtime": {
+    "lifecycle": "PAUSED",
+    "health": {
+      "lifecycle": "PAUSED",
+      "journal_writable": true,
+      "cognitive_healthy": true,
+      "homeostasis_healthy": false,
+      "llm_healthy": true,
+      "body_healthy": true,
+      "degraded_reasons": [
+        "homeostasis"
+      ],
+      "last_heartbeat_at": "2026-10-06T08:39:59.824462Z",
+      "last_journal_append_at": "2026-10-06T10:40:55.675975Z",
+      "embodiment": {
+        "state": "disabled",
+        "provider_id": null,
+        "body_instance_id": null,
+        "activated_capabilities": [],
+        "effective_capabilities": [],
+        "negotiated": null,
+        "health": null,
+        "reason": "embodiment disabled by manifest"
+      },
+      "agency_state": "AVAILABLE",
+      "body_episode_id": null,
+      "body_revision": null,
+      "body_state_age_seconds": null
+    },
+    "pending_events": 14,
+    "background": {
+      "heartbeat": {
+        "active": true,
+        "pending": 0,
+        "running": false,
+        "coalesced": 2,
+        "thread_jobs": 0,
+        "last_duration_ms": 28.476,
+        "last_error": null
+      },
+      "affect": {
+        "pending": 0,
+        "running": 0,
+        "scopes": 0,
+        "degraded": false
+      }
+    }
+  },
+  "direct": {
+    "running": true,
+    "connected": true,
+    "heartbeat_at": "2026-10-06T11:28:41.313432+00:00"
+  },
+  "bindings": {
+    "NC_HOMEOSTASIS_STATE_DIR": "/var/lib/neuralcloud/homeostasis/domain",
+    "NC_QQ_DIRECT_CONFIG": "/etc/neuralcloud/direct.json"
+  },
+  "paths": {
+    "releases": "/opt/neuralcloud/releases",
+    "current": "/opt/neuralcloud/current",
+    "state_root": "/var/lib/neuralcloud"
+  },
+  "config_hash": "624e418cf2147cf1633c698a0e15cf0e0451ca08a6e15aa5d8884b6f00c70cf7"
+}

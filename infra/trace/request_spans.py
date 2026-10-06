@@ -31,6 +31,7 @@ _CONTEXT_FIELDS = {
     "model_attempt", "model_budget_seconds",
     "stable_prefix_message_count",
     "qq_trace_id",
+    "attention_context", "attention_reread", "attention_evidence_refs", "attention_revision",
 }
 
 
@@ -106,6 +107,10 @@ def model_request_span(settings: Settings, *, role: str,
                        messages: list[dict[str, Any]] | None = None) -> Iterator[dict[str, Any]]:
     """Yield mutable safe result fields; always append a terminal request row."""
     metadata = current_trace_context()
+    attention_context = str(metadata.get("attention_context") or "")
+    if attention_context.startswith("qq:"):
+        from harness.qq.attention import require_attention
+        require_attention(attention_context.removeprefix("qq:"), revision=metadata.get("attention_revision"))
     span_id = new_span_id("model_request")
     started_at = datetime.now(UTC).isoformat()
     started = time.perf_counter()
@@ -139,6 +144,21 @@ def model_request_span(settings: Settings, *, role: str,
         error = {"type": type(exc).__name__, "message": "model request failed"}
         raise
     finally:
+        assessment = result.pop("attention_assessment", None)
+        if messages is not None and (status == "success" or result.get("usage")):
+            try:
+                from harness.homeostasis.work import configured_work_ledger
+                ledger = configured_work_ledger()
+                if ledger is not None:
+                    ledger.record(span_id=span_id,
+                        context=str(metadata.get("attention_context") or metadata.get("phase") or "model"),
+                        messages=messages, prefix_count=base["stable_prefix"]["message_count"],
+                        usage=result.get("usage"), assessment=assessment,
+                        evidence_ref=metadata.get("event_id"), evidence_refs=metadata.get("attention_evidence_refs"),
+                        attention_revision=metadata.get("attention_revision"),
+                        reread=metadata.get("attention_reread") is True)
+            except Exception as exc:
+                logger.warning("cognitive work receipt failed (%s)", type(exc).__name__)
         if enabled:
             _append(path, {
                 **base,

@@ -1,5 +1,8 @@
 # Grounded Agency 全面重构调研
 
+- [内稳态 v3 与群聊接收控制](cognitive-dynamics-v3-20261006.md)：实际加工驱动的快慢状态、独立恢复、持久接收策略、因果去重、回放与 24 小时影子切换门槛；线上切换尚未完成。
+- [Misty 内稳态自主行为修复](homeostatic-autonomy-repair-20261006.md)：修复证据截断、请求故障恢复、活动生命周期、评价窗口、Web 信息反馈与 OneBot 事实回流；包含回归、历史请求重放和真实模型隔离验证。
+- [Misty 内稳态自主行为调研](../research/misty-homeostatic-autonomy-assessment-20261006.md)：线上只读核实自主搜索历史、当前 33 次请求校验失败、调度频率与反馈缺口；包含脱敏证据和后续验收建议，未修改运行配置。
 - [QQ 按需 Kimi 识图发布](qq-vision-kimi-rollout-20261006.md)：保留当前主模型，自主选择 Kimi K2.6 非思考识图与后续联网；公开样本、Linux 验收及历史命令 ID 碰撞修复记录。
 - [QQ 记忆准备优化与隔离实测](qq-memory-prepare-optimization-20261005.md)：增量来源同步、内存人格复用和会话查询下推；67.5 ms 隔离中位数、280 项回归通过，已发布 `20261005-memory-prepare-v1`。
 - [JSON 独立 DeepSeek 迁移与缓存验收](json-deepseek-migration-20261005.md)：统一结构化路由、真实协议/缓存对照、私聊隔离验证及发布记录。

@@ -361,8 +361,46 @@ def create_qq_capability_router(supervisor, *, authenticate, config_path=None, s
 
             direct_bridge = QQDirectCapabilityBridge(supervisor, config, Path(direct),
                 (Path(state_path) if state_path else supervisor.state_dir / "qq-capabilities.sqlite3").with_name("qq-direct-capabilities.sqlite3"))
+            from harness.runtime.qq_direct_feedback import QQDirectFeedback
+            supervisor.qq_direct_feedback = QQDirectFeedback(supervisor, direct_bridge)
+            from harness.runtime.attention import AttentionController
+            supervisor.attention_controller = AttentionController(supervisor, direct_bridge)
             bridge = QQCapabilityTransports(bridge, direct_bridge)
     supervisor.qq_capability_bridge = bridge
+
+    def attention_bridge():
+        direct_bridge = getattr(bridge, "direct", None)
+        if direct_bridge is None:
+            raise HTTPException(status_code=503, detail="qq_attention_not_configured")
+        return direct_bridge
+
+    @router.get("/v1/qq/attention")
+    async def attention_status():
+        from harness.qq.direct_config import DirectQQSettings
+        direct_bridge = attention_bridge()
+        store = direct_bridge.attention_store()
+        settings = DirectQQSettings.read(direct_bridge.config_path)
+        return {"policies": [store.get(g.group_id) for g in settings.group_roster if g.observe],
+                "dispositions": store.counts(), "outcomes": direct_bridge.attention_outcomes(),
+                "review_error": supervisor.attention_controller.last_error}
+
+    @router.post("/v1/qq/attention")
+    async def attention_override(payload: dict):
+        from harness.qq.attention import AttentionArguments
+        from harness.qq.direct_config import DirectQQSettings
+        from uuid import uuid4
+        direct_bridge = attention_bridge()
+        try:
+            args = AttentionArguments.model_validate(payload)
+            settings = DirectQQSettings.read(direct_bridge.config_path)
+            result = direct_bridge.attention_store().set(args, origin="user", action_id="user:"+uuid4().hex,
+                expected_revision=None, allowed_groups={g.group_id for g in settings.group_roster
+                    if g.observe and g.group_id in direct_bridge.config.allowed_group_ids})
+            supervisor._append_journal("attention_user_override", data=result)
+            direct_bridge.notify_attention(result)
+            return result
+        except (ValueError, OSError, sqlite3.Error):
+            raise HTTPException(status_code=409, detail="attention_override_invalid") from None
 
     def invoke(method, schema, payload):
         if bridge is None:

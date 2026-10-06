@@ -36,6 +36,8 @@ class DirectQQSettings(BaseModel):
     state_db: Path
     status_file: Path
     control_file: Path
+    attention_db: Path | None = None
+    attention_budget_enabled: StrictBool = False
     evidence_dir: Path
     image_cache_dir: Path
     desktop_status_file: Path
@@ -81,6 +83,8 @@ class DirectQQSettings(BaseModel):
         paths = [self.token_file, self.session_config_path, self.state_db, self.status_file, self.control_file,
             self.evidence_dir, self.image_cache_dir, self.desktop_status_file, self.shared_control_token_file,
             *self.allowed_local_image_roots]
+        if self.attention_db is not None:
+            paths.append(self.attention_db)
         if any(not path.is_absolute() or path.is_symlink() for path in paths):
             raise ValueError("direct_configuration_requires_absolute_private_paths")
         return self

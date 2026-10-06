@@ -1,0 +1,636 @@
+{
+  "deployment": {
+    "release": "20261006-homeostatic-autonomy-repair-v1",
+    "previous_release": "20261006-qq-context-budget-fix-v2",
+    "activated_at": "2026-10-06T03:14:06.167477+00:00",
+    "archive_sha256": "6e7613e245e968fb83c290688ab4dfa6ffaf71b0782832e5454d79dc4f32dbba",
+    "verified_source_files": 426,
+    "configuration_unchanged": true,
+    "persistent_data_preserved": true,
+    "runtime_lifecycle": "RUNNING",
+    "runtime_health": {
+      "journal_writable": true,
+      "cognitive_healthy": true,
+      "homeostasis_healthy": true
+    },
+    "services": {
+      "cognitive": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "Result": "success"
+      },
+      "homeostasis": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "Result": "success"
+      },
+      "runtime": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "Result": "success"
+      },
+      "gui": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "Result": "success"
+      },
+      "board": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "Result": "success"
+      },
+      "qq_direct": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "Result": "success"
+      }
+    },
+    "direct": {
+      "running": true,
+      "connected": true,
+      "automatic_send": true,
+      "last_error_type": "direct_incoming_invalid",
+      "heartbeat_at": "2026-10-06T03:14:05.968577+00:00"
+    }
+  },
+  "tests": {
+    "regression": {
+      "tests": "1073",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "9",
+      "time": "142.163"
+    },
+    "final_delta": {
+      "tests": "109",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "6.316"
+    }
+  },
+  "request_replay": {
+    "sample_count": 37,
+    "valid_before": 0,
+    "valid_after": 37
+  },
+  "isolated_model_scope": "Current model and preset; empty shared-memory/dialogue context; only web-search offer; paired normal/low-novelty snapshots. Decisions only, no dispatch.",
+  "model_probes": [
+    {
+      "case": "in_band",
+      "repetition": 0,
+      "valid": true,
+      "operation": "wait",
+      "choice": "wait",
+      "target_dimensions": [],
+      "model_calls": 1,
+      "seconds": 7.377
+    },
+    {
+      "case": "low_novelty",
+      "repetition": 0,
+      "valid": true,
+      "operation": "wait",
+      "choice": "wait",
+      "target_dimensions": [],
+      "model_calls": 1,
+      "seconds": 6.548
+    },
+    {
+      "case": "in_band",
+      "repetition": 1,
+      "valid": true,
+      "operation": "wait",
+      "choice": "wait",
+      "target_dimensions": [],
+      "model_calls": 1,
+      "seconds": 5.334
+    },
+    {
+      "case": "low_novelty",
+      "repetition": 1,
+      "valid": true,
+      "operation": "wait",
+      "choice": "wait",
+      "target_dimensions": [
+        "novelty"
+      ],
+      "model_calls": 1,
+      "seconds": 10.74
+    }
+  ],
+  "probe_side_effects": {
+    "runtime_events": 0,
+    "qq_sends": 0,
+    "web_requests": 0
+  },
+  "live_observations": [
+    {
+      "captured_at": "2026-10-06T03:14:23.676824+00:00",
+      "release": "20261006-homeostatic-autonomy-repair-v1",
+      "runtime_lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-06T03:14:23.206368Z",
+        "last_journal_append_at": "2026-10-06T03:14:23.208173Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "goal_health": {
+        "status": "available",
+        "request_faults": []
+      },
+      "qq_feedback": {
+        "last_scan_at": "2026-10-06T03:14:17.408097+00:00",
+        "last_accepted_at": null,
+        "accepted_this_run": 0,
+        "error": null
+      },
+      "budget": {
+        "calls_last_hour": 4,
+        "maximum_calls_per_hour": 12,
+        "next_available_at": "2026-10-06T03:14:23.136851+00:00"
+      },
+      "active_episode": null,
+      "standing_goal": {
+        "status": "observing",
+        "next_review_at": "2026-10-06T03:44:14.480686+00:00",
+        "blocked_reason": null
+      },
+      "latest_episode": [
+        {
+          "created_at": "2026-09-12T09:43:51.303486+00:00",
+          "status": "abandoned",
+          "end_reason": "episode_time_limit",
+          "ended_at": "2026-10-06T03:14:14.480686+00:00",
+          "no_progress": 136,
+          "target_dimensions": [
+            "social_connection"
+          ]
+        }
+      ],
+      "post_activation_calls": [],
+      "dimensions": {
+        "social_connection": {
+          "value": 0.22,
+          "target_band": [
+            0.5,
+            0.74
+          ]
+        },
+        "novelty": {
+          "value": 0.16,
+          "target_band": [
+            0.35,
+            0.68
+          ]
+        }
+      },
+      "snapshot_revision": 127486
+    },
+    {
+      "captured_at": "2026-10-06T03:15:33.490811+00:00",
+      "release": "20261006-homeostatic-autonomy-repair-v1",
+      "runtime_lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-06T03:15:27.098251Z",
+        "last_journal_append_at": "2026-10-06T03:15:33.014076Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "goal_health": {
+        "status": "available",
+        "request_faults": []
+      },
+      "qq_feedback": {
+        "last_scan_at": "2026-10-06T03:15:22.174903+00:00",
+        "last_accepted_at": null,
+        "accepted_this_run": 0,
+        "error": null
+      },
+      "budget": {
+        "calls_last_hour": 4,
+        "maximum_calls_per_hour": 12,
+        "next_available_at": "2026-10-06T03:15:32.931196+00:00"
+      },
+      "active_episode": null,
+      "standing_goal": {
+        "status": "observing",
+        "next_review_at": "2026-10-06T03:44:14.480686+00:00",
+        "blocked_reason": null
+      },
+      "latest_episode": [
+        {
+          "created_at": "2026-09-12T09:43:51.303486+00:00",
+          "status": "abandoned",
+          "end_reason": "episode_time_limit",
+          "ended_at": "2026-10-06T03:14:14.480686+00:00",
+          "no_progress": 136,
+          "target_dimensions": [
+            "social_connection"
+          ]
+        }
+      ],
+      "post_activation_calls": [],
+      "dimensions": {
+        "social_connection": {
+          "value": 0.22,
+          "target_band": [
+            0.5,
+            0.74
+          ]
+        },
+        "novelty": {
+          "value": 0.16,
+          "target_band": [
+            0.35,
+            0.68
+          ]
+        }
+      },
+      "snapshot_revision": 127500
+    },
+    {
+      "captured_at": "2026-10-06T03:16:08.586066+00:00",
+      "release": "20261006-homeostatic-autonomy-repair-v1",
+      "runtime_lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-06T03:16:03.025893Z",
+        "last_journal_append_at": "2026-10-06T03:16:06.723528Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "goal_health": {
+        "status": "available",
+        "request_faults": []
+      },
+      "qq_feedback": {
+        "last_scan_at": "2026-10-06T03:15:58.033005+00:00",
+        "last_accepted_at": "2026-10-06T03:15:58.033005+00:00",
+        "accepted_this_run": 3,
+        "error": null
+      },
+      "budget": {
+        "calls_last_hour": 4,
+        "maximum_calls_per_hour": 12,
+        "next_available_at": "2026-10-06T03:16:07.869983+00:00"
+      },
+      "active_episode": null,
+      "standing_goal": {
+        "status": "observing",
+        "next_review_at": "2026-10-06T03:44:14.480686+00:00",
+        "blocked_reason": null
+      },
+      "latest_episode": [
+        {
+          "created_at": "2026-09-12T09:43:51.303486+00:00",
+          "status": "abandoned",
+          "end_reason": "episode_time_limit",
+          "ended_at": "2026-10-06T03:14:14.480686+00:00",
+          "no_progress": 136,
+          "target_dimensions": [
+            "social_connection"
+          ]
+        }
+      ],
+      "post_activation_calls": [],
+      "dimensions": {
+        "social_connection": {
+          "value": 0.22016669141666667,
+          "target_band": [
+            0.5,
+            0.74
+          ]
+        },
+        "novelty": {
+          "value": 0.20065668993166666,
+          "target_band": [
+            0.35,
+            0.68
+          ]
+        }
+      },
+      "snapshot_revision": 127509
+    },
+    {
+      "captured_at": "2026-10-06T03:16:43.883864+00:00",
+      "release": "20261006-homeostatic-autonomy-repair-v1",
+      "runtime_lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-06T03:16:38.035072Z",
+        "last_journal_append_at": "2026-10-06T03:16:43.260964Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "goal_health": {
+        "status": "available",
+        "request_faults": []
+      },
+      "qq_feedback": {
+        "last_scan_at": "2026-10-06T03:16:38.040769+00:00",
+        "last_accepted_at": "2026-10-06T03:15:58.033005+00:00",
+        "accepted_this_run": 3,
+        "error": null
+      },
+      "budget": {
+        "calls_last_hour": 4,
+        "maximum_calls_per_hour": 12,
+        "next_available_at": "2026-10-06T03:16:39.863025+00:00"
+      },
+      "active_episode": null,
+      "standing_goal": {
+        "status": "observing",
+        "next_review_at": "2026-10-06T03:44:14.480686+00:00",
+        "blocked_reason": null
+      },
+      "latest_episode": [
+        {
+          "created_at": "2026-09-12T09:43:51.303486+00:00",
+          "status": "abandoned",
+          "end_reason": "episode_time_limit",
+          "ended_at": "2026-10-06T03:14:14.480686+00:00",
+          "no_progress": 136,
+          "target_dimensions": [
+            "social_connection"
+          ]
+        }
+      ],
+      "post_activation_calls": [],
+      "dimensions": {
+        "social_connection": {
+          "value": 0.22050208129999999,
+          "target_band": [
+            0.5,
+            0.74
+          ]
+        },
+        "novelty": {
+          "value": 0.20097195642200003,
+          "target_band": [
+            0.35,
+            0.68
+          ]
+        }
+      },
+      "snapshot_revision": 127517
+    },
+    {
+      "captured_at": "2026-10-06T03:17:18.957444+00:00",
+      "release": "20261006-homeostatic-autonomy-repair-v1",
+      "runtime_lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-06T03:17:13.277630Z",
+        "last_journal_append_at": "2026-10-06T03:17:18.275635Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "goal_health": {
+        "status": "available",
+        "request_faults": []
+      },
+      "qq_feedback": {
+        "last_scan_at": "2026-10-06T03:17:13.283629+00:00",
+        "last_accepted_at": "2026-10-06T03:16:58.280682+00:00",
+        "accepted_this_run": 6,
+        "error": null
+      },
+      "budget": {
+        "calls_last_hour": 4,
+        "maximum_calls_per_hour": 12,
+        "next_available_at": "2026-10-06T03:17:18.219292+00:00"
+      },
+      "active_episode": null,
+      "standing_goal": {
+        "status": "observing",
+        "next_review_at": "2026-10-06T03:44:14.480686+00:00",
+        "blocked_reason": null
+      },
+      "latest_episode": [
+        {
+          "created_at": "2026-09-12T09:43:51.303486+00:00",
+          "status": "abandoned",
+          "end_reason": "episode_time_limit",
+          "ended_at": "2026-10-06T03:14:14.480686+00:00",
+          "no_progress": 136,
+          "target_dimensions": [
+            "social_connection"
+          ]
+        }
+      ],
+      "post_activation_calls": [],
+      "dimensions": {
+        "social_connection": {
+          "value": 0.22079383572499997,
+          "target_band": [
+            0.5,
+            0.74
+          ]
+        },
+        "novelty": {
+          "value": 0.24174620558150003,
+          "target_band": [
+            0.35,
+            0.68
+          ]
+        }
+      },
+      "snapshot_revision": 127527
+    },
+    {
+      "captured_at": "2026-10-06T03:17:53.926207+00:00",
+      "release": "20261006-homeostatic-autonomy-repair-v1",
+      "runtime_lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-06T03:17:48.289288Z",
+        "last_journal_append_at": "2026-10-06T03:17:53.301905Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "goal_health": {
+        "status": "available",
+        "request_faults": []
+      },
+      "qq_feedback": {
+        "last_scan_at": "2026-10-06T03:17:48.294951+00:00",
+        "last_accepted_at": "2026-10-06T03:16:58.280682+00:00",
+        "accepted_this_run": 6,
+        "error": null
+      },
+      "budget": {
+        "calls_last_hour": 4,
+        "maximum_calls_per_hour": 12,
+        "next_available_at": "2026-10-06T03:17:53.249314+00:00"
+      },
+      "active_episode": null,
+      "standing_goal": {
+        "status": "observing",
+        "next_review_at": "2026-10-06T03:44:14.480686+00:00",
+        "blocked_reason": null
+      },
+      "latest_episode": [
+        {
+          "created_at": "2026-09-12T09:43:51.303486+00:00",
+          "status": "abandoned",
+          "end_reason": "episode_time_limit",
+          "ended_at": "2026-10-06T03:14:14.480686+00:00",
+          "no_progress": 136,
+          "target_dimensions": [
+            "social_connection"
+          ]
+        }
+      ],
+      "post_activation_calls": [],
+      "dimensions": {
+        "social_connection": {
+          "value": 0.22108572631666665,
+          "target_band": [
+            0.5,
+            0.74
+          ]
+        },
+        "novelty": {
+          "value": 0.24202058273766666,
+          "target_band": [
+            0.35,
+            0.68
+          ]
+        }
+      },
+      "snapshot_revision": 127534
+    }
+  ],
+  "live_fact_verification": {
+    "committed_facts_since_activation": 6,
+    "sources": [
+      "verified_outcome"
+    ],
+    "revisions": [
+      127503,
+      127506,
+      127508,
+      127520,
+      127521,
+      127523
+    ],
+    "total_applied_novelty": 0.08100000000000007,
+    "total_applied_social_connection": 0.0
+  },
+  "planned_observation": {
+    "returncode": 0,
+    "samples": 5,
+    "planned_seconds": 120
+  }
+}

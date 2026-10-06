@@ -1,0 +1,144 @@
+{
+  "schema_version": "cognitive-dynamics-validation-v1",
+  "checked_at": "2026-10-06T11:39:37.129604+00:00",
+  "latest_result_per_case": {
+    "passed": 4182,
+    "failed": 0,
+    "skipped": 2
+  },
+  "reports": [
+    {
+      "report": "cognitive-memory-tests.xml",
+      "sha256": "c25c11bdba91959562fe7ab55c0eba5db3dd2d1e6f7fb9cd1254e51547569f0e",
+      "passed": 407,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "report": "cognitive-dynamics-tests.xml",
+      "sha256": "d16b026986180fac3b7a5137b1bca473a3ab767b185095ef69779c5e1d4f0a86",
+      "passed": 3844,
+      "failed": 2,
+      "skipped": 2
+    },
+    {
+      "report": "cognitive-final-boundaries.xml",
+      "sha256": "8ea930603dd889c7cf2452953dde0b054cb945b51d8f3f270617482a1303a4c8",
+      "passed": 106,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "report": "cognitive-final-regression.xml",
+      "sha256": "f77a42f1a80096f64164c1fc0c9512fd8669cea200183707f15ea37002779dd5",
+      "passed": 845,
+      "failed": 1,
+      "skipped": 0
+    },
+    {
+      "report": "cognitive-final-specialized.xml",
+      "sha256": "2d991d80650ab13be3ae09d88c29c56e9bae47a0bbf43c1be0a52b01de81f7d9",
+      "passed": 31,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "report": "cognitive-deadline-recheck.xml",
+      "sha256": "4f4223e3f2fd2a25710a6af2c1e54f4131771c0b9b8d7e8743439502dd3f5bb2",
+      "passed": 40,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "report": "cognitive-final-persistence.xml",
+      "sha256": "9825334c377685d39851ece9e7f8de6aaf061023ebfa76bd6d1e3d35344b6cd0",
+      "passed": 110,
+      "failed": 0,
+      "skipped": 2
+    }
+  ],
+  "remaining_failures": [],
+  "coverage_note": "Incremental runs during implementation; latest result per case is aggregated coverage, not a single full-suite run.",
+  "corrected_regressions": [
+    "optional assessment serialized reserve",
+    "clock fallback for legacy bridge construction"
+  ],
+  "timing_recheck": "One 200 ms deadline test expired before reaching its stub during concurrent replay/regression; its full 40-test file passed when run alone, without changing deadline code or the test.",
+  "static_checks": {
+    "ruff": "passed on modified Python and new modules/tests",
+    "javascript_syntax": "passed attention.js and app.js",
+    "git_diff_check": "passed with CRLF-aware whitespace rules"
+  },
+  "rollout": {
+    "offline_replay": "passed",
+    "live_shadow_started": false,
+    "live_24_hours_passed": false,
+    "active_rules_deployed": false,
+    "reason": "Read-only preflight: existing production Runtime is PAUSED with legacy homeostasis unhealthy. No production configuration or state was changed."
+  },
+  "limitations": [
+    "Historical raw timeline has no processing receipts; no token measurements or appraisals were fabricated.",
+    "New input text counts are deterministic estimates, explicitly labelled text_units_estimate."
+  ],
+  "source_sha256": {
+    "gui/runtime_server.py": "527b9a2f56a300f9c99b2f8bceaa742da0c60539b9f8b44d39fe0543b71e4757",
+    "gui/static/app.js": "8a58c8e30121643416aaaaf478627173ec10655d0d9da119015a750cea71ba38",
+    "gui/static/attention.js": "f0248a5d9d8ddcb9f5ce381d184b3c7aa5d2a479c27beb03f6b7e6a8d128abb3",
+    "gui/static/goals.js": "704241e8aa5e19c21f173c21f61eb93c3ad6c3a27c8f739a09c35eafb9bb2504",
+    "harness/cognitive/capabilities.py": "1a2edb569e5eda0495506f6b7e5566386784fdf600375bf6c44f3e652369fcf9",
+    "harness/cognitive/daily_revision.py": "27f144b051b17d876f191e31cf49ac5a62812858ec5068d2769554f54b1ad4a9",
+    "harness/cognitive/goals.py": "9cd7efb40d0186711e280249a9812baf25ba83a3492d86f2aa22516ad786d13e",
+    "harness/cognitive/qq_memory.py": "db2464087ef2b1e3bd41744b7ac6200167fb588c14e60c40ea53b6b4cdcefa2d",
+    "harness/cognitive/qq_turn.py": "20a74c20805b9f21927794d5ca890fb1a59cd84d7a4cb515414a074855546720",
+    "harness/cognitive/service.py": "bb561c9c79b01aff6095d74074054669f6888689f5eb6c31ac56602762319016",
+    "harness/cognitive/shared_memory.py": "4188ca0e8db59d3f84ae0e245e2384cf6b37452dbc733723c11786244786e7bc",
+    "harness/contracts/capability_calls.py": "bfd60b16b129d5642dca2af0b01e69550eb61beb47488648801581f22008b0c6",
+    "harness/deploy/config.py": "021c5ffd9653e015ffcb284ffc33b93c3e8d2bed62a94be21e55e5c622de9b7f",
+    "harness/deploy/snapshot.py": "43785f037a091deade0874909df3f24e322df2f3eddac63a0b1633b839967260",
+    "harness/homeostasis/appraisal.py": "4ec2cb54a61f6eb6df9b03da71f30fed0dec1f8d7ee56f674157b2837211ba61",
+    "harness/homeostasis/dynamics.py": "10f64fbcc8c482553faaf191fdc7c8265c5fb32e275ea22997db9cf0727787ce",
+    "harness/homeostasis/engine.py": "1e0a9fb61f67ead3b66d9ee56dc056ab43091945faf1e80f2975df5e1e35ae1b",
+    "harness/homeostasis/ledger.py": "334d26d89ea156ac67cdd8ddc6a9380077f5601067048e876fdf84b90079081e",
+    "harness/homeostasis/models.py": "d0bf08f1d5224ca5449e2bebe520c391d7b2a8a16147dc89ab412ee68439dc90",
+    "harness/homeostasis/rollout.py": "a9a83dbc803ba8e09a5c2abfe7e760daa9ec26362245d48a40a460b1284021ac",
+    "harness/homeostasis/work.py": "a4c68c556888c6b72bfe71e908562d88727a58ed437ea8fa5f790b35ace5e1b0",
+    "harness/llm/client.py": "9b2c0a387345aa19e3621c54e64092ad2844edc570895b0c92a46b77c0556687",
+    "harness/memory/production.py": "fcac79bfed2d261c0bbc1ee1d0c2a250193f4ed96b27a5c71a03d249ee247c9b",
+    "harness/memory/revision/recall.py": "604b4e7a8010b879dca913a5aeaea9968280e1b28745ce0d4498d557f2a43582",
+    "harness/memory/shared.py": "70594b0dd62bba196a8e670e829acd4ad90709e647fc591e3aa43c58bafbe80e",
+    "harness/qq/attention.py": "a32841787455d9bbdf8e28957436e29d24c5389483e2ec7599c4e325693b4b2a",
+    "harness/qq/decision.py": "423b4b3666aa7342e74a5f525174ac6a66604af0a3158788c8fa3b3d430ccee1",
+    "harness/qq/direct.py": "be10798cc2c3b00ccf535ff4042c22804236cd69502363b7d4faff11459655f4",
+    "harness/qq/direct_capabilities.py": "8aac5bfec748456c4607f1076e6c1009c7422d34be1677a4895e70af9194e214",
+    "harness/qq/direct_config.py": "5391d818a5d8e8a3b1a2be0a37810d6a7e9c350e1035ca45c93a3673919b05fc",
+    "harness/qq/direct_source.py": "b1954b6809fe65594dddc37804217fa8903077a9529bee442fe1f46568564287",
+    "harness/qq/failures.py": "643d2a470a803c4b9e8a62455bd5d242d6b09f18b1ec5072414ce7356b52830d",
+    "harness/qq/memory.py": "f01ca5a0c4e27a2fd2e8085855566952a5259279bff87281b119f14a5d6442d8",
+    "harness/qq/shared.py": "a2e029956eed99663aa8c9fb94998d7706b7b6eb0f5d9a59664f801e58618c50",
+    "harness/qq/telemetry.py": "137d95b87b0ab9756f31ea05437c74737319803c9d091ec225b37de663163376",
+    "harness/qq/vision_tool.py": "7688b362f54458ecc381ccd2aacebcb4103f65220ce35a3ce92e918a7a1ba0d8",
+    "harness/regulation/config.py": "5d43d9d1c3e150c2cd81875331f43085f5c2b3dda6488893ea6bc4e7fe9348a6",
+    "harness/regulation/store.py": "a423dcf6369b83a867f030aaf9018496011b93df8cc341cf411ed6195dfaeac9",
+    "harness/research/manifest.py": "e32436d5ac345f5bc00aac293de324108fe9c87e7ac48649a2915c645e013b31",
+    "harness/runtime/adapters.py": "a89799a7d6b0462bc89278627041e44bb9fcff8cf32e734e5b5e6bac224ae898",
+    "harness/runtime/attention.py": "ab7e6d2ea55e92cbed32237d09205fbd4bd051b297ee9d725e7010ad45365336",
+    "harness/runtime/background.py": "6332a2dfd5f839ce89c8ca8bd66ce00319124a8c7277b63ac99302a9ab303e4d",
+    "harness/runtime/capabilities.py": "fceaefd42eb5a32048b268633ec721f538b96e86fe32c1d271af07ead3403a5d",
+    "harness/runtime/goals.py": "ccc5e0f3b7e142e03034c0f000817f9730a2f9fa657ddce25371e253d8e82bcc",
+    "harness/runtime/models.py": "2615295016044a61f35e6416a4a93fad3cfb214142721974100b8214b19f5cc9",
+    "harness/runtime/qq_capabilities.py": "d837564a47c343f35b0cf147735fdf136b1ddfd47a83bd962f25b6aab43adaf8",
+    "harness/runtime/qq_homeostasis.py": "f686715a5b799d1032e7affa4c6c658ce20b7b5f3217516035ee3bf668f218f8",
+    "harness/runtime/qq_sources.py": "af28b53e432ce41115afdf8e31f974a92d5b040f875a64677c5a35bfcb501928",
+    "harness/runtime/qq_turns.py": "898033772ced2718ba6aba82ee3efe511621812ea7d0a13c9540f690122aa583",
+    "harness/runtime/queue.py": "72643a466fc1df56c65650df24d7a3d394c6a84236267550fdebde7bf312dcd4",
+    "harness/runtime/supervisor.py": "6879e86bf814146461409f7b30f2eeed48873265c1fcb4e6337afad55954c43c",
+    "infra/trace/request_spans.py": "7c3161ac7de9d2177be4e12dd4f39586725b657936f7b47ffe36e5b9893869f9",
+    "tests/test_cognitive_dynamics.py": "13ec9c84afe55b74e41a1749f4378fbb98138930d71a4540211a148ffaa21b31",
+    "tests/test_cognitive_rollout.py": "1fd33062697882eeacfca486606a9e666e4a768bf56d4c7f622e6c7ed4afc02e",
+    "tests/test_cognitive_work.py": "136a8f4b1252d1c00d64d728bacba7aa540b40be58e227660f6fa861f4e72f68",
+    "tests/test_goal_cognition.py": "73f40ab1d3406d7eae87504d9a224243e1562cd530a20f58203c1d89228b1d88",
+    "tests/test_psychological_appraisal.py": "e8c0d8adcf980ffd7da8d19a76537b8e3b1c6cae9cf2d1112143f4d60e284aa4",
+    "tests/test_qq_attention.py": "d6f4a9e6d6722596593c0ea0c5a130b3b8752cba337ac777290ab18923b14b33",
+    "tools/deploy/export_shared.py": "03330f44439a598bb160e4489bcb658355efa0e637fa38a0dc9925733b548a0c"
+  }
+}

@@ -1,0 +1,530 @@
+{
+  "schema": "misty-homeostatic-autonomy-research-v1",
+  "captured_at_utc": "2026-10-06T02:41:16.631419+00:00",
+  "local_timezone": "Asia/Shanghai",
+  "code_commit": "516ae1d038284bab6ce3e50630fc8270ac50a9d4",
+  "release": "20261006-qq-context-budget-fix-v2",
+  "method": {
+    "remote_access": "read-only SQLite URI mode=ro and authenticated GET status endpoints",
+    "intervention": "none; no model calls, searches, messages, configuration changes or service restarts",
+    "validation": "Pure Pydantic validation of 33 stored request reconstructions, followed by in-memory appraisal-reference intersection counterfactual. No execution or persistence of altered requests.",
+    "coverage": "Persisted records across multiple releases and downtime; not a continuous unattended experiment. Database queries and endpoints are sequential, not a global atomic snapshot.",
+    "private_collection_sha256": "de51af9170b620400084bf557567f5917b2afdec435811205a05222ae28204c6"
+  },
+  "active_runtime": {
+    "lifecycle": "RUNNING",
+    "production": null,
+    "degraded_reasons": [],
+    "autonomous_capabilities": {
+      "allowed_capabilities": [
+        "communication.qq.read.v1",
+        "communication.qq.send.v1",
+        "expression.board.read.v1",
+        "expression.board.append.v1"
+      ],
+      "deadline_seconds": 60,
+      "enabled": true,
+      "opportunity_seconds": 1800,
+      "owners": {
+        "board": "shared",
+        "desktop": "off",
+        "qq": "shared"
+      },
+      "qq_send_enabled": true,
+      "quiet_seconds": 60
+    },
+    "goal_regulation": {
+      "autonomous_enabled": true,
+      "enabled": true,
+      "maximum_model_calls_per_hour": 12,
+      "maximum_no_progress": 3,
+      "maximum_plan_steps": 32,
+      "minimum_reconsideration_interval": 60,
+      "review_seconds": 300,
+      "stability_seconds": 180
+    },
+    "heartbeat_seconds": 5,
+    "web_authorization": {
+      "enabled": true,
+      "conversation_enabled": true,
+      "capability_requirements": [
+        {
+          "capability": "web.search.v1",
+          "required": false
+        },
+        {
+          "capability": "web.read.v1",
+          "required": false
+        }
+      ],
+      "autonomous_enabled": true
+    },
+    "web_usage": {
+      "day": "2026-10-06",
+      "requests": 3,
+      "autonomous_requests": 0,
+      "daily_limit": 100,
+      "autonomous_daily_limit": 20
+    },
+    "web_health_reason_codes": {
+      "web.search.v1": "web_api_unverified",
+      "web.read.v1": "web_api_unverified"
+    }
+  },
+  "current_homeostasis": {
+    "revision": 127139,
+    "dimensions": {
+      "energy_reserve": {
+        "value": 0.6649999999996343,
+        "target_band": [
+          0.55,
+          0.78
+        ]
+      },
+      "cognitive_load": {
+        "value": 0.39999999999940067,
+        "target_band": [
+          0.25,
+          0.55
+        ]
+      },
+      "safety_predictability": {
+        "value": 0.6649999999997562,
+        "target_band": [
+          0.55,
+          0.78
+        ]
+      },
+      "competence": {
+        "value": 0.6249999999991347,
+        "target_band": [
+          0.5,
+          0.75
+        ]
+      },
+      "autonomy": {
+        "value": 0.6750000000001821,
+        "target_band": [
+          0.55,
+          0.8
+        ]
+      },
+      "social_connection": {
+        "value": 0.22,
+        "target_band": [
+          0.5,
+          0.74
+        ]
+      },
+      "novelty": {
+        "value": 0.16,
+        "target_band": [
+          0.35,
+          0.68
+        ]
+      }
+    },
+    "salience": "marked",
+    "drive_profile": {
+      "enabled": true,
+      "experience_novelty_recovery": 0.08,
+      "idle_grace_seconds": 600,
+      "interaction_novelty_recovery": 0.02,
+      "interaction_social_recovery": 0.1,
+      "message_novelty_recovery": 0.015,
+      "novelty_depletion_per_hour": 0.12,
+      "novelty_floor": 0.16,
+      "social_depletion_per_hour": 0.14,
+      "social_floor": 0.22
+    }
+  },
+  "historical": {
+    "count": 445,
+    "first_opportunity_at": "2026-09-12T07:23:15.485262+00:00",
+    "last_opportunity_at": "2026-10-06T01:34:42.538232+00:00",
+    "statuses": {
+      "error": 429,
+      "wait": 7,
+      "completed": 6,
+      "superseded": 1,
+      "committed": 2
+    },
+    "errors": {
+      "unspecified": 9,
+      "goal_runtime_error": 332,
+      "goal_planned_step_required": 3,
+      "goal_invalid_request": 85
+    },
+    "successful_capabilities": {
+      "communication.qq.read.v1": 4,
+      "web.search.v1": 2,
+      "expression.board.append.v1": 2
+    },
+    "last_successful_opportunity_at": "2026-09-17T11:04:22.105296+00:00",
+    "regulation_object_counts": {
+      "regulation_contribution": 123351,
+      "regulation_decision": 14,
+      "regulation_episode": 1,
+      "regulation_evaluation": 10518,
+      "regulation_goal": 2,
+      "regulation_operation": 4,
+      "regulation_reservation": 442,
+      "regulation_runtime_recovery": 1,
+      "regulation_state": 1
+    }
+  },
+  "recent": {
+    "filter": "created_at >= 2026-10-05T00:00:00Z; all retained matching records as of collection",
+    "first_at": "2026-10-05T13:41:38.061739+00:00",
+    "last_at": "2026-10-06T01:34:42.538232+00:00",
+    "count": 33,
+    "local_date_counts": {
+      "2026-10-05": 9,
+      "2026-10-06": 24
+    },
+    "statuses": {
+      "error": 33
+    },
+    "errors": {
+      "goal_invalid_request": 33
+    },
+    "gap_seconds": {
+      "minimum": 127.019219,
+      "median": 234.853911,
+      "maximum": 21844.185382
+    },
+    "max_attempts_rolling_hour": 10,
+    "snapshots": [
+      {
+        "at": "2026-10-05T13:41:38.061739+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T14:12:34.170583+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T14:14:41.189802+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T14:52:41.278184+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T14:57:13.323868+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T15:02:29.105611+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T15:04:43.301617+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T15:07:41.278380+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T15:19:25.352667+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T16:00:14.775138+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T16:03:10.911855+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T16:06:27.478748+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T16:09:32.556160+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T16:31:46.402522+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T16:43:00.826172+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T16:55:21.544899+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T16:58:03.746024+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T17:14:04.702189+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T17:16:28.325995+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T17:20:14.073724+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T17:22:58.025780+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T17:25:58.855864+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T17:28:42.236713+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T17:57:35.233661+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T18:01:35.682289+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T18:04:41.431560+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-05T18:08:30.690754+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-06T00:12:34.876136+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-06T00:43:00.650697+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-06T00:56:19.739570+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-06T01:28:59.744546+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-06T01:31:50.549543+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      {
+        "at": "2026-10-06T01:34:42.538232+00:00",
+        "novelty": 0.16,
+        "social_connection": 0.22
+      }
+    ],
+    "latest_release_attempts": [
+      {
+        "at": "2026-10-06T01:28:59.744546+00:00",
+        "status": "error",
+        "error_code": "goal_invalid_request"
+      },
+      {
+        "at": "2026-10-06T01:31:50.549543+00:00",
+        "status": "error",
+        "error_code": "goal_invalid_request"
+      },
+      {
+        "at": "2026-10-06T01:34:42.538232+00:00",
+        "status": "error",
+        "error_code": "goal_invalid_request"
+      }
+    ]
+  },
+  "schema_validation": {
+    "count": 33,
+    "all_fail_same_reason": true,
+    "error": [
+      {
+        "type": "value_error",
+        "loc": [],
+        "msg": "Value error, goal_invalid_appraisal_evidence"
+      }
+    ],
+    "last_request": {
+      "at": "2026-10-06T01:34:42.538232+00:00",
+      "known_count": 128,
+      "appraisal_count": 64,
+      "missing_from_known": 33,
+      "missing_ref_types": {
+        "qq-protocol": 20,
+        "qq-protocol-message": 12,
+        "board-evidence": 1
+      },
+      "intersection_only_validates": true,
+      "remaining_errors": [],
+      "offered_capabilities": [
+        "web.search.v1",
+        "web.read.v1",
+        "expression.board.read.v1",
+        "expression.board.append.v1",
+        "communication.qq.read.v1",
+        "communication.qq.read.v1",
+        "communication.qq.read.v1"
+      ]
+    },
+    "all_intersection_only_validates": true,
+    "source_hashes": {
+      "harness/contracts/goals.py": "331e590591a8bb02ea04a540f37f1980b03b7731fbe35d247d22033fa10bfb89",
+      "harness/contracts/capability_calls.py": "1f05ed43ec992c0cba4035e578a0d9759f8ab9ab9699b6009c9d1a5d352f0eb6",
+      "harness/runtime/goals.py": "4299c2e836793f701b73052bb6459e811dff79c3acad376e0a1928846659a22b",
+      "harness/cognitive/goals.py": "8e7ab5f9241ef7412883e40c39aab52857f9261e83a1646c60c81156173c55ed"
+    }
+  },
+  "feedback": {
+    "active_episode_created_at": "2026-09-12T09:43:51.303486+00:00",
+    "active_episode_status": "waiting",
+    "active_episode_blocked_reason": "no_progress",
+    "active_episode_no_progress": 132,
+    "active_episode_target_dimensions": [
+      "social_connection"
+    ],
+    "appraisal_count": 1,
+    "last_appraisal_at": "2026-09-14T03:06:00.658215+00:00",
+    "evaluation_counts": {
+      "improved": 1,
+      "worsened": 10517
+    },
+    "evaluation_span": [
+      "2026-09-12T09:43:51.359137+00:00",
+      "2026-10-06T02:43:12.464725+00:00"
+    ],
+    "latest_evaluation": {
+      "at": "2026-10-06T02:41:07.245989+00:00",
+      "outcome": "worsened",
+      "before": {
+        "social_connection": 0.2643519276972632
+      },
+      "after": {
+        "social_connection": 0.22
+      },
+      "deviation_before": 0.23564807230273682,
+      "deviation_after": 0.28,
+      "contributions": {
+        "coupling": {
+          "social_connection": 0.0
+        },
+        "drift": {
+          "social_connection": -0.15127692769726317
+        },
+        "fact": {
+          "social_connection": 0.0
+        },
+        "legacy_event": {
+          "social_connection": 0.1008
+        },
+        "self_report": {
+          "social_connection": 0.0061249999999999916
+        }
+      },
+      "contributing_sources": [
+        "drift",
+        "legacy_event",
+        "self_report"
+      ],
+      "causal_effect_verified": false
+    },
+    "contribution_sources": {
+      "drift": 123339,
+      "fact": 7,
+      "legacy_event": 4,
+      "self_report": 1
+    },
+    "last_non_drift_contribution_at": "2026-09-17T14:41:40.663897Z",
+    "last_fact_contribution_at": "2026-09-14T04:18:28.422372Z"
+  },
+  "autonomous_searches": [
+    {
+      "created_at": "2026-09-14T07:30:33.426850+00:00",
+      "started_at": "2026-09-14T07:30:54.483724+00:00",
+      "query": "秋日 摄影 光线 氛围",
+      "purpose": "本 episode 因低压力社交发送机会暂不可用而重排：先用一次只读、公开主题的轻量观察补充偏低的新鲜感，不强迫表达也不重复自述；下次复查时再对照心理快照决定去留。",
+      "target_dimensions": [
+        "novelty"
+      ],
+      "salience": "marked",
+      "status": "completed",
+      "effect": "external_information_only",
+      "source_count": 3,
+      "source_types": {
+        "search": 3
+      },
+      "source_titles": [
+        "秋日摄影笔记：光影与色彩的捕捉 | 凉风有信",
+        "【摄影技巧】8招拍出温暖如诗般的秋意氛围_拍摄",
+        "拍摄色彩缤纷的秋叶 | Sony China"
+      ],
+      "independent_appraisal_after_search": false
+    },
+    {
+      "created_at": "2026-09-17T04:48:27.906976+00:00",
+      "started_at": "2026-09-17T04:48:35.242488+00:00",
+      "query": "秋天 云层 光线 摄影 小技巧",
+      "purpose": "本 episode 已多次调用失败，最近一次留言板表达已取得回执；当前 novelty 偏低且好奇正在减弱，改用一次只读、公开主题的轻量观察补充一点新鲜感，不发送任何私人内容，也不据此断言连接改善。",
+      "target_dimensions": [
+        "novelty"
+      ],
+      "salience": "marked",
+      "status": "completed",
+      "effect": "external_information_only",
+      "source_count": 3,
+      "source_types": {
+        "search": 3
+      },
+      "source_titles": [
+        "摄影技巧：从第1片落叶开始，简单5招秋色大片拍出来 – NiSi 耐司-专业电影及相机光学镜头滤镜品牌",
+        "拍摄色彩缤纷的秋叶 | Sony China",
+        "Instagram"
+      ],
+      "independent_appraisal_after_search": false
+    }
+  ]
+}

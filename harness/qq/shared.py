@@ -122,12 +122,18 @@ class QQSharedCognitiveClient:
         try:
             response = self.client.post("/v1/qq/decisions", json=request.model_dump(mode="json"),
                                         timeout=remaining + ERROR_FALLBACK_SEND_SECONDS, follow_redirects=False)
+            if response.status_code == 409:
+                code = response.json().get("detail")
+                if code in {"attention_closed", "attention_policy_changed", "attention_backlog", "attention_deferred"}:
+                    raise SharedQQUnavailable(code)
             response.raise_for_status()
             payload = response.json()
         except httpx.TimeoutException as exc:
             if deadline.expired:
                 raise QQDeadlineExpired("Shared cognition exceeded the original turn deadline") from exc
             raise SharedQQUnavailable("shared_cognitive_timeout") from exc
+        except SharedQQUnavailable:
+            raise
         except (httpx.HTTPError, ValueError) as exc:
             raise SharedQQUnavailable("shared_cognitive_unavailable") from exc
         ended = trace.clock()

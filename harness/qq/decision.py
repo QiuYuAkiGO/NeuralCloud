@@ -28,6 +28,7 @@ from harness.compiler.compiler import (
     emotion_enabled, estimate_tokens, render_emotion_guidance, render_homeostatic_interoception,
 )
 from harness.homeostasis.models import HomeostaticInteroceptiveSummary
+from harness.homeostasis.dynamics import AttentionAssessment
 from harness.core.error_notice import ERROR_FALLBACK_REPLY
 from harness.core.ids import new_id
 from harness.core.inference import ContextSegment, MemoryEvidenceContext, ParsedInteraction, TokenUsage
@@ -116,6 +117,9 @@ _STATIC_PARSE_CACHE: OrderedDict[str, tuple[float, ParsedInteraction]] = Ordered
 _STATIC_PARSE_LOCK = threading.RLock()
 _STATIC_PARSE_CLOCK = time.monotonic
 _REPLY_PLANNING_RULES = (
+    "可选字段attention_assessment描述实际注意经历；无新证据时省略或null。字段topic、unexpectedness(0..1)、meaning(0..1)、"
+    "wants_engagement、confidence(0..1)、impacts(安全safety_predictability/能力competence/自主autonomy/联结social_connection到-1..1)。"
+    "仅基于当前实际事件评价，不按消息数量、工具成功或预期收益打分。"
     '\n输出JSON格式示例：{"action":"speak","reason":"有内容值得回应。",'
     '"addressing":"ambient","addressing_source_record_id":null,"addressing_supporting_quote":null,'
     '"reply_style":"conversational","reply_style_reason":"普通聊天。","reply_plan":null}。'
@@ -291,6 +295,7 @@ class QQReplyPlan(_StrictModel):
 
 
 class _GateDecision(_StrictModel):
+    attention_assessment: AttentionAssessment | None = None
     action: Literal["speak", "wait"]
     reason: str = Field(min_length=1, max_length=512)
     addressing: Literal["direct", "ambient"] = "ambient"
@@ -308,6 +313,13 @@ class _GateDecision(_StrictModel):
     @model_validator(mode="wrap")
     @classmethod
     def optional_plan_does_not_invalidate_gate(cls, value, handler):
+        if isinstance(value, dict) and value.get("attention_assessment") is not None:
+            from harness.homeostasis.dynamics import AttentionAssessment
+            value = dict(value)
+            try:
+                value["attention_assessment"] = AttentionAssessment.model_validate(value["attention_assessment"])
+            except (ValueError, TypeError):
+                value["attention_assessment"] = None
         invalid = False
         web_invalid = False
         vision_invalid = False
@@ -710,6 +722,7 @@ def _assessment_reserve(*, include_web_plan: bool = False, include_vision_reques
     # strings, and leaves historical legacy budgets unchanged.
     schema["properties"].pop("web_plan", None)
     schema["properties"].pop("vision_request", None)
+    schema["properties"].pop("attention_assessment", None)
 
     def largest_value(field):
         if "$ref" in field:
@@ -732,6 +745,7 @@ def _assessment_reserve(*, include_web_plan: bool = False, include_vision_reques
     largest = largest_value(schema)
     largest["web_plan"] = None
     largest["vision_request"] = None
+    largest["attention_assessment"] = None
     # The persona receives this as a separate user message, with its own braces.
     return (len(_canonical({"assessment": largest})) + (22_000 if include_web_plan else 0)
             + (4000 if include_vision_request else 0))
@@ -2010,7 +2024,7 @@ def decide_qq_reply(
                         emotion_guidance=emotion_guidance, emotion_on=emotion_on, new_ids=new_ids,
                         trigger_latest_id=trigger_latest_id, usage=usage, trace=trace, timings=timings,
                     )
-                speech_payload = _checked_model_payload({"assessment": choice.model_dump()}, trace=trace,
+                speech_payload = _checked_model_payload({"assessment": choice.model_dump(exclude={"attention_assessment"})}, trace=trace,
                                                        stage="persona", max_characters=input_character_budget)
                 llm.stage_name = "persona"
                 persona_started = trace.clock()

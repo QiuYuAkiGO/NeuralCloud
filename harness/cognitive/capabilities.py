@@ -143,6 +143,15 @@ def _bound_choice(choice: CapabilityChoice, offer: CapabilityOffer, *, now: date
             raise CapabilitySelectionError("capability_invalid_voice_arguments")
     elif offer.channel == "qq" and offer.provider_id == "qq-onebot":
         from harness.qq.direct_capabilities import QQDirectReadArguments
+        if offer.capability_id == "communication.qq.attention.set.v1":
+            from harness.qq.attention import AttentionArguments
+            try:
+                args = AttentionArguments.model_validate(choice.arguments)
+                if choice.kind != "act" or choice.success_criteria or args.group_id != offer.scope.get("group_id"):
+                    raise ValueError("attention scope mismatch")
+            except (ValueError, TypeError):
+                raise CapabilitySelectionError("capability_invalid_attention_arguments") from None
+            return
 
         if offer.capability_id == "communication.qq.send.v1":
             if choice.kind != "act" or choice.arguments or choice.success_criteria:
@@ -288,9 +297,10 @@ def _visible_offer(offer: CapabilityOffer) -> dict[str, Any]:
             "type": "object", "properties": {}, "additionalProperties": False}
     elif offer.channel == "qq" and offer.provider_id == "qq-onebot":
         from harness.qq.direct_capabilities import QQDirectReadArguments
-
-        value["input_schema"] = (QQDirectReadArguments.model_json_schema() if offer.capability_id == "communication.qq.read.v1"
-                                 else {"type": "object", "properties": {}, "additionalProperties": False})
+        from harness.qq.attention import ATTENTION_SET, AttentionArguments
+        value["input_schema"] = (AttentionArguments.model_json_schema() if offer.capability_id == ATTENTION_SET else
+            QQDirectReadArguments.model_json_schema() if offer.capability_id == "communication.qq.read.v1" else
+            {"type": "object", "properties": {}, "additionalProperties": False})
     return value
 
 
@@ -322,8 +332,15 @@ async def prepare(host: Any, command: Any) -> dict[str, Any]:
     model_ms = 0.0
     usage: dict[str, Any] = {}
     if ready:
-        emotion_guidance = None if command.payload.get("production_context") else await resolve_command_emotion(host, command)
-        context = await asyncio.wait_for(asyncio.to_thread(_context, host, command, now), timeout=remaining())
+        attention_only = request.homeostatic_summary.get("attention_control_only") is True
+        emotion_guidance = None if attention_only or command.payload.get("production_context") else await resolve_command_emotion(host, command)
+        if attention_only:
+            persona = host.chat.memory.get_persona()
+            if persona is None:
+                raise CapabilitySelectionError("capability_shared_persona_unavailable")
+            context = {"persona": persona.model_dump(mode="json"), "shared_memory": [], "recent_dialogue": []}
+        else:
+            context = await asyncio.wait_for(asyncio.to_thread(_context, host, command, now), timeout=remaining())
         ready = [offer for offer in ready if offer.valid_until > datetime.now(timezone.utc)]
         remaining()
     if ready:
@@ -334,10 +351,15 @@ async def prepare(host: Any, command: Any) -> dict[str, Any]:
         emotion_text = ""
         if command.payload.get("production_context"):
             payload.pop("homeostatic_summary", None)
-        if emotion_enabled(getattr(host.chat, "settings", None)):
+        if not attention_only and emotion_enabled(getattr(host.chat, "settings", None)):
             payload.pop("homeostatic_summary")
             emotion_text = render_emotion_guidance(emotion_guidance, homeostasis=request.homeostatic_summary)
         rules = (_PRODUCTION_RULES + _RULES[_RULES.index("只输出符合"):]) if command.payload.get("production_context") else _RULES
+        rules += "\n可选attention_assessment只解释本次真实经历；无证据时null，不根据工具成功或计划预期制造心理收益。"
+        if attention_only:
+            rules += ("\n本次只分配群聊注意力。可以关闭、续关或开放任一已有接收权限的群；wait表示保持当前策略。"
+                      "关闭没有自动到期，复查只依据自身状态及给出的关闭前情境。阈值是建议，不能读取关闭期间群内容。"
+                      "默认静默操作；关闭或反复开关不产生心理奖励。reason记录具体原因，不代表发言。")
         messages = build_messages(persona=context["persona"], rules=rules + "\n" + OFFER_DEFINITION_RULE,
             fixed_payload={"choice_schema": CapabilityChoice.model_json_schema(), "criterion_schema": _CRITERIA.json_schema(),
                            "available_offer_definitions": definitions, "source_authority": "untrusted_attributed_records"},
@@ -345,7 +367,9 @@ async def prepare(host: Any, command: Any) -> dict[str, Any]:
         timeout = remaining()
         model_started = time.monotonic()
         with trace_scope(event_id=command.event_id, command_id=command.command_id,
-                         phase="capability_selection", model_attempt=1, model_budget_seconds=timeout):
+                         phase="capability_selection", model_attempt=1, model_budget_seconds=timeout,
+                         attention_context="attention:control" if attention_only else "capability:selection",
+                         attention_reread=not attention_only):
             try:
                 response = await asyncio.wait_for(asyncio.to_thread(host.chat.llm.complete_chat_result,
                     messages, stream=False, max_tokens=MAX_OUTPUT_TOKENS, timeout_seconds=timeout,

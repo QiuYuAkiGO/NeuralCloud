@@ -22,6 +22,7 @@ from harness.embodiment.qq_contracts import QQReadResult, QQScope
 from harness.qq.roster import configured_groups
 from harness.qq.telemetry import measure_stage
 from harness.qq.conversation import conversation_audience, conversation_scope
+from harness.qq.attention import attention_visible, guarded_group_read
 
 OPERATOR_QQ_MEMBER_ID = "2285027817"
 
@@ -236,17 +237,20 @@ class CognitiveSharedMemory:
         # SQLite WAL changes count too. This is a cache optimization, not the
         # source integrity check performed by the atomic importer.
         private_peers = getattr(self.qq_settings, "allowed_private_peer_ids", ())
+        groups = tuple(group for group in self.qq_settings.allowed_group_ids if attention_visible(group))
+        if not groups and not private_peers:
+            return
         def file_stamp(p):
             if not p.exists():
                 return None
             stat = p.stat()
             return stat.st_dev, stat.st_ino, stat.st_mtime_ns, stat.st_size
         stamp = (tuple(file_stamp(p) for p in (path, Path(str(path)+"-wal"))),
-                 tuple(self.qq_settings.allowed_group_ids), tuple(private_peers), self.qq_settings.self_member_id)
+                 groups, tuple(private_peers), self.qq_settings.self_member_id)
         if stamp == self._source_stamp:
             return
         result = self.store.import_qq_database(path,
-            allowed_group_ids=self.qq_settings.allowed_group_ids,
+            allowed_group_ids=groups,
             self_member_id=self.qq_settings.self_member_id, allowed_private_peer_ids=private_peers,
             track_changes=True)
         self.last_import = result
@@ -430,7 +434,7 @@ class CognitiveSharedMemory:
                 body_instance_id=scope_fields["expected_instance_id"],
                 environment_revision=scope_fields["expected_revision"],
                 window_id=scope_fields["window_id"], group_id=entry.group_id,
-                self_member_id=self.qq_settings.self_member_id) for entry in groups if entry.observe}
+                self_member_id=self.qq_settings.self_member_id) for entry in groups if entry.observe and attention_visible(entry.group_id)}
             database = Path(config["state_db"]).with_suffix(".roster.sqlite3")
             if not database.is_absolute() or not database.is_file():
                 return []
@@ -505,6 +509,7 @@ class CognitiveSharedMemory:
         return [segment]
 
     @measure_stage("memory.prepare")
+    @guarded_group_read
     def qq_binding(self, *, group_id, member_id=None, query=None):
         conversation = conversation_scope(group_id)
         private = conversation["kind"] == "private"

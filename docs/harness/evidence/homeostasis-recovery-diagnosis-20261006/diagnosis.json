@@ -1,0 +1,227 @@
+{
+  "checked_at_beijing": "2026-10-06T17:18:46.073131+08:00",
+  "release": "20261006-homeostatic-autonomy-repair-v1",
+  "scope": "Read-only production evidence; all recovery checks ran in memory without production mutations or model calls.",
+  "range": {
+    "start": "2026-10-06T11:14:03+08:00",
+    "end": "2026-10-06T16:40:04+08:00",
+    "first_revision": 127484,
+    "last_revision": 131533
+  },
+  "source_code_verified": true,
+  "before_release_fact_count_in_preceding_3950_transitions": 0,
+  "commands": {
+    "heartbeat": {
+      "count": 3826,
+      "load": -0.2806013169775812,
+      "novelty": -0.1234763439709651
+    },
+    "qq_message_fact": {
+      "count": 224,
+      "load": 0.8305309498259504,
+      "novelty": 0.9134413803528766
+    }
+  },
+  "facts_by_group": {
+    "1060979317": 207,
+    "1044946257": 10,
+    "712342021": 7
+  },
+  "initial": {
+    "cognitive_load": 0.39999999999940067,
+    "novelty": 0.16,
+    "social_connection": 0.22
+  },
+  "final": {
+    "cognitive_load": 0.9499296328477699,
+    "novelty": 0.9499650363819115,
+    "social_connection": 0.3799349690905674
+  },
+  "timeline": [
+    {
+      "at": "2026-10-06T03:59:54.996326Z",
+      "beijing_hour": 11,
+      "load": 0.5783122602549853,
+      "novelty": 0.703261297087826
+    },
+    {
+      "at": "2026-10-06T04:59:58.775058Z",
+      "beijing_hour": 12,
+      "load": 0.6687702439317557,
+      "novelty": 0.9485947579475443
+    },
+    {
+      "at": "2026-10-06T05:59:58.485947Z",
+      "beijing_hour": 13,
+      "load": 0.8770370928337649,
+      "novelty": 0.9467446401533336
+    },
+    {
+      "at": "2026-10-06T06:59:58.239911Z",
+      "beijing_hour": 14,
+      "load": 0.9426400639503822,
+      "novelty": 0.9462221815507221
+    },
+    {
+      "at": "2026-10-06T07:59:58.960899Z",
+      "beijing_hour": 15,
+      "load": 0.9415460081439584,
+      "novelty": 0.9485720072843004
+    },
+    {
+      "at": "2026-10-06T08:40:04.827469Z",
+      "beijing_hour": 16,
+      "load": 0.9499296328477699,
+      "novelty": 0.9499650363819115
+    }
+  ],
+  "goal_calls": {
+    "total": 38,
+    "status": {
+      "error": 13,
+      "completed": 20,
+      "superseded": 4,
+      "committed": 1
+    },
+    "choice": {
+      "none": 8,
+      "observe": 28,
+      "act": 1,
+      "wait": 1
+    },
+    "offer": {
+      "qq-onebot:2ded193abeb8087e6e34fa1cabe621e37c4445ab641da6fe0779145536360125:read": 15,
+      "board:expression.board.read.v1": 4,
+      "qq-onebot:ba64f14f8d85c2fe76780c20aef23486ce4fccfd07c552c89791a7ad134eba92:read": 1
+    }
+  },
+  "applied_psychological_appraisals": 0,
+  "checks": {
+    "resume_rejected": "cannot resume while homeostasis watchdog remains active: cognitive_load:hard_bound_sustained, novelty:hard_bound_sustained",
+    "health_after_one_hour_without_command": false,
+    "state_unchanged_without_command": true,
+    "one_isolated_passive_heartbeat": {
+      "seconds": 5,
+      "applied": {
+        "cognitive_load": -6.860223236115903e-05,
+        "novelty": -3.539362422222414e-05
+      },
+      "watchdog": []
+    },
+    "preheartbeat_boundary_window": [
+      {
+        "at": "2026-10-06T08:39:18.797625Z",
+        "load_before": 0.949776769142137,
+        "load_after": 0.9497080979508593,
+        "novelty_before": 0.9499020701819119,
+        "novelty_after": 0.9498666512301562,
+        "watchdog": []
+      },
+      {
+        "at": "2026-10-06T08:39:23.839265Z",
+        "load_before": 0.95,
+        "load_after": 0.9499255539271709,
+        "novelty_before": 0.95,
+        "novelty_after": 0.9499671236289162,
+        "watchdog": []
+      },
+      {
+        "at": "2026-10-06T08:39:29.125856Z",
+        "load_before": 0.9499255539271709,
+        "load_after": 0.9498529489129209,
+        "novelty_before": 0.9499671236289162,
+        "novelty_after": 0.9499297389727496,
+        "watchdog": []
+      },
+      {
+        "at": "2026-10-06T08:39:34.174649Z",
+        "load_before": 0.9498529489129209,
+        "load_after": 0.949783727702921,
+        "novelty_before": 0.9499297389727496,
+        "novelty_after": 0.9498939730314496,
+        "watchdog": []
+      },
+      {
+        "at": "2026-10-06T08:39:39.210461Z",
+        "load_before": 0.949783727702921,
+        "load_after": 0.9497146284168376,
+        "novelty_before": 0.9498939730314496,
+        "novelty_after": 0.9498583289423829,
+        "watchdog": []
+      },
+      {
+        "at": "2026-10-06T08:39:44.570674Z",
+        "load_before": 0.9497146284168376,
+        "load_after": 0.9496409932826432,
+        "novelty_before": 0.9498583289423829,
+        "novelty_after": 0.949820433799394,
+        "watchdog": []
+      },
+      {
+        "at": "2026-10-06T08:39:49.636217Z",
+        "load_before": 0.9496409932826432,
+        "load_after": 0.949571556443421,
+        "novelty_before": 0.949820433799394,
+        "novelty_after": 0.9497845417223828,
+        "watchdog": []
+      },
+      {
+        "at": "2026-10-06T08:39:54.730808Z",
+        "load_before": 0.95,
+        "load_after": 0.9499223716441482,
+        "novelty_before": 0.95,
+        "novelty_after": 0.9499680585482432,
+        "watchdog": []
+      },
+      {
+        "at": "2026-10-06T08:39:59.791954Z",
+        "load_before": 0.95,
+        "load_after": 0.9499291608807335,
+        "novelty_before": 0.95,
+        "novelty_after": 0.949964919106194,
+        "watchdog": []
+      },
+      {
+        "at": "2026-10-06T08:40:04.827469Z",
+        "load_before": 0.95,
+        "load_after": 0.9499296328477699,
+        "novelty_before": 0.95,
+        "novelty_after": 0.9499650363819115,
+        "watchdog": [
+          "cognitive_load:hard_bound_sustained",
+          "novelty:hard_bound_sustained"
+        ]
+      }
+    ]
+  },
+  "counterfactual_scope": "Same initial snapshot and heartbeat/event times, using the verified production integration code; excludes model choices, external actions, and any changed behavior.",
+  "replays": {
+    "all_actual_facts": {
+      "final": {
+        "cognitive_load": 0.9499296328477699,
+        "novelty": 0.9499650363819115,
+        "social_connection": 0.3799349690905674
+      },
+      "first_watchdog_at": "2026-10-06T08:40:04.827469+00:00",
+      "maximum_absolute_error_vs_observed": 0
+    },
+    "excluding_group_1060979317": {
+      "final": {
+        "cognitive_load": 0.39999999999964553,
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      "first_watchdog_at": null,
+      "maximum_absolute_error_vs_observed": null
+    },
+    "without_message_facts": {
+      "final": {
+        "cognitive_load": 0.39999999999940067,
+        "novelty": 0.16,
+        "social_connection": 0.22
+      },
+      "first_watchdog_at": null,
+      "maximum_absolute_error_vs_observed": null
+    }
+  }
+}

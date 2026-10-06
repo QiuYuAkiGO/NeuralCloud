@@ -222,7 +222,7 @@ def _validated_homeostatic_interoception(
             "homeostatic interoception revision mismatch: "
             f"summary={summary.snapshot_revision}, version_vector={expected_revision}"
         )
-    if summary.salience == "critical":
+    if summary.schema_version == "homeostatic-interoception-v1" and summary.salience == "critical":
         raise ValueError("critical homeostatic state must pause before cognitive invocation")
     return summary
 

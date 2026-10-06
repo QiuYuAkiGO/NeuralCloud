@@ -21,6 +21,9 @@ from harness.embodiment.contracts import (
     evidence_ref_strings,
 )
 from harness.homeostasis.appraisal import ApplyPsychologicalAppraisal, PsychologicalAppraisal
+from harness.homeostasis.dynamics import (
+    CognitiveExposure, DynamicsState, PSYCHOLOGICAL, advance, expose, appraise as appraise_dynamics,
+)
 from harness.homeostasis.models import (
     DIMENSIONS,
     CoreAffect,
@@ -112,8 +115,20 @@ class HomeostasisEngine:
         self._clock = clock or ((lambda: now) if now is not None else utc_now)
         self._started_at = now or self._clock()
         self._qq_activity_at = self._started_at
+        self._dynamics: DynamicsState | None = None
+        self._loaded_snapshot_schema = "homeostasis-state-v3"
         self.snapshot = initial_snapshot(profile, now=self._started_at)
         self._load()
+        prior_mode = (self.snapshot.dynamics or {}).get("mode", "off")
+        if profile.cognitive_dynamics.mode == "active" and prior_mode != "active" and self._dynamics is not None:
+            # Activation preserves displayed values; shadow-only latent history
+            # survives, but adopting a new calculator must not jump the UI.
+            self._dynamics.load = self.snapshot.dimensions["cognitive_load"].value
+            self._dynamics.novelty = self.snapshot.dimensions["novelty"].value
+            self._dynamics.responses = {k: self.snapshot.dimensions[k].value-self._dynamics.baselines[k] for k in PSYCHOLOGICAL}
+        if profile.cognitive_dynamics.mode != "off" and self._dynamics is None:
+            self._dynamics = DynamicsState.migrate(
+                {k: v.value for k, v in self.snapshot.dimensions.items()}, profile.preferences, self.snapshot.updated_at)
         self._validate_profile_identity()
         self._upgrade_legacy_snapshot_schema()
         candidates = self._rank_policies(self.snapshot.dimensions)
@@ -154,6 +169,8 @@ class HomeostasisEngine:
                     "boundary_heartbeat_streaks": dict(
                         self._boundary_heartbeat_streaks
                     ),
+                    "dynamics_mode": self.profile.cognitive_dynamics.mode,
+                    "regulation_pressure": self._dynamics.pressure() if self._dynamics else {},
                 },
             )
 
@@ -287,6 +304,11 @@ class HomeostasisEngine:
                 )
             effective_at = max(observed_at, self.snapshot.updated_at)
             factors = dict(self.snapshot.dimensions)
+            next_dynamics = advance(self._dynamics, effective_at, self.profile.cognitive_dynamics) if self._dynamics and self.profile.cognitive_dynamics.mode != "off" else self._dynamics
+            if self.profile.cognitive_dynamics.mode == "active":
+                if set(observation.observed_values) != {"energy_reserve"}:
+                    return self._failure(command, request_hash, "cognitive dynamics accepts measured energy only", "rejected")
+                factors = self._dynamics_factors(next_dynamics, effective_at)
             applied: dict[DimensionName, float] = (
                 {} if legacy else {key: 0.0 for key in DIMENSIONS}
             )
@@ -335,7 +357,7 @@ class HomeostasisEngine:
                 effective_at,
                 salience=salience,
             )
-            candidates = self._rank_policies(factors)
+            candidates = self._rank_policies(factors, dynamics=next_dynamics)
             summary = self._derive_interoceptive_summary(
                 revision=revision,
                 factors=factors,
@@ -344,8 +366,11 @@ class HomeostasisEngine:
                 candidates=candidates,
                 watchdog=watchdog,
                 salience=salience,
+                dynamics=next_dynamics,
             )
             next_snapshot = HomeostaticSnapshot(
+                dynamics=self._dynamics_view(next_dynamics),
+                regulation_pressure=next_dynamics.pressure() if next_dynamics else {},
                 revision=revision,
                 profile_id=self.profile.profile_id,
                 profile_revision=self.profile.revision,
@@ -415,10 +440,12 @@ class HomeostasisEngine:
                 engine_state=self._engine_state_payload(
                     boundary_streaks,
                     boundary_sides,
+                    dynamics_state=next_dynamics,
                 ),
                 trace=trace.model_dump(mode="json"),
             )
             self.snapshot = next_snapshot
+            self._dynamics = next_dynamics
             self._boundary_heartbeat_streaks = boundary_streaks
             self._boundary_heartbeat_sides = boundary_sides
             self._project_snapshot_mirror()
@@ -452,7 +479,18 @@ class HomeostasisEngine:
                 return self._enrich_replay(restored)
             if command.is_expired(now=self._clock()):
                 return self._failure(command, request_hash, "command deadline expired", "rejected")
-            if command.expected_revision is not None and command.expected_revision != self.snapshot.revision:
+            heartbeat_rebased = False
+            if kind == "appraisal" and command.payload.get("allow_heartbeat_rebase") is True:
+                try:
+                    candidate = ApplyPsychologicalAppraisal.model_validate(command.payload)
+                    heartbeat_rebased = (candidate.basis_snapshot_at is not None
+                        and 0 <= (self._clock() - candidate.basis_snapshot_at).total_seconds() <= 60
+                        and command.expected_revision == candidate.appraisal.basis_snapshot_revision
+                        and self._command_ledger.heartbeat_only_between(
+                            candidate.appraisal.basis_snapshot_revision, self.snapshot.revision))
+                except ValidationError:
+                    pass
+            if command.expected_revision is not None and command.expected_revision != self.snapshot.revision and not heartbeat_rebased:
                 return self._failure(
                     command,
                     request_hash,
@@ -472,7 +510,7 @@ class HomeostasisEngine:
                 now = self._clock()
                 if psychological.created_at > now or now >= psychological.expires_at:
                     return self._failure(command, request_hash, "appraisal is not currently valid", "rejected")
-                if psychological.basis_snapshot_revision != self.snapshot.revision:
+                if psychological.basis_snapshot_revision != self.snapshot.revision and not heartbeat_rebased:
                     return self._failure(command, request_hash, "appraisal basis snapshot revision is stale", "conflict")
                 if self._command_ledger.appraisal_is_committed(
                     episode_id=psychological.episode_id,
@@ -504,7 +542,7 @@ class HomeostasisEngine:
                     )
                 elif "qq_fact" in payload:
                     drive = self.profile.qq_social_drive
-                    if drive is None or not drive.enabled or kind == "heartbeat":
+                    if ((drive is None or not drive.enabled) and self.profile.cognitive_dynamics.mode != "active") or kind == "heartbeat":
                         return self._failure(command, request_hash, "QQ facts require an enabled profile and event/outcome command", "rejected")
                     if "appraisal" in payload or "appraisal" in event:
                         return self._failure(command, request_hash, "QQ facts cannot override their deterministic appraisal", "rejected")
@@ -515,18 +553,83 @@ class HomeostasisEngine:
                     new_fact = previous_fact_hash is None
                     if new_fact and not -5 <= (self._clock() - fact.occurred_at).total_seconds() <= 300:
                         return self._failure(command, request_hash, "QQ fact must be a recent verified event", "rejected")
-                    appraisal = self._qq_fact_appraisal(fact, apply=new_fact,
-                        regulation_feedback=command.payload.get("regulation_feedback") is True)
+                    appraisal = (EventAppraisal(source="verified_outcome", precision=.9, suggested_impacts={})
+                        if self.profile.cognitive_dynamics.mode == "active" else self._qq_fact_appraisal(fact, apply=new_fact,
+                        regulation_feedback=command.payload.get("regulation_feedback") is True))
                     if new_fact and fact.kind in {"verified_message", "verified_interaction", "verified_novelty"}:
                         activity_at = max(activity_at, min(fact.occurred_at, command.issued_at))
+                elif "cognitive_exposure" in payload:
+                    appraisal = EventAppraisal(source="runtime", precision=.8, suggested_impacts={})
                 else:
                     appraisal = self._appraise(event, kind=kind, event_id=command.event_id)
             except ValidationError:
                 return self._failure(command, request_hash, "invalid QQ homeostatic fact or context", "rejected")
-            factors, applied, coupling = self._integrate(
-                appraisal, effective_at, heartbeat=kind == "heartbeat", qq_resting=drive_context.resting,
-            )
-            if psychological is not None:
+            next_dynamics = self._dynamics
+            exposure = None
+            new_exposure = False
+            causal_evidence = []
+            if next_dynamics is not None and self.profile.cognitive_dynamics.mode != "off":
+                next_dynamics = advance(next_dynamics, effective_at, self.profile.cognitive_dynamics)
+                if self.profile.cognitive_dynamics.mode == "shadow" and kind == "heartbeat":
+                    previous_sample = next_dynamics.shadow_last_sample_at
+                    if previous_sample is not None:
+                        gap = max(0, (effective_at-previous_sample).total_seconds())
+                        next_dynamics.shadow_max_gap_seconds = max(next_dynamics.shadow_max_gap_seconds, gap)
+                        next_dynamics.shadow_observed_seconds = next_dynamics.shadow_observed_seconds+gap if gap <= 30 else 0
+                    next_dynamics.shadow_last_sample_at = effective_at
+                    next_dynamics.shadow_samples += 1
+                if "cognitive_exposure" in payload:
+                    try:
+                        exposure = CognitiveExposure.model_validate(payload["cognitive_exposure"])
+                    except ValidationError:
+                        return self._failure(command, request_hash, "invalid cognitive exposure", "rejected")
+                    if fact is not None or psychological is not None or kind == "heartbeat":
+                        return self._failure(command, request_hash, "exposure requires an independent processing receipt", "rejected")
+                    stored_hash = self._command_ledger.exposure_status(exposure.exposure_id)
+                    if stored_hash is not None and stored_hash != exposure.receipt_hash:
+                        return self._failure(command, request_hash, "exposure identity reused with different receipt", "conflict")
+                    new_exposure = stored_hash is None
+                    if new_exposure:
+                        if (self._clock()-exposure.attended_at).total_seconds() < -5:
+                            return self._failure(command, request_hash, "cognitive exposure must describe recent processing", "rejected")
+                        next_dynamics = expose(next_dynamics, exposure, self.profile.cognitive_dynamics,
+                                               repeated_content=self._command_ledger.content_seen(exposure.content_hash))
+                        effective_at = max(effective_at, next_dynamics.updated_at)
+                        if exposure.assessment and exposure.evidence_refs and exposure.context_id != "attention:control" and (effective_at-exposure.attended_at).total_seconds() <= 300:
+                            # Immutable causal content is also a dedup key: changing
+                            # command/appraisal IDs cannot manufacture new evidence.
+                            refs = [*exposure.evidence_refs, "content:" + exposure.content_hash]
+                            eligible = self._command_ledger.eligible_affect_dimensions(refs, set(exposure.assessment.impacts))
+                            next_dynamics = appraise_dynamics(next_dynamics, effective_at,
+                                exposure.assessment.impacts, exposure.assessment.confidence,
+                                self.profile.cognitive_dynamics, eligible_dimensions=eligible)
+                            causal_evidence = [(ref, dimension) for ref in refs for dimension in eligible]
+                if psychological is not None:
+                    eligible = self._command_ledger.eligible_affect_dimensions(
+                        psychological.observed_event_refs, set(psychological.suggested_impacts).intersection(PSYCHOLOGICAL))
+                    if any(ref.startswith("qq-attention:") for ref in psychological.observed_event_refs):
+                        eligible = set()
+                    next_dynamics = appraise_dynamics(next_dynamics, effective_at,
+                        psychological.suggested_impacts, psychological.model_confidence, self.profile.cognitive_dynamics,
+                        eligible_dimensions=eligible,
+                        verified_outcome=(psychological.appraisal_kind == "event_interpretation"
+                            and bool(set(psychological.observed_event_refs).intersection(trusted.verified_outcome_refs))))
+                    causal_evidence = [(ref, dimension) for ref in psychological.observed_event_refs for dimension in eligible]
+            shadow_only = self.profile.cognitive_dynamics.mode == "shadow" and (
+                "cognitive_exposure" in payload or command.payload.get("passive_only") is True or payload.get("passive_only") is True)
+            if shadow_only:
+                factors = dict(self.snapshot.dimensions)
+                applied = {k: 0.0 for k in DIMENSIONS}
+                coupling = dict(applied)
+            elif self.profile.cognitive_dynamics.mode == "active":
+                factors = self._dynamics_factors(next_dynamics, effective_at)
+                applied = {k: factors[k].value-self.snapshot.dimensions[k].value for k in DIMENSIONS}
+                coupling = {k: 0.0 for k in DIMENSIONS}
+            else:
+                factors, applied, coupling = self._integrate(
+                    appraisal, effective_at, heartbeat=kind == "heartbeat", qq_resting=drive_context.resting,
+                )
+            if psychological is not None and self.profile.cognitive_dynamics.mode != "active":
                 # Model suggestions may affect only the six psychological
                 # dimensions. Cross-factor coupling cannot modify energy or
                 # relabel its authoritative evidence/precision either.
@@ -537,10 +640,14 @@ class HomeostasisEngine:
                 factors,
                 heartbeat=kind == "heartbeat",
             )
+            if shadow_only:
+                boundary_streaks, boundary_sides = dict(self._boundary_heartbeat_streaks), dict(self._boundary_heartbeat_sides)
             watchdog = self._watchdog(factors, boundary_streaks)
+            if shadow_only:
+                watchdog = list(self.snapshot.watchdog)
             revision = self.snapshot.revision + 1
-            heartbeat_at = effective_at if kind == "heartbeat" else self.snapshot.last_heartbeat_at
-            candidates = self._rank_policies(factors)
+            heartbeat_at = effective_at if kind == "heartbeat" and not shadow_only else self.snapshot.last_heartbeat_at
+            candidates = self._rank_policies(factors, dynamics=next_dynamics)
             affect = self._derive_affect(factors)
             salience = derive_homeostatic_salience(
                 self.profile,
@@ -562,8 +669,14 @@ class HomeostasisEngine:
                 candidates=candidates,
                 watchdog=watchdog,
                 salience=salience,
+                dynamics=next_dynamics,
             )
+            if shadow_only:
+                affect, emotion, candidates = self.snapshot.core_affect, self.snapshot.emotion, self.snapshot.candidates
+                summary = self.snapshot.interoceptive_summary.model_copy(update={"snapshot_revision": revision})
             next_snapshot = HomeostaticSnapshot(
+                dynamics=self._dynamics_view(next_dynamics),
+                regulation_pressure=next_dynamics.pressure() if next_dynamics else {},
                 revision=revision,
                 profile_id=self.profile.profile_id,
                 profile_revision=self.profile.revision,
@@ -624,6 +737,8 @@ class HomeostasisEngine:
                     "appraisal_id": psychological.appraisal_id,
                     "appraisal_kind": psychological.appraisal_kind,
                     "basis_snapshot_revision": psychological.basis_snapshot_revision,
+                    "applied_to_revision": self.snapshot.revision,
+                    "heartbeat_rebased": heartbeat_rebased,
                     "evidence_set_hash": psychological.evidence_set_hash,
                     "model_confidence": psychological.model_confidence,
                     "effective_precision": appraisal.precision,
@@ -650,6 +765,7 @@ class HomeostasisEngine:
                         boundary_streaks,
                         boundary_sides,
                         qq_activity_at=activity_at,
+                        dynamics_state=next_dynamics,
                     ),
                     trace=trace.model_dump(mode="json"),
                     qq_fact=(fact.fact_key, fact.fact_hash) if fact is not None and new_fact else None,
@@ -658,18 +774,41 @@ class HomeostasisEngine:
                          psychological.observed_event_refs)
                         if psychological is not None else None
                     ),
+                    cognitive_exposure=(exposure.exposure_id, exposure.receipt_hash, exposure.content_hash) if new_exposure else None,
+                    causal_evidence=causal_evidence,
                 )
             except (CommandLedgerConflictError, StaleSnapshotError):
                 if psychological is None:
                     raise
                 return self._failure(command, request_hash, "appraisal state or semantic evidence changed during commit", "conflict")
             self.snapshot = next_snapshot
+            self._dynamics = next_dynamics
             self._qq_activity_at = activity_at
             self._boundary_heartbeat_streaks = boundary_streaks
             self._boundary_heartbeat_sides = boundary_sides
             self._project_snapshot_mirror()
             self._project_trace(trace)
             return result
+
+    def _dynamics_view(self, state):
+        return state.view(self.profile.cognitive_dynamics.mode, habituation_seconds=self.profile.cognitive_dynamics.habituation_seconds) if state and self.profile.cognitive_dynamics.mode != "off" else None
+
+    def _dynamics_factors(self, state, at):
+        factors = dict(self.snapshot.dimensions)
+        for name, value in state.values().items():
+            old = factors[name]
+            band = self.profile.dimensions[name].baseline_band
+            if name == "cognitive_load" or (name == "novelty" and (
+                    state.boredom < .5 or state.fatigue >= .5 or state.load >= .45 or not state.wants_engagement)):
+                band = (0.0, band[1])
+            factors[name] = old.model_copy(update={"value": value, "velocity": value-old.value,
+                "posterior": self._posterior(value, band), "target_band": band, "updated_at": at})
+        energy = factors["energy_reserve"]
+        previous_at = self._dynamics.updated_at if self._dynamics else self.snapshot.updated_at
+        stale_after = energy.updated_at+timedelta(seconds=self.profile.cognitive_dynamics.sensor_stale_seconds)
+        stale_elapsed = max(0, (at-max(previous_at, stale_after)).total_seconds())
+        factors["energy_reserve"] = energy.model_copy(update={"precision": energy.precision*math.exp(-stale_elapsed/3600), "velocity": 0.0})
+        return factors
 
     def _qq_fact_appraisal(self, fact: QQHomeostaticFact, *, apply: bool, regulation_feedback: bool = False) -> EventAppraisal:
         drive = self.profile.qq_social_drive
@@ -969,8 +1108,9 @@ class HomeostasisEngine:
         candidates: list[PolicyCandidate],
         watchdog: list[str],
         salience: HomeostaticSalience | None = None,
+        dynamics: DynamicsState | None = None,
     ) -> HomeostaticInteroceptiveSummary:
-        return build_interoceptive_summary(
+        summary = build_interoceptive_summary(
             self.profile,
             revision=revision,
             factors=factors,
@@ -981,6 +1121,11 @@ class HomeostasisEngine:
             previous_salience=self._previous_salience(),
             salience=salience,
         )
+        dynamics = dynamics or self._dynamics
+        if self.profile.cognitive_dynamics.mode == "active" and dynamics:
+            summary = summary.model_copy(update={"schema_version": "homeostatic-interoception-v2",
+                "regulation_pressure": dynamics.pressure(), "fatigue": dynamics.fatigue, "boredom": dynamics.boredom})
+        return summary
 
     def _enrich_replay(
         self,
@@ -1047,7 +1192,7 @@ class HomeostasisEngine:
             }
         )
 
-    def _rank_policies(self, factors: dict[DimensionName, FactorBelief]) -> list[PolicyCandidate]:
+    def _rank_policies(self, factors: dict[DimensionName, FactorBelief], *, dynamics=None) -> list[PolicyCandidate]:
         actions: dict[DimensionName, tuple[str, str, dict[DimensionName, float]]] = {
             "energy_reserve": ("rest", "降低交互强度并恢复资源", {"energy_reserve": 0.10, "cognitive_load": -0.05}),
             "cognitive_load": ("simplify", "分解当前任务并降低刺激", {"cognitive_load": -0.10, "competence": 0.02}),
@@ -1067,6 +1212,15 @@ class HomeostasisEngine:
             error = max(low - factor.value, factor.value - high, 0.0)
             weight = spec.lower_weight if factor.value < low else spec.upper_weight
             action = actions[dimension]
+            if self.profile.cognitive_dynamics.mode == "active":
+                dynamics = dynamics or self._dynamics
+                if dimension == "cognitive_load" and factor.value <= high:
+                    continue
+                if dimension == "novelty" and factor.value < low and (not dynamics or dynamics.boredom < .5
+                        or dynamics.fatigue >= .5 or dynamics.load >= .45 or not dynamics.wants_engagement):
+                    continue
+                if error <= 0:
+                    continue
             if factor.value > high and dimension == "social_connection":
                 action = ("quiet", "降低社交密度并留出独处空间", {"social_connection": -0.10})
             elif factor.value > high and dimension == "novelty":
@@ -1108,7 +1262,7 @@ class HomeostasisEngine:
         dict[DimensionName, int],
         dict[DimensionName, Literal["low", "high"]],
     ]:
-        if self.profile.watchdog_boundary_heartbeats is None:
+        if self.profile.cognitive_dynamics.mode == "active" or self.profile.watchdog_boundary_heartbeats is None:
             return {}, {}
         previous = self._boundary_heartbeat_streaks
         previous_sides = self._boundary_heartbeat_sides
@@ -1144,10 +1298,10 @@ class HomeostasisEngine:
         for dimension, factor in factors.items():
             if not math.isfinite(factor.value):
                 reasons.append(f"{dimension}:non_finite")
-            if max(factor.posterior.values()) > 0.999999:
+            if self.profile.cognitive_dynamics.mode != "active" and max(factor.posterior.values()) > 0.999999:
                 reasons.append(f"{dimension}:posterior_saturated")
             threshold = self.profile.watchdog_boundary_heartbeats
-            if threshold is not None and boundary_streaks.get(dimension, 0) >= threshold:
+            if self.profile.cognitive_dynamics.mode != "active" and threshold is not None and boundary_streaks.get(dimension, 0) >= threshold:
                 reasons.append(f"{dimension}:hard_bound_sustained")
         return reasons
 
@@ -1185,7 +1339,7 @@ class HomeostasisEngine:
                 }
             )
         affect = self._derive_affect(factors)
-        watchdog = list(self.snapshot.watchdog)
+        watchdog = self._watchdog(factors, {}) if self.profile.cognitive_dynamics.mode == "active" else list(self.snapshot.watchdog)
         salience = derive_homeostatic_salience(
             self.profile,
             factors,
@@ -1224,6 +1378,8 @@ class HomeostasisEngine:
                 ),
                 "watchdog": watchdog,
                 "interoceptive_summary": summary,
+                "dynamics": self._dynamics_view(self._dynamics),
+                "regulation_pressure": self._dynamics.pressure() if self._dynamics else {},
             }
         )
         self._persist()
@@ -1231,14 +1387,17 @@ class HomeostasisEngine:
     def _upgrade_legacy_snapshot_schema(self) -> None:
         """Materialize a v2 summary once without modifying factor evidence."""
 
-        if self.snapshot.interoceptive_summary is not None:
+        if (self.snapshot.interoceptive_summary is not None and self._loaded_snapshot_schema == "homeostasis-state-v3"
+                and (self.snapshot.dynamics or {}).get("mode", "off") == self.profile.cognitive_dynamics.mode
+                and (self.profile.cognitive_dynamics.mode == "off" or self.snapshot.dynamics is not None)):
             return
         factors = self.snapshot.dimensions
+        watchdog = self._watchdog(factors, {}) if self.profile.cognitive_dynamics.mode == "active" else self.snapshot.watchdog
         affect = self._derive_affect(factors)
         salience = derive_homeostatic_salience(
             self.profile,
             factors,
-            watchdog=self.snapshot.watchdog,
+            watchdog=watchdog,
         )
         emotion = self._derive_emotion(
             affect,
@@ -1254,7 +1413,7 @@ class HomeostasisEngine:
             affect=affect,
             emotion=emotion,
             candidates=candidates,
-            watchdog=self.snapshot.watchdog,
+            watchdog=watchdog,
             salience=salience,
         )
         self.snapshot = self.snapshot.model_copy(
@@ -1264,8 +1423,11 @@ class HomeostasisEngine:
                 "emotion": emotion,
                 "candidates": candidates,
                 "interoceptive_summary": summary,
+                "watchdog": watchdog,
+                "dynamics": self._dynamics_view(self._dynamics),
+                "regulation_pressure": self._dynamics.pressure() if self._dynamics else {},
                 "stable_snapshot_ref": (
-                    f"snapshot://{self.profile.profile_id}/schema-migration-v2"
+                    f"snapshot://{self.profile.profile_id}/schema-migration-v3"
                     if not self.snapshot.watchdog
                     else self.snapshot.stable_snapshot_ref
                 ),
@@ -1276,10 +1438,15 @@ class HomeostasisEngine:
     def _load(self) -> None:
         stored_snapshot = self._command_ledger.load_snapshot()
         if stored_snapshot is not None:
+            self._loaded_snapshot_schema = stored_snapshot.get("schema_version", "homeostasis-state-v1")
             self.snapshot = HomeostaticSnapshot.model_validate(stored_snapshot)
         elif self.state_path.is_file():
-            self.snapshot = HomeostaticSnapshot.model_validate_json(self.state_path.read_text(encoding="utf-8"))
+            stored_snapshot = json.loads(self.state_path.read_text(encoding="utf-8"))
+            self._loaded_snapshot_schema = stored_snapshot.get("schema_version", "homeostasis-state-v1")
+            self.snapshot = HomeostaticSnapshot.model_validate(stored_snapshot)
         engine_state = self._command_ledger.load_engine_state()
+        if engine_state.get("cognitive_dynamics") is not None:
+            self._dynamics = DynamicsState.model_validate(engine_state["cognitive_dynamics"])
         if engine_state.get("qq_activity_at") is not None:
             self._qq_activity_at = _aware(engine_state["qq_activity_at"], self.snapshot.updated_at)
         else:
@@ -1324,6 +1491,7 @@ class HomeostasisEngine:
         boundary_sides: dict[DimensionName, Literal["low", "high"]],
         *,
         qq_activity_at: datetime | None = None,
+        dynamics_state: DynamicsState | None = None,
     ) -> dict[str, Any]:
         result: dict[str, Any] = {
             "boundary_heartbeat_streaks": dict(boundary_streaks),
@@ -1331,6 +1499,9 @@ class HomeostasisEngine:
         }
         if self.profile.qq_social_drive is not None and self.profile.qq_social_drive.enabled:
             result["qq_activity_at"] = (qq_activity_at or self._qq_activity_at).isoformat()
+        dynamics_state = dynamics_state or self._dynamics
+        if dynamics_state is not None:
+            result["cognitive_dynamics"] = dynamics_state.model_dump(mode="json")
         return result
 
     def _project_snapshot_mirror(self) -> None:

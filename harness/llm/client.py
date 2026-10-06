@@ -177,6 +177,15 @@ def _record_provider_response(span: dict[str, Any], body: Any, messages: list[di
     """Retain returned usage even if response validation/deadline rejects it."""
     if not isinstance(body, dict):
         return
+    try:
+        content = body["choices"][0]["message"]["content"]
+        if isinstance(content, str) and content.lstrip().startswith("{"):
+            interpretation = json.loads(content).get("attention_assessment")
+            if interpretation is not None:
+                from harness.homeostasis.dynamics import AttentionAssessment
+                span["attention_assessment"] = AttentionAssessment.model_validate(interpretation).model_dump(mode="json")
+    except (ValueError, TypeError, KeyError, IndexError):
+        pass
     model = body.get("model")
     if isinstance(model, str) and re.fullmatch(r"[A-Za-z0-9_.:/-]{1,200}", model):
         span["response_model"] = model

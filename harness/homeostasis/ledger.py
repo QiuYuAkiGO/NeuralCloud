@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from contextlib import closing
 from collections import OrderedDict
 from copy import deepcopy
 from pathlib import Path
@@ -151,6 +152,21 @@ class CommandLedger:
             raise CommandLedgerError("stored engine state must be an object")
         return payload
 
+    def exposure_status(self, exposure_id: str):
+        with closing(self._connect()) as connection:
+            row = connection.execute("SELECT receipt_hash FROM cognitive_exposures WHERE exposure_id=?", (exposure_id,)).fetchone()
+        return row[0] if row else None
+
+    def content_seen(self, content_hash: str) -> bool:
+        with closing(self._connect()) as connection:
+            return connection.execute("SELECT 1 FROM cognitive_content WHERE content_hash=?", (content_hash,)).fetchone() is not None
+
+    def eligible_affect_dimensions(self, references, dimensions):
+        with closing(self._connect()) as connection:
+            return {dimension for dimension in dimensions if not any(connection.execute(
+                "SELECT 1 FROM psychological_causal_evidence WHERE evidence_ref=? AND dimension=?", (ref, dimension)
+            ).fetchone() for ref in references)}
+
     def load_trace(self, revision: int) -> dict[str, Any] | None:
         connection = self._connect()
         try:
@@ -202,6 +218,8 @@ class CommandLedger:
         trace: dict[str, Any],
         qq_fact: tuple[str, str] | None = None,
         psychological_appraisal: tuple[str, str, str, list[str]] | None = None,
+        cognitive_exposure: tuple[str, str, str] | None = None,
+        causal_evidence: list[tuple[str, str]] | None = None,
     ) -> None:
         validated_result = DomainCommandResult[dict[str, Any]].model_validate(result)
         validated_snapshot = HomeostaticSnapshot.model_validate(snapshot)
@@ -283,6 +301,19 @@ class CommandLedger:
                     )
                 except sqlite3.IntegrityError as exc:
                     raise CommandLedgerConflictError("psychological appraisal already committed") from exc
+            if cognitive_exposure is not None:
+                exposure_id, receipt_hash, content_hash = cognitive_exposure
+                try:
+                    connection.execute("INSERT INTO cognitive_exposures VALUES (?,?,?)", (exposure_id, receipt_hash, revision))
+                except sqlite3.IntegrityError as exc:
+                    raise CommandLedgerConflictError("cognitive exposure already committed") from exc
+                connection.execute("INSERT OR IGNORE INTO cognitive_content VALUES (?,?)", (content_hash, revision))
+            if causal_evidence:
+                try:
+                    connection.executemany("INSERT INTO psychological_causal_evidence VALUES (?,?,?)",
+                                           [(ref, dim, revision) for ref, dim in causal_evidence])
+                except sqlite3.IntegrityError as exc:
+                    raise CommandLedgerConflictError("causal evidence already appraised") from exc
             connection.commit()
         except Exception:
             connection.rollback()
@@ -365,6 +396,16 @@ class CommandLedger:
             (revision, encoded_snapshot, encoded_engine_state),
         )
 
+    def heartbeat_only_between(self, after: int, through: int) -> bool:
+        """Prove a bounded, contiguous revision interval contains only drift."""
+        if not 0 < through - after <= 64:
+            return False
+        with closing(self._connect()) as connection:
+            rows = connection.execute("SELECT revision,trace_json FROM transition_traces WHERE revision>? AND revision<=? ORDER BY revision",
+                                      (after, through)).fetchall()
+        return (len(rows) == through - after and all(revision == after + index + 1
+            and json.loads(raw).get("command_type") == "ApplyHeartbeat" for index, (revision, raw) in enumerate(rows)))
+
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.path, timeout=30.0)
         connection.execute("PRAGMA busy_timeout=30000")
@@ -386,6 +427,9 @@ class CommandLedger:
             connection.execute("PRAGMA journal_mode=WAL")
             connection.execute("PRAGMA synchronous=FULL")
             with connection:
+                connection.execute("CREATE TABLE IF NOT EXISTS cognitive_exposures(exposure_id TEXT PRIMARY KEY,receipt_hash TEXT NOT NULL,revision INTEGER NOT NULL)")
+                connection.execute("CREATE TABLE IF NOT EXISTS cognitive_content(content_hash TEXT PRIMARY KEY,revision INTEGER NOT NULL)")
+                connection.execute("CREATE TABLE IF NOT EXISTS psychological_causal_evidence(evidence_ref TEXT NOT NULL,dimension TEXT NOT NULL,revision INTEGER NOT NULL,PRIMARY KEY(evidence_ref,dimension))")
                 connection.execute(
                     """
                     CREATE TABLE IF NOT EXISTS command_results (
@@ -457,6 +501,9 @@ class CommandLedger:
                        ORDER BY p.revision"""
                 ).fetchall():
                     prior = HomeostaticTransitionTrace.model_validate_json(trace_json)
+                    connection.executemany("INSERT OR IGNORE INTO psychological_causal_evidence VALUES (?,?,?)",
+                        [(ref, dim, revision) for ref in prior.evidence_refs
+                         for dim in prior.suggested_impacts if dim in {"safety_predictability", "competence", "autonomy", "social_connection"}])
                     connection.executemany(
                         """INSERT OR IGNORE INTO psychological_appraisal_evidence
                            (episode_id, evidence_ref, appraisal_id, revision) VALUES (?, ?, ?, ?)""",

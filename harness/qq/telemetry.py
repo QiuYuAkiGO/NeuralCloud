@@ -29,6 +29,7 @@ _QQ_ERRORS = frozenset({"capability_unavailable", "required_capability_unavailab
     "chat_context_changed", "active_scope_changed", "scope_not_allowed", "request_expired",
     "request_time_invalid", "provider_activation_changed", "provider_not_activated", "driver_operation_busy"})
 _DIRECT_ERRORS = frozenset({
+    "attention_closed", "attention_deferred", "attention_policy_changed", "attention_backlog",
     "direct_owner_unavailable", "direct_group_read_only", "direct_delivery_unknown", "direct_newer_context",
     "direct_frozen_plan_mismatch", "direct_send_budget_insufficient", "direct_decision_source_mismatch",
     "onebot_disconnected", "onebot_request_timeout", "onebot_action_failed", "onebot_invalid_result",
@@ -44,6 +45,7 @@ _DIRECT_TERMINAL_REASONS = _ERRORS | {
     "natural_wait", "guard_wait", "decision_replayed", "decision_not_sendable", "direct_cooldown",
 }
 _DIRECT_TERMINAL_STAGES = frozenset({
+    "protocol.attention",
     "protocol.read", "protocol.precheck", "protocol.shared_prepare", "protocol.decision", "protocol.delivery",
 })
 _NAME = re.compile(r"^[a-z][a-z0-9_.-]{0,63}$")

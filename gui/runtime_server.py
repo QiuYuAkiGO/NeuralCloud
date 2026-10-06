@@ -528,6 +528,14 @@ def create_app(*, runtime_url: str | None = None, control_token: str | None = No
     async def homeostasis_profile(request: Request) -> Any:
         return await gateway(request).request("GET", "/v1/homeostasis/profile")
 
+    @app.get("/api/qq/attention")
+    async def qq_attention(request: Request) -> Any:
+        return await gateway(request).request("GET", "/v1/qq/attention")
+
+    @app.post("/api/qq/attention")
+    async def qq_attention_override(request: Request) -> Any:
+        return await gateway(request).request("POST", "/v1/qq/attention", json=await _json_body(request))
+
     @app.post("/api/homeostasis/profile/validate")
     async def validate_profile(request: Request) -> Any:
         return await gateway(request).request(

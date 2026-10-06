@@ -30,7 +30,7 @@ _DIGEST = re.compile(r"[0-9a-f]{64}\Z")
 _ROLE = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9_.-]{0,95}\Z")
 _SQLITE_HEADER = b"SQLite format 3\x00"
 _PATH_KEYS = {
-    "memory_db", "state_db", "token_file", "manifest_path", "profile_path", "source_path",
+    "memory_db", "state_db", "attention_db", "token_file", "manifest_path", "profile_path", "source_path",
     "state_root", "config_root", "log_root", "evidence_dir", "image_cache_dir",
     "allowed_local_image_roots", "session_config_path", "model_config_path", "preset_path",
     "watcher_status_file", "direct_status_file", "homeostasis_profile_path", "homeostasis_state_dir",
@@ -39,7 +39,7 @@ _PATH_KEYS = {
     "api_key_file", "queue_path",
 }
 _BINDING_PATHS = {
-    "NC_GUI_CONFIG", "NC_GUI_PRESETS", "NC_COGNITIVE_STATE_PATH", "NC_COGNITIVE_AUTONOMOUS_LOG_DIR",
+    "NC_GUI_CONFIG", "NC_GUI_PRESETS", "NC_COGNITIVE_STATE_PATH", "NC_COGNITIVE_AUTONOMOUS_LOG_DIR", "NC_COGNITIVE_WORK_DB",
     "NC_RUNTIME_STATE_DIR", "NC_HOMEOSTASIS_STATE_DIR", "NC_SHARED_MEMORY_DB", "NC_QQ_SESSION_CONFIG",
     "NC_QQ_WATCHER_CONFIG", "NC_QQ_DIRECT_CONFIG", "NC_CONTROL_TOKEN_FILE", "NC_SERVICE_TOKEN_FILE",
     "NC_BOARD_CONFIG", "NC_VOICE_CONFIG", "NC_WEB_CONFIG", "NC_CALL_LOG_DIR", "NC_RUNTIME_MANIFEST_PATH",
@@ -534,6 +534,7 @@ def discover_shared_sources(
         add("homeostasis-parent", Path(homeostasis).parent, "state/homeostasis", required=False, reference_only=True)
         add("qq-feedback", Path(homeostasis).parent / "qq-feedback.sqlite3", "state/homeostasis/qq-feedback.sqlite3", required=False)
     add("shared-memory", bindings.get("NC_SHARED_MEMORY_DB"), "state/shared-memory.sqlite3")
+    add("cognitive-work", bindings.get("NC_COGNITIVE_WORK_DB"), "state/cognitive-work.sqlite3", required=False)
     add("homeostasis-revisions", bindings.get("NC_PROFILE_REVISION_DIR", repo / "data/homeostasis/profiles"),
         "state/homeostasis/profiles", required=False)
     add("manifest-revisions", bindings.get("NC_MANIFEST_REVISION_DIR", repo / "data/runtime/manifests"),
@@ -605,6 +606,8 @@ def discover_shared_sources(
                 if baseline:
                     add("qq-watcher-baseline", baseline, f"state/qq-watcher/{Path(baseline).name}")
             elif role == "qq-direct":
+                attention = Path(payload.get("attention_db") or state_path.with_name("attention.sqlite3"))
+                add("qq-attention", attention, "state/qq-direct/attention.sqlite3", required=False)
                 trace = state_path.with_suffix(".trace.jsonl")
                 add("qq-direct-trace", trace, f"state/qq-direct/{trace.name}", required=False)
             if role in {"qq-direct", "qq-watcher"} and not payload.get("control_file"):

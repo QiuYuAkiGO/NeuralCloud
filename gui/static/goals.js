@@ -105,6 +105,7 @@ const GoalView = (() => {
     card.append(heading);
     if (array(episode.target_dimensions).length) card.append(node("p", `关注：${episode.target_dimensions.map(key => dimensionLabels[key] || key).join(" · ")}`, "meta"));
     metadata(episode, card);
+    if (episode.evaluation_started_at) card.append(node("p", `本次计划评价起点：${time(episode.evaluation_started_at)}`, "meta"));
     if (episode.end_reason) card.append(node("p", `结束原因：${words(episode.end_reason)}`, "meta"));
     if (episode.effect_status === "pending") card.append(node("p", "行动已结束，调节效果仍在复查。", "meta"));
     if (array(episode.steps).length) {
@@ -138,11 +139,13 @@ const GoalView = (() => {
     heading.append(node("h3", time(review.at)), badge(review.outcome || review.status));
     card.append(heading);
     if (review.episode_id) card.append(node("p", `调节记录：${review.episode_id}`, "meta"));
+    card.append(node("p", "此结果比较当前计划的起始状态，不代表每次复查都再次改善或恶化。", "meta"));
+    if (review.interval_outcome) card.append(node("p", `与上次观测比较：${statusLabels[review.interval_outcome] || review.interval_outcome}`, "meta"));
     const before = object(review.before), after = object(review.after);
     const dimensions = [...new Set([...Object.keys(before), ...Object.keys(after)])];
     if (dimensions.length) {
       const trends = node("div", undefined, "result-group");
-      trends.append(node("h4", "代理状态 · 行动前 → 复查时"));
+      trends.append(node("h4", "代理状态 · 计划起点 → 复查时"));
       for (const key of dimensions) {
         const row = node("div", undefined, "trend");
         const delta = typeof before[key] === "number" && typeof after[key] === "number" ? after[key] - before[key] : null;
@@ -201,6 +204,11 @@ const GoalView = (() => {
       schedule.append(node("dt", label), node("dd", value == null ? "未提供" : value));
     }
     el("schedule").replaceChildren(schedule, node("p", "此预算统计目标评估；各渠道另有既有的执行期限与冷却。", "meta"), node("p", `下次复查：${time(snapshot.next_review_at)}`, "schedule-next"));
+    for (const fault of array(snapshot.health?.request_faults)) {
+      el("schedule").append(node("p", `自主请求受阻：${fault.code}。已停止重复尝试，等待请求契约或配置修复。`, "error"));
+    }
+    if (snapshot.activity_metrics) el("schedule").append(node("p",
+      `最近一小时：${snapshot.activity_metrics.attempts} 次机会，${snapshot.activity_metrics.valid_decisions} 次有效决策。`, "meta"));
     if (budget.next_available_at) el("schedule").append(node("p", `预算可用时间：${time(budget.next_available_at)}`, "meta"));
     el("create").disabled = !writable.enabled || Boolean(options.busy);
   }

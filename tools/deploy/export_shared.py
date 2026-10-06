@@ -55,6 +55,7 @@ def main(argv: list[str] | None = None) -> int:
                     if key in _BINDING_PATHS and value is not None}
         state_root = Path(expand(profile.get("state_root") or "data"))
         bindings.setdefault("NC_COGNITIVE_STATE_PATH", str(state_root / "cognitive/state.json"))
+        bindings.setdefault("NC_COGNITIVE_WORK_DB", str(state_root / "cognitive-work.sqlite3"))
         bindings.setdefault("NC_RUNTIME_STATE_DIR", str(state_root / "runtime"))
         bindings.setdefault("NC_HOMEOSTASIS_STATE_DIR", str(state_root / "homeostasis"))
         bindings["NC_RUNTIME_MANIFEST_PATH"] = expand(profile["manifest_path"])

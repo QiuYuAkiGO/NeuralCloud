@@ -18,6 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_vali
 
 from harness.qq.conversation import QQConversationID, conversation_scope
 from harness.qq.direct_config import DirectQQSettings
+from harness.qq.attention import ATTENTION_SET, AttentionArguments, AttentionStore, attention_path, text_units
 from harness.qq.direct_store import canonical, normalize_evidence
 from harness.qq.feedback import _readonly
 from harness.qq.memory import QQID, QQVerifiedProfile, QQVisualObservation, _history_match, _normalized_text, _query_terms
@@ -78,6 +79,88 @@ class QQDirectCapabilityBridge:
         owner = getattr(self.supervisor, "capabilities", None)
         return (owner.owner("qq") if owner is not None else "legacy", getattr(owner, "generation", 0))
 
+    def attention_store(self):
+        settings = DirectQQSettings.read(self.config_path)
+        if settings.self_member_id != self.config.self_member_id:
+            raise ValueError("attention_scope_not_authorized")
+        return AttentionStore(attention_path(settings), clock=self.clock)
+
+    def _attention_check(self, settings, group_id, *, revision=None):
+        policy = AttentionStore(attention_path(settings), clock=getattr(self, "clock", None))
+        reason = policy.check(group_id, revision=revision)
+        if reason:
+            raise ValueError(reason)
+        return policy.get(group_id)["revision"] if group_id.isdigit() else 0
+
+    def attention_outcomes(self):
+        """Operator-only counters; closed message bodies are never read."""
+        settings = DirectQQSettings.read(self.config_path)
+        result = {"model_wait": 0, "runtime_failure": 0, "guard_wait": 0}
+        if not settings.state_db.exists():
+            return result
+        with closing(_readonly(settings.state_db)) as db:
+            rows = db.execute("SELECT state,terminal_reason,COUNT(*) AS count FROM qq_direct_events "
+                "WHERE self_id=? AND received_at>=? GROUP BY state,terminal_reason",
+                (settings.self_member_id, (self.clock()-timedelta(hours=1)).isoformat()))
+            for row in rows:
+                if row["terminal_reason"] == "natural_wait":
+                    result["model_wait"] += row["count"]
+                elif row["terminal_reason"] == "guard_wait":
+                    result["guard_wait"] += row["count"]
+                elif row["state"] == "failed":
+                    result["runtime_failure"] += row["count"]
+        return result
+
+    def attention_catalog(self):
+        owner, generation = self._ownership()
+        if owner != "shared":
+            return []
+        settings = DirectQQSettings.read(self.config_path)
+        if not settings.enabled or settings.self_member_id != self.config.self_member_id:
+            return []
+        store = self.attention_store()
+        offers = []
+        for group in settings.group_roster:
+            if not group.observe or group.group_id not in self.config.allowed_group_ids:
+                continue
+            policy = store.get(group.group_id)
+            offers.append({"offer_id": "qq-attention:"+group.group_id, "channel": "qq", "capability_id": ATTENTION_SET,
+                "provider_id": "qq-onebot", "body_instance_id": "qq-onebot:"+settings.self_member_id,
+                "scope": QQDirectReadScope(group_id=group.group_id, self_member_id=settings.self_member_id).model_dump(mode="json"),
+                "activation_revision": f"attention:{generation}:{policy['revision']}",
+                "input_schema": AttentionArguments.model_json_schema(), "observation_refs": [],
+                "supported": True, "available": True, "ready": True,
+                "valid_until": (self.clock()+timedelta(seconds=60)).isoformat(),
+                "observation": {"group_label": group.label, "attention_policy": policy,
+                    "effect": "change_local_group_reception_without_sending_or_reading_messages"}})
+        return offers
+
+    def enqueue_attention(self, row):
+        args = AttentionArguments.model_validate(row.get("arguments", {}))
+        owner, generation = self._ownership()
+        scope = QQDirectReadScope.model_validate(row["scope"])
+        if (owner != "shared" or generation != row["generation"] or args.group_id != scope.group_id
+                or row["capability_id"] != ATTENTION_SET or self.clock() >= _time(row["deadline_at"])):
+            raise ValueError("attention_scope_not_authorized")
+        settings = DirectQQSettings.read(self.config_path)
+        if scope.self_member_id != settings.self_member_id or settings.self_member_id != self.config.self_member_id or not settings.enabled:
+            raise ValueError("attention_scope_not_authorized")
+        activation = row.get("activation_revision") or row.get("offer", {}).get("activation_revision", "")
+        prefix = f"attention:{generation}:"
+        if not activation.startswith(prefix):
+            raise ValueError("attention_policy_changed")
+        revision = int(activation[len(prefix):])
+        receipt = self.attention_store().set(args, origin="model", action_id=row["opportunity_id"], expected_revision=revision,
+            allowed_groups={g.group_id for g in settings.group_roster if g.observe and g.group_id in self.config.allowed_group_ids})
+        self.notify_attention(receipt)
+        return {"opportunity_id": row["opportunity_id"], "status": "completed", "receipt": receipt,
+                "evidence_refs": [receipt["evidence_ref"]]}
+
+    def notify_attention(self, receipt):
+        ingress = getattr(self.supervisor, "qq_turn_ingress", None)
+        if ingress is not None and receipt["current"]["mode"] == "closed":
+            ingress.close_group(receipt["current"]["group_id"])
+
     def _active(self):
         settings = DirectQQSettings.read(self.config_path)
         if (not settings.enabled or settings.self_member_id != self.config.self_member_id
@@ -116,6 +199,7 @@ class QQDirectCapabilityBridge:
         elif (scope.group_id not in self.config.allowed_group_ids
                 or not any(group.observe and group.group_id == scope.group_id for group in settings.group_roster)):
             raise ValueError("direct_read_scope_invalid")
+        self._attention_check(settings, scope.group_id)
         return conversation
 
     def _metadata(self, settings, group_id):
@@ -128,17 +212,25 @@ class QQDirectCapabilityBridge:
         owner, generation = self._ownership()
         if owner != "shared":
             return []
+        control_offers = []
         try:
+            snapshot = getattr(getattr(self.supervisor, "_homeostasis_snapshot", None), "payload", {})
+            snapshot = snapshot.get("snapshot", snapshot)
+            if (snapshot.get("dynamics") or {}).get("mode") == "active":
+                control_offers = self.attention_catalog()
             settings, status = self._active()
-            offers = []
+            offers = list(control_offers)
             for group in settings.group_roster:
                 if not group.observe:
+                    continue
+                policy = self.attention_store().get(group.group_id)
+                if policy["mode"] == "closed":
                     continue
                 scope = QQDirectReadScope(group_id=group.group_id, self_member_id=settings.self_member_id)
                 key = hashlib.sha256(canonical(scope.model_dump(mode="json")).encode()).hexdigest()
                 offers.append({"offer_id": "qq-onebot:" + key + ":read", "channel": "qq", "capability_id": READ,
                     "provider_id": "qq-onebot", "body_instance_id": "qq-onebot:" + settings.self_member_id,
-                    "scope": scope.model_dump(mode="json"), "activation_revision": f"{status['run_id']}:{generation}",
+                    "scope": scope.model_dump(mode="json"), "activation_revision": f"{status['run_id']}:{generation}"+(f":{policy['revision']}" if policy["revision"] else ""),
                     "input_schema": QQDirectReadArguments.model_json_schema(), "observation_refs": [],
                     "supported": True, "available": True, "ready": True,
                     "valid_until": (self.clock() + timedelta(seconds=10)).isoformat(),
@@ -153,6 +245,8 @@ class QQDirectCapabilityBridge:
                                for p in settings.private_contacts if p.observe and p.send]
                 with closing(_readonly(settings.state_db)) as db:
                     for group_id, label in recipients:
+                        if group_id.isdigit() and self.attention_store().get(group_id)["mode"] == "closed":
+                            continue
                         source = db.execute("SELECT event_id FROM qq_direct_events WHERE group_id=? AND self_id=? AND source_record_id IS NOT NULL AND json_extract(record_json,'$._production_contact') IS NULL ORDER BY received_at DESC LIMIT 1",
                                             (group_id, settings.self_member_id)).fetchone()
                         if source is None:
@@ -162,7 +256,7 @@ class QQDirectCapabilityBridge:
                         key = hashlib.sha256(canonical(scope.model_dump(mode="json")).encode()).hexdigest()
                         offers.append({"offer_id": "qq-onebot:" + key + ":send", "channel": "qq", "capability_id": SEND,
                             "provider_id": "qq-onebot", "body_instance_id": "qq-onebot:" + settings.self_member_id,
-                            "scope": scope.model_dump(mode="json"), "activation_revision": f"{status['run_id']}:{generation}",
+                            "scope": scope.model_dump(mode="json"), "activation_revision": f"{status['run_id']}:{generation}:{self.attention_store().get(group_id)['revision']}",
                             "input_schema": {"type": "object", "properties": {}, "additionalProperties": False},
                             "observation_refs": [], "supported": True, "available": True, "ready": True,
                             "valid_until": (self.clock() + timedelta(seconds=10)).isoformat(),
@@ -174,7 +268,7 @@ class QQDirectCapabilityBridge:
             # Private history belongs to its scoped QQ reply preparation.
             return offers
         except (ValueError, OSError, KeyError, TypeError, sqlite3.Error):
-            return []
+            return control_offers
 
     def _verify(self, settings, observation):
         scope = QQDirectReadScope(group_id=observation.group_id, self_member_id=settings.self_member_id)
@@ -212,8 +306,9 @@ class QQDirectCapabilityBridge:
                 or [item.image_index for item in observation.image_analysis] != list(range(1, len(original["images"]) + 1))):
             raise ValueError("direct_read_source_invalid")
 
-    def _read(self, settings, scope, arguments, deadline):
+    def _read(self, settings, scope, arguments, deadline, *, read_id=None):
         conversation = self._scope_authorized(settings, scope)
+        attention_revision = self._attention_check(settings, scope.group_id)
         terms, _ = _query_terms(arguments.query)
 
         def score(observation):
@@ -243,6 +338,7 @@ class QQDirectCapabilityBridge:
             candidates = [(observation, profile) for observation, profile in candidates if score(observation) > 0]
         candidates.sort(key=lambda pair: (score(pair[0]) if terms else 0, pair[0].observed_at, pair[0].stored_at), reverse=True)
         messages, refs = [], []
+        units = 0
         for observation, profile in candidates[:arguments.limit]:
             if self.clock() >= deadline:
                 raise ValueError("direct_read_expired")
@@ -251,21 +347,67 @@ class QQDirectCapabilityBridge:
                     or profile.group_id != scope.group_id or profile.record_id != observation.profile_record_id):
                 raise ValueError("direct_read_profile_invalid")
             item = {"observation": observation.model_dump(mode="json"), "profile": profile.model_dump(mode="json")}
+            cost = text_units(observation.text or "") + sum(text_units(i.description or "") + text_units(i.ocr_text or "") for i in observation.image_analysis)
+            if settings.attention_budget_enabled and units+cost > 4096:
+                break
             if len(canonical(messages + [item]).encode("utf-8")) > 64000:
                 break
             messages.append(item)
+            units += cost
             refs.extend(observation.evidence + observation.attribution_evidence)
+        archived = []
+        # Explicit bounded history access after reopening. It is never written
+        # back as a fresh interaction or silently fed into the next reply.
+        if settings.attention_budget_enabled:
+            with closing(_readonly(settings.state_db)) as db:
+                raw_rows = db.execute("SELECT record_json FROM qq_direct_events WHERE group_id=? AND self_id=? AND source_record_id IS NULL ORDER BY received_at DESC LIMIT 500",
+                                      (scope.group_id, settings.self_member_id)).fetchall()
+            for raw_row in raw_rows:
+                if len(messages)+len(archived) >= arguments.limit or self.clock() >= deadline:
+                    break
+                value = json.loads(raw_row[0])
+                if terms and not any(t in _normalized_text(value["text"]) for t in terms):
+                    continue
+                cost = text_units(value["text"])
+                if units+cost > 4096:
+                    continue
+                ref = value["event_evidence_ref"]
+                if re.fullmatch(r"qq-protocol://sha256/[a-f0-9]{64}", ref) is None:
+                    raise ValueError("direct_read_evidence_invalid")
+                path = settings.evidence_dir / (ref.rsplit("/", 1)[1]+".json")
+                if path.is_symlink() or path.stat().st_size > 2*1024*1024:
+                    raise ValueError("direct_read_evidence_invalid")
+                raw = path.read_bytes()
+                if hashlib.sha256(raw).hexdigest() != ref.rsplit("/", 1)[1]:
+                    raise ValueError("direct_read_evidence_changed")
+                original = normalize_evidence(json.loads(raw), self_id=settings.self_member_id,
+                    groups={scope.group_id}, private_peers=set(), received_at=_time(value["received_at"]))
+                if original is None or any(original[k] != value[k] for k in ("event_id", "group_id", "member_id", "message_id", "text", "images")):
+                    raise ValueError("direct_read_source_invalid")
+                archived.append({k: value[k] for k in ("event_id", "group_id", "member_id", "message_id", "text", "message_time", "event_evidence_ref")}
+                                | {"image_count": len(value["images"]), "images_processed": False, "historical_only": True})
+                refs.append(ref)
+                units += cost
+            admission = self.attention_store().admit("read:"+str(read_id), scope.group_id,
+                received_at=self.clock(), units=units, addressed=True, budget_enabled=True, historical_read=True)
+            if admission["disposition"] != "admitted":
+                raise ValueError(admission["disposition"])
         if self.clock() >= deadline:
             raise ValueError("direct_read_expired")
+        self._attention_check(settings, scope.group_id, revision=attention_revision)
         private_metadata = {"conversation": conversation, "privacy": "private_conversation_only"} if conversation["kind"] == "private" else {}
         return {"status": "completed", "receipt": {"kind": "retained_protocol_memory_read", "scope": scope.model_dump(mode="json"),
-            "read_at": self.clock().isoformat(), "current_live_observation": False, "coverage": "partial_retained_messages",
-            "query": arguments.query, "messages": messages, "matched_candidates": len(candidates),
+            "read_at": self.clock().isoformat(), "attention_revision": attention_revision,
+            "current_live_observation": False, "coverage": "partial_retained_messages",
+            "query": arguments.query, "messages": messages, "archived_messages": archived, "input_units": units,
+            "matched_candidates": len(candidates),
             "omitted_candidates": len(candidates) - len(messages), "searched_latest_records": min(len(rows), 500),
             "scan_limit": 500, "scan_truncated": len(rows) > 500, **self._metadata(settings, scope.group_id), **private_metadata},
             "evidence_refs": list(dict.fromkeys(refs))[:128]}
 
     def enqueue(self, row):
+        if row.get("capability_id") == ATTENTION_SET:
+            return self.enqueue_attention(row)
         if row.get("capability_id") == SEND:
             return self.enqueue_contact(row)
         owner, generation = self._ownership()
@@ -284,14 +426,17 @@ class QQDirectCapabilityBridge:
         if existing:
             if existing[0] != canonical(request):
                 raise ValueError("direct_read_request_conflict")
-            return {"opportunity_id": row["opportunity_id"], **json.loads(existing[1])}
+            cached = json.loads(existing[1])
+            self._attention_check(DirectQQSettings.read(self.config_path), scope.group_id,
+                                  revision=cached.get("receipt", {}).get("attention_revision", 0))
+            return {"opportunity_id": row["opportunity_id"], **cached}
         if not 0 < (deadline - self.clock()).total_seconds() <= 60:
             raise ValueError("direct_read_expired")
         offers = [offer for offer in self.catalog() if offer["offer_id"] == row["offer_id"]]
         if len(offers) != 1 or any(request[key] != offers[0][key] for key in ("scope", "capability_id", "body_instance_id", "activation_revision")):
             raise ValueError("direct_read_offer_changed")
         settings, _ = self._active()
-        result = self._read(settings, scope, arguments, deadline)
+        result = self._read(settings, scope, arguments, deadline, read_id=row["opportunity_id"])
         with closing(self._db()) as db, db:
             db.execute("INSERT INTO qq_direct_capability_results VALUES(?,?,?)", (row["opportunity_id"], canonical(request), canonical(result)))
         return {"opportunity_id": row["opportunity_id"], **result}
@@ -300,6 +445,13 @@ class QQDirectCapabilityBridge:
         with closing(self._db()) as db:
             row = db.execute("SELECT request_json,result_json FROM qq_direct_capability_results WHERE opportunity_id=?", (opportunity_id,)).fetchone()
         if row is None:
+            try:
+                control = self.attention_store().action(opportunity_id)
+            except (ValueError, OSError, sqlite3.Error):
+                control = None
+            if control is not None:
+                return {"opportunity_id": opportunity_id, "status": "completed", "receipt": control,
+                        "evidence_refs": [control["evidence_ref"]]}
             try:
                 settings = DirectQQSettings.read(self.config_path)
                 with closing(_readonly(settings.state_db)) as db:
@@ -317,7 +469,13 @@ class QQDirectCapabilityBridge:
         scope = QQDirectReadScope.model_validate(request["scope"])
         if conversation_scope(scope.group_id)["kind"] == "private":
             return None
-        return {"opportunity_id": opportunity_id, **json.loads(row[1])}
+        cached = json.loads(row[1])
+        try:
+            self._attention_check(DirectQQSettings.read(self.config_path), scope.group_id,
+                                  revision=cached.get("receipt", {}).get("attention_revision", 0))
+        except ValueError as exc:
+            return {"opportunity_id": opportunity_id, "status": "rejected", "error_type": str(exc)}
+        return {"opportunity_id": opportunity_id, **cached}
 
     get = result
 

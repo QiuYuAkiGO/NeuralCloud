@@ -50,6 +50,8 @@ def _reply_references(request, sources, config):
 
 
 def verified_qq_source(request, config=None):
+    from harness.qq.attention import require_attention
+    attention_revision = require_attention(request.group_id)
     from harness.qq.feedback import _observation, _readonly
     from harness.qq.session import QQSessionSettings
     from harness.runtime.qq_turns import _source
@@ -90,4 +92,5 @@ def verified_qq_source(request, config=None):
     if batch is not None:
         text = "\n".join(item.get("text", "") for item in batch["sources"])
     references = _reply_references(request, batch["sources"] if batch is not None else [value], config)
+    require_attention(request.group_id, revision=attention_revision)
     return {"digest": digest, "text": text, "source": value, "reply_reference_record_ids": references}

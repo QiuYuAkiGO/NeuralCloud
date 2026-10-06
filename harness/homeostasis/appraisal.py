@@ -6,7 +6,7 @@ import hashlib
 import json
 from typing import Annotated, Literal
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StrictBool, field_validator, model_validator
 
 PsychologicalDimension = Literal[
     "cognitive_load",
@@ -84,6 +84,9 @@ class ApplyPsychologicalAppraisal(BaseModel):
     episode_id: Identity
     appraisal: PsychologicalAppraisal
     verified_evidence_refs: list[EvidenceRef] = Field(min_length=1, max_length=128, strict=True)
+    allow_heartbeat_rebase: StrictBool = False
+    basis_snapshot_at: AwareDatetime | None = None
+    verified_outcome_refs: list[EvidenceRef] = Field(default_factory=list, max_length=128)
 
     @model_validator(mode="after")
     def validate_runtime_binding(self) -> ApplyPsychologicalAppraisal:
@@ -91,4 +94,6 @@ class ApplyPsychologicalAppraisal(BaseModel):
             raise ValueError("appraisal episode does not match the Runtime episode")
         if not set(self.appraisal.observed_event_refs) <= set(self.verified_evidence_refs):
             raise ValueError("appraisal references evidence not verified by Runtime")
+        if not set(self.verified_outcome_refs) <= set(self.verified_evidence_refs):
+            raise ValueError("outcome references must be verified by Runtime")
         return self

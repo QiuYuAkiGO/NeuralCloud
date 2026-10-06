@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
+from harness.homeostasis.dynamics import DynamicsConfig
 
 DimensionName = Literal[
     "energy_reserve",
@@ -88,7 +89,7 @@ class QQHomeostaticFact(BaseModel):
     group_id: str = Field(pattern=r"^[1-9][0-9]{0,19}$")
     kind: Literal["verified_message", "verified_interaction", "verified_novelty", "send_attempt", "no_response"]
     occurred_at: AwareDatetime
-    verification: Literal["qq_ui_verified"]
+    verification: Literal["qq_ui_verified", "qq_protocol_verified"]
     evidence_refs: list[str] = Field(min_length=1, max_length=16)
     related_attempt_id: str | None = Field(default=None, min_length=1, max_length=256)
 
@@ -187,6 +188,7 @@ class HomeostaticProfile(BaseModel):
     salience_noticeable_exit: float = Field(default=0.15, ge=0.0, le=1.0)
     salience_marked_exit: float = Field(default=0.35, ge=0.0, le=1.0)
     qq_social_drive: QQSocialDriveProfile | None = None
+    cognitive_dynamics: DynamicsConfig = Field(default_factory=DynamicsConfig)
 
     @field_validator("source_precision")
     @classmethod
@@ -397,7 +399,7 @@ class HomeostaticInteroceptiveSummary(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    schema_version: Literal["homeostatic-interoception-v1"] = (
+    schema_version: Literal["homeostatic-interoception-v1", "homeostatic-interoception-v2"] = (
         "homeostatic-interoception-v1"
     )
     profile_ref: str = Field(min_length=1, max_length=160)
@@ -410,12 +412,15 @@ class HomeostaticInteroceptiveSummary(BaseModel):
     emotion_hint: HomeostaticEmotionHint | None = None
     policy_refs: list[str] = Field(default_factory=list, max_length=3)
     episode_signature: str = Field(min_length=1, max_length=96)
+    regulation_pressure: dict = Field(default_factory=dict)
+    fatigue: float | None = Field(default=None, ge=0, le=1)
+    boredom: float | None = Field(default=None, ge=0, le=1)
 
 
 class HomeostaticSnapshot(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    schema_version: Literal["homeostasis-state-v2"] = "homeostasis-state-v2"
+    schema_version: Literal["homeostasis-state-v3"] = "homeostasis-state-v3"
     revision: int = Field(default=0, ge=0)
     profile_id: str
     profile_revision: int = Field(ge=1)
@@ -430,15 +435,17 @@ class HomeostaticSnapshot(BaseModel):
     stable_snapshot_ref: str | None = None
     watchdog: list[str] = Field(default_factory=list)
     interoceptive_summary: HomeostaticInteroceptiveSummary | None = None
+    dynamics: dict | None = None
+    regulation_pressure: dict = Field(default_factory=dict)
 
     @model_validator(mode="before")
     @classmethod
     def _migrate_v1_payload(cls, value: object) -> object:
         """Accept persisted v1 snapshots; the engine supplies their derived summary."""
 
-        if isinstance(value, dict) and value.get("schema_version") == "homeostasis-state-v1":
+        if isinstance(value, dict) and value.get("schema_version") in {"homeostasis-state-v1", "homeostasis-state-v2"}:
             migrated = dict(value)
-            migrated["schema_version"] = "homeostasis-state-v2"
+            migrated["schema_version"] = "homeostasis-state-v3"
             migrated.setdefault("interoceptive_summary", None)
             return migrated
         return value
@@ -453,7 +460,7 @@ class HomeostaticSnapshot(BaseModel):
             expected_ref = f"{self.profile_id}@{self.profile_revision}"
             if self.interoceptive_summary.profile_ref != expected_ref:
                 raise ValueError("interoceptive summary profile_ref must match snapshot")
-            if bool(self.watchdog) != (
+            if self.interoceptive_summary.schema_version == "homeostatic-interoception-v1" and bool(self.watchdog) != (
                 self.interoceptive_summary.salience == "critical"
             ):
                 raise ValueError(
@@ -640,7 +647,7 @@ def build_interoceptive_summary(
         previous=previous_salience,
         watchdog=watchdog,
     )
-    if bool(watchdog) != (resolved_salience == "critical"):
+    if profile.cognitive_dynamics.mode != "active" and bool(watchdog) != (resolved_salience == "critical"):
         raise ValueError(
             "watchdog presence must match critical interoceptive salience"
         )
@@ -691,6 +698,7 @@ def build_interoceptive_summary(
     if resolved_salience in {"marked", "critical"} and emotion_label == "settled":
         emotion_label = "strained" if affect.arousal > 0.55 else "attentive"
     return HomeostaticInteroceptiveSummary(
+        schema_version="homeostatic-interoception-v2" if profile.cognitive_dynamics.mode == "active" else "homeostatic-interoception-v1",
         profile_ref=profile.profile_ref,
         snapshot_revision=revision,
         salience=resolved_salience,

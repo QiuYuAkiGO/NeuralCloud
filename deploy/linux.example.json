@@ -20,6 +20,7 @@
     "NC_GUI_PRESETS": "/var/lib/neuralcloud/presets",
     "NC_RUNTIME_STATE_DIR": "/var/lib/neuralcloud/runtime",
     "NC_COGNITIVE_STATE_PATH": "/var/lib/neuralcloud/cognitive/state.json",
+    "NC_COGNITIVE_WORK_DB": "/var/lib/neuralcloud/cognitive-work.sqlite3",
     "NC_HOMEOSTASIS_STATE_DIR": "/var/lib/neuralcloud/homeostasis/domain",
     "NC_SHARED_MEMORY_DB": "/var/lib/neuralcloud/shared-memory.sqlite3",
     "NC_CONTROL_TOKEN_FILE": "/etc/neuralcloud/control.token",

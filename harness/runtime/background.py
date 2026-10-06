@@ -14,7 +14,7 @@ from pathlib import Path
 import sqlite3
 import time
 
-from harness.runtime.models import RuntimeLifecycle, utc_now
+from harness.runtime.models import RuntimeLifecycle, RuntimeEventType, RuntimeEventPriority, utc_now
 from harness.runtime.queue import PriorityEventQueue, QueueClosedError
 
 
@@ -164,3 +164,39 @@ class HeartbeatWorker:
             return False
         await self.thread.close()
         return True
+
+
+class PassiveStateWorker(HeartbeatWorker):
+    """A separate lane: a busy model or manual pause cannot stop recovery."""
+
+    async def _tick(self) -> None:
+        while self.active:
+            owner = self.supervisor
+            snapshot = owner._homeostasis_snapshot.payload
+            if (owner.lifecycle in {RuntimeLifecycle.RUNNING, RuntimeLifecycle.PAUSED}
+                    and snapshot.get("snapshot", snapshot).get("dynamics")):
+                try:
+                    await owner.submit_event(event_type=RuntimeEventType.HOMEOSTASIS_TICK,
+                        priority=RuntimeEventPriority.CONTROL, source="runtime.passive_state",
+                        payload={"passive_only": True})
+                except Exception as exc:
+                    self.last_error = type(exc).__name__
+                    owner._append_journal("passive_state_failed", data={"error_type": self.last_error})
+            await asyncio.sleep(5)
+
+    async def _run(self) -> None:
+        while True:
+            try:
+                event = await self.queue.get()
+            except QueueClosedError:
+                return
+            try:
+                self.current_event = event
+                result = await self.supervisor.dispatch(event)
+                self.last_error = result.detail.get("error")
+            except Exception as exc:
+                self.last_error = type(exc).__name__
+                self.supervisor._append_journal("passive_state_failed", event=event,
+                    data={"error_type": self.last_error})
+            finally:
+                self.current_event = None

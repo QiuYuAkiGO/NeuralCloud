@@ -18,6 +18,48 @@ from harness.homeostasis.models import HomeostaticProfile
 NOW = datetime(2026, 9, 12, 12, tzinfo=UTC)
 
 
+@pytest.mark.parametrize("case", ["heartbeat", "event", "too_old", "future", "missing_time", "no_opt_in", "missing_trace"])
+def test_short_appraisal_can_rebase_only_over_proven_heartbeats(tmp_path, case):
+    from tests.test_homeostasis_engine import _heartbeat_command, _command
+
+    async def scenario():
+        later = NOW + timedelta(seconds=10)
+        engine = HomeostasisEngine(profile(), state_dir=tmp_path, now=NOW, clock=lambda: later)
+        try:
+            advance = _heartbeat_command(sequence=1, expected_revision=0, at=later)
+            if case == "event":
+                advance = _command(sequence=1, expected_revision=0, at=later)
+            applied = await (engine.apply_event(advance) if case == "event" else engine.apply_heartbeat(advance))
+            assert applied.status == "applied"
+            if case == "missing_trace":
+                with sqlite3.connect(engine._command_ledger.path) as db:
+                    db.execute("DELETE FROM transition_traces WHERE revision=1")
+            payload = {"allow_heartbeat_rebase": case != "no_opt_in", "basis_snapshot_at": NOW}
+            if case == "too_old":
+                payload["basis_snapshot_at"] = later - timedelta(seconds=61)
+            elif case == "future":
+                payload["basis_snapshot_at"] = later + timedelta(seconds=1)
+            elif case == "missing_time":
+                payload.pop("basis_snapshot_at")
+            before = engine.snapshot.model_copy(deep=True)
+            request = command(at=later, payload_updates=payload)
+            result = await engine.apply_appraisal(request)
+            if case == "heartbeat":
+                assert result.status == "applied"
+                assert result.result["appraisal"]["heartbeat_rebased"] is True
+                assert result.result["appraisal"]["basis_snapshot_revision"] == 0
+                assert result.result["appraisal"]["applied_to_revision"] == 1
+                assert engine.snapshot.dimensions["energy_reserve"] == before.dimensions["energy_reserve"]
+                revision = engine.snapshot.revision
+                assert (await engine.apply_appraisal(request)).status == "idempotent_replay"
+                assert engine.snapshot.revision == revision
+            else:
+                assert result.status == "conflict" and engine.snapshot == before
+        finally:
+            await engine.close()
+    asyncio.run(scenario())
+
+
 def appraisal(**updates):
     payload = {
         "episode_id": "regulation-one",

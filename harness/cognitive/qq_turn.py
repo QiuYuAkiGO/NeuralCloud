@@ -91,9 +91,28 @@ def _production_checkpoint_fence(host, command, payload, *, runtime=True):
 
 
 async def run(host, command, *, resume: bool):
+    from harness.qq.attention import ATTENTION_DENIALS, require_attention
+    group = str(command.payload.get("group_id", ""))
+    try:
+        revision = require_attention(group, received_at=(command.payload.get("trace") or {}).get("first_seen_at"))
+        result = await _run_attended(host, command, resume=resume, attention_revision=revision)
+        require_attention(group, revision=revision)
+        return result
+    except ValueError as exc:
+        if str(exc) not in ATTENTION_DENIALS:
+            raise
+        return host.adapter._failure(command, str(exc), status="rejected").model_copy(
+            update={"result": failure_detail(exc)})
+
+
+async def _run_attended(host, command, *, resume, attention_revision):
+    from harness.qq.attention import processing_evidence
     phase = "qq_resume" if resume else "qq_prepare_turn"
     with trace_scope(correlation_id=command.correlation_id, event_id=command.event_id,
                      command_id=command.command_id, phase=phase, span_id=command.command_id,
+                     attention_context="qq:" + str(command.payload.get("group_id", "")),
+                     attention_revision=attention_revision,
+                     attention_evidence_refs=processing_evidence(command.payload),
                      qq_trace_id=(command.payload.get("trace") or {}).get("trace_id")):
         from harness.production.metering import production_call_scope
         context = command.payload.get("production_context")
