@@ -136,10 +136,9 @@ class RuntimeGateway:
                                 if topic == "cognitive.ui" and isinstance(payload, dict):
                                     await self.broadcast(payload)
                                 elif topic in {"event.completed", "lifecycle", "watchdog"}:
-                                    try:
-                                        await self.broadcast({"type": "state", "data": await self.status()})
-                                    except HTTPException:
-                                        pass
+                                    # Events invalidate the display; only a visible browser
+                                    # requests a snapshot. No viewers means no database read.
+                                    await self.broadcast({"type": "state_dirty"})
             except asyncio.CancelledError:
                 raise
             except Exception as exc:

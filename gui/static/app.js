@@ -13,6 +13,23 @@ const STAGE_DEFS = [
 const $ = (id) => document.getElementById(id);
 let memoryRefreshTimer = null;
 let memoryRefreshInFlight = false;
+let statusRequest = null;
+let statusRefreshTimer = null;
+
+function scheduleStatusRefresh() {
+  if (document.hidden || statusRefreshTimer !== null) return;
+  statusRefreshTimer = setTimeout(() => {
+    statusRefreshTimer = null;
+    fetchStatus().catch(() => { /* A later event or visibility change retries. */ });
+  }, 250);
+}
+
+document.addEventListener("visibilitychange", () => {
+  clearTimeout(memoryRefreshTimer);
+  clearTimeout(statusRefreshTimer);
+  statusRefreshTimer = null;
+  if (!document.hidden) scheduleStatusRefresh();
+});
 
 const state = {
   busy: false,
@@ -724,9 +741,9 @@ function applySnapshot(snap, opts = {}) {
   if ($("presets-dialog")?.open) renderPresetList(snap);
   renderSharedMemory(snap);
   clearTimeout(memoryRefreshTimer);
-  if ([snap.memory_snapshot, snap.preset_snapshot].some((part) => part && part.status !== "ready")) {
+  if (!document.hidden && [snap.memory_snapshot, snap.preset_snapshot].some((part) => part && part.status !== "ready")) {
     memoryRefreshTimer = setTimeout(async () => {
-      if (memoryRefreshInFlight) return;
+      if (document.hidden || memoryRefreshInFlight) return;
       memoryRefreshInFlight = true;
       try { await fetchStatus(); } catch { /* The next connection/state event retries. */ }
       finally { memoryRefreshInFlight = false; }
@@ -958,6 +975,7 @@ function connectWs() {
   ws.onmessage = (ev) => {
     const msg = JSON.parse(ev.data);
     if (msg.type === "ping") return;
+    if (msg.type === "state_dirty") scheduleStatusRefresh();
     if (msg.type === "stage" || msg.type === "final") applyStageEvent(msg);
     if (msg.type === "state") applySnapshot(msg.data);
     if (msg.type === "error") {
@@ -973,8 +991,17 @@ function connectWs() {
 }
 
 async function fetchStatus(opts = {}) {
-  const res = await fetch("/api/status");
-  applySnapshot(await res.json(), opts);
+  if (document.hidden) return;
+  // Coalesce event bursts and explicit refresh callers into one HTTP read.
+  if (!statusRequest) {
+    statusRequest = (async () => {
+      const res = await fetch("/api/status");
+      if (!res.ok) throw new Error(`Status unavailable: ${res.status}`);
+      return res.json();
+    })().finally(() => { statusRequest = null; });
+  }
+  const snap = await statusRequest;
+  if (!document.hidden) applySnapshot(snap, opts);
 }
 
 async function sendChat(event) {
