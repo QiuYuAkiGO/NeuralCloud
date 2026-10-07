@@ -24,6 +24,8 @@ Legacy UI 的共享记忆部分作为可丢弃的内存热数据：后台线程�
 
 附带发现：截至 23:24:24，新版本窗口内情绪评价有 45 次完成、42 次成功、3 次 `deepseek_structured_json_invalid`。三次均收到 HTTP 200，随后在严格 JSON 解析阶段被拒绝；不是 UI 请求超时，也不是此前 `subject_refs` 缺失错误。本机日志不保存响应正文，现有脱敏证据不足以定位具体语法错误，不能推断为截断或某个字段的问题。该阶段已有 fallback，后续群聊 gate、persona 和后台记忆仍有成功记录；保留严格校验，列入持续观察，不将本次 UI 验收表述为所有模型调用均无故障。
 
+后续专项检查完成了 18 次冻结输入隔离回放，均通过校验；原始三次的具体语法仍不可还原。失败来源被标为已处理、后续指引另有语义兜底的影响见 [情绪 JSON 诊断](emotion-json-diagnosis-20261007.md)。
+
 内稳态仍为 shadow，profile `qq-social-drive-v1@3`、manifest revision `4`。实际连续窗口为北京时间 **2026-10-07 23:16:04**，无新断档时最早 **2026-10-08 23:16:04** 满 24 小时；尚未切换 active。
 
 [脱敏部署与性能证据](../harness/evidence/ui-snapshot-hotfix-20261007/deployment.json)。

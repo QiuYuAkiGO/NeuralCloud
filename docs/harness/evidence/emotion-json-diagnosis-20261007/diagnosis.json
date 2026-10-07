@@ -1,0 +1,1454 @@
+{
+  "schema_version": "emotion-json-diagnosis-v1",
+  "release": "20261007-ui-snapshot-integrated-v3",
+  "code_commit": "085899ea71e3760572b8e9423aa6a0a78189ddd8",
+  "original_failure_metadata": [
+    {
+      "started_at": "2026-10-07T15:20:36.413791+00:00",
+      "completed_at": "2026-10-07T15:20:38.755549+00:00",
+      "http_status": 200,
+      "latency_ms": 2341.757,
+      "usage": {
+        "prompt_tokens": 2527,
+        "completion_tokens": 107,
+        "total_tokens": 2634,
+        "cache_hit_tokens": 896,
+        "cache_miss_tokens": 1631,
+        "cache_known_prompt_tokens": 2527,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "response_model": "deepseek-flash",
+      "finish_reason": null
+    },
+    {
+      "started_at": "2026-10-07T15:21:38.717480+00:00",
+      "completed_at": "2026-10-07T15:21:39.786802+00:00",
+      "http_status": 200,
+      "latency_ms": 1069.323,
+      "usage": {
+        "prompt_tokens": 2575,
+        "completion_tokens": 112,
+        "total_tokens": 2687,
+        "cache_hit_tokens": 896,
+        "cache_miss_tokens": 1679,
+        "cache_known_prompt_tokens": 2575,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "response_model": "deepseek-flash",
+      "finish_reason": null
+    },
+    {
+      "started_at": "2026-10-07T15:24:16.229906+00:00",
+      "completed_at": "2026-10-07T15:24:17.124214+00:00",
+      "http_status": 200,
+      "latency_ms": 894.308,
+      "usage": {
+        "prompt_tokens": 2605,
+        "completion_tokens": 106,
+        "total_tokens": 2711,
+        "cache_hit_tokens": 896,
+        "cache_miss_tokens": 1709,
+        "cache_known_prompt_tokens": 2605,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "response_model": "deepseek-flash",
+      "finish_reason": null
+    }
+  ],
+  "live_followup": {
+    "checked_at": "2026-10-07T15:40:03.172692+00:00",
+    "since": "2026-10-07T15:16:12.177338+00:00",
+    "counts": {
+      "before_integrated": {
+        "finished": 141,
+        "success": 141
+      },
+      "after_integrated": {
+        "finished": 87,
+        "success": 84,
+        "error": 3,
+        "deepseek_structured_json_invalid": 3
+      }
+    },
+    "new_errors": [
+      {
+        "started_at": "2026-10-07T15:20:36.413791+00:00",
+        "completed_at": "2026-10-07T15:20:38.755549+00:00",
+        "http_status": 200,
+        "latency_ms": 2341.757,
+        "usage": {
+          "prompt_tokens": 2527,
+          "completion_tokens": 107,
+          "total_tokens": 2634,
+          "cache_hit_tokens": 896,
+          "cache_miss_tokens": 1631,
+          "cache_known_prompt_tokens": 2527,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        },
+        "response_model": "deepseek-flash",
+        "finish_reason": null
+      },
+      {
+        "started_at": "2026-10-07T15:21:38.717480+00:00",
+        "completed_at": "2026-10-07T15:21:39.786802+00:00",
+        "http_status": 200,
+        "latency_ms": 1069.323,
+        "usage": {
+          "prompt_tokens": 2575,
+          "completion_tokens": 112,
+          "total_tokens": 2687,
+          "cache_hit_tokens": 896,
+          "cache_miss_tokens": 1679,
+          "cache_known_prompt_tokens": 2575,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        },
+        "response_model": "deepseek-flash",
+        "finish_reason": null
+      },
+      {
+        "started_at": "2026-10-07T15:24:16.229906+00:00",
+        "completed_at": "2026-10-07T15:24:17.124214+00:00",
+        "http_status": 200,
+        "latency_ms": 894.308,
+        "usage": {
+          "prompt_tokens": 2605,
+          "completion_tokens": 106,
+          "total_tokens": 2711,
+          "cache_hit_tokens": 896,
+          "cache_miss_tokens": 1709,
+          "cache_known_prompt_tokens": 2605,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        },
+        "response_model": "deepseek-flash",
+        "finish_reason": null
+      }
+    ]
+  },
+  "initial_replay": {
+    "checked_at": "2026-10-07T15:35:55.030739+00:00",
+    "release": "20261007-ui-snapshot-integrated-v3",
+    "scope": "isolated replay of three frozen requests to their existing provider; no production state or work-ledger writes",
+    "results": [
+      {
+        "original_started_at": "2026-10-07T15:20:36.413791+00:00",
+        "context_hash": "9d47a575cc1b054fedce5ea8b279d5dd6123673689f2f1a7753987ba9464d1e5",
+        "original_frame_status": "fallback",
+        "original_fallback_reason": "emotion_model_failure",
+        "original_guidance_status": "fallback",
+        "frozen_input_verified": true,
+        "original_prompt_version": "emotion-director-v5",
+        "input_shape": {
+          "messages": 20,
+          "new_sources": 1,
+          "input_bytes": 5828
+        },
+        "request": {
+          "body_sha256": "87996f85ab0b9e152be26411824e4e6ad70a1b84fd4fa749763153e537eefa28",
+          "model": "deepseek-flash",
+          "max_output_tokens": 1536,
+          "format": "json_schema"
+        },
+        "response": {
+          "http_status": 200,
+          "finish_reason": "stop",
+          "has_refusal": false,
+          "has_tool_calls": false,
+          "elapsed_ms": 1377.303,
+          "usage": {
+            "prompt_tokens": 2527,
+            "completion_tokens": 106,
+            "total_tokens": 2633,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 2304
+            }
+          },
+          "syntax": {
+            "characters": 273,
+            "utf8_bytes": 331,
+            "sha256": "8207d0300a66ee6a2d74f1ab383766cbd5a26dbc6c716f1c6e35e63c3b5eae9f",
+            "blank": false,
+            "starts_object": true,
+            "fenced": false,
+            "json_valid": true,
+            "root_type": "dict"
+          }
+        },
+        "result": "success",
+        "duration_ms": 1452.87
+      },
+      {
+        "original_started_at": "2026-10-07T15:21:38.717480+00:00",
+        "context_hash": "229212895023adbc4f8a39a6eb444eaf6f312119d12bd2d5f67c5e9f0c0c7cf2",
+        "original_frame_status": "fallback",
+        "original_fallback_reason": "emotion_model_failure",
+        "original_guidance_status": "fallback",
+        "frozen_input_verified": true,
+        "original_prompt_version": "emotion-director-v5",
+        "input_shape": {
+          "messages": 20,
+          "new_sources": 1,
+          "input_bytes": 5953
+        },
+        "request": {
+          "body_sha256": "474128b9701b36e37cb6f7ec7475a0151f0255c90a9f3b384bd5c57d3eea68d5",
+          "model": "deepseek-flash",
+          "max_output_tokens": 1536,
+          "format": "json_schema"
+        },
+        "response": {
+          "http_status": 200,
+          "finish_reason": "stop",
+          "has_refusal": false,
+          "has_tool_calls": false,
+          "elapsed_ms": 1170.153,
+          "usage": {
+            "prompt_tokens": 2575,
+            "completion_tokens": 114,
+            "total_tokens": 2689,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 2432
+            }
+          },
+          "syntax": {
+            "characters": 299,
+            "utf8_bytes": 379,
+            "sha256": "112accd2a84adc6e9c0c57b06bc8bbd97434f8a85fb89763d7bc3103a1f91c0a",
+            "blank": false,
+            "starts_object": true,
+            "fenced": false,
+            "json_valid": true,
+            "root_type": "dict"
+          }
+        },
+        "result": "success",
+        "duration_ms": 1174.44
+      },
+      {
+        "original_started_at": "2026-10-07T15:24:16.229906+00:00",
+        "context_hash": "d6ba34429c7ad729dbc4c42e07327fcf935205a6eca069f9c5bc1540d1427b48",
+        "original_frame_status": "fallback",
+        "original_fallback_reason": "emotion_model_failure",
+        "original_guidance_status": "fallback",
+        "frozen_input_verified": true,
+        "original_prompt_version": "emotion-director-v5",
+        "input_shape": {
+          "messages": 20,
+          "new_sources": 1,
+          "input_bytes": 5996
+        },
+        "request": {
+          "body_sha256": "d077b0ec9cbda3d18593d1acfe5b6d8b2b7aaac40fc1a4f61463b0e6e8b47122",
+          "model": "deepseek-flash",
+          "max_output_tokens": 1536,
+          "format": "json_schema"
+        },
+        "response": {
+          "http_status": 200,
+          "finish_reason": "stop",
+          "has_refusal": false,
+          "has_tool_calls": false,
+          "elapsed_ms": 1274.551,
+          "usage": {
+            "prompt_tokens": 2605,
+            "completion_tokens": 106,
+            "total_tokens": 2711,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 2432
+            }
+          },
+          "syntax": {
+            "characters": 276,
+            "utf8_bytes": 348,
+            "sha256": "3e60f547903a1fcb5b6d1e27bf66d08ce8e5f18114db21386a715f5604a8c2f7",
+            "blank": false,
+            "starts_object": true,
+            "fenced": false,
+            "json_valid": true,
+            "root_type": "dict"
+          }
+        },
+        "result": "success",
+        "duration_ms": 1278.91
+      }
+    ]
+  },
+  "bounded_replay": {
+    "checked_at": "2026-10-07T15:37:30.830445+00:00",
+    "release": "20261007-ui-snapshot-integrated-v3",
+    "scope": "isolated replay of three frozen requests to their existing provider; no production state or work-ledger writes",
+    "results": [
+      {
+        "diagnostic_attempt": 1,
+        "original_started_at": "2026-10-07T15:20:36.413791+00:00",
+        "context_hash": "9d47a575cc1b054fedce5ea8b279d5dd6123673689f2f1a7753987ba9464d1e5",
+        "original_frame_status": "fallback",
+        "original_fallback_reason": "emotion_model_failure",
+        "original_guidance_status": "fallback",
+        "frozen_input_verified": true,
+        "original_prompt_version": "emotion-director-v5",
+        "input_shape": {
+          "messages": 20,
+          "new_sources": 1,
+          "input_bytes": 5828
+        },
+        "request": {
+          "body_sha256": "87996f85ab0b9e152be26411824e4e6ad70a1b84fd4fa749763153e537eefa28",
+          "model": "deepseek-flash",
+          "max_output_tokens": 1536,
+          "format": "json_schema"
+        },
+        "wire_shape": {
+          "status": "completed",
+          "incomplete": false,
+          "output_items": [
+            {
+              "type": "message",
+              "status": "completed",
+              "parts": [
+                {
+                  "type": "output_text",
+                  "text_characters": 272
+                }
+              ]
+            }
+          ]
+        },
+        "response": {
+          "http_status": 200,
+          "finish_reason": "stop",
+          "has_refusal": false,
+          "has_tool_calls": false,
+          "elapsed_ms": 1312.003,
+          "usage": {
+            "prompt_tokens": 2527,
+            "completion_tokens": 106,
+            "total_tokens": 2633,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 2304
+            }
+          },
+          "syntax": {
+            "characters": 272,
+            "utf8_bytes": 330,
+            "sha256": "4754a7af897e69cc6037350ccc80bfce5720345754e5a8c1b067ffeecedfa6d9",
+            "blank": false,
+            "starts_object": true,
+            "fenced": false,
+            "json_valid": true,
+            "root_type": "dict"
+          }
+        },
+        "result": "success",
+        "duration_ms": 1347.71
+      },
+      {
+        "diagnostic_attempt": 2,
+        "original_started_at": "2026-10-07T15:21:38.717480+00:00",
+        "context_hash": "229212895023adbc4f8a39a6eb444eaf6f312119d12bd2d5f67c5e9f0c0c7cf2",
+        "original_frame_status": "fallback",
+        "original_fallback_reason": "emotion_model_failure",
+        "original_guidance_status": "fallback",
+        "frozen_input_verified": true,
+        "original_prompt_version": "emotion-director-v5",
+        "input_shape": {
+          "messages": 20,
+          "new_sources": 1,
+          "input_bytes": 5953
+        },
+        "request": {
+          "body_sha256": "474128b9701b36e37cb6f7ec7475a0151f0255c90a9f3b384bd5c57d3eea68d5",
+          "model": "deepseek-flash",
+          "max_output_tokens": 1536,
+          "format": "json_schema"
+        },
+        "wire_shape": {
+          "status": "completed",
+          "incomplete": false,
+          "output_items": [
+            {
+              "type": "message",
+              "status": "completed",
+              "parts": [
+                {
+                  "type": "output_text",
+                  "text_characters": 299
+                }
+              ]
+            }
+          ]
+        },
+        "response": {
+          "http_status": 200,
+          "finish_reason": "stop",
+          "has_refusal": false,
+          "has_tool_calls": false,
+          "elapsed_ms": 1018.828,
+          "usage": {
+            "prompt_tokens": 2575,
+            "completion_tokens": 114,
+            "total_tokens": 2689,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 2432
+            }
+          },
+          "syntax": {
+            "characters": 299,
+            "utf8_bytes": 379,
+            "sha256": "5319f35fc15a8baa2991ca1f28016a86e995f03e7835d57bfa3b2d02a5b05faf",
+            "blank": false,
+            "starts_object": true,
+            "fenced": false,
+            "json_valid": true,
+            "root_type": "dict"
+          }
+        },
+        "result": "success",
+        "duration_ms": 1023.76
+      },
+      {
+        "diagnostic_attempt": 3,
+        "original_started_at": "2026-10-07T15:24:16.229906+00:00",
+        "context_hash": "d6ba34429c7ad729dbc4c42e07327fcf935205a6eca069f9c5bc1540d1427b48",
+        "original_frame_status": "fallback",
+        "original_fallback_reason": "emotion_model_failure",
+        "original_guidance_status": "fallback",
+        "frozen_input_verified": true,
+        "original_prompt_version": "emotion-director-v5",
+        "input_shape": {
+          "messages": 20,
+          "new_sources": 1,
+          "input_bytes": 5996
+        },
+        "request": {
+          "body_sha256": "d077b0ec9cbda3d18593d1acfe5b6d8b2b7aaac40fc1a4f61463b0e6e8b47122",
+          "model": "deepseek-flash",
+          "max_output_tokens": 1536,
+          "format": "json_schema"
+        },
+        "wire_shape": {
+          "status": "completed",
+          "incomplete": false,
+          "output_items": [
+            {
+              "type": "message",
+              "status": "completed",
+              "parts": [
+                {
+                  "type": "output_text",
+                  "text_characters": 276
+                }
+              ]
+            }
+          ]
+        },
+        "response": {
+          "http_status": 200,
+          "finish_reason": "stop",
+          "has_refusal": false,
+          "has_tool_calls": false,
+          "elapsed_ms": 1491.352,
+          "usage": {
+            "prompt_tokens": 2605,
+            "completion_tokens": 108,
+            "total_tokens": 2713,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 2432
+            }
+          },
+          "syntax": {
+            "characters": 276,
+            "utf8_bytes": 350,
+            "sha256": "e9c0dca688176260bb843a704e78b6676fe12dc41d862bf5b130b5c47bd60101",
+            "blank": false,
+            "starts_object": true,
+            "fenced": false,
+            "json_valid": true,
+            "root_type": "dict"
+          }
+        },
+        "result": "success",
+        "duration_ms": 1495.94
+      },
+      {
+        "diagnostic_attempt": 4,
+        "original_started_at": "2026-10-07T15:20:36.413791+00:00",
+        "context_hash": "9d47a575cc1b054fedce5ea8b279d5dd6123673689f2f1a7753987ba9464d1e5",
+        "original_frame_status": "fallback",
+        "original_fallback_reason": "emotion_model_failure",
+        "original_guidance_status": "fallback",
+        "frozen_input_verified": true,
+        "original_prompt_version": "emotion-director-v5",
+        "input_shape": {
+          "messages": 20,
+          "new_sources": 1,
+          "input_bytes": 5828
+        },
+        "request": {
+          "body_sha256": "87996f85ab0b9e152be26411824e4e6ad70a1b84fd4fa749763153e537eefa28",
+          "model": "deepseek-flash",
+          "max_output_tokens": 1536,
+          "format": "json_schema"
+        },
+        "wire_shape": {
+          "status": "completed",
+          "incomplete": false,
+          "output_items": [
+            {
+              "type": "message",
+              "status": "completed",
+              "parts": [
+                {
+                  "type": "output_text",
+                  "text_characters": 285
+                }
+              ]
+            }
+          ]
+        },
+        "response": {
+          "http_status": 200,
+          "finish_reason": "stop",
+          "has_refusal": false,
+          "has_tool_calls": false,
+          "elapsed_ms": 954.352,
+          "usage": {
+            "prompt_tokens": 2527,
+            "completion_tokens": 118,
+            "total_tokens": 2645,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 2304
+            }
+          },
+          "syntax": {
+            "characters": 285,
+            "utf8_bytes": 369,
+            "sha256": "bf3bc3321be58e8345a76c2acb6888003b8f0a549290cb5d8bd3a3269ecf4938",
+            "blank": false,
+            "starts_object": true,
+            "fenced": false,
+            "json_valid": true,
+            "root_type": "dict"
+          }
+        },
+        "result": "success",
+        "duration_ms": 959.14
+      },
+      {
+        "diagnostic_attempt": 5,
+        "original_started_at": "2026-10-07T15:21:38.717480+00:00",
+        "context_hash": "229212895023adbc4f8a39a6eb444eaf6f312119d12bd2d5f67c5e9f0c0c7cf2",
+        "original_frame_status": "fallback",
+        "original_fallback_reason": "emotion_model_failure",
+        "original_guidance_status": "fallback",
+        "frozen_input_verified": true,
+        "original_prompt_version": "emotion-director-v5",
+        "input_shape": {
+          "messages": 20,
+          "new_sources": 1,
+          "input_bytes": 5953
+        },
+        "request": {
+          "body_sha256": "474128b9701b36e37cb6f7ec7475a0151f0255c90a9f3b384bd5c57d3eea68d5",
+          "model": "deepseek-flash",
+          "max_output_tokens": 1536,
+          "format": "json_schema"
+        },
+        "wire_shape": {
+          "status": "completed",
+          "incomplete": false,
+          "output_items": [
+            {
+              "type": "message",
+              "status": "completed",
+              "parts": [
+                {
+                  "type": "output_text",
+                  "text_characters": 299
+                }
+              ]
+            }
+          ]
+        },
+        "response": {
+          "http_status": 200,
+          "finish_reason": "stop",
+          "has_refusal": false,
+          "has_tool_calls": false,
+          "elapsed_ms": 1383.216,
+          "usage": {
+            "prompt_tokens": 2575,
+            "completion_tokens": 114,
+            "total_tokens": 2689,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 2432
+            }
+          },
+          "syntax": {
+            "characters": 299,
+            "utf8_bytes": 379,
+            "sha256": "5319f35fc15a8baa2991ca1f28016a86e995f03e7835d57bfa3b2d02a5b05faf",
+            "blank": false,
+            "starts_object": true,
+            "fenced": false,
+            "json_valid": true,
+            "root_type": "dict"
+          }
+        },
+        "result": "success",
+        "duration_ms": 1387.92
+      },
+      {
+        "diagnostic_attempt": 6,
+        "original_started_at": "2026-10-07T15:24:16.229906+00:00",
+        "context_hash": "d6ba34429c7ad729dbc4c42e07327fcf935205a6eca069f9c5bc1540d1427b48",
+        "original_frame_status": "fallback",
+        "original_fallback_reason": "emotion_model_failure",
+        "original_guidance_status": "fallback",
+        "frozen_input_verified": true,
+        "original_prompt_version": "emotion-director-v5",
+        "input_shape": {
+          "messages": 20,
+          "new_sources": 1,
+          "input_bytes": 5996
+        },
+        "request": {
+          "body_sha256": "d077b0ec9cbda3d18593d1acfe5b6d8b2b7aaac40fc1a4f61463b0e6e8b47122",
+          "model": "deepseek-flash",
+          "max_output_tokens": 1536,
+          "format": "json_schema"
+        },
+        "wire_shape": {
+          "status": "completed",
+          "incomplete": false,
+          "output_items": [
+            {
+              "type": "message",
+              "status": "completed",
+              "parts": [
+                {
+                  "type": "output_text",
+                  "text_characters": 276
+                }
+              ]
+            }
+          ]
+        },
+        "response": {
+          "http_status": 200,
+          "finish_reason": "stop",
+          "has_refusal": false,
+          "has_tool_calls": false,
+          "elapsed_ms": 952.111,
+          "usage": {
+            "prompt_tokens": 2605,
+            "completion_tokens": 106,
+            "total_tokens": 2711,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 2432
+            }
+          },
+          "syntax": {
+            "characters": 276,
+            "utf8_bytes": 348,
+            "sha256": "3e60f547903a1fcb5b6d1e27bf66d08ce8e5f18114db21386a715f5604a8c2f7",
+            "blank": false,
+            "starts_object": true,
+            "fenced": false,
+            "json_valid": true,
+            "root_type": "dict"
+          }
+        },
+        "result": "success",
+        "duration_ms": 957.0
+      },
+      {
+        "diagnostic_attempt": 7,
+        "original_started_at": "2026-10-07T15:20:36.413791+00:00",
+        "context_hash": "9d47a575cc1b054fedce5ea8b279d5dd6123673689f2f1a7753987ba9464d1e5",
+        "original_frame_status": "fallback",
+        "original_fallback_reason": "emotion_model_failure",
+        "original_guidance_status": "fallback",
+        "frozen_input_verified": true,
+        "original_prompt_version": "emotion-director-v5",
+        "input_shape": {
+          "messages": 20,
+          "new_sources": 1,
+          "input_bytes": 5828
+        },
+        "request": {
+          "body_sha256": "87996f85ab0b9e152be26411824e4e6ad70a1b84fd4fa749763153e537eefa28",
+          "model": "deepseek-flash",
+          "max_output_tokens": 1536,
+          "format": "json_schema"
+        },
+        "wire_shape": {
+          "status": "completed",
+          "incomplete": false,
+          "output_items": [
+            {
+              "type": "message",
+              "status": "completed",
+              "parts": [
+                {
+                  "type": "output_text",
+                  "text_characters": 285
+                }
+              ]
+            }
+          ]
+        },
+        "response": {
+          "http_status": 200,
+          "finish_reason": "stop",
+          "has_refusal": false,
+          "has_tool_calls": false,
+          "elapsed_ms": 918.904,
+          "usage": {
+            "prompt_tokens": 2527,
+            "completion_tokens": 118,
+            "total_tokens": 2645,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 2304
+            }
+          },
+          "syntax": {
+            "characters": 285,
+            "utf8_bytes": 369,
+            "sha256": "bf3bc3321be58e8345a76c2acb6888003b8f0a549290cb5d8bd3a3269ecf4938",
+            "blank": false,
+            "starts_object": true,
+            "fenced": false,
+            "json_valid": true,
+            "root_type": "dict"
+          }
+        },
+        "result": "success",
+        "duration_ms": 924.79
+      },
+      {
+        "diagnostic_attempt": 8,
+        "original_started_at": "2026-10-07T15:21:38.717480+00:00",
+        "context_hash": "229212895023adbc4f8a39a6eb444eaf6f312119d12bd2d5f67c5e9f0c0c7cf2",
+        "original_frame_status": "fallback",
+        "original_fallback_reason": "emotion_model_failure",
+        "original_guidance_status": "fallback",
+        "frozen_input_verified": true,
+        "original_prompt_version": "emotion-director-v5",
+        "input_shape": {
+          "messages": 20,
+          "new_sources": 1,
+          "input_bytes": 5953
+        },
+        "request": {
+          "body_sha256": "474128b9701b36e37cb6f7ec7475a0151f0255c90a9f3b384bd5c57d3eea68d5",
+          "model": "deepseek-flash",
+          "max_output_tokens": 1536,
+          "format": "json_schema"
+        },
+        "wire_shape": {
+          "status": "completed",
+          "incomplete": false,
+          "output_items": [
+            {
+              "type": "message",
+              "status": "completed",
+              "parts": [
+                {
+                  "type": "output_text",
+                  "text_characters": 299
+                }
+              ]
+            }
+          ]
+        },
+        "response": {
+          "http_status": 200,
+          "finish_reason": "stop",
+          "has_refusal": false,
+          "has_tool_calls": false,
+          "elapsed_ms": 1058.639,
+          "usage": {
+            "prompt_tokens": 2575,
+            "completion_tokens": 114,
+            "total_tokens": 2689,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 2432
+            }
+          },
+          "syntax": {
+            "characters": 299,
+            "utf8_bytes": 379,
+            "sha256": "5319f35fc15a8baa2991ca1f28016a86e995f03e7835d57bfa3b2d02a5b05faf",
+            "blank": false,
+            "starts_object": true,
+            "fenced": false,
+            "json_valid": true,
+            "root_type": "dict"
+          }
+        },
+        "result": "success",
+        "duration_ms": 1063.3
+      },
+      {
+        "diagnostic_attempt": 9,
+        "original_started_at": "2026-10-07T15:24:16.229906+00:00",
+        "context_hash": "d6ba34429c7ad729dbc4c42e07327fcf935205a6eca069f9c5bc1540d1427b48",
+        "original_frame_status": "fallback",
+        "original_fallback_reason": "emotion_model_failure",
+        "original_guidance_status": "fallback",
+        "frozen_input_verified": true,
+        "original_prompt_version": "emotion-director-v5",
+        "input_shape": {
+          "messages": 20,
+          "new_sources": 1,
+          "input_bytes": 5996
+        },
+        "request": {
+          "body_sha256": "d077b0ec9cbda3d18593d1acfe5b6d8b2b7aaac40fc1a4f61463b0e6e8b47122",
+          "model": "deepseek-flash",
+          "max_output_tokens": 1536,
+          "format": "json_schema"
+        },
+        "wire_shape": {
+          "status": "completed",
+          "incomplete": false,
+          "output_items": [
+            {
+              "type": "message",
+              "status": "completed",
+              "parts": [
+                {
+                  "type": "output_text",
+                  "text_characters": 275
+                }
+              ]
+            }
+          ]
+        },
+        "response": {
+          "http_status": 200,
+          "finish_reason": "stop",
+          "has_refusal": false,
+          "has_tool_calls": false,
+          "elapsed_ms": 1074.208,
+          "usage": {
+            "prompt_tokens": 2605,
+            "completion_tokens": 105,
+            "total_tokens": 2710,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 2432
+            }
+          },
+          "syntax": {
+            "characters": 275,
+            "utf8_bytes": 347,
+            "sha256": "1191f74448b5cedce12a8e2ed9938d3b90f44a843f98e43de39c5161ee02ee1e",
+            "blank": false,
+            "starts_object": true,
+            "fenced": false,
+            "json_valid": true,
+            "root_type": "dict"
+          }
+        },
+        "result": "success",
+        "duration_ms": 1080.27
+      },
+      {
+        "diagnostic_attempt": 10,
+        "original_started_at": "2026-10-07T15:20:36.413791+00:00",
+        "context_hash": "9d47a575cc1b054fedce5ea8b279d5dd6123673689f2f1a7753987ba9464d1e5",
+        "original_frame_status": "fallback",
+        "original_fallback_reason": "emotion_model_failure",
+        "original_guidance_status": "fallback",
+        "frozen_input_verified": true,
+        "original_prompt_version": "emotion-director-v5",
+        "input_shape": {
+          "messages": 20,
+          "new_sources": 1,
+          "input_bytes": 5828
+        },
+        "request": {
+          "body_sha256": "87996f85ab0b9e152be26411824e4e6ad70a1b84fd4fa749763153e537eefa28",
+          "model": "deepseek-flash",
+          "max_output_tokens": 1536,
+          "format": "json_schema"
+        },
+        "wire_shape": {
+          "status": "completed",
+          "incomplete": false,
+          "output_items": [
+            {
+              "type": "message",
+              "status": "completed",
+              "parts": [
+                {
+                  "type": "output_text",
+                  "text_characters": 272
+                }
+              ]
+            }
+          ]
+        },
+        "response": {
+          "http_status": 200,
+          "finish_reason": "stop",
+          "has_refusal": false,
+          "has_tool_calls": false,
+          "elapsed_ms": 966.434,
+          "usage": {
+            "prompt_tokens": 2527,
+            "completion_tokens": 106,
+            "total_tokens": 2633,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 2304
+            }
+          },
+          "syntax": {
+            "characters": 272,
+            "utf8_bytes": 330,
+            "sha256": "2ba87dc6f19d1ed5c100bd60efec18b973ebbc3e6882f89f7405fb25033b19ce",
+            "blank": false,
+            "starts_object": true,
+            "fenced": false,
+            "json_valid": true,
+            "root_type": "dict"
+          }
+        },
+        "result": "success",
+        "duration_ms": 971.25
+      },
+      {
+        "diagnostic_attempt": 11,
+        "original_started_at": "2026-10-07T15:21:38.717480+00:00",
+        "context_hash": "229212895023adbc4f8a39a6eb444eaf6f312119d12bd2d5f67c5e9f0c0c7cf2",
+        "original_frame_status": "fallback",
+        "original_fallback_reason": "emotion_model_failure",
+        "original_guidance_status": "fallback",
+        "frozen_input_verified": true,
+        "original_prompt_version": "emotion-director-v5",
+        "input_shape": {
+          "messages": 20,
+          "new_sources": 1,
+          "input_bytes": 5953
+        },
+        "request": {
+          "body_sha256": "474128b9701b36e37cb6f7ec7475a0151f0255c90a9f3b384bd5c57d3eea68d5",
+          "model": "deepseek-flash",
+          "max_output_tokens": 1536,
+          "format": "json_schema"
+        },
+        "wire_shape": {
+          "status": "completed",
+          "incomplete": false,
+          "output_items": [
+            {
+              "type": "message",
+              "status": "completed",
+              "parts": [
+                {
+                  "type": "output_text",
+                  "text_characters": 297
+                }
+              ]
+            }
+          ]
+        },
+        "response": {
+          "http_status": 200,
+          "finish_reason": "stop",
+          "has_refusal": false,
+          "has_tool_calls": false,
+          "elapsed_ms": 874.343,
+          "usage": {
+            "prompt_tokens": 2575,
+            "completion_tokens": 113,
+            "total_tokens": 2688,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 2432
+            }
+          },
+          "syntax": {
+            "characters": 297,
+            "utf8_bytes": 373,
+            "sha256": "786e19073d141cf1960c9f46b24c1dd0b166a36382baf08f902426d519717f88",
+            "blank": false,
+            "starts_object": true,
+            "fenced": false,
+            "json_valid": true,
+            "root_type": "dict"
+          }
+        },
+        "result": "success",
+        "duration_ms": 879.26
+      },
+      {
+        "diagnostic_attempt": 12,
+        "original_started_at": "2026-10-07T15:24:16.229906+00:00",
+        "context_hash": "d6ba34429c7ad729dbc4c42e07327fcf935205a6eca069f9c5bc1540d1427b48",
+        "original_frame_status": "fallback",
+        "original_fallback_reason": "emotion_model_failure",
+        "original_guidance_status": "fallback",
+        "frozen_input_verified": true,
+        "original_prompt_version": "emotion-director-v5",
+        "input_shape": {
+          "messages": 20,
+          "new_sources": 1,
+          "input_bytes": 5996
+        },
+        "request": {
+          "body_sha256": "d077b0ec9cbda3d18593d1acfe5b6d8b2b7aaac40fc1a4f61463b0e6e8b47122",
+          "model": "deepseek-flash",
+          "max_output_tokens": 1536,
+          "format": "json_schema"
+        },
+        "wire_shape": {
+          "status": "completed",
+          "incomplete": false,
+          "output_items": [
+            {
+              "type": "message",
+              "status": "completed",
+              "parts": [
+                {
+                  "type": "output_text",
+                  "text_characters": 276
+                }
+              ]
+            }
+          ]
+        },
+        "response": {
+          "http_status": 200,
+          "finish_reason": "stop",
+          "has_refusal": false,
+          "has_tool_calls": false,
+          "elapsed_ms": 680.33,
+          "usage": {
+            "prompt_tokens": 2605,
+            "completion_tokens": 105,
+            "total_tokens": 2710,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 2432
+            }
+          },
+          "syntax": {
+            "characters": 276,
+            "utf8_bytes": 350,
+            "sha256": "b4ed20d0e9d452d82dd1f5f84b9ceb8c044df00b2aab3f83938c49fe8887ea82",
+            "blank": false,
+            "starts_object": true,
+            "fenced": false,
+            "json_valid": true,
+            "root_type": "dict"
+          }
+        },
+        "result": "success",
+        "duration_ms": 685.29
+      },
+      {
+        "diagnostic_attempt": 13,
+        "original_started_at": "2026-10-07T15:20:36.413791+00:00",
+        "context_hash": "9d47a575cc1b054fedce5ea8b279d5dd6123673689f2f1a7753987ba9464d1e5",
+        "original_frame_status": "fallback",
+        "original_fallback_reason": "emotion_model_failure",
+        "original_guidance_status": "fallback",
+        "frozen_input_verified": true,
+        "original_prompt_version": "emotion-director-v5",
+        "input_shape": {
+          "messages": 20,
+          "new_sources": 1,
+          "input_bytes": 5828
+        },
+        "request": {
+          "body_sha256": "87996f85ab0b9e152be26411824e4e6ad70a1b84fd4fa749763153e537eefa28",
+          "model": "deepseek-flash",
+          "max_output_tokens": 1536,
+          "format": "json_schema"
+        },
+        "wire_shape": {
+          "status": "completed",
+          "incomplete": false,
+          "output_items": [
+            {
+              "type": "message",
+              "status": "completed",
+              "parts": [
+                {
+                  "type": "output_text",
+                  "text_characters": 272
+                }
+              ]
+            }
+          ]
+        },
+        "response": {
+          "http_status": 200,
+          "finish_reason": "stop",
+          "has_refusal": false,
+          "has_tool_calls": false,
+          "elapsed_ms": 1157.187,
+          "usage": {
+            "prompt_tokens": 2527,
+            "completion_tokens": 106,
+            "total_tokens": 2633,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 2304
+            }
+          },
+          "syntax": {
+            "characters": 272,
+            "utf8_bytes": 330,
+            "sha256": "4754a7af897e69cc6037350ccc80bfce5720345754e5a8c1b067ffeecedfa6d9",
+            "blank": false,
+            "starts_object": true,
+            "fenced": false,
+            "json_valid": true,
+            "root_type": "dict"
+          }
+        },
+        "result": "success",
+        "duration_ms": 1161.88
+      },
+      {
+        "diagnostic_attempt": 14,
+        "original_started_at": "2026-10-07T15:21:38.717480+00:00",
+        "context_hash": "229212895023adbc4f8a39a6eb444eaf6f312119d12bd2d5f67c5e9f0c0c7cf2",
+        "original_frame_status": "fallback",
+        "original_fallback_reason": "emotion_model_failure",
+        "original_guidance_status": "fallback",
+        "frozen_input_verified": true,
+        "original_prompt_version": "emotion-director-v5",
+        "input_shape": {
+          "messages": 20,
+          "new_sources": 1,
+          "input_bytes": 5953
+        },
+        "request": {
+          "body_sha256": "474128b9701b36e37cb6f7ec7475a0151f0255c90a9f3b384bd5c57d3eea68d5",
+          "model": "deepseek-flash",
+          "max_output_tokens": 1536,
+          "format": "json_schema"
+        },
+        "wire_shape": {
+          "status": "completed",
+          "incomplete": false,
+          "output_items": [
+            {
+              "type": "message",
+              "status": "completed",
+              "parts": [
+                {
+                  "type": "output_text",
+                  "text_characters": 281
+                }
+              ]
+            }
+          ]
+        },
+        "response": {
+          "http_status": 200,
+          "finish_reason": "stop",
+          "has_refusal": false,
+          "has_tool_calls": false,
+          "elapsed_ms": 973.274,
+          "usage": {
+            "prompt_tokens": 2575,
+            "completion_tokens": 107,
+            "total_tokens": 2682,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 2432
+            }
+          },
+          "syntax": {
+            "characters": 281,
+            "utf8_bytes": 353,
+            "sha256": "3dd8bf4a604182e989067d61f01f2ff73b8a89cf55265db8ba571ed2738d9aa7",
+            "blank": false,
+            "starts_object": true,
+            "fenced": false,
+            "json_valid": true,
+            "root_type": "dict"
+          }
+        },
+        "result": "success",
+        "duration_ms": 978.23
+      },
+      {
+        "diagnostic_attempt": 15,
+        "original_started_at": "2026-10-07T15:24:16.229906+00:00",
+        "context_hash": "d6ba34429c7ad729dbc4c42e07327fcf935205a6eca069f9c5bc1540d1427b48",
+        "original_frame_status": "fallback",
+        "original_fallback_reason": "emotion_model_failure",
+        "original_guidance_status": "fallback",
+        "frozen_input_verified": true,
+        "original_prompt_version": "emotion-director-v5",
+        "input_shape": {
+          "messages": 20,
+          "new_sources": 1,
+          "input_bytes": 5996
+        },
+        "request": {
+          "body_sha256": "d077b0ec9cbda3d18593d1acfe5b6d8b2b7aaac40fc1a4f61463b0e6e8b47122",
+          "model": "deepseek-flash",
+          "max_output_tokens": 1536,
+          "format": "json_schema"
+        },
+        "wire_shape": {
+          "status": "completed",
+          "incomplete": false,
+          "output_items": [
+            {
+              "type": "message",
+              "status": "completed",
+              "parts": [
+                {
+                  "type": "output_text",
+                  "text_characters": 277
+                }
+              ]
+            }
+          ]
+        },
+        "response": {
+          "http_status": 200,
+          "finish_reason": "stop",
+          "has_refusal": false,
+          "has_tool_calls": false,
+          "elapsed_ms": 918.148,
+          "usage": {
+            "prompt_tokens": 2605,
+            "completion_tokens": 107,
+            "total_tokens": 2712,
+            "completion_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "cached_tokens": 2432
+            }
+          },
+          "syntax": {
+            "characters": 277,
+            "utf8_bytes": 353,
+            "sha256": "6585b5e0ed2d50fad099a5d128c1c0afa6bb765f05cb018554b8398e4068be80",
+            "blank": false,
+            "starts_object": true,
+            "fenced": false,
+            "json_valid": true,
+            "root_type": "dict"
+          }
+        },
+        "result": "success",
+        "duration_ms": 923.06
+      }
+    ]
+  },
+  "stored_impact": {
+    "cases": [
+      {
+        "started_at": "2026-10-07T15:20:36.413791+00:00",
+        "ledger_status": "applied",
+        "frame_status": "fallback",
+        "appraisal_events": 0,
+        "source_processed": [
+          true
+        ],
+        "guidance_status": "fallback",
+        "guidance_fallback_reason": "emotion_guidance_feeling_missing",
+        "same_turn_model_phases": {
+          "emotion_appraisal": {
+            "error": 1
+          },
+          "emotion_guidance": {
+            "success": 1
+          },
+          "qq_gate": {
+            "success": 1
+          }
+        }
+      },
+      {
+        "started_at": "2026-10-07T15:21:38.717480+00:00",
+        "ledger_status": "applied",
+        "frame_status": "fallback",
+        "appraisal_events": 0,
+        "source_processed": [
+          true
+        ],
+        "guidance_status": "fallback",
+        "guidance_fallback_reason": "emotion_guidance_feeling_missing",
+        "same_turn_model_phases": {
+          "emotion_appraisal": {
+            "error": 1
+          },
+          "emotion_guidance": {
+            "success": 1
+          },
+          "qq_gate": {
+            "success": 1
+          },
+          "qq_persona": {
+            "success": 4
+          }
+        }
+      },
+      {
+        "started_at": "2026-10-07T15:24:16.229906+00:00",
+        "ledger_status": "applied",
+        "frame_status": "fallback",
+        "appraisal_events": 0,
+        "source_processed": [
+          true
+        ],
+        "guidance_status": "fallback",
+        "guidance_fallback_reason": "emotion_guidance_feeling_missing",
+        "same_turn_model_phases": {
+          "emotion_appraisal": {
+            "error": 1
+          },
+          "emotion_guidance": {
+            "success": 1
+          },
+          "qq_gate": {
+            "success": 1
+          }
+        }
+      }
+    ]
+  },
+  "synthetic_error_code_collision": [
+    {
+      "synthetic_case": "empty",
+      "error_code": "deepseek_structured_json_invalid",
+      "diagnostics": []
+    },
+    {
+      "synthetic_case": "fenced",
+      "error_code": "deepseek_structured_json_invalid",
+      "diagnostics": []
+    },
+    {
+      "synthetic_case": "trailing_comma",
+      "error_code": "deepseek_structured_json_invalid",
+      "diagnostics": []
+    },
+    {
+      "synthetic_case": "two_objects",
+      "error_code": "deepseek_structured_json_invalid",
+      "diagnostics": []
+    },
+    {
+      "synthetic_case": "invalid_number",
+      "error_code": "deepseek_structured_json_invalid",
+      "diagnostics": []
+    }
+  ],
+  "diagnostic_scripts_sha256": {
+    "emotion-json-replay.py": "2a37477d59f27ff28b88d6e822f0490b1e73506365a90d24e8ac2bd3039e4285",
+    "emotion-json-impact.py": "1843a59d173aacbac7f66b671f602b55050bb0c4c7c0ed61ac4b12ef206a1e13"
+  },
+  "interpretation": {
+    "confirmed_stage": "JSON decoding of normalized Responses output before schema validation",
+    "historical_exact_syntax": "unavailable; original response and parser position not retained",
+    "inference": "Intermittent generation or response-shape anomaly is more consistent with successful frozen-input replays than a deterministic input/configuration fault.",
+    "historical_repair_performed": false,
+    "production_code_modified": false,
+    "service_restarted": false,
+    "diagnostic_model_calls": 18,
+    "diagnostic_work_receipts_written": false
+  },
+  "provider_documentation": "https://api-docs.deepseek.com/api/create-response/",
+  "privacy": "No prompt, response, chat body, key, credential or quoted message exported."
+}
