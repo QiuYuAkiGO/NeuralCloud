@@ -1,0 +1,2164 @@
+{
+  "schema_version": "ui-snapshot-hotfix-v3",
+  "deployments": {
+    "v1": {
+      "started_at": "2026-10-07T14:28:18.983375+00:00",
+      "phase": "running",
+      "release_id": "20261007-ui-snapshot-hot-v1",
+      "code_commit": "bdc7c58345ce7acb6349a5f9ecf18d3c4ed92bf3",
+      "archive_sha256": "41d1bbf48d8f4ff87c1cde34c6a7f6e9df25f930e5c353620ca56ed33b133963",
+      "control_audit": [
+        {
+          "at": "2026-10-07T14:28:29.984125Z",
+          "type": "pause",
+          "authorized_maintenance": true
+        }
+      ],
+      "backup": {
+        "path": "/var/backups/neuralcloud/20261007-before-ui-snapshot-hot",
+        "verification": {
+          "ok": true,
+          "files": 14145,
+          "bytes": 12830849186,
+          "sqlite_databases": 24,
+          "journals": {
+            "state/runtime/journal": {
+              "records": 1327215,
+              "last_hash": "d37e6ac32d78489b4b8d7933a2f0c2317f4a8268b45bcca5239a127b7f826cb5"
+            }
+          },
+          "manifest_sha256": "ce2bf067e0cf9b0f69afe46360c19c48b6fc2faf89754e325cd1ce824f25fbec"
+        }
+      },
+      "database_changes": "none; existing WAL and job state retained",
+      "preservation": {
+        "profile_manifest_direct_unchanged": true,
+        "attention_sha256": "f070e076812feafa2c1e3695c60f080ce66a3fb63e23d383e21ebbd809dda6b2",
+        "attention_unchanged_before_restart": true
+      },
+      "activation": {
+        "release": "20261007-ui-snapshot-hot-v1",
+        "previous_release": "20261007-shared-memory-wal-v1",
+        "services": [
+          "cognitive",
+          "homeostasis",
+          "runtime",
+          "gui",
+          "board",
+          "qq_direct"
+        ]
+      },
+      "verification": {
+        "release_id": "20261007-ui-snapshot-hot-v1",
+        "verified_files": 434,
+        "configuration_valid": true,
+        "business_services_started": false
+      },
+      "runtime": {
+        "lifecycle": "RUNNING",
+        "health": {
+          "lifecycle": "RUNNING",
+          "journal_writable": true,
+          "cognitive_healthy": true,
+          "homeostasis_healthy": true,
+          "llm_healthy": true,
+          "body_healthy": true,
+          "degraded_reasons": [
+            "qq_homeostatic_feedback"
+          ],
+          "last_heartbeat_at": "2026-10-07T14:35:08.048105Z",
+          "last_journal_append_at": "2026-10-07T14:35:09.061422Z",
+          "embodiment": {
+            "state": "disabled",
+            "provider_id": null,
+            "body_instance_id": null,
+            "activated_capabilities": [],
+            "effective_capabilities": [],
+            "negotiated": null,
+            "health": null,
+            "reason": "embodiment disabled by manifest"
+          },
+          "agency_state": "AVAILABLE",
+          "body_episode_id": null,
+          "body_revision": null,
+          "body_state_age_seconds": null
+        },
+        "pending_events": 0,
+        "background": {
+          "heartbeat": {
+            "active": true,
+            "pending": 0,
+            "running": true,
+            "coalesced": 0,
+            "thread_jobs": 2,
+            "last_duration_ms": null,
+            "last_error": null
+          },
+          "passive_state": {
+            "active": true,
+            "pending": 0,
+            "running": false,
+            "coalesced": 0,
+            "thread_jobs": 0,
+            "last_duration_ms": null,
+            "last_error": null
+          },
+          "affect": {
+            "pending": 0,
+            "running": 0,
+            "scopes": 0,
+            "degraded": false
+          }
+        }
+      },
+      "direct": {
+        "running": true,
+        "connected": true,
+        "heartbeat_at": "2026-10-07T14:35:08.674753+00:00"
+      },
+      "services": {
+        "cognitive": {
+          "MainPID": "234012",
+          "Result": "success",
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "FragmentPath": "/etc/systemd/system/neuralcloud-cognitive.service"
+        },
+        "homeostasis": {
+          "MainPID": "234048",
+          "Result": "success",
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "FragmentPath": "/etc/systemd/system/neuralcloud-homeostasis.service"
+        },
+        "runtime": {
+          "MainPID": "234152",
+          "Result": "success",
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "FragmentPath": "/etc/systemd/system/neuralcloud-runtime.service"
+        },
+        "gui": {
+          "MainPID": "234737",
+          "Result": "success",
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "FragmentPath": "/etc/systemd/system/neuralcloud-gui.service"
+        },
+        "board": {
+          "MainPID": "234142",
+          "Result": "success",
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "FragmentPath": "/etc/systemd/system/neuralcloud-board.service"
+        },
+        "qq_direct": {
+          "MainPID": "234761",
+          "Result": "success",
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "FragmentPath": "/etc/systemd/system/neuralcloud-qq-direct.service"
+        }
+      },
+      "finished_at": "2026-10-07T14:35:10.303322+00:00"
+    },
+    "v2": {
+      "started_at": "2026-10-07T14:53:00.733038+00:00",
+      "phase": "failed",
+      "release_id": "20261007-ui-snapshot-hot-v2",
+      "code_commit": "e9e91a7a9214e86567f806c50f085b13b37cfbac",
+      "archive_sha256": "901a4b11301d00e0087596414be753604a07b1c39544d0489bcafcfcf8d3391b",
+      "control_audit": [
+        {
+          "at": "2026-10-07T14:53:12.159113Z",
+          "type": "pause",
+          "authorized_maintenance": true
+        }
+      ],
+      "backup": {
+        "path": "/var/backups/neuralcloud/20261007-before-ui-snapshot-hot-v2",
+        "verification": {
+          "ok": true,
+          "files": 14353,
+          "bytes": 12971907282,
+          "sqlite_databases": 24,
+          "journals": {
+            "state/runtime/journal": {
+              "records": 1334942,
+              "last_hash": "93ce655eb175ac6f78c6e18c08368fc49384c0fa85798262888ed914e433f64b"
+            }
+          },
+          "manifest_sha256": "947c04fae6a0e4dc4fe71c404568b9a9e6b1feefebfb78c6e7b3eaf7022f3c43"
+        }
+      },
+      "database_changes": "none; existing WAL and job state retained",
+      "preservation": {
+        "profile_manifest_direct_unchanged": true,
+        "attention_sha256": "6d0c20698fbdd913da636036eb9e9d7ccf1c329984f90c49538b8240c0efc50f",
+        "attention_unchanged_before_restart": true
+      },
+      "error_type": "AssertionError",
+      "error": "Another deployment changed the current release",
+      "finished_at": "2026-10-07T14:56:26.820324+00:00"
+    },
+    "integrated": {
+      "started_at": "2026-10-07T15:08:47.275499+00:00",
+      "phase": "running",
+      "release_id": "20261007-ui-snapshot-integrated-v3",
+      "code_commit": "e9e91a7a9214e86567f806c50f085b13b37cfbac",
+      "archive_sha256": "d2ec62e819aebe6068e2d05c87e5252dd79ae07394e24bf0b8b2c436148d4ae5",
+      "control_audit": [
+        {
+          "at": "2026-10-07T15:09:13.422450Z",
+          "type": "pause",
+          "authorized_maintenance": true
+        }
+      ],
+      "backup": {
+        "path": "/var/backups/neuralcloud/20261007-before-ui-snapshot-integrated",
+        "verification": {
+          "ok": true,
+          "files": 14937,
+          "bytes": 13039822388,
+          "sqlite_databases": 24,
+          "journals": {
+            "state/runtime/journal": {
+              "records": 1340157,
+              "last_hash": "0cbbc0a57787755b967f7482b6325ed6cb88a03ce13a83390541d21aae9f2356"
+            }
+          },
+          "manifest_sha256": "09e04ba40d437d036771e169fa489971f7fa7cdc1b7481e7a4caa26912f90234"
+        }
+      },
+      "database_changes": "none; existing WAL and job state retained",
+      "preservation": {
+        "profile_manifest_direct_unchanged": true,
+        "attention_sha256": "e6870dd4fbe65ae920ca1e2fb2ea2507aabc0256d56b8c5c87e543181f747687",
+        "attention_unchanged_before_restart": true
+      },
+      "activation": {
+        "release": "20261007-ui-snapshot-integrated-v3",
+        "previous_release": "20261007-semantic-health-v2",
+        "services": [
+          "cognitive",
+          "homeostasis",
+          "runtime",
+          "gui",
+          "board",
+          "qq_direct"
+        ]
+      },
+      "verification": {
+        "release_id": "20261007-ui-snapshot-integrated-v3",
+        "verified_files": 436,
+        "configuration_valid": true,
+        "business_services_started": false
+      },
+      "runtime": {
+        "lifecycle": "RUNNING",
+        "health": {
+          "lifecycle": "RUNNING",
+          "journal_writable": true,
+          "cognitive_healthy": true,
+          "homeostasis_healthy": true,
+          "llm_healthy": true,
+          "body_healthy": true,
+          "degraded_reasons": [
+            "qq_homeostatic_feedback"
+          ],
+          "last_heartbeat_at": "2026-10-07T15:16:09.548385Z",
+          "last_journal_append_at": "2026-10-07T15:16:09.700431Z",
+          "embodiment": {
+            "state": "disabled",
+            "provider_id": null,
+            "body_instance_id": null,
+            "activated_capabilities": [],
+            "effective_capabilities": [],
+            "negotiated": null,
+            "health": null,
+            "reason": "embodiment disabled by manifest"
+          },
+          "agency_state": "AVAILABLE",
+          "body_episode_id": null,
+          "body_revision": null,
+          "body_state_age_seconds": null
+        },
+        "pending_events": 0,
+        "background": {
+          "heartbeat": {
+            "active": true,
+            "pending": 0,
+            "running": true,
+            "coalesced": 0,
+            "thread_jobs": 2,
+            "last_duration_ms": null,
+            "last_error": null
+          },
+          "passive_state": {
+            "active": true,
+            "pending": 0,
+            "running": false,
+            "coalesced": 0,
+            "thread_jobs": 0,
+            "last_duration_ms": null,
+            "last_error": null
+          },
+          "affect": {
+            "pending": 0,
+            "running": 0,
+            "scopes": 0,
+            "degraded": false
+          }
+        }
+      },
+      "direct": {
+        "running": true,
+        "connected": true,
+        "heartbeat_at": "2026-10-07T15:16:11.070624+00:00"
+      },
+      "services": {
+        "cognitive": {
+          "MainPID": "243574",
+          "Result": "success",
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "FragmentPath": "/etc/systemd/system/neuralcloud-cognitive.service"
+        },
+        "homeostasis": {
+          "MainPID": "243614",
+          "Result": "success",
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "FragmentPath": "/etc/systemd/system/neuralcloud-homeostasis.service"
+        },
+        "runtime": {
+          "MainPID": "243655",
+          "Result": "success",
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "FragmentPath": "/etc/systemd/system/neuralcloud-runtime.service"
+        },
+        "gui": {
+          "MainPID": "244271",
+          "Result": "success",
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "FragmentPath": "/etc/systemd/system/neuralcloud-gui.service"
+        },
+        "board": {
+          "MainPID": "243647",
+          "Result": "success",
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "FragmentPath": "/etc/systemd/system/neuralcloud-board.service"
+        },
+        "qq_direct": {
+          "MainPID": "244296",
+          "Result": "success",
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "FragmentPath": "/etc/systemd/system/neuralcloud-qq-direct.service"
+        }
+      },
+      "finished_at": "2026-10-07T15:16:12.177338+00:00"
+    }
+  },
+  "memory_benchmark": {
+    "at": "2026-10-07T14:26:47.548011+00:00",
+    "release": "20261007-ui-snapshot-hot-v1",
+    "frozen_database_sha256": "5465aa46870d2aaa93bb1b77d8f050efaa01d9af1b2826005a7332ebc78b5c88",
+    "frozen_database_bytes": 155938816,
+    "visible_count": 18216,
+    "selected_record_count": 50,
+    "payload_entry_count": 32,
+    "contexts_equal": true,
+    "payloads_equal": true,
+    "legacy_query_ms": 4987.583,
+    "operator_recent_ms": [
+      119.894,
+      118.519,
+      115.454
+    ],
+    "payload_sha256": "3b3330f6a9fb1f8f78daf3227b8227c04abd7640e9a8019b0bcf322b826e32a6",
+    "policy_unchanged": true
+  },
+  "package": {
+    "release_id": "20261007-ui-snapshot-integrated-v3",
+    "files": 436,
+    "archive": "/home/qiuyu/.config/neuralcloud/cognitive-v3-shadow/ui-snapshot-integrated-v3.tar.gz",
+    "sha256": "d2ec62e819aebe6068e2d05c87e5252dd79ae07394e24bf0b8b2c436148d4ae5",
+    "base_release": "20261007-semantic-health-v2",
+    "ui_code_commit": "e9e91a7a9214e86567f806c50f085b13b37cfbac",
+    "overlays": [
+      {
+        "path": "gui/presets.py",
+        "base_sha256": "97f5381142410aac22caa864f27589f3aca4bb02e44fc13661e3b12b42f0d5d1",
+        "new_sha256": "e3f13ec76f150874f8129d9e9785dd4a7eab037c8808d7206c7cbbdfe789c44a"
+      },
+      {
+        "path": "gui/service.py",
+        "base_sha256": "9678003dc13feea1519cf53218f18a85beb712881ff4c1614e6d729eb6281e2a",
+        "new_sha256": "7fa17686ba95451307b6c08d824c69d6486cc8aa22dbaf48b8224f3bdf6997a7"
+      },
+      {
+        "path": "gui/static/app.js",
+        "base_sha256": "88841a34a19b54bb03182ae7ea169a91fc4d8174dfcadc0a965825a37820d1fb",
+        "new_sha256": "b70815258fe430fc905ec3188550f3dfd6361da8325985d1348fe4b73b0a208e"
+      },
+      {
+        "path": "harness/cognitive/qq_memory.py",
+        "base_sha256": "b8ee2a07b5a7348cf8605f0d3796b87b76a944b12be7460aa6e41f427901741f",
+        "new_sha256": "431fea7deafa473abbe2a2376b9447d2c67c87da2c1fc40c71d803a7f9a75265"
+      },
+      {
+        "path": "harness/cognitive/service.py",
+        "base_sha256": "6cb67ad04ed594933e9932a2cd77d0707e665dcbc40b33509a4167db8fbd55ac",
+        "new_sha256": "b0686d09ef95df54c4d1e9f713c1e2ca032a9ec0c8488eed457e224e696a2115"
+      }
+    ],
+    "base_manifest_sha256": "c673e498beed0a962d7d83a535f36486a8186688eeb431d057f3e8e974922843"
+  },
+  "source_verification": {
+    "current_release": "20261007-ui-snapshot-integrated-v3",
+    "candidate": "20261007-ui-snapshot-hot-v2",
+    "all_ui_files_identical": true,
+    "files": [
+      {
+        "path": "gui/presets.py",
+        "current_sha256": "e3f13ec76f150874f8129d9e9785dd4a7eab037c8808d7206c7cbbdfe789c44a",
+        "candidate_sha256": "e3f13ec76f150874f8129d9e9785dd4a7eab037c8808d7206c7cbbdfe789c44a",
+        "equal": true
+      },
+      {
+        "path": "gui/service.py",
+        "current_sha256": "7fa17686ba95451307b6c08d824c69d6486cc8aa22dbaf48b8224f3bdf6997a7",
+        "candidate_sha256": "7fa17686ba95451307b6c08d824c69d6486cc8aa22dbaf48b8224f3bdf6997a7",
+        "equal": true
+      },
+      {
+        "path": "gui/static/app.js",
+        "current_sha256": "b70815258fe430fc905ec3188550f3dfd6361da8325985d1348fe4b73b0a208e",
+        "candidate_sha256": "b70815258fe430fc905ec3188550f3dfd6361da8325985d1348fe4b73b0a208e",
+        "equal": true
+      },
+      {
+        "path": "harness/cognitive/qq_memory.py",
+        "current_sha256": "431fea7deafa473abbe2a2376b9447d2c67c87da2c1fc40c71d803a7f9a75265",
+        "candidate_sha256": "431fea7deafa473abbe2a2376b9447d2c67c87da2c1fc40c71d803a7f9a75265",
+        "equal": true
+      },
+      {
+        "path": "harness/cognitive/service.py",
+        "current_sha256": "b0686d09ef95df54c4d1e9f713c1e2ca032a9ec0c8488eed457e224e696a2115",
+        "candidate_sha256": "b0686d09ef95df54c4d1e9f713c1e2ca032a9ec0c8488eed457e224e696a2115",
+        "equal": true
+      },
+      {
+        "path": "harness/cognitive/shared_memory.py",
+        "current_sha256": "821fec08dd52e6684637563df12cc5ad7dae4badad274b3a9dc4acf8a0594860",
+        "candidate_sha256": "821fec08dd52e6684637563df12cc5ad7dae4badad274b3a9dc4acf8a0594860",
+        "equal": true
+      },
+      {
+        "path": "harness/cognitive/ui_snapshot.py",
+        "current_sha256": "067e37e1295212806cd8d2679588dad499e6b0a1e2f1e9a821cdeaa12c0248f7",
+        "candidate_sha256": "067e37e1295212806cd8d2679588dad499e6b0a1e2f1e9a821cdeaa12c0248f7",
+        "equal": true
+      },
+      {
+        "path": "harness/memory/shared.py",
+        "current_sha256": "1d4c27612fd0f2eada58c6627b34fc9f620adc1201247bbaa0b77b821ac100aa",
+        "candidate_sha256": "1d4c27612fd0f2eada58c6627b34fc9f620adc1201247bbaa0b77b821ac100aa",
+        "equal": true
+      },
+      {
+        "path": "harness/qq/attention.py",
+        "current_sha256": "121e93a79c8fcee90f0dd3745d7ab60e5e03aa5bbfb3ce1a5d88efa1a647afe5",
+        "candidate_sha256": "121e93a79c8fcee90f0dd3745d7ab60e5e03aa5bbfb3ce1a5d88efa1a647afe5",
+        "equal": true
+      }
+    ],
+    "release_manifest_sha256": "03d16d94f092ce331c1c58c2a1db1da567cbbb8d4735e06eaa3b58b6daf429ae"
+  },
+  "source_provenance": {
+    "commit": "085899ea71e3760572b8e9423aa6a0a78189ddd8",
+    "files": 436,
+    "line_endings_only_differences": 299,
+    "content_differences": 0
+  },
+  "aborted_v2_backup_note": "Validation passed, but concurrent activation prevents claiming that writers were stopped throughout this backup; final integrated deployment uses a new verified backup.",
+  "catalog_profile": {
+    "catalog_seconds": 1.27037007099716,
+    "items": 4,
+    "working_json_bytes": 65781454,
+    "profile": [
+      {
+        "file": "presets.py",
+        "line": 367,
+        "function": "list_summaries",
+        "calls": 1,
+        "own_seconds": 0.033,
+        "cumulative_seconds": 1.2699
+      },
+      {
+        "file": "presets.py",
+        "line": 345,
+        "function": "summarize",
+        "calls": 4,
+        "own_seconds": 0.0001,
+        "cumulative_seconds": 1.2365
+      },
+      {
+        "file": "presets.py",
+        "line": 255,
+        "function": "load",
+        "calls": 4,
+        "own_seconds": 0.0106,
+        "cumulative_seconds": 1.236
+      },
+      {
+        "file": "presets.py",
+        "line": 196,
+        "function": "load_preset_file",
+        "calls": 4,
+        "own_seconds": 0.0115,
+        "cumulative_seconds": 1.2253
+      },
+      {
+        "file": "__init__.py",
+        "line": 299,
+        "function": "loads",
+        "calls": 4,
+        "own_seconds": 0.0,
+        "cumulative_seconds": 0.5874
+      },
+      {
+        "file": "decoder.py",
+        "line": 332,
+        "function": "decode",
+        "calls": 4,
+        "own_seconds": 0.0,
+        "cumulative_seconds": 0.5874
+      },
+      {
+        "file": "decoder.py",
+        "line": 343,
+        "function": "raw_decode",
+        "calls": 4,
+        "own_seconds": 0.5873,
+        "cumulative_seconds": 0.5873
+      },
+      {
+        "file": "pathlib.py",
+        "line": 1024,
+        "function": "read_text",
+        "calls": 4,
+        "own_seconds": 0.0,
+        "cumulative_seconds": 0.4276
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'read' of '_io.TextIOWrapper' objects>",
+        "calls": 4,
+        "own_seconds": 0.3281,
+        "cumulative_seconds": 0.4275
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'validate_python' of 'pydantic_core._pydantic_core.SchemaValidator' objects>",
+        "calls": 8,
+        "own_seconds": 0.0557,
+        "cumulative_seconds": 0.1988
+      },
+      {
+        "file": "main.py",
+        "line": 693,
+        "function": "model_validate",
+        "calls": 4,
+        "own_seconds": 0.0,
+        "cumulative_seconds": 0.1988
+      },
+      {
+        "file": "models.py",
+        "line": 96,
+        "function": "_canonical_visibility",
+        "calls": 3426,
+        "own_seconds": 0.0023,
+        "cumulative_seconds": 0.1418
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.any>",
+        "calls": 3426,
+        "own_seconds": 0.0009,
+        "cumulative_seconds": 0.1386
+      },
+      {
+        "file": "models.py",
+        "line": 99,
+        "function": "<genexpr>",
+        "calls": 10278,
+        "own_seconds": 0.1372,
+        "cumulative_seconds": 0.1377
+      },
+      {
+        "file": "<frozen codecs>",
+        "line": 319,
+        "function": "decode",
+        "calls": 4,
+        "own_seconds": 0.0,
+        "cumulative_seconds": 0.0994
+      }
+    ]
+  },
+  "catalog_benchmark": {
+    "at": "2026-10-07T14:51:52.293648+00:00",
+    "identical": true,
+    "catalog_items": 4,
+    "cold_then_four_warm_ms": [
+      1262.343,
+      0.198,
+      0.135,
+      0.126,
+      0.121
+    ],
+    "preset_json_bytes": 65886179,
+    "backups_free_bytes": 73119227904
+  },
+  "initial_v1_http": {
+    "at": "2026-10-07T14:36:13.692977+00:00",
+    "release": "20261007-ui-snapshot-hot-v1",
+    "sequential": {
+      "cognitive": [
+        {
+          "status": 200,
+          "milliseconds": 2765.72,
+          "bytes": 43694,
+          "memory_records": 18230,
+          "entries": 31,
+          "freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T14:35:45.147030+00:00",
+            "age_seconds": 4.9,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 6,
+            "last_duration_ms": 2398.18
+          },
+          "runtime_lifecycle": null
+        },
+        {
+          "status": 200,
+          "milliseconds": 1604.54,
+          "bytes": 43696,
+          "memory_records": 18230,
+          "entries": 31,
+          "freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T14:35:45.147030+00:00",
+            "age_seconds": 6.168,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 7,
+            "last_duration_ms": 2398.18
+          },
+          "runtime_lifecycle": null
+        },
+        {
+          "status": 200,
+          "milliseconds": 3333.97,
+          "bytes": 43696,
+          "memory_records": 18230,
+          "entries": 31,
+          "freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T14:35:45.147030+00:00",
+            "age_seconds": 8.627,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 7,
+            "last_duration_ms": 2398.18
+          },
+          "runtime_lifecycle": null
+        }
+      ],
+      "gui": [
+        {
+          "status": 200,
+          "milliseconds": 3980.82,
+          "bytes": 94172,
+          "memory_records": 18230,
+          "entries": 31,
+          "freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T14:35:50.047334+00:00",
+            "age_seconds": 8.553,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 7,
+            "last_duration_ms": 8401.03
+          },
+          "runtime_lifecycle": "RUNNING"
+        },
+        {
+          "status": 200,
+          "milliseconds": 4594.0,
+          "bytes": 94015,
+          "memory_records": 18230,
+          "entries": 31,
+          "freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T14:35:50.047334+00:00",
+            "age_seconds": 13.159,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 7,
+            "last_duration_ms": 8401.03
+          },
+          "runtime_lifecycle": "RUNNING"
+        },
+        {
+          "status": 200,
+          "milliseconds": 3860.76,
+          "bytes": 62303,
+          "memory_records": null,
+          "entries": 0,
+          "freshness": {
+            "status": "loading",
+            "as_of": null,
+            "age_seconds": 16.119,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 8,
+            "last_duration_ms": 8401.03
+          },
+          "runtime_lifecycle": "RUNNING"
+        }
+      ]
+    },
+    "eight_parallel_gui": [
+      {
+        "status": 200,
+        "milliseconds": 4815.59,
+        "bytes": 93351,
+        "memory_records": 18230,
+        "entries": 31,
+        "freshness": {
+          "status": "refreshing",
+          "as_of": "2026-10-07T14:36:03.206707+00:00",
+          "age_seconds": 7.069,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 8,
+          "last_duration_ms": 4602.81
+        },
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 4953.98,
+        "bytes": 93351,
+        "memory_records": 18230,
+        "entries": 31,
+        "freshness": {
+          "status": "refreshing",
+          "as_of": "2026-10-07T14:36:03.206707+00:00",
+          "age_seconds": 8.348,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 9,
+          "last_duration_ms": 4602.81
+        },
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "error_type": "TimeoutError",
+        "milliseconds": 5005.45
+      },
+      {
+        "error_type": "TimeoutError",
+        "milliseconds": 5005.07
+      },
+      {
+        "error_type": "TimeoutError",
+        "milliseconds": 5004.81
+      },
+      {
+        "error_type": "TimeoutError",
+        "milliseconds": 5004.93
+      },
+      {
+        "error_type": "TimeoutError",
+        "milliseconds": 5004.58
+      },
+      {
+        "error_type": "TimeoutError",
+        "milliseconds": 5003.65
+      }
+    ],
+    "summary": {
+      "requests": 14,
+      "success": 8,
+      "max_ms": 5005.45,
+      "median_ms": 4884.785
+    }
+  },
+  "final_http": {
+    "at": "2026-10-07T15:16:57.758511+00:00",
+    "release": "20261007-ui-snapshot-integrated-v3",
+    "sequential": {
+      "cognitive": [
+        {
+          "status": 200,
+          "milliseconds": 25.99,
+          "bytes": 44356,
+          "memory_records": 18906,
+          "entries": 30,
+          "freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T15:16:50.808436+00:00",
+            "age_seconds": 2.299,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 7,
+            "last_duration_ms": 127.86
+          },
+          "preset_freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T15:16:46.060852+00:00",
+            "age_seconds": 7.045,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 6,
+            "last_duration_ms": 11.1
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": null
+        },
+        {
+          "status": 200,
+          "milliseconds": 16.72,
+          "bytes": 44352,
+          "memory_records": 18906,
+          "entries": 30,
+          "freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T15:16:50.808436+00:00",
+            "age_seconds": 2.312,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 8,
+            "last_duration_ms": 127.86
+          },
+          "preset_freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:16:53.106095+00:00",
+            "age_seconds": 0.014,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 7,
+            "last_duration_ms": 0.78
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": null
+        },
+        {
+          "status": 200,
+          "milliseconds": 15.45,
+          "bytes": 44350,
+          "memory_records": 18906,
+          "entries": 30,
+          "freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T15:16:50.808436+00:00",
+            "age_seconds": 2.329,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 8,
+            "last_duration_ms": 127.86
+          },
+          "preset_freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:16:53.106095+00:00",
+            "age_seconds": 0.03,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 7,
+            "last_duration_ms": 0.78
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": null
+        }
+      ],
+      "gui": [
+        {
+          "status": 200,
+          "milliseconds": 2958.71,
+          "bytes": 99767,
+          "memory_records": 18910,
+          "entries": 30,
+          "freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T15:16:53.107408+00:00",
+            "age_seconds": 2.969,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 9,
+            "last_duration_ms": 160.93
+          },
+          "preset_freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:16:53.106095+00:00",
+            "age_seconds": 2.969,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 7,
+            "last_duration_ms": 0.78
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": "RUNNING"
+        },
+        {
+          "status": 200,
+          "milliseconds": 47.83,
+          "bytes": 99767,
+          "memory_records": 18910,
+          "entries": 30,
+          "freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T15:16:53.107408+00:00",
+            "age_seconds": 3.016,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 9,
+            "last_duration_ms": 160.93
+          },
+          "preset_freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:16:53.106095+00:00",
+            "age_seconds": 3.016,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 7,
+            "last_duration_ms": 0.78
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": "RUNNING"
+        },
+        {
+          "status": 200,
+          "milliseconds": 43.94,
+          "bytes": 99767,
+          "memory_records": 18910,
+          "entries": 30,
+          "freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T15:16:53.107408+00:00",
+            "age_seconds": 3.059,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 9,
+            "last_duration_ms": 160.93
+          },
+          "preset_freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:16:53.106095+00:00",
+            "age_seconds": 3.059,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 7,
+            "last_duration_ms": 0.78
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": "RUNNING"
+        }
+      ]
+    },
+    "eight_parallel_gui": [
+      {
+        "status": 200,
+        "milliseconds": 1516.28,
+        "bytes": 99766,
+        "memory_records": 18910,
+        "entries": 30,
+        "freshness": {
+          "status": "refreshing",
+          "as_of": "2026-10-07T15:16:53.107408+00:00",
+          "age_seconds": 4.581,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 9,
+          "last_duration_ms": 160.93
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:16:53.106095+00:00",
+          "age_seconds": 4.581,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 7,
+          "last_duration_ms": 0.78
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 1517.13,
+        "bytes": 99764,
+        "memory_records": 18910,
+        "entries": 30,
+        "freshness": {
+          "status": "refreshing",
+          "as_of": "2026-10-07T15:16:53.107408+00:00",
+          "age_seconds": 4.58,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 9,
+          "last_duration_ms": 160.93
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:16:53.106095+00:00",
+          "age_seconds": 4.58,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 7,
+          "last_duration_ms": 0.78
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 1517.91,
+        "bytes": 99766,
+        "memory_records": 18910,
+        "entries": 30,
+        "freshness": {
+          "status": "refreshing",
+          "as_of": "2026-10-07T15:16:53.107408+00:00",
+          "age_seconds": 4.581,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 9,
+          "last_duration_ms": 160.93
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:16:53.106095+00:00",
+          "age_seconds": 4.581,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 7,
+          "last_duration_ms": 0.78
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 1519.83,
+        "bytes": 99766,
+        "memory_records": 18910,
+        "entries": 30,
+        "freshness": {
+          "status": "refreshing",
+          "as_of": "2026-10-07T15:16:53.107408+00:00",
+          "age_seconds": 4.581,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 9,
+          "last_duration_ms": 160.93
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:16:53.106095+00:00",
+          "age_seconds": 4.581,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 7,
+          "last_duration_ms": 0.78
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 1553.64,
+        "bytes": 99766,
+        "memory_records": 18910,
+        "entries": 30,
+        "freshness": {
+          "status": "refreshing",
+          "as_of": "2026-10-07T15:16:53.107408+00:00",
+          "age_seconds": 4.622,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 9,
+          "last_duration_ms": 160.93
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:16:53.106095+00:00",
+          "age_seconds": 4.622,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 7,
+          "last_duration_ms": 0.78
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 1551.8,
+        "bytes": 99767,
+        "memory_records": 18910,
+        "entries": 30,
+        "freshness": {
+          "status": "refreshing",
+          "as_of": "2026-10-07T15:16:53.107408+00:00",
+          "age_seconds": 4.621,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 9,
+          "last_duration_ms": 160.93
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:16:53.106095+00:00",
+          "age_seconds": 4.622,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 7,
+          "last_duration_ms": 0.78
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 1549.39,
+        "bytes": 99767,
+        "memory_records": 18910,
+        "entries": 30,
+        "freshness": {
+          "status": "refreshing",
+          "as_of": "2026-10-07T15:16:53.107408+00:00",
+          "age_seconds": 4.612,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 9,
+          "last_duration_ms": 160.93
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:16:53.106095+00:00",
+          "age_seconds": 4.612,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 7,
+          "last_duration_ms": 0.78
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 1554.52,
+        "bytes": 99767,
+        "memory_records": 18910,
+        "entries": 30,
+        "freshness": {
+          "status": "refreshing",
+          "as_of": "2026-10-07T15:16:53.107408+00:00",
+          "age_seconds": 4.623,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 9,
+          "last_duration_ms": 160.93
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:16:53.106095+00:00",
+          "age_seconds": 4.622,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 7,
+          "last_duration_ms": 0.78
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      }
+    ],
+    "summary": {
+      "requests": 14,
+      "success": 14,
+      "max_ms": 2958.71,
+      "median_ms": 1517.52
+    }
+  },
+  "later_http": {
+    "at": "2026-10-07T15:21:51.317226+00:00",
+    "release": "20261007-ui-snapshot-integrated-v3",
+    "sequential": {
+      "cognitive": [
+        {
+          "status": 200,
+          "milliseconds": 23.03,
+          "bytes": 43521,
+          "memory_records": 19000,
+          "entries": 31,
+          "freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T15:21:46.278087+00:00",
+            "age_seconds": 3.364,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 74,
+            "last_duration_ms": 1255.31
+          },
+          "preset_freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:21:46.276746+00:00",
+            "age_seconds": 3.365,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 47,
+            "last_duration_ms": 10.57
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": null
+        },
+        {
+          "status": 200,
+          "milliseconds": 8.59,
+          "bytes": 43521,
+          "memory_records": 19000,
+          "entries": 31,
+          "freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T15:21:46.278087+00:00",
+            "age_seconds": 3.374,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 75,
+            "last_duration_ms": 1255.31
+          },
+          "preset_freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:21:46.276746+00:00",
+            "age_seconds": 3.375,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 47,
+            "last_duration_ms": 10.57
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": null
+        },
+        {
+          "status": 200,
+          "milliseconds": 7.49,
+          "bytes": 43521,
+          "memory_records": 19000,
+          "entries": 31,
+          "freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T15:21:46.278087+00:00",
+            "age_seconds": 3.383,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 75,
+            "last_duration_ms": 1255.31
+          },
+          "preset_freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:21:46.276746+00:00",
+            "age_seconds": 3.384,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 47,
+            "last_duration_ms": 10.57
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": null
+        }
+      ],
+      "gui": [
+        {
+          "status": 200,
+          "milliseconds": 1536.36,
+          "bytes": 100404,
+          "memory_records": 19000,
+          "entries": 31,
+          "freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:21:49.642294+00:00",
+            "age_seconds": 1.543,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 75,
+            "last_duration_ms": 149.04
+          },
+          "preset_freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:21:46.276746+00:00",
+            "age_seconds": 4.907,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 47,
+            "last_duration_ms": 10.57
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": "RUNNING"
+        },
+        {
+          "status": 200,
+          "milliseconds": 21.96,
+          "bytes": 100405,
+          "memory_records": 19000,
+          "entries": 31,
+          "freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:21:49.642294+00:00",
+            "age_seconds": 1.571,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 75,
+            "last_duration_ms": 149.04
+          },
+          "preset_freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:21:46.276746+00:00",
+            "age_seconds": 4.936,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 47,
+            "last_duration_ms": 10.57
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": "RUNNING"
+        },
+        {
+          "status": 200,
+          "milliseconds": 19.03,
+          "bytes": 100405,
+          "memory_records": 19000,
+          "entries": 31,
+          "freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:21:49.642294+00:00",
+            "age_seconds": 1.588,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 75,
+            "last_duration_ms": 149.04
+          },
+          "preset_freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:21:46.276746+00:00",
+            "age_seconds": 4.954,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 47,
+            "last_duration_ms": 10.57
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": "RUNNING"
+        }
+      ]
+    },
+    "eight_parallel_gui": [
+      {
+        "status": 200,
+        "milliseconds": 24.82,
+        "bytes": 100406,
+        "memory_records": 19000,
+        "entries": 31,
+        "freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:21:49.642294+00:00",
+          "age_seconds": 1.614,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 75,
+          "last_duration_ms": 149.04
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:21:46.276746+00:00",
+          "age_seconds": 4.979,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 47,
+          "last_duration_ms": 10.57
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 39.81,
+        "bytes": 100405,
+        "memory_records": 19000,
+        "entries": 31,
+        "freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:21:49.642294+00:00",
+          "age_seconds": 1.626,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 75,
+          "last_duration_ms": 149.04
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:21:46.276746+00:00",
+          "age_seconds": 4.989,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 47,
+          "last_duration_ms": 10.57
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 43.58,
+        "bytes": 100406,
+        "memory_records": 19000,
+        "entries": 31,
+        "freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:21:49.642294+00:00",
+          "age_seconds": 1.626,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 75,
+          "last_duration_ms": 149.04
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:21:46.276746+00:00",
+          "age_seconds": 4.988,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 47,
+          "last_duration_ms": 10.57
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 56.96,
+        "bytes": 100405,
+        "memory_records": 19000,
+        "entries": 31,
+        "freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:21:49.642294+00:00",
+          "age_seconds": 1.642,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 75,
+          "last_duration_ms": 149.04
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:21:46.276746+00:00",
+          "age_seconds": 4.993,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 47,
+          "last_duration_ms": 10.57
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 61.69,
+        "bytes": 100405,
+        "memory_records": 19000,
+        "entries": 31,
+        "freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:21:49.642294+00:00",
+          "age_seconds": 1.643,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 75,
+          "last_duration_ms": 149.04
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:21:46.276746+00:00",
+          "age_seconds": 4.995,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 47,
+          "last_duration_ms": 10.57
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 50.87,
+        "bytes": 100406,
+        "memory_records": 19000,
+        "entries": 31,
+        "freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:21:49.642294+00:00",
+          "age_seconds": 1.637,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 75,
+          "last_duration_ms": 149.04
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:21:46.276746+00:00",
+          "age_seconds": 4.992,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 47,
+          "last_duration_ms": 10.57
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 69.64,
+        "bytes": 100406,
+        "memory_records": 19000,
+        "entries": 31,
+        "freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:21:49.642294+00:00",
+          "age_seconds": 1.642,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 75,
+          "last_duration_ms": 149.04
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:21:46.276746+00:00",
+          "age_seconds": 4.993,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 47,
+          "last_duration_ms": 10.57
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 67.06,
+        "bytes": 100405,
+        "memory_records": 19000,
+        "entries": 31,
+        "freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:21:49.642294+00:00",
+          "age_seconds": 1.643,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 75,
+          "last_duration_ms": 149.04
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:21:46.276746+00:00",
+          "age_seconds": 4.995,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 47,
+          "last_duration_ms": 10.57
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      }
+    ],
+    "summary": {
+      "requests": 14,
+      "success": 14,
+      "max_ms": 1536.36,
+      "median_ms": 41.695
+    }
+  },
+  "before_v1": {
+    "journal_mode": "wal",
+    "quick_check": "ok",
+    "read_latency_ms": [
+      0.012,
+      0.006,
+      0.003
+    ],
+    "errors_since": "2026-10-07T13:55:42.650725+00:00",
+    "journal_lock_errors": 0,
+    "journal_read_success": true,
+    "worker": {
+      "processing": false,
+      "queue": {
+        "pending": 33,
+        "preparing": 0,
+        "retry": 0,
+        "applied": 2484,
+        "skipped": 615,
+        "total_jobs": 3132,
+        "assigned_sources": 8617,
+        "oldest_pending_seconds": 1537.579509
+      },
+      "last_error_type": null,
+      "last_completed_at": "2026-10-07T14:27:43.231727+00:00"
+    }
+  },
+  "before_v2": {
+    "journal_mode": "wal",
+    "quick_check": "ok",
+    "read_latency_ms": [
+      0.012,
+      0.004,
+      0.003
+    ],
+    "errors_since": "2026-10-07T14:35:10.303322+00:00",
+    "journal_lock_errors": 0,
+    "journal_read_success": true,
+    "worker": {
+      "processing": false,
+      "queue": {
+        "pending": 41,
+        "preparing": 0,
+        "retry": 0,
+        "applied": 2499,
+        "skipped": 615,
+        "total_jobs": 3155,
+        "assigned_sources": 8795,
+        "oldest_pending_seconds": 2389.243111
+      },
+      "last_error_type": null,
+      "last_completed_at": "2026-10-07T14:44:45.121502+00:00"
+    }
+  },
+  "after_integrated": {
+    "journal_mode": "wal",
+    "quick_check": "ok",
+    "read_latency_ms": [
+      0.013,
+      0.004,
+      0.004
+    ],
+    "errors_since": "2026-10-07T15:16:12.177338+00:00",
+    "journal_lock_errors": 0,
+    "journal_read_success": true,
+    "worker": {
+      "processing": false,
+      "queue": {
+        "pending": 32,
+        "preparing": 0,
+        "retry": 0,
+        "applied": 2524,
+        "skipped": 615,
+        "total_jobs": 3171,
+        "assigned_sources": 9009,
+        "oldest_pending_seconds": 3483.98562
+      },
+      "last_error_type": null,
+      "last_completed_at": "2026-10-07T15:20:22.554126+00:00"
+    }
+  },
+  "monitor": {
+    "at": "2026-10-07T15:22:46.970233+00:00",
+    "release": "20261007-ui-snapshot-integrated-v3",
+    "manifest_revision": 4,
+    "manifest_profile": "qq-social-drive-v1@3",
+    "services": {
+      "cognitive": {
+        "MainPID": "243574",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "MainPID": "243614",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "MainPID": "243655",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "MainPID": "244271",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "MainPID": "243647",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq_direct": {
+        "MainPID": "244296",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-07T15:22:43.409301Z",
+        "last_journal_append_at": "2026-10-07T15:22:46.310680Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "pending_events": 1,
+      "background": {
+        "heartbeat": {
+          "active": true,
+          "pending": 0,
+          "running": false,
+          "coalesced": 5,
+          "thread_jobs": 0,
+          "last_duration_ms": 2740.717,
+          "last_error": null
+        },
+        "passive_state": {
+          "active": true,
+          "pending": 0,
+          "running": false,
+          "coalesced": 0,
+          "thread_jobs": 0,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "affect": {
+          "pending": 0,
+          "running": 0,
+          "scopes": 0,
+          "degraded": false
+        }
+      }
+    },
+    "direct": {
+      "running": true,
+      "connected": true,
+      "repository_root": "/opt/neuralcloud/releases/20261007-ui-snapshot-integrated-v3",
+      "heartbeat_at": "2026-10-07T15:22:45.838213+00:00"
+    },
+    "watchdog": [],
+    "dynamics": {
+      "mode": "shadow",
+      "fatigue": 0.8190505800094426,
+      "boredom": 0.8449934476882855,
+      "wants_engagement": true,
+      "latent_confidence": 0.8,
+      "baselines": {
+        "autonomy": 0.6749992824438109,
+        "competence": 0.6250000152600026,
+        "safety_predictability": 0.6651600000000001,
+        "social_connection": 0.38068496909056737
+      },
+      "short_term_responses": {
+        "autonomy": 0.004339601893504703,
+        "competence": 0.01487647474655285,
+        "safety_predictability": 0.007142170437519941,
+        "social_connection": 0.2271489440675408
+      },
+      "regulation_pressure": {
+        "level": "overloaded",
+        "suggest_reduce_input": true,
+        "suggest_reopen": false
+      },
+      "assessment_coverage": {
+        "exposures": 2309,
+        "assessed": 141,
+        "unassessed": 2168,
+        "work_units": 19448264,
+        "last_work_at": "2026-10-07T15:22:45.825544+00:00"
+      },
+      "shadow_observation": {
+        "continuous_seconds": 401.669938,
+        "samples": 34253,
+        "maximum_gap_seconds": 411.159127,
+        "last_sample_at": "2026-10-07T15:22:46.173851+00:00"
+      },
+      "shadow_values": {
+        "cognitive_load": 0.9499999991713213,
+        "novelty": 0.43609809185722087,
+        "safety_predictability": 0.67230217043752,
+        "competence": 0.6398764900065554,
+        "autonomy": 0.6793388843373156,
+        "social_connection": 0.6078339131581082
+      },
+      "started_at": "2026-10-06T12:24:08.049492+00:00",
+      "updated_at": "2026-10-07T15:22:46.173851+00:00"
+    },
+    "display_values": {
+      "energy_reserve": 0.665008333695,
+      "cognitive_load": 0.9497944795502915,
+      "safety_predictability": 0.6650055557966668,
+      "competence": 0.6250000238241431,
+      "autonomy": 0.6749995582934322,
+      "social_connection": 0.62,
+      "novelty": 0.9498991654450666
+    },
+    "gate": {
+      "schema_version": "cognitive-dynamics-shadow-gate-v1",
+      "ready": false,
+      "reasons": [
+        "continuous_shadow_observation_less_than_24_hours"
+      ],
+      "observation": {
+        "continuous_seconds": 401.669938,
+        "samples": 34253,
+        "maximum_gap_seconds": 411.159127,
+        "last_sample_at": "2026-10-07T15:22:46.173851+00:00"
+      },
+      "assessment_coverage": {
+        "exposures": 2309,
+        "assessed": 141,
+        "unassessed": 2168,
+        "work_units": 19448264,
+        "last_work_at": "2026-10-07T15:22:45.825544+00:00"
+      },
+      "snapshot_revision": 169394,
+      "profile_ref": "qq-social-drive-v1@3",
+      "checked_at": "2026-10-07T15:22:47.002194+00:00"
+    },
+    "work": {
+      "total": 2309,
+      "pending": 0,
+      "by_context_category": {
+        "qq": {
+          "total": 1976,
+          "assessed": 141,
+          "applied": 1976,
+          "units": 13420151,
+          "last_at": "2026-10-07T15:22:45.825544Z"
+        },
+        "emotion_guidance": {
+          "total": 166,
+          "assessed": 0,
+          "applied": 166,
+          "units": 70822,
+          "last_at": "2026-10-07T13:58:56.462515Z"
+        },
+        "goal_decision": {
+          "total": 166,
+          "assessed": 0,
+          "applied": 166,
+          "units": 5885125,
+          "last_at": "2026-10-07T13:59:04.458373Z"
+        },
+        "diary_prepare": {
+          "total": 1,
+          "assessed": 0,
+          "applied": 1,
+          "units": 3302,
+          "last_at": "2026-10-06T16:01:01.315040Z"
+        }
+      }
+    },
+    "attention": {
+      "policies": [
+        {
+          "group_id": "1044946257",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "1060979317",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "712342021",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        }
+      ],
+      "dispositions": {
+        "admitted": 418
+      },
+      "outcomes": {
+        "model_wait": 81,
+        "runtime_failure": 250,
+        "guard_wait": 0
+      },
+      "review_error": null
+    }
+  },
+  "phase_coverage": {
+    "checked_at": "2026-10-07T15:25:25.589879+00:00",
+    "receipts": 2381,
+    "matched": 2379,
+    "unmatched": 2,
+    "phases": {
+      "legacy_unlabelled_shared_memory": {
+        "total": 55,
+        "assessed": 0,
+        "success": 43,
+        "error": 12,
+        "last_at": "2026-10-06T12:58:52.741584Z"
+      },
+      "qq_memory_consolidation": {
+        "total": 588,
+        "assessed": 0,
+        "success": 480,
+        "error": 108,
+        "last_at": "2026-10-07T15:20:18.737946Z"
+      },
+      "emotion_guidance": {
+        "total": 544,
+        "assessed": 0,
+        "success": 544,
+        "error": 0,
+        "last_at": "2026-10-07T15:25:18.916956Z"
+      },
+      "goal_decision": {
+        "total": 166,
+        "assessed": 0,
+        "success": 166,
+        "error": 0,
+        "last_at": "2026-10-07T13:59:04.458373Z"
+      },
+      "emotion_appraisal": {
+        "total": 453,
+        "assessed": 0,
+        "success": 450,
+        "error": 3,
+        "last_at": "2026-10-07T15:25:17.468037Z"
+      },
+      "qq_gate": {
+        "total": 383,
+        "assessed": 145,
+        "success": 383,
+        "error": 0,
+        "last_at": "2026-10-07T15:25:20.861214Z"
+      },
+      "qq_persona": {
+        "total": 181,
+        "assessed": 0,
+        "success": 181,
+        "error": 0,
+        "last_at": "2026-10-07T15:24:55.268673Z"
+      },
+      "diary_prepare": {
+        "total": 1,
+        "assessed": 0,
+        "success": 1,
+        "error": 0,
+        "last_at": "2026-10-06T16:01:01.315040Z"
+      },
+      "diagnostic_memory_schema": {
+        "total": 8,
+        "assessed": 0,
+        "success": 7,
+        "error": 1,
+        "last_at": "2026-10-07T05:04:24.991893Z"
+      }
+    }
+  },
+  "new_model_errors": {
+    "at": "2026-10-07T15:22:46.940464+00:00",
+    "since": "2026-10-07T15:16:12.177338+00:00",
+    "phases": {
+      "qq_memory_consolidation": {
+        "finished": 5,
+        "success": 5,
+        "error": 0
+      },
+      "emotion_appraisal": {
+        "finished": 34,
+        "success": 32,
+        "error": 2
+      },
+      "emotion_guidance": {
+        "finished": 34,
+        "success": 34,
+        "error": 0
+      },
+      "qq_gate": {
+        "finished": 35,
+        "success": 35,
+        "error": 0
+      },
+      "qq_persona": {
+        "finished": 26,
+        "success": 26,
+        "error": 0
+      }
+    },
+    "errors": {
+      "StructuredResponseError:deepseek_structured_json_invalid": 2
+    }
+  },
+  "tests": {
+    "passed": 232,
+    "skipped": 0,
+    "junit_sha256": "f2809e5c26a8d3800ce98ef781de5a43706f220f25a8773e2bdb05ae1b7e19b6"
+  },
+  "code_commit": "085899ea71e3760572b8e9423aa6a0a78189ddd8",
+  "ui_code_commit": "e9e91a7a9214e86567f806c50f085b13b37cfbac",
+  "shadow_window_start_beijing": "2026-10-07 23:16:04",
+  "earliest_acceptance_beijing": "2026-10-08 23:16:04",
+  "privacy": "No chat bodies or credentials exported; no test messages sent to QQ.",
+  "emotion_json_followup": {
+    "checked_at": "2026-10-07T15:24:24.714608+00:00",
+    "since": "2026-10-07T15:16:12.177338+00:00",
+    "counts": {
+      "before_integrated": {
+        "finished": 141,
+        "success": 141
+      },
+      "after_integrated": {
+        "finished": 45,
+        "success": 42,
+        "error": 3,
+        "deepseek_structured_json_invalid": 3
+      }
+    },
+    "new_errors": [
+      {
+        "started_at": "2026-10-07T15:20:36.413791+00:00",
+        "completed_at": "2026-10-07T15:20:38.755549+00:00",
+        "http_status": 200,
+        "latency_ms": 2341.757,
+        "usage": {
+          "prompt_tokens": 2527,
+          "completion_tokens": 107,
+          "total_tokens": 2634,
+          "cache_hit_tokens": 896,
+          "cache_miss_tokens": 1631,
+          "cache_known_prompt_tokens": 2527,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        },
+        "response_model": "deepseek-flash",
+        "finish_reason": null
+      },
+      {
+        "started_at": "2026-10-07T15:21:38.717480+00:00",
+        "completed_at": "2026-10-07T15:21:39.786802+00:00",
+        "http_status": 200,
+        "latency_ms": 1069.323,
+        "usage": {
+          "prompt_tokens": 2575,
+          "completion_tokens": 112,
+          "total_tokens": 2687,
+          "cache_hit_tokens": 896,
+          "cache_miss_tokens": 1679,
+          "cache_known_prompt_tokens": 2575,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        },
+        "response_model": "deepseek-flash",
+        "finish_reason": null
+      },
+      {
+        "started_at": "2026-10-07T15:24:16.229906+00:00",
+        "completed_at": "2026-10-07T15:24:17.124214+00:00",
+        "http_status": 200,
+        "latency_ms": 894.308,
+        "usage": {
+          "prompt_tokens": 2605,
+          "completion_tokens": 106,
+          "total_tokens": 2711,
+          "cache_hit_tokens": 896,
+          "cache_miss_tokens": 1709,
+          "cache_known_prompt_tokens": 2605,
+          "cache_unknown_prompt_tokens": 0,
+          "cache_status": "known",
+          "prompt_tokens_source": "api",
+          "completion_tokens_source": "api",
+          "calls": 0,
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api"
+        },
+        "response_model": "deepseek-flash",
+        "finish_reason": null
+      }
+    ]
+  }
+}
