@@ -1,0 +1,826 @@
+{
+  "schema_version": "shadow-followup-v1",
+  "monitor": {
+    "at": "2026-10-07T05:02:06.792860+00:00",
+    "release": "20261007-structured-memory-hotfix-v2",
+    "manifest_revision": 4,
+    "manifest_profile": "qq-social-drive-v1@3",
+    "services": {
+      "cognitive": {
+        "MainPID": "207922",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "MainPID": "207961",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "MainPID": "207998",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "MainPID": "208713",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "MainPID": "207990",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq_direct": {
+        "MainPID": "208738",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-07T05:02:06.029655Z",
+        "last_journal_append_at": "2026-10-07T05:02:06.073858Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "pending_events": 0,
+      "background": {
+        "heartbeat": {
+          "active": true,
+          "pending": 0,
+          "running": true,
+          "coalesced": 20,
+          "thread_jobs": 1,
+          "last_duration_ms": 4907.396,
+          "last_error": null
+        },
+        "passive_state": {
+          "active": true,
+          "pending": 0,
+          "running": false,
+          "coalesced": 0,
+          "thread_jobs": 0,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "affect": {
+          "pending": 0,
+          "running": 0,
+          "scopes": 0,
+          "degraded": false
+        }
+      }
+    },
+    "direct": {
+      "running": true,
+      "connected": true,
+      "repository_root": "/opt/neuralcloud/releases/20261007-structured-memory-hotfix-v2",
+      "heartbeat_at": "2026-10-07T05:02:05.845656+00:00"
+    },
+    "watchdog": [],
+    "dynamics": {
+      "mode": "shadow",
+      "fatigue": 0.15061545905488805,
+      "boredom": 0.8838208786018618,
+      "wants_engagement": true,
+      "latent_confidence": 0.8,
+      "baselines": {
+        "autonomy": 0.6749992824438109,
+        "competence": 0.6250000152600026,
+        "safety_predictability": 0.6651600000000001,
+        "social_connection": 0.38068496909056737
+      },
+      "short_term_responses": {
+        "autonomy": 0.0,
+        "competence": 0.0,
+        "safety_predictability": 0.0,
+        "social_connection": 0.016433727738990697
+      },
+      "regulation_pressure": {
+        "level": "elevated",
+        "suggest_reduce_input": false,
+        "suggest_reopen": false
+      },
+      "assessment_coverage": {
+        "exposures": 591,
+        "assessed": 7,
+        "unassessed": 584,
+        "work_units": 6093406,
+        "last_work_at": "2026-10-07T05:01:53.148735+00:00"
+      },
+      "shadow_observation": {
+        "continuous_seconds": 32770.011799000094,
+        "samples": 21552,
+        "maximum_gap_seconds": 329.777824,
+        "last_sample_at": "2026-10-07T05:02:06.051245+00:00"
+      },
+      "shadow_values": {
+        "cognitive_load": 0.6218468887323025,
+        "novelty": 0.4998686879184343,
+        "safety_predictability": 0.6651600000000001,
+        "competence": 0.6250000152600026,
+        "autonomy": 0.6749992824438109,
+        "social_connection": 0.3971186968295581
+      },
+      "started_at": "2026-10-06T12:24:08.049492+00:00",
+      "updated_at": "2026-10-07T05:02:06.051245+00:00"
+    },
+    "display_values": {
+      "energy_reserve": 0.6643464195727776,
+      "cognitive_load": 0.8939532225872735,
+      "safety_predictability": 0.6645295692522222,
+      "competence": 0.6249998323013526,
+      "autonomy": 0.6750027954529428,
+      "social_connection": 0.62,
+      "novelty": 0.9496064814238333
+    },
+    "gate": {
+      "schema_version": "cognitive-dynamics-shadow-gate-v1",
+      "ready": false,
+      "reasons": [
+        "continuous_shadow_observation_less_than_24_hours"
+      ],
+      "observation": {
+        "continuous_seconds": 32770.011799000094,
+        "samples": 21552,
+        "maximum_gap_seconds": 329.777824,
+        "last_sample_at": "2026-10-07T05:02:06.051245+00:00"
+      },
+      "assessment_coverage": {
+        "exposures": 591,
+        "assessed": 7,
+        "unassessed": 584,
+        "work_units": 6093406,
+        "last_work_at": "2026-10-07T05:01:53.148735+00:00"
+      },
+      "snapshot_revision": 153930,
+      "profile_ref": "qq-social-drive-v1@3",
+      "checked_at": "2026-10-07T05:02:06.825290+00:00"
+    },
+    "work": {
+      "total": 591,
+      "pending": 0,
+      "by_context_category": {
+        "qq": {
+          "total": 408,
+          "assessed": 7,
+          "applied": 408,
+          "units": 2809509,
+          "last_at": "2026-10-07T05:01:53.148735Z"
+        },
+        "emotion_guidance": {
+          "total": 91,
+          "assessed": 0,
+          "applied": 91,
+          "units": 37236,
+          "last_at": "2026-10-07T04:32:59.127218Z"
+        },
+        "goal_decision": {
+          "total": 91,
+          "assessed": 0,
+          "applied": 91,
+          "units": 3209055,
+          "last_at": "2026-10-07T04:33:07.760367Z"
+        },
+        "diary_prepare": {
+          "total": 1,
+          "assessed": 0,
+          "applied": 1,
+          "units": 3302,
+          "last_at": "2026-10-06T16:01:01.315040Z"
+        }
+      }
+    },
+    "attention": {
+      "policies": [
+        {
+          "group_id": "1044946257",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "1060979317",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "712342021",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        }
+      ],
+      "dispositions": {
+        "admitted": 30
+      },
+      "outcomes": {
+        "model_wait": 1,
+        "runtime_failure": 0,
+        "guard_wait": 0
+      },
+      "review_error": null
+    }
+  },
+  "outcomes": {
+    "at": "2026-10-07T05:02:07.037869+00:00",
+    "release": "20261007-structured-memory-hotfix-v2",
+    "requeued_outcomes": [
+      {
+        "job_digest": "95182a2c30174eb9f495d972ad5079d5ae8618b0f21bc14134c298ab7c5332be",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:41:25.360735+00:00"
+      },
+      {
+        "job_digest": "b3088770bdbbd8bfac0d6cf585590c07db89ded012fe3d94daf685e12aa48091",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:53:14.761428+00:00"
+      },
+      {
+        "job_digest": "d05a9e5e0d4620e63df82ec56a8a7be1b937245fb6d1567d423c0f772aeb5a47",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:53:37.755387+00:00"
+      },
+      {
+        "job_digest": "9d751a21f3b11b3a8c03291fd584643a7e8cf952fb72d92f8c8ce66e55293647",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:53:51.683551+00:00"
+      },
+      {
+        "job_digest": "6206021f905edea117769bcc449e36dee52bf6494c7f9166be798a1093109da5",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:54:05.759378+00:00"
+      },
+      {
+        "job_digest": "adbac0fbed18a14443a265555ead6f089c4e7bf14edc73cdc1bb01c6db35f6ce",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:54:19.413675+00:00"
+      },
+      {
+        "job_digest": "ef13fba0944b7c371150a9d5d922e9e29d4a4d852370651fbfa4c964c16beeee",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:54:31.848569+00:00"
+      },
+      {
+        "job_digest": "730bef6147ac91ab457284c363e7f3e15b8b3659efae961d688e10e8954c6567",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:54:43.907920+00:00"
+      },
+      {
+        "job_digest": "d1e40bd0ab032371f5b1458619128169c01886186ebe82de7922436b1d6d5717",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:43:11.951835+00:00"
+      },
+      {
+        "job_digest": "71a1da0780e7c6cdcc1acd6818580746a8486552289a9a7e09219e4de172e40c",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-06T19:55:07.788950+00:00"
+      }
+    ],
+    "receipts": [
+      {
+        "job_digest": "95182a2c30174eb9f495d972ad5079d5ae8618b0f21bc14134c298ab7c5332be",
+        "deferred_impressions": 0,
+        "reasons": []
+      },
+      {
+        "job_digest": "b3088770bdbbd8bfac0d6cf585590c07db89ded012fe3d94daf685e12aa48091",
+        "deferred_impressions": 1,
+        "reasons": [
+          "historical_evidence_before_latest_impression"
+        ]
+      },
+      {
+        "job_digest": "d05a9e5e0d4620e63df82ec56a8a7be1b937245fb6d1567d423c0f772aeb5a47",
+        "deferred_impressions": 1,
+        "reasons": [
+          "historical_evidence_before_latest_impression"
+        ]
+      },
+      {
+        "job_digest": "9d751a21f3b11b3a8c03291fd584643a7e8cf952fb72d92f8c8ce66e55293647",
+        "deferred_impressions": 1,
+        "reasons": [
+          "historical_evidence_before_latest_impression"
+        ]
+      },
+      {
+        "job_digest": "6206021f905edea117769bcc449e36dee52bf6494c7f9166be798a1093109da5",
+        "deferred_impressions": 1,
+        "reasons": [
+          "historical_evidence_before_latest_impression"
+        ]
+      },
+      {
+        "job_digest": "adbac0fbed18a14443a265555ead6f089c4e7bf14edc73cdc1bb01c6db35f6ce",
+        "deferred_impressions": 1,
+        "reasons": [
+          "historical_evidence_before_latest_impression"
+        ]
+      },
+      {
+        "job_digest": "ef13fba0944b7c371150a9d5d922e9e29d4a4d852370651fbfa4c964c16beeee",
+        "deferred_impressions": 1,
+        "reasons": [
+          "historical_evidence_before_latest_impression"
+        ]
+      },
+      {
+        "job_digest": "730bef6147ac91ab457284c363e7f3e15b8b3659efae961d688e10e8954c6567",
+        "deferred_impressions": 1,
+        "reasons": [
+          "historical_evidence_before_latest_impression"
+        ]
+      },
+      {
+        "job_digest": "d1e40bd0ab032371f5b1458619128169c01886186ebe82de7922436b1d6d5717",
+        "deferred_impressions": 0,
+        "reasons": []
+      },
+      {
+        "job_digest": "71a1da0780e7c6cdcc1acd6818580746a8486552289a9a7e09219e4de172e40c",
+        "deferred_impressions": 2,
+        "reasons": [
+          "historical_evidence_before_latest_impression"
+        ]
+      }
+    ],
+    "request_counts": [
+      {
+        "status": "success",
+        "type": null,
+        "code": null,
+        "count": 63
+      },
+      {
+        "status": "error",
+        "type": "StructuredResponseError",
+        "code": "deepseek_structured_schema_invalid",
+        "count": 2
+      }
+    ],
+    "recent_safe_diagnostics": [
+      {
+        "code": "deepseek_structured_schema_invalid",
+        "diagnostics": [
+          {
+            "validator": "enum",
+            "path": [
+              "impressions",
+              0,
+              "subject_refs",
+              1
+            ],
+            "missing_fields": []
+          }
+        ]
+      },
+      {
+        "code": "deepseek_structured_schema_invalid",
+        "diagnostics": [
+          {
+            "validator": "enum",
+            "path": [
+              "impressions",
+              1,
+              "subject_refs",
+              0
+            ],
+            "missing_fields": []
+          }
+        ]
+      }
+    ],
+    "memory_worker": {
+      "processing": false,
+      "queue": {
+        "pending": 0,
+        "preparing": 0,
+        "retry": 0,
+        "applied": 2299,
+        "skipped": 615,
+        "total_jobs": 2914,
+        "assigned_sources": 7823,
+        "oldest_pending_seconds": 0.0
+      },
+      "last_error_type": null,
+      "last_completed_at": "2026-10-07T05:02:03.748976+00:00"
+    }
+  },
+  "coverage": {
+    "checked_at": "2026-10-07T05:02:08.136238+00:00",
+    "receipts": 591,
+    "matched": 591,
+    "unmatched": 0,
+    "phases": {
+      "legacy_unlabelled_shared_memory": {
+        "total": 55,
+        "assessed": 0,
+        "success": 43,
+        "error": 12,
+        "last_at": "2026-10-06T12:58:52.741584Z"
+      },
+      "qq_memory_consolidation": {
+        "total": 281,
+        "assessed": 0,
+        "success": 179,
+        "error": 102,
+        "last_at": "2026-10-07T05:01:53.148735Z"
+      },
+      "emotion_guidance": {
+        "total": 110,
+        "assessed": 0,
+        "success": 110,
+        "error": 0,
+        "last_at": "2026-10-07T04:32:59.127218Z"
+      },
+      "goal_decision": {
+        "total": 91,
+        "assessed": 0,
+        "success": 91,
+        "error": 0,
+        "last_at": "2026-10-07T04:33:07.760367Z"
+      },
+      "emotion_appraisal": {
+        "total": 20,
+        "assessed": 0,
+        "success": 20,
+        "error": 0,
+        "last_at": "2026-10-07T04:14:18.457640Z"
+      },
+      "qq_gate": {
+        "total": 21,
+        "assessed": 7,
+        "success": 21,
+        "error": 0,
+        "last_at": "2026-10-07T04:14:28.288572Z"
+      },
+      "qq_persona": {
+        "total": 6,
+        "assessed": 0,
+        "success": 6,
+        "error": 0,
+        "last_at": "2026-10-07T04:10:17.500214Z"
+      },
+      "diary_prepare": {
+        "total": 1,
+        "assessed": 0,
+        "success": 1,
+        "error": 0,
+        "last_at": "2026-10-06T16:01:01.315040Z"
+      },
+      "diagnostic_memory_schema": {
+        "total": 6,
+        "assessed": 0,
+        "success": 5,
+        "error": 1,
+        "last_at": "2026-10-06T19:36:39.712807Z"
+      }
+    }
+  },
+  "controls": {
+    "at": "2026-10-07T05:02:09.482370+00:00",
+    "files": [
+      "runtime-000037.jsonl",
+      "runtime-000038.jsonl"
+    ],
+    "parse_errors": 0,
+    "since": "2026-10-06T19:56:03",
+    "controls": [],
+    "transitions": [],
+    "lifecycle": "RUNNING"
+  },
+  "new_failure_metadata": {
+    "jobs": [
+      {
+        "job_digest": "47aa11507cac656be4482d0706ac9845679a99eb322316536a815e621e0bb1ae",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-07T04:10:38.357015+00:00",
+        "has_proposal": true
+      },
+      {
+        "job_digest": "94a46fb52c8c91675e4420d33fe1cdb3931a48eddf519a9cfe5829ef115b00d0",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-07T04:10:58.859374+00:00",
+        "has_proposal": true
+      },
+      {
+        "job_digest": "0b7cdc1e8dd79341d1299b41ddd54532429ded3793771a994be6cda026c8d26a",
+        "status": "skipped",
+        "attempts": 1,
+        "error_code": "ValueError",
+        "updated_at": "2026-10-07T04:11:20.690803+00:00",
+        "has_proposal": false
+      },
+      {
+        "job_digest": "4b78c0a497572769928f66b6be564e6ae2717fc00e86bba69a42e15c6e888e63",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-07T04:12:03.246842+00:00",
+        "has_proposal": true
+      },
+      {
+        "job_digest": "436e60244a5f26460d0e0295f13072bb19d0a72c9bb4bb955a0361506a954112",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-07T04:15:10.048631+00:00",
+        "has_proposal": true
+      },
+      {
+        "job_digest": "c91ea3a9b7b1e2780051f2994b226b8121a1ee2d3dfa7dca3d1c37ddfd788cbb",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-07T04:15:35.818751+00:00",
+        "has_proposal": true
+      },
+      {
+        "job_digest": "f3ef7d84e7a0b557568be853d212d76f348d9dd997b8b80420e7f535b81425fe",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-07T04:24:59.816276+00:00",
+        "has_proposal": true
+      },
+      {
+        "job_digest": "4af2fac0b1a21eca0f4509178a57b2b998b7fc0c3b495e7957f5661412e13ef1",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-07T04:47:14.741236+00:00",
+        "has_proposal": true
+      },
+      {
+        "job_digest": "24f7b25d0093dac22e20b7d6f3e315b0b3fb30917a5544a61adacd9553907ea0",
+        "status": "applied",
+        "attempts": 2,
+        "error_code": null,
+        "updated_at": "2026-10-07T04:48:40.683476+00:00",
+        "has_proposal": true
+      },
+      {
+        "job_digest": "b3bc6ae614ffb72be7bf173ac3357cb2a243557427ae3dd158a3bc855e2e3ccd",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-07T04:50:29.837992+00:00",
+        "has_proposal": true
+      },
+      {
+        "job_digest": "cb52e4455556b7ec670399ace221c3214e141d723f8a1f5ff9279f99f23e5d7f",
+        "status": "applied",
+        "attempts": 2,
+        "error_code": null,
+        "updated_at": "2026-10-07T04:52:16.195413+00:00",
+        "has_proposal": true
+      },
+      {
+        "job_digest": "b04c0292281365ecf306c3336f1d0924b0281b0c3da50a00bfe6b7655e4b477b",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-07T04:58:02.829178+00:00",
+        "has_proposal": true
+      },
+      {
+        "job_digest": "e3dbc4db27e8448a048ce961bff37bee6f1444ff80984d1534a0e0308b847f2e",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-07T04:58:48.144864+00:00",
+        "has_proposal": true
+      },
+      {
+        "job_digest": "f8d723357cb690f10c018124a9080c84977f6110e087d1df741699683b256bc7",
+        "status": "applied",
+        "attempts": 1,
+        "error_code": null,
+        "updated_at": "2026-10-07T05:01:58.749084+00:00",
+        "has_proposal": true
+      }
+    ],
+    "requests": [
+      {
+        "started_at": "2026-10-07T04:10:28.132580+00:00",
+        "finished_at": null,
+        "status": "success",
+        "error": null
+      },
+      {
+        "started_at": "2026-10-07T04:10:29.704187+00:00",
+        "finished_at": null,
+        "status": "success",
+        "error": null
+      },
+      {
+        "started_at": "2026-10-07T04:10:49.479477+00:00",
+        "finished_at": null,
+        "status": "success",
+        "error": null
+      },
+      {
+        "started_at": "2026-10-07T04:11:09.953144+00:00",
+        "finished_at": null,
+        "status": "success",
+        "error": null
+      },
+      {
+        "started_at": "2026-10-07T04:11:15.900457+00:00",
+        "finished_at": null,
+        "status": "success",
+        "error": null
+      },
+      {
+        "started_at": "2026-10-07T04:11:58.772631+00:00",
+        "finished_at": null,
+        "status": "success",
+        "error": null
+      },
+      {
+        "started_at": "2026-10-07T04:15:00.946915+00:00",
+        "finished_at": null,
+        "status": "success",
+        "error": null
+      },
+      {
+        "started_at": "2026-10-07T04:15:26.612924+00:00",
+        "finished_at": null,
+        "status": "success",
+        "error": null
+      },
+      {
+        "started_at": "2026-10-07T04:24:50.665068+00:00",
+        "finished_at": null,
+        "status": "success",
+        "error": null
+      },
+      {
+        "started_at": "2026-10-07T04:47:05.594941+00:00",
+        "finished_at": null,
+        "status": "success",
+        "error": null
+      },
+      {
+        "started_at": "2026-10-07T04:48:05.466522+00:00",
+        "finished_at": null,
+        "status": "error",
+        "error": {
+          "type": "StructuredResponseError",
+          "message": "model request failed",
+          "code": "deepseek_structured_schema_invalid",
+          "diagnostics": [
+            {
+              "validator": "enum",
+              "path": [
+                "impressions",
+                0,
+                "subject_refs",
+                1
+              ],
+              "missing_fields": []
+            }
+          ]
+        }
+      },
+      {
+        "started_at": "2026-10-07T04:48:31.572915+00:00",
+        "finished_at": null,
+        "status": "success",
+        "error": null
+      },
+      {
+        "started_at": "2026-10-07T04:48:33.039589+00:00",
+        "finished_at": null,
+        "status": "success",
+        "error": null
+      },
+      {
+        "started_at": "2026-10-07T04:50:21.235245+00:00",
+        "finished_at": null,
+        "status": "success",
+        "error": null
+      },
+      {
+        "started_at": "2026-10-07T04:51:41.043102+00:00",
+        "finished_at": null,
+        "status": "error",
+        "error": {
+          "type": "StructuredResponseError",
+          "message": "model request failed",
+          "code": "deepseek_structured_schema_invalid",
+          "diagnostics": [
+            {
+              "validator": "enum",
+              "path": [
+                "impressions",
+                1,
+                "subject_refs",
+                0
+              ],
+              "missing_fields": []
+            }
+          ]
+        }
+      },
+      {
+        "started_at": "2026-10-07T04:52:07.212671+00:00",
+        "finished_at": null,
+        "status": "success",
+        "error": null
+      },
+      {
+        "started_at": "2026-10-07T04:57:54.295286+00:00",
+        "finished_at": null,
+        "status": "success",
+        "error": null
+      },
+      {
+        "started_at": "2026-10-07T04:58:39.023489+00:00",
+        "finished_at": null,
+        "status": "success",
+        "error": null
+      },
+      {
+        "started_at": "2026-10-07T05:01:49.932416+00:00",
+        "finished_at": null,
+        "status": "success",
+        "error": null
+      }
+    ]
+  },
+  "findings": {
+    "schema_errors": "Two subject_refs enum violations, not missing fields; identity restriction retained. Two jobs in the same period applied on attempt 2; temporal association, not a proven trace-to-job join.",
+    "new_skipped": "One ValueError at 04:11:20 UTC, attempt 1, no saved proposal; earlier than both enum errors. Specific business rejection not available from retained metadata.",
+    "promotion": "Not promoted; continuous shadow below 24 hours.",
+    "production_mutations": false
+  }
+}
