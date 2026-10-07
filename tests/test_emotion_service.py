@@ -521,6 +521,38 @@ def test_transport_timeout_has_a_specific_redacted_fallback_reason():
     assert "provider message" not in json.dumps(service.snapshot())
 
 
+@pytest.mark.parametrize("stage", ["appraisal", "guidance"])
+def test_structured_failure_details_survive_emotion_fallback_and_restart(stage):
+    from harness.llm.deepseek_structured import validate_response
+
+    class InvalidAux(FakeAux):
+        def complete_json(self, *, system, user, **kwargs):
+            if ("EMOTION_APPRAISAL_V1" in system) == (stage == "appraisal"):
+                self.calls.append((system, json.loads(user), kwargs))
+                validate_response({"status": "completed", "output": [{"type": "message", "content": [
+                    {"type": "output_text", "text": '{"PRIVATE_MODEL_VALUE":,}'}]}]}, {})
+            return super().complete_json(system=system, user=user, **kwargs)
+
+    llm = InvalidAux()
+    service = EmotionService(settings(), llm)
+    frame = service.observe(request())
+    result = frame if stage == "appraisal" else service.guidance(frame)
+    assert result.status == "fallback"
+    assert result.diagnostics["fallback_reason"] == "emotion_model_failure"
+    error = result.diagnostics["structured_error"]
+    assert error["code"] == "deepseek_structured_json_invalid"
+    assert error["diagnostics"][0]["reason"] == "expected_value"
+    assert "PRIVATE_MODEL_VALUE" not in json.dumps(service.snapshot())
+    # Reporting must not add a retry, resurrect consumed stimuli or lose details
+    # when the owner reloads the already committed fallback.
+    before = len(llm.calls)
+    restored = EmotionService(settings(), llm)
+    restored.load(service.snapshot())
+    again = restored.observe(request()) if stage == "appraisal" else restored.guidance(frame.context_id)
+    assert again.diagnostics == result.diagnostics and len(llm.calls) == before
+    assert before == (1 if stage == "appraisal" else 2)
+
+
 @pytest.mark.parametrize("mechanism", ["维持内稳态", "保持内稳态平衡", "根据情绪余额"])
 def test_chinese_mechanism_terms_do_not_reach_the_main_emotion_segment(mechanism):
     service = EmotionService(settings(), FakeAux(guidance="此刻明显愤怒，" + mechanism + "。"))

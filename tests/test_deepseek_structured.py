@@ -114,7 +114,63 @@ def test_invalid_json_diagnostics_keep_distinct_content_free_codes(wire, text, c
     with pytest.raises(StructuredResponseError) as caught:
         wire.client.complete_chat_result([], response_format=decision_format(wire.client, SCHEMA, "decision"))
     assert caught.value.error_code == code
-    assert caught.value.diagnostics == []
+    if code == "deepseek_structured_json_invalid":
+        assert caught.value.diagnostics[0]["reason"] == "expected_value"
+    else:
+        assert caught.value.diagnostics == []
+
+
+@pytest.mark.parametrize("observed", [False, True])
+@pytest.mark.parametrize("text,reason", [
+    ('', 'expected_value'),
+    ('```json\n{"decision":"PRIVATE_VALUE"}\n```', 'expected_value'),
+    ('{"decision":"PRIVATE_VALUE",}', 'expected_property_name'),
+    ('{"decision":"PRIVATE_VALUE"}{}', 'extra_data'),
+    ('{"decision":"PRIVATE_VALUE\\q"}', 'invalid_escape'),
+    ('{"decision":"PRIVATE_VALUE\n"}', 'invalid_control_character'),
+])
+def test_json_failure_keeps_safe_location_and_response_metadata(wire, observed, text, reason):
+    if observed:
+        wire.client._request_observer = wire.diagnostics.append
+    wire.body = body(text)
+    with pytest.raises(json.JSONDecodeError) as parser:
+        json.loads(text)
+    with pytest.raises(StructuredResponseError) as caught:
+        wire.client.complete_chat_result([], response_format=decision_format(wire.client, SCHEMA, "decision"))
+    diag = caught.value.diagnostics[0]
+    assert diag == {"validator": "json_decode", "reason": reason, "offset": parser.value.pos,
+                    "line": parser.value.lineno, "column": parser.value.colno,
+                    "content_characters": len(text), "empty": not text.strip(),
+                    "leading_code_fence": text.startswith('```')}
+    trace = (wire.path / "model_requests.jsonl").read_text(encoding="utf-8")
+    assert "PRIVATE" not in trace and len(wire.calls) == 1
+    terminal = json.loads(trace.splitlines()[-1])
+    assert terminal["finish_reason"] == "stop" and terminal["content_characters"] == len(text)
+    assert terminal["content_type"] == "text" and terminal["usage"]["completion_tokens"] == 11
+    assert terminal["structured_response"] == {"status": "completed", "output_items": 2,
+                                               "message_items": 1, "text_parts": 1}
+    assert terminal["error"]["diagnostics"] == caught.value.diagnostics
+
+
+def test_multiple_json_parts_are_reported_and_still_rejected(wire):
+    wire.body = body('{"decision":"wait"}')
+    wire.body['output'][-1]['content'].append({'type': 'output_text', 'text': '{"PRIVATE":"VALUE"}'})
+    with pytest.raises(StructuredResponseError) as caught:
+        wire.client.complete_chat_result([], response_format=decision_format(wire.client, SCHEMA, "decision"))
+    assert caught.value.diagnostics[0]["reason"] == "extra_data"
+    terminal = json.loads((wire.path / "model_requests.jsonl").read_text().splitlines()[-1])
+    assert terminal['structured_response']['text_parts'] == 2
+    assert "PRIVATE" not in json.dumps(terminal)
+
+
+@pytest.mark.parametrize("wrapped", [False, True])
+def test_json_nesting_error_remains_safe(wire, wrapped):
+    text = '[' * 3000 + '"PRIVATE"' + ']' * 3000
+    wire.body = body('{"decision":' + text + '}' if wrapped else text)
+    with pytest.raises(StructuredResponseError) as caught:
+        wire.client.complete_chat_result([], response_format=decision_format(wire.client, SCHEMA, "decision"))
+    assert caught.value.diagnostics[0]['reason'] == 'nesting_limit'
+    assert "PRIVATE" not in (wire.path / "model_requests.jsonl").read_text()
 
 
 def test_actual_production_choice_stays_main_and_preserves_raw_metering(wire):

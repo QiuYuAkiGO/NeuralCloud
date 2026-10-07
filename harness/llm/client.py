@@ -177,6 +177,12 @@ def _record_provider_response(span: dict[str, Any], body: Any, messages: list[di
     """Retain returned usage even if response validation/deadline rejects it."""
     if not isinstance(body, dict):
         return
+    # These fields also describe rejected responses. Recording them only after
+    # validation loses finish_reason and output length precisely when needed.
+    try:
+        span.update(_chat_result(body, messages).response_metadata())
+    except (ValueError, TypeError, KeyError, IndexError, AttributeError):
+        pass
     try:
         content = body["choices"][0]["message"]["content"]
         if isinstance(content, str) and content.lstrip().startswith("{"):
@@ -184,7 +190,7 @@ def _record_provider_response(span: dict[str, Any], body: Any, messages: list[di
             if interpretation is not None:
                 from harness.homeostasis.dynamics import AttentionAssessment
                 span["attention_assessment"] = AttentionAssessment.model_validate(interpretation).model_dump(mode="json")
-    except (ValueError, TypeError, KeyError, IndexError):
+    except (ValueError, TypeError, KeyError, IndexError, RecursionError):
         pass
     model = body.get("model")
     if isinstance(model, str) and re.fullmatch(r"[A-Za-z0-9_.:/-]{1,200}", model):
@@ -379,6 +385,8 @@ class OpenAICompatClient:
             except (ValueError, UnicodeError):
                 body = None
             _record_production_response(metering, body)
+            if response_schema is not None:
+                span["structured_response"] = deepseek_structured.response_shape(body)
             normalized = deepseek_structured.chat_body(body) if response_schema is not None else body
             _record_provider_response(span, normalized, messages)
             remaining_model_seconds()
@@ -425,6 +433,8 @@ class OpenAICompatClient:
             except (ValueError, UnicodeError):
                 body = None
             _record_production_response(metering if metering is not None else {}, body)
+            if response_schema is not None:
+                span["structured_response"] = deepseek_structured.response_shape(body)
             normalized = deepseek_structured.chat_body(body) if response_schema is not None else body
             _record_provider_response(span, normalized, messages)
             emit_diagnostic({"record_type": "http_response_received", "request_id": request_id,

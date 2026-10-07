@@ -144,6 +144,48 @@ def _constant(_value):
     raise StructuredResponseError("deepseek_structured_nonfinite_number")
 
 
+def response_shape(body):
+    """Bounded operational metadata; never include output, errors or reasoning text."""
+    if not isinstance(body, dict):
+        return {"status": "invalid", "output_items": 0, "message_items": 0, "text_parts": 0}
+    status = body.get("status")
+    status = status if isinstance(status, str) and status in {
+        "in_progress", "completed", "incomplete", "failed"} else "unknown"
+    output = body.get("output")
+    output = output if isinstance(output, list) else []
+    messages = [item for item in output if isinstance(item, dict) and item.get("type") == "message"]
+    parts = [part for item in messages if isinstance(item.get("content"), list) for part in item["content"]]
+    return {"status": status, "output_items": len(output), "message_items": len(messages),
+            "text_parts": sum(isinstance(part, dict) and part.get("type") == "output_text"
+                              and isinstance(part.get("text"), str) for part in parts)}
+
+
+def _json_diagnostic(text, exc):
+    # JSONDecodeError.doc/str(exc) and neighborhoods can contain private text.
+    # Translate the parser's fixed messages to our own finite vocabulary only.
+    reasons = {
+        "Expecting value": "expected_value",
+        "Expecting property name enclosed in double quotes": "expected_property_name",
+        "Expecting ':' delimiter": "expected_colon",
+        "Expecting ',' delimiter": "expected_comma",
+        "Unterminated string starting at": "unterminated_string",
+        "Invalid \\escape": "invalid_escape",
+        "Invalid \\uXXXX escape": "invalid_unicode_escape",
+        "Invalid control character at": "invalid_control_character",
+        "Extra data": "extra_data",
+        "Unexpected UTF-8 BOM (decode using utf-8-sig)": "unexpected_bom",
+    }
+    result = {"validator": "json_decode", "content_characters": len(text),
+              "empty": not text.strip(), "leading_code_fence": text.lstrip().startswith("```")}
+    if isinstance(exc, json.JSONDecodeError):
+        result.update(reason=reasons.get(exc.msg, "syntax_error"), offset=exc.pos,
+                      line=exc.lineno, column=exc.colno)
+    else:
+        result["reason"] = ("nesting_limit" if isinstance(exc, RecursionError) else
+                            "invalid_type" if isinstance(exc, TypeError) else "invalid_value")
+    return result
+
+
 def validate_response(body, schema):
     if not isinstance(body, dict) or body.get("status") != "completed" or body.get("error"):
         code = (body.get("error") or {}).get("code") if isinstance(body, dict) else None
@@ -157,8 +199,9 @@ def validate_response(body, schema):
         value = json.loads(message["content"], object_pairs_hook=_unique, parse_constant=_constant)
     except StructuredResponseError:
         raise
-    except (ValueError, TypeError, RecursionError):
-        raise StructuredResponseError("deepseek_structured_json_invalid") from None
+    except (ValueError, TypeError, RecursionError) as exc:
+        raise StructuredResponseError("deepseek_structured_json_invalid",
+            diagnostics=[_json_diagnostic(message["content"], exc)]) from None
     if not isinstance(value, dict):
         raise StructuredResponseError("deepseek_structured_schema_invalid")
     errors = list(islice(Draft202012Validator(schema).iter_errors(value), 8))

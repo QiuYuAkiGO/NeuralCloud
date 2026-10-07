@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from contextlib import nullcontext
 from contextvars import copy_context
+from copy import deepcopy
 from datetime import datetime, timezone
 from functools import lru_cache
 import hashlib
@@ -159,6 +160,16 @@ def _fallback_code(exc: Exception) -> str:
     if isinstance(exc, (TimeoutException, TimeoutError)):
         return "emotion_model_timeout"
     return "emotion_invalid_schema" if isinstance(exc, ValidationError) else "emotion_model_failure"
+
+
+def _failure_diagnostics(exc: Exception) -> dict:
+    result = {"fallback_reason": _fallback_code(exc)}
+    from harness.llm.deepseek_structured import StructuredResponseError
+    if isinstance(exc, StructuredResponseError):
+        # This host exception carries content-free codes and bounded diagnostics,
+        # not the provider's exception message or the rejected JSON document.
+        result["structured_error"] = {"code": exc.error_code, "diagnostics": deepcopy(exc.diagnostics)}
+    return result
 
 
 class EmotionService:
@@ -484,7 +495,7 @@ class EmotionService:
                 except Exception as exc:
                     appraisal = EmotionAppraisal()
                     status = "fallback"
-                    diagnostics["fallback_reason"] = _fallback_code(exc)
+                    diagnostics.update(_failure_diagnostics(exc))
             diagnostics["elapsed_ms"] = round((time.monotonic() - started) * 1000, 3)
             diagnostics["appraisal_hash"] = _hash(appraisal.model_dump(mode="json"))
             with self._lock:
@@ -631,7 +642,7 @@ class EmotionService:
             except _DiagnosticSinkFailure as exc:
                 raise exc.cause
             except Exception as exc:
-                diagnostics["fallback_reason"] = _fallback_code(exc)
+                diagnostics.update(_failure_diagnostics(exc))
             diagnostics["elapsed_ms"] = round((time.monotonic() - started) * 1000, 3)
             guidance = EmotionGuidance(text=text, context_id=context_id, scope=frame.scope,
                                        revision=frame.revision, status=status, diagnostics=diagnostics)
