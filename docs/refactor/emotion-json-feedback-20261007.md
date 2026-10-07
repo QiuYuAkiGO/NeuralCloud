@@ -14,4 +14,10 @@ JSON 语法拒绝继续使用 `deepseek_structured_json_invalid`，新增 `error
 
 247 项相关回归通过，覆盖普通与诊断 HTTP 路径、真实 parser 行列位置、单次调用限制、私密标记不进入运行日志、多文本片段、深层 JSON、情绪兜底持久化与重载、deadline、用量记录、群聊记忆和情绪调用链。Ruff 通过。
 
-部署与自然流量核查完成后补充发布证据。
+已部署 **`20261007-emotion-json-diagnostics-v1`**，代码 `a21d0e9`，发布包 SHA-256 `bf75c1d41115139b098a45b10823747a594090db6257b6c9a42cb9c744a9168d`。以 `20261007-ui-demand-v1` 为基线，核验仅三个上述生产文件变化，保留 UI 按需刷新及已有语义校验修复。停写备份 `/var/backups/neuralcloud/20261007-before-emotion-json-diagnostics` 校验通过，群策略及 profile/manifest/Direct 配置保留。六个服务 active、Runtime RUNNING、QQ connected。
+
+服务器候选发布包使用模拟响应验证了错误位置、私密标记不进入日志、兜底记录持久化与重载，未调用真实模型或向群发消息。上线后自然流量已出现新的响应形态和结束原因字段；不为验证而制造线上错误。详细阶段计数保留在证据中，历史错误不计入本次发布。
+
+内稳态继续 shadow，profile `qq-social-drive-v1@3`、manifest revision 4。维护后的持续观察起点按服务器记录推算为北京时间 **2026-10-08 00:05:12**，无新断档时最早 **2026-10-09 00:05:12** 满 24 小时。
+
+[部署与自然流量证据](../harness/evidence/emotion-json-feedback-20261007/deployment.json)。

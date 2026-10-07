@@ -1,0 +1,673 @@
+{
+  "schema_version": "emotion-json-diagnostics-deployment-v1",
+  "package": {
+    "release_id": "20261007-emotion-json-diagnostics-v1",
+    "files": 436,
+    "archive": "D:\\GameDev\\NeuralCloud\\.tmp\\emotion-json-diagnostics-v1.tar.gz",
+    "sha256": "bf75c1d41115139b098a45b10823747a594090db6257b6c9a42cb9c744a9168d",
+    "code_commit": "a21d0e9c2e0716ae4cd3f6b34cc5bfc5e6921c60"
+  },
+  "deployment": {
+    "status": {
+      "started_at": "2026-10-07T15:58:26.707773+00:00",
+      "phase": "running",
+      "release_id": "20261007-emotion-json-diagnostics-v1",
+      "code_commit": "a21d0e9c2e0716ae4cd3f6b34cc5bfc5e6921c60",
+      "archive_sha256": "bf75c1d41115139b098a45b10823747a594090db6257b6c9a42cb9c744a9168d",
+      "last_recent_user_control": null,
+      "control_audit": [
+        {
+          "at": "2026-10-07T15:58:31.657300Z",
+          "type": "pause",
+          "authorized_maintenance": true
+        }
+      ],
+      "backup": {
+        "path": "/var/backups/neuralcloud/20261007-before-emotion-json-diagnostics",
+        "verification": {
+          "ok": true,
+          "files": 15285,
+          "bytes": 13205851771,
+          "sqlite_databases": 24,
+          "journals": {
+            "state/runtime/journal": {
+              "records": 1355565,
+              "last_hash": "a89c6c299813f9409735f4580a2726fdf09b0f3968143acdcc71c16ccfb808aa"
+            }
+          },
+          "manifest_sha256": "3521051d321b7c7044d944e225b04ab4dcad16626a7bb71423bfae89bac5651e"
+        }
+      },
+      "database_changes": "none; existing WAL and job state retained",
+      "preservation": {
+        "profile_manifest_direct_unchanged": true,
+        "attention_sha256": "584fe48a7ed952b00d467869b44f3650e7a8d17565567b89b20853164f91ea6c",
+        "attention_unchanged_before_restart": true
+      },
+      "activation": {
+        "release": "20261007-emotion-json-diagnostics-v1",
+        "previous_release": "20261007-ui-demand-v1",
+        "services": [
+          "cognitive",
+          "homeostasis",
+          "runtime",
+          "gui",
+          "board",
+          "qq_direct"
+        ]
+      },
+      "verification": {
+        "release_id": "20261007-emotion-json-diagnostics-v1",
+        "verified_files": 436,
+        "configuration_valid": true,
+        "business_services_started": false
+      },
+      "runtime": {
+        "lifecycle": "RUNNING",
+        "health": {
+          "lifecycle": "RUNNING",
+          "journal_writable": true,
+          "cognitive_healthy": true,
+          "homeostasis_healthy": true,
+          "llm_healthy": true,
+          "body_healthy": true,
+          "degraded_reasons": [
+            "qq_homeostatic_feedback"
+          ],
+          "last_heartbeat_at": "2026-10-07T16:05:17.829271Z",
+          "last_journal_append_at": "2026-10-07T16:05:18.260804Z",
+          "embodiment": {
+            "state": "disabled",
+            "provider_id": null,
+            "body_instance_id": null,
+            "activated_capabilities": [],
+            "effective_capabilities": [],
+            "negotiated": null,
+            "health": null,
+            "reason": "embodiment disabled by manifest"
+          },
+          "agency_state": "AVAILABLE",
+          "body_episode_id": null,
+          "body_revision": null,
+          "body_state_age_seconds": null
+        },
+        "pending_events": 0,
+        "background": {
+          "heartbeat": {
+            "active": true,
+            "pending": 0,
+            "running": true,
+            "coalesced": 0,
+            "thread_jobs": 2,
+            "last_duration_ms": null,
+            "last_error": null
+          },
+          "passive_state": {
+            "active": true,
+            "pending": 0,
+            "running": false,
+            "coalesced": 0,
+            "thread_jobs": 0,
+            "last_duration_ms": null,
+            "last_error": null
+          },
+          "affect": {
+            "pending": 0,
+            "running": 0,
+            "scopes": 0,
+            "degraded": false
+          }
+        }
+      },
+      "direct": {
+        "running": true,
+        "connected": true,
+        "heartbeat_at": "2026-10-07T16:05:19.495826+00:00"
+      },
+      "services": {
+        "cognitive": {
+          "MainPID": "250756",
+          "Result": "success",
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "FragmentPath": "/etc/systemd/system/neuralcloud-cognitive.service"
+        },
+        "homeostasis": {
+          "MainPID": "250798",
+          "Result": "success",
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "FragmentPath": "/etc/systemd/system/neuralcloud-homeostasis.service"
+        },
+        "runtime": {
+          "MainPID": "250844",
+          "Result": "success",
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "FragmentPath": "/etc/systemd/system/neuralcloud-runtime.service"
+        },
+        "gui": {
+          "MainPID": "251423",
+          "Result": "success",
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "FragmentPath": "/etc/systemd/system/neuralcloud-gui.service"
+        },
+        "board": {
+          "MainPID": "250836",
+          "Result": "success",
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "FragmentPath": "/etc/systemd/system/neuralcloud-board.service"
+        },
+        "qq_direct": {
+          "MainPID": "251447",
+          "Result": "success",
+          "LoadState": "loaded",
+          "ActiveState": "active",
+          "SubState": "running",
+          "FragmentPath": "/etc/systemd/system/neuralcloud-qq-direct.service"
+        }
+      },
+      "finished_at": "2026-10-07T16:05:19.980346+00:00"
+    },
+    "source-diff": {
+      "changed_files": [
+        "harness/emotion/service.py",
+        "harness/llm/client.py",
+        "harness/llm/deepseek_structured.py"
+      ],
+      "base": "20261007-ui-demand-v1"
+    }
+  },
+  "regression": {
+    "passed": 247,
+    "junit_sha256": "846a89748eb2cf2a135dce9e0b61148905ac4fd4422490c0122ce3d5c419015c"
+  },
+  "candidate_mock_verification": {
+    "release": "20261007-emotion-json-diagnostics-v1",
+    "passed": true,
+    "production_model_calls": 0,
+    "mock_calls": 1,
+    "persistent_error": {
+      "code": "deepseek_structured_json_invalid",
+      "diagnostics": [
+        {
+          "validator": "json_decode",
+          "content_characters": 32,
+          "empty": false,
+          "leading_code_fence": false,
+          "reason": "expected_property_name",
+          "offset": 31,
+          "line": 1,
+          "column": 32
+        }
+      ]
+    },
+    "span_shape": {
+      "status": "completed",
+      "output_items": 1,
+      "message_items": 1,
+      "text_parts": 1
+    },
+    "finish_reason": "stop",
+    "private_markers_absent": true,
+    "reload_preserved": true
+  },
+  "health": {
+    "checked_at": "2026-10-07T16:07:29.555221+00:00",
+    "release": "20261007-emotion-json-diagnostics-v1",
+    "since": "2026-10-07T16:05:19.980346+00:00",
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-07T16:07:23.775084Z",
+        "last_journal_append_at": "2026-10-07T16:07:29.410502Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "background": {
+        "heartbeat": {
+          "active": true,
+          "pending": 0,
+          "running": true,
+          "coalesced": 6,
+          "thread_jobs": 0,
+          "last_duration_ms": 5609.413,
+          "last_error": null
+        },
+        "passive_state": {
+          "active": true,
+          "pending": 0,
+          "running": true,
+          "coalesced": 0,
+          "thread_jobs": 0,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "affect": {
+          "pending": 0,
+          "running": 0,
+          "scopes": 0,
+          "degraded": false
+        }
+      },
+      "pending_events": 0
+    },
+    "direct": {
+      "running": true,
+      "connected": true,
+      "heartbeat_at": "2026-10-07T16:07:28.770626+00:00"
+    },
+    "services": {
+      "cognitive": {
+        "MainPID": "250756",
+        "Result": "success",
+        "ActiveState": "active"
+      },
+      "homeostasis": {
+        "MainPID": "250798",
+        "Result": "success",
+        "ActiveState": "active"
+      },
+      "runtime": {
+        "MainPID": "250844",
+        "Result": "success",
+        "ActiveState": "active"
+      },
+      "gui": {
+        "MainPID": "251423",
+        "Result": "success",
+        "ActiveState": "active"
+      },
+      "board": {
+        "MainPID": "250836",
+        "Result": "success",
+        "ActiveState": "active"
+      },
+      "qq_direct": {
+        "MainPID": "251447",
+        "Result": "success",
+        "ActiveState": "active"
+      }
+    },
+    "new_model_phases": {
+      "diary_prepare": {
+        "success": 1,
+        "with_response_shape": 1,
+        "with_finish_reason": 1
+      },
+      "qq_memory_consolidation": {
+        "success": 3,
+        "with_response_shape": 3,
+        "with_finish_reason": 3
+      },
+      "emotion_appraisal": {
+        "success": 3,
+        "with_response_shape": 3,
+        "with_finish_reason": 3
+      },
+      "emotion_guidance": {
+        "success": 3,
+        "with_response_shape": 3,
+        "with_finish_reason": 3
+      },
+      "qq_gate": {
+        "success": 3,
+        "with_response_shape": 3,
+        "with_finish_reason": 3
+      },
+      "qq_persona": {
+        "error": 1,
+        "success": 2,
+        "with_response_shape": 1,
+        "with_finish_reason": 1
+      }
+    },
+    "new_errors": {
+      "ReadTimeout": 1
+    },
+    "new_json_reasons": {},
+    "natural_metadata_examples": [
+      {
+        "phase": "emotion_appraisal",
+        "http_status": 200,
+        "status": "success",
+        "finish_reason": "stop",
+        "content_type": "text",
+        "content_characters": 272,
+        "structured_response": {
+          "status": "completed",
+          "output_items": 1,
+          "message_items": 1,
+          "text_parts": 1
+        }
+      },
+      {
+        "phase": "emotion_appraisal",
+        "http_status": 200,
+        "status": "success",
+        "finish_reason": "stop",
+        "content_type": "text",
+        "content_characters": 285,
+        "structured_response": {
+          "status": "completed",
+          "output_items": 1,
+          "message_items": 1,
+          "text_parts": 1
+        }
+      },
+      {
+        "phase": "emotion_appraisal",
+        "http_status": 200,
+        "status": "success",
+        "finish_reason": "stop",
+        "content_type": "text",
+        "content_characters": 298,
+        "structured_response": {
+          "status": "completed",
+          "output_items": 1,
+          "message_items": 1,
+          "text_parts": 1
+        }
+      }
+    ],
+    "source_sha256": {
+      "harness/emotion/service.py": "821444dc01235f855153311545ddde265ea018f47cb06319010a71f3f7427930",
+      "harness/llm/client.py": "730163328d7c61c19a97066fca49e8c0349efd7b776fb9d2d5109035ad149bd2",
+      "harness/llm/deepseek_structured.py": "7467c38b1548d490e95701c31751df208f1e328c55867daed9ff420ce2562303"
+    }
+  },
+  "shadow_monitor": {
+    "at": "2026-10-07T16:07:29.551874+00:00",
+    "release": "20261007-emotion-json-diagnostics-v1",
+    "manifest_revision": 4,
+    "manifest_profile": "qq-social-drive-v1@3",
+    "services": {
+      "cognitive": {
+        "MainPID": "250756",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "MainPID": "250798",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "MainPID": "250844",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "MainPID": "251423",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "MainPID": "250836",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq_direct": {
+        "MainPID": "251447",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-07T16:07:23.775084Z",
+        "last_journal_append_at": "2026-10-07T16:07:29.410502Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "pending_events": 0,
+      "background": {
+        "heartbeat": {
+          "active": true,
+          "pending": 0,
+          "running": true,
+          "coalesced": 6,
+          "thread_jobs": 0,
+          "last_duration_ms": 5609.413,
+          "last_error": null
+        },
+        "passive_state": {
+          "active": true,
+          "pending": 0,
+          "running": true,
+          "coalesced": 0,
+          "thread_jobs": 0,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "affect": {
+          "pending": 0,
+          "running": 0,
+          "scopes": 0,
+          "degraded": false
+        }
+      }
+    },
+    "direct": {
+      "running": true,
+      "connected": true,
+      "repository_root": "/opt/neuralcloud/releases/20261007-emotion-json-diagnostics-v1",
+      "heartbeat_at": "2026-10-07T16:07:28.770626+00:00"
+    },
+    "watchdog": [],
+    "dynamics": {
+      "mode": "shadow",
+      "fatigue": 0.6905329551870372,
+      "boredom": 0.8208830190284446,
+      "wants_engagement": true,
+      "latent_confidence": 0.8,
+      "baselines": {
+        "autonomy": 0.6749992824438109,
+        "competence": 0.6250000152600026,
+        "safety_predictability": 0.6651600000000001,
+        "social_connection": 0.38068496909056737
+      },
+      "short_term_responses": {
+        "autonomy": 0.0009773601642677485,
+        "competence": 0.009271903433097386,
+        "safety_predictability": 0.019101593473248392,
+        "social_connection": 0.23469232611789612
+      },
+      "regulation_pressure": {
+        "level": "elevated",
+        "suggest_reduce_input": false,
+        "suggest_reopen": false
+      },
+      "assessment_coverage": {
+        "exposures": 2729,
+        "assessed": 171,
+        "unassessed": 2558,
+        "work_units": 22463397,
+        "last_work_at": "2026-10-07T16:07:21.315530+00:00"
+      },
+      "shadow_observation": {
+        "continuous_seconds": 136.623549,
+        "samples": 34972,
+        "maximum_gap_seconds": 411.159127,
+        "last_sample_at": "2026-10-07T16:07:29.402650+00:00"
+      },
+      "shadow_values": {
+        "cognitive_load": 0.9428198843362704,
+        "novelty": 0.47244721316080973,
+        "safety_predictability": 0.6842615934732484,
+        "competence": 0.6342719186931,
+        "autonomy": 0.6759766426080787,
+        "social_connection": 0.6153772952084635
+      },
+      "started_at": "2026-10-06T12:24:08.049492+00:00",
+      "updated_at": "2026-10-07T16:07:29.402650+00:00"
+    },
+    "display_values": {
+      "energy_reserve": 0.6650094645016668,
+      "cognitive_load": 0.9497547916366015,
+      "safety_predictability": 0.6650063096677779,
+      "competence": 0.6250000301987414,
+      "autonomy": 0.6749994747928557,
+      "social_connection": 0.62,
+      "novelty": 0.949879359698683
+    },
+    "gate": {
+      "schema_version": "cognitive-dynamics-shadow-gate-v1",
+      "ready": false,
+      "reasons": [
+        "continuous_shadow_observation_less_than_24_hours"
+      ],
+      "observation": {
+        "continuous_seconds": 136.623549,
+        "samples": 34972,
+        "maximum_gap_seconds": 411.159127,
+        "last_sample_at": "2026-10-07T16:07:29.402650+00:00"
+      },
+      "assessment_coverage": {
+        "exposures": 2729,
+        "assessed": 171,
+        "unassessed": 2558,
+        "work_units": 22463397,
+        "last_work_at": "2026-10-07T16:07:21.315530+00:00"
+      },
+      "snapshot_revision": 170718,
+      "profile_ref": "qq-social-drive-v1@3",
+      "checked_at": "2026-10-07T16:07:29.580391+00:00"
+    },
+    "work": {
+      "total": 2729,
+      "pending": 0,
+      "by_context_category": {
+        "qq": {
+          "total": 2391,
+          "assessed": 171,
+          "applied": 2391,
+          "units": 16352055,
+          "last_at": "2026-10-07T16:07:21.315530Z"
+        },
+        "emotion_guidance": {
+          "total": 168,
+          "assessed": 0,
+          "applied": 168,
+          "units": 71871,
+          "last_at": "2026-10-07T15:37:49.418824Z"
+        },
+        "goal_decision": {
+          "total": 168,
+          "assessed": 0,
+          "applied": 168,
+          "units": 5959554,
+          "last_at": "2026-10-07T15:37:55.769134Z"
+        },
+        "diary_prepare": {
+          "total": 2,
+          "assessed": 0,
+          "applied": 2,
+          "units": 6573,
+          "last_at": "2026-10-07T16:05:26.237537Z"
+        }
+      }
+    },
+    "attention": {
+      "policies": [
+        {
+          "group_id": "1044946257",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "1060979317",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "712342021",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        }
+      ],
+      "dispositions": {
+        "admitted": 353
+      },
+      "outcomes": {
+        "model_wait": 88,
+        "runtime_failure": 101,
+        "guard_wait": 0
+      },
+      "review_error": null
+    }
+  },
+  "shadow_start_beijing": "2026-10-08 00:05:12",
+  "earliest_acceptance_beijing": "2026-10-09 00:05:12",
+  "scope": "Diagnostics only; no retry, parser relaxation, historical stimulus replay or QQ test message."
+}
