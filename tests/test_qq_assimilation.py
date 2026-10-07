@@ -517,7 +517,7 @@ def test_live_model_must_explicitly_classify_evidence_kind(setup):
             assert "反差可以向正面或负面修订" in system
             return raw
 
-    with pytest.raises(ValueError, match="explicitly classify"):
+    with pytest.raises(ValueError, match="evidence validation"):
         QQMemoryProposer(Model()).propose(job)
 
 
@@ -625,3 +625,60 @@ def test_invalid_frozen_head_is_dead_lettered_without_blocking_the_group(setup):
     with sqlite3.connect(store.path) as connection:
         assert connection.execute("SELECT status FROM qq_memory_jobs WHERE job_id=?",
                                   (jobs[0].job_id,)).fetchone()[0] == "skipped"
+
+
+def test_schema_rejection_receives_bounded_feedback_and_keeps_identity_constraints(setup):
+    from harness.llm.deepseek_structured import StructuredResponseError
+    job = make_job(setup)
+    expected = proposal(job)
+    calls = []
+
+    class Model:
+        def complete_json(self, *, user, **kwargs):
+            payload = json.loads(user)
+            calls.append(payload)
+            if len(calls) == 1:
+                raise StructuredResponseError("deepseek_structured_schema_invalid", diagnostics=[
+                    {"validator": "enum", "path": ["impressions", 0, "subject_refs", 0], "missing_fields": []}])
+            assert payload["schema"] == calls[0]["schema"]
+            assert payload["frozen_sources"] == calls[0]["frozen_sources"]
+            assert payload["validation_feedback"][0]["validator"] == "enum"
+            return expected.model_dump(mode="json")
+
+    assert QQMemoryProposer(Model()).propose(job) == expected
+    assert len(calls) == 2
+
+
+def test_exhausted_model_business_validation_is_retryable_but_bounded(setup):
+    from harness.memory.qq_assimilation import QQProposalValidationError, UNRECOVERABLE_JOB_ERRORS
+    job = make_job(setup)
+    calls = []
+
+    class Model:
+        def complete_json(self, **kwargs):
+            calls.append(1)
+            return {"unrelated": "private invalid output"}
+
+    with pytest.raises(QQProposalValidationError) as caught:
+        QQMemoryProposer(Model()).propose(job)
+    assert len(calls) == 2
+    assert caught.value.error_code not in UNRECOVERABLE_JOB_ERRORS
+    assert "private" not in str(caught.value)
+
+
+def test_schema_feedback_does_not_loop_or_mask_second_failure(setup):
+    from harness.llm.deepseek_structured import StructuredResponseError
+    calls = []
+    class Model:
+        def complete_json(self, **kwargs):
+            calls.append(1)
+            raise StructuredResponseError("deepseek_structured_schema_invalid")
+    with pytest.raises(StructuredResponseError):
+        QQMemoryProposer(Model()).propose(make_job(setup))
+    assert len(calls) == 2
+
+
+def test_model_rejection_reason_is_content_free():
+    from harness.memory.qq_assimilation import QQProposalValidationError
+    assert QQProposalValidationError(ValueError("impression needs new non-self, non-duplicate, non-quoted evidence")).error_code == "qq_model_validation_independent_evidence"
+    assert "secret" not in str(QQProposalValidationError(ValueError("secret")))

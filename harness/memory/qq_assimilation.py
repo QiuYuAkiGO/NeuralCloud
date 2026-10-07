@@ -358,6 +358,23 @@ class QQNonThinkingProposalInvalid(ValueError):
     error_code = "non_thinking_proposal_invalid"
 
 
+class QQProposalValidationError(ValueError):
+    """Retryable model proposal rejection, distinct from corrupt stored jobs."""
+
+    error_code = "qq_model_proposal_validation_failed"
+
+    def __init__(self, cause):
+        rules = {
+            "impression needs new non-self, non-duplicate, non-quoted evidence": "independent_evidence",
+            "each impression subject requires its own independent evidence": "subject_evidence",
+            "person and relationship subjects require their own attributed utterances": "subject_attribution",
+            "episodes must partition every frozen source exactly once": "source_partition",
+        }
+        rule = rules.get(str(cause), "invalid_proposal")
+        self.error_code = "qq_model_validation_" + rule
+        super().__init__("model proposal failed evidence validation: " + rule)
+
+
 class QQMemoryProposer:
     def __init__(self, llm, *, max_tokens: int = 8192, timeout_seconds: float = 45, reasoning_options=None):
         self.llm = llm
@@ -501,8 +518,17 @@ class QQMemoryProposer:
         return response
 
     def _propose_validated(self, job, payload, old):
+        from harness.llm.deepseek_structured import StructuredResponseError
+
         for attempt in range(2):
-            result = self._generate(payload)
+            try:
+                result = self._generate(payload)
+            except StructuredResponseError as exc:
+                if attempt or exc.error_code != "deepseek_structured_schema_invalid":
+                    raise
+                payload = {**payload, "validation_feedback": exc.diagnostics,
+                    "repair_request": "Schema validation failed. Regenerate from the same frozen_sources; use only schema-authorized subject_refs and source_ids. Omit unsupported impressions."}
+                continue
             try:
                 if isinstance(result, Mapping) and isinstance(result.get("impressions"), (list, tuple)):
                     if any(isinstance(item, Mapping) and "evidence_kind" not in item for item in result["impressions"]):
@@ -510,7 +536,7 @@ class QQMemoryProposer:
                 return validate_proposal(job, result, old_impressions=old)
             except ValueError as exc:
                 if attempt or self._budget_fallback_used:
-                    raise
+                    raise QQProposalValidationError(exc) from exc
                 details = exc.errors(include_input=False, include_context=False) if hasattr(exc, "errors") else str(exc)
                 payload = {**payload, "rejected_proposal": result, "validation_feedback": details,
                     "repair_request": "上一提案未通过结构或证据校验。仅依据同一份frozen_sources修正，无依据的印象删去；不得添加来源或更换群及对象。"}
