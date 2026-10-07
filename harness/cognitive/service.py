@@ -209,6 +209,7 @@ class CognitiveServiceHost:
         self._close_task = None
         from harness.cognitive.ui_snapshot import UISnapshotCache
         self._ui_memory_cache = UISnapshotCache()
+        self._ui_catalog_cache = UISnapshotCache(refresh_after=5, max_age=30, cold_wait=0)
 
     @property
     def command_tasks(self):
@@ -751,6 +752,7 @@ class CognitiveServiceHost:
     async def _close(self) -> None:
         try:
             await self._ui_memory_cache.close()
+            await self._ui_catalog_cache.close()
             await self.daily_revision.close()
             await self.qq_memory.close()
             await self.adapter.close()
@@ -804,6 +806,7 @@ class CognitiveServiceHost:
     async def start(self) -> None:
         self.owner_lease.acquire()
         try:
+            await self._ui_catalog()
             if self.shared.qq_settings is not None and self.shared.qq_settings.memory_db.is_file():
                 # One-time source schema upgrade and mirror bootstrap precede
                 # readiness. Later foreground turns only validate new rows.
@@ -825,8 +828,14 @@ class CognitiveServiceHost:
             self.owner_lease.release()
             raise
 
+    async def _ui_catalog(self):
+        library = self.chat.library
+        return await self._ui_catalog_cache.get(id(library), lambda: {
+            "items": [item.model_dump(mode="json") for item in library.list_summaries()]})
+
     async def ui_snapshot(self) -> dict[str, Any]:
         self._sync_transcript()
+        catalog, catalog_freshness = await self._ui_catalog()
         from harness.qq.attention import attention_policy_token
 
         def identity():
@@ -855,12 +864,13 @@ class CognitiveServiceHost:
             memory = {"shared_mind": {"owner_id": self.shared.store.owner_id,
                 "mode": "production" if self.shared.production_enabled else "shared", "memory_records": None}}
         memory["memory_snapshot"] = freshness
+        memory["preset_snapshot"] = catalog_freshness
         if not self.shared.production_enabled:
-            return {**self.chat.status(), **memory, "qq_memory": self.qq_memory.status(),
+            return {**self.chat.status(preset_summaries=catalog.get("items", [])), **memory, "qq_memory": self.qq_memory.status(),
                     "daily_revision": self.daily_revision.status()}
         from itertools import islice
 
-        snapshot = self.chat.status()
+        snapshot = self.chat.status(preset_summaries=catalog.get("items", []))
         for legacy in ("relationship", "psych", "homeostasis"):
             snapshot.pop(legacy, None)
         # UI access is authenticated at /v1/ui/snapshot. This operator view
@@ -943,6 +953,7 @@ class CognitiveServiceHost:
             require_development(operation, control_mode=self.control_mode)
             production = self.shared.production_enabled
             self._ui_memory_cache.invalidate()
+            self._ui_catalog_cache.invalidate()
             self._apply_mutation(operation, body)
             self.chat.pipeline.compiler = SharedMemoryCompiler(self.chat.settings)
             self.adapter.pipeline = self.chat.pipeline

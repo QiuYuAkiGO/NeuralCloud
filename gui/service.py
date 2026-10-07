@@ -398,15 +398,18 @@ class HarnessChatService:
             "character_name": character_name,
         }
 
-    def presets_payload(self) -> dict[str, Any]:
-        items = self.library.list_summaries(open_ids=self.open_preset_ids, active_id=self.active_preset_id)
+    def presets_payload(self, *, summaries: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+        if summaries is None:
+            summaries = [item.model_dump(mode="json") for item in
+                         self.library.list_summaries(open_ids=self.open_preset_ids, active_id=self.active_preset_id)]
         return {
             "active_id": self.active_preset_id,
             "open_ids": list(self.open_preset_ids),
-            "items": [item.model_dump(mode="json") for item in items],
+            "items": [{**item, "open": item["preset_id"] in self.open_preset_ids,
+                       "active": item["preset_id"] == self.active_preset_id} for item in summaries],
         }
 
-    def snapshot_state(self, session_id: str | None = None) -> dict[str, Any]:
+    def snapshot_state(self, session_id: str | None = None, *, preset_summaries: list[dict[str, Any]] | None = None) -> dict[str, Any]:
         from harness.qq.policy import effective_configuration
         del session_id
         snap = self.memory.get_state()
@@ -458,7 +461,7 @@ class HarnessChatService:
                 "turns": [turn.model_dump(mode="json") for turn in self.transcript],
             },
             "speakers": self.speakers_payload(),
-            "presets": self.presets_payload(),
+            "presets": self.presets_payload(summaries=preset_summaries),
         }
 
     def _aux_payload(self) -> dict[str, Any]:
@@ -475,8 +478,8 @@ class HarnessChatService:
         base_url, model, _ = resolve_qq_memory_endpoint(self.settings)
         return {"base_url": base_url, "model": model}
 
-    def status(self, session_id: str | None = None) -> dict[str, Any]:
-        payload = self.snapshot_state(session_id)
+    def status(self, session_id: str | None = None, *, preset_summaries: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+        payload = self.snapshot_state(session_id, preset_summaries=preset_summaries)
         payload["default_session_id"] = self.active_session_id
         return payload
 

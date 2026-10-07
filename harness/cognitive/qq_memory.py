@@ -72,8 +72,8 @@ def _hash(value):
                                     separators=(",", ":")).encode()).hexdigest()
 
 
-def memory_state(value):
-    state = deepcopy(value or {})
+def memory_state(value, *, copy_state=True):
+    state = deepcopy(value or {}) if copy_state else dict(value or {})
     if state.get("schema_version", VERSION) != VERSION:
         raise ValueError("qq_memory_state_version_unknown")
     state.setdefault("schema_version", VERSION)
@@ -537,7 +537,9 @@ class QQMemoryWorker:
         return self.status()
 
     def status(self, *, details=False):
-        state = memory_state(getattr(self.host.chat.memory, "qq_memory_state", {}))
+        # Aggregate synchronously from the current immutable committed view;
+        # only the explicit details response needs detached nested objects.
+        state = memory_state(getattr(self.host.chat.memory, "qq_memory_state", {}), copy_state=details)
         settings = getattr(self.host.chat, "settings", None)
         episodes = [x for x in self.host.chat.memory.stores.episodic.list_all()
                     if x.scope and x.scope.channel in {"qq_group", "qq_private"}]

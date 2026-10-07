@@ -239,6 +239,7 @@ class PresetLibrary:
         self.working_dir = working_dir if working_dir is not None else default_working_dir()
         self.builtin_dir = builtin_dir if builtin_dir is not None else default_builtin_dir()
         self.working_dir.mkdir(parents=True, exist_ok=True)
+        self._summary_cache: dict[str, tuple[tuple, PresetSummary]] = {}
 
     def working_path(self, preset_id: str) -> Path:
         return self.working_dir / f"{_validate_preset_id(preset_id)}.json"
@@ -349,10 +350,22 @@ class PresetLibrary:
         open_ids: list[str] | None = None,
         active_id: str | None = None,
     ) -> PresetSummary:
+        def signature():
+            path = self.working_path(preset_id)
+            if not path.is_file():
+                path = self.builtin_path(preset_id)
+            stat = path.stat()
+            return (str(path), stat.st_dev, stat.st_ino, stat.st_mtime_ns, stat.st_ctime_ns, stat.st_size,
+                    self.is_builtin_id(preset_id))
+
+        before = signature()
+        cached = self._summary_cache.get(preset_id)
+        if cached is not None and cached[0] == before:
+            return cached[1].model_copy(update={"open": preset_id in (open_ids or []), "active": preset_id == active_id})
         preset = self.load(preset_id)
         protected = preset.is_protected() or self.is_builtin_id(preset_id)
         opened = open_ids or []
-        return PresetSummary(
+        summary = PresetSummary(
             preset_id=preset.preset_id,
             name=preset.display_name(),
             builtin=self.is_builtin_id(preset.preset_id),
@@ -363,6 +376,11 @@ class PresetLibrary:
             active=preset.preset_id == active_id,
             turn_count=len(preset.transcript),
         )
+        # Atomic replacement, external edits and restores invalidate metadata.
+        # Keep only a small summary, never a second copy of the full archive.
+        if signature() == before:
+            self._summary_cache[preset_id] = (before, summary)
+        return summary.model_copy()
 
     def list_summaries(
         self,

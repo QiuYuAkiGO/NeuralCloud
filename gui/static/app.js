@@ -724,7 +724,7 @@ function applySnapshot(snap, opts = {}) {
   if ($("presets-dialog")?.open) renderPresetList(snap);
   renderSharedMemory(snap);
   clearTimeout(memoryRefreshTimer);
-  if (snap.memory_snapshot && snap.memory_snapshot.status !== "ready") {
+  if ([snap.memory_snapshot, snap.preset_snapshot].some((part) => part && part.status !== "ready")) {
     memoryRefreshTimer = setTimeout(async () => {
       if (memoryRefreshInFlight) return;
       memoryRefreshInFlight = true;
@@ -750,7 +750,9 @@ function renderSharedMemory(snap) {
   const freshnessText = freshness?.status === "unavailable" ? "记忆暂时无法读取，稍后自动重试。" :
     freshness?.status === "loading" ? "正在读取记忆，其余状态已更新。" : freshness ?
     `记忆更新于 ${freshness.as_of ? new Date(freshness.as_of).toLocaleTimeString() : "—"}${freshness.refreshing ? " · 正在刷新" : ""}` : "";
-  const freshnessHtml = freshnessText ? `<p class="hint" role="status">${esc(freshnessText)}</p>` : "";
+  const catalogText = snap?.preset_snapshot?.status === "unavailable" ? "角色列表暂时无法读取，稍后自动重试。" :
+    snap?.preset_snapshot?.status === "loading" ? "角色列表正在更新。" : "";
+  const freshnessHtml = [freshnessText, catalogText].filter(Boolean).map((text) => `<p class="hint" role="status">${esc(text)}</p>`).join("");
   if (snap?.production_cognitive?.enabled) {
     root.innerHTML = freshnessHtml + renderProductionMemory(snap.production_memory, snap.qq_memory, snap.production_cognitive);
     return;

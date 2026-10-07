@@ -196,3 +196,67 @@ def test_host_reports_memory_failure_without_losing_other_ui_state(tmp_path, mon
         finally:
             await host.close()
     asyncio.run(run())
+
+
+def test_slow_catalog_does_not_block_snapshots_or_multiply_reads(tmp_path, monkeypatch):
+    async def run():
+        host, _ = _host(tmp_path, monkeypatch, ["ok"])
+        release, entered = Event(), Event()
+        calls = []
+        original = host.chat.library.list_summaries
+
+        def catalog():
+            calls.append(1)
+            entered.set()
+            assert release.wait(3)
+            return original()
+
+        monkeypatch.setattr(host.chat.library, "list_summaries", catalog)
+        try:
+            task = asyncio.create_task(host.ui_snapshot())
+            assert await asyncio.to_thread(entered.wait, 1)
+            first = await asyncio.wait_for(task, 1)
+            assert first["preset_snapshot"]["status"] == "loading"
+            assert "persona" in first and "shared_memory" in first
+            responses = await asyncio.gather(*(host.ui_snapshot() for _ in range(8)))
+            assert len(calls) == 1
+            assert all(r["preset_snapshot"]["status"] == "loading" for r in responses)
+            release.set()
+            await host._ui_catalog_cache._task
+            ready = await host.ui_snapshot()
+            assert ready["preset_snapshot"]["status"] == "ready" and ready["presets"]["items"]
+        finally:
+            release.set()
+            await host.close()
+    asyncio.run(run())
+
+
+def test_catalog_cache_detects_external_replace_and_never_caches_open_flags(tmp_path, monkeypatch):
+    from gui.presets import PresetLibrary, save_preset_file
+    library = PresetLibrary(working_dir=tmp_path/"presets")
+    preset = library.ensure_working("misty")
+    expected = library.summarize("misty")
+    load = library.load
+    monkeypatch.setattr(library, "load", lambda *args: pytest.fail("unchanged summary reloaded archive"))
+    active = library.summarize("misty", open_ids=["misty"], active_id="misty")
+    assert active.active and active.open
+    active.name = "mutating caller copy"
+    assert library.summarize("misty") == expected
+    monkeypatch.setattr(library, "load", load)
+    save_preset_file(preset.model_copy(update={"name": "new name"}), library.working_path("misty"))
+    assert library.summarize("misty").name == "new name"
+
+
+def test_qq_aggregate_status_does_not_copy_full_history(tmp_path, monkeypatch):
+    async def run():
+        host, _ = _host(tmp_path, monkeypatch, ["ok"])
+        try:
+            before = host.qq_memory.status()
+            def no_copy(*args, **kwargs):
+                raise AssertionError("aggregate status copied historical bodies")
+            with monkeypatch.context() as m:
+                m.setattr("harness.cognitive.qq_memory.deepcopy", no_copy)
+                assert host.qq_memory.status() == before
+        finally:
+            await host.close()
+    asyncio.run(run())
