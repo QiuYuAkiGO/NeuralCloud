@@ -585,6 +585,14 @@ class QQAssimilationQueue:
         if write:
             self.path.parent.mkdir(parents=True, exist_ok=True)
             connection = sqlite3.connect(self.path, timeout=5)
+            # Readers must not be blocked by concurrent archive/queue commits.
+            # Keep SQLite's default FULL durability and existing busy timeout.
+            try:
+                if connection.execute("PRAGMA journal_mode").fetchone()[0] != "wal":
+                    connection.execute("PRAGMA journal_mode=WAL")
+            except Exception:
+                connection.close()
+                raise
         else:
             connection = sqlite3.connect(self.path.absolute().as_uri() + "?mode=ro", uri=True, timeout=5)
         connection.row_factory = sqlite3.Row
@@ -686,36 +694,45 @@ class QQAssimilationQueue:
             return ()
         if len({source.source_id for source in manifest}) != len(manifest):
             raise ValueError("a source manifest must not contain duplicate record IDs")
-        with closing(self._connect(write=True)) as connection, connection:
-            connection.execute("BEGIN IMMEDIATE")
+        with closing(self._connect(write=True)):
+            pass
+        with closing(self._connect(write=False)) as connection, connection:
             assignments = connection.execute("SELECT * FROM qq_memory_job_sources WHERE owner_id=? AND preset_id=? "
                                              "AND processing_version=? AND self_id=?", self._scope).fetchall()
-            existing = {row["source_id"]: QQSource.model_validate_json(row["frozen_json"]) for row in assignments}
-            for source in manifest:
-                if source.source_id in existing and source.source_sha256 != existing[source.source_id].source_sha256:
-                    raise SharedMemoryConflict("an already assigned immutable source changed")
-            unassigned = sorted((source for source in manifest if source.source_id not in existing
-                                 and source.occurred_at <= current), key=lambda source: (source.occurred_at, source.source_id))
-            previous = sorted(existing.values(), key=lambda source: (source.occurred_at, source.source_id))
-            grouped: dict[str, list[QQSource]] = {}
-            for source in unassigned:
-                source = self._link_duplicates(source, previous)
-                previous.append(source)
-                grouped.setdefault(source.group_id, []).append(source)
-            windows = []
-            for group_sources in grouped.values():
-                window: list[QQSource] = []
-                for source in group_sources:
-                    if window and ((source.occurred_at - window[-1].occurred_at).total_seconds() >= self.idle_seconds
-                                   or (source.occurred_at - window[0].occurred_at).total_seconds() >= self.max_seconds
-                                   or len(window) >= self.max_messages):
-                        windows.append(tuple(window))
-                        window = []
-                    window.append(source)
-                if window and (backfill or len(window) >= self.max_messages
-                               or (current - window[-1].occurred_at).total_seconds() >= self.idle_seconds
-                               or (current - window[0].occurred_at).total_seconds() >= self.max_seconds):
+        existing = {row["source_id"]: QQSource.model_validate_json(row["frozen_json"]) for row in assignments}
+        for source in manifest:
+            if source.source_id in existing and source.source_sha256 != existing[source.source_id].source_sha256:
+                raise SharedMemoryConflict("an already assigned immutable source changed")
+        unassigned = sorted((source for source in manifest if source.source_id not in existing
+                             and source.occurred_at <= current), key=lambda source: (source.occurred_at, source.source_id))
+        previous = sorted(existing.values(), key=lambda source: (source.occurred_at, source.source_id))
+        grouped: dict[str, list[QQSource]] = {}
+        for source in unassigned:
+            source = self._link_duplicates(source, previous)
+            previous.append(source)
+            grouped.setdefault(source.group_id, []).append(source)
+        windows = []
+        for group_sources in grouped.values():
+            window: list[QQSource] = []
+            for source in group_sources:
+                if window and ((source.occurred_at - window[-1].occurred_at).total_seconds() >= self.idle_seconds
+                               or (source.occurred_at - window[0].occurred_at).total_seconds() >= self.max_seconds
+                               or len(window) >= self.max_messages):
                     windows.append(tuple(window))
+                    window = []
+                window.append(source)
+            if window and (backfill or len(window) >= self.max_messages
+                           or (current - window[-1].occurred_at).total_seconds() >= self.idle_seconds
+                           or (current - window[0].occurred_at).total_seconds() >= self.max_seconds):
+                windows.append(tuple(window))
+        with closing(self._connect(write=True)) as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            current_assignments = connection.execute(
+                "SELECT source_id,source_sha256 FROM qq_memory_job_sources WHERE owner_id=? AND preset_id=? "
+                "AND processing_version=? AND self_id=?", self._scope).fetchall()
+            if {(row["source_id"], row["source_sha256"]) for row in current_assignments} != {
+                    (row["source_id"], row["source_sha256"]) for row in assignments}:
+                raise SharedMemoryConflict("source assignments changed during window planning")
             jobs = []
             for window in sorted(windows, key=lambda items: (items[0].occurred_at, items[0].source_id)):
                 digest = _digest([source.model_dump(mode="json") for source in window])

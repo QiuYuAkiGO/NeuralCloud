@@ -682,3 +682,37 @@ def test_model_rejection_reason_is_content_free():
     from harness.memory.qq_assimilation import QQProposalValidationError
     assert QQProposalValidationError(ValueError("impression needs new non-self, non-duplicate, non-quoted evidence")).error_code == "qq_model_validation_independent_evidence"
     assert "secret" not in str(QQProposalValidationError(ValueError("secret")))
+
+
+def test_duplicate_window_planning_does_not_hold_sqlite_writer_lock(setup, monkeypatch):
+    import sqlite3
+    store, queue = setup
+    add_message(store)
+    original = queue._link_duplicates
+    checked = []
+    def unlocked(source, previous):
+        with sqlite3.connect(queue.path, timeout=0.1) as other:
+            other.execute("BEGIN IMMEDIATE")
+            other.rollback()
+        checked.append(True)
+        return original(source, previous)
+    monkeypatch.setattr(queue, "_link_duplicates", unlocked)
+    queue.enqueue(now=NOW + timedelta(seconds=90))
+    assert checked
+
+
+def test_concurrent_window_assignment_is_rechecked_before_commit(setup, monkeypatch):
+    store, queue = setup
+    add_message(store)
+    other = QQAssimilationQueue(store.path, owner_id="misty", preset_id="active", self_id="999",
+                               allowed_group_ids=("100", "101"))
+    original = queue._link_duplicates
+    def raced(source, previous):
+        other.enqueue(now=NOW + timedelta(seconds=90))
+        return original(source, previous)
+    monkeypatch.setattr(queue, "_link_duplicates", raced)
+    with pytest.raises(SharedMemoryConflict, match="assignments changed"):
+        queue.enqueue(now=NOW + timedelta(seconds=90))
+    monkeypatch.setattr(queue, "_link_duplicates", original)
+    assert queue.enqueue(now=NOW + timedelta(seconds=90)) == ()
+    assert queue.status()["total_jobs"] == 1

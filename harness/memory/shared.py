@@ -363,6 +363,14 @@ class SharedMemoryStore:
         if write:
             self.path.parent.mkdir(parents=True, exist_ok=True)
             connection = sqlite3.connect(self.path, timeout=5)
+            # Readers must not be blocked by concurrent archive/queue commits.
+            # Keep SQLite's default FULL durability and existing busy timeout.
+            try:
+                if connection.execute("PRAGMA journal_mode").fetchone()[0] != "wal":
+                    connection.execute("PRAGMA journal_mode=WAL")
+            except Exception:
+                connection.close()
+                raise
         else:
             connection = sqlite3.connect(self.path.absolute().as_uri() + "?mode=ro", uri=True, timeout=5)
         connection.row_factory = sqlite3.Row

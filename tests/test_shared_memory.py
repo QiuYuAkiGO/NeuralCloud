@@ -554,3 +554,20 @@ def test_migration_cannot_target_original_database(tmp_path):
     source = source_database(tmp_path)
     with pytest.raises(ValueError, match="original QQ database"):
         SharedMemoryStore(source).import_qq_database(source, allowed_group_ids=["100"], self_member_id="999")
+
+
+def test_wal_reader_and_writer_keep_independent_snapshots(tmp_path):
+    from contextlib import closing
+    store = SharedMemoryStore(tmp_path / "shared.sqlite3")
+    with closing(store._connect(write=True)) as writer:
+        assert writer.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+        writer.execute("BEGIN IMMEDIATE")
+        writer.execute("UPDATE shared_memory_identity SET preset_id=preset_id")
+        with closing(store._connect(write=False)) as reader:
+            reader.execute("BEGIN")
+            assert reader.execute("SELECT preset_id FROM shared_memory_identity").fetchone()[0] == "misty"
+            writer.commit()
+            writer.execute("BEGIN IMMEDIATE")
+            writer.execute("UPDATE shared_memory_identity SET preset_id=preset_id")
+            writer.commit()
+            assert reader.execute("SELECT preset_id FROM shared_memory_identity").fetchone()[0] == "misty"
