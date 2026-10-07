@@ -160,7 +160,7 @@ def test_known_recovery_repairs_once_without_thinking_and_preserves_mode_on_fail
         if repair_succeeds:
             assert QQMemoryProposer(client).propose(job) == proposal(job)
         else:
-            with pytest.raises(QQNonThinkingProposalInvalid, match="partition every frozen source") as error:
+            with pytest.raises(QQNonThinkingProposalInvalid, match="source_partition") as error:
                 QQMemoryProposer(client).propose(job)
             assert error.value.error_code == "non_thinking_proposal_invalid"
             assert len(calls) == 2

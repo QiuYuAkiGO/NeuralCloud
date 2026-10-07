@@ -1,0 +1,187 @@
+{
+  "incident_date": "2026-10-07",
+  "timezone": "Asia/Shanghai",
+  "audited_release": "20261007-shared-memory-wal-v1",
+  "group_id": "712342021",
+  "decision_id": "qq-decision:59c090235ac64c4c952b6dda10edd987",
+  "trace_id": "qq-trace:51f6cf9514854ff8b30abc67d991cf20",
+  "trigger": "饭店里有时候都不敢大声叫服务员过来",
+  "delivered_at_utc": "2026-10-07T14:02:13.443819Z",
+  "delivered_text": "我也有过……明明想加个水，结果一直等到人家路过才敢开口",
+  "delivery_verified": "qq_protocol_verified",
+  "gate_reason": "892830920的新消息“饭店里有时候都不敢大声叫服务员过来”是承接刚才“我也内向”的性格话题，具体、有画面感，我有类似感受可以自然接一句。",
+  "gate_reply_plan": {
+    "detail_level": "brief",
+    "intent": "acknowledge",
+    "must_address": "承接“不敢大声叫服务员”这个具体的内向场景，给出自己的真实感受或类似经验，而不是泛泛附和。",
+    "necessary_boundary": null,
+    "new_questions": []
+  },
+  "recalled_memory_ids": [],
+  "recalled_episode_ids": [],
+  "physical_requests": [
+    {
+      "phase": "emotion_guidance",
+      "request_model": "deepseek-flash",
+      "response_model": "deepseek-flash",
+      "endpoint": "https://api.deepseek.com/responses",
+      "started_at": "2026-10-07T14:01:42.651795+00:00",
+      "completed_at": "2026-10-07T14:01:43.844613+00:00",
+      "latency_ms": 1192.819,
+      "status": "success",
+      "error": null,
+      "usage": {
+        "prompt_tokens": 907,
+        "completion_tokens": 70,
+        "total_tokens": 977,
+        "cache_hit_tokens": 256,
+        "cache_miss_tokens": 651,
+        "cache_known_prompt_tokens": 907,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      }
+    },
+    {
+      "phase": "qq_gate",
+      "request_model": "deepseek-flash",
+      "response_model": "deepseek-flash",
+      "endpoint": "https://api.deepseek.com/responses",
+      "started_at": "2026-10-07T14:01:44.374398+00:00",
+      "completed_at": "2026-10-07T14:01:46.348826+00:00",
+      "latency_ms": 1974.436,
+      "status": "success",
+      "error": null,
+      "usage": {
+        "prompt_tokens": 25390,
+        "completion_tokens": 207,
+        "total_tokens": 25597,
+        "cache_hit_tokens": 4480,
+        "cache_miss_tokens": 20910,
+        "cache_known_prompt_tokens": 25390,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      }
+    },
+    {
+      "phase": "qq_persona",
+      "request_model": "qwen3.8-27b",
+      "response_model": null,
+      "endpoint": "http://192.168.1.105:8080/v1",
+      "started_at": "2026-10-07T14:01:48.705372+00:00",
+      "completed_at": "2026-10-07T14:02:08.914833+00:00",
+      "latency_ms": 20209.477,
+      "status": "error",
+      "error": {
+        "type": "ConnectTimeout",
+        "message": "model request failed"
+      },
+      "usage": null
+    },
+    {
+      "phase": "qq_persona",
+      "request_model": "deepseek-v4-flash",
+      "response_model": "deepseek-flash",
+      "endpoint": "https://api.deepseek.com/v1",
+      "started_at": "2026-10-07T14:02:09.393160+00:00",
+      "completed_at": "2026-10-07T14:02:10.760278+00:00",
+      "latency_ms": 1367.113,
+      "status": "success",
+      "error": null,
+      "usage": {
+        "prompt_tokens": 32889,
+        "completion_tokens": 21,
+        "total_tokens": 32910,
+        "cache_hit_tokens": 2816,
+        "cache_miss_tokens": 30073,
+        "cache_known_prompt_tokens": 32889,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      }
+    }
+  ],
+  "validator_configuration_at_turn": {
+    "source": "persisted",
+    "value": false
+  },
+  "isolated_rule_check": {
+    "rule_check_with_no_memory": {
+      "verdict": "pass",
+      "violations": [],
+      "severity": 0.0,
+      "instruction": null,
+      "skipped": false
+    },
+    "physical_claim_detected": false,
+    "validator_source_sha256": "b0f11b4422ac3e54459c51ad52fd15102b12fa9728725d8fa65f2ad77b15f319"
+  },
+  "frozen_checkpoint": {
+    "snapshot_present": true,
+    "memory_evidence_count": 79,
+    "targeted_memory_evidence_matches": [],
+    "knowledge_boundary": [
+      "只把本设定包明确记录的资料当作自身事实",
+      "不编造未记录的家世、能力、共同经历、关系进展或现实环境观察",
+      "不知道或不确定的事实会坦率说明",
+      "视觉身体是自身形象的投影，不把渲染器状态误说成亲眼观察到的现实"
+    ],
+    "speech_style": [
+      "语气轻柔自然，像在认真和熟悉的人说话",
+      "关系升温循序渐进，不突然表现得过度亲密或外向",
+      "害羞或被直白关注时会稍有停顿，但不故作夸张",
+      "情绪表达细腻克制，不使用客服腔、说教腔或夸张漫画式反应",
+      "可以用风、光线、音乐和日常细节表达感受，但不机械重复代表句",
+      "回应言之有物：每句都带具体内容、真实感受或针对性疑问，不写空泛点评或敷衍附和；依然保持简短。"
+    ],
+    "emotion_guidance": {
+      "context_id": "emotion:e13834d94cc398026cb0de2741271d2ea0791d8f7ef305d448b977a353a9f467",
+      "diagnostics": {
+        "elapsed_ms": 1195.892,
+        "fallback_reason": "emotion_guidance_feeling_missing",
+        "input_budget_unit": "utf8_bytes_upper_bound",
+        "input_bytes": 2643,
+        "model_calls": 1,
+        "omitted_window_messages": 0,
+        "prompt_layout_version": "persona-first-v1",
+        "prompt_version": "emotion-director-v5",
+        "response_schema_bytes": 569,
+        "validation_version": "emotion-guidance-guard-v2"
+      },
+      "revision": 1435,
+      "scope": "qq:group:712342021",
+      "status": "fallback",
+      "text": "此刻新鲜刺激偏多，希望有熟悉和稳定的内容。这份需要正在缓和，表达节奏可以逐步恢复。同时明显平静。同时明显好奇。这份好奇的强度正在减弱。让需要与心情自然影响表达，保持角色身份和事实边界，不凭空解释情绪来源。"
+    }
+  },
+  "local_source_matches_live_release": {
+    "harness/qq/decision.py": true,
+    "harness/qq/draft.py": true,
+    "harness/pipeline/pipeline.py": true,
+    "harness/qq/prepared_turn.py": true,
+    "harness/validator/validator.py": true
+  },
+  "scope": {
+    "read_only_production": true,
+    "model_api_requests": 0,
+    "qq_messages_sent": 0,
+    "code_or_config_changes": false
+  },
+  "conclusion": "Unsupported autobiographical episode: the gate planned similar personal experience without cited evidence; body fallback generated concrete details; disabled validator and incomplete rule coverage did not reject it. Valid JSON does not establish factual support."
+}

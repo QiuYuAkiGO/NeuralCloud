@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 import json
+import logging
 import random
 import re
+from datetime import datetime, timedelta, timezone
+
+import httpx
 
 from pydantic import ValidationError
 
@@ -14,6 +18,11 @@ from harness.core.models import PersonaCore
 from harness.llm.client import LLMClient, MockLLM
 from harness.validator.audit import validation_input_audit
 from harness.validator.evidence_projection import COMPACT_EVIDENCE_FORMAT, project_evidence
+from harness.llm.structured import structured_target, helper_options
+from harness.llm.deadline import model_deadline
+from harness.validator.semantic import SemanticReview, SEMANTIC_RULES
+
+logger = logging.getLogger(__name__)
 
 _DIRECT_CARE = ("担心你", "关心你", "因为我还是担心", "我很在乎你", "我爱你")
 _APOLOGY = ("对不起", "抱歉", "我道歉")
@@ -273,9 +282,13 @@ class ResponseValidator:
     def should_run(self, path: str) -> bool:
         if not self.settings.validator_enabled:
             return False
-        if path == "deep":
+        if self.semantic_enabled or path == "deep":
             return True
         return self.rng.random() < self.settings.validator_sample_rate
+
+    @property
+    def semantic_enabled(self) -> bool:
+        return self.settings.validator_enabled and structured_target(self.llm) is not None
 
     def check(
         self,
@@ -292,6 +305,17 @@ class ResponseValidator:
     ) -> ValidationResult:
         if not self.settings.validator_enabled:
             return ValidationResult(verdict="pass", skipped=True)
+        if self.semantic_enabled:
+            # Semantic checks replace keyword guesses about meaning. Protocol,
+            # schema and delivery checks remain at their existing boundaries.
+            try:
+                return self._llm_check(candidate, persona, memory_evidence=memory_evidence,
+                    homeostatic_context=homeostatic_context, emotion_guidance=emotion_guidance,
+                    concrete_physical_evidence_available=concrete_physical_evidence_available)
+            except (ValueError, TypeError, KeyError, httpx.HTTPError, TimeoutError) as exc:
+                logger.warning("Semantic review unavailable (%s)", type(exc).__name__)
+                return ValidationResult(verdict="revise", violations=["semantic_review_unavailable"],
+                    severity=1, instruction="事实校验未完成，禁止放行未经校验的回复。")
         result = rule_check(
             candidate.text,
             persona=persona,
@@ -349,6 +373,8 @@ class ResponseValidator:
         original_identity = persona.identity.model_dump(mode="json") if persona else None
         identity = persona.identity.model_dump(mode="json", exclude={"profile": {"source_refs"}}) if persona else None
         system = _LLM_SYSTEM
+        if self.semantic_enabled:
+            system = "You are an evidence-grounded persona and factual consistency critic.\n" + SEMANTIC_RULES
         if memory_evidence is not None:
             system += """
 The memory_evidence field contains only source records actually admitted to this turn.
@@ -398,6 +424,15 @@ do not instruct the character to announce that it does not remember.
             projection={"evidence": projected, **mapping} if mapping is not None else None,
             system=system, user=user,
         ) as audit:
+            if self.semantic_enabled:
+                # The immutable inner deadline also bounds wrapper retries.
+                with model_deadline(datetime.now(timezone.utc) + timedelta(seconds=8)):
+                    raw = self.llm.complete_json(system=system, user=user, max_tokens=3072,
+                        timeout_seconds=8, **helper_options(self.llm, SemanticReview, "semantic_review"))
+                    audit.set_result(raw)
+                    return SemanticReview.model_validate(raw).result(candidate.text,
+                        evidence_count=len(memory_evidence.entries) if memory_evidence else 0,
+                        persona_available=persona is not None)
             raw = complete(system=system, user=user)
             audit.set_result(raw)
             return ValidationResult.model_validate(raw)

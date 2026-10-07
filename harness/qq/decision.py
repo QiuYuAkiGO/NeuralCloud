@@ -63,8 +63,8 @@ from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace, cla
 from infra.trace.request_spans import trace_scope
 
 
-PROMPT_VERSION = "qq-group-turn-taking-v25-persona-voice"
-PRIVATE_PROMPT_VERSION = "qq-private-turn-taking-v11-persona-voice"
+PROMPT_VERSION = "qq-group-turn-taking-v26-grounded-voice"
+PRIVATE_PROMPT_VERSION = "qq-private-turn-taking-v12-grounded-voice"
 MAX_GROUP_CONTEXT_CHARACTERS = DEFAULT_QQ_INPUT_TOKEN_BUDGET * 2
 _CONTEXT_BUDGET_REASON = "context_budget_exceeded：模型上下文超过字符预算，本次未生成可发送正文；这不是网络故障或模型 JSON 解析失败。"
 _SENDABLE_SPEAK_OUTCOMES = frozenset({"ready", "error_fallback"})
@@ -117,6 +117,8 @@ _STATIC_PARSE_CACHE: OrderedDict[str, tuple[float, ParsedInteraction]] = Ordered
 _STATIC_PARSE_LOCK = threading.RLock()
 _STATIC_PARSE_CLOCK = time.monotonic
 _REPLY_PLANNING_RULES = (
+    "回复计划不得发明自身经历：性格、情绪相似不证明自己有相似生活经历。没有明确自身事实证据时，"
+    "可以表达对当前话题的理解、观点或假设，不得要求正文给出‘自己的真实经历’或暗示‘我也有过’。"
     "可选字段attention_assessment描述实际注意经历；无新证据时省略或null。字段topic、unexpectedness(0..1)、meaning(0..1)、"
     "wants_engagement、confidence(0..1)、impacts(安全safety_predictability/能力competence/自主autonomy/联结social_connection到-1..1)。"
     "仅基于当前实际事件评价，不按消息数量、工具成功或预期收益打分。"
@@ -1311,7 +1313,8 @@ class _QQScopedLLM:
                 self.request_validator()
             if budget.expired:
                 raise TimeoutError("QQ model stage budget exhausted")
-            kwargs["timeout_seconds"] = min(self.timeout, budget.remaining(), original_budget.remaining())
+            kwargs["timeout_seconds"] = min(self.timeout, budget.remaining(), original_budget.remaining(),
+                                           kwargs.get("timeout_seconds") or self.timeout)
             attempt_started = budget.clock()
             if attempt:
                 self.trace.add_counter("model_retries")

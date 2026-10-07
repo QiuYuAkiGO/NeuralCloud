@@ -258,10 +258,12 @@ class OpenAICompatClient:
         *,
         extra_payload: dict[str, Any] | None = None,
         request_observer: DiagnosticObserver | None = None,
+        connect_timeout: float | None = None,
     ) -> None:
         self.settings = settings or get_settings()
         self._extra_payload = dict(extra_payload or {})
         self._request_observer = request_observer
+        self._connect_timeout = connect_timeout
         # One long-lived client: keep-alive reuse across all pipeline stages
         # instead of a fresh TCP+TLS handshake per call.
         self._client = httpx.Client(timeout=self.settings.llm_timeout)
@@ -332,6 +334,9 @@ class OpenAICompatClient:
             if not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
                 raise ValueError("request timeout must be finite and positive")
             request_options["timeout"] = timeout_seconds
+        if self._connect_timeout is not None:
+            total_timeout = timeout_seconds if timeout_seconds is not None else self.settings.llm_timeout
+            request_options["timeout"] = httpx.Timeout(total_timeout, connect=min(total_timeout, self._connect_timeout))
         payload: dict[str, Any] = {
             **self._extra_payload,
             "model": self.settings.llm_model,

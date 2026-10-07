@@ -59,3 +59,35 @@ def test_qq_direct_body_rejects_unscoped_evidence_before_model(service):
     with pytest.raises(ValueError, match="scoped evidence"):
         pipeline.prepare_qq_response("固定指令", session_id="qq-group-draft:10001", context_segments=[],
             memory_evidence=MemoryEvidenceContext(audience="local:private"), prefix_messages=[])
+
+
+@pytest.mark.parametrize("unavailable", [False, True])
+def test_semantic_body_repairs_once_and_rechecks_but_never_rewrites_for_critic_outage(service, monkeypatch, unavailable):
+    from harness.core.inference import CandidateResponse
+    from harness.validator.validator import ResponseValidator
+    from tests.test_semantic_validator import Critic, report, claim
+
+    critic = Critic(TimeoutError() if unavailable else report(claims=[claim()]))
+    settings = Settings(_env_file=None, validator_enabled=True, validator_sample_rate=0,
+                        call_log_enabled=False, record_interaction=False)
+    validator = ResponseValidator(settings=settings, llm=critic)
+    pipeline = InferencePipeline(service, settings=settings, validator=validator)
+    generations = []
+
+    def generate(context, **kwargs):
+        generations.append(kwargs)
+        if len(generations) == 2:
+            assert kwargs["revision_instruction"]
+            critic.response = report()
+        return CandidateResponse(text="我也有过" if len(generations) == 1 else "听起来很难开口。")
+
+    monkeypatch.setattr(pipeline.character, "generate", generate)
+    final = pipeline.prepare_qq_response("正文指令", session_id="qq-group-draft:10001",
+        context_segments=[ContextSegment(kind="user", text="本轮问题")],
+        memory_evidence=MemoryEvidenceContext(audience="qq:group:10001"),
+        prefix_messages=[{"role": "system", "content": "人设约束"},
+                         {"role": "assistant", "content": '{"action":"speak"}'}])
+    assert len(generations) == (1 if unavailable else 2)
+    assert len(critic.calls) == len(generations)
+    assert final.validation.verdict == ("revise" if unavailable else "pass")
+    assert final.text == ("" if unavailable else "听起来很难开口。")

@@ -233,7 +233,8 @@ class InferencePipeline:
                 context = context.model_copy(update={"prefix_messages": list(prefix_messages)})
                 candidate, validation, revisions, usage = self._generate_validated(
                     context, situation=situation, insights=[], path="fast",
-                    continuation_instruction=None, segment_index=0, max_revisions=0,
+                    continuation_instruction=None, segment_index=0,
+                    max_revisions=1 if isinstance(self.validator, ResponseValidator) and self.validator.semantic_enabled else 0,
                 )
                 bodies, _ = split_protocol_segments(candidate.text)
                 accepted, _ = fresh_bodies(bodies, [])
@@ -790,6 +791,11 @@ class InferencePipeline:
                 extra={"revision": revisions, "path": path, "segment": segment_index},
             )
             if validation.verdict == "pass":
+                break
+            if "semantic_review_unavailable" in validation.violations:
+                # Regenerating cannot repair a critic outage. Never send an
+                # unchecked candidate or spend another body generation on it.
+                candidate = candidate.model_copy(update={"text": ""})
                 break
             if revisions >= (self.settings.max_revisions if max_revisions is None else max_revisions):
                 if _HOMEOSTATIC_HARD_VIOLATIONS.intersection(validation.violations):

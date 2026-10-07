@@ -1,0 +1,48 @@
+{
+  "checked_at": "2026-10-06T13:33:00+08:00",
+  "release": "20261006-homeostatic-autonomy-repair-v1",
+  "production_configuration": {
+    "qq_direct_connected": true,
+    "qq_image_mode": "all",
+    "qq_image_analysis": "on_demand",
+    "vision_enabled": true,
+    "vision_model": "kimi-k2.6",
+    "vision_base_url": "https://api.moonshot.cn/v1",
+    "main_model": "qwen3.8-27b"
+  },
+  "napcat_readback_probe": {
+    "source": "existing incoming QQ image retrieved through live NapCat get_msg and production image acquisition code",
+    "image_sha256": "5361a7e47397c5a312173cd2d3b8df0068622c0415cba27f9262d5b82a81e8bc",
+    "matches_original_observation": true,
+    "width": 1055,
+    "height": 1491,
+    "size_bytes": 2546361,
+    "vision_status": "ok",
+    "vision_model": "kimi-k2.6",
+    "thinking": "disabled",
+    "vision_calls": 1,
+    "vision_seconds": 8.762,
+    "visual_check": "Original image inspected; title, main comic events and LCD/RGB OFF state match. First tool response also included an unsupported claim about GPU release timing, so this is not a claim that all returned details are accurate."
+  },
+  "isolated_qq_turn_probe": {
+    "source": "same actual NapCat image; fresh temporary database with a synthetic explicit image question",
+    "question": "Misty，请看这张图，告诉我漫画的标题，以及最后LCD和RGB分别是什么状态。",
+    "main_model_selects_vision": true,
+    "model_call_counts": {"gate": 2, "persona": 1, "vision": 1},
+    "vision_model": "kimi-k2.6",
+    "vision_status": "ok",
+    "outcome": "ready",
+    "seconds": 15.435,
+    "reply": "标题是《关掉5090，终于能睡了》\n\n最后LCD和RGB都是OFF，已经保存了",
+    "qq_messages_sent": 0,
+    "production_memory_modified": false
+  },
+  "observed_production_limitation": {
+    "time": "2026-10-06T13:26:06+08:00",
+    "trigger": "text-only question about another member's earlier image",
+    "vision_calls": 0,
+    "reply_incorrectly_claimed_images_disabled": true,
+    "code_boundary": "QQVisionTool.for_turn offers only current request observation IDs, not arbitrary historical attachments"
+  },
+  "scope": "Live NapCat image retrieval and real Kimi recognition verified; isolated main-model selection and reply verified. No new natural QQ message-to-send acceptance performed. Production configuration and code unchanged."
+}
