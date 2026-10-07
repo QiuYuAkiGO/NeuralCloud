@@ -1,7 +1,7 @@
 {
-  "release_id": "20261007-memory-validation-retry-v1",
-  "archive": "D:\\GameDev\\NeuralCloud\\.tmp\\memory-validation-retry-v1.tar.gz",
-  "sha256": "983a5690852bc58e70a7252e0fe4e41e0066839737bb6000049c3cf9747863d9",
+  "release_id": "20261007-shared-memory-wal-v1",
+  "archive": "D:\\GameDev\\NeuralCloud\\.tmp\\shared-memory-wal-v1.tar.gz",
+  "sha256": "f528e2ea0adf24c27564655b93f83182bf86eb30a5502481d4dc07a34525e911",
   "files": 433,
   "state": "deployed_shadow",
   "changed_from_production": [
@@ -61,33 +61,40 @@
     "presets/homeostasis/qq-cognitive-dynamics-shadow-v3.json",
     "tools/deploy/export_shared.py"
   ],
-  "code_commit": "e2aa56da46e50f498af86ebcd1e09423f6c71797",
-  "deployed_at": "2026-10-07T05:12:59.657758+00:00",
-  "evidence": "../memory-validation-retry-20261007/deployment.json",
+  "code_commit": "de346c8721b1d2dfc87dd50ffa765df2a0ca16e2",
+  "deployed_at": "2026-10-07T13:55:42.650725+00:00",
+  "evidence": "../shared-memory-lock-hotfix-20261007/deployment.json",
   "previous_release": {
-    "release_id": "20261007-structured-memory-hotfix-v2",
-    "sha256": "bbedd66dbfdd5dcb8c111cc8785c72e8c84c6ab758442bd858fdb224c6b84b8f",
-    "code_commit": "60dc1a5add1d54959bc86c447dc6a4709ca6e781",
-    "deployed_at": "2026-10-06T19:56:03.024115+00:00",
-    "evidence": "../structured-memory-hotfix-20261007/deployment.json",
+    "release_id": "20261007-memory-validation-retry-v1",
+    "sha256": "983a5690852bc58e70a7252e0fe4e41e0066839737bb6000049c3cf9747863d9",
+    "code_commit": "e2aa56da46e50f498af86ebcd1e09423f6c71797",
+    "deployed_at": "2026-10-07T05:12:59.657758+00:00",
+    "evidence": "../memory-validation-retry-20261007/deployment.json",
     "previous_release": {
-      "release_id": "20261007-structured-memory-hotfix-v1",
-      "sha256": "9629ac9cd4df3ba2da9cbbae1f2de356139c40f275e4d1c131bbf301b1f73024",
-      "code_commit": "2a2943f450f27cf7a7cabfcf6a58db7359f9a617",
-      "deployed_at": "2026-10-06T19:44:19.126891+00:00",
-      "evidence": "../structured-memory-hotfix-20261007/deployment.json#initial_deployment",
+      "release_id": "20261007-structured-memory-hotfix-v2",
+      "sha256": "bbedd66dbfdd5dcb8c111cc8785c72e8c84c6ab758442bd858fdb224c6b84b8f",
+      "code_commit": "60dc1a5add1d54959bc86c447dc6a4709ca6e781",
+      "deployed_at": "2026-10-06T19:56:03.024115+00:00",
+      "evidence": "../structured-memory-hotfix-20261007/deployment.json",
       "previous_release": {
-        "release_id": "20261006-cognitive-dynamics-v3-shadow-v3",
-        "sha256": "c0269dfe4fc8be8b148d45e82ed9693cdb47490f219fa97bb326d3aa3c8af719",
-        "code_commit": "47f9da9c804f6d6b7a37004a490f45297d93dd72",
-        "deployed_at": "2026-10-06T13:54:13.907658+00:00",
-        "evidence": "shadow-repair.json",
+        "release_id": "20261007-structured-memory-hotfix-v1",
+        "sha256": "9629ac9cd4df3ba2da9cbbae1f2de356139c40f275e4d1c131bbf301b1f73024",
+        "code_commit": "2a2943f450f27cf7a7cabfcf6a58db7359f9a617",
+        "deployed_at": "2026-10-06T19:44:19.126891+00:00",
+        "evidence": "../structured-memory-hotfix-20261007/deployment.json#initial_deployment",
         "previous_release": {
-          "release_id": "20261006-cognitive-dynamics-v3-shadow-v2",
-          "sha256": "d6e82b002449e10005e94d137120534d9090f4d0d656dc091988b37628970991",
-          "code_commit": "9882b5f8ecca7fb65a7bca02991af14c969015d0",
-          "deployed_at": "2026-10-06T12:30:51.150342+00:00",
-          "evidence": "deployment.json"
+          "release_id": "20261006-cognitive-dynamics-v3-shadow-v3",
+          "sha256": "c0269dfe4fc8be8b148d45e82ed9693cdb47490f219fa97bb326d3aa3c8af719",
+          "code_commit": "47f9da9c804f6d6b7a37004a490f45297d93dd72",
+          "deployed_at": "2026-10-06T13:54:13.907658+00:00",
+          "evidence": "shadow-repair.json",
+          "previous_release": {
+            "release_id": "20261006-cognitive-dynamics-v3-shadow-v2",
+            "sha256": "d6e82b002449e10005e94d137120534d9090f4d0d656dc091988b37628970991",
+            "code_commit": "9882b5f8ecca7fb65a7bca02991af14c969015d0",
+            "deployed_at": "2026-10-06T12:30:51.150342+00:00",
+            "evidence": "deployment.json"
+          }
         }
       }
     }

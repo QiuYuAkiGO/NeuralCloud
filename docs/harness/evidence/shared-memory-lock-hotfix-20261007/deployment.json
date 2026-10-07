@@ -1,0 +1,553 @@
+{
+  "schema_version": "shared-memory-lock-hotfix-v1",
+  "deployment": {
+    "started_at": "2026-10-07T13:48:31.233806+00:00",
+    "phase": "running",
+    "release_id": "20261007-shared-memory-wal-v1",
+    "code_commit": "de346c8",
+    "archive_sha256": "f528e2ea0adf24c27564655b93f83182bf86eb30a5502481d4dc07a34525e911",
+    "control_audit": [
+      {
+        "at": "2026-10-07T13:49:07.148973Z",
+        "type": "pause",
+        "authorized_maintenance": true
+      }
+    ],
+    "backup": {
+      "path": "/var/backups/neuralcloud/20261007-before-shared-memory-wal",
+      "verification": {
+        "ok": true,
+        "files": 13932,
+        "bytes": 12566377962,
+        "sqlite_databases": 23,
+        "journals": {
+          "state/runtime/journal": {
+            "records": 1315544,
+            "last_hash": "b57900e3a1e65533b2faf514c77b26520cc255384e88fbfec4094ad9852612d9"
+          }
+        },
+        "manifest_sha256": "f2d3ed5060d541617b9720d659155e1dce81674a838f983d8e0a51fd6d9dcbcc"
+      }
+    },
+    "database_migration": {
+      "before": "delete",
+      "after": "wal",
+      "quick_check": "ok",
+      "record_counts_preserved": true,
+      "jobs_requeued": 0
+    },
+    "preservation": {
+      "profile_manifest_direct_unchanged": true,
+      "attention_sha256": "0da72f4cb0353767dc21e2b9dd028ea6a7231c3ca2c16f73b5b44295d07a5861",
+      "attention_unchanged_before_restart": true
+    },
+    "activation": {
+      "release": "20261007-shared-memory-wal-v1",
+      "previous_release": "20261007-memory-validation-retry-v1",
+      "services": [
+        "cognitive",
+        "homeostasis",
+        "runtime",
+        "gui",
+        "board",
+        "qq_direct"
+      ]
+    },
+    "verification": {
+      "release_id": "20261007-shared-memory-wal-v1",
+      "verified_files": 433,
+      "configuration_valid": true,
+      "business_services_started": false
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [
+          "qq_homeostatic_feedback"
+        ],
+        "last_heartbeat_at": "2026-10-07T13:55:40.505724Z",
+        "last_journal_append_at": "2026-10-07T13:55:40.882858Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "pending_events": 0,
+      "background": {
+        "heartbeat": {
+          "active": true,
+          "pending": 0,
+          "running": true,
+          "coalesced": 0,
+          "thread_jobs": 2,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "passive_state": {
+          "active": true,
+          "pending": 0,
+          "running": false,
+          "coalesced": 0,
+          "thread_jobs": 0,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "affect": {
+          "pending": 0,
+          "running": 0,
+          "scopes": 0,
+          "degraded": false
+        }
+      }
+    },
+    "direct": {
+      "running": true,
+      "connected": true,
+      "heartbeat_at": "2026-10-07T13:55:41.177330+00:00"
+    },
+    "services": {
+      "cognitive": {
+        "MainPID": "229304",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-cognitive.service"
+      },
+      "homeostasis": {
+        "MainPID": "229345",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-homeostasis.service"
+      },
+      "runtime": {
+        "MainPID": "229384",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-runtime.service"
+      },
+      "gui": {
+        "MainPID": "230182",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-gui.service"
+      },
+      "board": {
+        "MainPID": "229376",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-board.service"
+      },
+      "qq_direct": {
+        "MainPID": "230207",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-qq-direct.service"
+      }
+    },
+    "finished_at": "2026-10-07T13:55:42.650725+00:00"
+  },
+  "monitor": {
+    "at": "2026-10-07T13:56:02.601820+00:00",
+    "release": "20261007-shared-memory-wal-v1",
+    "manifest_revision": 4,
+    "manifest_profile": "qq-social-drive-v1@3",
+    "services": {
+      "cognitive": {
+        "MainPID": "229304",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "MainPID": "229345",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "MainPID": "229384",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "MainPID": "230182",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "MainPID": "229376",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq_direct": {
+        "MainPID": "230207",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [
+          "qq_homeostatic_feedback"
+        ],
+        "last_heartbeat_at": "2026-10-07T13:55:40.505724Z",
+        "last_journal_append_at": "2026-10-07T13:56:01.047548Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "pending_events": 0,
+      "background": {
+        "heartbeat": {
+          "active": true,
+          "pending": 1,
+          "running": true,
+          "coalesced": 3,
+          "thread_jobs": 2,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "passive_state": {
+          "active": true,
+          "pending": 0,
+          "running": false,
+          "coalesced": 0,
+          "thread_jobs": 0,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "affect": {
+          "pending": 0,
+          "running": 0,
+          "scopes": 0,
+          "degraded": false
+        }
+      }
+    },
+    "direct": {
+      "running": true,
+      "connected": true,
+      "repository_root": "/opt/neuralcloud/releases/20261007-shared-memory-wal-v1",
+      "heartbeat_at": "2026-10-07T13:56:01.061771+00:00"
+    },
+    "watchdog": [],
+    "dynamics": {
+      "mode": "shadow",
+      "fatigue": 0.7592331291578576,
+      "boredom": 0.8372336120861971,
+      "wants_engagement": true,
+      "latent_confidence": 0.8,
+      "baselines": {
+        "autonomy": 0.6749992824438109,
+        "competence": 0.6250000152600026,
+        "safety_predictability": 0.6651600000000001,
+        "social_connection": 0.38068496909056737
+      },
+      "short_term_responses": {
+        "autonomy": 0.0015102695957414994,
+        "competence": 0.0018676077785414393,
+        "safety_predictability": 0.0086629091836878,
+        "social_connection": 0.2026197788872205
+      },
+      "regulation_pressure": {
+        "level": "overloaded",
+        "suggest_reduce_input": true,
+        "suggest_reopen": false
+      },
+      "assessment_coverage": {
+        "exposures": 1571,
+        "assessed": 74,
+        "unassessed": 1497,
+        "work_units": 13928699,
+        "last_work_at": "2026-10-07T13:55:42.984144+00:00"
+      },
+      "shadow_observation": {
+        "continuous_seconds": 25.19854,
+        "samples": 32692,
+        "maximum_gap_seconds": 382.894669,
+        "last_sample_at": "2026-10-07T13:56:00.674728+00:00"
+      },
+      "shadow_values": {
+        "cognitive_load": 0.9496549238898762,
+        "novelty": 0.47399871543731315,
+        "safety_predictability": 0.6738229091836879,
+        "competence": 0.626867623038544,
+        "autonomy": 0.6765095520395524,
+        "social_connection": 0.5833047479777879
+      },
+      "started_at": "2026-10-06T12:24:08.049492+00:00",
+      "updated_at": "2026-10-07T13:56:00.674728+00:00"
+    },
+    "display_values": {
+      "energy_reserve": 0.66515,
+      "cognitive_load": 0.947937680359715,
+      "safety_predictability": 0.6651,
+      "competence": 0.6250000268412195,
+      "autonomy": 0.6749995526892315,
+      "social_connection": 0.62,
+      "novelty": 0.9489862835876706
+    },
+    "gate": {
+      "schema_version": "cognitive-dynamics-shadow-gate-v1",
+      "ready": false,
+      "reasons": [
+        "continuous_shadow_observation_less_than_24_hours"
+      ],
+      "observation": {
+        "continuous_seconds": 25.19854,
+        "samples": 32692,
+        "maximum_gap_seconds": 382.894669,
+        "last_sample_at": "2026-10-07T13:56:00.674728+00:00"
+      },
+      "assessment_coverage": {
+        "exposures": 1571,
+        "assessed": 74,
+        "unassessed": 1497,
+        "work_units": 13928699,
+        "last_work_at": "2026-10-07T13:55:42.984144+00:00"
+      },
+      "snapshot_revision": 166603,
+      "profile_ref": "qq-social-drive-v1@3",
+      "checked_at": "2026-10-07T13:56:02.630803+00:00"
+    },
+    "work": {
+      "total": 1571,
+      "pending": 0,
+      "by_context_category": {
+        "qq": {
+          "total": 1242,
+          "assessed": 74,
+          "applied": 1242,
+          "units": 7980295,
+          "last_at": "2026-10-07T13:55:42.984144Z"
+        },
+        "emotion_guidance": {
+          "total": 164,
+          "assessed": 0,
+          "applied": 164,
+          "units": 69773,
+          "last_at": "2026-10-07T12:47:52.148836Z"
+        },
+        "goal_decision": {
+          "total": 164,
+          "assessed": 0,
+          "applied": 164,
+          "units": 5810945,
+          "last_at": "2026-10-07T12:48:00.947343Z"
+        },
+        "diary_prepare": {
+          "total": 1,
+          "assessed": 0,
+          "applied": 1,
+          "units": 3302,
+          "last_at": "2026-10-06T16:01:01.315040Z"
+        }
+      }
+    },
+    "attention": {
+      "policies": [
+        {
+          "group_id": "1044946257",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "1060979317",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "712342021",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        }
+      ],
+      "dispositions": {
+        "admitted": 363
+      },
+      "outcomes": {
+        "model_wait": 56,
+        "runtime_failure": 276,
+        "guard_wait": 0
+      },
+      "review_error": null
+    }
+  },
+  "database_health": {
+    "journal_mode": "wal",
+    "quick_check": "ok",
+    "read_latency_ms": [
+      0.011,
+      0.004,
+      0.003
+    ],
+    "errors_since": "2026-10-07T13:55:42.650725+00:00",
+    "journal_lock_errors": 0,
+    "journal_read_success": true,
+    "worker": {
+      "processing": false,
+      "queue": {
+        "pending": 28,
+        "preparing": 0,
+        "retry": 0,
+        "applied": 2453,
+        "skipped": 615,
+        "total_jobs": 3096,
+        "assigned_sources": 8450,
+        "oldest_pending_seconds": 2408.377306
+      },
+      "last_error_type": null,
+      "last_completed_at": "2026-10-07T13:56:52.566118+00:00"
+    }
+  },
+  "ui_probe": [
+    {
+      "status": 200,
+      "bytes": 43749,
+      "milliseconds": 10883.65
+    },
+    {
+      "error_type": "TimeoutError"
+    },
+    {
+      "error_type": "TimeoutError"
+    }
+  ],
+  "early_health": {
+    "journal_mode": "wal",
+    "quick_check": "ok",
+    "read_latency_ms": [
+      0.015,
+      0.005,
+      0.004
+    ],
+    "errors_since": "2026-10-07T13:48:31.233806+00:00",
+    "journal_lock_errors": 0,
+    "journal_read_success": true,
+    "worker": {
+      "processing": false,
+      "queue": {
+        "pending": 33,
+        "preparing": 0,
+        "retry": 1,
+        "applied": 2442,
+        "skipped": 615,
+        "total_jobs": 3091,
+        "assigned_sources": 8429,
+        "oldest_pending_seconds": 3050.710546
+      },
+      "last_error_type": "qq_model_validation_invalid_proposal",
+      "last_completed_at": null
+    }
+  },
+  "middle_health": {
+    "journal_mode": "wal",
+    "quick_check": "ok",
+    "read_latency_ms": [
+      0.013,
+      0.005,
+      0.004
+    ],
+    "errors_since": "2026-10-07T13:48:31.233806+00:00",
+    "journal_lock_errors": 0,
+    "journal_read_success": true,
+    "worker": {
+      "processing": false,
+      "queue": {
+        "pending": 31,
+        "preparing": 0,
+        "retry": 0,
+        "applied": 2445,
+        "skipped": 615,
+        "total_jobs": 3091,
+        "assigned_sources": 8429,
+        "oldest_pending_seconds": 2879.445343
+      },
+      "last_error_type": null,
+      "last_completed_at": "2026-10-07T13:53:52.523447+00:00"
+    }
+  },
+  "before": {
+    "mode": "delete",
+    "assigned_sources": 8405,
+    "bytes": 152383488,
+    "lock_errors": 28,
+    "time_scope": "since 2026-10-07T12:50:00Z"
+  },
+  "tests": {
+    "passed": 200,
+    "skipped": 1,
+    "sha256": "0891b188a7cb9342cacb01d8ce53e51fae3992ef98131fed195e4ca89bb2db8a"
+  },
+  "code_commit": "de346c8721b1d2dfc87dd50ffa765df2a0ca16e2",
+  "shadow_window_start_beijing": "2026-10-07 21:55:35",
+  "earliest_acceptance_beijing": "2026-10-08 21:55:35",
+  "privacy": "No chat bodies or credentials; no test group messages."
+}
