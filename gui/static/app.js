@@ -11,6 +11,8 @@ const STAGE_DEFS = [
 ];
 
 const $ = (id) => document.getElementById(id);
+let memoryRefreshTimer = null;
+let memoryRefreshInFlight = false;
 
 const state = {
   busy: false,
@@ -721,6 +723,15 @@ function applySnapshot(snap, opts = {}) {
   renderTranscript();
   if ($("presets-dialog")?.open) renderPresetList(snap);
   renderSharedMemory(snap);
+  clearTimeout(memoryRefreshTimer);
+  if (snap.memory_snapshot && snap.memory_snapshot.status !== "ready") {
+    memoryRefreshTimer = setTimeout(async () => {
+      if (memoryRefreshInFlight) return;
+      memoryRefreshInFlight = true;
+      try { await fetchStatus(); } catch { /* The next connection/state event retries. */ }
+      finally { memoryRefreshInFlight = false; }
+    }, 2000);
+  }
   applyDevelopmentAuthority();
 }
 
@@ -735,8 +746,13 @@ function applyDevelopmentAuthority() {
 function renderSharedMemory(snap) {
   const root = $("shared-memory");
   if (!root) return;
+  const freshness = snap?.memory_snapshot;
+  const freshnessText = freshness?.status === "unavailable" ? "记忆暂时无法读取，稍后自动重试。" :
+    freshness?.status === "loading" ? "正在读取记忆，其余状态已更新。" : freshness ?
+    `记忆更新于 ${freshness.as_of ? new Date(freshness.as_of).toLocaleTimeString() : "—"}${freshness.refreshing ? " · 正在刷新" : ""}` : "";
+  const freshnessHtml = freshnessText ? `<p class="hint" role="status">${esc(freshnessText)}</p>` : "";
   if (snap?.production_cognitive?.enabled) {
-    root.innerHTML = renderProductionMemory(snap.production_memory, snap.qq_memory, snap.production_cognitive);
+    root.innerHTML = freshnessHtml + renderProductionMemory(snap.production_memory, snap.qq_memory, snap.production_cognitive);
     return;
   }
   const owner = snap?.shared_mind;
@@ -747,7 +763,8 @@ function renderSharedMemory(snap) {
   const memory = snap.shared_memory || {};
   const entries = Array.isArray(memory.entries) ? memory.entries : [];
   root.innerHTML = `<article class="card"><h2>共享记忆 · ${esc(owner.owner_id)}</h2>
-    <p class="hint">${esc(owner.mode)} · ${esc(owner.memory_records)} 条持久记录 · 当前展示 ${entries.length} 条，来源范围以服务端检索为准。</p>
+    ${freshnessHtml}
+    <p class="hint">${esc(owner.mode)} · ${owner.memory_records == null ? "记录数待更新" : `${esc(owner.memory_records)} 条可见持久记录`} · 当前展示 ${entries.length} 条，来源范围以服务端检索为准。</p>
     ${snap.qq_memory ? renderQQMemorySummary(snap.qq_memory, true) : ""}
     ${entries.map((entry) => `<details><summary>${esc(entry.channel)} · ${esc(entry.display_name || entry.author_principal || "未知作者")} · ${esc(entry.occurred_at)}</summary>
       <p style="white-space: pre-wrap">${esc(entry.text)}</p>

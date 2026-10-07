@@ -102,6 +102,22 @@ def attention_visible(conversation_id):
         raise
 
 
+def attention_policy_token():
+    """Fence cached operator projections with persisted policy revisions.
+
+    Read on every use so an override in another process takes effect without
+    waiting for cache expiry. Reasons and message data never enter the token.
+    """
+    import os
+    path = os.environ.get("NC_QQ_DIRECT_CONFIG")
+    if path is None:
+        return None
+    stat = Path(path).stat()
+    policies = _configured_store(path, stat.st_mtime_ns, stat.st_size).policies()
+    return (path, stat.st_mtime_ns, stat.st_size,
+            tuple((p["group_id"], p["revision"], p["mode"]) for p in policies))
+
+
 def processing_evidence(payload):
     """Bind model interpretation to the same immutable causes as QQ feedback."""
     try:

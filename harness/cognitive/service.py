@@ -207,6 +207,8 @@ class CognitiveServiceHost:
             config_path=Path(os.environ.get("NC_DAILY_REVISION_CONFIG", str(state_path.parent / "daily-revision.config.json"))),
             queue_path=state_path.parent / "daily-revision.sqlite3")
         self._close_task = None
+        from harness.cognitive.ui_snapshot import UISnapshotCache
+        self._ui_memory_cache = UISnapshotCache()
 
     @property
     def command_tasks(self):
@@ -748,6 +750,7 @@ class CognitiveServiceHost:
 
     async def _close(self) -> None:
         try:
+            await self._ui_memory_cache.close()
             await self.daily_revision.close()
             await self.qq_memory.close()
             await self.adapter.close()
@@ -824,7 +827,34 @@ class CognitiveServiceHost:
 
     async def ui_snapshot(self) -> dict[str, Any]:
         self._sync_transcript()
-        memory = await asyncio.to_thread(self.shared.ui)
+        from harness.qq.attention import attention_policy_token
+
+        def identity():
+            return (self.chat.active_preset_id, id(self.chat.memory), id(self.shared.store), self.shared.production_enabled)
+
+        owner = identity()
+        try:
+            policy = await asyncio.to_thread(attention_policy_token)
+            if self.shared.production_enabled:
+                # Production's bounded view also checks belief revocations
+                # and validity deadlines; do not cache that authority here.
+                memory = await asyncio.to_thread(self.shared.ui)
+                freshness = {"status": "ready", "refreshing": False,
+                    "as_of": datetime.now(timezone.utc).isoformat(), "age_seconds": 0, "last_error_type": None}
+            else:
+                memory, freshness = await self._ui_memory_cache.get((owner, policy), self.shared.ui)
+            # Fence even warm reads, and recheck after the await: another
+            # process can close a group while the background reader runs.
+            if identity() != owner or await asyncio.to_thread(attention_policy_token) != policy:
+                raise ValueError("ui_snapshot_authority_changed")
+        except Exception as exc:
+            self._ui_memory_cache.invalidate()
+            memory, freshness = {}, {"status": "unavailable", "refreshing": False,
+                "as_of": None, "age_seconds": None, "last_error_type": type(exc).__name__}
+        if not memory:
+            memory = {"shared_mind": {"owner_id": self.shared.store.owner_id,
+                "mode": "production" if self.shared.production_enabled else "shared", "memory_records": None}}
+        memory["memory_snapshot"] = freshness
         if not self.shared.production_enabled:
             return {**self.chat.status(), **memory, "qq_memory": self.qq_memory.status(),
                     "daily_revision": self.daily_revision.status()}
@@ -912,6 +942,7 @@ class CognitiveServiceHost:
                 return {"base_url": url, "models": names}
             require_development(operation, control_mode=self.control_mode)
             production = self.shared.production_enabled
+            self._ui_memory_cache.invalidate()
             self._apply_mutation(operation, body)
             self.chat.pipeline.compiler = SharedMemoryCompiler(self.chat.settings)
             self.adapter.pipeline = self.chat.pipeline

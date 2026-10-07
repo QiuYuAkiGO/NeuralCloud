@@ -11,6 +11,7 @@ from __future__ import annotations
 from contextlib import closing
 from datetime import datetime, timezone
 import hashlib
+import heapq
 import json
 from pathlib import Path
 import re
@@ -792,6 +793,61 @@ class SharedMemoryStore:
                     continue
                 records.append(record)
         return tuple(records)
+
+    def operator_recent(self, *, limit: int = 50) -> SharedMemoryContext:
+        """Bounded local UI projection; model retrieval still uses query().
+
+        Scan ordering/visibility metadata in SQLite, then fully validate the
+        selected originals in the same read transaction. Archive counts are
+        metadata counts, not an assertion that every old body was audited.
+        """
+        from harness.qq.attention import attention_policy_token, attention_visible
+        if type(limit) is not int or not 1 <= limit <= 100:
+            raise ValueError("query limit must be an integer from 1 to 100")
+        policy = attention_policy_token()
+        selected, count = (), 0
+        if self.path.is_file():
+            with closing(self._connect(write=False)) as db, db:
+                db.execute("BEGIN")
+                exists = db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='shared_memory_entries'").fetchone()
+                if exists:
+                    # Old text, original JSON and image data stay in SQLite.
+                    # Python datetime preserves timezone and microsecond order.
+                    rows = db.execute("""SELECT record_id,channel,session_id,
+                        json_extract(record_json,'$.occurred_at') AS occurred_at,
+                        json_extract(record_json,'$.stored_at') AS stored_at
+                        FROM shared_memory_entries WHERE owner_id=? AND EXISTS(
+                            SELECT 1 FROM json_each(record_json,'$.visibility') WHERE value='local:main')""",
+                        (self.owner_id,))
+                    groups = {}
+
+                    def metadata():
+                        nonlocal count
+                        for row in rows:
+                            if row["channel"] == "qq_group":
+                                group = row["session_id"]
+                                if group not in groups:
+                                    groups[group] = attention_visible(group)
+                                if not groups[group]:
+                                    continue
+                            count += 1
+                            yield (datetime.fromisoformat(row["occurred_at"]),
+                                   datetime.fromisoformat(row["stored_at"]), row["record_id"])
+
+                    try:
+                        recent = heapq.nlargest(limit, metadata())
+                        selected = tuple(self._decode(db.execute(
+                            "SELECT * FROM shared_memory_entries WHERE record_id=?", (item[2],)).fetchone())
+                            for item in recent)
+                    except (TypeError, ValueError) as exc:
+                        raise SharedMemoryStorageError("persisted shared UI metadata is invalid") from exc
+                    if any(r.owner_id != self.owner_id or "local:main" not in r.visibility for r in selected):
+                        raise SharedMemoryStorageError("shared UI scope disagrees with original")
+        if attention_policy_token() != policy:
+            raise ValueError("attention_policy_changed")
+        return SharedMemoryContext(scope=SharedReadScope(owner_id=self.owner_id, audience="local:main"),
+            records=selected, visible_count=count, matched_count=count, omitted_count=count-len(selected),
+            query=None, selection="recent")
 
     @measure_stage("memory.shared_query")
     def query(self, scope: SharedReadScope, *, text: str | None = None, limit: int = 20) -> SharedMemoryContext:

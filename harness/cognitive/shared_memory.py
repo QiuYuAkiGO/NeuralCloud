@@ -655,7 +655,7 @@ class CognitiveSharedMemory:
             return {"shared_mind": {"owner_id": self.production_store.owner_id, "mode": "production",
                                     "memory_records": None},
                     "production_memory": self.production_store.operator_snapshot()}
-        context = self.store.query(SharedReadScope(audience="local:main"), limit=50)
+        context = self.store.operator_recent(limit=50)
         payload = context.model_payload(max_bytes=32000)
         return {"shared_mind": {"owner_id": "misty", "mode": "shared",
                                  "memory_records": context.visible_count},
