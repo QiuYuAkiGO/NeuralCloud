@@ -8,7 +8,7 @@ from dataclasses import dataclass, replace
 from datetime import datetime
 import json
 
-from harness.qq.context_budget import ModelContextSelection, project_group_context, select_model_context
+from harness.qq.context_budget import ModelContextSelection, project_group_context, restrict_vision_offer, select_model_context
 from harness.qq.context_window import encode_model_payload
 from harness.qq.conversation import conversation_scope
 from harness.qq.memory import QQPersonContext, QQVerifiedProfile, QQVisualObservation
@@ -87,6 +87,7 @@ def include_trusted_reply_references(path, context, record_ids):
 
 def _subset(payload, retained: set[str], *, original_ids: list[str]):
     value = deepcopy(payload)
+    restrict_vision_offer(value, retained)
     for member in value["group_context"]["members"]:
         member["observations"] = [item for item in member["observations"] if item["record_id"] in retained]
         latest = max(member["profiles"], key=lambda item: (datetime.fromisoformat(item["observed_at"]),

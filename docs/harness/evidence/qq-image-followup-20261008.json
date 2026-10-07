@@ -1,0 +1,401 @@
+{
+  "checked_at": "2026-10-07T16:22:31.319121+00:00",
+  "deployment": {
+    "release": "20261008-image-followup-v1",
+    "previous_release": "20261007-emotion-json-diagnostics-v1",
+    "services": {
+      "cognitive": {
+        "MainPID": "254490",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "MainPID": "254527",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "MainPID": "254569",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "MainPID": "255146",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "MainPID": "254561",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq_direct": {
+        "MainPID": "255169",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "runtime_lifecycle": "RUNNING",
+    "qq_connected": true,
+    "validator_enabled": true,
+    "structured": {
+      "enabled": true,
+      "model": "deepseek-flash",
+      "base_url": "https://api.deepseek.com",
+      "format": "responses_json_schema",
+      "reasoning_effort": "none",
+      "cache_friendly_inputs": true
+    },
+    "primary_health": {
+      "ready": true,
+      "reason": "ready",
+      "checked_age_seconds": 4.0623941410158295,
+      "interval_seconds": 5.0,
+      "timeout_seconds": 1.0,
+      "recovery_successes": 2
+    },
+    "process_release_verified": true,
+    "configuration_unchanged": true,
+    "preserved_source_files": 430
+  },
+  "activation": {
+    "phase": "passed",
+    "release": "20261008-image-followup-v1",
+    "recorded_at": 1791390099.3575337,
+    "previous_release": "20261007-emotion-json-diagnostics-v1"
+  },
+  "plan": {
+    "release_id": "20261008-image-followup-v1",
+    "previous_release": "20261007-emotion-json-diagnostics-v1",
+    "files": [
+      {
+        "path": "harness/qq/vision_tool.py",
+        "before_sha256": "7688b362f54458ecc381ccd2aacebcb4103f65220ce35a3ce92e918a7a1ba0d8",
+        "after_sha256": "226451f21ed1560b0f52341cec93e08ae1db0ffa36aa4dd4c44c90148337ea26"
+      },
+      {
+        "path": "harness/qq/decision.py",
+        "before_sha256": "d185d3a00803f4b3d8f7b08b2c305dfd7c61ac23a75a149cfdffc810c4223cbf",
+        "after_sha256": "19c32d9fe1873fc699cf05197a518d80502ed51551b5c9f4cf41863b305d309a"
+      },
+      {
+        "path": "harness/qq/context_budget.py",
+        "before_sha256": "fa0bda14c1d3a72636410bacc7892e0525b84c42f6870aaa3be51300c813eaae",
+        "after_sha256": "05c8e2f006f622ade7402e4fa6940f7ec5cd9472e3b509d1a57838050d24b027"
+      },
+      {
+        "path": "harness/qq/history_selection.py",
+        "before_sha256": "a4ca669ad7653056b48087d4066b35536c01db6a49d23a5617f0a44faaf24c33",
+        "after_sha256": "bedd3484e08a1da72f28006279b0f918bdc5dc7fbc80cefaf2ec8b65a04ee5af"
+      },
+      {
+        "path": "harness/qq/direct.py",
+        "before_sha256": "f752b53555c9c23ce6a8220d26663cca8b54e138221bb355b174b57684866cc2",
+        "after_sha256": "73ec98dc69b05506e58a82ccd69dfe939b13b7003332a4b79a22139c277efa1f"
+      },
+      {
+        "path": "harness/qq/prepared_turn.py",
+        "before_sha256": "aac8620ebc55dcc050d0a9ba11d12bc15ce7f3dfd2ad7e266ae12e641e6fd167",
+        "after_sha256": "a82000e3176ea8152d20dfa12b3c1bc12138ebd1d4b856499a6919c1129e079c"
+      }
+    ],
+    "preserved_source_files": 430,
+    "preserved_source_hash": "4b0e221aeba5c7a2f4a4c8653b688e0c163867411e1f56bc73363eaa6edd35a6",
+    "config_hashes": {
+      "homeostasis-profile.json": "1a4348b35d078bf69767ff8c543f60760c1c90c019ade062a5d1ff8db2252212",
+      "gui-settings.json": "9a96a125e6df67226c5040ac8674aec9d62627f7a1281ee8a671bb841bf91d5a",
+      "structured-llm.json": "84523b0df11e938d2a451cc7e01e8ed69a17fe1f8f9f41a94621330047343f4c",
+      "main-fallback.json": "b0c88e79041c4fd5b2c0a56d0b82e3cb4cabb03429570e0eca8ce3615561bb49",
+      "watcher.json": "d5c52326876dab16e032a83bbd8aecb12fb751cc8afb24b808b8292c329acd5f",
+      "session.json": "5c2ba3483536856086d24046d84ad42a98cdd12239d03670dd66f1242b176a91",
+      "emotion-deepseek.json": "05dc77d99b4875e72871cfd0b4583c0d1591488123a41924328011f892e38324",
+      "deploy.pre-emotion-20260917.json": "2d33337999871fd9eb4b70de8bd90825f07adf7504aabb21fbebcf3d6cc29d11",
+      "deploy.before-board-repair-20260917.json": "4a0dce38a681c9328206d14527eaf546600ad786648bc049593f793d7d80ae4b",
+      "diary.json": "e6492a2ce46e5b014d30a344cfbcd6fd415b42371206c45804f9a693affecb6e",
+      "direct.json": "9e504a94abf320f103ed4804e089f153c3d99087a102e39623911facf71e1ffb",
+      "manifest.json": "d9bcb3a13213c1202355c650150bb3d217ad561eadbc4443096569970e1478a7",
+      "qq-vision-tool.json": "e35c0cc992a58f3eecbcc0f51b5762376ceb6af0ca1d49561fb7f00873d75b7b",
+      "deploy.json": "624e418cf2147cf1633c698a0e15cf0e0451ca08a6e15aa5d8884b6f00c70cf7",
+      "direct.before-disable-1060979317-20260917T032643Z.json": "3e127c6ec469b8955ed07b17741de441b39e449ae616a6afce08ecb1eb89a0c2",
+      "board-client.json": "6797f63a65f014134816cd06a62552d2abee3005e6212b25ead0c421692ed5a4"
+    }
+  },
+  "regression": {
+    "phase": "passed",
+    "release_id": "20261008-image-followup-v1",
+    "regression_summary": "500 passed, 2 warnings in 37.41s"
+  },
+  "release_manifest_sha256": "957338d0e04eb63d5fd05904e02a213329e831fe5b3890dcd0fd119159b577f0",
+  "original_incident": {
+    "release": "20261008-image-followup-v1",
+    "original_incident_replay": [
+      {
+        "quoted": true,
+        "offer": [
+          {
+            "image_id": "image_1",
+            "observation_id": "qq-visual:b593cd83b0fe4e3f882a075f7e2c978b",
+            "image_index": 1,
+            "evidence_ref": "qq-direct-image:sha256:c32feb84f5e2b005505b3c90bb8d220bfee9ba708dc2120a3073d7462fbfe669",
+            "selection_source": "reply_reference",
+            "member_id": "734756519",
+            "observed_at": "2026-10-07T15:31:16+00:00"
+          }
+        ],
+        "pixels_verified": true,
+        "decoded_frames": 1
+      },
+      {
+        "quoted": false,
+        "offer": [
+          {
+            "image_id": "image_1",
+            "observation_id": "qq-visual:b593cd83b0fe4e3f882a075f7e2c978b",
+            "image_index": 1,
+            "evidence_ref": "qq-direct-image:sha256:c32feb84f5e2b005505b3c90bb8d220bfee9ba708dc2120a3073d7462fbfe669",
+            "selection_source": "recent_context",
+            "member_id": "734756519",
+            "observed_at": "2026-10-07T15:31:16+00:00"
+          }
+        ],
+        "pixels_verified": true,
+        "decoded_frames": 1
+      }
+    ],
+    "vision_api_calls": 0,
+    "qq_messages_sent": 0,
+    "production_changes": false
+  },
+  "real_provider_smoke": {
+    "release": "20261008-image-followup-v1",
+    "scope": "isolated synthetic images and database; real deployed providers and validator",
+    "qq_messages_sent": 0,
+    "production_memory_changed": false,
+    "rows": [
+      {
+        "case": "quoted",
+        "ok": true,
+        "seconds": 6.5,
+        "outcome": "ready",
+        "reply": "看起来是一整片绿色，形状就是矩形，没什么别的图案",
+        "calls": {
+          "gate": 2,
+          "persona": 2,
+          "vision": 1
+        },
+        "vision_evidence_count": 1,
+        "vision": [
+          {
+            "status": "ok",
+            "error": null,
+            "request_ids": [
+              "image_1"
+            ],
+            "selected_sources": [
+              "reply_reference"
+            ],
+            "seconds": 1.843,
+            "images": [
+              {
+                "image_id": "image_1",
+                "description": "这是一张纯色的绿色矩形图片，没有任何可见物体、图案或细节。整个画面被均匀的绿色填满，呈现出单一的颜色和最简单的几何形状——矩形。",
+                "ocr_text": null,
+                "characters": [],
+                "uncertainties": []
+              }
+            ]
+          }
+        ],
+        "validation": [
+          {
+            "verdict": "pass",
+            "violations": [],
+            "severity": 0.0,
+            "instruction": null,
+            "skipped": false,
+            "evidence_rows": 1,
+            "vision_evidence_rows": 1
+          }
+        ]
+      },
+      {
+        "case": "recent",
+        "ok": true,
+        "seconds": 6.681,
+        "outcome": "ready",
+        "reply": "看起来就是一大片纯绿色，整个是矩形，没有别的颜色和形状",
+        "calls": {
+          "gate": 2,
+          "persona": 2,
+          "vision": 1
+        },
+        "vision_evidence_count": 1,
+        "vision": [
+          {
+            "status": "ok",
+            "error": null,
+            "request_ids": [
+              "image_1"
+            ],
+            "selected_sources": [
+              "recent_context"
+            ],
+            "seconds": 1.74,
+            "images": [
+              {
+                "image_id": "image_1",
+                "description": "整张图片为均匀填充的纯绿色矩形，无其他颜色、形状或可辨认的物体轮廓。画面没有任何渐变、纹理、图案或边界变化。",
+                "ocr_text": null,
+                "characters": [],
+                "uncertainties": []
+              }
+            ]
+          }
+        ],
+        "validation": [
+          {
+            "verdict": "pass",
+            "violations": [],
+            "severity": 0.0,
+            "instruction": null,
+            "skipped": false,
+            "evidence_rows": 1,
+            "vision_evidence_rows": 1
+          }
+        ]
+      },
+      {
+        "case": "older_reference_with_other_image",
+        "ok": true,
+        "seconds": 7.161,
+        "outcome": "ready",
+        "reply": "看着就是一整块纯绿色，没什么别的颜色，也没有能认出来的形状",
+        "calls": {
+          "gate": 2,
+          "persona": 2,
+          "vision": 1
+        },
+        "vision_evidence_count": 1,
+        "vision": [
+          {
+            "status": "ok",
+            "error": null,
+            "request_ids": [
+              "image_1"
+            ],
+            "selected_sources": [
+              "reply_reference"
+            ],
+            "seconds": 2.048,
+            "images": [
+              {
+                "image_id": "image_1",
+                "description": "整幅图是均匀的纯绿色矩形，无其他颜色、形状或可辨认的物体轮廓。画面填满单一的深绿色（接近标准绿色 #008000），没有任何渐变、纹理、图案或边缘变化。",
+                "ocr_text": null,
+                "characters": [],
+                "uncertainties": []
+              }
+            ]
+          }
+        ],
+        "validation": [
+          {
+            "verdict": "pass",
+            "violations": [],
+            "severity": 0.0,
+            "instruction": null,
+            "skipped": false,
+            "evidence_rows": 2,
+            "vision_evidence_rows": 1
+          }
+        ]
+      },
+      {
+        "case": "ambiguous",
+        "ok": true,
+        "seconds": 7.697,
+        "outcome": "ready",
+        "reply": "看了，一张纯红一张纯绿，都是纯色块，没别的图案或字\n\n这……是色卡吗？",
+        "calls": {
+          "gate": 2,
+          "persona": 2,
+          "vision": 1
+        },
+        "vision_evidence_count": 2,
+        "vision": [
+          {
+            "status": "ok",
+            "error": null,
+            "request_ids": [
+              "image_1",
+              "image_2"
+            ],
+            "selected_sources": [
+              "recent_context",
+              "recent_context"
+            ],
+            "seconds": 2.558,
+            "images": [
+              {
+                "image_id": "image_1",
+                "description": "纯红色（RGB #FF0000）的纯色填充画面，无任何图案、纹理、物体或文字内容。",
+                "ocr_text": null,
+                "characters": [],
+                "uncertainties": []
+              },
+              {
+                "image_id": "image_2",
+                "description": "纯绿色（RGB #008000）的纯色填充画面，无任何图案、纹理、物体或文字内容。",
+                "ocr_text": null,
+                "characters": [],
+                "uncertainties": []
+              }
+            ]
+          }
+        ],
+        "validation": [
+          {
+            "verdict": "pass",
+            "violations": [],
+            "severity": 0.0,
+            "instruction": null,
+            "skipped": false,
+            "evidence_rows": 2,
+            "vision_evidence_rows": 2
+          }
+        ]
+      },
+      {
+        "case": "no_vision",
+        "ok": true,
+        "seconds": 3.046,
+        "outcome": "ready",
+        "reply": "收到",
+        "calls": {
+          "gate": 1,
+          "persona": 2
+        },
+        "vision_evidence_count": 0,
+        "vision": [],
+        "validation": [
+          {
+            "verdict": "pass",
+            "violations": [],
+            "severity": 0.0,
+            "instruction": null,
+            "skipped": false,
+            "evidence_rows": 0,
+            "vision_evidence_rows": 0
+          }
+        ]
+      }
+    ]
+  },
+  "development_findings": [
+    "Initial provider smoke exposed critic evidence admission dropping independently serialized JSON.",
+    "Final main-model and critic payloads share one whole visible observation string; final admission asserts retention."
+  ],
+  "qq_test_messages_sent": 0,
+  "database_schema_changed": false,
+  "configuration_changed": false
+}

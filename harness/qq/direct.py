@@ -429,7 +429,8 @@ class DirectQQActor:
             analyses.append(QQImageAnalysis(image_index=index, status=value.status, evidence_ref=value.evidence_ref,
                 analysis_ref=value.analysis_ref,
                 description=value.description or None, ocr_text=ocr,
-                uncertainties=uncertainties, error=None if value.status == "described" else error))
+                uncertainties=uncertainties,
+                error=None if value.status == "described" or value.error == "vision_on_demand" else error))
         with stage(trace, "protocol.observation_commit"):
             self.check_attention(event)
             _, written = self.memory.record_protocol_message(profile_input, lambda profile:

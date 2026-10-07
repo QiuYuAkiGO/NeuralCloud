@@ -1,0 +1,291 @@
+{
+  "scope": "read-only diagnosis; no code/config changes, no paid vision calls, no QQ messages sent",
+  "release": "20261007-ui-snapshot-integrated-v3",
+  "group_id": "712342021",
+  "original_image": {
+    "record_id": "qq-visual:b593cd83b0fe4e3f882a075f7e2c978b",
+    "observed_at": "2026-10-07T15:31:16Z",
+    "text": "[图片 1]",
+    "evidence": [
+      "qq-protocol://sha256/e575c3e8942f3a3b8a45a0efbaeccf04e4772bb6c5d27374e8d6a573c0213e71",
+      "qq-protocol-message:712342021:734756519:1351831548",
+      "qq-direct-image:sha256:c32feb84f5e2b005505b3c90bb8d220bfee9ba708dc2120a3073d7462fbfe669"
+    ],
+    "image_analysis": [
+      {
+        "authority": "model_inference",
+        "image_index": 1,
+        "status": "unknown",
+        "evidence_ref": "qq-direct-image:sha256:c32feb84f5e2b005505b3c90bb8d220bfee9ba708dc2120a3073d7462fbfe669",
+        "analysis_ref": null,
+        "description": null,
+        "ocr_text": null,
+        "uncertainties": [
+          "图片已保存，主模型可按需调用识图工具；此记录尚未识别内容。"
+        ],
+        "error": "unavailable"
+      }
+    ],
+    "author_attribution": "qq_protocol_verified",
+    "group_id": "712342021",
+    "member_id": "734756519",
+    "cache_files": [
+      {
+        "name": "c32feb84f5e2b005505b3c90bb8d220bfee9ba708dc2120a3073d7462fbfe669.png",
+        "bytes": 799560,
+        "sha256_matches": true
+      }
+    ]
+  },
+  "failed_turn": {
+    "id": "qq-decision:8dcca9ffe4724084925a4213c83a9d8d",
+    "prepare_id": "qq-prepare:2b1fa23e0f71894764b6f2235169843a691216df548fdcc8cc34559ce653f98b",
+    "source_event_ids": [
+      "qq-watch-event:ba93dd3bc70056ed61ccfe8282d0d0ef"
+    ],
+    "raw_gate": {
+      "action": "speak",
+      "reason": "傻娜直接@我让我看图，但识图工具返回不可用，图片内容无法确认；需要如实说明看不清，而不是猜内容或沉默。",
+      "addressing": "direct",
+      "addressing_source_record_id": "qq-visual:8b0de975b51a4b6ab6bf5a22736b2bdd",
+      "addressing_supporting_quote": "[引用消息 1351831548] @2015188508  看这个图",
+      "reply_style": "conversational",
+      "reply_style_reason": "普通群聊回应，简短口语即可。",
+      "reply_plan": {
+        "intent": "answer",
+        "must_address": "回应傻娜让我看图这件事，说明这张图我这边没能看清/加载出来，请她简单说下是什么或再发一次。",
+        "new_questions": [],
+        "detail_level": "brief",
+        "necessary_boundary": "图片内容未成功识别，不能猜图或假装看到了。"
+      },
+      "vision_request": null,
+      "attention_assessment": {
+        "topic": "傻娜@我看图但识图失败",
+        "unexpectedness": 0.3,
+        "meaning": 0.4,
+        "wants_engagement": true,
+        "confidence": 0.8,
+        "impacts": {
+          "social_connection": 0.1
+        }
+      }
+    },
+    "selected_payload_keys": [
+      "bounded_history",
+      "conversation_window",
+      "coverage",
+      "current_request_observation_ids",
+      "delivered_style_window",
+      "delivery_receipts",
+      "derived_memory",
+      "derived_query_truncated",
+      "effective_query",
+      "emotion_guidance_text",
+      "group_context",
+      "model_context_selection",
+      "new_observation_record_ids",
+      "prior_decisions",
+      "query_source",
+      "reply_reference_observation_ids",
+      "request",
+      "retrieval_hints",
+      "segment_delivery_coverage",
+      "segment_delivery_receipts",
+      "topic_window",
+      "trigger_member_id",
+      "verified_self_aliases",
+      "verified_self_member_id",
+      "web_capabilities"
+    ],
+    "current_request_ids": [
+      "qq-visual:8b0de975b51a4b6ab6bf5a22736b2bdd"
+    ],
+    "reply_reference_ids": [
+      "qq-visual:b593cd83b0fe4e3f882a075f7e2c978b"
+    ],
+    "offered_vision": null,
+    "image_in_gate": true,
+    "image_in_body": true,
+    "model_counters": {
+      "context_vision_combined_characters": 63555,
+      "context_vision_history_pruned": 0,
+      "emotion_appraisal_model_calls": 1,
+      "emotion_guidance_model_calls": 1,
+      "gate_model_calls": 2,
+      "model_calls": 2
+    },
+    "assistant_choices": [
+      {
+        "action": "speak",
+        "reason": "傻娜引用图片并@我让我看图，是直接点名的新请求；图片内容未知，需要先识图再回应。",
+        "addressing": "direct",
+        "addressing_source_record_id": "qq-visual:8b0de975b51a4b6ab6bf5a22736b2bdd",
+        "addressing_supporting_quote": "[引用消息 1351831548] @2015188508  看这个图",
+        "reply_style": "conversational",
+        "reply_style_reason": "普通群聊看图回应，简短口语即可。",
+        "reply_plan": {
+          "intent": "answer",
+          "must_address": "回应傻娜让我看的那张图，基于识图结果给出具体反应或看法，而不是泛泛敷衍。",
+          "new_questions": [],
+          "detail_level": "brief",
+          "necessary_boundary": "图片内容以识图结果为准，识别不出就直说看不清，不猜内容。"
+        },
+        "vision_request": {
+          "image_ids": [
+            "qq-direct-image:sha256:c32feb84f5e2b005505b3c90bb8d220bfee9ba708dc2120a3073d7462fbfe669"
+          ],
+          "question": "这张图里是什么内容？请描述画面和其中的文字。"
+        },
+        "attention_assessment": {
+          "topic": "傻娜@我看一张图",
+          "unexpectedness": 0.4,
+          "meaning": 0.5,
+          "wants_engagement": true,
+          "confidence": 0.7,
+          "impacts": {
+            "social_connection": 0.2
+          }
+        }
+      }
+    ],
+    "tool_results": [
+      {
+        "status": "unavailable",
+        "error": "image_selection_invalid",
+        "model": null,
+        "tool": "inspect_qq_images",
+        "evidence": null
+      }
+    ]
+  },
+  "successful_comparison": {
+    "id": "qq-decision:7f735bff505746c196043cd0f30e2715",
+    "prepare_id": "qq-prepare:b0197a14bd105c420297399e7b5d5efa5f0589d10268aa85c8d52bdd0917a644",
+    "current_request_ids": [
+      "qq-visual:f3823c5cc362404c9e7bf21b94f4f91b"
+    ],
+    "offered_vision": {
+      "available_images": [
+        {
+          "evidence_ref": "qq-direct-image:sha256:76a406fbd15ef314a280592d0bae3f11cdb6d5807e44bb420dbf742fcd082fa9",
+          "image_id": "image_1",
+          "image_index": 1,
+          "observation_id": "qq-visual:f3823c5cc362404c9e7bf21b94f4f91b"
+        }
+      ],
+      "max_images_per_request": 4,
+      "mode": "model_requested",
+      "model": "kimi-k2.6",
+      "name": "inspect_qq_images",
+      "request_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "image_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Image Ids",
+            "type": "array"
+          },
+          "question": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "image_ids",
+          "question"
+        ],
+        "title": "QQVisionRequest",
+        "type": "object"
+      }
+    },
+    "model_counters": {
+      "context_vision_combined_characters": 70246,
+      "context_vision_history_pruned": 0,
+      "emotion_appraisal_model_calls": 1,
+      "emotion_guidance_model_calls": 1,
+      "gate_model_calls": 2,
+      "model_calls": 3,
+      "vision_api_usage_calls": 1,
+      "vision_cache_hit_tokens": 0,
+      "vision_cache_known_calls": 0,
+      "vision_cache_known_prompt_tokens": 0,
+      "vision_cache_miss_tokens": 0,
+      "vision_cache_unknown_prompt_tokens": 1371,
+      "vision_completion_tokens": 249,
+      "vision_estimated_completion_tokens": 0,
+      "vision_estimated_prompt_tokens": 0,
+      "vision_input_api_calls": 1,
+      "vision_model_calls": 1,
+      "vision_output_api_calls": 1,
+      "vision_prompt_tokens": 1371,
+      "vision_usage_calls": 1
+    },
+    "tool_results": [
+      {
+        "status": "ok",
+        "error": null,
+        "model": "kimi-k2.6",
+        "tool": "inspect_qq_images",
+        "evidence": [
+          {
+            "evidence_ref": "qq-direct-image:sha256:76a406fbd15ef314a280592d0bae3f11cdb6d5807e44bb420dbf742fcd082fa9",
+            "frame_count": 1,
+            "frame_sha256": [
+              "66c8914be09683fe0405e899b4796bee52a66ab76e38915bc6553de2f78c8271"
+            ],
+            "image_id": "image_1",
+            "image_index": 1,
+            "observation_id": "qq-visual:f3823c5cc362404c9e7bf21b94f4f91b",
+            "sampled_frame_indices": [
+              0
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "delivery_records": [
+    {
+      "receipt_id": "qq-delivery:c592cba0b137421ba94a2ed7942385ad",
+      "decision_id": "qq-decision:8dcca9ffe4724084925a4213c83a9d8d",
+      "delivered_at": "2026-10-07T15:32:17.201508Z"
+    },
+    {
+      "receipt_id": "qq-delivery:813706e1ae794cb39bd50e2e2c1a4154",
+      "decision_id": "qq-decision:7f735bff505746c196043cd0f30e2715",
+      "delivered_at": "2026-10-07T15:37:07.441754Z"
+    }
+  ],
+  "selection_reproduction": {
+    "release": "20261007-ui-snapshot-integrated-v3",
+    "actual_current_ids_offer_no_tool": true,
+    "adding_verified_reference_offers": [
+      {
+        "image_id": "image_1",
+        "observation_id": "qq-visual:b593cd83b0fe4e3f882a075f7e2c978b",
+        "image_index": 1,
+        "evidence_ref": "qq-direct-image:sha256:c32feb84f5e2b005505b3c90bb8d220bfee9ba708dc2120a3073d7462fbfe669"
+      }
+    ],
+    "vision_api_calls": 0,
+    "production_changes": false,
+    "source_hashes": {
+      "harness/qq/vision_tool.py": "7688b362f54458ecc381ccd2aacebcb4103f65220ce35a3ce92e918a7a1ba0d8",
+      "harness/qq/decision.py": "d185d3a00803f4b3d8f7b08b2c305dfd7c61ac23a75a149cfdffc810c4223cbf",
+      "harness/qq/history_selection.py": "a4ca669ad7653056b48087d4066b35536c01db6a49d23a5617f0a44faaf24c33"
+    }
+  },
+  "existing_scope_tests": "5 passed",
+  "conclusions": [
+    "Referenced image was already stored and included in both gate and body context.",
+    "Vision offering only used current request observation IDs, excluding the verified reply-reference image.",
+    "Gate attempted to use an evidence SHA reference as image_id; host returned image_selection_invalid before any Kimi request.",
+    "vision_on_demand is mapped to unavailable in the persistent observation DTO, conflating unexamined with unavailable."
+  ]
+}

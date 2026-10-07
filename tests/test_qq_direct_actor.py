@@ -221,6 +221,23 @@ def test_readonly_group_records_pixels_and_shared_image_analysis_without_sending
     assert not shared.query(SharedReadScope(audience=f"qq:group:{MAIN}", kinds=("qq_observation",))).records
 
 
+def test_on_demand_image_is_received_without_an_unavailable_error(actor_factory):
+    actor, cognition, model = actor_factory()
+    actor.settings = actor.settings.model_copy(update={"qq_image_analysis": "on_demand"})
+
+    async def execute():
+        await actor.verify_connection()
+        return await consume(actor, incoming(group=GUEST, images=True))
+
+    row = asyncio.run(execute())
+    assert row["state"] == "observed" and not cognition.calls and not actor.client.sent
+    analysis = messages(actor, GUEST)[0].image_analysis[0]
+    assert analysis.status == "unknown" and analysis.error is None and analysis.evidence_ref
+    assert analysis.description is None and analysis.ocr_text is None
+    assert "图片已保存" in analysis.uncertainties[0]
+    assert len(list(actor.settings.image_cache_dir.glob("*.png"))) == 1 and not model.calls
+
+
 def test_repeated_sticker_skips_second_vision_call(actor_factory):
     actor, cognition, model = actor_factory()
     from harness.config import Settings

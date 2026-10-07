@@ -63,8 +63,8 @@ from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace, cla
 from infra.trace.request_spans import trace_scope
 
 
-PROMPT_VERSION = "qq-group-turn-taking-v26-grounded-voice"
-PRIVATE_PROMPT_VERSION = "qq-private-turn-taking-v12-grounded-voice"
+PROMPT_VERSION = "qq-group-turn-taking-v27-referenced-images"
+PRIVATE_PROMPT_VERSION = "qq-private-turn-taking-v13-referenced-images"
 MAX_GROUP_CONTEXT_CHARACTERS = DEFAULT_QQ_INPUT_TOKEN_BUDGET * 2
 _CONTEXT_BUDGET_REASON = "context_budget_exceeded：模型上下文超过字符预算，本次未生成可发送正文；这不是网络故障或模型 JSON 解析失败。"
 _SENDABLE_SPEAK_OUTCOMES = frozenset({"ready", "error_fallback"})
@@ -1593,7 +1593,8 @@ def decide_qq_reply(
     source_ids = sorted({item.record_id for item in observations})
     evidence_refs = sorted({ref for member in context.members for ref in _evidence_refs(member)})
     vision_tool = (QQVisionTool.for_turn(settings, observations, group_id=group_id, self_member_id=self_member_id,
-        current_ids=set(request_observation_ids or ([trigger_latest_id] if trigger_latest_id else [])))
+        current_ids=set(request_observation_ids or ([trigger_latest_id] if trigger_latest_id else [])),
+        reply_reference_ids=set(_reply_reference_record_ids or []))
         if idle_intent is None else None)
     base_payload = {"coverage": "partial_verified_observations",
                     "group_context": context.model_dump(mode="json"), "request": request,
@@ -1880,6 +1881,7 @@ def decide_qq_reply(
         raw_llm = None
         llm = None
         usage = TokenUsage()
+        vision_evidence = []
         try:
             if _turn_preparation is not None:
                 provider = _turn_preparation.get("used_sources_provider")
@@ -1923,7 +1925,7 @@ def decide_qq_reply(
                                               "evidence_refs": evidence_refs, "delivery_refs": list(selection.delivery_ids)})
             messages = [{"role": "system", "content": persona_prefix(preset.persona)
                         + (_PRIVATE_RULES if private else _RULES) + web_rules
-                        + (VISION_TOOL_RULES if vision_tool is not None else "")
+                        + VISION_TOOL_RULES
                         + (_PRODUCTION_MEMORY_USE_RULES if production_store is not None else "")
                         + ((_PRODUCTION_IDLE_RULES if production_idle else _IDLE_RULES) if idle_intent is not None else "")},
                         *({"role": "user", "content": content} for content in encoded_messages)]
@@ -1945,9 +1947,12 @@ def decide_qq_reply(
                         validator = (_turn_preparation or {}).get("request_validator")
                         if validator is not None:
                             validator()
-                        if vision_tool is None or choice._vision_request_invalid:
+                        offered_ids = {item["image_id"] for item in payload.get("vision_tool", {}).get("available_images", [])}
+                        if (not offered_ids or choice._vision_request_invalid
+                                or not set(choice.vision_request.image_ids).issubset(offered_ids)):
                             visual, vision_usage = ({"tool": "inspect_qq_images", "status": "unavailable",
-                                "untrusted": True, "images": [], "error": "image_selection_invalid"}, TokenUsage())
+                                "untrusted": True, "images": [],
+                                "error": "image_selection_invalid" if offered_ids else "no_offered_images"}, TokenUsage())
                         else:
                             presented = set(selection.observation_ids) & set(body_selection.observation_ids)
                             if any(image.observation_id not in presented for image in vision_tool.images
@@ -1955,11 +1960,21 @@ def decide_qq_reply(
                                 raise QQDraftError("qq_vision_source_not_presented")
                             visual, vision_usage = vision_tool.invoke(choice.vision_request, deadline=deadline,
                                 trace=trace, request_validator=validator)
+                            vision_evidence = vision_tool.evidence_entries(visual, presented_ids=presented)
+                            if vision_evidence:
+                                # One complete text per image reaches both the main
+                                # model and critic. Admission checks exact visible
+                                # strings; separately reconstructed JSON is not proof.
+                                visual = {**visual, "images": [
+                                    {"image_id": image["image_id"], "observation": entry.text}
+                                    for image, entry in zip(visual["images"], vision_evidence, strict=True)]}
                         usage = usage.add(vision_usage)
                         tool_payload = {"vision_tool_result": visual,
                             "continuation": "识图工具结果已返回。本轮不再调用识图；结合结果完成参与判断与回复计划。"
                                 "需要外部资料时自主给出web_plan，否则为null。vision_request必须为null。"
-                                "失败或不确定的结果不能补成确定事实。"}
+                                "失败或不确定的结果不能补成确定事实。"
+                                "已记录图片的识别失败不等于未收到；no_offered_images仅说明当前没有可选图，"
+                                "image_selection_invalid仅说明选择编号无效，都不证明用户没有发图。"}
                         prefix_characters = sum(len(item["content"]) for item in messages if item["role"] != "system")
                         tool_prefix_characters = prefix_characters + len(response.text) + len(_canonical(tool_payload))
                         if history_mode == "bounded":
@@ -2022,7 +2037,7 @@ def decide_qq_reply(
                         result=result, choice=choice, raw_gate=response.text, messages=messages,
                         payload=payload, context=context, selection=selection, receipts=receipts,
                         body_selection=body_selection, body_extra_messages=body_extra_messages,
-                        body_evidence_refs=body_evidence_refs,
+                        body_evidence_refs=body_evidence_refs, vision_evidence=vision_evidence,
                         partial_receipts=partial_receipts, shared_owner=shared_owner, summary=summary,
                         emotion_guidance=emotion_guidance, emotion_on=emotion_on, new_ids=new_ids,
                         trigger_latest_id=trigger_latest_id, usage=usage, trace=trace, timings=timings,
@@ -2043,6 +2058,7 @@ def decide_qq_reply(
                                 new_observation_ids=set(new_ids), trigger_record_id=trigger_latest_id),
                             receipts=receipts, partial_receipts=partial_receipts, shared_owner=shared_owner,
                         )
+                        speech_kwargs["memory_evidence_entries"].extend(vision_evidence)
                         speech_kwargs["prefix_messages"] = [*messages, {"role": "assistant", "content": response.text},
                                                             *body_extra_messages]
                         if (sum(len(item["content"]) for item in speech_kwargs["prefix_messages"]

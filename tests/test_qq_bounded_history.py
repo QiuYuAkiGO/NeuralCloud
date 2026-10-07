@@ -99,6 +99,35 @@ def test_hard_budget_can_trim_more_optional_history_than_the_soft_target(setup):
     assert len(selected.body.observation_ids) < len(_select(payload, {records[-1].record_id}).body.observation_ids)
 
 
+@pytest.mark.parametrize("keep_recent_offer", [False, True])
+def test_vision_offer_tracks_presented_records_without_reassigning_aliases(setup, keep_recent_offer):
+    from harness.qq.context_budget import select_model_context
+    from harness.qq.vision_tool import QQVisionRequest
+
+    records = _history(setup[0])
+    _, payload = _payload(setup[0])
+    images = [{"image_id": "image_1", "observation_id": records[0].record_id}]
+    if keep_recent_offer:
+        images.append({"image_id": "image_2", "observation_id": records[-1].record_id})
+    schema = QQVisionRequest.model_json_schema()
+    schema["properties"]["image_ids"]["items"]["enum"] = [i["image_id"] for i in images]
+    payload["vision_tool"] = {"available_images": images, "request_schema": schema}
+    original = deepcopy(payload)
+    selections = _select(payload, {records[-1].record_id})
+    legacy = select_model_context(payload, required_observation_ids={records[-1].record_id},
+        handled_observation_ids={i.record_id for i in records[:-1]}, max_characters=14_000,
+        assessment_reserve=1000, projection="compact")
+    for selection in (selections.gate, selections.body, legacy):
+        assert records[0].record_id not in selection.observation_ids
+        if keep_recent_offer:
+            tool = selection.payload["vision_tool"]
+            assert tool["available_images"] == images[1:]
+            assert tool["request_schema"]["properties"]["image_ids"]["items"]["enum"] == ["image_2"]
+        else:
+            assert "vision_tool" not in selection.payload
+    assert payload == original
+
+
 @pytest.mark.parametrize("vision_available", [False, True])
 def test_combined_body_budget_counts_extra_history_metadata_and_tool_reserve(tmp_path, vision_available):
     store = QQVisualMemoryStore(tmp_path / "crowded.sqlite3")

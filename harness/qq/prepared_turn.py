@@ -82,13 +82,14 @@ def prepare_qq_turn(*, turn_binding: dict, web_capabilities: dict | None = None,
 def checkpoint_gate(*, preparation, path, settings, preset, result, choice, raw_gate, messages,
                     payload, context, selection, receipts, partial_receipts, shared_owner, summary,
                     emotion_guidance, emotion_on, new_ids, trigger_latest_id, usage, trace, timings,
-                    body_selection, body_extra_messages, body_evidence_refs):
+                    body_selection, body_extra_messages, body_evidence_refs, vision_evidence=()):
     from harness.qq import decision as qq
 
     evidence = qq.build_qq_memory_evidence(payload=body_selection.payload, trusted_context=context,
         current_observation_ids=qq.current_qq_burst_ids(trusted_context=context,
             new_observation_ids=set(new_ids), trigger_record_id=trigger_latest_id),
         receipts=receipts, partial_receipts=partial_receipts, shared_owner=shared_owner)
+    evidence.extend(vision_evidence)
     policy = QQLatencyOptions.from_settings(settings)
     source_records = {"qq_visual_profiles": {}, "qq_visual_observations": {}}
     for member in context.members:

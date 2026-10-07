@@ -71,8 +71,8 @@ def test_missing_detail_plan_names_the_gap_without_scripting_the_sentence():
         assert "must_address写需要澄清的具体缺口" in rules
         assert "日期、原话或必要线索" in rules
         assert "不计划‘我不记得’‘没有记录’" in rules
-    assert decision.PROMPT_VERSION == "qq-group-turn-taking-v26-grounded-voice"
-    assert decision.PRIVATE_PROMPT_VERSION == "qq-private-turn-taking-v12-grounded-voice"
+    assert decision.PROMPT_VERSION == "qq-group-turn-taking-v27-referenced-images"
+    assert decision.PRIVATE_PROMPT_VERSION == "qq-private-turn-taking-v13-referenced-images"
 
 
 def test_both_generation_stages_keep_memory_guards_but_allow_natural_social_response():

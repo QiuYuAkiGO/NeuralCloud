@@ -48,6 +48,19 @@ class ModelContextSelection:
     fits: bool
 
 
+def restrict_vision_offer(payload: dict, retained: set[str]) -> None:
+    """Prune the live offer with its source records, preserving opaque aliases."""
+    tool = payload.get("vision_tool")
+    if not tool:
+        return
+    images = [item for item in tool["available_images"] if item["observation_id"] in retained]
+    if not images:
+        payload.pop("vision_tool")
+        return
+    tool["available_images"] = images
+    tool["request_schema"]["properties"]["image_ids"]["items"]["enum"] = [item["image_id"] for item in images]
+
+
 def select_model_context(
     payload: dict, *, required_observation_ids: set[str],
     handled_observation_ids: set[str], max_characters: int, assessment_reserve: int,
@@ -98,6 +111,7 @@ def select_model_context(
 
     def refresh() -> None:
         retained = {item["record_id"] for member in context["members"] for item in member["observations"]}
+        restrict_vision_offer(selected, retained)
         profile_ids = latest_profiles | {
             item["profile_record_id"] for member in context["members"] for item in member["observations"]
         }
