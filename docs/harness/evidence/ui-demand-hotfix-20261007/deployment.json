@@ -1,0 +1,1244 @@
+{
+  "deployment": {
+    "started_at": "2026-10-07T15:39:04.279941+00:00",
+    "phase": "running",
+    "release_id": "20261007-ui-demand-v1",
+    "code_commit": "dc9a5ceddc30d047160cb3ade01c2ccb65c076b0",
+    "archive_sha256": "a39f24d4a5b0a9f6ae8f10ba64770f6bbaa352fbfb93ea623892f4494d0868d5",
+    "control_audit": [
+      {
+        "at": "2026-10-07T15:39:13.182901Z",
+        "type": "pause",
+        "authorized_maintenance": true
+      }
+    ],
+    "backup": {
+      "path": "/var/backups/neuralcloud/20261007-before-ui-demand",
+      "verification": {
+        "ok": true,
+        "files": 15128,
+        "bytes": 13144859756,
+        "sqlite_databases": 24,
+        "journals": {
+          "state/runtime/journal": {
+            "records": 1349991,
+            "last_hash": "3b860ca3ad4cfff87f36d0e7cd0b43a59fa0bb9f656eec5c3f94f1aa88f56df9"
+          }
+        },
+        "manifest_sha256": "11320e57dd020431c025a53973b66f44732ed42c4103e309232ab488d153028c"
+      }
+    },
+    "database_changes": "none; existing WAL and job state retained",
+    "preservation": {
+      "profile_manifest_direct_unchanged": true,
+      "attention_sha256": "345f486b79ba948f6cbc887bdce513b8ef981ca9b8ec868c2c48cb7b834ef7d6",
+      "attention_unchanged_before_restart": true
+    },
+    "activation": {
+      "release": "20261007-ui-demand-v1",
+      "previous_release": "20261007-ui-snapshot-integrated-v3",
+      "services": [
+        "cognitive",
+        "homeostasis",
+        "runtime",
+        "gui",
+        "board",
+        "qq_direct"
+      ]
+    },
+    "verification": {
+      "release_id": "20261007-ui-demand-v1",
+      "verified_files": 436,
+      "configuration_valid": true,
+      "business_services_started": false
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [
+          "qq_homeostatic_feedback"
+        ],
+        "last_heartbeat_at": "2026-10-07T15:45:57.719937Z",
+        "last_journal_append_at": "2026-10-07T15:45:57.881993Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "pending_events": 0,
+      "background": {
+        "heartbeat": {
+          "active": true,
+          "pending": 0,
+          "running": true,
+          "coalesced": 0,
+          "thread_jobs": 2,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "passive_state": {
+          "active": true,
+          "pending": 0,
+          "running": false,
+          "coalesced": 0,
+          "thread_jobs": 0,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "affect": {
+          "pending": 0,
+          "running": 0,
+          "scopes": 0,
+          "degraded": false
+        }
+      }
+    },
+    "direct": {
+      "running": true,
+      "connected": true,
+      "heartbeat_at": "2026-10-07T15:45:59.260594+00:00"
+    },
+    "services": {
+      "cognitive": {
+        "MainPID": "247891",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-cognitive.service"
+      },
+      "homeostasis": {
+        "MainPID": "247930",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-homeostasis.service"
+      },
+      "runtime": {
+        "MainPID": "248036",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-runtime.service"
+      },
+      "gui": {
+        "MainPID": "248731",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-gui.service"
+      },
+      "board": {
+        "MainPID": "248028",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-board.service"
+      },
+      "qq_direct": {
+        "MainPID": "248756",
+        "Result": "success",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "SubState": "running",
+        "FragmentPath": "/etc/systemd/system/neuralcloud-qq-direct.service"
+      }
+    },
+    "finished_at": "2026-10-07T15:45:59.882238+00:00"
+  },
+  "package": {
+    "release_id": "20261007-ui-demand-v1",
+    "files": 436,
+    "archive": "D:\\GameDev\\NeuralCloud\\.tmp\\ui-demand-v1.tar.gz",
+    "sha256": "a39f24d4a5b0a9f6ae8f10ba64770f6bbaa352fbfb93ea623892f4494d0868d5",
+    "code_commit": "dc9a5ceddc30d047160cb3ade01c2ccb65c076b0"
+  },
+  "http_initial": {
+    "at": "2026-10-07T15:46:39.716737+00:00",
+    "release": "20261007-ui-demand-v1",
+    "sequential": {
+      "cognitive": [
+        {
+          "status": 200,
+          "milliseconds": 1742.17,
+          "bytes": 11526,
+          "memory_records": null,
+          "entries": 0,
+          "freshness": {
+            "status": "loading",
+            "as_of": null,
+            "age_seconds": null,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 1,
+            "last_duration_ms": null
+          },
+          "preset_freshness": {
+            "status": "loading",
+            "as_of": null,
+            "age_seconds": 240.52,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 1,
+            "last_duration_ms": 1564.02
+          },
+          "preset_count": 0,
+          "runtime_lifecycle": null
+        },
+        {
+          "status": 200,
+          "milliseconds": 2268.32,
+          "bytes": 12353,
+          "memory_records": null,
+          "entries": 0,
+          "freshness": {
+            "status": "loading",
+            "as_of": null,
+            "age_seconds": null,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 1,
+            "last_duration_ms": null
+          },
+          "preset_freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:46:24.072155+00:00",
+            "age_seconds": 1.731,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 2,
+            "last_duration_ms": 1729.4
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": null
+        },
+        {
+          "status": 200,
+          "milliseconds": 973.94,
+          "bytes": 12351,
+          "memory_records": null,
+          "entries": 0,
+          "freshness": {
+            "status": "loading",
+            "as_of": null,
+            "age_seconds": null,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 1,
+            "last_duration_ms": null
+          },
+          "preset_freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:46:24.072155+00:00",
+            "age_seconds": 4.096,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 2,
+            "last_duration_ms": 1729.4
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": null
+        }
+      ],
+      "gui": [
+        {
+          "status": 200,
+          "milliseconds": 3563.14,
+          "bytes": 102572,
+          "memory_records": 19247,
+          "entries": 31,
+          "freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T15:46:24.072917+00:00",
+            "age_seconds": 8.43,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 1,
+            "last_duration_ms": 5742.52
+          },
+          "preset_freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T15:46:24.072155+00:00",
+            "age_seconds": 8.431,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 2,
+            "last_duration_ms": 1729.4
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": "RUNNING"
+        },
+        {
+          "error_type": "TimeoutError",
+          "milliseconds": 5005.06
+        },
+        {
+          "status": 200,
+          "milliseconds": 1959.4,
+          "bytes": 102621,
+          "memory_records": 19247,
+          "entries": 31,
+          "freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T15:46:32.503647+00:00",
+            "age_seconds": 6.583,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 2,
+            "last_duration_ms": 1394.5
+          },
+          "preset_freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T15:46:32.502802+00:00",
+            "age_seconds": 6.507,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 3,
+            "last_duration_ms": 1245.22
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": "RUNNING"
+        }
+      ]
+    },
+    "eight_parallel_gui": [
+      {
+        "status": 200,
+        "milliseconds": 81.75,
+        "bytes": 102616,
+        "memory_records": 19247,
+        "entries": 31,
+        "freshness": {
+          "status": "refreshing",
+          "as_of": "2026-10-07T15:46:32.503647+00:00",
+          "age_seconds": 7.113,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 3,
+          "last_duration_ms": 1394.5
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:46:39.009675+00:00",
+          "age_seconds": 0.606,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 4,
+          "last_duration_ms": 566.82
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 79.82,
+        "bytes": 102615,
+        "memory_records": 19247,
+        "entries": 31,
+        "freshness": {
+          "status": "refreshing",
+          "as_of": "2026-10-07T15:46:32.503647+00:00",
+          "age_seconds": 7.112,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 3,
+          "last_duration_ms": 1394.5
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:46:39.009675+00:00",
+          "age_seconds": 0.605,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 4,
+          "last_duration_ms": 566.82
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 109.56,
+        "bytes": 102616,
+        "memory_records": 19247,
+        "entries": 31,
+        "freshness": {
+          "status": "refreshing",
+          "as_of": "2026-10-07T15:46:32.503647+00:00",
+          "age_seconds": 7.137,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 3,
+          "last_duration_ms": 1394.5
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:46:39.009675+00:00",
+          "age_seconds": 0.628,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 4,
+          "last_duration_ms": 566.82
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 141.94,
+        "bytes": 102613,
+        "memory_records": 19247,
+        "entries": 31,
+        "freshness": {
+          "status": "refreshing",
+          "as_of": "2026-10-07T15:46:32.503647+00:00",
+          "age_seconds": 7.141,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 3,
+          "last_duration_ms": 1394.5
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:46:39.009675+00:00",
+          "age_seconds": 0.631,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 4,
+          "last_duration_ms": 566.82
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 143.14,
+        "bytes": 102615,
+        "memory_records": 19247,
+        "entries": 31,
+        "freshness": {
+          "status": "refreshing",
+          "as_of": "2026-10-07T15:46:32.503647+00:00",
+          "age_seconds": 7.14,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 3,
+          "last_duration_ms": 1394.5
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:46:39.009675+00:00",
+          "age_seconds": 0.628,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 4,
+          "last_duration_ms": 566.82
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 110.57,
+        "bytes": 102616,
+        "memory_records": 19247,
+        "entries": 31,
+        "freshness": {
+          "status": "refreshing",
+          "as_of": "2026-10-07T15:46:32.503647+00:00",
+          "age_seconds": 7.139,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 3,
+          "last_duration_ms": 1394.5
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:46:39.009675+00:00",
+          "age_seconds": 0.628,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 4,
+          "last_duration_ms": 566.82
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 111.61,
+        "bytes": 102615,
+        "memory_records": 19247,
+        "entries": 31,
+        "freshness": {
+          "status": "refreshing",
+          "as_of": "2026-10-07T15:46:32.503647+00:00",
+          "age_seconds": 7.139,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 3,
+          "last_duration_ms": 1394.5
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:46:39.009675+00:00",
+          "age_seconds": 0.629,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 4,
+          "last_duration_ms": 566.82
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 112.54,
+        "bytes": 102615,
+        "memory_records": 19247,
+        "entries": 31,
+        "freshness": {
+          "status": "refreshing",
+          "as_of": "2026-10-07T15:46:32.503647+00:00",
+          "age_seconds": 7.137,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 3,
+          "last_duration_ms": 1394.5
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:46:39.009675+00:00",
+          "age_seconds": 0.609,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 4,
+          "last_duration_ms": 566.82
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      }
+    ],
+    "summary": {
+      "requests": 14,
+      "success": 13,
+      "max_ms": 5005.06,
+      "median_ms": 142.54
+    }
+  },
+  "http_recheck": {
+    "at": "2026-10-07T15:46:55.509060+00:00",
+    "release": "20261007-ui-demand-v1",
+    "sequential": {
+      "cognitive": [
+        {
+          "status": 200,
+          "milliseconds": 506.03,
+          "bytes": 44001,
+          "memory_records": 19253,
+          "entries": 31,
+          "freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T15:46:39.087042+00:00",
+            "age_seconds": 12.875,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 3,
+            "last_duration_ms": 1339.96
+          },
+          "preset_freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T15:46:39.009675+00:00",
+            "age_seconds": 12.844,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 4,
+            "last_duration_ms": 566.82
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": null
+        },
+        {
+          "status": 200,
+          "milliseconds": 596.3,
+          "bytes": 43995,
+          "memory_records": 19253,
+          "entries": 31,
+          "freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T15:46:39.087042+00:00",
+            "age_seconds": 13.502,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 4,
+            "last_duration_ms": 1339.96
+          },
+          "preset_freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:46:51.853517+00:00",
+            "age_seconds": 0.56,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 5,
+            "last_duration_ms": 157.54
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": null
+        },
+        {
+          "status": 200,
+          "milliseconds": 1068.48,
+          "bytes": 43996,
+          "memory_records": 19253,
+          "entries": 31,
+          "freshness": {
+            "status": "refreshing",
+            "as_of": "2026-10-07T15:46:39.087042+00:00",
+            "age_seconds": 14.163,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 4,
+            "last_duration_ms": 1339.96
+          },
+          "preset_freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:46:51.853517+00:00",
+            "age_seconds": 1.283,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 5,
+            "last_duration_ms": 157.54
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": null
+        }
+      ],
+      "gui": [
+        {
+          "status": 200,
+          "milliseconds": 1177.11,
+          "bytes": 72983,
+          "memory_records": null,
+          "entries": 0,
+          "freshness": {
+            "status": "loading",
+            "as_of": null,
+            "age_seconds": 15.613,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 4,
+            "last_duration_ms": 1339.96
+          },
+          "preset_freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:46:51.853517+00:00",
+            "age_seconds": 2.54,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 5,
+            "last_duration_ms": 157.54
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": "RUNNING"
+        },
+        {
+          "status": 200,
+          "milliseconds": 71.27,
+          "bytes": 72984,
+          "memory_records": null,
+          "entries": 0,
+          "freshness": {
+            "status": "loading",
+            "as_of": null,
+            "age_seconds": 16.09,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 4,
+            "last_duration_ms": 1339.96
+          },
+          "preset_freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:46:51.853517+00:00",
+            "age_seconds": 3.323,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 5,
+            "last_duration_ms": 157.54
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": "RUNNING"
+        },
+        {
+          "status": 200,
+          "milliseconds": 96.07,
+          "bytes": 72984,
+          "memory_records": null,
+          "entries": 0,
+          "freshness": {
+            "status": "loading",
+            "as_of": null,
+            "age_seconds": 16.193,
+            "refreshing": true,
+            "last_error_type": null,
+            "refresh_count": 4,
+            "last_duration_ms": 1339.96
+          },
+          "preset_freshness": {
+            "status": "ready",
+            "as_of": "2026-10-07T15:46:51.853517+00:00",
+            "age_seconds": 3.425,
+            "refreshing": false,
+            "last_error_type": null,
+            "refresh_count": 5,
+            "last_duration_ms": 157.54
+          },
+          "preset_count": 4,
+          "runtime_lifecycle": "RUNNING"
+        }
+      ]
+    },
+    "eight_parallel_gui": [
+      {
+        "status": 200,
+        "milliseconds": 44.68,
+        "bytes": 72984,
+        "memory_records": null,
+        "entries": 0,
+        "freshness": {
+          "status": "loading",
+          "as_of": null,
+          "age_seconds": 16.234,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 4,
+          "last_duration_ms": 1339.96
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:46:51.853517+00:00",
+          "age_seconds": 3.467,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 5,
+          "last_duration_ms": 157.54
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 154.67,
+        "bytes": 72984,
+        "memory_records": null,
+        "entries": 0,
+        "freshness": {
+          "status": "loading",
+          "as_of": null,
+          "age_seconds": 16.347,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 4,
+          "last_duration_ms": 1339.96
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:46:51.853517+00:00",
+          "age_seconds": 3.526,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 5,
+          "last_duration_ms": 157.54
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 157.75,
+        "bytes": 72979,
+        "memory_records": null,
+        "entries": 0,
+        "freshness": {
+          "status": "loading",
+          "as_of": null,
+          "age_seconds": 16.347,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 4,
+          "last_duration_ms": 1339.96
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:46:51.853517+00:00",
+          "age_seconds": 3.51,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 5,
+          "last_duration_ms": 157.54
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 192.38,
+        "bytes": 72984,
+        "memory_records": null,
+        "entries": 0,
+        "freshness": {
+          "status": "loading",
+          "as_of": null,
+          "age_seconds": 16.368,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 4,
+          "last_duration_ms": 1339.96
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:46:51.853517+00:00",
+          "age_seconds": 3.527,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 5,
+          "last_duration_ms": 157.54
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 193.19,
+        "bytes": 72984,
+        "memory_records": null,
+        "entries": 0,
+        "freshness": {
+          "status": "loading",
+          "as_of": null,
+          "age_seconds": 16.368,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 4,
+          "last_duration_ms": 1339.96
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:46:51.853517+00:00",
+          "age_seconds": 3.527,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 5,
+          "last_duration_ms": 157.54
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 190.31,
+        "bytes": 72985,
+        "memory_records": null,
+        "entries": 0,
+        "freshness": {
+          "status": "loading",
+          "as_of": null,
+          "age_seconds": 16.368,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 4,
+          "last_duration_ms": 1339.96
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:46:51.853517+00:00",
+          "age_seconds": 3.527,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 5,
+          "last_duration_ms": 157.54
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 193.92,
+        "bytes": 72984,
+        "memory_records": null,
+        "entries": 0,
+        "freshness": {
+          "status": "loading",
+          "as_of": null,
+          "age_seconds": 16.385,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 4,
+          "last_duration_ms": 1339.96
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:46:51.853517+00:00",
+          "age_seconds": 3.528,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 5,
+          "last_duration_ms": 157.54
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      },
+      {
+        "status": 200,
+        "milliseconds": 161.97,
+        "bytes": 72984,
+        "memory_records": null,
+        "entries": 0,
+        "freshness": {
+          "status": "loading",
+          "as_of": null,
+          "age_seconds": 16.366,
+          "refreshing": true,
+          "last_error_type": null,
+          "refresh_count": 4,
+          "last_duration_ms": 1339.96
+        },
+        "preset_freshness": {
+          "status": "ready",
+          "as_of": "2026-10-07T15:46:51.853517+00:00",
+          "age_seconds": 3.527,
+          "refreshing": false,
+          "last_error_type": null,
+          "refresh_count": 5,
+          "last_duration_ms": 157.54
+        },
+        "preset_count": 4,
+        "runtime_lifecycle": "RUNNING"
+      }
+    ],
+    "summary": {
+      "requests": 14,
+      "success": 14,
+      "max_ms": 1177.11,
+      "median_ms": 191.345
+    }
+  },
+  "health": {
+    "journal_mode": "wal",
+    "quick_check": "ok",
+    "read_latency_ms": [
+      0.012,
+      0.004,
+      0.003
+    ],
+    "errors_since": "2026-10-07T15:45:59.882238+00:00",
+    "journal_lock_errors": 0,
+    "journal_read_success": true,
+    "worker": {
+      "processing": false,
+      "queue": {
+        "pending": 31,
+        "preparing": 0,
+        "retry": 0,
+        "applied": 2548,
+        "skipped": 615,
+        "total_jobs": 3194,
+        "assigned_sources": 9121,
+        "oldest_pending_seconds": 2835.085345
+      },
+      "last_error_type": null,
+      "last_completed_at": "2026-10-07T15:46:29.622458+00:00"
+    }
+  },
+  "monitor": {
+    "at": "2026-10-07T15:47:12.116350+00:00",
+    "release": "20261007-ui-demand-v1",
+    "manifest_revision": 4,
+    "manifest_profile": "qq-social-drive-v1@3",
+    "services": {
+      "cognitive": {
+        "MainPID": "247891",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "MainPID": "247930",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "MainPID": "248036",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "MainPID": "248731",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "MainPID": "248028",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq_direct": {
+        "MainPID": "248756",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-07T15:47:05.764643Z",
+        "last_journal_append_at": "2026-10-07T15:47:12.018588Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "pending_events": 1,
+      "background": {
+        "heartbeat": {
+          "active": true,
+          "pending": 0,
+          "running": true,
+          "coalesced": 5,
+          "thread_jobs": 0,
+          "last_duration_ms": 6222.542,
+          "last_error": null
+        },
+        "passive_state": {
+          "active": true,
+          "pending": 1,
+          "running": true,
+          "coalesced": 0,
+          "thread_jobs": 0,
+          "last_duration_ms": null,
+          "last_error": null
+        },
+        "affect": {
+          "pending": 0,
+          "running": 0,
+          "scopes": 0,
+          "degraded": false
+        }
+      }
+    },
+    "direct": {
+      "running": true,
+      "connected": true,
+      "repository_root": "/opt/neuralcloud/releases/20261007-ui-demand-v1",
+      "heartbeat_at": "2026-10-07T15:47:10.505904+00:00"
+    },
+    "watchdog": [],
+    "dynamics": {
+      "mode": "shadow",
+      "fatigue": 0.7896691675666161,
+      "boredom": 0.8474147684693214,
+      "wants_engagement": true,
+      "latent_confidence": 0.8,
+      "baselines": {
+        "autonomy": 0.6749992824438109,
+        "competence": 0.6250000152600026,
+        "safety_predictability": 0.6651600000000001,
+        "social_connection": 0.38068496909056737
+      },
+      "short_term_responses": {
+        "autonomy": 0.001928875564945295,
+        "competence": 0.013025478566890979,
+        "safety_predictability": 0.01281808637104047,
+        "social_connection": 0.19318083310929532
+      },
+      "regulation_pressure": {
+        "level": "overloaded",
+        "suggest_reduce_input": true,
+        "suggest_reopen": false
+      },
+      "assessment_coverage": {
+        "exposures": 2571,
+        "assessed": 159,
+        "unassessed": 2412,
+        "work_units": 21298970,
+        "last_work_at": "2026-10-07T15:47:01.515414+00:00"
+      },
+      "shadow_observation": {
+        "continuous_seconds": 73.013492,
+        "samples": 34667,
+        "maximum_gap_seconds": 411.159127,
+        "last_sample_at": "2026-10-07T15:47:05.695553+00:00"
+      },
+      "shadow_values": {
+        "cognitive_load": 0.9499322049747985,
+        "novelty": 0.47756460970029774,
+        "safety_predictability": 0.6779780863710405,
+        "competence": 0.6380254938268936,
+        "autonomy": 0.6769281580087562,
+        "social_connection": 0.5738658021998627
+      },
+      "started_at": "2026-10-06T12:24:08.049492+00:00",
+      "updated_at": "2026-10-07T15:47:05.695553+00:00"
+    },
+    "display_values": {
+      "energy_reserve": 0.6650081090433334,
+      "cognitive_load": 0.9499260800989893,
+      "safety_predictability": 0.6650054060288889,
+      "competence": 0.6249998321817222,
+      "autonomy": 0.6750022857056461,
+      "social_connection": 0.62,
+      "novelty": 0.9499685148682798
+    },
+    "gate": {
+      "schema_version": "cognitive-dynamics-shadow-gate-v1",
+      "ready": false,
+      "reasons": [
+        "continuous_shadow_observation_less_than_24_hours"
+      ],
+      "observation": {
+        "continuous_seconds": 73.013492,
+        "samples": 34667,
+        "maximum_gap_seconds": 411.159127,
+        "last_sample_at": "2026-10-07T15:47:05.695553+00:00"
+      },
+      "assessment_coverage": {
+        "exposures": 2571,
+        "assessed": 159,
+        "unassessed": 2412,
+        "work_units": 21298970,
+        "last_work_at": "2026-10-07T15:47:01.515414+00:00"
+      },
+      "snapshot_revision": 170163,
+      "profile_ref": "qq-social-drive-v1@3",
+      "checked_at": "2026-10-07T15:47:12.148440+00:00"
+    },
+    "work": {
+      "total": 2571,
+      "pending": 0,
+      "by_context_category": {
+        "qq": {
+          "total": 2234,
+          "assessed": 159,
+          "applied": 2234,
+          "units": 15193459,
+          "last_at": "2026-10-07T15:47:01.515414Z"
+        },
+        "emotion_guidance": {
+          "total": 168,
+          "assessed": 0,
+          "applied": 168,
+          "units": 71871,
+          "last_at": "2026-10-07T15:37:49.418824Z"
+        },
+        "goal_decision": {
+          "total": 168,
+          "assessed": 0,
+          "applied": 168,
+          "units": 5959554,
+          "last_at": "2026-10-07T15:37:55.769134Z"
+        },
+        "diary_prepare": {
+          "total": 1,
+          "assessed": 0,
+          "applied": 1,
+          "units": 3302,
+          "last_at": "2026-10-06T16:01:01.315040Z"
+        }
+      }
+    },
+    "attention": {
+      "policies": [
+        {
+          "group_id": "1044946257",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "1060979317",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        },
+        {
+          "group_id": "712342021",
+          "mode": "open",
+          "revision": 0,
+          "origin": "default",
+          "changed_at": null,
+          "closed_at": null,
+          "opened_at": null,
+          "next_review_at": null,
+          "review_count": 0
+        }
+      ],
+      "dispositions": {
+        "admitted": 386
+      },
+      "outcomes": {
+        "model_wait": 90,
+        "runtime_failure": 201,
+        "guard_wait": 0
+      },
+      "review_error": null
+    }
+  },
+  "shadow_start": "2026-10-07T15:45:52.682061+00:00",
+  "tests": {
+    "python_passed": 21,
+    "browser_logic": "passed: hidden, foreground, coalesced requests, late responses",
+    "ruff": "passed",
+    "javascript_syntax": "passed"
+  }
+}
