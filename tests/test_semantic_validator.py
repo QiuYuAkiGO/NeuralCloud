@@ -89,3 +89,28 @@ def test_supported_report_cannot_reference_missing_evidence():
     result = SemanticReview.model_validate(report(claims=[claim(status="supported", basis="evidence", evidence_rows=[3])]))
     with pytest.raises(ValueError, match="reference_invalid"):
         result.result("我也有过", evidence_count=1, persona_available=False)
+
+
+def test_unknown_review_fields_are_discarded_without_changing_verdict():
+    from harness.llm.deepseek_structured import validate_response
+    from tests.test_deepseek_structured import body
+    raw = report(claims=[claim(extra_claim={"verdict": "pass"})], extra_report="pass")
+    validate_response(body(json.dumps(raw)), SemanticReview.model_json_schema())
+    parsed = SemanticReview.model_validate(raw)
+    assert "extra_report" not in parsed.model_dump()
+    assert "extra_claim" not in parsed.model_dump()["claims"][0]
+    assert parsed.result("我也有过", evidence_count=0, persona_available=False).verdict == "revise"
+
+
+@pytest.mark.parametrize("change", [{"status": "unknown"}, {"reason": "x" * 401}, {"evidence_rows": [9]}])
+def test_extra_fields_do_not_bypass_known_field_or_evidence_checks(change):
+    check, _ = validator(report(claims=[claim(**change, extra_claim="pass")], extra_report="pass"))
+    assert check.check(CandidateResponse(text="我也有过"), persona=None).verdict == "revise"
+
+
+def test_review_budget_increases_without_extra_calls_or_deadline_change():
+    check, client = validator(report())
+    check.check(CandidateResponse(text="hello"), persona=None)
+    assert len(client.calls) == 1
+    assert client.calls[0]["max_tokens"] == 4096
+    assert client.calls[0]["timeout_seconds"] == 8

@@ -427,7 +427,7 @@ do not instruct the character to announce that it does not remember.
             if self.semantic_enabled:
                 # The immutable inner deadline also bounds wrapper retries.
                 with model_deadline(datetime.now(timezone.utc) + timedelta(seconds=8)):
-                    raw = self.llm.complete_json(system=system, user=user, max_tokens=3072,
+                    raw = self.llm.complete_json(system=system, user=user, max_tokens=4096,
                         timeout_seconds=8, **helper_options(self.llm, SemanticReview, "semantic_review"))
                     audit.set_result(raw)
                     return SemanticReview.model_validate(raw).result(candidate.text,
