@@ -150,6 +150,19 @@ class DiaryController:
         if (self.supervisor.lifecycle != RuntimeLifecycle.RUNNING or self.active_entry
                 or getattr(self.supervisor, "_foreground_dispatches", ())):
             return
+        if self.settings.reflection_enabled and not self.store.paused:
+            for pending in self.turns.all():
+                if (pending["status"] in {"error", "expired"} and not pending.get("confirmed_at")
+                        and self.store.get(pending["entry_id"]) is not None
+                        and time.monotonic() >= self.next_opportunity):
+                    self.next_opportunity = time.monotonic() + self.settings.opportunity_seconds
+                    pending.update(event_id=self._new_event_id(pending["entry_id"]), status="queued",
+                        deadline_at=(utc_now()+timedelta(seconds=60)).isoformat())
+                    self.turns.put(pending)
+                    await self.supervisor.submit_event(event_type=RuntimeEventType.DIARY_REFLECTION,
+                        priority=RuntimeEventPriority.IDLE, source="diary_recovery", event_id=pending["event_id"],
+                        idempotency_key=pending["event_id"], payload={"entry_id": pending["entry_id"]})
+                    return
         controller = getattr(self.supervisor, "capabilities", None)
         # Goals currently dispatch board/QQ/web, not diary. Only the diary
         # owner setting may suppress this independent, day-limited scheduler.
@@ -178,7 +191,7 @@ class DiaryController:
         try:
             await self.request(
                 {"request_id": "idle-" + uuid4().hex,
-                 "text": "这是只写给自己的日记。回顾今天真正发生过的事和当下的感受；没有想写的就等一等。"},
+                 "text": "这是只写给自己的日记。回顾这段时间的真实经历、新感受或新认识；没有变化可以等待。"},
                 trigger="homeostasis",
             )
         except ValueError as exc:
@@ -213,6 +226,20 @@ class DiaryController:
         row = self.turns.get(event.payload.get("entry_id", ""))
         if row is None or row["event_id"] != event.event_id:
             raise ValueError("diary_event_source_invalid")
+        saved = self.store.get(row["entry_id"])
+        if self.settings.reflection_enabled and saved is not None and not row.get("confirmed_at"):
+            try:
+                await self._command(event, "CommitDiaryEntry", {
+                    "entry_id": saved["entry_id"], "decision_id": saved["decision_id"],
+                    "body_hash": saved["body_hash"], "written_at": saved["written_at"],
+                    "text": saved["body"], "source_event_id": saved["source_event_id"],
+                    "homeostatic_summary": json.loads(saved["homeostatic_summary_json"]),
+                }, utc_now()+timedelta(seconds=60))
+                row["confirmed_at"] = utc_now().isoformat()
+                return self._finish(event, process_seq, row, "committed")
+            except Exception as exc:
+                row["error_type"] = type(exc).__name__
+                return self._finish(event, process_seq, row, "error")
         if row["status"] in {"committed", "wait", "expired", "superseded", "paused", "error", "queue_failed"}:
             return self._result(event, process_seq, row)
         self.active_entry = row["entry_id"]
@@ -236,10 +263,11 @@ class DiaryController:
                 "trigger": row["trigger"], "request_text": row["request_text"],
                 "source_event_id": event.event_id, "day": row["day"],
                 "model_timeout_seconds": (
-                    self.settings.autonomous_model_seconds if row["trigger"] == "homeostasis"
+                    (25 if self.settings.reflection_enabled else self.settings.autonomous_model_seconds) if row["trigger"] == "homeostasis"
                     else self.settings.user_model_seconds
                 ),
                 "homeostatic_summary": summary or {},
+                **({"reflection_basis": self.store.reflection_basis()} if self.settings.reflection_enabled else {}),
             }, deadline)
             row["decision"], row["timing"] = prepared["decision"], prepared.get("timing", {})
             decision = row["decision"]
@@ -251,12 +279,22 @@ class DiaryController:
                 return self._finish(event, process_seq, row, "wait")
             if decision["action"] != "write":
                 raise ValueError("diary_decision_action_invalid")
+            reflection = decision.get("reflection", {})
+            if reflection:
+                if self.store.contains_body(decision["text"]):
+                    row["wait_reason"] = "exact_repeat"
+                    return self._finish(event, process_seq, row, "wait")
+                from harness.qq.attention import attention_visible
+                if any(not attention_visible(s) for s in reflection.get("source_sessions", [])):
+                    return self._finish(event, process_seq, row, "superseded")
             if production is not None:
                 await production.begin_tool_operation("diary", row["entry_id"], "expression.diary.write.v1")
             invalid = ("expired" if utc_now() >= deadline else
                 "paused" if self.store.paused or self.supervisor.lifecycle != RuntimeLifecycle.RUNNING else
                 "superseded" if production is not None and (production.epoch != effect_epoch or
                     production.context_snapshot("owner")["restricted_dialogue"]) else None)
+            if reflection and any(not attention_visible(s) for s in reflection.get("source_sessions", [])):
+                invalid = "superseded"
             if invalid:
                 if production is not None:
                     production.cancel_tool_operation("diary", row["entry_id"])
@@ -270,7 +308,8 @@ class DiaryController:
             if production is not None:
                 production.mark_tool_dispatched("diary", row["entry_id"])
             try:
-                stored = self.store.put(original, day=row["day"], revision=self.supervisor._cognitive_snapshot.revision + 1)
+                stored = self.store.put(original, day=row["day"], revision=self.supervisor._cognitive_snapshot.revision + 1,
+                                        **({"reflection": reflection} if reflection else {}))
             except Exception:
                 if production is not None:
                     production.finish_tool_operation("diary", row["entry_id"], outcome="failed")
@@ -322,6 +361,7 @@ class DiaryController:
             "today": self._day(), "today_count": self.store.count(self._day()),
             "wrote_today": self.store.count(self._day()) > 0,
             "active_entry": self.active_entry, "error_type": self.last_error,
+            "reflection": {"enabled": self.settings.reflection_enabled, **self.store.reflection_status()},
             "entries": rows,
             "turns": [{k: v for k, v in row.items() if k not in {"decision", "request_text"}}
                       for row in self.turns.all()[:30]],
@@ -332,6 +372,7 @@ class DiaryController:
                  "text": (self.store.get(item["entry_id"]) or {}).get("body")}
                 for item in rows
             ]
+            payload["reflection_evidence"] = {item["entry_id"]: self.store.reflection_evidence(item["entry_id"]) for item in rows}
         return payload
 
     def close(self):

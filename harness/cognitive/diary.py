@@ -63,6 +63,7 @@ class DiaryPrepareRequest(_Frozen):
     request_text: str = Field(default="", max_length=4000, repr=False)
     homeostatic_summary: dict = Field(default_factory=dict, repr=False)
     model_timeout_seconds: float = Field(default=25, gt=0, le=25, allow_inf_nan=False)
+    reflection_basis: dict = Field(default_factory=dict, repr=False)
 
     @model_validator(mode="after")
     def bounded_context(self):
@@ -91,6 +92,7 @@ class DiaryDecision(_Expression):
     prepared_at: AwareDatetime
     deadline_at: AwareDatetime
     day: str
+    reflection: dict = Field(default_factory=dict)
 
 
 class DiaryCommitRequest(_Frozen):
@@ -172,6 +174,14 @@ async def prepare(host, command, *, diagnostic=None):
     from harness.production.metering import current_production_context
     production = current_production_context()
     emotion_guidance = None if production else await resolve_command_emotion(host, command)
+    if settings.reflection_enabled:
+        from harness.cognitive.diary_reflection import prepare as prepare_reflection
+        feeling = ""
+        if not production:
+            feeling = (render_emotion_guidance(emotion_guidance, homeostasis=request.homeostatic_summary)
+                if emotion_enabled(getattr(host.chat, "settings", None)) else
+                json.dumps(request.homeostatic_summary, ensure_ascii=False))
+        return await prepare_reflection(host, command, request, deadline, feeling, started=started)
     diagnostic.stage = "shared_memory"
     context = await asyncio.to_thread(host.shared.diary_context, query=request.request_text)
     diagnostic.stage = "context"
@@ -255,10 +265,21 @@ async def commit(host, command, *, diagnostic=None):
     request = DiaryCommitRequest.model_validate(command.payload)
     diagnostic.stage = "candidate_lookup"
     candidate = _prepared(host.adapter, request.entry_id)
+    if candidate is None and DiarySettings.from_environment().reflection_enabled:
+        from harness.cognitive.diary_reflection import worker
+        saved = worker(host).store.get("reflection_state", "decision:" + request.entry_id)
+        if saved:
+            candidate = DiaryDecision.model_validate(saved)
     if candidate is None or candidate.decision_id != request.decision_id or candidate.action != "write":
         raise ValueError("diary_commit_requires_prepared_write")
     if candidate.text != request.text or hashlib.sha256(candidate.text.encode("utf-8")).hexdigest() != request.body_hash:
         raise ValueError("diary_commit_text_mismatch")
+    if candidate.reflection:
+        from harness.cognitive.diary_reflection import worker
+        w = worker(host)
+        job = w.store.get("reflection_jobs", candidate.reflection["job_id"])
+        if job is None or not await asyncio.to_thread(w.valid, job, check_model=False):
+            raise ValueError("diary_sources_changed")
     original = DiaryOriginal(
         entry_id=request.entry_id, decision_id=request.decision_id, text=request.text,
         written_at=request.written_at, body_hash=request.body_hash,
@@ -273,5 +294,8 @@ async def commit(host, command, *, diagnostic=None):
         if production and production.get("cognitive_signature") != digest((host.chat.active_preset_id, host.chat.memory.get_persona().model_dump(mode="json"))):
             raise ValueError("production_snapshot_superseded")
         stored = await asyncio.to_thread(host.shared.commit_diary_entry, original)
+    if candidate.reflection:
+        job["status"] = "committed"
+        w.store.save_job(job)
     return {"entry_id": request.entry_id, "decision_id": request.decision_id,
             "shared_record_id": stored.record.record_id, "memory_created": stored.created}

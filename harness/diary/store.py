@@ -30,6 +30,7 @@ class DiaryStore:
             )"""
         )
         self.db.execute("CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+        self.db.execute("CREATE TABLE IF NOT EXISTS reflection_evidence(entry_id TEXT PRIMARY KEY, payload TEXT NOT NULL)")
         self.db.commit()
 
     @property
@@ -56,7 +57,7 @@ class DiaryStore:
         row = self.db.execute("SELECT * FROM entries WHERE decision_id=?", (decision_id,)).fetchone()
         return dict(row) if row else None
 
-    def put(self, original: DiaryOriginal, *, day: str, revision: int) -> dict:
+    def put(self, original: DiaryOriginal, *, day: str, revision: int, reflection: dict | None = None) -> dict:
         payload = {
             "entry_id": original.entry_id,
             "decision_id": original.decision_id,
@@ -84,7 +85,32 @@ class DiaryStore:
                  payload["body"], payload["body_hash"], payload["homeostatic_summary_json"],
                  payload["source_event_id"], payload["revision"]),
             )
+            if reflection:
+                self.db.execute("INSERT INTO reflection_evidence VALUES (?,?)", (original.entry_id, json.dumps(reflection, ensure_ascii=False)))
         return payload
+
+    def reflection_basis(self) -> dict:
+        rows = self.db.execute("SELECT entry_id,written_at,body FROM entries ORDER BY written_at DESC LIMIT 3").fetchall()
+        if not rows:
+            return {"recent": []}
+        latest = rows[0]
+        evidence = self.db.execute("SELECT payload FROM reflection_evidence WHERE entry_id=?", (latest["entry_id"],)).fetchone()
+        result = {"entry_id": latest["entry_id"], "written_at": latest["written_at"],
+                  "recent": [{"entry_id": r["entry_id"], "written_at": r["written_at"], "text": r["body"]} for r in rows]}
+        if evidence:
+            result["coverage"] = json.loads(evidence[0])["coverage"]
+        return result
+
+    def reflection_status(self):
+        basis = self.reflection_basis()
+        return {"last_entry_id": basis.get("entry_id"), "coverage": basis.get("coverage")}
+
+    def reflection_evidence(self, entry_id):
+        row = self.db.execute("SELECT payload FROM reflection_evidence WHERE entry_id=?", (entry_id,)).fetchone()
+        return json.loads(row[0]) if row else None
+
+    def contains_body(self, text):
+        return self.db.execute("SELECT 1 FROM entries WHERE trim(body)=? LIMIT 1", (text.strip(),)).fetchone() is not None
 
     def public_rows(self, *, day: str | None = None, limit: int = 30) -> list[dict]:
         if day:

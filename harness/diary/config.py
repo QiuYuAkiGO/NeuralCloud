@@ -12,6 +12,7 @@ class DiarySettings(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     autonomous_enabled: bool = False
+    reflection_enabled: bool = False
     window_local: str = "21:00-02:00"
     max_entries_per_day: int = Field(default=1, ge=1, le=8)
     quiet_seconds: int = Field(default=60, ge=30, le=3600)

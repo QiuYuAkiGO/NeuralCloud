@@ -221,7 +221,10 @@ class CognitiveServiceHost:
 
     async def health(self):
         health = await self.adapter.health()
+        diary_worker = getattr(self, "diary_reflection", None)
+        diary_status = await asyncio.to_thread(lambda: diary_worker.store.status()) if diary_worker is not None else {"enabled": False}
         return health.model_copy(update={"detail": {**health.detail, "qq_memory": self.qq_memory.status(),
+            "diary_reflection": diary_status,
             "daily_revision": self.daily_revision.status(),
             "production_memory_recovery": self.production_memory_recovery_status(),
             "qq_turn_commands": ["PrepareQQTurn", "ResumeQQResponse"]}})
@@ -754,6 +757,8 @@ class CognitiveServiceHost:
             await self._ui_memory_cache.close()
             await self._ui_catalog_cache.close()
             await self.daily_revision.close()
+            if getattr(self, "diary_reflection", None) is not None:
+                await self.diary_reflection.close()
             await self.qq_memory.close()
             await self.adapter.close()
         finally:
@@ -824,6 +829,10 @@ class CognitiveServiceHost:
             await self.recover_production_memory()
             await self.qq_memory.start()
             await self.daily_revision.start()
+            from harness.diary.config import DiarySettings
+            if DiarySettings.from_environment().reflection_enabled:
+                from harness.cognitive.diary_reflection import worker
+                await worker(self).start()
         except BaseException:
             self.owner_lease.release()
             raise

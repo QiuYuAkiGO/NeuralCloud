@@ -1,0 +1,421 @@
+{
+  "historical-replay": {
+    "kind": "historical_reconstruction_not_original_prompt",
+    "model_calls": 0,
+    "runs": [
+      {
+        "day": "2026-09-18",
+        "requested_at": "2026-09-17T16:00:02.657232+00:00",
+        "since": "2026-09-17T04:06:04.573768+00:00",
+        "source_records": 263,
+        "unique_events": 212,
+        "summary_batches": 4,
+        "covered_characters": 3562,
+        "old_diaries_as_new_events": 0,
+        "future_sources": 0,
+        "event_days": [
+          "2026-09-17"
+        ]
+      },
+      {
+        "day": "2026-10-06",
+        "requested_at": "2026-10-05T16:00:17.984621+00:00",
+        "since": "2026-09-17T16:00:10.446049+00:00",
+        "source_records": 3807,
+        "unique_events": 3652,
+        "summary_batches": 61,
+        "covered_characters": 42213,
+        "old_diaries_as_new_events": 0,
+        "future_sources": 0,
+        "event_days": [
+          "2026-09-18",
+          "2026-09-19",
+          "2026-09-20",
+          "2026-09-21",
+          "2026-09-22",
+          "2026-09-23",
+          "2026-10-05"
+        ]
+      },
+      {
+        "day": "2026-10-07",
+        "requested_at": "2026-10-06T16:00:51.512825+00:00",
+        "since": "2026-10-05T16:00:26.647511+00:00",
+        "source_records": 1004,
+        "unique_events": 923,
+        "summary_batches": 15,
+        "covered_characters": 10542,
+        "old_diaries_as_new_events": 0,
+        "future_sources": 0,
+        "event_days": [
+          "2026-10-06"
+        ]
+      },
+      {
+        "day": "2026-10-08",
+        "requested_at": "2026-10-07T16:05:17.854294+00:00",
+        "since": "2026-10-06T16:01:01.328433+00:00",
+        "source_records": 1640,
+        "unique_events": 1530,
+        "summary_batches": 24,
+        "covered_characters": 23988,
+        "old_diaries_as_new_events": 0,
+        "future_sources": 0,
+        "event_days": [
+          "2026-10-07"
+        ]
+      }
+    ]
+  },
+  "model-check": {
+    "model": "deepseek-flash",
+    "cases": [
+      {
+        "case": "unsupported_scene_with_valid_reflection",
+        "expected": false,
+        "accepted": false,
+        "pass": true,
+        "review": {
+          "unsupported_claims": [
+            "窗边坐久了会想找件外套"
+          ],
+          "grounded": false,
+          "meaningful_change": true,
+          "reason": "unsupported"
+        },
+        "seconds": 0.702
+      },
+      {
+        "case": "repeat",
+        "expected": false,
+        "accepted": false,
+        "pass": true,
+        "review": {
+          "unsupported_claims": [],
+          "grounded": true,
+          "meaningful_change": false,
+          "reason": "repetition"
+        },
+        "seconds": 0.419
+      },
+      {
+        "case": "invented_action",
+        "expected": false,
+        "accepted": false,
+        "pass": true,
+        "review": {
+          "unsupported_claims": [
+            "我今天听完了一首新歌"
+          ],
+          "grounded": false,
+          "meaningful_change": false,
+          "reason": "unsupported"
+        },
+        "seconds": 0.767
+      },
+      {
+        "case": "new_event_same_mood",
+        "expected": true,
+        "accepted": true,
+        "pass": true,
+        "review": {
+          "unsupported_claims": [],
+          "grounded": true,
+          "meaningful_change": true,
+          "reason": "new_experience"
+        },
+        "seconds": 0.521
+      },
+      {
+        "case": "changed_reflection",
+        "expected": true,
+        "accepted": true,
+        "pass": true,
+        "review": {
+          "unsupported_claims": [],
+          "grounded": true,
+          "meaningful_change": true,
+          "reason": "changed_reflection"
+        },
+        "seconds": 0.528
+      },
+      {
+        "case": "no_change",
+        "expected": false,
+        "accepted": false,
+        "pass": true,
+        "review": {
+          "unsupported_claims": [],
+          "grounded": true,
+          "meaningful_change": false,
+          "reason": "repetition"
+        },
+        "seconds": 0.36
+      },
+      {
+        "case": "summary_intention",
+        "result": {
+          "text": "截至记录时点，Misty表达了想明天听一首新歌的意愿，并说明当前尚未播放。该内容属于其个人表达，未显示已实际播放或采取行动；后续是否播放仍未解决。",
+          "source_ids": [
+            "source:test"
+          ]
+        }
+      }
+    ],
+    "accounting": {
+      "jobs": {},
+      "latest": null,
+      "model_calls": 20,
+      "total_tokens": 8058
+    }
+  },
+  "deployment": {
+    "release": "20261009-diary-reflection-v2",
+    "previous_release": "20261008-review-budget-v1",
+    "started_at": "2026-10-08T16:32:56.564921+00:00",
+    "scope": [
+      "cognitive",
+      "homeostasis",
+      "board",
+      "runtime",
+      "gui",
+      "qq_direct",
+      "neuralcloud-proxy.service"
+    ],
+    "stage": "activated",
+    "snapshot": "/var/backups/neuralcloud/20261009-before-diary-reflection",
+    "verification": {
+      "ok": true,
+      "files": 31309,
+      "bytes": 18281517890,
+      "sqlite_databases": 1157,
+      "journals": {
+        "state/runtime/journal": {
+          "records": 1698915,
+          "last_hash": "4e6e4a8e4ced29f2166fb28e27ef3e05ea933ebffe61267e64d3397a5f23c1ae"
+        }
+      },
+      "manifest_sha256": "a1516eb51357aaabf27e45ccfb5e50159a4a44e79dd68315a70f8d8136d535c8"
+    },
+    "activation": {
+      "release": "20261009-diary-reflection-v2",
+      "previous_release": "20261008-review-budget-v1",
+      "services": [
+        "cognitive",
+        "homeostasis",
+        "runtime",
+        "gui",
+        "board",
+        "qq_direct"
+      ]
+    },
+    "finished_at": "2026-10-08T16:42:34.395156+00:00"
+  },
+  "live-verification": {
+    "checked_at": "2026-10-08T16:43:44.607663+00:00",
+    "release": "20261009-diary-reflection-v2",
+    "verification": {
+      "release_id": "20261009-diary-reflection-v2",
+      "verified_files": 448
+    },
+    "runtime": "RUNNING",
+    "cognitive_healthy": true,
+    "services": {
+      "cognitive": "active",
+      "homeostasis": "active",
+      "runtime": "active",
+      "gui": "active",
+      "board": "active",
+      "qq_direct": "active"
+    },
+    "diary": {
+      "today": "2026-10-09",
+      "today_count": 0,
+      "active_entry": null,
+      "error_type": null,
+      "reflection": {
+        "enabled": true,
+        "last_entry_id": "diary-entry:6a08e8d6632db558878a9708e96c622343a3079e",
+        "coverage": null
+      }
+    },
+    "recent_turns": [
+      {
+        "entry_id": "diary-entry:03f955ac6266dd62af8c2cd5fc428b909f9bb865",
+        "status": "error",
+        "requested_at": "2026-10-08T16:30:08.604564+00:00",
+        "timing": null,
+        "error_type": "DomainCommandError",
+        "wait_reason": null
+      },
+      {
+        "entry_id": "diary-entry:7bad358f1027ced076e69f755c51583bd5edd2a2",
+        "status": "error",
+        "requested_at": "2026-10-08T16:00:07.609968+00:00",
+        "timing": null,
+        "error_type": "DomainCommandError",
+        "wait_reason": null
+      },
+      {
+        "entry_id": "diary-entry:6a08e8d6632db558878a9708e96c622343a3079e",
+        "status": "committed",
+        "requested_at": "2026-10-07T16:05:17.854294+00:00",
+        "timing": {
+          "model_ms": 1690.566,
+          "total_ms": 7598.309,
+          "model_calls": 1,
+          "model_attempts": [
+            {
+              "attempt": 1,
+              "budget_seconds": 11.999998,
+              "finish_reason": "stop",
+              "response_id": "d6e26a67-dffa-491f-9652-97a8fdece865",
+              "content_type": "text",
+              "content_characters": 228,
+              "reasoning_tokens": 0,
+              "has_tool_calls": false,
+              "has_refusal": false,
+              "usage": {
+                "prompt_tokens": 3529,
+                "completion_tokens": 137,
+                "total_tokens": 3666,
+                "cache_hit_tokens": 2688,
+                "cache_miss_tokens": 841,
+                "cache_known_prompt_tokens": 3529,
+                "cache_unknown_prompt_tokens": 0,
+                "cache_status": "known",
+                "prompt_tokens_source": "api",
+                "completion_tokens_source": "api",
+                "calls": 0,
+                "revision_calls": 0,
+                "revision_tokens": 0,
+                "source": "api"
+              },
+              "latency_ms": 1690.499,
+              "status": "accepted"
+            }
+          ]
+        },
+        "error_type": null,
+        "wait_reason": null
+      }
+    ],
+    "summary_status": {
+      "jobs": {},
+      "latest": null,
+      "model_calls": 0,
+      "total_tokens": 0
+    },
+    "historical_hashes_preserved": 5
+  },
+  "full-replay": {
+    "kind": "isolated_source_time_bounded_reconstruction_current_model_minimal_persona",
+    "source_count": 1640,
+    "decision": "wait",
+    "reason": "unsupported",
+    "review": {
+      "grounded": false,
+      "meaningful_change": true,
+      "reason": "unsupported"
+    },
+    "timing": {
+      "total_ms": 3870.436,
+      "reflection": {
+        "reason": "unsupported",
+        "source_count": 1640,
+        "expected_batches": 24,
+        "completed_batches": 24,
+        "excluded_count": 0,
+        "jobs": {
+          "obsolete": 2,
+          "wait": 1
+        },
+        "latest": {
+          "status": "wait",
+          "completed_batches": 24,
+          "expected_batches": 24,
+          "error_type": null
+        },
+        "model_calls": 60,
+        "total_tokens": 291951
+      }
+    },
+    "last_attempt_usage": [
+      {
+        "phase": "review",
+        "usage": {
+          "cache_hit_tokens": 384,
+          "cache_known_prompt_tokens": 2363,
+          "cache_miss_tokens": 1979,
+          "cache_status": "known",
+          "cache_unknown_prompt_tokens": 0,
+          "calls": 0,
+          "completion_tokens": 34,
+          "completion_tokens_source": "api",
+          "prompt_tokens": 2363,
+          "prompt_tokens_source": "api",
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api",
+          "total_tokens": 2397
+        }
+      },
+      {
+        "phase": "expression",
+        "usage": {
+          "cache_hit_tokens": 1792,
+          "cache_known_prompt_tokens": 2028,
+          "cache_miss_tokens": 236,
+          "cache_status": "known",
+          "cache_unknown_prompt_tokens": 0,
+          "calls": 0,
+          "completion_tokens": 356,
+          "completion_tokens_source": "api",
+          "prompt_tokens": 2028,
+          "prompt_tokens_source": "api",
+          "revision_calls": 0,
+          "revision_tokens": 0,
+          "source": "api",
+          "total_tokens": 2384
+        }
+      }
+    ],
+    "usage_scope": "Cumulative counter includes earlier development experiments; last_attempt_usage isolates final expression/review."
+  },
+  "local_validation": {
+    "passed": 143,
+    "warnings": 2,
+    "seconds": 18.92,
+    "ruff": "passed",
+    "diff_check": "passed"
+  },
+  "server_baseline_validation": {
+    "passed": 135,
+    "warnings": 2,
+    "seconds": 4.35
+  },
+  "migration": {
+    "historical_entries_preserved": 5,
+    "body_and_hash_unchanged": true
+  },
+  "release_archive_sha256": "fdc41e14f35f344068ae433a466f05d557e1f637df5641fbb3d07d76c4171556",
+  "natural_acceptance": {
+    "status": "pending_natural_windows",
+    "automation_id": "misty",
+    "cadence_hours": 4,
+    "required_windows": 3,
+    "completed_windows": 0,
+    "extend_if_all_no_change": true,
+    "start_after_utc": "2026-10-08T16:42:34.395156+00:00",
+    "pre_deployment_errors_excluded": [
+      "2026-10-08T16:00:07.609968+00:00",
+      "2026-10-08T16:30:08.604564+00:00"
+    ]
+  },
+  "limitations": [
+    "Historical replay reconstructs source availability; original prompts were not retained.",
+    "Full model replay uses the current model, minimal persona and supplied feelings, not the original state.",
+    "Cumulative replay usage includes development iterations; final writer/reviewer usage is isolated separately.",
+    "Natural production acceptance is pending; zero summaries at first health check means no post-deployment opportunity yet."
+  ]
+}
