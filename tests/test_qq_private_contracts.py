@@ -117,7 +117,7 @@ def test_private_images_and_text_reach_same_persona_without_group_recall(setup, 
     assert result.outcome == "ready", result.reason
     assert result.addressing == "direct" and result.addressing_source == "verified_private_message"
     assert result.addressing_source_record_ids == [observation.record_id]
-    assert result.prompt_version == "qq-private-turn-taking-v13-referenced-images"
+    assert result.prompt_version == "qq-private-turn-taking-v14-provisional-acceptance"
     assert result.participants == [PEER]
     assert result.source_record_ids == [observation.record_id]
     client = setup[1]

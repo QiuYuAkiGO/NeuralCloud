@@ -30,6 +30,7 @@ from harness.compiler.compiler import (
 from harness.homeostasis.models import HomeostaticInteroceptiveSummary
 from harness.homeostasis.dynamics import AttentionAssessment
 from harness.core.error_notice import ERROR_FALLBACK_REPLY
+from harness.core.conversation_policy import CONVERSATION_ACCEPTANCE_RULES
 from harness.core.ids import new_id
 from harness.core.inference import ContextSegment, MemoryEvidenceContext, ParsedInteraction, TokenUsage
 from harness.llm.client import build_llm_client, deepseek_low_reasoning_options, estimate_chat_usage
@@ -63,8 +64,8 @@ from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace, cla
 from infra.trace.request_spans import trace_scope
 
 
-PROMPT_VERSION = "qq-group-turn-taking-v27-referenced-images"
-PRIVATE_PROMPT_VERSION = "qq-private-turn-taking-v13-referenced-images"
+PROMPT_VERSION = "qq-group-turn-taking-v28-provisional-acceptance"
+PRIVATE_PROMPT_VERSION = "qq-private-turn-taking-v14-provisional-acceptance"
 MAX_GROUP_CONTEXT_CHARACTERS = DEFAULT_QQ_INPUT_TOKEN_BUDGET * 2
 _CONTEXT_BUDGET_REASON = "context_budget_exceeded：模型上下文超过字符预算，本次未生成可发送正文；这不是网络故障或模型 JSON 解析失败。"
 _SENDABLE_SPEAK_OUTCOMES = frozenset({"ready", "error_fallback"})
@@ -117,6 +118,9 @@ _STATIC_PARSE_CACHE: OrderedDict[str, tuple[float, ParsedInteraction]] = Ordered
 _STATIC_PARSE_LOCK = threading.RLock()
 _STATIC_PARSE_CLOCK = time.monotonic
 _REPLY_PLANNING_RULES = (
+    CONVERSATION_ACCEPTANCE_RULES
+    + "necessary_boundary默认null；仅在缺口会实质改变本轮回答时填写。普通自述或作品身份说明没有独立核实，"
+    "本身不构成必要边界；应先用于理解当前话题，不把它规划为必须强调的疑点。"
     "回复计划不得发明自身经历：性格、情绪相似不证明自己有相似生活经历。没有明确自身事实证据时，"
     "可以表达对当前话题的理解、观点或假设，不得要求正文给出‘自己的真实经历’或暗示‘我也有过’。"
     "可选字段attention_assessment描述实际注意经历；无新证据时省略或null。字段topic、unexpectedness(0..1)、meaning(0..1)、"
@@ -227,7 +231,7 @@ _PRIVATE_DRAFT_RULES = (
     + "\n当前明确是一对一私聊，只有 conversation.self_member_id 与 conversation.peer_id。"
     "group_id 中 private:self:peer 只是旧存储字段中的私聊范围，不是群号。不要称对方为群友或假设群内有其他人。"
     "可使用本私聊资料及程序已授权提供的 derived_memory、operator_confirmed_facts，按其来源区分会话。"
-    "跨会话记忆是有出处的历史，不是本私聊的新消息；当前观点需保留暂定性和反例，不编造未提供的经历。"
+    "跨会话记忆是有出处的历史，不是本私聊的新消息；可自然表达当前观点，存在实质反例时保留分歧，不编造未提供的经历。"
 )
 
 

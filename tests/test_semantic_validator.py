@@ -7,6 +7,7 @@ from harness.config import Settings
 from harness.core.inference import CandidateResponse, MemoryEvidenceContext, MemoryEvidenceEntry
 from harness.validator.validator import ResponseValidator
 from harness.validator.semantic import SemanticReview
+from harness.llm.deepseek_structured import StructuredResponseError
 from harness.qq.decision import _QQScopedLLM
 from harness.qq.telemetry import QQDeadline, QQTurnTrace
 
@@ -144,3 +145,51 @@ def test_malformed_report_repair_reuses_candidate_and_evidence_within_original_d
     assert client.calls[0]["user"] == client.calls[1]["user"]
     assert "semantic_quote_not_in_candidate" in client.calls[1]["system"]
     assert all(call["timeout_seconds"] == 8 for call in client.calls)
+
+
+@pytest.mark.parametrize("previous", [None, "network_error"])
+def test_transport_report_repair_uses_existing_two_attempt_budget_and_preserves_older_failures(previous):
+    class Responses(Critic):
+        def complete_json(self, **kwargs):
+            self.calls.append(kwargs)
+            if len(self.calls) == 1:
+                raise StructuredResponseError("deepseek_structured_json_invalid")
+            return report()
+
+    raw = Responses(None)
+    scoped = _QQScopedLLM(raw, deadline=QQDeadline.after(60), trace=QQTurnTrace(), timeout=60)
+    scoped.failed_error_type = previous
+    check = ResponseValidator(settings=Settings(_env_file=None, validator_enabled=True,
+        validator_sample_rate=0, call_log_enabled=False), llm=scoped)
+    assert check.check(CandidateResponse(text="我愿意先相信你。"), persona=None).verdict == "pass"
+    assert len(raw.calls) == 2
+    assert raw.calls[0]["user"] == raw.calls[1]["user"]
+    assert "deepseek_structured_json_invalid" in raw.calls[1]["system"]
+    assert all(call["timeout_seconds"] <= 8 for call in raw.calls)
+    assert scoped.failed_error_type is None if previous is None else scoped.failed_error_type is not None
+
+
+@pytest.mark.parametrize("error,calls", [(StructuredResponseError("deepseek_structured_json_invalid"), 2),
+                                      (StructuredResponseError("deepseek_structured_nontext_response"), 1),
+                                      (httpx.ConnectError("offline"), 1)])
+def test_report_repair_never_exceeds_existing_budget_or_retries_transport_and_refusal(error, calls):
+    check, client = validator(error)
+    result = check.check(CandidateResponse(text="我愿意先相信你。"), persona=None)
+    assert result.verdict == "revise" and result.violations == ["semantic_review_unavailable"]
+    assert len(client.calls) == calls
+
+
+def test_omitted_empty_references_are_neutral_but_never_substantiate_a_fact():
+    from harness.llm.deepseek_structured import validate_response
+    from tests.test_deepseek_structured import body
+
+    item = claim(quote="我愿意了解你", kind="non_factual", status="not_asserted", basis="none")
+    item.pop("evidence_rows")
+    raw = report(claims=[item])
+    validate_response(body(json.dumps(raw)), SemanticReview.model_json_schema())
+    check, client = validator(raw)
+    assert check.check(CandidateResponse(text="我愿意了解你"), persona=None).verdict == "pass"
+    assert len(client.calls) == 1
+    fabricated = report(claims=[{**item, "kind": "shared_history", "status": "supported", "basis": "evidence"}])
+    check, _ = validator(fabricated)
+    assert check.check(CandidateResponse(text="我愿意了解你"), persona=None).verdict == "revise"

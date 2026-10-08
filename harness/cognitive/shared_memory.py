@@ -16,6 +16,7 @@ from threading import Lock
 
 from harness.core.inference import ContextSegment, MemoryEvidenceContext, MemoryEvidenceEntry
 from harness.core.models import WorldState
+from harness.memory.evidence_status import derived_evidence_status
 from harness.memory.shared import SharedActionOutcome, SharedLocalEvent, SharedMemoryContext, SharedMemoryStore, SharedReadScope
 from harness.compiler.compiler import ContextCompiler, estimate_tokens
 from harness.embodiment.qq_contracts import QQReadResult, QQScope
@@ -331,7 +332,7 @@ class CognitiveSharedMemory:
                     text=row.get("current_impression") or row.get("summary", ""), audience="local:main",
                     source_channel=row.get("source_channel"), source_conversation_id=row.get("source_conversation_id"),
                     observed_at=row.get("occurred_at"), source_refs=row.get("source_refs", []),
-                    status="provisional" if row.get("kind") == "person" else "retained_fact", kind="derived_memory")
+                    status=derived_evidence_status(row), kind="derived_memory")
                     for row in payload["entries"]]
                 segment.memory_evidence = MemoryEvidenceContext.bind(audience="local:main", entries=entries, segment=segment)
                 if event.channel == "chat" and event.speaker != "character":

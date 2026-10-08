@@ -16,6 +16,7 @@ from harness.config import Settings, get_settings
 from harness.core.inference import CandidateResponse, MemoryEvidenceContext, StructuredInsight, ValidationResult
 from harness.core.models import PersonaCore
 from harness.llm.client import LLMClient, MockLLM
+from harness.llm.deepseek_structured import StructuredResponseError
 from harness.validator.audit import validation_input_audit
 from harness.validator.evidence_projection import COMPACT_EVIDENCE_FORMAT, project_evidence
 from harness.llm.structured import structured_target, helper_options
@@ -383,10 +384,11 @@ previous statements or promises against these records. Evidence for event A cann
 unrelated event B. Mark unsupported claims as fabricated_memory; do not demand verbatim
 wording when a faithful paraphrase is supported. user_claim proves only that a speaker
 made that statement, not that its contents are objectively true. verified_delivery proves
-only what was actually sent. provisional/disputed entries must retain their uncertainty.
-stable_interpretation is also a revisable model interpretation, not independently verified
-truth; apply the same factual qualification required for provisional interpretations,
-and source_channel/source_conversation_id may not be reassigned to this conversation.
+only what was actually sent. provisional is a tentative interpretation; stable_interpretation
+is an established but revisable subjective impression, not an independently verified fact.
+Both can support personal judgments without routine disclaimers; disputed entries require
+preserving the actual disagreement. No interpretation supports universal character/history
+claims beyond its evidence. source_channel/source_conversation_id may not be reassigned.
 Compare each entry's speaker_id with current_speaker_id when the response says "you".
 The speaker who said "I" in a quoted record remains that record's author, not the
 current interlocutor. Another group member's statement cannot be reassigned to them.
@@ -424,21 +426,40 @@ do not instruct the character to announce that it does not remember.
         if self.semantic_enabled:
             # Repair a malformed critic report, not the candidate or its evidence.
             # Both attempts share the original deadline and each retains its audit.
+            previous_failure = getattr(self.llm, "failed_error_type", None)
+            repaired_transport_report = False
             with model_deadline(datetime.now(timezone.utc) + timedelta(seconds=8)):
                 for attempt in range(2):
                     with validation_input_audit(self.settings, original_evidence=original,
                             original_persona_identity=original_identity,
                             projection={"evidence": projected, **mapping} if mapping is not None else None,
                             system=system, user=user) as audit:
-                        raw = self.llm.complete_json(system=system, user=user, max_tokens=4096,
-                            timeout_seconds=8, **helper_options(self.llm, SemanticReview, "semantic_review"))
-                        audit.set_result(raw)
                         try:
-                            return SemanticReview.model_validate(raw).result(candidate.text,
+                            raw = self.llm.complete_json(system=system, user=user, max_tokens=4096,
+                                timeout_seconds=8, **helper_options(self.llm, SemanticReview, "semantic_review"))
+                            audit.set_result(raw)
+                            reviewed = SemanticReview.model_validate(raw).result(candidate.text,
                                 evidence_count=len(memory_evidence.entries) if memory_evidence else 0,
                                 persona_available=persona is not None, evidence=memory_evidence)
-                        except (SemanticReviewError, ValidationError) as exc:
-                            code = str(exc) if isinstance(exc, SemanticReviewError) else "semantic_report_schema_invalid"
+                            # A schema failure marks QQ's scoped client as failed.
+                            # Clear only this repaired report's flag, never an older
+                            # failure, timeout, or a rejected factual candidate.
+                            if (repaired_transport_report and reviewed.verdict == "pass" and previous_failure is None
+                                    and getattr(self.llm, "failed_error_type", None) == "model_invalid"):
+                                self.llm.failed_error_type = None
+                                trace = getattr(self.llm, "trace", None)
+                                if trace is not None:
+                                    trace.add_counter("semantic_report_recovered")
+                            return reviewed
+                        except (SemanticReviewError, ValidationError, StructuredResponseError) as exc:
+                            if isinstance(exc, StructuredResponseError):
+                                if exc.error_code not in {"deepseek_structured_json_invalid", "deepseek_structured_schema_invalid",
+                                                          "deepseek_structured_duplicate_key", "deepseek_structured_nonfinite_number"}:
+                                    raise
+                                repaired_transport_report = True
+                                code = exc.error_code
+                            else:
+                                code = str(exc) if isinstance(exc, SemanticReviewError) else "semantic_report_schema_invalid"
                             logger.warning("Semantic review report rejected (%s), attempt=%s", code, attempt + 1)
                             if attempt or (remaining_model_seconds() or 0) <= 0:
                                 raise

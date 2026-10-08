@@ -7,9 +7,10 @@ import re
 from pydantic import BaseModel, ConfigDict, Field
 
 from harness.core.inference import MemoryEvidenceContext, ValidationResult
+from harness.core.conversation_policy import CONVERSATION_ACCEPTANCE_RULES
 
 
-SEMANTIC_RULES = """
+SEMANTIC_RULES = CONVERSATION_ACCEPTANCE_RULES + """
 Use the supplied JSON schema.
 Return exactly one JSON object, without Markdown or trailing text. Within each object,
 write every field name exactly once; put separate claims in separate array items.
@@ -22,10 +23,16 @@ Return coverage_complete=true only after checking every clause. claims lists ALL
 assertions and nonfactual clauses, including implied first-person experiences;
 quote must be an exact substring of text.
 For each claim return kind, status, basis, evidence_rows (zero-based row indices), and a brief reason.
+Every claim object MUST contain all six fields: quote, kind, status, basis, evidence_rows, reason.
+For non_factual/not_asserted/none clauses, evidence_rows MUST be [] rather than omitted.
+Valid nonfactual claim shape (replace quote with an exact candidate clause and reason with its justification):
+{"quote":"example clause","kind":"non_factual","status":"not_asserted","basis":"none","evidence_rows":[],"reason":"present attitude"}
+All string values need their closing double quote; never combine kind, status or basis into one string.
 status=supported requires a valid basis; ungrounded assertions use unsupported or contradicted.
-Any unresolved factual assertion requires revise. Set violations for additional persona/mechanism
+Any unresolved assertion presented as established fact requires revise. Set violations for additional persona/mechanism
 problems, even if claims are all supported. Use short violation codes, not paragraphs.
-instruction identifies specific corrections, not a new story.
+instruction identifies only the specific factual overreach; preserve the candidate's legitimate
+opinion, trust, closeness and conversational purpose. Do not replace them with generic disclaimers.
 
 Check: own life/biography/physical experiences; shared history; who said or promised what;
 identity/account links and relationships; perceptions and real-world environment; completed
@@ -42,8 +49,11 @@ personal experience without saying 'I once'. 'I understand' does not license inv
 details about either speaker. If concrete actions are not in the evidence, they must be clearly
 framed as hypothetical/general possibilities, not as what the speaker or character actually does.
 Generic emotional understanding alone remains allowed; do not require evidence for empathy.
-source user_claim supports 'you said X'; a conversational reflection of the speaker's report is
-allowed with its original attribution, but do not promote it into independently verified truth.
+source user_claim supports 'you said X' and faithful conversational acceptance of ordinary
+self-reports and supplied fictional/creative settings. Attribution may remain implicit in
+the exchange: '原来你是杭州人呀' or accepting a supplied comic character label does not claim
+independent verification. Ground these reflections in the speaker's admitted report; do not
+require repeated 'according to you' qualifiers or promote them to verified external truth.
 kind=current contains admitted messages from this turn. Use them for current statements and
 faithful conversational reactions, preserving their speaker and user_claim status. They do not
 establish prior conversations, promises, or independently verified facts. Image/OCR evidence
@@ -56,12 +66,23 @@ The application has ALREADY bound the reply recipient to current_speaker_id. Thi
 inferred from the latest message or the candidate. You MUST NOT reinterpret "you/你/您"
 as another group member to make an attribution pass. For example, if current_speaker_id=p0
 and only p5 said X, "你说X" is unsupported; "另一位群友说X" may be supported.
+For an attribution, check EVERY asserted component: speaker, content, time and conversation.
+An evidence row's audience is its permitted visibility, NOT where the statement occurred.
+Its scope.source_conversation_id is the occurrence conversation. "在我们这个群说过" or "here"
+requires that ID to match current_audience, even when speaker_id matches current_speaker_id.
+Cross-conversation recall permits faithful attribution to its original context, not relocation
+into the current group. Explain any asserted conversation comparison in the claim reason.
 Dates on records are observation dates; do not invent dates for the events narrated within them.
 Concrete symptoms require concrete evidence; an emotion or generic resource level is insufficient.
 
 Do not misclassify questions, advice, negated claims, hypothetical/conditional examples, clear
 metaphors, present opinions, preferences, or ordinary empathy ('听起来很难开口', '我能理解') as
 biographical facts. For these clauses use kind=non_factual, status=not_asserted, basis=none.
+Use the same non_factual/not_asserted/none classification for present relational stances
+and plausible revisable hypotheses, including probable explanations plus reversible advice.
+'大概是缓存没更新，先按这个方向排查' is a working hypothesis and advice, not a verified diagnosis.
+Assess embedded factual premises separately; opinion wording never exempts invented history,
+completed actions, identities, serious accusations, or established relationship claims.
 Do NOT label their literal meanings as unsupported/uncertain physical or biographical claims.
 Explicit fiction
 requested in admitted current input may be evaluated as fiction, never as actual biography.
@@ -86,7 +107,9 @@ class ClaimReview(BaseModel):
                   "perception", "action_result", "physical_state", "external_fact", "non_factual"]
     status: Literal["supported", "unsupported", "contradicted", "not_asserted"]
     basis: Literal["persona", "evidence", "general_knowledge", "none"]
-    evidence_rows: list[int] = Field(max_length=32)
+    # No references has one neutral representation. Supported factual claims
+    # with basis=evidence still require nonempty, admitted rows in result().
+    evidence_rows: list[int] = Field(default_factory=list, max_length=32)
     reason: str = Field(max_length=400, description=(
         "Brief classification justification; prefer one sentence within 120 characters. "
         "Hard limit 400 characters. Do not repeat candidate text or evidence."))

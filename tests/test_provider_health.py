@@ -32,8 +32,18 @@ def test_unknown_stale_failure_and_recovery_never_wait_for_a_probe():
     health.probe()
     assert not health.snapshot()["ready"]
     health.probe()
+    # The deployed health monitor also leases one generation recovery attempt.
+    # Successful /models probes alone must not heal that stronger circuit.
+    if hasattr(health, "begin_attempt"):
+        assert not health.snapshot()["ready"]
+        assert health.begin_attempt(2) is None
+        now[0] += health.failure_cooldown
+        health.probe()
+        epoch = health.begin_attempt(2)
+        assert epoch is not None and health.begin_attempt(2) is None
+        health.succeeded(epoch)
     assert health.snapshot()["ready"]
-    now[0] = 12
+    now[0] += 12
     assert client.complete_chat(MESSAGES) == "备用回复"
     assert len(main.calls) == 2 and len(fallback.calls) == 3
     client.close()

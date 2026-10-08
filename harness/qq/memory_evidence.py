@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 
 from harness.core.inference import MemoryEvidenceEntry
+from harness.memory.evidence_status import derived_evidence_status
 from harness.qq.conversation import conversation_audience, conversation_scope
 from harness.qq.emotion_window import remove_legacy_emotion_parameters
 
@@ -124,9 +125,7 @@ def build_qq_memory_evidence(*, payload: dict, trusted_context, current_observat
     for selected in payload.get("derived_memory", {}).get("entries", []):
         if selected != originals.get(selected["record_id"]):
             raise ValueError("QQ derived memory evidence projection mismatch")
-        status = selected.get("status")
-        status = status if status in {"provisional", "disputed"} else (
-            "provisional" if selected.get("authority") == "misty_tentative_interpretation" else "retained_fact")
+        status = derived_evidence_status(selected)
         refs = [*selected.get("source_refs", []), *selected.get("supporting_episode_ids", [])]
         for field in ("objective_fact", "summary", "current_impression", "first_impression", "value"):
             add(source_id=selected["record_id"], text=selected.get(field), refs=refs,

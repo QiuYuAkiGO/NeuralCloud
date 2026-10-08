@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from copy import deepcopy
 from types import SimpleNamespace
 
 from gui.presets import hydrate_memory
@@ -59,6 +60,25 @@ def test_local_candidates_are_recalled_without_embedding_and_rollback_removes_th
     finally:
         memory.close()
         restored.close()
+
+
+def test_daily_stable_impression_reaches_compiler_without_becoming_a_fact():
+    records = [source(f"stable-{i}", days=i + 1) for i in range(4)]
+    changed = preset()
+    for i, record in enumerate(records):
+        changed = build_revision(changed, run(f"stable-run-{i}", [record]),
+            proposal([record], impressions=[impression(identifier=record.source_id)]), Settings(), now=NOW)
+    memory = memory_from(changed)
+    try:
+        before = deepcopy(memory.qq_memory_state)
+        payload = select_daily_recall(memory, audience="local:main", query="摄影")
+        entries = [entry for entry in payload["entries"] if entry["kind"] == "impression"]
+        assert entries and entries[0]["status"] == "stable_interpretation"
+        segment = daily_context_segment(payload)
+        assert any(entry.status == "stable_interpretation" for entry in segment.memory_evidence.entries)
+        assert memory.qq_memory_state == before
+    finally:
+        memory.close()
 
 
 def test_daily_recall_requires_exact_qq_destination_and_whole_budget():

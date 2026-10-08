@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 
 from harness.core.inference import ContextSegment, MemoryEvidenceContext, MemoryEvidenceEntry
 from harness.core.models import MemoryScope
+from harness.memory.evidence_status import interpretation_status
 
 
 def _size(value):
@@ -106,7 +107,7 @@ def select_daily_recall(memory, *, audience: str, query: str | None = None,
                 raw.get("value") or raw.get("claim"))
         if not text:
             continue
-        status = "disputed" if counters or raw.get("status") == "disputed" or metadata.get("status") == "disputed" else "provisional"
+        status = interpretation_status(raw.get("status"), metadata.get("status"), has_counterevidence=bool(counters))
         entry = {"record_id": identifier, "kind": collection.rstrip("s"),
             "current_impression": text, "status": status,
             "authority": "daily_evidence_bound_interpretation", "author_principal": f"character:{owner_id}",
