@@ -1,0 +1,69 @@
+{
+  "release_id": "20261009-provisional-trust-v2",
+  "compat_release": "20261009-trust-compat-v2",
+  "base_release": "20261009-diary-reflection-v2",
+  "overlay_files": [
+    {
+      "path": "harness/cognitive/shared_memory.py",
+      "before_sha256": "f34baa27d831e52eed536589d9c1f8c602c1dbe5b454a6c498e6a464ee2eddf4",
+      "after_sha256": "cc7bef0cf41083c417452904d0a2d8fdadf642fd5b7e67dac774fbc5d27b97d5"
+    },
+    {
+      "path": "harness/core/conversation_policy.py",
+      "before_sha256": null,
+      "after_sha256": "c9cc266615279a4356f0a5b44aad6fda095769d57dc22153156f787d7e1b8d35"
+    },
+    {
+      "path": "harness/memory/evidence_status.py",
+      "before_sha256": null,
+      "after_sha256": "e5577e5d916159a9f8c3e71decd9cb87b5f4e5c11ef527adcaa1991210efbe6d"
+    },
+    {
+      "path": "harness/memory/revision/recall.py",
+      "before_sha256": "98def529d92ec74feaa00ee291f97b0c775d960f1af3907d12c6b92745e930bb",
+      "after_sha256": "79c5a1eacae2f16d6db5ad81b692492192f6ec0e0fb7334e8c66710c4bd3ee73"
+    },
+    {
+      "path": "harness/qq/decision.py",
+      "before_sha256": "d2c9ca76f9041fe4aaf20dae52b730bd85552e69a2f42b4683a1ed83ebe5e563",
+      "after_sha256": "b7367a3ecbe0b246ed57ee7c389547636bb0db5db60c2e13e1f491206822cb72"
+    },
+    {
+      "path": "harness/qq/draft.py",
+      "before_sha256": "b6eedf512258b7624ee8680e71c3162195e76584ee241cd489e63b49c8135244",
+      "after_sha256": "a42f21e754c441c2dd8faf7f2eb7e205fa64f28cb64b24a7b1e10b6eccc9efcb"
+    },
+    {
+      "path": "harness/qq/memory_evidence.py",
+      "before_sha256": "8085007e0ea726421c7b109de9196ac04fe45424d7a279c8ed124c328b545623",
+      "after_sha256": "743d64723468b0ccf02559f042dd4eb26c66646da189d31e1853f87fffaa5204"
+    },
+    {
+      "path": "harness/validator/semantic.py",
+      "before_sha256": "f11d43cfefaba7bebfee9d7373758095c0f8b41b01fa6342b64ec5a32d88d7b7",
+      "after_sha256": "1ba44391a18eb58e70d1c46fe003d58f40eb5b924ed96df749ee53c7e92d4fb7"
+    },
+    {
+      "path": "harness/validator/validator.py",
+      "before_sha256": "5ee4136a3e4f8fa9fe63a56ad59b5b1e3342d7b9642cb18a24221ef95229caf4",
+      "after_sha256": "b779910ac25761e8850659a4c4fca4ba72792cbfdbf0c3e22dcbf01db3ca7c99"
+    }
+  ],
+  "compat_overlay_files": [
+    {
+      "path": "harness/core/inference.py",
+      "before_sha256": "d2c772005b266b0bd0bafee156929f3f859c7b288440794ae1b50b11dfcf8423",
+      "after_sha256": "c5f35be3364b36c4066cc4cd13267a574730fede751bb09b279066936bb9e481"
+    },
+    {
+      "path": "harness/validator/validator.py",
+      "before_sha256": "58f1047bb49e8edca50a97694e10d01baefc70ec5cbebc831181668579c686b3",
+      "after_sha256": "5ee4136a3e4f8fa9fe63a56ad59b5b1e3342d7b9642cb18a24221ef95229caf4"
+    }
+  ],
+  "preserved": {
+    "preserved_files": 441,
+    "preserved_hash": "6d90edc7dc9f9d2228b12a1f0da4f4cedba446295e07dcc2f299e664dfbbde30"
+  },
+  "source_hash": "dde98bf467f1ce651101a8d2374594c1e2305309c3c132cc3804060da90c26c2"
+}

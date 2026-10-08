@@ -1,0 +1,36 @@
+{
+  "release": "20261009-provisional-trust-v2",
+  "checked_at": "2026-10-08T17:42:45.383398+00:00",
+  "since": "2026-10-08T17:40:15.097744+00:00",
+  "services": {
+    "cognitive": "active",
+    "homeostasis": "active",
+    "runtime": "active",
+    "gui": "active",
+    "board": "active",
+    "qq_direct": "active"
+  },
+  "runtime": "RUNNING",
+  "qq_connected": true,
+  "qq_messages_sent_by_test": 0,
+  "natural_model_requests": 2,
+  "natural_statuses": {
+    "success": 2
+  },
+  "natural_phases": {
+    "emotion_guidance": 1,
+    "goal_decision": 1
+  },
+  "errors": [],
+  "journal_review_or_exception_count": 0,
+  "natural_qq": {
+    "checked_at": "2026-10-08T17:42:45.368636+00:00",
+    "bounded_latest_rows": 200,
+    "decision_count": 0,
+    "outcomes": {}
+  },
+  "limitations": [
+    "Bounded startup observation window; no conclusion about factual false acceptance or excessive qualification rates without natural reply samples.",
+    "Natural conversation content is not exported into Git."
+  ]
+}

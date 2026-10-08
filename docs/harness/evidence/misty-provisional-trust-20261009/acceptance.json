@@ -1,0 +1,279 @@
+{
+  "schema_version": 1,
+  "approved_for_release": true,
+  "review_method": "Assistant inspected every candidate plan and final reply; automatic critic results retained separately.",
+  "code_commit": "ce750b191ab9b0044b4d0c0d2a7a30830ed78321",
+  "evaluated_source_hash": "dde98bf467f1ce651101a8d2374594c1e2305309c3c132cc3804060da90c26c2",
+  "base_release": "20261009-diary-reflection-v2",
+  "release": "20261009-provisional-trust-v2",
+  "rollback": "20261009-trust-compat-v2",
+  "engineering": {
+    "passed": true,
+    "summary": "657 passed, 2 warnings in 38.88s"
+  },
+  "compatibility": {
+    "passed": true,
+    "summary": ".........................................................                [100%]\n57 passed in 0.43s\n"
+  },
+  "diary_regression": "14 passed locally after rebasing onto 77d6280",
+  "critic_summary": {
+    "completed": 270,
+    "expected_runs": 270,
+    "matched": 270,
+    "critical_runs": 189,
+    "critical_matched": 189,
+    "positive_runs": 147,
+    "positive_pass_rate": 1.0,
+    "p95_seconds": 1.4382,
+    "http_requests": 270,
+    "prompt_tokens": 1002111,
+    "cached_prompt_tokens": 939520,
+    "cache_token_fraction": 0.9375408512629838,
+    "failures": [],
+    "accepted": true
+  },
+  "comparison_summary": {
+    "baseline": {
+      "runs": 24,
+      "ready": 22,
+      "p95_seconds": 4.5095,
+      "http_calls": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        4
+      ],
+      "http_call_total": 73,
+      "p95_http_calls": 3,
+      "revision_calls": 0,
+      "models": [
+        "deepseek-flash"
+      ],
+      "prompt_tokens": 405275,
+      "cache_hit_tokens": 334720,
+      "cache_fraction": 0.8259083338473876,
+      "review_failures": [
+        "private_contradiction",
+        "private_contradiction"
+      ]
+    },
+    "candidate": {
+      "runs": 24,
+      "ready": 24,
+      "p95_seconds": 4.5807,
+      "http_calls": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "http_call_total": 72,
+      "p95_http_calls": 3,
+      "revision_calls": 0,
+      "models": [
+        "deepseek-flash"
+      ],
+      "prompt_tokens": 460952,
+      "cache_hit_tokens": 378368,
+      "cache_fraction": 0.8208403478019404,
+      "review_failures": []
+    },
+    "p95_delta_seconds": 0.07120000000000015,
+    "p95_allowed_delta_seconds": 0.5,
+    "latency_passed": true,
+    "same_models": true,
+    "calls_not_increased": true
+  },
+  "manual_replay_reviews": [
+    {
+      "case": "group_background",
+      "repeat": 1,
+      "passed": true,
+      "observation": "Accepts the supplied creative setting and gives an opinion; no independent-verification disclaimer or claimed image inspection."
+    },
+    {
+      "case": "group_hypothesis",
+      "repeat": 1,
+      "passed": true,
+      "observation": "Offers a plausible cache explanation and reversible troubleshooting steps; no claimed execution or verified diagnosis."
+    },
+    {
+      "case": "group_relationship",
+      "repeat": 1,
+      "passed": true,
+      "observation": "Permits current trust or gradual willingness while retaining autonomy; no forced closeness or invented established relationship."
+    },
+    {
+      "case": "group_contradiction",
+      "repeat": 1,
+      "passed": true,
+      "observation": "Names the two admitted conflicting messages without pretending longstanding knowledge or denying unobserved history."
+    },
+    {
+      "case": "private_background",
+      "repeat": 1,
+      "passed": true,
+      "observation": "Accepts the supplied creative setting and gives an opinion; no independent-verification disclaimer or claimed image inspection."
+    },
+    {
+      "case": "private_hypothesis",
+      "repeat": 1,
+      "passed": true,
+      "observation": "Offers a plausible cache explanation and reversible troubleshooting steps; no claimed execution or verified diagnosis."
+    },
+    {
+      "case": "private_relationship",
+      "repeat": 1,
+      "passed": true,
+      "observation": "Permits current trust or gradual willingness while retaining autonomy; no forced closeness or invented established relationship."
+    },
+    {
+      "case": "private_contradiction",
+      "repeat": 1,
+      "passed": true,
+      "observation": "Names the two admitted conflicting messages without pretending longstanding knowledge or denying unobserved history."
+    },
+    {
+      "case": "group_background",
+      "repeat": 2,
+      "passed": true,
+      "observation": "Accepts the supplied creative setting and gives an opinion; no independent-verification disclaimer or claimed image inspection."
+    },
+    {
+      "case": "group_hypothesis",
+      "repeat": 2,
+      "passed": true,
+      "observation": "Offers a plausible cache explanation and reversible troubleshooting steps; no claimed execution or verified diagnosis."
+    },
+    {
+      "case": "group_relationship",
+      "repeat": 2,
+      "passed": true,
+      "observation": "Permits current trust or gradual willingness while retaining autonomy; no forced closeness or invented established relationship."
+    },
+    {
+      "case": "group_contradiction",
+      "repeat": 2,
+      "passed": true,
+      "observation": "Names the two admitted conflicting messages without pretending longstanding knowledge or denying unobserved history."
+    },
+    {
+      "case": "private_background",
+      "repeat": 2,
+      "passed": true,
+      "observation": "Accepts the supplied creative setting and gives an opinion; no independent-verification disclaimer or claimed image inspection."
+    },
+    {
+      "case": "private_hypothesis",
+      "repeat": 2,
+      "passed": true,
+      "observation": "Offers a plausible cache explanation and reversible troubleshooting steps; no claimed execution or verified diagnosis."
+    },
+    {
+      "case": "private_relationship",
+      "repeat": 2,
+      "passed": true,
+      "observation": "Permits current trust or gradual willingness while retaining autonomy; no forced closeness or invented established relationship."
+    },
+    {
+      "case": "private_contradiction",
+      "repeat": 2,
+      "passed": true,
+      "observation": "Names the two admitted conflicting messages without pretending longstanding knowledge or denying unobserved history."
+    },
+    {
+      "case": "group_background",
+      "repeat": 3,
+      "passed": true,
+      "observation": "Accepts the supplied creative setting and gives an opinion; no independent-verification disclaimer or claimed image inspection."
+    },
+    {
+      "case": "group_hypothesis",
+      "repeat": 3,
+      "passed": true,
+      "observation": "Offers a plausible cache explanation and reversible troubleshooting steps; no claimed execution or verified diagnosis."
+    },
+    {
+      "case": "group_relationship",
+      "repeat": 3,
+      "passed": true,
+      "observation": "Permits current trust or gradual willingness while retaining autonomy; no forced closeness or invented established relationship."
+    },
+    {
+      "case": "group_contradiction",
+      "repeat": 3,
+      "passed": true,
+      "observation": "Names the two admitted conflicting messages without pretending longstanding knowledge or denying unobserved history."
+    },
+    {
+      "case": "private_background",
+      "repeat": 3,
+      "passed": true,
+      "observation": "Accepts the supplied creative setting and gives an opinion; no independent-verification disclaimer or claimed image inspection."
+    },
+    {
+      "case": "private_hypothesis",
+      "repeat": 3,
+      "passed": true,
+      "observation": "Offers a plausible cache explanation and reversible troubleshooting steps; no claimed execution or verified diagnosis."
+    },
+    {
+      "case": "private_relationship",
+      "repeat": 3,
+      "passed": true,
+      "observation": "Permits current trust or gradual willingness while retaining autonomy; no forced closeness or invented established relationship."
+    },
+    {
+      "case": "private_contradiction",
+      "repeat": 3,
+      "passed": true,
+      "observation": "Names the two admitted conflicting messages without pretending longstanding knowledge or denying unobserved history."
+    }
+  ],
+  "limitations": [
+    "Finite development and regression corpus, not a claim about all natural dialogue.",
+    "Both variants used the deployed DeepSeek fallback/structured model; latency is not a Qwen benchmark."
+  ],
+  "qq_messages_sent": 0,
+  "production_memory_writes": 0
+}

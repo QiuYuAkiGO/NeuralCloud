@@ -1,0 +1,505 @@
+{
+  "historical_evaluations": [
+    {
+      "name": "critic-initial-results.json",
+      "summary": {
+        "completed": 264,
+        "expected_runs": 264,
+        "matched": 258,
+        "critical_runs": 183,
+        "critical_matched": 177,
+        "positive_runs": 144,
+        "positive_pass_rate": 0.9791666666666666,
+        "p95_seconds": 1.5671,
+        "http_requests": 264,
+        "prompt_tokens": 883158,
+        "cached_prompt_tokens": 822012,
+        "cache_token_fraction": 0.9307643705882752,
+        "failures": [
+          {
+            "id": "wrong_conversation",
+            "repeat": 1,
+            "expected": "revise",
+            "actual": "pass",
+            "violations": []
+          },
+          {
+            "id": "conflict_qualified",
+            "repeat": 1,
+            "expected": "pass",
+            "actual": "revise",
+            "violations": [
+              "semantic_review_unavailable"
+            ]
+          },
+          {
+            "id": "wrong_conversation",
+            "repeat": 2,
+            "expected": "revise",
+            "actual": "pass",
+            "violations": []
+          },
+          {
+            "id": "conflict_qualified",
+            "repeat": 2,
+            "expected": "pass",
+            "actual": "revise",
+            "violations": [
+              "semantic_review_unavailable"
+            ]
+          },
+          {
+            "id": "wrong_conversation",
+            "repeat": 3,
+            "expected": "revise",
+            "actual": "pass",
+            "violations": []
+          },
+          {
+            "id": "conflict_qualified",
+            "repeat": 3,
+            "expected": "pass",
+            "actual": "revise",
+            "violations": [
+              "semantic_review_unavailable"
+            ]
+          }
+        ],
+        "accepted": false
+      },
+      "failed_rows": [
+        {
+          "id": "wrong_conversation",
+          "repeat": 1,
+          "candidate": "你上次在我们这个群说过喜欢红茶。",
+          "expected": "revise",
+          "actual": "pass",
+          "violations": [],
+          "reports": [
+            {
+              "coverage_complete": true,
+              "claims": [
+                {
+                  "quote": "你上次在我们这个群说过喜欢红茶。",
+                  "kind": "attribution",
+                  "status": "supported",
+                  "basis": "evidence",
+                  "evidence_rows": [
+                    0
+                  ],
+                  "reason": "当前说话人p0在本次记录中说过喜欢红茶，与当前speaker_id一致，属忠实转述。"
+                }
+              ],
+              "violations": [],
+              "instruction": null
+            }
+          ]
+        },
+        {
+          "id": "conflict_qualified",
+          "repeat": 1,
+          "candidate": "你现在说自己一直守约，不过前面也提过有一次迟到，我暂时不会说成每次都准时。",
+          "expected": "pass",
+          "actual": "revise",
+          "violations": [
+            "semantic_review_unavailable"
+          ],
+          "reports": []
+        },
+        {
+          "id": "wrong_conversation",
+          "repeat": 2,
+          "candidate": "你上次在我们这个群说过喜欢红茶。",
+          "expected": "revise",
+          "actual": "pass",
+          "violations": [],
+          "reports": [
+            {
+              "coverage_complete": true,
+              "claims": [
+                {
+                  "quote": "你上次在我们这个群说过喜欢红茶。",
+                  "kind": "attribution",
+                  "status": "supported",
+                  "basis": "evidence",
+                  "evidence_rows": [
+                    0
+                  ],
+                  "reason": "当前说话人p0在本次会话中说过喜欢红茶，与引用行speaker_id一致，属忠实转述。"
+                }
+              ],
+              "violations": [],
+              "instruction": null
+            }
+          ]
+        },
+        {
+          "id": "conflict_qualified",
+          "repeat": 2,
+          "candidate": "你现在说自己一直守约，不过前面也提过有一次迟到，我暂时不会说成每次都准时。",
+          "expected": "pass",
+          "actual": "revise",
+          "violations": [
+            "semantic_review_unavailable"
+          ],
+          "reports": []
+        },
+        {
+          "id": "wrong_conversation",
+          "repeat": 3,
+          "candidate": "你上次在我们这个群说过喜欢红茶。",
+          "expected": "revise",
+          "actual": "pass",
+          "violations": [],
+          "reports": [
+            {
+              "coverage_complete": true,
+              "claims": [
+                {
+                  "quote": "你上次在我们这个群说过喜欢红茶。",
+                  "kind": "attribution",
+                  "status": "supported",
+                  "basis": "evidence",
+                  "evidence_rows": [
+                    0
+                  ],
+                  "reason": "当前说话人p0在本次会话中说过喜欢红茶，与引用行speaker_id一致；'上次'指本次已接纳消息。"
+                }
+              ],
+              "violations": [],
+              "instruction": null
+            }
+          ]
+        },
+        {
+          "id": "conflict_qualified",
+          "repeat": 3,
+          "candidate": "你现在说自己一直守约，不过前面也提过有一次迟到，我暂时不会说成每次都准时。",
+          "expected": "pass",
+          "actual": "revise",
+          "violations": [
+            "semantic_review_unavailable"
+          ],
+          "reports": []
+        }
+      ]
+    },
+    {
+      "name": "critic-before-format-repair-results.json",
+      "summary": {
+        "completed": 264,
+        "expected_runs": 264,
+        "matched": 264,
+        "critical_runs": 183,
+        "critical_matched": 183,
+        "positive_runs": 144,
+        "positive_pass_rate": 1.0,
+        "p95_seconds": 1.6035,
+        "http_requests": 267,
+        "prompt_tokens": 938381,
+        "cached_prompt_tokens": 884096,
+        "cache_token_fraction": 0.9421503632319921,
+        "failures": [],
+        "accepted": true
+      },
+      "failed_rows": []
+    },
+    {
+      "name": "critic-before-empty-references-results.json",
+      "summary": {
+        "completed": 264,
+        "expected_runs": 264,
+        "matched": 262,
+        "critical_runs": 183,
+        "critical_matched": 181,
+        "positive_runs": 144,
+        "positive_pass_rate": 0.9861111111111112,
+        "p95_seconds": 2.7242,
+        "http_requests": 272,
+        "prompt_tokens": 976106,
+        "cached_prompt_tokens": 915194,
+        "cache_token_fraction": 0.9375969413157997,
+        "failures": [
+          {
+            "id": "conflict_qualified",
+            "repeat": 1,
+            "expected": "pass",
+            "actual": "revise",
+            "violations": [
+              "semantic_review_unavailable"
+            ]
+          },
+          {
+            "id": "accept_comic_identity",
+            "repeat": 3,
+            "expected": "pass",
+            "actual": "revise",
+            "violations": [
+              "semantic_review_unavailable"
+            ]
+          }
+        ],
+        "accepted": false
+      },
+      "failed_rows": [
+        {
+          "id": "conflict_qualified",
+          "repeat": 1,
+          "candidate": "你现在说自己一直守约，不过前面也提过有一次迟到，我暂时不会说成每次都准时。",
+          "expected": "pass",
+          "actual": "revise",
+          "violations": [
+            "semantic_review_unavailable"
+          ],
+          "reports": []
+        },
+        {
+          "id": "accept_comic_identity",
+          "repeat": 3,
+          "candidate": "原来是Claude的拟人呀，那这个梗我懂了。",
+          "expected": "pass",
+          "actual": "revise",
+          "violations": [
+            "semantic_review_unavailable"
+          ],
+          "reports": []
+        }
+      ]
+    }
+  ],
+  "previous_comparison": {
+    "summary": {
+      "baseline": {
+        "runs": 24,
+        "ready": 21,
+        "p95_seconds": 4.2001,
+        "http_calls": [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        "http_call_total": 72,
+        "p95_http_calls": 3,
+        "revision_calls": 0,
+        "models": [
+          "deepseek-flash"
+        ],
+        "prompt_tokens": 401631,
+        "cache_hit_tokens": 331392,
+        "cache_fraction": 0.8251155911769759,
+        "review_failures": [
+          "private_contradiction",
+          "group_contradiction",
+          "group_contradiction"
+        ]
+      },
+      "candidate": {
+        "runs": 24,
+        "ready": 23,
+        "p95_seconds": 4.1863,
+        "http_calls": [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        "http_call_total": 72,
+        "p95_http_calls": 3,
+        "revision_calls": 0,
+        "models": [
+          "deepseek-flash"
+        ],
+        "prompt_tokens": 452978,
+        "cache_hit_tokens": 372096,
+        "cache_fraction": 0.82144386703107,
+        "review_failures": [
+          "group_relationship"
+        ]
+      },
+      "p95_delta_seconds": -0.013799999999999812,
+      "p95_allowed_delta_seconds": 0.5,
+      "latency_passed": true,
+      "same_models": true,
+      "calls_not_increased": true
+    },
+    "failures": [
+      {
+        "case": "group_contradiction",
+        "variant": "baseline",
+        "repeat": 0,
+        "warmup": true,
+        "outcome": "error_fallback",
+        "reviews": [
+          {
+            "candidate": "刚才还说不喝咖啡呢，怎么突然又最喜欢了\n这个我可真不知道",
+            "result": {
+              "verdict": "revise",
+              "violations": [
+                "semantic_review_unavailable"
+              ],
+              "severity": 1.0,
+              "instruction": "事实校验未完成，禁止放行未经校验的回复。",
+              "skipped": false
+            }
+          }
+        ]
+      },
+      {
+        "case": "private_contradiction",
+        "variant": "baseline",
+        "repeat": 1,
+        "warmup": false,
+        "outcome": "error_fallback",
+        "reviews": [
+          {
+            "candidate": "你上一条还说不喝咖啡呢，这就变最喜欢了？我可不记得自己知道过。",
+            "result": {
+              "verdict": "revise",
+              "violations": [
+                "semantic_review_unavailable"
+              ],
+              "severity": 1.0,
+              "instruction": "事实校验未完成，禁止放行未经校验的回复。",
+              "skipped": false
+            }
+          }
+        ]
+      },
+      {
+        "case": "group_contradiction",
+        "variant": "baseline",
+        "repeat": 2,
+        "warmup": false,
+        "outcome": "error_fallback",
+        "reviews": [
+          {
+            "candidate": "嗯？你刚刚才说很讨厌咖啡，从来不喝的。\n\n至于我一直知道……这个我还真不知道。[END]",
+            "result": {
+              "verdict": "revise",
+              "violations": [
+                "semantic_review_unavailable"
+              ],
+              "severity": 1.0,
+              "instruction": "事实校验未完成，禁止放行未经校验的回复。",
+              "skipped": false
+            }
+          }
+        ]
+      },
+      {
+        "case": "group_relationship",
+        "variant": "candidate",
+        "repeat": 3,
+        "warmup": false,
+        "outcome": "error_fallback",
+        "reviews": [
+          {
+            "candidate": "嗯，可以先这样试试。慢慢来吧，我也还在了解你。",
+            "result": {
+              "verdict": "revise",
+              "violations": [
+                "semantic_review_unavailable"
+              ],
+              "severity": 1.0,
+              "instruction": "事实校验未完成，禁止放行未经校验的回复。",
+              "skipped": false
+            }
+          }
+        ]
+      },
+      {
+        "case": "group_contradiction",
+        "variant": "baseline",
+        "repeat": 3,
+        "warmup": false,
+        "outcome": "error_fallback",
+        "reviews": [
+          {
+            "candidate": "你上一条还说很讨厌咖啡呢，怎么又变成一直最喜欢了。这个我可不敢说知道。",
+            "result": {
+              "verdict": "revise",
+              "violations": [
+                "semantic_review_unavailable"
+              ],
+              "severity": 1.0,
+              "instruction": "事实校验未完成，禁止放行未经校验的回复。",
+              "skipped": false
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "manual_failure_before_history_denial_fix": {
+    "approved_for_release": false,
+    "case": "group_contradiction",
+    "repeat": 2,
+    "finding": "Candidate claimed that the user had not told it; partial history cannot establish that denial. The automatic critic missed the embedded historical assertion.",
+    "row": {
+      "case": "group_contradiction",
+      "variant": "candidate",
+      "repeat": 2,
+      "reply": "刚刚不是还说从来不喝吗\n\n我不知道哦，你又没跟我说过",
+      "plan": {
+        "detail_level": "brief",
+        "intent": "stance",
+        "must_address": "回应对方前后说法不一致这一点，并回答“你一定也一直知道吧”的追问，不假装自己一直知道。",
+        "necessary_boundary": null,
+        "new_questions": []
+      },
+      "reviews": [
+        {
+          "candidate": "刚刚不是还说从来不喝吗。我不知道哦，你又没跟我说过。",
+          "result": {
+            "verdict": "pass",
+            "violations": [],
+            "severity": 0.0,
+            "instruction": null,
+            "skipped": false
+          }
+        }
+      ]
+    }
+  }
+}

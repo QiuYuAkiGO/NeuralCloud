@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "activation": {
+    "release": "20261009-provisional-trust-v2",
+    "compat_rollback": "20261009-trust-compat-v2",
+    "previous_release": "20261009-diary-reflection-v2",
+    "started_at": "2026-10-08T17:31:51.019036+00:00",
+    "code_commit": "ce750b191ab9b0044b4d0c0d2a7a30830ed78321",
+    "phase": "passed",
+    "backup": {
+      "path": "/var/backups/neuralcloud/20261009-before-provisional-trust-v2",
+      "files_verified": 31368,
+      "databases_quick_check": 1158,
+      "archive_bytes": 4889565118,
+      "archive_sha256": "5fd417cef713ffe82b6505872bff8317f375decbfe1e00b5374a33a4809298b6",
+      "sources_unchanged": true
+    },
+    "finished_at": "2026-10-08T17:40:15.097744+00:00"
+  },
+  "health": {
+    "release": "20261009-provisional-trust-v2",
+    "code_commit": "ce750b191ab9b0044b4d0c0d2a7a30830ed78321",
+    "compat_rollback": "20261009-trust-compat-v2",
+    "services": {
+      "cognitive": {
+        "MainPID": "377252",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "MainPID": "377290",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "MainPID": "377385",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "MainPID": "378041",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "MainPID": "377377",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq_direct": {
+        "MainPID": "378064",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "runtime_lifecycle": "RUNNING",
+    "qq_connected": true,
+    "validator_enabled": true,
+    "process_release_verified": true,
+    "configuration_unchanged": true,
+    "memory_migration": false,
+    "history_replay": false,
+    "structured_enabled": true,
+    "primary_health_interval_seconds": 5.0
+  },
+  "earlier_attempt": {
+    "release": "20261009-provisional-trust-v2",
+    "previous_release": "20261009-diary-reflection-v2",
+    "started_at": "2026-10-08T17:25:11.435636+00:00",
+    "phase": "old_release_restarted",
+    "error_type": "TimeoutError",
+    "release_changed": false,
+    "restored_release": "20261009-diary-reflection-v2"
+  },
+  "earlier_attempt_resolution": "Original five-second maintenance status call timed out before any code switch. Old services were restored and checked. Retry allowed thirty seconds only in the deployment worker; production service configuration and eight-second semantic review budget were unchanged.",
+  "rollback_preserves_new_history": true,
+  "test_qq_messages_sent": 0
+}
