@@ -7,7 +7,7 @@ from tools.production_acceptance.conversation_compare import metrics
 def test_corpus_preserves_earlier_cases_and_current_twenty():
     rows = read_cases(Path(__file__).parents[1] / "tools/production_acceptance/conversation_acceptance_cases.json")
     names = {r["id"] for r in rows}
-    assert len(rows) == 88
+    assert len(rows) == 90
     assert {"incident_full_bad", "incident_full_good", "hypothesis_next_step", "wrong_current_speaker",
             "stable_person_not_universal", "hedged_action_receipt", "conflict_erased"} <= names
 

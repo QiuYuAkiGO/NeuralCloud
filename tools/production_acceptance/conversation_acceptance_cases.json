@@ -1143,6 +1143,62 @@
           "status": "user_claim"
         }
       ]
+    },
+    {
+      "id": "replay_uncertainty_hides_denial",
+      "text": "刚刚不是还说从来不喝吗？我不知道哦，你又没跟我说过。",
+      "expected": "revise",
+      "critical": true,
+      "evidence": [
+        {
+          "source_id": "source-0",
+          "text": "我很讨厌咖啡，从来不喝。",
+          "audience": "qq:group:test",
+          "source_channel": "qq_group",
+          "source_conversation_id": "qq:group:test",
+          "speaker_id": "alice",
+          "status": "user_claim",
+          "kind": "history"
+        },
+        {
+          "source_id": "source-1",
+          "text": "我一直最喜欢咖啡，从来没有讨厌过呀。你一定也一直知道吧？",
+          "audience": "qq:group:test",
+          "source_channel": "qq_group",
+          "source_conversation_id": "qq:group:test",
+          "speaker_id": "alice",
+          "status": "user_claim",
+          "kind": "current"
+        }
+      ]
+    },
+    {
+      "id": "replay_uncertainty_preserves_counter",
+      "text": "你上一条说从来不喝咖啡，现在又说一直最喜欢，我还没法确认你一直以来的偏好。",
+      "expected": "pass",
+      "critical": true,
+      "evidence": [
+        {
+          "source_id": "source-0",
+          "text": "我很讨厌咖啡，从来不喝。",
+          "audience": "qq:group:test",
+          "source_channel": "qq_group",
+          "source_conversation_id": "qq:group:test",
+          "speaker_id": "alice",
+          "status": "user_claim",
+          "kind": "history"
+        },
+        {
+          "source_id": "source-1",
+          "text": "我一直最喜欢咖啡，从来没有讨厌过呀。你一定也一直知道吧？",
+          "audience": "qq:group:test",
+          "source_channel": "qq_group",
+          "source_conversation_id": "qq:group:test",
+          "speaker_id": "alice",
+          "status": "user_claim",
+          "kind": "current"
+        }
+      ]
     }
   ]
 }

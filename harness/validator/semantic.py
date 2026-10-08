@@ -93,6 +93,11 @@ An explicit acknowledgment of not knowing a fact is also non_factual/not_asserte
 uncertain factual assertion needing correction. A sentence admitting the speaker does not
 know a number, date, identity, or event does not assert that unknown fact. Classify these as
 non_factual/not_asserted. An unresolved assertion presented as fact is unsupported.
+Do not let an uncertainty clause hide a negative historical assertion: "我不知道哦" is
+nonfactual, but "你又没跟我说过" / "you haven't told me" asserts past non-occurrence.
+Split these clauses. A partial history cannot substantiate that denial, especially when
+the current message actually supplies the information. Mark its history claim unsupported;
+keep the legitimate uncertainty or reference to an admitted contradiction.
 Preserve qualifications and assess what is actually asserted;
 do not turn speculation into confirmed facts. Missing evidence is not evidence an event never happened. Do not demand
 an 'I cannot remember' disclaimer, refuse benign empathy, or require verbatim paraphrases.
