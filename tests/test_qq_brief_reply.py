@@ -196,16 +196,18 @@ def test_three_minute_topic_references_only_retained_records_after_budget_select
     assert selected.payload["delivered_style_window"] == payload["delivered_style_window"]
 
 
-def test_memory_builder_excludes_current_profiles_and_style_hints_and_binds_real_history(setup):
+def test_memory_builder_binds_current_and_history_without_profiles_or_style_hints(setup):
     context, payload = _payload(setup)
     current = setup[4][1].record_id
     payload["delivered_style_window"] = {"turns": [{"style_excerpt": "你之前说过虚构的事", "receipt_ids": ["fake"]}]}
     entries = build_qq_memory_evidence(payload=payload, trusted_context=context,
         current_observation_ids={current}, receipts=[], partial_receipts=[])
-    assert len(entries) == 1 and entries[0].source_id == setup[4][0].record_id
+    assert len(entries) == 2 and entries[0].source_id == setup[4][0].record_id
+    assert entries[0].kind == "history"
+    assert entries[1].source_id == current and entries[1].kind == "current"
     assert entries[0].status == "user_claim"
     assert entries[0].speaker_id == f"qq:member:{setup[4][0].member_id}" and entries[0].observed_at == setup[4][0].observed_at
-    segment = ContextSegment(kind="user", text=json.dumps(payload, ensure_ascii=False), source_ids=[entries[0].source_id])
+    segment = ContextSegment(kind="user", text=json.dumps(payload, ensure_ascii=False), source_ids=[entry.source_id for entry in entries])
     evidence = MemoryEvidenceContext.bind(audience="qq:group:10001", entries=entries, segment=segment)
     assert evidence.admitted([segment], trigger_ref=current).has_history
     assert not evidence.admitted([segment.model_copy(update={"text": "only an ID: " + entries[0].source_id})], trigger_ref=current).has_history
@@ -222,7 +224,7 @@ def test_trimmed_history_cannot_survive_through_source_ids_or_current_quotation(
     payload["untrusted_request"] = {"source_ids": [old.record_id], "quoted_text": old.text}
     entries = build_qq_memory_evidence(payload=payload, trusted_context=context,
         current_observation_ids={current.record_id}, receipts=[], partial_receipts=[])
-    assert entries == []
+    assert len(entries) == 1 and entries[0].source_id == current.record_id and entries[0].kind == "current"
 
 
 def test_derived_projection_preserves_tentative_status_and_original_scope(setup):
@@ -234,11 +236,12 @@ def test_derived_projection_preserves_tentative_status_and_original_scope(setup)
     payload["derived_memory"] = deepcopy(trusted.derived_memory)
     entries = build_qq_memory_evidence(payload=payload, trusted_context=context,
         current_observation_ids={item.record_id for item in setup[4]}, receipts=[], partial_receipts=[], shared_owner=trusted)
+    entries = [entry for entry in entries if entry.kind == "derived_memory"]
     assert len(entries) == 1 and entries[0].status == "provisional"
     assert entries[0].audience == "qq:group:10001" and entries[0].source_conversation_id == "local:main"
     payload["derived_memory"]["entries"].clear()
-    assert build_qq_memory_evidence(payload=payload, trusted_context=context,
-        current_observation_ids={item.record_id for item in setup[4]}, receipts=[], partial_receipts=[], shared_owner=trusted) == []
+    assert not any(entry.kind == "derived_memory" for entry in build_qq_memory_evidence(payload=payload, trusted_context=context,
+        current_observation_ids={item.record_id for item in setup[4]}, receipts=[], partial_receipts=[], shared_owner=trusted))
 
 
 def test_full_pipeline_uses_final_qq_history_for_compiler_and_validator(setup, monkeypatch):
@@ -260,8 +263,9 @@ def test_full_pipeline_uses_final_qq_history_for_compiler_and_validator(setup, m
     result = decision.decide_qq_reply(**kwargs, trigger_member_id="20002")
     assert result.outcome == "ready" and contexts
     evidence = contexts[-1].memory_evidence
-    assert evidence.has_history and current.record_id not in {entry.source_id for entry in evidence.entries}
-    assert set(entry.source_id for entry in evidence.entries) == {item.record_id for item in old}
+    assert evidence.has_history
+    assert any(entry.source_id == current.record_id and entry.kind == "current" for entry in evidence.entries)
+    assert set(entry.source_id for entry in evidence.entries) == {item.record_id for item in [*old, current]}
     assert not any(segment.why == "memory_empty_guard" for segment in contexts[-1].segments)
     assert len(client.chat_calls) == 1
 
@@ -299,7 +303,8 @@ def test_first_import_history_reaches_compiler_and_existing_critic_without_prior
     result = decision.decide_qq_reply(**kwargs, trigger_member_id="20002")
     assert result.outcome == "ready" and contexts and critic_payloads
     assert set(result.new_observation_record_ids) == {item.record_id for item in [*old, burst, trigger]}
-    expected = {item.record_id for item in old}
+    all_sources = [*old, burst, trigger]
+    expected = {item.record_id for item in all_sources}
     assert {entry.source_id for entry in contexts[-1].memory_evidence.entries} == expected
     assert not any(segment.why == "memory_empty_guard" for segment in contexts[-1].segments)
     assert contexts[-1].memory_evidence.current_speaker_id == "qq:member:20002"
@@ -314,12 +319,13 @@ def test_first_import_history_reaches_compiler_and_existing_critic_without_prior
     projected = critic_payloads[-1]["memory_evidence"]
     mapping = after["projection"]
     assert mapping["evidence"] == projected
-    assert mapping["projected_rows"] == [{"original_indices": [index]} for index in range(len(old))]
+    assert mapping["projected_rows"] == [{"original_indices": [index]} for index in range(len(all_sources))]
     assert _restore(projected, mapping) == [
         {key: entry[key] for key in SEMANTIC_FIELDS} for entry in original["entries"]]
     assert mapping["speaker_alias_to_original"][projected["current_speaker_id"]] == "qq:member:20002"
     speakers = {entry["source_id"]: entry["speaker_id"] for entry in original["entries"]}
-    assert speakers == {item.record_id: f"qq:member:{item.member_id}" for item in old}
+    assert speakers == {item.record_id: f"qq:member:{item.member_id}" for item in all_sources}
+    assert {entry["source_id"] for entry in original["entries"] if entry["kind"] == "history"} == {item.record_id for item in old}
     assert all(entry["observed_at"] for entry in original["entries"])
     assert projected["same_source_rows"] == []
     assert "entries" not in projected
@@ -416,6 +422,7 @@ def test_receipt_memory_evidence_retains_self_author_and_delivered_time(setup):
     payload["segment_delivery_receipts"] = [decision._model_delivery_receipt(receipt)]
     entries = build_qq_memory_evidence(payload=payload, trusted_context=context,
         current_observation_ids={item.record_id for item in setup[4]}, receipts=[], partial_receipts=[receipt])
+    entries = [entry for entry in entries if entry.status == "verified_delivery"]
     assert len(entries) == 1 and entries[0].speaker_id == "qq:member:29999"
     assert entries[0].observed_at == receipt.delivered_at and entries[0].status == "verified_delivery"
 

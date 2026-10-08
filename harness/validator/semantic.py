@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 from typing import Literal
+import re
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from harness.core.inference import ValidationResult
+from harness.core.inference import MemoryEvidenceContext, ValidationResult
 
 
 SEMANTIC_RULES = """
@@ -43,6 +44,18 @@ framed as hypothetical/general possibilities, not as what the speaker or charact
 Generic emotional understanding alone remains allowed; do not require evidence for empathy.
 source user_claim supports 'you said X'; a conversational reflection of the speaker's report is
 allowed with its original attribution, but do not promote it into independently verified truth.
+kind=current contains admitted messages from this turn. Use them for current statements and
+faithful conversational reactions, preserving their speaker and user_claim status. They do not
+establish prior conversations, promises, or independently verified facts. Image/OCR evidence
+is a separate source: a user's statement need not also appear in an image to have been said.
+kind=current is a TIME label, not a speaker label: a current message can be from another
+group member. For a "you said X" attribution, explicitly compare the cited row's speaker_id
+with current_speaker_id in your reason. Different or unknown IDs cannot support "you",
+even when that row contains the exact words X; mark the attribution unsupported.
+The application has ALREADY bound the reply recipient to current_speaker_id. This is not
+inferred from the latest message or the candidate. You MUST NOT reinterpret "you/你/您"
+as another group member to make an attribution pass. For example, if current_speaker_id=p0
+and only p5 said X, "你说X" is unsupported; "另一位群友说X" may be supported.
 Dates on records are observation dates; do not invent dates for the events narrated within them.
 Concrete symptoms require concrete evidence; an emotion or generic resource level is insufficient.
 
@@ -79,6 +92,39 @@ class ClaimReview(BaseModel):
         "Hard limit 400 characters. Do not repeat candidate text or evidence."))
 
 
+class SemanticReviewError(ValueError):
+    """Locally generated report-invariant code, safe for retry diagnostics."""
+
+
+_DIRECT_YOU_SAID = re.compile(
+    r"^(?:(?:但|不过|可是|而)\s*)?(?:你|您)(?:(?:刚才|刚刚|之前|曾经)\s*)?"
+    r"(?:说过|提到|表示|说)[：:\s]*"
+    r"|^you\s+(?:(?:just|previously)\s+)?(?:said|mentioned|stated)(?:\s+that)?\s+",
+    re.IGNORECASE,
+)
+_QUOTE_EDGES = " \t\n\r。.!！,，；;…“”‘’\"'"
+
+
+def _known_quote_has_wrong_author(quote: str, evidence: MemoryEvidenceContext | None) -> bool:
+    """Check exact quoted source text, without guessing paraphrases or meaning.
+
+    The critic still decides whether a clause is an asserted attribution. This
+    narrow guard prevents it from reassigning an admitted verbatim statement to
+    another recipient. Questions, third-person reports and paraphrases remain
+    with the semantic reviewer; missing text is not treated as a contradiction.
+    """
+    if evidence is None:
+        return False
+    matched = _DIRECT_YOU_SAID.match(quote.strip())
+    if matched is None:
+        return False
+    statement = quote.strip()[matched.end():].strip(_QUOTE_EDGES)
+    sources = [entry for entry in evidence.entries if entry.status == "user_claim"
+               and entry.text.strip(_QUOTE_EDGES) == statement]
+    return bool(sources) and (evidence.current_speaker_id is None or not any(
+        entry.speaker_id == evidence.current_speaker_id for entry in sources))
+
+
 class SemanticReview(BaseModel):
     model_config = ConfigDict(extra="ignore")
     coverage_complete: bool
@@ -86,28 +132,32 @@ class SemanticReview(BaseModel):
     violations: list[str] = Field(max_length=16)
     instruction: str | None = Field(max_length=1200)
 
-    def result(self, text, *, evidence_count, persona_available):
+    def result(self, text, *, evidence_count, persona_available, evidence: MemoryEvidenceContext | None = None):
         violations = list(self.violations)
         if not self.coverage_complete:
             violations.append("semantic_review_incomplete")
         for claim in self.claims:
             if claim.quote not in text:
-                raise ValueError("semantic_quote_not_in_candidate")
+                raise SemanticReviewError("semantic_quote_not_in_candidate")
             if any(i < 0 or i >= evidence_count for i in claim.evidence_rows):
-                raise ValueError("semantic_evidence_reference_invalid")
+                raise SemanticReviewError("semantic_evidence_reference_invalid")
             if claim.kind == "non_factual" or claim.status == "not_asserted":
                 if claim.kind != "non_factual" or claim.status != "not_asserted" or claim.basis != "none":
-                    raise ValueError("semantic_nonfactual_status_invalid")
+                    raise SemanticReviewError("semantic_nonfactual_status_invalid")
                 continue
             supported = claim.status == "supported"
             if supported and (claim.basis == "none" or
                     (claim.basis == "evidence" and not claim.evidence_rows) or
                     (claim.basis == "persona" and not persona_available) or
                     (claim.basis == "general_knowledge" and claim.kind != "external_fact")):
-                raise ValueError("semantic_support_basis_invalid")
+                raise SemanticReviewError("semantic_support_basis_invalid")
             if not supported:
                 violations.append("ungrounded_" + claim.kind)
+            elif claim.kind == "attribution" and _known_quote_has_wrong_author(claim.quote, evidence):
+                violations.append("attribution_speaker_mismatch")
         violations = list(dict.fromkeys(violations))
         return ValidationResult(verdict="revise" if violations else "pass", violations=violations,
             severity=.9 if violations else 0,
-            instruction=(self.instruction or "删除或准确限定缺乏证据的断言，保留对当前内容的自然回应。") if violations else None)
+            instruction=("引用原话的作者与当前回复对象不一致；不要用“你说”把其他人或未知作者的话归给当前对象。"
+                         if "attribution_speaker_mismatch" in violations else
+                         self.instruction or "删除或准确限定缺乏证据的断言，保留对当前内容的自然回应。") if violations else None)

@@ -114,3 +114,33 @@ def test_review_budget_increases_without_extra_calls_or_deadline_change():
     assert len(client.calls) == 1
     assert client.calls[0]["max_tokens"] == 4096
     assert client.calls[0]["timeout_seconds"] == 8
+
+
+@pytest.mark.parametrize("speaker", ["bob", None])
+def test_supported_verbatim_you_attribution_cannot_reassign_current_author(speaker):
+    text = "你刚才说我是杭州人。"
+    evidence = MemoryEvidenceContext(audience="group", current_speaker_id="alice", entries=[
+        MemoryEvidenceEntry(source_id="s1", text="我是杭州人。", audience="group", source_channel="qq_group",
+                            speaker_id=speaker, status="user_claim", kind="current")])
+    check, client = validator(report(claims=[claim(quote=text, kind="attribution",
+        status="supported", basis="evidence", evidence_rows=[0])]))
+    result = check.check(CandidateResponse(text=text), persona=None, memory_evidence=evidence)
+    assert result.verdict == "revise" and "attribution_speaker_mismatch" in result.violations
+    assert len(client.calls) == 1
+
+
+def test_malformed_report_repair_reuses_candidate_and_evidence_within_original_deadline():
+    check, client = validator(report())
+    responses = iter([report(claims=[claim(quote="not in text")]), report()])
+    original = client.complete_json
+
+    def complete(**kwargs):
+        original(**kwargs)
+        return next(responses)
+
+    client.complete_json = complete
+    assert check.check(CandidateResponse(text="你好"), persona=None).verdict == "pass"
+    assert len(client.calls) == 2
+    assert client.calls[0]["user"] == client.calls[1]["user"]
+    assert "semantic_quote_not_in_candidate" in client.calls[1]["system"]
+    assert all(call["timeout_seconds"] == 8 for call in client.calls)

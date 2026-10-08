@@ -156,7 +156,7 @@ class MemoryEvidenceEntry(BaseModel):
     # Source observation/delivery timestamp, not proof of when narrated events occurred.
     observed_at: AwareDatetime | None = None
     source_refs: list[str] = Field(default_factory=list)
-    status: Literal["user_claim", "verified_delivery", "retained_fact", "provisional", "disputed"]
+    status: Literal["user_claim", "verified_delivery", "retained_fact", "provisional", "disputed", "stable_interpretation"]
     kind: Literal["history", "derived_memory", "current"] = "history"
     # Binds metadata to a complete adapter-owned serialization. A copied ID or
     # quote in user text cannot keep evidence alive after its segment is cut.
@@ -190,8 +190,11 @@ class MemoryEvidenceContext(BaseModel):
         admitted = []
         for entry in self.entries:
             segment = by_digest.get(entry.segment_sha256)
-            if (entry.audience != self.audience or entry.kind == "current"
-                    or trigger_ref in {entry.source_id, *entry.source_refs}
+            # Current source records ground replies to this turn, but never
+            # establish past interactions or independently verified facts.
+            if (entry.audience != self.audience
+                    or (entry.kind == "current" and entry.status != "user_claim")
+                    or (entry.kind != "current" and trigger_ref in {entry.source_id, *entry.source_refs})
                     or segment is None or entry.source_id not in segment.source_ids):
                 continue
             # JSON quotes/newlines must be decoded before checking completeness.

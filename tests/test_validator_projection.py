@@ -123,6 +123,14 @@ def test_unknown_author_and_conversation_remain_unknown_and_are_not_identity_lin
     assert "never infer two null IDs have the same identity" in COMPACT_EVIDENCE_FORMAT
 
 
+def test_stable_interpretation_roundtrips_without_becoming_a_retained_fact():
+    context = _context([_entry(status="stable_interpretation", kind="derived_memory")])
+    restored = MemoryEvidenceContext.model_validate_json(context.model_dump_json())
+    projection, audit = project_evidence(restored)
+    assert _restore(projection, audit)[0]["status"] == "stable_interpretation"
+    assert restored == context
+
+
 def test_provenance_is_private_and_audit_is_complete_without_mutating_source():
     context = _context()
     before = context.model_dump(mode="json")

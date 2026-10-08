@@ -74,11 +74,26 @@ def test_missing_or_wrong_scope_or_current_records_never_authorize_history(damag
             {"kind": "current"} if damage == "current" else {"source_refs": ["current-1"]})
         evidence = evidence.model_copy(update={"entries": [evidence.entries[0].model_copy(update=changes)]})
     context = _compile(segment, evidence, required=required)
-    assert context.memory_evidence.entries == []
+    if damage == "current":
+        assert context.memory_evidence.entries == evidence.entries
+    else:
+        assert context.memory_evidence.entries == []
     assert not context.memory_evidence.has_history
     result = rule_check("你上次说喜欢红茶。", persona=None, insights=[], memory_empty=False,
                         memory_evidence=context.memory_evidence)
     assert "fabricated_memory" in result.violations
+
+
+@pytest.mark.parametrize("status", ["verified_delivery", "retained_fact", "provisional", "disputed", "stable_interpretation"])
+def test_current_records_cannot_grant_non_user_authority(status):
+    segment, evidence = _source(kind="current", status=status)
+    assert _compile(segment, evidence).memory_evidence.entries == []
+
+
+def test_current_user_claim_bound_to_trigger_is_admitted_without_becoming_history():
+    segment, evidence = _source(kind="current", source_id="current-1", refs=["current-1"])
+    result = _compile(segment, evidence).memory_evidence
+    assert result.entries == evidence.entries and not result.has_history
 
 
 def test_source_ids_and_json_claims_do_not_create_metadata():
@@ -112,7 +127,7 @@ class _Character:
         return CandidateResponse(text=self.text)
 
 
-@pytest.mark.parametrize("status", ["user_claim", "verified_delivery", "retained_fact", "provisional", "disputed"])
+@pytest.mark.parametrize("status", ["user_claim", "verified_delivery", "retained_fact", "provisional", "disputed", "stable_interpretation"])
 def test_existing_pipeline_critic_receives_exact_evidence_and_status(service, status):
     segment, evidence = _source(status=status)
     critic = _Critic()
