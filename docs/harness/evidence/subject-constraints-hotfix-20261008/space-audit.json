@@ -1,0 +1,250 @@
+[
+  {
+    "command": [
+      "df",
+      "-B1",
+      "/"
+    ],
+    "exit_code": 0,
+    "output": "文件系统                           1B的块         已用        可用 已用% 挂载点\n/dev/mapper/ubuntu--vg-lv--0 499694788608 461433180160 12803231744   98% /\n"
+  },
+  {
+    "command": [
+      "du",
+      "-x",
+      "-B1",
+      "-d",
+      "1",
+      "/var/backups/neuralcloud"
+    ],
+    "exit_code": 0,
+    "output": "10143641600\t/var/backups/neuralcloud/20261006-background-queues-v1-state\n13260591104\t/var/backups/neuralcloud/20261007-before-emotion-json-diagnostics\n16384\t/var/backups/neuralcloud/qq-parser-recovery-20261005\n16384\t/var/backups/neuralcloud/qq-group-712342021-20261005T150455Z\n1772806144\t/var/backups/neuralcloud/scheduled-20260915T201123139144Z\n73728\t/var/backups/neuralcloud/bounded-history-20261006\n16384\t/var/backups/neuralcloud/structured-routing-20261005\n177696768\t/var/backups/neuralcloud/memory-prepare-20261005\n11367976960\t/var/backups/neuralcloud/20261007-before-structured-memory-hotfix\n3005964288\t/var/backups/neuralcloud/incident-20260916-before-qq-reply-v4\n1139085312\t/var/backups/neuralcloud/qq-version-upgrade-20261005\n16384\t/var/backups/neuralcloud/semantic-health-20261007\n12288\t/var/backups/neuralcloud/image-followup-20261008\n6561792\t/var/backups/neuralcloud/participation-variants-20260917\n9795665920\t/var/backups/neuralcloud/20261005-refactor-123232-state\n1304088576\t/var/backups/neuralcloud/qwen64k-20260915\n11905617920\t/var/backups/neuralcloud/20261007-before-memory-validation-retry\n3444736\t/var/backups/neuralcloud/substance-variants-20260917\n16384\t/var/backups/neuralcloud/20261006-qq-vision-kimi-on-demand-config\n3177508864\t/var/backups/neuralcloud/scheduled-20260916T155153803853Z\n2492121088\t/var/backups/neuralcloud/incident-20260916-before-qq-resilience-v1\n2767790080\t/var/backups/neuralcloud/incident-20260916-before-qq-latency-v2\n13023481856\t/var/backups/neuralcloud/20261007-before-ui-snapshot-hot-v2\n1266794496\t/var/backups/neuralcloud/before-20260915-qq-brief-v4-emotion-v1\n4096\t/var/backups/neuralcloud/20261008-before-subject-constraints\n2029268992\t/var/backups/neuralcloud/incident-20260916-before-context-v1\n2073530368\t/var/backups/neuralcloud/incident-20260916-before-participation-v1\n2906075136\t/var/backups/neuralcloud/incident-20260916-before-qq-response-v3\n12881616896\t/var/backups/neuralcloud/20261007-before-ui-snapshot-hot\n10990100480\t/var/backups/neuralcloud/20261006-shadow-watchdog-repair\n150364160\t/var/backups/neuralcloud/qq-memory-latency-20260920\n2357358592\t/var/backups/neuralcloud/incident-20260916-before-qq-expiry-v1\n9969274880\t/var/backups/neuralcloud/20261005-refactor-130601-state\n1401937920\t/var/backups/neuralcloud/opinion-length-20260915\n1285459968\t/var/backups/neuralcloud/qq-reply-repair-20260915\n13093261312\t/var/backups/neuralcloud/20261007-before-ui-snapshot-integrated\n1372123136\t/var/backups/neuralcloud/validator-off-20260915\n1974255616\t/var/backups/neuralcloud/incident-20260916-before-recovery-v1\n10149896192\t/var/backups/neuralcloud/20261006-background-queues-v2-state\n122880\t/var/backups/neuralcloud/qwen-main-20261005\n9795563520\t/var/backups/neuralcloud/20261005-refactor-120425-state\n13199036416\t/var/backups/neuralcloud/20261007-before-ui-demand\n10934210560\t/var/backups/neuralcloud/20261006-cognitive-v3-before-shadow\n11374825472\t/var/backups/neuralcloud/20261007-before-memory-late-recovery\n12616400896\t/var/backups/neuralcloud/20261007-before-shared-memory-wal\n16384\t/var/backups/neuralcloud/qwen64k-config-20260915\n1345597440\t/var/backups/neuralcloud/qwen-compact-20260915\n218511319040\t/var/backups/neuralcloud\n"
+  },
+  {
+    "command": [
+      "du",
+      "-x",
+      "-B1",
+      "-d",
+      "1",
+      "/opt/neuralcloud"
+    ],
+    "exit_code": 0,
+    "output": "72966144\t/opt/neuralcloud/tooling\n5165383680\t/opt/neuralcloud/releases\n5238353920\t/opt/neuralcloud\n"
+  },
+  {
+    "command": [
+      "du",
+      "-x",
+      "-B1",
+      "-d",
+      "1",
+      "/var/lib/neuralcloud"
+    ],
+    "exit_code": 0,
+    "output": "41500672\t/var/lib/neuralcloud/deployment-jobs\n8192\t/var/lib/neuralcloud/migration\n241942528\t/var/lib/neuralcloud/qq-session\n86016\t/var/lib/neuralcloud/board\n159744\t/var/lib/neuralcloud/token-budget-20261008\n159744\t/var/lib/neuralcloud/operation-progress-v3-20261008\n937984\t/var/lib/neuralcloud/emotion-semantic-probe-20261008\n5550080\t/var/lib/neuralcloud/current-evidence-deploy-20261008\n77447168\t/var/lib/neuralcloud/presets\n122880\t/var/lib/neuralcloud/capability-broker-v3-qa\n91287552\t/var/lib/neuralcloud/semantic-alignment-20261008-v2\n208896\t/var/lib/neuralcloud/reply-failover-20261008\n221937664\t/var/lib/neuralcloud/diagnostics\n172032\t/var/lib/neuralcloud/capability-broker-v2-qa\n176128\t/var/lib/neuralcloud/capability-broker-qa\n147456\t/var/lib/neuralcloud/operation-progress-v2-20261008\n12660166656\t/var/lib/neuralcloud/runtime\n24576\t/var/lib/neuralcloud/budget-increase-20261008\n262144\t/var/lib/neuralcloud/emotion-semantics-deploy-20261008\n613191680\t/var/lib/neuralcloud/qq-direct\n2876764160\t/var/lib/neuralcloud/homeostasis\n147456\t/var/lib/neuralcloud/operation-progress-20261008\n322260992\t/var/lib/neuralcloud/semantic-alignment-20261008\n20480\t/var/lib/neuralcloud/qq-vision-validation-20261006\n20480\t/var/lib/neuralcloud/neuralcloud\n491520\t/var/lib/neuralcloud/release-evidence\n3010560\t/var/lib/neuralcloud/current-evidence-deploy-20261008-v2\n2793472\t/var/lib/neuralcloud/qq-watcher\n466944\t/var/lib/neuralcloud/emotion-cache-probe-20261008\n41279488\t/var/lib/neuralcloud/semantic-alignment-20261008-v3\n217223168\t/var/lib/neuralcloud/cognitive\n265973760\t/var/lib/neuralcloud/semantic-alignment-20261008-v4\n18089959424\t/var/lib/neuralcloud\n"
+  },
+  {
+    "command": [
+      "du",
+      "-x",
+      "-B1",
+      "-d",
+      "1",
+      "/var/log"
+    ],
+    "exit_code": 0,
+    "output": "4096\t/var/log/private\n4096\t/var/log/landscape\n6275072\t/var/log/sysstat\n151552\t/var/log/apt\n1761280\t/var/log/installer\n4096\t/var/log/dist-upgrade\n942546944\t/var/log/journal\n102400\t/var/log/neuralcloud-demo\n333770752\t/var/log/neuralcloud\n90112\t/var/log/unattended-upgrades\n1330802688\t/var/log\n"
+  },
+  {
+    "command": [
+      "du",
+      "-x",
+      "-B1",
+      "-d",
+      "1",
+      "/home/qiuyu/.config/neuralcloud"
+    ],
+    "exit_code": 0,
+    "output": "522276864\t/home/qiuyu/.config/neuralcloud/qq-parser-recovery-20261005\n107208704\t/home/qiuyu/.config/neuralcloud/background-queues-20261006\n45056\t/home/qiuyu/.config/neuralcloud/bounded-history-20261006\n107200512\t/home/qiuyu/.config/neuralcloud/background-queues-20261006-v2\n743849984\t/home/qiuyu/.config/neuralcloud/structured-routing-20261005\n505098240\t/home/qiuyu/.config/neuralcloud/20261005-refactor-120012\n422223872\t/home/qiuyu/.config/neuralcloud/semantic-health-20261007\n89550848\t/home/qiuyu/.config/neuralcloud/image-followup-20261008\n425148416\t/home/qiuyu/.config/neuralcloud/20261005-refactor-113401\n272289792\t/home/qiuyu/.config/neuralcloud/20261005-refactor-123232\n156483584\t/home/qiuyu/.config/neuralcloud/20261005-refactor-115612\n197681152\t/home/qiuyu/.config/neuralcloud/20261005-refactor-114851\n42545152\t/home/qiuyu/.config/neuralcloud/cognitive-v3-shadow\n225280\t/home/qiuyu/.config/neuralcloud/semantic-eval-private\n1863217152\t/home/qiuyu/.config/neuralcloud/memory-optimization-20261005\n1157177344\t/home/qiuyu/.config/neuralcloud/20261005-refactor-113933\n462569472\t/home/qiuyu/.config/neuralcloud/20261005-refactor-130601\n1310334976\t/home/qiuyu/.config/neuralcloud/20261005-refactor-121727\n246214656\t/home/qiuyu/.config/neuralcloud/20261005-refactor-120425\n8631382016\t/home/qiuyu/.config/neuralcloud\n"
+  },
+  {
+    "deployment": {
+      "phase": "backing_up_stopped_state",
+      "started_at": "2026-10-08T14:30:54.914420+00:00"
+    }
+  },
+  {
+    "command": [
+      "du",
+      "-x",
+      "-B1",
+      "-d",
+      "1",
+      "/"
+    ],
+    "exit_code": 0,
+    "output": "4096\t/cdrom\n4096\t/bin.usr-is-merged\n731762688\t/tmp\n4096\t/lib.usr-is-merged\n140875255808\t/home\n7049216\t/etc\n6534205440\t/opt\n248092065792\t/var\n54877827072\t/usr\n16384\t/lost+found\n187854848\t/root\n8192\t/snap\n4096\t/sbin.usr-is-merged\n8192\t/mnt\n4096\t/media\n2745188352\t/srv\n462641205248\t/\n"
+  },
+  {
+    "command": [
+      "du",
+      "-x",
+      "-B1",
+      "-d",
+      "1",
+      "/home/qiuyu"
+    ],
+    "exit_code": 0,
+    "output": "23437312\t/home/qiuyu/.oh-my-zsh.broken\n10614800384\t/home/qiuyu/neuralcloud-production-acceptance-20260922\n909864960\t/home/qiuyu/sell\n294092800\t/home/qiuyu/data\n4096\t/home/qiuyu/CodeWorkspace\n1566990336\t/home/qiuyu/.cache\n2252169216\t/home/qiuyu/Barotrauma\n203702272\t/home/qiuyu/steamcmd\n1446035456\t/home/qiuyu/SCP5\n32768\t/home/qiuyu/.agentmemory\n17436672\t/home/qiuyu/emotion-source-20260917\n12914688\t/home/qiuyu/neuralcloud-incident-20260916\n1081344\t/home/qiuyu/neuralcloud-repair-20260915\n8906706944\t/home/qiuyu/.config\n2901868544\t/home/qiuyu/neuralcloud-migration\n35791364096\t/home/qiuyu/neuralcloud-evals\n7741440\t/home/qiuyu/downloads\n16384\t/home/qiuyu/.ssh\n18149376\t/home/qiuyu/board-repair-source-20260917\n23588864\t/home/qiuyu/.oh-my-zsh\n17436672\t/home/qiuyu/board-repair-source-v2-20260917\n442368\t/home/qiuyu/traces\n327315456\t/home/qiuyu/pvz\n133439488\t/home/qiuyu/Zomboid\n793956352\t/home/qiuyu/Napcat\n704512\t/home/qiuyu/.deepseek\n614350848\t/home/qiuyu/.cargo\n16384\t/home/qiuyu/__pycache__\n899289088\t/home/qiuyu/JobWar4\n8192\t/home/qiuyu/.iii\n12783616\t/home/qiuyu/.claude-server-commander\n17563648\t/home/qiuyu/board-repair-source-v3-20260917\n9841721344\t/home/qiuyu/Steam\n1462538240\t/home/qiuyu/.rustup\n172093440\t/home/qiuyu/napcat\n319070208\t/home/qiuyu/neuralcloud-evidence-v2-final-20260922\n72785920\t/home/qiuyu/.dotnet\n24576\t/home/qiuyu/.openclaw\n352944128\t/home/qiuyu/neuralcloud-qq-fix-retest-20260922-v1\n8192\t/home/qiuyu/.vim\n16825286656\t/home/qiuyu/createAstr\n36864\t/home/qiuyu/deepseek-tui\n8593408\t/home/qiuyu/neuralcloud-qq-perf-20260922-v2-ten\n319246336\t/home/qiuyu/neuralcloud-evidence-v2-acceptance-20260922\n16217419776\t/home/qiuyu/HomoRestaurant\n29130752\t/home/qiuyu/.cursor\n760655872\t/home/qiuyu/.local\n356352\t/home/qiuyu/.forge\n45056\t/home/qiuyu/.ollama\n12811878400\t/home/qiuyu/PowerOfWord\n1912832\t/home/qiuyu/neuralcloud-qwen64k-20260915\n2566070272\t/home/qiuyu/.npm\n17436672\t/home/qiuyu/participation-restore-source-20260917-v2\n17428480\t/home/qiuyu/participation-restore-source-20260917\n1043836928\t/home/qiuyu/.nvm\n140824920064\t/home/qiuyu\n"
+  },
+  {
+    "command": [
+      "du",
+      "-x",
+      "-B1",
+      "-d",
+      "1",
+      "/var/lib"
+    ],
+    "exit_code": 0,
+    "output": "561152\t/var/lib/mistyai\n221184\t/var/lib/cloud\n1863680\t/var/lib/neuralcloud-demo-restored\n4096\t/var/lib/private\n4096\t/var/lib/ubuntu-drivers-common\n16384\t/var/lib/grub\n8192\t/var/lib/xfonts\n8192\t/var/lib/landscape\n47783936\t/var/lib/dpkg\n20480\t/var/lib/xml-core\n20480\t/var/lib/neuralcloud-preinstall-state\n4096\t/var/lib/plymouth\n4096\t/var/lib/python\n8192\t/var/lib/boltd\n356352\t/var/lib/snapd\n118784\t/var/lib/ucf\n28672\t/var/lib/pam\n8192\t/var/lib/ubuntu-release-upgrader\n215085056\t/var/lib/apt\n12288\t/var/lib/sgml-base\n2232320\t/var/lib/neuralcloud-demo-before-restore\n4096\t/var/lib/dbus\n12288\t/var/lib/neuralcloud-frp\n4096\t/var/lib/misc\n4096\t/var/lib/udisks2\n1081344\t/var/lib/systemd\n8192\t/var/lib/apport\n8192\t/var/lib/vim\n20480\t/var/lib/update-notifier\n1800814592\t/var/lib/neuralcloud-qq\n4096\t/var/lib/man-db\n4096\t/var/lib/tpm\n4096\t/var/lib/upower\n8192\t/var/lib/xkb\n4096\t/var/lib/git\n4096\t/var/lib/dhcpcd\n8192\t/var/lib/sudo\n8192\t/var/lib/logrotate\n12288\t/var/lib/update-manager\n3903488\t/var/lib/command-not-found\n12288\t/var/lib/misty-observe\n40960\t/var/lib/neuralcloud-proxy\n4096\t/var/lib/libuuid\n4096\t/var/lib/os-prober\n69632\t/var/lib/swcatalog\n3244032\t/var/lib/neuralcloud-demo\n4096\t/var/lib/usb_modeswitch\n16384\t/var/lib/neuralcloud-proxy-preinstall-20260915\n12288\t/var/lib/locales\n18089959424\t/var/lib/neuralcloud\n2097152\t/var/lib/fwupd\n4096\t/var/lib/unattended-upgrades\n4096\t/var/lib/ieee-data\n20480\t/var/lib/polkit-1\n8192\t/var/lib/shim-signed\n7213056\t/var/lib/ubuntu-advantage\n36864\t/var/lib/PackageKit\n2501300224\t/var/lib/neuralcloud-aux-ollama\n22678347776\t/var/lib\n"
+  },
+  {
+    "command": [
+      "du",
+      "-x",
+      "-B1",
+      "-d",
+      "1",
+      "/root"
+    ],
+    "exit_code": 0,
+    "output": "4096\t/root/.step\n350076928\t/root/.cache\n8192\t/root/.config\n4096\t/root/.ssh\n495616\t/root/.cargo\n577536\t/root/Steam\n8192\t/root/.rustup\n53248\t/root/mistyai-acceptance\n12713984\t/root/.local\n87097344\t/root/.npm\n352256\t/root/mistyai-candidate-v1\n451432448\t/root\n"
+  },
+  {
+    "command": [
+      "du",
+      "-x",
+      "-B1",
+      "-d",
+      "1",
+      "/home/qiuyu/neuralcloud-evals"
+    ],
+    "exit_code": 0,
+    "output": "1627168768\t/home/qiuyu/neuralcloud-evals/qwen3-06b-side-20260923-v1\n24666406912\t/home/qiuyu/neuralcloud-evals/clm-20261005\n28549120\t/home/qiuyu/neuralcloud-evals/nl-gliner-20260923-v1\n2499723264\t/home/qiuyu/neuralcloud-evals/qwen3-instruct-side-20260923-v1\n3105214464\t/home/qiuyu/neuralcloud-evals/gliner2-20260922-jev-alternative\n2742525952\t/home/qiuyu/neuralcloud-evals/qwen35-2b-side-20260923-v1\n1121771520\t/home/qiuyu/neuralcloud-evals/gliner2-20260922-neuralcloud-scenes-v1\n35791364096\t/home/qiuyu/neuralcloud-evals\n"
+  },
+  {
+    "command": [
+      "du",
+      "-x",
+      "-B1",
+      "-d",
+      "1",
+      "/home/qiuyu/neuralcloud-production-acceptance-20260922"
+    ],
+    "exit_code": 0,
+    "output": "2396160\t/home/qiuyu/neuralcloud-production-acceptance-20260922/alt-model-v1\n14704640\t/home/qiuyu/neuralcloud-production-acceptance-20260922/mistyai\n90771456\t/home/qiuyu/neuralcloud-production-acceptance-20260922/pytest-neuralcloud-v2\n2248704\t/home/qiuyu/neuralcloud-production-acceptance-20260922/model-candidate-sonnet46-v1-preflight\n2375680\t/home/qiuyu/neuralcloud-production-acceptance-20260922/model-scenarios-real-v1\n1245184\t/home/qiuyu/neuralcloud-production-acceptance-20260922/model-postfix-real-v1\n2248704\t/home/qiuyu/neuralcloud-production-acceptance-20260922/model-candidate-opus46-v1-preflight\n2560000\t/home/qiuyu/neuralcloud-production-acceptance-20260922/model-candidate-opus46-v1\n454656\t/home/qiuyu/neuralcloud-production-acceptance-20260922/runtime-benchmark-state\n167936\t/home/qiuyu/neuralcloud-production-acceptance-20260922/model-wire-claude-sonnet-5-v1\n2248704\t/home/qiuyu/neuralcloud-production-acceptance-20260922/model-candidate-haiku45-v1-preflight\n2248704\t/home/qiuyu/neuralcloud-production-acceptance-20260922/proxy-main-v1-preflight\n176128\t/home/qiuyu/neuralcloud-production-acceptance-20260922/before-model-gate-v1\n2990080\t/home/qiuyu/neuralcloud-production-acceptance-20260922/native-sonnet46-remaining-five-v1\n516096\t/home/qiuyu/neuralcloud-production-acceptance-20260922/native-sonnet46-counterevidence-forced-tool-v1\n106496\t/home/qiuyu/neuralcloud-production-acceptance-20260922/__pycache__\n383311872\t/home/qiuyu/neuralcloud-production-acceptance-20260922/memory-hot-100000.prepare-oelogwd1\n65306624\t/home/qiuyu/neuralcloud-production-acceptance-20260922/memory-drill\n1245184\t/home/qiuyu/neuralcloud-production-acceptance-20260922/model-diagnostic-real-v1\n2584576\t/home/qiuyu/neuralcloud-production-acceptance-20260922/model-candidate-sonnet46-v1\n8192\t/home/qiuyu/neuralcloud-production-acceptance-20260922/model-access-readonly-v1\n3993600\t/home/qiuyu/neuralcloud-production-acceptance-20260922/pytest-misty-v2\n2379776\t/home/qiuyu/neuralcloud-production-acceptance-20260922/proxy-main-v1\n3989504\t/home/qiuyu/neuralcloud-production-acceptance-20260922/pytest-misty\n497147904\t/home/qiuyu/neuralcloud-production-acceptance-20260922/memory-drill-v3\n1511424\t/home/qiuyu/neuralcloud-production-acceptance-20260922/runtime-benchmark-v2-state\n60887040\t/home/qiuyu/neuralcloud-production-acceptance-20260922/model-candidates-mock-linux-v1\n3946713088\t/home/qiuyu/neuralcloud-production-acceptance-20260922/memory-hot-1000000.prepare-01sfnuqm\n138584064\t/home/qiuyu/neuralcloud-production-acceptance-20260922/neuralcloud\n23711744\t/home/qiuyu/neuralcloud-production-acceptance-20260922/historical-memory-bridge\n97304576\t/home/qiuyu/neuralcloud-production-acceptance-20260922/pytest-neuralcloud-v3\n3981312\t/home/qiuyu/neuralcloud-production-acceptance-20260922/pytest-misty-v3\n321245184\t/home/qiuyu/neuralcloud-production-acceptance-20260922/venv\n2666496\t/home/qiuyu/neuralcloud-production-acceptance-20260922/model-candidate-haiku45-v1\n73748480\t/home/qiuyu/neuralcloud-production-acceptance-20260922/pytest-neuralcloud\n497106944\t/home/qiuyu/neuralcloud-production-acceptance-20260922/memory-drill-v2\n10614800384\t/home/qiuyu/neuralcloud-production-acceptance-20260922\n"
+  },
+  {
+    "command": [
+      "du",
+      "-x",
+      "-B1",
+      "-d",
+      "1",
+      "/usr/local"
+    ],
+    "exit_code": 0,
+    "output": "4954685440\t/usr/local/lib\n61440\t/usr/local/share\n4096\t/usr/local/include\n4096\t/usr/local/etc\n4096\t/usr/local/sbin\n86994944\t/usr/local/bin\n4096\t/usr/local/games\n4096\t/usr/local/src\n8192\t/usr/local/libexec\n5041774592\t/usr/local\n"
+  },
+  {
+    "command": [
+      "du",
+      "-x",
+      "-B1",
+      "-d",
+      "1",
+      "/usr/lib"
+    ],
+    "exit_code": 0,
+    "output": "1024819200\t/usr/lib/x86_64-linux-gnu\n28672\t/usr/lib/linux-boot-probes\n626688\t/usr/lib/rpm\n16384\t/usr/lib/valgrind\n4096\t/usr/lib/gnupg2\n188022784\t/usr/lib/llvm-18\n12288\t/usr/lib/linux-tools\n307200\t/usr/lib/byobu\n8192\t/usr/lib/linux\n53248\t/usr/lib/recovery-mode\n12288\t/usr/lib/nagios\n974848\t/usr/lib/openssh\n18206720\t/usr/lib/grub\n8192\t/usr/lib/software-properties\n8192\t/usr/lib/binfmt.d\n16384\t/usr/lib/hdparm\n4096\t/usr/lib/X11\n8192\t/usr/lib/groff\n36864\t/usr/lib/dpkg\n12292096\t/usr/lib/debug\n19202048\t/usr/lib/linux-tools-6.8.0-142\n102400\t/usr/lib/girepository-1.0\n102400\t/usr/lib/sysstat\n28672\t/usr/lib/ufw\n86016\t/usr/lib/cloud-init\n45056\t/usr/lib/sysusers.d\n4096\t/usr/lib/sasl2\n24576\t/usr/lib/needrestart\n19202048\t/usr/lib/linux-tools-6.8.0-139\n90112\t/usr/lib/os-probes\n4096\t/usr/lib/compat-ld\n4829184\t/usr/lib/shim\n109244416\t/usr/lib/snapd\n40960\t/usr/lib/dbus-1.0\n8192\t/usr/lib/nvidia\n94208\t/usr/lib/dracut\n16384\t/usr/lib/ubuntu-release-upgrader\n335355904\t/usr/lib/modules\n12288\t/usr/lib/rsyslog\n8192\t/usr/lib/finalrd\n45056\t/usr/lib/mime\n28672\t/usr/lib/networkd-dispatcher\n12288\t/usr/lib/NetworkManager\n1122304\t/usr/lib/apt\n56348672\t/usr/lib/python3.12\n372736\t/usr/lib/initramfs-tools\n24576\t/usr/lib/apparmor\n238624768\t/usr/lib/python3\n12288\t/usr/lib/console-setup\n12288\t/usr/lib/ubiquity\n4096\t/usr/lib/udisks2\n7749632\t/usr/lib/systemd\n40960\t/usr/lib/open-iscsi\n77824\t/usr/lib/update-notifier\n674009088\t/usr/lib/firmware\n24576\t/usr/lib/pm-utils\n25595904\t/usr/lib/gcc\n6586368\t/usr/lib/locale\n307200\t/usr/lib/man-db\n16384\t/usr/lib/init\n32768\t/usr/lib/kernel\n4096\t/usr/lib/bfd-plugins\n24576\t/usr/lib/modprobe.d\n32768\t/usr/lib/xorg\n45056\t/usr/lib/dhcpcd\n139264\t/usr/lib/cryptsetup\n11005952\t/usr/lib/git-core\n557056\t/usr/lib/klibc\n12288\t/usr/lib/modules-load.d\n36864\t/usr/lib/lsb\n22241280\t/usr/lib/udev\n4096\t/usr/lib/gold-ld\n8192\t/usr/lib/netplan\n16384\t/usr/lib/sysctl.d\n12288\t/usr/lib/pam.d\n131072\t/usr/lib/tmpfiles.d\n368640\t/usr/lib/multipath\n8192\t/usr/lib/environment.d\n4096\t/usr/lib/pkgconfig\n479232\t/usr/lib/gnupg\n8515584\t/usr/lib/file\n16224256\t/usr/lib/node_modules\n12288\t/usr/lib/initcpio\n151552\t/usr/lib/polkit-1\n24576\t/usr/lib/ssl\n110592\t/usr/lib/ubuntu-advantage\n181661696\t/usr/lib/rustlib\n4096\t/usr/lib/policykit-1\n69632\t/usr/lib/pcrlock.d\n2987524096\t/usr/lib\n"
+  },
+  {
+    "command": [
+      "du",
+      "-x",
+      "-B1",
+      "-d",
+      "1",
+      "/usr"
+    ],
+    "output": "2987524096\t/usr/lib\n46002241536\t/usr/share\n4096\t/usr/lib64\n12861440\t/usr/lib32\n86093824\t/usr/include\n37871616\t/usr/sbin\n286363648\t/usr/bin\n5041774592\t/usr/local\n4096\t/usr/games\n325963776\t/usr/src\n97120256\t/usr/libexec\n54877827072\t/usr\n"
+  },
+  {
+    "command": [
+      "du",
+      "-x",
+      "-B1",
+      "-d",
+      "1",
+      "/home/qiuyu/neuralcloud-evals/clm-20261005"
+    ],
+    "output": "3461406720\t/home/qiuyu/neuralcloud-evals/clm-20261005/wheels\n593920\t/home/qiuyu/neuralcloud-evals/clm-20261005/results-cpu-bf16\n3870720\t/home/qiuyu/neuralcloud-evals/clm-20261005/deps\n40960\t/home/qiuyu/neuralcloud-evals/clm-20261005/__pycache__\n21200125952\t/home/qiuyu/neuralcloud-evals/clm-20261005/models\n176128\t/home/qiuyu/neuralcloud-evals/clm-20261005/vendor\n24666406912\t/home/qiuyu/neuralcloud-evals/clm-20261005\n"
+  },
+  {
+    "ollama": "1318912\t/usr/share/ollama/.cache/mesa_shader_cache\n1318912\t/usr/share/ollama/.cache/radv_builtin_shaders\n2641920\t/usr/share/ollama/.cache\n8192\t/usr/share/ollama/.ollama/cache\n45519745024\t/usr/share/ollama/.ollama/models\n45519765504\t/usr/share/ollama/.ollama\n45522423808\t/usr/share/ollama\n"
+  },
+  {
+    "cleanup_candidates": [
+      {
+        "path": "/var/backups/neuralcloud/20261005-refactor-120425-state",
+        "snapshot_manifest_exists": false,
+        "manifest_exists": true,
+        "modified_at": "2026-10-05T12:06:51.100603+00:00"
+      },
+      {
+        "path": "/var/backups/neuralcloud/20261005-refactor-123232-state",
+        "snapshot_manifest_exists": false,
+        "manifest_exists": true,
+        "modified_at": "2026-10-05T12:34:01.800471+00:00"
+      },
+      {
+        "path": "/var/backups/neuralcloud/20261005-refactor-130601-state",
+        "snapshot_manifest_exists": false,
+        "manifest_exists": true,
+        "modified_at": "2026-10-05T13:07:35.481280+00:00"
+      },
+      {
+        "path": "/var/backups/neuralcloud/20261006-background-queues-v1-state",
+        "snapshot_manifest_exists": false,
+        "manifest_exists": true,
+        "modified_at": "2026-10-05T16:39:31.572237+00:00"
+      },
+      {
+        "path": "/var/backups/neuralcloud/20261006-background-queues-v2-state",
+        "snapshot_manifest_exists": false,
+        "manifest_exists": true,
+        "modified_at": "2026-10-05T16:51:46.326272+00:00"
+      },
+      {
+        "path": "/var/backups/neuralcloud/20261006-cognitive-v3-before-shadow",
+        "snapshot_manifest_exists": false,
+        "manifest_exists": true,
+        "modified_at": "2026-10-06T12:22:06.221262+00:00"
+      },
+      {
+        "path": "/var/backups/neuralcloud/20261006-qq-vision-kimi-on-demand-config",
+        "snapshot_manifest_exists": false,
+        "manifest_exists": false,
+        "modified_at": "2026-10-05T19:07:53.421625+00:00"
+      },
+      {
+        "path": "/var/backups/neuralcloud/20261006-shadow-watchdog-repair",
+        "snapshot_manifest_exists": false,
+        "manifest_exists": true,
+        "modified_at": "2026-10-06T13:49:32.925820+00:00"
+      }
+    ]
+  }
+]

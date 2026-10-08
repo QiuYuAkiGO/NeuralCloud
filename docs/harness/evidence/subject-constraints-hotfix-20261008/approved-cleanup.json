@@ -1,0 +1,43 @@
+{
+  "at": "2026-10-08T14:35:13.653517+00:00",
+  "authorized_exact_paths": [
+    {
+      "path": "/var/backups/neuralcloud/20261005-refactor-120425-state",
+      "allocated_bytes_before": 9795563520,
+      "removed": true
+    },
+    {
+      "path": "/var/backups/neuralcloud/20261005-refactor-123232-state",
+      "allocated_bytes_before": 9795665920,
+      "removed": true
+    },
+    {
+      "path": "/var/backups/neuralcloud/20261005-refactor-130601-state",
+      "allocated_bytes_before": 9969274880,
+      "removed": true
+    },
+    {
+      "path": "/var/backups/neuralcloud/20261006-background-queues-v1-state",
+      "allocated_bytes_before": 10143641600,
+      "removed": true
+    },
+    {
+      "path": "/var/backups/neuralcloud/20261006-background-queues-v2-state",
+      "allocated_bytes_before": 10149896192,
+      "removed": true
+    },
+    {
+      "path": "/var/backups/neuralcloud/20261006-cognitive-v3-before-shadow",
+      "allocated_bytes_before": 10934210560,
+      "removed": true
+    },
+    {
+      "path": "/var/backups/neuralcloud/20261006-shadow-watchdog-repair",
+      "allocated_bytes_before": 10990100480,
+      "removed": true
+    }
+  ],
+  "free_bytes_before": 8247205888,
+  "free_bytes_after": 80025559040,
+  "retained_new_backup": true
+}

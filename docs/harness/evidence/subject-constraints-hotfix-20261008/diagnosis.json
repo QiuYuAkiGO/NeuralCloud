@@ -1,0 +1,375 @@
+{
+  "case": {
+    "job": "11b1e901744eaf04146aec99af8e3ef894dfad8227bfe565fac926e504e9f657",
+    "source_count": 1,
+    "author_count": 1,
+    "all_authors_numeric": true,
+    "self_is_author": false,
+    "self_sources": 0,
+    "independent_sources": 1,
+    "conversation_private": false,
+    "proposal_saved": false
+  },
+  "calls": [
+    {
+      "at": "2026-10-08T13:14:18.173910+00:00",
+      "http_status": 200,
+      "diagnostics": [
+        {
+          "validator": "enum",
+          "path": [
+            "impressions",
+            0,
+            "subject_refs",
+            1
+          ],
+          "missing_fields": []
+        }
+      ],
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      }
+    },
+    {
+      "at": "2026-10-08T13:14:19.701254+00:00",
+      "http_status": 200,
+      "diagnostics": [
+        {
+          "validator": "enum",
+          "path": [
+            "impressions",
+            0,
+            "subject_refs",
+            1
+          ],
+          "missing_fields": []
+        }
+      ],
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      }
+    },
+    {
+      "at": "2026-10-08T13:14:32.058784+00:00",
+      "http_status": 200,
+      "diagnostics": [
+        {
+          "validator": "enum",
+          "path": [
+            "impressions",
+            0,
+            "subject_refs",
+            0
+          ],
+          "missing_fields": []
+        }
+      ],
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      }
+    },
+    {
+      "at": "2026-10-08T13:14:33.444915+00:00",
+      "http_status": 200,
+      "diagnostics": [
+        {
+          "validator": "enum",
+          "path": [
+            "impressions",
+            0,
+            "subject_refs",
+            1
+          ],
+          "missing_fields": []
+        }
+      ],
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      }
+    },
+    {
+      "at": "2026-10-08T13:14:56.006869+00:00",
+      "http_status": 200,
+      "diagnostics": [
+        {
+          "validator": "enum",
+          "path": [
+            "impressions",
+            0,
+            "subject_refs",
+            0
+          ],
+          "missing_fields": []
+        }
+      ],
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      }
+    },
+    {
+      "at": "2026-10-08T13:14:57.973453+00:00",
+      "http_status": 200,
+      "diagnostics": [
+        {
+          "validator": "enum",
+          "path": [
+            "impressions",
+            0,
+            "subject_refs",
+            1
+          ],
+          "missing_fields": []
+        }
+      ],
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      }
+    },
+    {
+      "at": "2026-10-08T13:15:41.583176+00:00",
+      "http_status": 200,
+      "diagnostics": [
+        {
+          "validator": "enum",
+          "path": [
+            "impressions",
+            0,
+            "subject_refs",
+            0
+          ],
+          "missing_fields": []
+        }
+      ],
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      }
+    },
+    {
+      "at": "2026-10-08T13:15:43.444922+00:00",
+      "http_status": 200,
+      "diagnostics": [
+        {
+          "validator": "enum",
+          "path": [
+            "impressions",
+            0,
+            "subject_refs",
+            1
+          ],
+          "missing_fields": []
+        }
+      ],
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      }
+    },
+    {
+      "at": "2026-10-08T13:17:23.419249+00:00",
+      "http_status": 200,
+      "diagnostics": [
+        {
+          "validator": "enum",
+          "path": [
+            "impressions",
+            0,
+            "subject_refs",
+            0
+          ],
+          "missing_fields": []
+        }
+      ],
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      }
+    },
+    {
+      "at": "2026-10-08T13:17:25.386783+00:00",
+      "http_status": 200,
+      "diagnostics": [
+        {
+          "validator": "enum",
+          "path": [
+            "impressions",
+            0,
+            "subject_refs",
+            1
+          ],
+          "missing_fields": []
+        }
+      ],
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      }
+    },
+    {
+      "at": "2026-10-08T13:20:07.774170+00:00",
+      "http_status": 200,
+      "diagnostics": [
+        {
+          "validator": "enum",
+          "path": [
+            "impressions",
+            0,
+            "subject_refs",
+            0
+          ],
+          "missing_fields": []
+        }
+      ],
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      }
+    },
+    {
+      "at": "2026-10-08T13:20:09.539469+00:00",
+      "http_status": 200,
+      "diagnostics": [
+        {
+          "validator": "enum",
+          "path": [
+            "impressions",
+            0,
+            "subject_refs",
+            1
+          ],
+          "missing_fields": []
+        }
+      ],
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      }
+    },
+    {
+      "at": "2026-10-08T13:25:20.406974+00:00",
+      "http_status": 200,
+      "diagnostics": [
+        {
+          "validator": "enum",
+          "path": [
+            "impressions",
+            0,
+            "subject_refs",
+            0
+          ],
+          "missing_fields": []
+        }
+      ],
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      }
+    },
+    {
+      "at": "2026-10-08T13:25:22.230833+00:00",
+      "http_status": 200,
+      "diagnostics": [
+        {
+          "validator": "enum",
+          "path": [
+            "impressions",
+            0,
+            "subject_refs",
+            1
+          ],
+          "missing_fields": []
+        }
+      ],
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      }
+    },
+    {
+      "at": "2026-10-08T13:30:27.470927+00:00",
+      "http_status": 200,
+      "diagnostics": [
+        {
+          "validator": "enum",
+          "path": [
+            "impressions",
+            0,
+            "subject_refs",
+            0
+          ],
+          "missing_fields": []
+        }
+      ],
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      }
+    },
+    {
+      "at": "2026-10-08T13:30:29.381071+00:00",
+      "http_status": 200,
+      "diagnostics": [
+        {
+          "validator": "enum",
+          "path": [
+            "impressions",
+            0,
+            "subject_refs",
+            1
+          ],
+          "missing_fields": []
+        }
+      ],
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      }
+    }
+  ],
+  "validation": {
+    "tests_passed": 197,
+    "ruff": "passed",
+    "diff_check": "passed",
+    "model_replay_calls": 0
+  },
+  "code_commit": "6d2e21b",
+  "scope": "one production file over actual current-evidence-v2 release; no historical task mutation"
+}

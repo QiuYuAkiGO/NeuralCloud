@@ -1,0 +1,141 @@
+{
+  "started_at": "2026-10-08T14:30:54.914420+00:00",
+  "phase": "running",
+  "release_id": "20261008-subject-constraints-v1",
+  "code_commit": "6d2e21b",
+  "base_release": "20261008-current-evidence-v2",
+  "last_recent_user_control": null,
+  "control_audit": [
+    {
+      "at": "2026-10-08T14:31:02.022401Z",
+      "type": "pause",
+      "authorized_maintenance": true
+    }
+  ],
+  "backup": {
+    "path": "/var/backups/neuralcloud/20261008-before-subject-constraints",
+    "files_verified": 29672,
+    "databases_quick_check": 1157,
+    "archive_bytes": 4547485850,
+    "archive_sha256": "076871c24808725cc4f61a28d382d6f5b067715f308d3b5a8716369fbedc83de",
+    "source_hashes_unchanged": true
+  },
+  "database_changes": "none; existing WAL and job state retained",
+  "preservation": {
+    "profile_manifest_direct_unchanged": true,
+    "attention_sha256": "cf24afc3c86821dafd0fd488648e9fa05325689b47b8e3c499a54705093fa29b",
+    "attention_unchanged_before_restart": true
+  },
+  "direct": {
+    "running": true,
+    "connected": true,
+    "heartbeat_at": "2026-10-08T14:39:21.315870+00:00"
+  },
+  "finished_at": "2026-10-08T14:39:21.726471+00:00",
+  "health": {
+    "release": "20261008-subject-constraints-v1",
+    "services": {
+      "cognitive": {
+        "MainPID": "345064",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "homeostasis": {
+        "MainPID": "345210",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "MainPID": "345254",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "MainPID": "346409",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "board": {
+        "MainPID": "345242",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq_direct": {
+        "MainPID": "346433",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "lifecycle": "RUNNING",
+    "qq_connected": true,
+    "watchdog": [],
+    "manifest_revision": 5,
+    "profile_ref": "qq-social-drive-v1@3",
+    "gate": {
+      "schema_version": "cognitive-dynamics-shadow-gate-v1",
+      "ready": false,
+      "reasons": [
+        "continuous_shadow_observation_less_than_24_hours"
+      ],
+      "observation": {
+        "continuous_seconds": 68.317326,
+        "samples": 60952,
+        "maximum_gap_seconds": 495.014667,
+        "last_sample_at": "2026-10-08T14:40:21.861659+00:00"
+      },
+      "assessment_coverage": {
+        "exposures": 4553,
+        "assessed": 386,
+        "unassessed": 4167,
+        "work_units": 38250257,
+        "last_work_at": "2026-10-08T14:40:19.363372+00:00"
+      },
+      "snapshot_revision": 199273,
+      "profile_ref": "qq-social-drive-v1@3",
+      "checked_at": "2026-10-08T14:40:25.782729+00:00"
+    }
+  },
+  "natural_flow": {
+    "at": "2026-10-08T14:40:22.268163+00:00",
+    "model_phases": [
+      {
+        "phase": "qq_memory_consolidation",
+        "status": "success",
+        "count": 4
+      },
+      {
+        "phase": "emotion_appraisal",
+        "status": "success",
+        "count": 1
+      },
+      {
+        "phase": "emotion_guidance",
+        "status": "success",
+        "count": 1
+      }
+    ],
+    "errors": {},
+    "all_jobs": {
+      "applied": 2925,
+      "pending": 3,
+      "skipped": 619
+    },
+    "new_jobs": {
+      "applied": 3,
+      "pending": 3
+    }
+  },
+  "package": {
+    "release": "20261008-subject-constraints-v1",
+    "changed_files": [
+      "harness/memory/qq_assimilation.py"
+    ],
+    "archive_sha256": "30bf2eb3b948aa75dd3a30484d158373d1f0472f456f89e4be9bf91def894472"
+  }
+}
