@@ -1,0 +1,125 @@
+{
+  "at": "2026-10-08T15:18:08.702332+00:00",
+  "release": "20261008-semantic-output-v1",
+  "manifest_revision": 5,
+  "manifest_profile": "qq-social-drive-v1@3",
+  "watchdog": [],
+  "dynamics": {
+    "mode": "shadow",
+    "fatigue": 0.2659722110452567,
+    "boredom": 0.008852985633942006,
+    "wants_engagement": true,
+    "latent_confidence": 0.8,
+    "baselines": {
+      "autonomy": 0.6749992824438109,
+      "competence": 0.6250000152600026,
+      "safety_predictability": 0.6651600000000001,
+      "social_connection": 0.38068496909056737
+    },
+    "short_term_responses": {
+      "autonomy": 0.004199998215098033,
+      "competence": 0.006910964299668229,
+      "safety_predictability": 0.010104745922593196,
+      "social_connection": 0.13901997869755864
+    },
+    "regulation_pressure": {
+      "level": "elevated",
+      "suggest_reduce_input": false,
+      "suggest_reopen": false
+    },
+    "assessment_coverage": {
+      "exposures": 4642,
+      "assessed": 400,
+      "unassessed": 4242,
+      "work_units": 39115524,
+      "last_work_at": "2026-10-08T15:18:04.142624+00:00"
+    },
+    "shadow_observation": {
+      "continuous_seconds": 74.078751,
+      "samples": 61477,
+      "maximum_gap_seconds": 495.014667,
+      "last_sample_at": "2026-10-08T15:18:05.399733+00:00"
+    },
+    "shadow_values": {
+      "cognitive_load": 0.8128916032323747,
+      "novelty": 0.4868762717957564,
+      "safety_predictability": 0.6752647459225933,
+      "competence": 0.6319109795596708,
+      "autonomy": 0.6791992806589089,
+      "social_connection": 0.519704947788126
+    },
+    "started_at": "2026-10-06T12:24:08.049492+00:00",
+    "updated_at": "2026-10-08T15:18:05.399733+00:00"
+  },
+  "gate": {
+    "schema_version": "cognitive-dynamics-shadow-gate-v1",
+    "ready": false,
+    "reasons": [
+      "continuous_shadow_observation_less_than_24_hours"
+    ],
+    "observation": {
+      "continuous_seconds": 74.078751,
+      "samples": 61477,
+      "maximum_gap_seconds": 495.014667,
+      "last_sample_at": "2026-10-08T15:18:05.399733+00:00"
+    },
+    "assessment_coverage": {
+      "exposures": 4642,
+      "assessed": 400,
+      "unassessed": 4242,
+      "work_units": 39115524,
+      "last_work_at": "2026-10-08T15:18:04.142624+00:00"
+    },
+    "snapshot_revision": 199906,
+    "profile_ref": "qq-social-drive-v1@3",
+    "checked_at": "2026-10-08T15:18:08.734423+00:00"
+  },
+  "work": {
+    "total": 4644,
+    "pending": 2,
+    "by_context_category": {
+      "qq": {
+        "total": 4009,
+        "assessed": 400,
+        "applied": 4007,
+        "units": 26872963,
+        "last_at": "2026-10-08T15:18:08.054582Z"
+      },
+      "emotion_guidance": {
+        "total": 316,
+        "assessed": 0,
+        "applied": 316,
+        "units": 145209,
+        "last_at": "2026-10-08T15:06:33.434014Z"
+      },
+      "goal_decision": {
+        "total": 311,
+        "assessed": 0,
+        "applied": 311,
+        "units": 11936857,
+        "last_at": "2026-10-08T15:06:38.496186Z"
+      },
+      "diary_prepare": {
+        "total": 2,
+        "assessed": 0,
+        "applied": 2,
+        "units": 6573,
+        "last_at": "2026-10-07T16:05:26.237537Z"
+      },
+      "board_prepare": {
+        "total": 5,
+        "assessed": 0,
+        "applied": 5,
+        "units": 23735,
+        "last_at": "2026-10-08T13:17:14.579559Z"
+      },
+      "web_selection": {
+        "total": 1,
+        "assessed": 0,
+        "applied": 1,
+        "units": 1154,
+        "last_at": "2026-10-08T02:55:56.683302Z"
+      }
+    }
+  }
+}

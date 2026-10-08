@@ -1,0 +1,30 @@
+{
+  "group_id": "712342021",
+  "code_commit": "46b656d",
+  "tests_passed": 91,
+  "strict_validation_preserved": true,
+  "new_retries": 0,
+  "cases": [
+    {
+      "trace_id": "qq-trace:c96d7e283c1f45109b7cca5d94647a09",
+      "error_code": "deepseek_structured_schema_invalid",
+      "validator": "maxLength",
+      "path": [
+        "claims",
+        0,
+        "reason"
+      ],
+      "outcome": "error_fallback",
+      "termination": "direct_newer_context",
+      "delivered": false
+    },
+    {
+      "trace_id": "qq-trace:91801f0e17464b9486d4c340256021bd",
+      "error_code": "deepseek_structured_duplicate_key",
+      "duplicate_field": "not_recorded",
+      "outcome": "error_fallback",
+      "delivered_at": "2026-10-08T14:40:51.196800Z",
+      "verification": "qq_protocol_verified"
+    }
+  ]
+}
