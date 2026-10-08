@@ -1,0 +1,241 @@
+{
+  "checked_at": "2026-10-08T15:21:22.361191+00:00",
+  "release": "20261008-semantic-output-v1",
+  "gate": {
+    "schema_version": "cognitive-dynamics-shadow-gate-v1",
+    "ready": false,
+    "reasons": [
+      "continuous_shadow_observation_less_than_24_hours"
+    ],
+    "observation": {
+      "continuous_seconds": 267.36886800000013,
+      "samples": 61553,
+      "maximum_gap_seconds": 495.014667,
+      "last_sample_at": "2026-10-08T15:21:18.689850+00:00"
+    },
+    "assessment_coverage": {
+      "exposures": 4704,
+      "assessed": 411,
+      "unassessed": 4293,
+      "work_units": 39528019,
+      "last_work_at": "2026-10-08T15:21:15.426377+00:00"
+    },
+    "snapshot_revision": 200059,
+    "profile_ref": "qq-social-drive-v1@3",
+    "checked_at": "2026-10-08T15:21:22.392471+00:00"
+  },
+  "cases": [
+    {
+      "started_at": "2026-10-08T15:20:17.497740+00:00",
+      "phase": "emotion_appraisal",
+      "stage": null,
+      "http_status": 200,
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      },
+      "finish_reason": "stop",
+      "error": {
+        "type": "StructuredResponseError",
+        "message": "model request failed",
+        "code": "deepseek_structured_json_invalid",
+        "diagnostics": [
+          {
+            "validator": "json_decode",
+            "content_characters": 285,
+            "empty": false,
+            "leading_code_fence": false,
+            "reason": "extra_data",
+            "offset": 284,
+            "line": 1,
+            "column": 285
+          }
+        ]
+      },
+      "decision": {
+        "outcome": "ready",
+        "error_type": null,
+        "completed_at": "2026-10-08T15:20:25.578522Z",
+        "action": "speak",
+        "deliveries": []
+      }
+    },
+    {
+      "started_at": "2026-10-08T15:20:27.275288+00:00",
+      "phase": "emotion_appraisal",
+      "stage": null,
+      "http_status": 200,
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      },
+      "finish_reason": "stop",
+      "error": {
+        "type": "StructuredResponseError",
+        "message": "model request failed",
+        "code": "deepseek_structured_json_invalid",
+        "diagnostics": [
+          {
+            "validator": "json_decode",
+            "content_characters": 276,
+            "empty": false,
+            "leading_code_fence": false,
+            "reason": "extra_data",
+            "offset": 275,
+            "line": 1,
+            "column": 276
+          }
+        ]
+      },
+      "decision": {
+        "outcome": "ready",
+        "error_type": null,
+        "completed_at": "2026-10-08T15:20:36.230720Z",
+        "action": "speak",
+        "deliveries": [
+          {
+            "delivered_at": "2026-10-08T15:20:38.275850Z",
+            "verification": "qq_protocol_verified"
+          }
+        ]
+      }
+    },
+    {
+      "started_at": "2026-10-08T15:21:00.198534+00:00",
+      "phase": "qq_persona",
+      "stage": "validate",
+      "http_status": 200,
+      "structured_response": {
+        "status": "incomplete",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      },
+      "finish_reason": "length",
+      "error": {
+        "type": "StructuredResponseError",
+        "message": "model request failed",
+        "code": "deepseek_structured_incomplete_or_failed",
+        "diagnostics": []
+      },
+      "decision": {
+        "outcome": "error_fallback",
+        "error_type": "model_invalid",
+        "completed_at": "2026-10-08T15:21:07.770447Z",
+        "action": "speak",
+        "deliveries": []
+      }
+    }
+  ],
+  "coverage": {
+    "checked_at": "2026-10-08T15:21:53.135276+00:00",
+    "receipts": 4714,
+    "matched": 4698,
+    "unmatched": 16,
+    "phases": {
+      "legacy_unlabelled_shared_memory": {
+        "total": 55,
+        "assessed": 0,
+        "success": 43,
+        "error": 12,
+        "last_at": "2026-10-06T12:58:52.741584Z"
+      },
+      "qq_memory_consolidation": {
+        "total": 1233,
+        "assessed": 0,
+        "success": 1077,
+        "error": 156,
+        "last_at": "2026-10-08T15:21:51.377258Z"
+      },
+      "emotion_guidance": {
+        "total": 1027,
+        "assessed": 0,
+        "success": 1016,
+        "error": 11,
+        "last_at": "2026-10-08T15:21:24.870125Z"
+      },
+      "goal_decision": {
+        "total": 311,
+        "assessed": 0,
+        "success": 310,
+        "error": 1,
+        "last_at": "2026-10-08T15:06:38.496186Z"
+      },
+      "emotion_appraisal": {
+        "total": 786,
+        "assessed": 0,
+        "success": 767,
+        "error": 19,
+        "last_at": "2026-10-08T15:21:23.929575Z"
+      },
+      "qq_gate": {
+        "total": 733,
+        "assessed": 413,
+        "success": 723,
+        "error": 10,
+        "last_at": "2026-10-08T15:21:27.828127Z"
+      },
+      "qq_persona": {
+        "total": 537,
+        "assessed": 0,
+        "success": 533,
+        "error": 4,
+        "last_at": "2026-10-08T15:21:32.027186Z"
+      },
+      "diary_prepare": {
+        "total": 2,
+        "assessed": 0,
+        "success": 2,
+        "error": 0,
+        "last_at": "2026-10-07T16:05:26.237537Z"
+      },
+      "diagnostic_memory_schema": {
+        "total": 8,
+        "assessed": 0,
+        "success": 7,
+        "error": 1,
+        "last_at": "2026-10-07T05:04:24.991893Z"
+      },
+      "board_prepare": {
+        "total": 5,
+        "assessed": 0,
+        "success": 5,
+        "error": 0,
+        "last_at": "2026-10-08T13:17:14.579559Z"
+      },
+      "web_selection": {
+        "total": 1,
+        "assessed": 0,
+        "success": 1,
+        "error": 0,
+        "last_at": "2026-10-08T02:55:56.683302Z"
+      }
+    }
+  },
+  "emotion_persistence": {
+    "both_ledger_status": "applied",
+    "both_frame_status": "fallback",
+    "appraisal_events_each": 0,
+    "both_sources_processed": true,
+    "both_guidance_status": "model"
+  },
+  "incomplete_review": {
+    "completion_tokens": 3072,
+    "configured_max_tokens": 3072,
+    "latency_ms": 7561.455
+  },
+  "health": {
+    "six_services_active": true,
+    "runtime": "RUNNING",
+    "degraded_reasons": [],
+    "qq_connected": true,
+    "new_controls": [],
+    "journal_lock_errors": 0,
+    "memory_skipped": 619
+  },
+  "actions": "read-only; no restart, replay, requeue or schema relaxation"
+}

@@ -17,3 +17,11 @@
 停写备份 `/var/backups/neuralcloud/20261008-before-semantic-output`：30,191 文件哈希验证、1,157 数据库 quick_check 通过，归档 4,615,310,039 字节，SHA-256 `7ef9194e569aaa40d9bc53d48ad40e71c009f3636ea9ee2ccb82ee5480810e78`。全部源哈希不变，配置及注意力策略保留。
 
 内稳态仍为 qq-social-drive-v1@3 shadow、manifest revision 5。真实快照 rollout shadow_report 仅因未满 24 小时不通过：continuous_seconds=74.078751，last_sample_at=2026-10-08T15:18:05.399733Z，连续起点约北京时间 23:16:51.321。最早次日同刻满 24 小时，后续仍须以持久化计数重算；本次热修复不等于 active 上线完成。
+
+## 23:21 跟进发现
+
+上线初期四次成功之后，23:20:17/27 新增两次情绪评价 extra_data，分别 285 字符/offset284、276 字符/offset275，HTTP200/completed/stop。持久化均 ledger applied、frame fallback、0 appraisal events、来源 processed；guidance 为 model，后续正文及审查成功，两决策 ready，其中后一条有发送回执。没有原始尾字符证据，不推测额外字符是什么。
+
+23:21:00 回复审查另一次 HTTP200/incomplete/length，输出恰为 3072 token，与当前上限一致。决策 error_fallback/model_invalid，核查时没有发送回执。该事件属于输出长度耗尽，不是重复键或 reason 长度限制复发。该窗口语义审查13成功1错误；不能继续引用初期零错误作为当前结果。
+
+六服务健康、Runtime RUNNING、QQ连接、无新控制pause，WAL quick_check正常、锁错误0。内稳态连续267.368868秒，样本15:21:18.689850Z，尚未24小时。后台skipped仍619；出现未到上限的重试任务，不能当最终失败。未重启、重放、重排或放宽校验。脱敏证据见followup-2321.json。
