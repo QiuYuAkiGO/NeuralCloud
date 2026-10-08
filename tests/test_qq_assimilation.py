@@ -361,7 +361,9 @@ def test_proposer_keeps_native_scope_impressions_and_strictly_rejects_invalid_mo
         def complete_json(self, *, system, user, **kwargs):
             assert "第三方" in system and "status=unknown" in system
             payload = json.loads(user)
-            assert payload["old_impressions"] == [old_impression()]
+            assert payload["old_impressions"] == [{**old_impression(),
+                "current_window_update_eligible": True,
+                "current_window_evidence_role": "historical_context_only_not_new_evidence"}]
             assert payload["frozen_sources"][0]["source_id"] == job.sources[0].source_id
             return expected.model_dump(mode="json")
 
@@ -676,6 +678,64 @@ def test_schema_feedback_does_not_loop_or_mask_second_failure(setup):
     with pytest.raises(StructuredResponseError):
         QQMemoryProposer(Model()).propose(make_job(setup))
     assert len(calls) == 2
+
+
+def test_single_author_schema_repair_preserves_episode_without_unsupported_subject(setup):
+    from harness.llm.deepseek_structured import StructuredResponseError
+    from jsonschema import Draft202012Validator
+    job = make_job(setup)
+    old = old_impression(subject_refs=["qq:member:201"])
+    calls = []
+
+    class Model:
+        def complete_json(self, *, user, **kwargs):
+            payload = json.loads(user)
+            calls.append(payload)
+            constraints = payload["subject_constraints"]
+            assert constraints["allowed_subject_refs"] == ["qq:member:200"]
+            assert "relationship" not in constraints["allowed_impression_kinds"]
+            assert payload["old_impressions"][0]["current_window_update_eligible"] is False
+            validator = Draft202012Validator(payload["schema"])
+            bad = proposal(job, impressions=[impression(job, kind="relationship",
+                subject_refs=["200", "201"])]).model_dump(mode="json")
+            assert not validator.is_valid(bad)
+            if len(calls) == 1:
+                raise StructuredResponseError("deepseek_structured_schema_invalid", diagnostics=[
+                    {"validator": "enum", "path": ["impressions", 0, "subject_refs", 1], "missing_fields": []}])
+            assert "impressions=[]" in payload["repair_request"]
+            assert payload["frozen_sources"] == calls[0]["frozen_sources"]
+            result = proposal(job).model_dump(mode="json")
+            assert validator.is_valid(result)
+            return result
+
+    result = QQMemoryProposer(Model()).propose(job, old_impressions=[old])
+    assert len(calls) == 2
+    assert result == proposal(job)
+    assert "current_window_update_eligible" not in old
+
+
+def test_two_independent_authors_can_still_form_relationship(setup):
+    from jsonschema import Draft202012Validator
+    store, queue = setup
+    add_message(store)
+    add_message(store, suffix="two", member="201", message_id="2", seconds=1)
+    job = queue.enqueue(now=NOW + timedelta(days=1), backfill=True)[0]
+    assert len(job.sources) == 2
+    expected = proposal(job, impressions=[impression(job, kind="relationship",
+        subject_refs=["200", "201"], source_ids=[s.source_id for s in job.sources])])
+
+    class Model:
+        def complete_json(self, *, user, **kwargs):
+            payload = json.loads(user)
+            assert "relationship" in payload["subject_constraints"]["allowed_impression_kinds"]
+            validator = Draft202012Validator(payload["schema"])
+            assert validator.is_valid(expected.model_dump(mode="json"))
+            duplicate = expected.model_dump(mode="json")
+            duplicate["impressions"][0]["subject_refs"] = ["qq:member:200"] * 2
+            assert not validator.is_valid(duplicate)
+            return expected.model_dump(mode="json")
+
+    assert QQMemoryProposer(Model()).propose(job) == expected
 
 
 def test_model_rejection_reason_is_content_free():

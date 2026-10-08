@@ -171,9 +171,11 @@ def test_private_continuation_and_proposer_share_only_same_conversation(private_
             payload = json.loads(user)
             assert payload["conversation_kind"] == "private"
             assert payload["conversation_id"] == "qq:" + PRIVATE
-            assert payload["old_impressions"] == [prior]
+            assert payload["old_impressions"] == [{**prior,
+                "current_window_update_eligible": True,
+                "current_window_evidence_role": "historical_context_only_not_new_evidence"}]
             assert payload["schema"]["$defs"]["QQImpressionProposal"]["properties"]["kind"]["enum"] == [
-                "person", "relationship", "topic"]
+                "person", "topic"]
             return proposed.model_dump(mode="json")
 
     assert QQMemoryProposer(Model()).propose(job, old_impressions=[prior, old_impression()]) == proposed

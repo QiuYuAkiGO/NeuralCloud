@@ -406,9 +406,22 @@ class QQMemoryProposer:
             "if": {"properties": {"evidence_kind": {"not": {"const": "observed_behavior"}}}},
             "then": {"properties": {"stance": {"const": "uncertain"}}}})
         authors = sorted({f"qq:member:{source.member_id}" for source in job.sources})
+        independent_authors = sorted({f"qq:member:{source.member_id}" for source in job.sources
+                                      if source.independent_eligible})
+        eligible_subjects = set(independent_authors) | ({f"qq:member:{job.self_id}"} & set(authors))
         schema["$defs"]["QQImpressionProposal"]["properties"]["subject_refs"]["items"]["enum"] = authors
+        schema["$defs"]["QQImpressionProposal"]["properties"]["subject_refs"]["uniqueItems"] = True
+        schema["$defs"]["QQImpressionProposal"]["allOf"].extend([
+            {"if": {"properties": {"kind": {"const": "relationship"}}},
+             "then": {"properties": {"subject_refs": {"minItems": 2}}}},
+            {"if": {"properties": {"kind": {"enum": ["topic", "group"]}}},
+             "then": {"properties": {"subject_refs": {"maxItems": 0}}}},
+        ])
         if conversation_scope(job.group_id)["kind"] == "private":
             schema["$defs"]["QQImpressionProposal"]["properties"]["kind"]["enum"] = ["person", "relationship", "topic"]
+        kinds = schema["$defs"]["QQImpressionProposal"]["properties"]["kind"]["enum"]
+        if len(eligible_subjects) < 2:
+            kinds.remove("relationship")
         for definition in ("QQEpisodeProposal", "QQImpressionProposal"):
             schema["$defs"][definition]["properties"]["source_ids"]["items"]["enum"] = [source.source_id for source in job.sources]
         # Full immutable originals stay on disk; only attributed projections
@@ -418,6 +431,14 @@ class QQMemoryProposer:
             "conversation_id": conversation_audience(job.group_id),
             "conversation_kind": conversation_scope(job.group_id)["kind"],
             "self_id": job.self_id, "persona": persona,
+            "subject_constraints": {
+                "allowed_subject_refs": authors,
+                "independent_subject_refs": independent_authors,
+                "allowed_impression_kinds": list(kinds),
+                "rule": "主体必须属于本条印象 source_ids 的真实作者，除 self 外还须有本人独立证据。"
+                        "旧印象、被提及者和 persona 不提供新主体证据。无法支持的印象直接不生成；"
+                        "仍须把全部 frozen_sources 恰好分配给 episodes，impressions 可以为 []。",
+            },
             "frozen_sources": [{"source_id": source.source_id, "member_id": source.member_id,
                                 "occurred_at": source.occurred_at.isoformat(), "text": source.text,
                                 "is_self": source.is_self, "contains_quote": source.contains_quote,
@@ -428,7 +449,12 @@ class QQMemoryProposer:
                                 "claims": [claim.model_dump(mode="json") for claim in source.record.claims],
                                 "image_analysis": [item.model_dump(mode="json") for item in source.record.image_analysis]}
                                for source in job.sources],
-            "old_impressions": old,
+            "old_impressions": [{**item, "current_window_update_eligible":
+                bool(independent_authors) and item.get("kind") in kinds
+                and set(item.get("subject_refs", ())) <= eligible_subjects
+                and not (item.get("kind") == "person"
+                         and set(item.get("subject_refs", ())) == {f"qq:member:{job.self_id}"}),
+                "current_window_evidence_role": "historical_context_only_not_new_evidence"} for item in old],
         }
         if isinstance(persona, BaseModel):
             payload["persona"] = persona.model_dump(mode="json")
@@ -527,7 +553,11 @@ class QQMemoryProposer:
                 if attempt or exc.error_code != "deepseek_structured_schema_invalid":
                     raise
                 payload = {**payload, "validation_feedback": exc.diagnostics,
-                    "repair_request": "Schema validation failed. Regenerate from the same frozen_sources; use only schema-authorized subject_refs and source_ids. Omit unsupported impressions."}
+                    "repair_request": "Schema validation failed. Regenerate from the same frozen_sources. "
+                        "Use subject_constraints.allowed_subject_refs and allowed_impression_kinds. "
+                        "Historical subjects and mentioned people are not new evidence. "
+                        "If subject_refs fails, omit the unsupported impression; do not substitute another person. "
+                        "Preserve all frozen sources in episodes exactly once. impressions=[] is valid."}
                 continue
             try:
                 if isinstance(result, Mapping) and isinstance(result.get("impressions"), (list, tuple)):
