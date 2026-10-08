@@ -1,0 +1,148 @@
+{
+  "at": "2026-10-08T14:57:28.829299+00:00",
+  "removed_default_ollama_tags": [
+    "qwen3-embedding:0.6b",
+    "gemma4:12b-128k",
+    "gemma4:12b-32k",
+    "gemma4:12b",
+    "qwen3.5:2b-q8_0",
+    "qwen3.5:0.8b-q8_0",
+    "qwen3.6:latest",
+    "gemma4:latest"
+  ],
+  "removed_artifacts": [
+    {
+      "path": "/home/qiuyu/neuralcloud-evals/clm-20261005",
+      "allocated_bytes_before": 24666406912,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-evals/qwen3-06b-side-20260923-v1/models",
+      "allocated_bytes_before": 347566080,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-evals/qwen3-06b-side-20260923-v1/official-download-parts",
+      "allocated_bytes_before": 639451136,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-evals/qwen3-06b-side-20260923-v1/Qwen3-0.6B-Q8_0.gguf",
+      "allocated_bytes_before": 639451136,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-evals/qwen3-instruct-side-20260923-v1/models",
+      "allocated_bytes_before": 2497339392,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-evals/qwen35-2b-side-20260923-v1/models",
+      "allocated_bytes_before": 2741235712,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-production-acceptance-20260922/memory-hot-1000000.sqlite3",
+      "allocated_bytes_before": 3945910272,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-production-acceptance-20260922/memory-hot-100000.sqlite3",
+      "allocated_bytes_before": 382504960,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-production-acceptance-20260922/memory-hot-100000.prepare-oelogwd1/production.sqlite3",
+      "allocated_bytes_before": 383258624,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-production-acceptance-20260922/memory-hot-100000.prepare-oelogwd1/shared.sqlite3",
+      "allocated_bytes_before": 49152,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-production-acceptance-20260922/memory-hot-1000000.prepare-01sfnuqm/production.sqlite3",
+      "allocated_bytes_before": 3946659840,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-production-acceptance-20260922/memory-hot-1000000.prepare-01sfnuqm/shared.sqlite3",
+      "allocated_bytes_before": 49152,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-production-acceptance-20260922/runtime-benchmark-state/runtime/production.sqlite3",
+      "allocated_bytes_before": 73728,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-production-acceptance-20260922/runtime-benchmark-state/runtime/capability-calls.sqlite3",
+      "allocated_bytes_before": 20480,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-production-acceptance-20260922/runtime-benchmark-state/runtime/regulation.sqlite3",
+      "allocated_bytes_before": 16384,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-production-acceptance-20260922/runtime-benchmark-state/runtime/recovery.sqlite3",
+      "allocated_bytes_before": 106496,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-production-acceptance-20260922/runtime-benchmark-state/cognitive/state.json.sqlite3",
+      "allocated_bytes_before": 49152,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-production-acceptance-20260922/runtime-benchmark-v2-state/runtime/production.sqlite3",
+      "allocated_bytes_before": 81920,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-production-acceptance-20260922/runtime-benchmark-v2-state/runtime/capability-calls.sqlite3",
+      "allocated_bytes_before": 20480,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-production-acceptance-20260922/runtime-benchmark-v2-state/runtime/regulation.sqlite3",
+      "allocated_bytes_before": 16384,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-production-acceptance-20260922/runtime-benchmark-v2-state/runtime/recovery.sqlite3",
+      "allocated_bytes_before": 241664,
+      "removed": true
+    },
+    {
+      "path": "/home/qiuyu/neuralcloud-production-acceptance-20260922/runtime-benchmark-v2-state/cognitive/state.json.sqlite3",
+      "allocated_bytes_before": 200704,
+      "removed": true
+    }
+  ],
+  "free_bytes_before": 79918555136,
+  "free_bytes_after": 165628960768,
+  "gui_settings_unchanged": true,
+  "online_aux_retained": true,
+  "remaining_default_models": "NAME    ID    SIZE    MODIFIED \n",
+  "df": "文件系统                           1B的块         已用         可用 已用% 挂载点\n/dev/mapper/ubuntu--vg-lv--0 499694788608 308607451136 165628960768   66% /\n",
+  "health_after": {
+    "runtime": "RUNNING",
+    "degraded_reasons": [],
+    "qq_connected": true,
+    "services": {
+      "cognitive": "active",
+      "homeostasis": "active",
+      "runtime": "active",
+      "gui": "active",
+      "board": "active",
+      "qq_direct": "active"
+    },
+    "aux_models": [
+      "qwen3:4b-instruct-2507-q4_K_M"
+    ],
+    "aux_active": "active"
+  }
+}
