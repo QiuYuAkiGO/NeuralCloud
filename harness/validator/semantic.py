@@ -10,6 +10,12 @@ from harness.core.inference import ValidationResult
 
 SEMANTIC_RULES = """
 Use the supplied JSON schema.
+Return exactly one JSON object, without Markdown or trailing text. Within each object,
+write every field name exactly once; put separate claims in separate array items.
+Each claim.reason is a short classification justification, preferably one sentence within
+120 characters and always at most 400 characters. Do not copy the candidate or evidence
+into reason, or put the whole review there. Keep clause coverage in claims, not in reason.
+Before returning, check field uniqueness and every string length against the schema.
 Review the ENTIRE candidate, clause by clause, for factual grounding and persona boundaries.
 Return coverage_complete=true only after checking every clause. claims lists ALL factual
 assertions and nonfactual clauses, including implied first-person experiences;
@@ -68,7 +74,9 @@ class ClaimReview(BaseModel):
     status: Literal["supported", "unsupported", "contradicted", "not_asserted"]
     basis: Literal["persona", "evidence", "general_knowledge", "none"]
     evidence_rows: list[int] = Field(max_length=32)
-    reason: str = Field(max_length=400)
+    reason: str = Field(max_length=400, description=(
+        "Brief classification justification; prefer one sentence within 120 characters. "
+        "Hard limit 400 characters. Do not repeat candidate text or evidence."))
 
 
 class SemanticReview(BaseModel):

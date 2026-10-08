@@ -116,6 +116,8 @@ def test_invalid_json_diagnostics_keep_distinct_content_free_codes(wire, text, c
     assert caught.value.error_code == code
     if code == "deepseek_structured_json_invalid":
         assert caught.value.diagnostics[0]["reason"] == "expected_value"
+    elif code == "deepseek_structured_duplicate_key":
+        assert caught.value.diagnostics == [{"validator": "unique_keys", "field": "decision"}]
     else:
         assert caught.value.diagnostics == []
 
@@ -203,3 +205,29 @@ def test_opt_out_and_plain_chat_preserve_legacy_transport(wire):
     assert wire.calls[0].url.path == "/v1/chat/completions"
     wire.client.settings.deepseek_structured_outputs = False
     assert decision_format(wire.client, SCHEMA, "decision") == {"type": "json_object"}
+
+@pytest.mark.parametrize("key,expected", [("decision", "decision"), ("PRIVATE_KEY", "*")])
+def test_nested_duplicate_diagnostic_redacts_unknown_names_and_never_retries(wire, key, expected):
+    wire.body = body('{"decision":"wait","nested":{"'+key+'":"PRIVATE_VALUE","'+key+'":"PRIVATE_OTHER"}}')
+    with pytest.raises(StructuredResponseError) as caught:
+        wire.client.complete_chat_result([], response_format=decision_format(wire.client, SCHEMA, "decision"))
+    assert caught.value.error_code == "deepseek_structured_duplicate_key"
+    assert caught.value.diagnostics == [{"validator": "unique_keys", "field": expected}]
+    assert len(wire.calls) == 1
+    assert "PRIVATE" not in (wire.path / "model_requests.jsonl").read_text(encoding="utf-8")
+
+
+def test_semantic_reason_limit_remains_strict():
+    from harness.validator.semantic import SemanticReview
+    from harness.llm.deepseek_structured import validate_response
+    report = {"coverage_complete": True, "claims": [{"quote": "test", "kind": "non_factual",
+        "status": "not_asserted", "basis": "none", "evidence_rows": [], "reason": "x" * 400}],
+        "violations": [], "instruction": None}
+    schema = SemanticReview.model_json_schema()
+    validate_response(body(json.dumps(report)), schema)
+    report["claims"][0]["reason"] += "x"
+    with pytest.raises(StructuredResponseError) as caught:
+        validate_response(body(json.dumps(report)), schema)
+    assert caught.value.error_code == "deepseek_structured_schema_invalid"
+    assert caught.value.diagnostics[0]["path"] == ["claims", 0, "reason"]
+    assert caught.value.diagnostics[0]["validator"] == "maxLength"

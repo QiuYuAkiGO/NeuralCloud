@@ -131,11 +131,12 @@ def chat_body(body):
                          "refusal": refused, "tool_calls": [{}] if tools else []}}]}
 
 
-def _unique(pairs):
+def _unique(pairs, names=frozenset()):
     result = {}
     for key, value in pairs:
         if key in result:
-            raise StructuredResponseError("deepseek_structured_duplicate_key")
+            raise StructuredResponseError("deepseek_structured_duplicate_key", diagnostics=[{
+                "validator": "unique_keys", "field": key if key in names else "*"}])
         result[key] = value
     return result
 
@@ -195,8 +196,22 @@ def validate_response(body, schema):
     message = normalized["choices"][0]["message"]
     if message["refusal"] or message["tool_calls"]:
         raise StructuredResponseError("deepseek_structured_nontext_response")
+    # Only host-defined schema property names are safe to include in diagnostics.
+    names = set()
+
+    def collect(node):
+        if isinstance(node, dict):
+            names.update(node.get("properties", {}))
+            for child in node.values():
+                collect(child)
+        elif isinstance(node, list):
+            for child in node:
+                collect(child)
+
+    collect(schema)
     try:
-        value = json.loads(message["content"], object_pairs_hook=_unique, parse_constant=_constant)
+        value = json.loads(message["content"], object_pairs_hook=lambda pairs: _unique(pairs, names),
+                           parse_constant=_constant)
     except StructuredResponseError:
         raise
     except (ValueError, TypeError, RecursionError) as exc:
@@ -208,18 +223,6 @@ def validate_response(body, schema):
     if errors:
         # Only names defined by the host's schema may enter diagnostics. Never
         # include jsonschema's message, instance, enum values or unknown keys.
-        names = set()
-
-        def collect(node):
-            if isinstance(node, dict):
-                names.update(node.get("properties", {}))
-                for child in node.values():
-                    collect(child)
-            elif isinstance(node, list):
-                for child in node:
-                    collect(child)
-
-        collect(schema)
         diagnostics = [{"validator": error.validator,
             "path": [part if isinstance(part, int) or part in names else "*"
                      for part in list(error.absolute_path)[:16]],
