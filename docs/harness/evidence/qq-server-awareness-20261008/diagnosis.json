@@ -1,0 +1,40 @@
+{
+  "diagnosis": "QQ request/response path lacks authoritative server capability context and a server action bridge; reply planner asserted unavailability without checking Runtime.",
+  "incident": {
+    "question_at": "2026-10-08T01:02:04Z",
+    "reply_at": "2026-10-08T01:02:28Z",
+    "question": "Misty，现在能看到你服务器上的情况了嘛",
+    "reply": "看不到的，我没有连到服务器那边，只能看到你发给我的话",
+    "decision_id": "qq-decision:617d13aeaeb34e77a78110ca61aeb995",
+    "command_id": "cmd_a5c57e3a3052fc2b54c7ece8abc43ada",
+    "call_id": "call_a6b2e83f1ac32fb8ec3a714531eba9e6"
+  },
+  "evidence": {
+    "server_authorization_enabled": true,
+    "server_autonomous_enabled": true,
+    "observe_health": "healthy",
+    "observe_reason": "server_ssh_available",
+    "execute_reason": "server_ssh_unverified",
+    "server_commands_at_inspection": 2,
+    "new_server_command_during_qq_turn": false,
+    "qq_prepare_context_has_web_capabilities": true,
+    "qq_prepare_context_has_server_capabilities": false,
+    "qq_response_context_has_server_status": false,
+    "qq_response_context_has_previous_uptime_receipt": false,
+    "gate_plan_must_address": "如实说明自己看不到服务器运行状态，只能通过对话感知；不编造监控或运维能力。",
+    "validator_verdict": "pass"
+  },
+  "fresh_transport_probe": {
+    "checked_at": "2026-10-08T01:05:13.315552+00:00",
+    "command": "uptime",
+    "exit_code": 0,
+    "stdout": " 09:05:13 up 2 days, 23:34,  4 users,  load average: 1.00, 1.26, 1.46\n",
+    "account": "misty-observe",
+    "authorization": {
+      "enabled": true,
+      "autonomous_enabled": true
+    },
+    "test_mode": "isolated read-only transport probe; not a Misty goal action"
+  },
+  "scope": "Read-only diagnosis plus isolated uptime probe. No QQ messages sent, no service restart, no permission/configuration changes."
+}

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import httpx
+
 import asyncio
 import inspect
 import json
@@ -188,6 +190,26 @@ def create_control_app(
     @app.get("/v1/status", dependencies=[Depends(authenticate)])
     async def status() -> dict[str, Any]:
         return control.supervisor.status().model_dump(mode="json")
+
+    @app.get("/v1/text/interruption", dependencies=[Depends(authenticate)])
+    async def interruption_status():
+        return control.supervisor.text_turns.engine.diagnostics()
+
+    @app.post("/v1/text/interruption", dependencies=[Depends(authenticate)])
+    async def assess_text_interruption(payload: dict):
+        from harness.interruption import InterruptionRequest
+        try:
+            request = InterruptionRequest.model_validate(payload)
+            return await control.supervisor.text_turns.assess(request)
+        except TimeoutError:
+            raise HTTPException(status_code=408, detail="text_interruption_timeout") from None
+        except ValueError:
+            raise HTTPException(status_code=422, detail="text_interruption_invalid") from None
+        except httpx.HTTPStatusError as exc:
+            status = exc.response.status_code if exc.response.status_code in {408, 422} else 503
+            raise HTTPException(status_code=status, detail="text_interruption_unavailable") from None
+        except Exception:
+            raise HTTPException(status_code=503, detail="text_interruption_unavailable") from None
 
     @app.get("/v1/snapshot", dependencies=[Depends(authenticate)])
     async def composite_snapshot() -> dict[str, Any]:

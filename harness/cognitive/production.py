@@ -419,6 +419,8 @@ async def prepare(adapter, command):
                 "production": visible_context(context), "memories": [segment.model_dump(mode="json") for segment in segments],
                 "source_refs": sorted(sources), "current_source_id": current_source,
                 "authorized_actions": action_catalog(context.get("authorized_action_context") or {})}
+            if command.payload.get("text_interruption_context"):
+                payload["text_interruption_context"] = command.payload["text_interruption_context"]
             signature = digest((frozen_persona, recent))
         try:
             choice = await asyncio.to_thread(call_before_deadline, command.deadline, _ask,

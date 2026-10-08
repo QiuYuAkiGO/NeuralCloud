@@ -1,0 +1,72 @@
+{
+  "schema_version": "text-interruption-validation-v1",
+  "recorded_at": "2026-10-07T16:57:51Z",
+  "branch": "codex/grounded-agency-rebuild-plan",
+  "base_commit": "988818f5e6d95b5bf6e6c39afef3b1ba3c7ed6a5",
+  "change_state": "working_tree_implementation",
+  "rollout": {
+    "runtime_text": "off",
+    "qq_group": "off",
+    "qq_private": "off",
+    "production_configuration_changed": false
+  },
+  "tests": [
+    {
+      "name": "related_regression",
+      "command": ".venv/Scripts/python.exe -m pytest tests/test_text_interruption.py tests/test_qq_text_interruption.py tests/test_runtime_text_interruption.py tests/test_runtime_supervisor.py tests/test_qq_direct_actor.py tests/test_qq_reply_requests.py tests/test_qq_private_actor.py tests/test_qq_shared_mode.py tests/test_runtime_rpc.py tests/test_gui_shared_mode.py tests/test_qq_decision.py tests/test_qq_brief_reply.py tests/test_runtime_qq_deadline.py tests/test_production_runtime.py -q --disable-warnings --maxfail=3",
+      "passed": 398,
+      "failed": 0,
+      "warnings": 2,
+      "seconds": 118.31,
+      "scope_note": "Completed before final cited-message isolation and standalone GUI correlation refinements; both refinements were covered by subsequent final focused runs."
+    },
+    {
+      "name": "final_gui_compatibility",
+      "command": ".venv/Scripts/python.exe -m pytest tests/test_runtime_text_interruption.py tests/test_gui.py -q --disable-warnings --maxfail=2",
+      "passed": 28,
+      "failed": 0,
+      "warnings": 2,
+      "seconds": 31.02
+    },
+    {
+      "name": "final_interruption_acceptance",
+      "command": ".venv/Scripts/python.exe -m pytest tests/test_text_interruption.py tests/test_qq_text_interruption.py tests/test_runtime_text_interruption.py -q --disable-warnings --maxfail=2",
+      "passed": 48,
+      "failed": 0,
+      "warnings": 2,
+      "seconds": 22.14
+    }
+  ],
+  "test_counts_overlap": true,
+  "checks": {
+    "ruff_changed_python_files": "passed",
+    "javascript_syntax": "node --check gui/static/app.js: passed",
+    "git_diff_check": "passed"
+  },
+  "invariants_verified": [
+    "continue/regenerate/wait use strict actions, reasons and supplied evidence",
+    "only cited relevant messages are merged; unrelated messages remain independent",
+    "burst traffic and judge failure release unsent output instead of starving it",
+    "two judgments, one regeneration and two seconds total hold per durable logical reply",
+    "late and stale judgments cannot undo loose release or a valid explicit wait",
+    "restart preserves deadline/quota and restores verified partial delivery prefix",
+    "same-reply regeneration does not trip independent-reply cooldown",
+    "group and private modes are independent and preserve send/attention/unknown-delivery fences",
+    "pause then resume does not revive a pre-control reply",
+    "judgments do not require main generation lock and stop admitting work during maintenance",
+    "expired queued judgments do not call the provider; in-flight workers retain concurrency slots",
+    "HTTP judgment requests have no automatic transport retry",
+    "Runtime UI finals require authorized delivery; per-run bubbles preserve later user messages",
+    "Runtime and standalone GUI both honor client-created correlation IDs"
+  ],
+  "live_validation": {
+    "paid_model_calls": 0,
+    "qq_messages_sent": 0,
+    "models": "synthetic",
+    "protocol": "simulated OneBot"
+  },
+  "remaining_release_validation": [
+    "Observe actual-model JSON validity, interruption precision, latency and cost in shadow mode",
+    "Measure natural-language duplication of already delivered prefixes before wider activation"
+  ]
+}

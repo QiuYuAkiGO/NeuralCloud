@@ -60,6 +60,8 @@ async def _bridge_cognitive_events(
                         elif line.startswith("data:"):
                             payload = json.loads(line[5:].strip())
                             if isinstance(payload, dict):
+                                if control.supervisor.text_turns.suppress_preview(payload):
+                                    continue
                                 await control.event_stream.publish(topic, payload)
         except asyncio.CancelledError:
             raise

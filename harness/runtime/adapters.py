@@ -88,6 +88,8 @@ class CognitiveServiceClient(Protocol):
 
     async def get_snapshot(self) -> DomainSnapshot: ...
 
+    async def assess_text_interruption(self, request) -> dict[str, Any]: ...
+
     async def prepare_response(
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[PreparedResponse]: ...
@@ -547,6 +549,14 @@ class PipelineCognitiveAdapter:
                 return await self._prepare_response(command)
             return await self._run_command(lambda: self._prepare_response(command))
 
+    async def assess_text_interruption(self, request):
+        from harness.cognitive.interruption import InterruptionAssessor
+        if self._maintenance_paused or self._closing:
+            raise RuntimeError("interruption_owner_paused")
+        if getattr(self, "_interruption_assessor", None) is None:
+            self._interruption_assessor = InterruptionAssessor(self.pipeline.llm)
+        return await self._interruption_assessor.assess(request)
+
     async def _prepare_response(
         self, command: DomainCommandEnvelope[dict[str, Any]]
     ) -> DomainCommandResult[PreparedResponse]:
@@ -608,6 +618,10 @@ class PipelineCognitiveAdapter:
             interoception_payload = payload.get("interoception")
             interoception: InteroceptiveState | None = None
             context_segments: list[ContextSegment] = []
+            if payload.get("text_interruption_context"):
+                context_segments.append(ContextSegment(kind="text_interruption",
+                    text=json.dumps(payload["text_interruption_context"], ensure_ascii=False),
+                    why="Continuation after a new message; delivered text must not be repeated"))
             if self._context_provider is not None:
                 context_segments.extend(await asyncio.to_thread(self._context_provider, event))
             runtime_web_context = payload.get("runtime_web_context")
@@ -1193,7 +1207,8 @@ class PipelineCognitiveAdapter:
     async def pause_maintenance(self, *, timeout: float) -> bool:
         self._maintenance_paused = True
         deadline = asyncio.get_running_loop().time() + timeout
-        workers = tuple(task for task in self.research_tasks | self.command_tasks if not task.done())
+        judge_jobs = getattr(getattr(self, "_interruption_assessor", None), "jobs", set())
+        workers = tuple(task for task in self.research_tasks | self.command_tasks | judge_jobs if not task.done())
         if workers:
             _, pending = await asyncio.wait(workers, timeout=max(0, timeout))
             if pending:
@@ -1234,7 +1249,8 @@ class PipelineCognitiveAdapter:
         await asyncio.shield(self._close_task)
 
     async def _close(self) -> None:
-        workers = tuple(self.research_tasks | self.command_tasks)
+        judge_jobs = getattr(getattr(self, "_interruption_assessor", None), "jobs", set())
+        workers = tuple(self.research_tasks | self.command_tasks | judge_jobs)
         if workers:
             await asyncio.gather(*workers, return_exceptions=True)
         await self._affect_thread.close()

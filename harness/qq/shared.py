@@ -19,6 +19,7 @@ from harness.qq.idle import QQIdleIntent
 from harness.qq.memory import QQID
 from harness.qq.conversation import QQConversationID, conversation_scope
 from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace
+from harness.interruption import InterruptionContext
 
 
 class QQSharedTraceOrigin(BaseModel):
@@ -38,6 +39,7 @@ class QQSharedPrepareRequest(BaseModel):
     trigger_member_id: QQID | None = None
     request: str | None = Field(default=None, min_length=1, max_length=4096)
     query: str | None = Field(default=None, min_length=1, max_length=4096)
+    text_interruption_context: InterruptionContext | None = None
     member_ids: list[QQID] | None = Field(default=None, max_length=20)
     verified_self_aliases: list[QQVerifiedSelfAlias] = Field(default_factory=list, max_length=16)
     idle_intent: QQIdleIntent | None = None
@@ -112,7 +114,7 @@ class QQSharedCognitiveClient:
         values = {key: kwargs[key] for key in (
             "group_id", "self_member_id", "trigger_member_id", "request", "query", "member_ids",
             "verified_self_aliases", "idle_intent", "homeostatic_interoception", "transport",
-            "request_id", "revision", "source_event_ids", "authority_anchor") if key in kwargs}
+            "request_id", "revision", "source_event_ids", "authority_anchor", "text_interruption_context") if key in kwargs}
         # Wall deadline is an additional cross-service bound; the caller's
         # original monotonic deadline is checked both before and after RPC.
         deadline_at = min(datetime.now(timezone.utc) + timedelta(seconds=remaining),
@@ -149,6 +151,12 @@ class QQSharedCognitiveClient:
         if result.outcome != "error_fallback":
             deadline.check()
         return result
+
+    def assess_text_interruption(self, request):
+        response = self.client.post("/v1/text/interruption", json=request.model_dump(mode="json"),
+            timeout=request.timeout_seconds, follow_redirects=False)
+        response.raise_for_status()
+        return response.json()
 
     def close(self):
         if self._owns_client:

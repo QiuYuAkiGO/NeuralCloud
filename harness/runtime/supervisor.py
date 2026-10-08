@@ -133,7 +133,7 @@ _HOMEOSTATIC_COGNITIVE_RESERVED_PAYLOAD_KEYS = frozenset(
     {"production_context", "homeostatic_interoception", "homeostatic_profile_ref", "interoception",
      "opaque_interoception", "grounded_manifest_hash", "provider_intents", "research_context", "basic_terminal",
      "web_context", "runtime_web_context", "runtime_web_deadline_at", "offers",
-     "emotion_context_ref", "emotion_revision"}
+     "emotion_context_ref", "emotion_revision", "text_interruption_context"}
 )
 
 
@@ -187,6 +187,7 @@ class RuntimeIngress:
         if self.supervisor.production_runtime is not None:
             self.supervisor.production_runtime.observe(event)
         if event.event_type == RuntimeEventType.USER_MESSAGE:
+            self.supervisor.text_turns.receive(event)
             # Make user preemption effective as soon as the ingress record is
             # durable.  Publishing and queue insertion both await, so deferring
             # this bookkeeping until accept() returns would leave a running
@@ -200,6 +201,9 @@ class RuntimeIngress:
                 reason="new user activity superseded autonomous output",
                 event=event,
             )
+        if event.event_type in {RuntimeEventType.PAUSE, RuntimeEventType.STOP,
+                RuntimeEventType.EMERGENCY_STOP, RuntimeEventType.PERMISSION_REVOKED}:
+            self.supervisor.text_turns.engine.fence()
         await self.supervisor._publish("event.accepted", event.model_dump(mode="json"))
 
         if (
@@ -292,6 +296,8 @@ class RuntimeSupervisor:
         self.runtime_instance_id = runtime_instance_id or new_id("runtime")
         self.state_dir = Path(state_dir)
         self.state_dir.mkdir(parents=True, exist_ok=True)
+        from harness.runtime.text_interruption import RuntimeTextTurns
+        self.text_turns = RuntimeTextTurns(self)
         self.production_runtime = None
         if manifest.production is not None:
             from harness.production.runtime import ProductionRuntime
@@ -689,8 +695,7 @@ class RuntimeSupervisor:
                 and not self.manifest.autonomous_chat_enabled):
             return None
         try:
-            event = await self.ingress.accept(**kwargs)
-            return event
+            return await self.ingress.accept(**kwargs)
         except QueueCapacityError:
             self._needs_refill = True
             self._append_journal("queue_overloaded", data={"statistics": self.queue.statistics().model_dump()})
@@ -1002,7 +1007,7 @@ class RuntimeSupervisor:
             return await self._dispatch_event(event)
         self._foreground_dispatches.add(event.event_id)
         try:
-            return await self._dispatch_event(event)
+            return await self.text_turns.dispatch(event, lambda: self._dispatch_event(event))
         finally:
             self._foreground_dispatches.discard(event.event_id)
 
@@ -1112,6 +1117,7 @@ class RuntimeSupervisor:
         return result
 
     async def pause(self, *, reason: str) -> None:
+        self.text_turns.engine.fence()
         if self.lifecycle in {RuntimeLifecycle.PAUSED, RuntimeLifecycle.PAUSING}:
             return
         if self.lifecycle != RuntimeLifecycle.RUNNING:
@@ -1302,6 +1308,8 @@ class RuntimeSupervisor:
         }:
             raise RuntimeStateError(f"cannot stop from {self.lifecycle}")
         await self._transition(RuntimeLifecycle.STOPPING, reason=reason)
+        self.text_turns.engine.fence()
+        await self.text_turns.engine.close()
         self.scheduler.suspend()
         if self.production_runtime is not None:
             await self.production_runtime.cancel_jobs()
@@ -1661,6 +1669,11 @@ class RuntimeSupervisor:
     async def _dispatch_domain_event(
         self, event: RuntimeEvent, process_seq: int
     ) -> EventDispatchResult:
+        if self.text_turns.engine.absorbed(event.event_id):
+            await self.text_turns.disposition(event, "coalesced")
+            return EventDispatchResult(event_id=event.event_id, receive_seq=event.receive_seq,
+                process_seq=process_seq, status="completed", decision_kind="no_action",
+                detail={"reason": "text_interruption_coalesced"})
         if event.event_type == RuntimeEventType.QQ_FACT:
             from harness.qq.attention import require_attention
             try:
@@ -2921,6 +2934,13 @@ class RuntimeSupervisor:
                 )
             if delivery is None:
                 async with self._foreground_lock:
+                    disposition = await self.text_turns.gate(event, prepared)
+                    if disposition != "continue":
+                        await self._commit_prepared(event, prepared, DeliveryEvidence(
+                            prepare_id=prepared.prepare_id, delivered_at=utc_now(), channel=decision.channel,
+                            success=False, error="text_interruption_" + disposition))
+                        return {"prepare_id": prepared.prepare_id, "effective_decision_kind": "no_action",
+                                "reason": "text_interruption_" + disposition}
                     blocked = self._response_block_reason()
                     if blocked is not None:
                         return {"prepare_id": prepared.prepare_id,
@@ -2992,6 +3012,7 @@ class RuntimeSupervisor:
                 error=delivery.error,
             )
             committed = await self._commit_prepared(event, prepared, delivery_evidence)
+            await self.text_turns.published(event, prepared, delivery)
             return {
                 "prepare_id": prepared.prepare_id,
                 "delivered": delivery.success,
@@ -3538,6 +3559,10 @@ class RuntimeSupervisor:
         payload: dict[str, Any],
         expected_revision: int | None,
     ) -> DomainCommandEnvelope[dict[str, Any]]:
+        if command_type == "PrepareResponse":
+            continuation = self.text_turns.command_context(event)
+            if continuation is not None:
+                payload = {**payload, "text_interruption_context": continuation}
         if self.production_runtime is not None and command_type in {
             "PrepareBoardEntry", "CommitBoardEntry", "PrepareDiaryEntry", "CommitDiaryEntry", "PrepareWebStep",
         }:
@@ -3575,7 +3600,9 @@ class RuntimeSupervisor:
             manifest_revision=self.manifest.revision,
             idempotency_key=idempotency_key,
             issued_at=issued_at,
-            deadline=issued_at + timedelta(seconds=self.command_timeout_seconds),
+            deadline=(datetime.fromtimestamp(self.text_turns.deadline(event,
+                (issued_at + timedelta(seconds=self.command_timeout_seconds)).timestamp()), tz=issued_at.tzinfo)
+                if command_type == "PrepareResponse" else issued_at + timedelta(seconds=self.command_timeout_seconds)),
             expected_revision=expected_revision,
             version_vector=version_vector,
             payload=payload,

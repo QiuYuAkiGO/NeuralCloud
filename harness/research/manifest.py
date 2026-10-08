@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from harness.embodiment.capabilities import CapabilityRequirement
 from harness.regulation.config import RegulationConfig
 from harness.production.config import ProductionConfig
+from harness.interruption import InterruptionOptions
 from harness.research.grounded_agency.manifest import GroundedAgencyBinding, GroundedAgencyCondition
 
 ControlMode = Literal["development_debug", "study_runtime"]
@@ -184,6 +185,7 @@ class ExperimentManifest(BaseModel):
     homeostatic_profile: str = Field(min_length=1)
     heartbeat_seconds: int = Field(default=60, ge=1, le=3600)
     autonomous_chat_enabled: bool = True
+    text_interruption: InterruptionOptions = Field(default_factory=InterruptionOptions)
     command_timeout_seconds: float = Field(default=30.0, ge=1, le=300, allow_inf_nan=False)
     policy_horizon: int = Field(default=3, ge=1, le=3)
     random_seed: int = Field(ge=0)

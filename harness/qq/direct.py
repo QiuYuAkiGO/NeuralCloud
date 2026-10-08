@@ -33,6 +33,8 @@ from harness.qq.onebot import OneBotClient, OneBotError
 from harness.qq.session import QQSessionSettings
 from harness.qq.shared import QQSharedCognitiveClient
 from harness.qq.reply_requests import ReplyRequestChanged, binding as reply_binding
+from harness.qq.interruption import QQTextTurns
+from harness.interruption import InterruptedReply
 from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace, classify_error, current_qq_trace, qq_trace_scope
 from harness.qq.vision import load_vision_settings
 
@@ -80,6 +82,7 @@ class DirectQQActor:
         self.connected = False
         self.connected_at = utcnow()
         self.epoch = 0
+        self.text_turns = QQTextTurns(self)
         self.group_evidence = {}
         self.aliases = {}
         self.history_supported = True
@@ -168,6 +171,7 @@ class DirectQQActor:
     def check_send(self, event, deadline, epoch, *, decision=None, untransmitted_send=None):
         deadline.check()
         self.check_attention(event)
+        self.text_turns.check_control(event)
         if not self.active() or self.stop.is_set() or self.epoch != epoch:
             raise OneBotError("direct_owner_unavailable")
         if event["group_id"] not in self.current_conversations(send=True):
@@ -224,8 +228,9 @@ class DirectQQActor:
                 and observation.get("message_id") == event["message_id"]
                 and observation.get("capture_id") == event["event_id"]
                 and refs.issubset(observation.get("attribution_evidence", [])))
-        if self.store.newer(event, same_member_only=protected,
-                excluded_event_ids=request["source_event_ids"] if request else ()):
+        if (not self.text_turns.engine(event).managed(event["event_id"])
+                and self.store.newer(event, same_member_only=protected,
+                    excluded_event_ids=request["source_event_ids"] if request else ())):
             raise OneBotError("direct_newer_context")
 
     def write_status(self, **values):
@@ -282,6 +287,7 @@ class DirectQQActor:
                     self.store.update(event["event_id"], state="archived", terminal_reason=reason, terminal_stage="protocol.attention")
                     self.state["last_received_at"] = event["received_at"]
                     return
+                self.text_turns.receive(self.store.get(event["event_id"])["event"])
                 if (self.event_policy(event)["scheduler"] == "coalesced" and not historical and not event["own"]
                         and self.conversations[event["group_id"]].send):
                     self.enqueue_reply(self.store.get(event["event_id"])["event"])
@@ -297,7 +303,8 @@ class DirectQQActor:
     def enqueue_reply(self, event):
         addressing = verified_protocol_addressing(event, evidence_dir=self.settings.evidence_dir,
             self_id=self.settings.self_member_id, groups=self.groups, private_peers=self.private_peers)
-        return self.store.reply_requests.ingest(event, addressing=addressing)
+        return self.store.reply_requests.ingest(event, addressing=addressing,
+            independent=self.text_turns.engine(event).active)
 
     async def verify_connection(self):
         login = await self.client.call("get_login_info", timeout=8)
@@ -528,7 +535,8 @@ class DirectQQActor:
                 raise ValueError("frozen_plan_mismatch")
         except Exception:
             raise OneBotError("direct_frozen_plan_mismatch") from None
-        if self.store.cooldown(event["group_id"], 10 if decision.addressing == "direct" else 60):
+        if self.store.cooldown(event["group_id"], 10 if decision.addressing == "direct" else 60,
+                exclude_events=self.text_turns.cooldown_exclusions(event)):
             self.store.update(event["event_id"], state="rate_limited",
                               terminal_reason="direct_cooldown", terminal_stage="protocol.delivery")
             return
@@ -537,6 +545,8 @@ class DirectQQActor:
             self.check_send(event, deadline, epoch, decision=frozen)
             if deadline.check() < _MIN_SEND_SECONDS:
                 raise OneBotError("direct_send_budget_insufficient")
+            await self.text_turns.gate(event, "\n\n".join(texts[index:]))
+            self.check_send(event, deadline, epoch, decision=frozen)
             send = self.store.reserve(event, decision, index, text)
             try:
                 self.check_send(event, deadline, epoch, decision=frozen)
@@ -575,7 +585,8 @@ class DirectQQActor:
                     decision_id=decision.decision_id, segment_index=index, segment_count=len(texts), delivered_text=text,
                     source_record_ids=[] if event.get("_production_contact") else [send["source_record_id"]], delivered_at=delivered_at,
                     protocol_message_id=message_id, evidence_refs=[ack, proof,
-                        protocol_message_evidence_ref(event["group_id"], self.settings.self_member_id, message_id)])
+                    protocol_message_evidence_ref(event["group_id"], self.settings.self_member_id, message_id)])
+                self.text_turns.engine(event).delivered(event["event_id"], [text], receipt_id=receipt.receipt_id)
                 self.store.update_send(send, "sent", receipt_id=receipt.receipt_id, delivered_at=delivered_at.isoformat())
                 receipts.append(receipt)
                 self.state["last_delivery_at"] = delivered_at.isoformat()
@@ -738,6 +749,7 @@ class DirectQQActor:
         terminal_stage = "protocol.read"
         try:
             self.check_attention(event)
+            deadline = self.text_turns.begin(event, deadline)
             if event["group_id"] not in self.current_conversations():
                 raise OneBotError("direct_owner_unavailable")
             self.write_status(state="reading_message", last_error_type=None)
@@ -785,6 +797,10 @@ class DirectQQActor:
                                    "observed_own" if event["own"] else "observed_read_only")
                 self.store.update(event["event_id"], state="observed")
                 return
+            if self.text_turns.engine(event).absorbed(event["event_id"]):
+                terminal_reason = "text_interruption_coalesced"
+                self.store.update(event["event_id"], state="observed")
+                return
             terminal_stage = "protocol.precheck"
             with trace.stage("protocol.precheck"):
                 self.check_send(event, deadline, epoch)
@@ -797,6 +813,7 @@ class DirectQQActor:
                 decision = await asyncio.to_thread(self.cognition, transport="onebot", deadline=deadline, trace=trace,
                     group_id=event["group_id"], self_member_id=self.settings.self_member_id,
                     trigger_member_id=event["member_id"], verified_self_aliases=self.aliases[event["group_id"]],
+                    **({"text_interruption_context": self.text_turns.context(event)} if self.text_turns.context(event) else {}),
                     **(reply_binding(request) if request else {}))
             terminal_stage = "protocol.decision"
             trace.add_counter("protocol_error_fallback", int(decision.outcome == "error_fallback"))
@@ -822,6 +839,11 @@ class DirectQQActor:
             else:
                 terminal_reason = (decision.error_type if decision.error_type else
                                    decision.outcome if decision.outcome in {"natural_wait", "guard_wait"} else "decision_wait")
+        except InterruptedReply as exc:
+            terminal_reason = "text_interruption_" + exc.action
+            with closing(self.store.connect()) as db:
+                sent = db.execute("SELECT 1 FROM qq_direct_sends WHERE event_id=? AND status='sent'", (event["event_id"],)).fetchone()
+            self.store.update(event["event_id"], state="partial" if sent else "wait")
         except Exception as exc:
             if isinstance(exc, ReplyRequestChanged):
                 terminal_reason = exc.code
@@ -846,6 +868,7 @@ class DirectQQActor:
             code = terminal_reason if isinstance(exc, OneBotError) else "direct_turn_expired" if deadline.expired else "direct_turn_failed"
             self.state["last_error_type"] = code
         finally:
+            self.text_turns.engine(event).finish(event["event_id"])
             if terminal_reason is not None:
                 self.store.update(event["event_id"], terminal_reason=terminal_reason, terminal_stage=terminal_stage)
                 trace.record_termination(reason=terminal_reason, stage=terminal_stage)
@@ -1031,6 +1054,7 @@ class DirectQQActor:
             self.stop.set()
             await worker
             await close_media_work()
+            await self.text_turns.close()
             self.cognition.close()
             if self.llm is not None:
                 self.llm.close()

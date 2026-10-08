@@ -41,6 +41,7 @@ _ERRORS = {"deadline_expired", "model_timeout", "model_http", "model_invalid", "
            "storage_error", "cancelled", "late_result", "internal_error", "qq_transport_error",
            "shared_cognitive_unavailable"} | _QQ_ERRORS | _DIRECT_ERRORS
 _DIRECT_TERMINAL_REASONS = _ERRORS | {
+    "text_interruption_wait", "text_interruption_regenerate", "text_interruption_expired", "text_interruption_coalesced",
     "sent", "observed_history", "observed_own", "observed_read_only", "decision_wait",
     "natural_wait", "guard_wait", "decision_replayed", "decision_not_sendable", "direct_cooldown",
 }
@@ -136,6 +137,9 @@ class QQDeadline:
 def classify_error(error: BaseException) -> str:
     """Return a fixed category, never exception text, HTTP bodies or URLs."""
     from harness.embodiment.providers.qq import QQCommunicationError
+    from harness.interruption import InterruptedReply
+    if isinstance(error, InterruptedReply):
+        return "cancelled"
 
     # Non-Direct traces must not require the optional WebSocket transport.
     # A real OneBotError (including subclasses) already has its module loaded.
@@ -374,9 +378,11 @@ class QQTurnTrace:
         try:
             yield
         except BaseException as exc:
+            category = classify_error(exc)
             self.record(name, started_mono=started,
-                        outcome="expired" if isinstance(exc, QQDeadlineExpired) else "error",
-                        error_type=classify_error(exc))
+                        outcome="expired" if isinstance(exc, QQDeadlineExpired) else
+                            "cancelled" if category == "cancelled" else "error",
+                        error_type=category)
             raise
         else:
             self.record(name, started_mono=started)

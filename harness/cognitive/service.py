@@ -1072,6 +1072,19 @@ def create_app():
         except Exception as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    @app.post("/v1/text/interruption")
+    async def assess_text_interruption(payload: dict, authorization: str | None = Header(default=None)):
+        await authenticate(authorization)
+        from harness.interruption import InterruptionRequest
+        try:
+            return await host.adapter.assess_text_interruption(InterruptionRequest.model_validate(payload))
+        except TimeoutError:
+            raise HTTPException(status_code=408, detail="text_interruption_timeout") from None
+        except ValueError:
+            raise HTTPException(status_code=422, detail="text_interruption_invalid") from None
+        except Exception:
+            raise HTTPException(status_code=503, detail="text_interruption_unavailable") from None
+
     @app.get("/v1/events/stream")
     async def events(authorization: str | None = Header(default=None)) -> StreamingResponse:
         await authenticate(authorization)

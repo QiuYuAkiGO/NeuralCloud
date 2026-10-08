@@ -1,0 +1,138 @@
+{
+  "phase": "enabled_readonly_with_verified_live_goal_command",
+  "verification": {
+    "local_tests_passed": 39,
+    "deployed_tests_passed": 39,
+    "isolated_goal_with_real_ssh": {
+      "command": "uptime",
+      "exit_code": 0,
+      "step_status": "executed",
+      "evidence_refs_present": true,
+      "model": "deterministic test model"
+    },
+    "blocked_ssh_commands": 12,
+    "normalized_uptime_allowed": true
+  },
+  "access": {
+    "account": "misty-observe",
+    "sudo_allowed": false,
+    "host": "127.0.0.1",
+    "daily_commands": 30,
+    "autonomous_daily_commands": 12,
+    "authorization": {
+      "enabled": true,
+      "autonomous_enabled": true
+    },
+    "saved_revision": 2,
+    "enforcement": [
+      "Runtime exact-command allowlist through forbidden_patterns",
+      "root-owned SSH forced-command dispatcher using argv, no shell",
+      "SSH restrict: no forwarding, PTY, user rc or agent forwarding"
+    ],
+    "allowed_commands": [
+      "uptime",
+      "uname -a",
+      "id",
+      "whoami",
+      "hostname",
+      "date",
+      "df -h",
+      "free -m",
+      "nproc",
+      "systemctl is-active neuralcloud-runtime",
+      "systemctl is-active neuralcloud-cognitive",
+      "systemctl is-active neuralcloud-homeostasis",
+      "uname -a; id"
+    ]
+  },
+  "online_acceptance": {
+    "checked_at": "2026-10-08T00:42:57.672633+00:00",
+    "goal_id": "goal:b16fba3fcd0abab4d7696e8c8fd2ca9f",
+    "goal_status": "cancelled",
+    "cleanup_reason": "Operator ended one-shot acceptance after proven command success; goal self-completion was not evaluated.",
+    "services": {
+      "runtime": "active",
+      "cognitive": "active",
+      "homeostasis": "active",
+      "gui": "active",
+      "qq-direct": "active",
+      "board": "active"
+    },
+    "config": {
+      "active_revision": 2,
+      "saved_revision": 2,
+      "restart_required": false,
+      "authorization": {
+        "enabled": true,
+        "autonomous_enabled": true
+      }
+    },
+    "status": {
+      "enabled": true,
+      "autonomous_enabled": true,
+      "usage": {
+        "day": "2026-10-08",
+        "commands": 2,
+        "autonomous_commands": 1,
+        "daily_limit": 30,
+        "autonomous_daily_limit": 12
+      },
+      "pending_approvals": 0
+    },
+    "commands": [
+      {
+        "command_id": "autonomous:capability:dd902cf9bb404cdd906021d0ea116647",
+        "status": "completed",
+        "capability": "server.observe.v1",
+        "command": "uptime",
+        "cwd": null,
+        "risk_class": "read_only",
+        "created_at": "2026-10-08T00:41:44.215774+00:00",
+        "error": null,
+        "exit_code": 0,
+        "truncated": false,
+        "evidence_refs": [
+          "server-command:autonomous:capability:dd902cf9bb404cdd906021d0ea116647",
+          "server-output:sha256:146d42a016aec9fcd35600fa84cfd646a880d803ff7578d6fac9460e1aa63301"
+        ],
+        "stdout": " 08:41:44 up 2 days, 23:11,  2 users,  load average: 1.64, 1.68, 1.84\n",
+        "stderr": ""
+      }
+    ],
+    "capability_calls": [
+      {
+        "opportunity_id": "capability:dd902cf9bb404cdd906021d0ea116647",
+        "status": "completed",
+        "goal_binding": {
+          "goal_id": "goal:b16fba3fcd0abab4d7696e8c8fd2ca9f",
+          "goal_revision": 1,
+          "episode_id": "episode:eeb1071cd6dc4e1b8d00885708a5aded",
+          "step_id": "episode:eeb1071cd6dc4e1b8d00885708a5aded:step:ce6ce28c003a"
+        },
+        "server_call_id": "autonomous:capability:dd902cf9bb404cdd906021d0ea116647",
+        "created_at": "2026-10-08T00:41:33.469216+00:00",
+        "completed_at": "2026-10-08T00:41:44.638461+00:00",
+        "evidence_refs": [
+          "server-command:autonomous:capability:dd902cf9bb404cdd906021d0ea116647",
+          "server-output:sha256:146d42a016aec9fcd35600fa84cfd646a880d803ff7578d6fac9460e1aa63301"
+        ]
+      }
+    ],
+    "executed_steps": [
+      {
+        "id": "episode:eeb1071cd6dc4e1b8d00885708a5aded:step:ce6ce28c003a",
+        "status": "executed",
+        "call_id": "capability:dd902cf9bb404cdd906021d0ea116647",
+        "evidence_refs": [
+          "server-command:autonomous:capability:dd902cf9bb404cdd906021d0ea116647",
+          "server-output:sha256:146d42a016aec9fcd35600fa84cfd646a880d803ff7578d6fac9460e1aa63301"
+        ]
+      }
+    ]
+  },
+  "limitations": [
+    "Initial natural-language acceptance goal produced two capability_invalid_server_choice failures before execution; an explicit choice contract in the second goal enabled a successful real model decision. No global prompt or schema fix was deployed.",
+    "The one-shot acceptance goal was cancelled after proven command success; independent goal self-completion and long-term autonomous decision reliability were not evaluated.",
+    "Both observe and execute capability identifiers are enabled by the existing configuration API, but both are restricted to the same fixed read-only commands."
+  ]
+}

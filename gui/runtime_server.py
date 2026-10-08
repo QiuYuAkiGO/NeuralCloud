@@ -468,7 +468,10 @@ def create_app(*, runtime_url: str | None = None, control_token: str | None = No
         text = str(body.get("text") or "").strip()
         if not text:
             raise HTTPException(status_code=400, detail="empty text")
-        run_id = f"run_{secrets.token_hex(4)}"
+        run_id = body.get("correlation_id") or f"run_{secrets.token_hex(4)}"
+        import re
+        if not isinstance(run_id, str) or re.fullmatch(r"run_[0-9a-f]{8,32}", run_id) is None:
+            raise HTTPException(status_code=400, detail="invalid correlation_id")
         event = await gateway(request).request(
             "POST",
             "/v1/messages",

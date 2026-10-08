@@ -427,13 +427,15 @@ class DirectStore:
                 (status, value.get("message_id"), value.get("receipt_id"), canonical(value), value["send_id"]))
         return value
 
-    def cooldown(self, group_id, seconds):
+    def cooldown(self, group_id, seconds, *, exclude_events=()):
         with closing(self.connect()) as db:
             # A task acknowledgement must not rate-limit the user's next
             # conversational turn. Task notices have their own bounded queue.
             rows = db.execute("""SELECT record_json FROM qq_direct_sends WHERE group_id=? AND status='sent'
                 AND json_extract(record_json,'$.task_notice_id') IS NULL""", (group_id,))
-            moments = [datetime.fromisoformat(json.loads(row[0])["delivered_at"]) for row in rows]
+            records = [json.loads(row[0]) for row in rows]
+            moments = [datetime.fromisoformat(row["delivered_at"]) for row in records
+                       if row["event_id"] not in exclude_events]
         return bool(moments and (utcnow() - max(moments)).total_seconds() < seconds)
 
     def cancel_untransmitted(self, value, *, reason="direct_send_budget_insufficient"):

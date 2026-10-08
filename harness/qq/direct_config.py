@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Literal
 
 from harness.files import replace_path
+from harness.interruption import InterruptionOptions
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, model_validator
 
@@ -49,6 +50,8 @@ class DirectQQSettings(BaseModel):
     history_count: int = Field(default=20, ge=1, le=50)
     history_poll_seconds: int = Field(default=300, ge=60, le=3600)
     qq_reply_scheduler: Literal["legacy", "shadow", "coalesced"] = "shadow"
+    text_interruption: InterruptionOptions = Field(default_factory=InterruptionOptions)
+    text_interruption_private: InterruptionOptions = Field(default_factory=InterruptionOptions)
     qq_media_cache_enabled: StrictBool = False
     qq_media_parallel_enabled: StrictBool = False
     qq_image_mode: Literal["all", "one", "off"] = "all"

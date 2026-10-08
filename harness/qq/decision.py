@@ -1481,6 +1481,7 @@ def decide_qq_reply(
     goal_context=None,
     shared_owner=None,
     runtime_web_context: dict | None = None,
+    text_interruption_context: dict | None = None,
     _turn_preparation: dict | None = None,
     _request_source_event_ids: list[str] | None = None,
     _reply_reference_record_ids: list[str] | None = None,
@@ -1656,6 +1657,9 @@ def decide_qq_reply(
         base_payload["goal_continuation_rules"] = (
             "这是有限目标的当前表达机会，不是新的群消息或完成证明。仅依据当前群可见内容表达，不能推测、复述本地私有目标；"
             "发送任意话语不构成目标完成。没有当前群内容支持的合适表达时可以等待。")
+    if text_interruption_context is not None:
+        from harness.interruption import InterruptionContext
+        base_payload["text_interruption_context"] = InterruptionContext.model_validate(text_interruption_context).model_dump()
     if emotion_on:
         base_payload = remove_legacy_emotion_parameters(base_payload)
     projected_base = {**base_payload, "group_context": project_group_context(base_payload["group_context"]),

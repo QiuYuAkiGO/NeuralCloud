@@ -887,29 +887,58 @@ function lastUserIndex() {
   return -1;
 }
 
-function commitCharacterSegments(segs, extra) {
-  const start = lastUserIndex() + 1;
+const finalizedReplies = new Set();
+const discardedReplies = new Set();
+
+function rememberReply(set, id) {
+  if (!id) return;
+  set.add(id);
+  if (set.size > 512) set.delete(set.values().next().value);
+}
+
+function pendingIndex(runId) {
+  return state.messages.findIndex((item) => item.pending && (!runId || item.run_id === runId));
+}
+
+function commitCharacterSegments(segs, extra, runId) {
+  const responseId = extra.response_id;
+  if (responseId && (finalizedReplies.has(responseId) || discardedReplies.has(responseId))) return;
+  if (runId && finalizedReplies.has(`run:${runId}`)) return;
+  const pending = pendingIndex(runId);
+  const start = pending < 0 ? state.messages.length : pending;
   const base = {
     role: "character",
     pending: false,
     speaker: state.speakers.character_name,
+    run_id: runId,
     ...extra,
   };
-  state.messages.splice(
-    start,
-    state.messages.length - start,
-    ...segs.map((text) => ({ ...base, text })),
-  );
+  state.messages.splice(start, pending < 0 ? 0 : 1, ...segs.map((text) => ({ ...base, text })));
+  state.messages = state.messages.filter((item) => !(item.draft_segment && item.run_id === runId));
+  rememberReply(finalizedReplies, responseId);
+  if (runId) rememberReply(finalizedReplies, `run:${runId}`);
+}
+
+function applyReplyDisposition(msg) {
+  rememberReply(discardedReplies, msg.data?.prepare_id);
+  const index = pendingIndex(msg.run_id);
+  if (index >= 0) state.messages.splice(index, 1);
+  const labels = {regenerate: "已按新消息调整回复", wait: "已按请求等待", coalesced: "已合并到当前回复",
+    expired: "回复已过期", fenced: "回复已被控制操作停止"};
+  $("run-meta").textContent = labels[msg.data?.action] || "回复已调整";
+  renderTranscript();
 }
 
 function applyReplySegment(msg) {
   const text = hideProtocolMarkers(msg.data?.text || "");
   if (!text) return;
-  const pendingIdx = state.messages.findIndex((item) => item.pending);
+  const pendingIdx = pendingIndex(msg.run_id);
   const bubble = {
     role: "character",
     text,
     speaker: state.speakers.character_name,
+    run_id: msg.run_id,
+    draft_segment: true,
   };
   if (pendingIdx >= 0) {
     state.messages.splice(pendingIdx, 0, bubble);
@@ -945,7 +974,8 @@ function applyStageEvent(msg) {
       path: msg.data?.path,
       revisions: msg.data?.revisions,
       usage: msg.data?.usage,
-    });
+      response_id: msg.data?.response_id,
+    }, msg.run_id);
     const stopped = msg.data?.stopped_by ? ` · ${msg.data.stopped_by}` : "";
     const usage = msg.data?.usage;
     const tok = usage?.total_tokens != null ? ` · ${usage.total_tokens} tok` : "";
@@ -977,9 +1007,10 @@ function connectWs() {
     if (msg.type === "ping") return;
     if (msg.type === "state_dirty") scheduleStatusRefresh();
     if (msg.type === "stage" || msg.type === "final") applyStageEvent(msg);
+    if (msg.type === "reply_disposition") applyReplyDisposition(msg);
     if (msg.type === "state") applySnapshot(msg.data);
     if (msg.type === "error") {
-      const pending = state.messages.find((item) => item.pending);
+      const pending = state.messages[pendingIndex(msg.run_id)];
       if (pending) {
         pending.pending = false;
         pending.text = `错误：${msg.data?.message || "unknown"}`;
@@ -1012,15 +1043,16 @@ async function sendChat(event) {
   state.busy = true;
   $("btn-send").disabled = true;
   $("input").value = "";
-  state.messages.push({ role: "user", text, speaker: state.speakers.user_name });
-  state.messages.push({ role: "character", text: "", pending: true, speaker: state.speakers.character_name });
+  const runId = `run_${Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("")}`;
+  state.messages.push({ role: "user", text, run_id: runId, speaker: state.speakers.user_name });
+  state.messages.push({ role: "character", text: "", pending: true, run_id: runId, speaker: state.speakers.character_name });
   renderTranscript();
   beginRun();
   try {
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, correlation_id: runId }),
     });
     const body = await res.json();
     state.runId = body.run_id;
@@ -1029,7 +1061,7 @@ async function sendChat(event) {
       throw new Error(typeof detail === "string" ? detail : res.statusText);
     }
   } catch (err) {
-    const pending = state.messages.find((item) => item.pending);
+    const pending = state.messages[pendingIndex(runId)];
     if (pending) {
       pending.pending = false;
       pending.text = `错误：${err.message}`;

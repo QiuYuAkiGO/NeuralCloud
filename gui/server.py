@@ -51,6 +51,7 @@ PORT = int(os.environ.get("NC_GUI_PORT", "8790"))
 class ChatRequest(BaseModel):
     text: str = Field(min_length=1)
     session_id: str | None = None
+    correlation_id: str | None = Field(default=None, pattern=r"^run_[0-9a-f]{8,32}$")
 
 
 class ConfigRequest(BaseModel):
@@ -292,7 +293,7 @@ def create_app(
         if not text:
             raise HTTPException(status_code=400, detail="empty text")
         service: HarnessChatService = app.state.service
-        run_id = new_run_id()
+        run_id = body.correlation_id or new_run_id()
         async with app.state.run_lock:
             try:
                 await asyncio.to_thread(service.respond, run_id, body.session_id or "", text)

@@ -206,6 +206,13 @@ class HttpCognitiveClient(_HttpDomainClient):
     async def ui_snapshot(self) -> dict[str, Any]:
         return await self._request("GET", "/v1/ui/snapshot")
 
+    async def assess_text_interruption(self, request) -> dict[str, Any]:
+        # One physical request per charged judgment, with a total I/O deadline.
+        response = await asyncio.wait_for(self.client.post("/v1/text/interruption",
+            json=request.model_dump(mode="json"), timeout=request.timeout_seconds), request.timeout_seconds)
+        response.raise_for_status()
+        return response.json()
+
     async def control(self, operation: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         return await self._request(
             "POST",

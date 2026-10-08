@@ -141,7 +141,7 @@ class ReplyRequests:
     def __init__(self, store):
         self.store = store
 
-    def ingest(self, event, *, addressing):
+    def ingest(self, event, *, addressing, independent=False):
         """Join only admitted live observations; every new explicit @ is independent."""
         if event["historical"] or event["own"] or addressing not in {"ambient", "self_mention", "private"}:
             return None
@@ -157,7 +157,7 @@ class ReplyRequests:
                 AND state IN ('queued','observing','preparing','frozen') AND deadline_at>?
                 ORDER BY first_seen_at DESC,request_id DESC""", (event["run_id"], event["group_id"], utcnow().isoformat())).fetchall()
             selected = None
-            if addressing != "self_mention":
+            if addressing != "self_mention" and not independent:
                 for row in candidates:
                     candidate = snapshot(row)
                     if candidate["addressing"] != "ambient" and candidate["member_id"] == event["member_id"]:
