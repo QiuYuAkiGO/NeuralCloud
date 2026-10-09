@@ -17,6 +17,7 @@ from harness.core.inference import (
     FinalResponse,
     InteroceptiveState,
     MemoryEvidenceContext,
+    ResponseSemanticContext,
     ModelContext,
     ParsedInteraction,
     SessionTurn,
@@ -61,6 +62,23 @@ _HOMEOSTATIC_HARD_VIOLATIONS = {
     "homeostatic_mechanism_leakage",
     "unsupported_physical_claim",
 }
+
+
+def _with_expression_diagnostics(validation, candidate, context):
+    """Missing/sampled-out reviews remain visible without scheduling a critic."""
+    if context.response_expression is None:
+        return validation
+    from harness.core.expression import expression_diagnostics
+    from harness.qq.telemetry import current_qq_trace
+    if validation.expression is None:
+        validation = validation.model_copy(update={"expression": expression_diagnostics(
+            None, candidate.text, context.response_expression)})
+    trace = current_qq_trace()
+    if trace is not None:
+        trace.add_counter("reply_expression_" + validation.expression["status"])
+        for issue in validation.expression["issues"]:
+            trace.add_counter("reply_expression_" + issue["kind"])
+    return validation
 
 
 class StageObserver(Protocol):
@@ -149,6 +167,7 @@ class InferencePipeline:
         call_id: str | None = None,
         context_segments: list[ContextSegment] | None = None,
         memory_evidence: MemoryEvidenceContext | None = None,
+        response_semantics: ResponseSemanticContext | None = None,
         interoception: InteroceptiveState | None = None,
         homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
         emotion_guidance: Any = None,
@@ -177,6 +196,7 @@ class InferencePipeline:
                     commit_interaction=False,
                     context_segments=context_segments,
                     memory_evidence=memory_evidence,
+                    response_semantics=response_semantics,
                     interoception=interoception,
                     homeostatic_interoception=homeostatic_interoception,
                     emotion_guidance=emotion_guidance,
@@ -192,6 +212,7 @@ class InferencePipeline:
         session_id: str,
         context_segments: list[ContextSegment],
         memory_evidence: MemoryEvidenceContext,
+        response_semantics: ResponseSemanticContext | None = None,
         prefix_messages: list[dict[str, str]],
         speaker: str = "operator",
         now: datetime | None = None,
@@ -204,7 +225,8 @@ class InferencePipeline:
         Gate judgement and scoped recall have already completed. Parsing the
         fixed adapter instruction, judging its complexity, or retrieving it as
         another utterance would add no new evidence. This entry never observes
-        emotion, mutates the session, continues, or repairs with another draft.
+        emotion, mutates the session, or continues. The existing critic may
+        request at most one corrected draft within the original turn deadline.
         """
         if not memory_evidence.audience.startswith("qq:") or not prefix_messages:
             raise ValueError("QQ response requires scoped evidence and an admitted gate prefix")
@@ -229,7 +251,8 @@ class InferencePipeline:
                     situation, insights=[], session=[], additional_segments=context_segments,
                     homeostatic_interoception=homeostatic_interoception, emotion_guidance=emotion_guidance,
                     memory_evidence=memory_evidence, prefix_messages=prefix_messages,
-                ), extra={"situation_id": situation.situation_id, "path": "qq_direct"})
+                ).model_copy(update={"response_semantics": response_semantics}),
+                    extra={"situation_id": situation.situation_id, "path": "qq_direct"})
                 context = context.model_copy(update={"prefix_messages": list(prefix_messages)})
                 candidate, validation, revisions, usage = self._generate_validated(
                     context, situation=situation, insights=[], path="fast",
@@ -447,6 +470,7 @@ class InferencePipeline:
         homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None,
         emotion_guidance: Any = None,
         memory_evidence: MemoryEvidenceContext | None = None,
+        response_semantics: ResponseSemanticContext | None = None,
         prefix_messages: list[dict[str, str]] | None = None,
     ) -> FinalResponse:
         started = time.perf_counter()
@@ -518,7 +542,7 @@ class InferencePipeline:
                 emotion_guidance=emotion_guidance,
                 prefix_messages=prefix_messages,
                 **({"memory_evidence": memory_evidence} if memory_evidence is not None else {}),
-            ),
+            ).model_copy(update={"response_semantics": response_semantics}),
             extra={"situation_id": situation.situation_id, "path": request.path},
         )
         if prefix_messages:
@@ -730,10 +754,19 @@ class InferencePipeline:
         usage = usage.add(candidate.usage)
         if not self.settings.validator_enabled:
             validation = ValidationResult(verdict="pass", skipped=True)
+            if context.response_semantics is not None:
+                validation = validation.model_copy(update={"alignment": {
+                    "status": "unavailable", "reason": "validator_disabled", "issues": []}})
+                if context.response_semantics.mode == "enforce":
+                    validation = validation.model_copy(update={"verdict": "revise", "skipped": False,
+                        "violations": ["semantic_review_unavailable"], "severity": 1})
+                    candidate = candidate.model_copy(update={"text": ""})
+            validation = _with_expression_diagnostics(validation, candidate, context)
             self._emit(
                 "validate", validation,
-                {"skipped": True, "reason": "disabled_by_configuration", "path": path,
-                 "latency_ms": 0.0, "verdict": "pass", "violations": [], "segment": segment_index},
+                {"skipped": validation.skipped, "reason": "disabled_by_configuration", "path": path,
+                 "latency_ms": 0.0, "verdict": validation.verdict,
+                 "violations": validation.violations, "segment": segment_index},
             )
             return candidate, validation, 0, usage
         sampled_validation = self.validator.should_run(path)
@@ -748,15 +781,23 @@ class InferencePipeline:
         )
         if not sampled_validation and not force_homeostatic_rules:
             validation = ValidationResult(verdict="pass", skipped=True)
+            if context.response_semantics is not None:
+                validation = validation.model_copy(update={"alignment": {
+                    "status": "unavailable", "reason": "critic_not_sampled", "issues": []}})
+                if context.response_semantics.mode == "enforce":
+                    validation = validation.model_copy(update={"verdict": "revise", "skipped": False,
+                        "violations": ["semantic_review_unavailable"], "severity": 1})
+                    candidate = candidate.model_copy(update={"text": ""})
+            validation = _with_expression_diagnostics(validation, candidate, context)
             self._emit(
                 "validate",
                 validation,
                 {
-                    "skipped": True,
+                    "skipped": validation.skipped,
                     "path": path,
                     "latency_ms": 0.0,
-                    "verdict": "pass",
-                    "violations": [],
+                    "verdict": validation.verdict,
+                    "violations": validation.violations,
                     "segment": segment_index,
                 },
             )
@@ -774,6 +815,8 @@ class InferencePipeline:
             if isinstance(self.validator, ResponseValidator):
                 validator_kwargs.update(
                     memory_evidence=context.memory_evidence,
+                    response_semantics=context.response_semantics,
+                    response_expression=context.response_expression,
                     homeostatic_context=has_homeostatic_context,
                     emotion_guidance=emotion_text,
                     # The current grounded BodyState proves only a generic
@@ -790,6 +833,12 @@ class InferencePipeline:
                 ),
                 extra={"revision": revisions, "path": path, "segment": segment_index},
             )
+            if validation.alignment is not None:
+                from harness.qq.telemetry import current_qq_trace
+                trace = current_qq_trace()
+                if trace is not None:
+                    trace.add_counter("reply_alignment_" + validation.alignment["status"])
+            validation = _with_expression_diagnostics(validation, candidate, context)
             if validation.verdict == "pass":
                 break
             if "semantic_review_unavailable" in validation.violations:
@@ -797,7 +846,10 @@ class InferencePipeline:
                 # unchecked candidate or spend another body generation on it.
                 candidate = candidate.model_copy(update={"text": ""})
                 break
-            if revisions >= (self.settings.max_revisions if max_revisions is None else max_revisions):
+            revision_limit = self.settings.max_revisions if max_revisions is None else max_revisions
+            if context.response_semantics is not None and context.response_semantics.mode == "enforce":
+                revision_limit = min(1, revision_limit)
+            if revisions >= revision_limit:
                 if _HOMEOSTATIC_HARD_VIOLATIONS.intersection(validation.violations):
                     candidate = candidate.model_copy(update={"text": ""})
                 break

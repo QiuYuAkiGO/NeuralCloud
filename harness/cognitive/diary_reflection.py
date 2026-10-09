@@ -67,7 +67,7 @@ def parse(response, schema):
     if (response.has_refusal or response.has_tool_calls or response.finish_reason not in (None, "stop")
             or response.content_type in {"array", "object", "invalid", "null", "missing"}):
         raise ValueError("diary_reflection_incomplete_response")
-    return schema.model_validate(parse_json_object(response.text))
+    return schema.model_validate(parse_json_object(response.text, schema=schema.model_json_schema()))
 
 
 class DiaryReflectionWorker:

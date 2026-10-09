@@ -16,6 +16,7 @@ dependencies = [
     "alembic>=1.13",
     "httpx>=0.27",
     "jsonschema>=4.23",
+    "json-repair==0.63.5",
     "asyncssh>=2.14",
     "numpy>=1.26",
     "tzdata>=2024.1",

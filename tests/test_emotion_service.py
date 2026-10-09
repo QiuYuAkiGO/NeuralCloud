@@ -40,10 +40,11 @@ def request(context_id="context-1", *, messages=None, scope="local:main", as_of=
 class FakeAux:
     aux_distinct = True
 
-    def __init__(self, *, amount=0.9, confidence=1.0, guidance=None, appraisal=None, delay=0):
+    def __init__(self, *, amount=0.9, confidence=1.0, guidance=None, appraisal=None, delay=0,
+                 delivery="语气可以直接、尖锐，减少客套，不必强行温柔。"):
         self.calls = []
         self.amount, self.confidence, self.appraisal, self.delay = amount, confidence, appraisal, delay
-        self.text = guidance or "此刻明显愤怒，语气可以直接、尖锐，减少客套，不必强行温柔。"
+        self.text, self.delivery = guidance, delivery
 
     def complete_json(self, *, system, user, **kwargs):
         payload = json.loads(user)
@@ -55,7 +56,9 @@ class FakeAux:
                 return self.appraisal(payload)
             return {"events": [{"source_id": identity, "signals": [{"label": "anger", "intensity": self.amount,
                         "confidence": self.confidence}], "recovery": []} for identity in payload["new_source_ids"]]}
-        assert "EMOTION_GUIDANCE_V1" in system
+        assert "EMOTION_GUIDANCE_V2" in system
+        if self.text is None:
+            return {**payload["required_expression"], "delivery": self.delivery}
         return {"feeling": self.text, "delivery": "措辞贴合当前心情", "needs": "保持事实与行动边界"}
 
 
@@ -558,7 +561,7 @@ def test_chinese_mechanism_terms_do_not_reach_the_main_emotion_segment(mechanism
     service = EmotionService(settings(), FakeAux(guidance="此刻明显愤怒，" + mechanism + "。"))
     guidance = service.guidance(service.observe(request()))
     assert guidance.status == "fallback" and mechanism not in guidance.text
-    assert guidance.diagnostics["validation_version"] == "emotion-guidance-guard-v2"
+    assert guidance.diagnostics["validation_version"] == "emotion-guidance-guard-v3"
 
 
 def test_anger_recovering_cannot_ambiguously_mean_anger_is_returning():
@@ -600,7 +603,7 @@ def test_a_decaying_positive_balance_is_described_as_weakening():
     ("cognitive_load", "high", "此刻认知负荷偏高，优先把交流说得简短清晰，同时保留羞怯的余韵。"),
 ])
 def test_model_guidance_preserves_computed_dominant_need_and_secondary_emotion(dimension, direction, valid_text):
-    llm = FakeAux(guidance=valid_text, appraisal=lambda payload: {"events": [
+    llm = FakeAux(delivery=valid_text, appraisal=lambda payload: {"events": [
         {"source_id": identity, "signals": [{"label": "shame", "intensity": .76, "confidence": 1.0}]}
         for identity in payload["new_source_ids"]]})
     service = EmotionService(settings(), llm)
@@ -643,12 +646,13 @@ def test_all_canonical_needs_pass_dominant_need_coverage_without_physical_sympto
     from harness.emotion.semantics import NEEDS
 
     for (dimension, direction), need_text in NEEDS.items():
-        llm = FakeAux(guidance="此刻" + need_text + "，让措辞与投入节奏贴合这份需要。")
+        llm = FakeAux(delivery="让措辞与投入节奏贴合这份需要。")
         service = EmotionService(settings(), llm)
         frame = service.observe(request(messages=[], homeostasis={"dominant_needs": [
             {"dimension": dimension, "direction": direction, "normalized_deviation": .95, "confidence": 1.0}]}))
         guidance = service.guidance(frame)
         assert guidance.status == "model", (dimension, direction, guidance.diagnostics)
+        assert need_text in guidance.text
 
 
 def test_read_snapshot_decays_without_calling_the_model_or_changing_revision():

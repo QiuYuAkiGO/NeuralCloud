@@ -1,0 +1,291 @@
+[
+  {
+    "verified_at": "2026-10-08T16:37:28.53257+08:00",
+    "release": "/opt/neuralcloud/releases/20261008-emotion-semantics-v1",
+    "previous_release": "/opt/neuralcloud/releases/20261008-reply-failover-v1",
+    "release_manifest": {
+      "release_id": "20261008-emotion-semantics-v1",
+      "verified_files": 446
+    },
+    "source_files": [
+      {
+        "path": "harness/emotion/semantics.py",
+        "sha256": "d10203dfb3848aeee2845f9e21b2b6585756bb3ec5b645d1dc78bc1e112ba737"
+      },
+      {
+        "path": "harness/emotion/service.py",
+        "sha256": "a1683c45bd42548782b4b944a1cc7c02b1fe25fec44cd904a0361386fbac2bb9"
+      },
+      {
+        "path": "tests/test_emotion_service.py",
+        "sha256": "35b112e7a3683c58ccef6d76f8581404281b774f8c7469538df713c160e9ccbe"
+      },
+      {
+        "path": "tests/test_emotion_guidance_contract.py",
+        "sha256": "afa747a0672fc4bf7bc2d219fed532e78d0fa6afefa62404ad48a8062510fa07"
+      },
+      {
+        "path": "tests/test_emotion_runtime.py",
+        "sha256": "2f443bb396ab6e3bcf909108c6d0eae64bdd40deefe08dccaf53ee80efe472ee"
+      },
+      {
+        "path": "tests/test_qq_emotion_pipeline_integration.py",
+        "sha256": "8ad6b2fd884f4fc8b6a061f752ba7a17ea42215de5ea889bf39b07adccbf4f49"
+      }
+    ],
+    "reply_failover_preserved": true,
+    "tests": {
+      "tests": 367,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "test_exclusions": [
+      "test_json_nesting_error_remains_safe: pre-existing platform-dependent diagnostic tests"
+    ],
+    "pre_deploy_live": {
+      "passed": true,
+      "release_source": "/opt/neuralcloud/releases/20261008-emotion-semantics-v1/harness/emotion/service.py",
+      "prompt_version": "emotion-director-v6",
+      "validation_version": "emotion-guidance-guard-v3",
+      "historical_input_audit": {
+        "frames": 2491,
+        "failures": {}
+      },
+      "requests": 24,
+      "model_successes": 24,
+      "semantic_passes": 24,
+      "external_messages_sent": 0,
+      "state_commits": 0,
+      "historical_deadlines_cleared_for_replay": true,
+      "completed_at": "2026-10-08T16:27:41.436587+08:00"
+    },
+    "post_deploy_live": {
+      "passed": true,
+      "release_source": "/opt/neuralcloud/releases/20261008-emotion-semantics-v1/harness/emotion/service.py",
+      "prompt_version": "emotion-director-v6",
+      "validation_version": "emotion-guidance-guard-v3",
+      "historical_input_audit": {
+        "frames": 2491,
+        "failures": {}
+      },
+      "requests": 12,
+      "model_successes": 12,
+      "semantic_passes": 12,
+      "external_messages_sent": 0,
+      "state_commits": 0,
+      "historical_deadlines_cleared_for_replay": true,
+      "completed_at": "2026-10-08T16:35:04.12355+08:00"
+    },
+    "activation": {
+      "phase": "verified",
+      "release": "/opt/neuralcloud/releases/20261008-emotion-semantics-v1",
+      "previous_release": "/opt/neuralcloud/releases/20261008-reply-failover-v1",
+      "started_at": 1791448189.8878553,
+      "configuration_before": {
+        "/etc/neuralcloud/deploy.json": "3863304aef943fab745170212743d7992feeb2c74b6acc12a90a8d3fdd685d76",
+        "/etc/neuralcloud/main-fallback.json": "84f3c279d40cedf01586aa5ec9fdfb3942f569d4110ba93ed36a4ca54b823124",
+        "/etc/neuralcloud/structured-llm.json": "84523b0df11e938d2a451cc7e01e8ed69a17fe1f8f9f41a94621330047343f4c",
+        "/etc/neuralcloud/gui-settings.json": "8effc6196de05b9f8daadb8cad0fc701aa8ba0bb1df5cc62100dd81d7d0d8a8e",
+        "/etc/neuralcloud/manifest.json": "c1d6d6465ca372f1e18fa10ec730a5b0f6f912eee286d5b963a6bdb9d7a955ef",
+        "/etc/neuralcloud/homeostasis-profile.json": "1a4348b35d078bf69767ff8c543f60760c1c90c019ade062a5d1ff8db2252212"
+      },
+      "health": {
+        "checks": {
+          "services": true,
+          "cognitive": true,
+          "runtime": true,
+          "gui": true,
+          "qq": true,
+          "qq_release": true
+        },
+        "services": {
+          "neuralcloud-qq-direct": "active",
+          "neuralcloud-gui": "active",
+          "neuralcloud-runtime": "active",
+          "neuralcloud-cognitive": "active"
+        },
+        "cognitive": {
+          "service": "cognitive",
+          "healthy": true,
+          "schema_version": "service-contract-v1",
+          "revision": 5989,
+          "acknowledged_receive_seq": 191173,
+          "detail": {
+            "maintenance_paused": false,
+            "commands_pending": 0,
+            "emotion_mode": "on",
+            "qq_memory": {
+              "enabled": true,
+              "recall_enabled": true,
+              "private_enabled": true,
+              "private_recall_enabled": true,
+              "owner_private_full_recall_enabled": true,
+              "processing": false,
+              "input_budget": {
+                "estimated_tokens": 60000,
+                "characters": 120000,
+                "recall_characters": 24000,
+                "recall_items": 8
+              },
+              "queue": {
+                "pending": 0,
+                "preparing": 0,
+                "retry": 0,
+                "applied": 2779,
+                "skipped": 618,
+                "total_jobs": 3397,
+                "assigned_sources": 9768,
+                "oldest_pending_seconds": 0.0
+              },
+              "tiers": {
+                "forgotten": 3022,
+                "mid": 137,
+                "long": 98,
+                "short": 135
+              },
+              "episodes": 3392,
+              "impressions": 403,
+              "impression_states": {
+                "stable": 39,
+                "dormant": 295,
+                "provisional": 68,
+                "disputed": 1
+              },
+              "stable_judgments": 39,
+              "processed_observations": 7937,
+              "committed_windows": 2779,
+              "last_error_type": null,
+              "last_completed_at": null,
+              "last_duration_ms": null,
+              "last_recall_ms": 0.0,
+              "channels": {
+                "qq_group": {
+                  "episodes": 3360,
+                  "impressions": 400,
+                  "tiers": {
+                    "forgotten": 3002,
+                    "mid": 131,
+                    "long": 98,
+                    "short": 129
+                  }
+                },
+                "qq_private": {
+                  "episodes": 32,
+                  "impressions": 3,
+                  "tiers": {
+                    "forgotten": 20,
+                    "mid": 6,
+                    "short": 6
+                  }
+                }
+              }
+            },
+            "daily_revision": {
+              "config": {
+                "enabled": false,
+                "base_url": "https://api.deepseek.com",
+                "model": "deepseek-flash",
+                "reasoning_effort": "none",
+                "schedule_time": "03:00",
+                "timezone": "Asia/Shanghai",
+                "backfill_days": 7,
+                "request_timeout_seconds": 180.0,
+                "job_timeout_seconds": 900.0,
+                "max_attempts": 3,
+                "max_completion_tokens": 32768,
+                "chunk_input_tokens": 16000,
+                "max_input_tokens": 96000,
+                "daily_token_budget": null,
+                "api_key_configured": true
+              },
+              "configured": true,
+              "processing": false,
+              "current_run_id": null,
+              "last_error": null,
+              "maintenance_paused": false,
+              "queue": {
+                "counts": {},
+                "usage": []
+              }
+            },
+            "production_memory_recovery": {
+              "enabled": false,
+              "status": "disabled",
+              "preset_id": "misty",
+              "error_type": null
+            },
+            "qq_turn_commands": [
+              "PrepareQQTurn",
+              "ResumeQQResponse"
+            ]
+          }
+        },
+        "runtime": {
+          "lifecycle": "RUNNING",
+          "journal_writable": true,
+          "cognitive_healthy": true,
+          "homeostasis_healthy": true,
+          "llm_healthy": true,
+          "body_healthy": true,
+          "degraded_reasons": [],
+          "last_heartbeat_at": "2026-10-08T08:33:56.739013Z",
+          "last_journal_append_at": "2026-10-08T08:33:57.047334Z",
+          "embodiment": {
+            "state": "disabled",
+            "provider_id": null,
+            "body_instance_id": null,
+            "activated_capabilities": [],
+            "effective_capabilities": [],
+            "negotiated": null,
+            "health": null,
+            "reason": "embodiment disabled by manifest"
+          },
+          "agency_state": "AVAILABLE",
+          "body_episode_id": null,
+          "body_revision": null,
+          "body_state_age_seconds": null
+        },
+        "qq": {
+          "running": true,
+          "connected": true,
+          "repository_root": "/opt/neuralcloud/releases/20261008-emotion-semantics-v1",
+          "heartbeat_at": "2026-10-08T16:33:59.144231+08:00",
+          "last_error_type": null
+        }
+      },
+      "configuration_unchanged": true,
+      "completed_at": 1791448439.6091292
+    },
+    "services": {
+      "cognitive": {
+        "MainPID": "307678",
+        "ActiveState": "active",
+        "SubState": "running",
+        "working_directory": "/opt/neuralcloud/releases/20261008-emotion-semantics-v1"
+      },
+      "runtime": {
+        "MainPID": "307715",
+        "ActiveState": "active",
+        "SubState": "running",
+        "working_directory": "/opt/neuralcloud/releases/20261008-emotion-semantics-v1"
+      },
+      "gui": {
+        "MainPID": "308938",
+        "ActiveState": "active",
+        "SubState": "running",
+        "working_directory": "/opt/neuralcloud/releases/20261008-emotion-semantics-v1"
+      },
+      "qq-direct": {
+        "MainPID": "308940",
+        "ActiveState": "active",
+        "SubState": "running",
+        "working_directory": "/opt/neuralcloud/releases/20261008-emotion-semantics-v1"
+      }
+    },
+    "natural_v6_guidance_observed_at_last_check": 0,
+    "scope": "Isolated HTTP model calls on deployed code; no test message delivery or cognitive database commits."
+  },
+  null,
+  null
+]

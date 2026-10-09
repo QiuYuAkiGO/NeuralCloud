@@ -28,6 +28,10 @@ class QQLatencyOptions(BaseModel):
     # optimizations use this rollout: None enables all, [] enables none.
     # Account-qualified keys keep group/private canaries isolated.
     qq_latency_conversations: list[str] | None = Field(default=None, max_length=128)
+    qq_semantic_alignment_mode: Literal["off", "observe", "enforce"] = "off"
+    qq_semantic_alignment_conversations: list[str] | None = Field(default_factory=list, max_length=128)
+    reply_internalization_mode: Literal["off", "observe", "enforce"] = "off"
+    reply_internalization_conversations: list[str] | None = Field(default_factory=list, max_length=128)
 
     @model_validator(mode="after")
     def validate_budget_rollout(self):
@@ -35,7 +39,17 @@ class QQLatencyOptions(BaseModel):
             raise ValueError("QQ stage budgets require compact input rollout")
         return self
 
-    @field_validator("qq_latency_conversations")
+    @field_validator("reply_internalization_conversations")
+    @classmethod
+    def validate_expression_conversations(cls, value):
+        if value is None:
+            return None
+        if len(value) != len(set(value)):
+            raise ValueError("duplicate expression conversation")
+        cls.validate_conversations([key for key in value if key != "local:main"])
+        return sorted(value)
+
+    @field_validator("qq_latency_conversations", "qq_semantic_alignment_conversations")
     @classmethod
     def validate_conversations(cls, value):
         if value is None:
@@ -55,7 +69,7 @@ class QQLatencyOptions(BaseModel):
 
     @classmethod
     def from_settings(cls, settings):
-        return cls.model_validate({key: getattr(settings, key, field.default)
+        return cls.model_validate({key: getattr(settings, key, field.get_default(call_default_factory=True))
                                    for key, field in cls.model_fields.items()})
 
     def for_conversation(self, *, group_id: str, self_member_id: str):
@@ -71,7 +85,11 @@ class QQLatencyOptions(BaseModel):
 
     @property
     def version(self) -> str:
-        encoded = json.dumps(self.model_dump(), sort_keys=True, separators=(",", ":")).encode()
+        values = self.model_dump()
+        if self.reply_internalization_mode == "off" and self.reply_internalization_conversations == []:
+            values.pop("reply_internalization_mode")
+            values.pop("reply_internalization_conversations")
+        encoded = json.dumps(values, sort_keys=True, separators=(",", ":")).encode()
         return "qq-policy:" + hashlib.sha256(encoded).hexdigest()
 
     def stage_budget(self, stage: str, remaining: float) -> float:

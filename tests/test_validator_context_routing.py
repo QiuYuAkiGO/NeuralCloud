@@ -200,6 +200,9 @@ def test_qq_turn_keeps_large_admitted_history_and_finishes_ready(tmp_path, monke
     assert len(critic) == 1 and critic[0][0] == "main"
     projected = critic[0][1]["memory_evidence"]
     entries = [dict(zip(projected["columns"], row)) for row in projected["rows"]]
-    assert {item["text"] for item in entries} == {receipt.delivered_text for receipt in receipts}
+    assert {item["text"] for item in entries} == {observation.text, *(receipt.delivered_text for receipt in receipts)}
+    current, = [item for item in entries if item["text"] == observation.text]
+    assert current["speaker_id"] == projected["current_speaker_id"]
+    assert projected["metadata"][current["metadata_id"]][-2:] == ["user_claim", "current"]
     assert set(result.delivery_refs) == {receipt.receipt_id for receipt in receipts}
     assert trace.snapshot()["counters"].get("failed_model_calls", 0) == 0

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from harness.llm.json_output import model_json_value
+
 import asyncio
 import json
 from collections.abc import Callable, Iterable, Mapping
@@ -29,7 +31,7 @@ def _strict_json(raw: str) -> dict[str, Any]:
                 raise ValueError("duplicate model JSON key")
             output[key] = value
         return output
-    value = json.loads(raw, object_pairs_hook=pairs, parse_constant=lambda _value: (_ for _ in ()).throw(ValueError("nonfinite JSON")))
+    value = model_json_value(raw, schema=AgencyModelOutput.model_json_schema(), legacy=lambda source: json.loads(source, object_pairs_hook=pairs, parse_constant=lambda _value: (_ for _ in ()).throw(ValueError("nonfinite JSON"))))
     if not isinstance(value, dict):
         raise ValueError("model must return one JSON object")
     return value

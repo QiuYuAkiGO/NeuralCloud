@@ -7,6 +7,8 @@ message receipts. Nothing here delivers replies or writes cognitive memory.
 
 from __future__ import annotations
 
+from harness.llm.json_output import validate_model_json
+
 import argparse
 import asyncio
 import base64
@@ -219,7 +221,7 @@ async def observe_qq_frame(
     if len(result.text) > MAX_RESPONSE_CHARS:
         raise QQVisionError("Vision response exceeds the observation limit")
     try:
-        observation = QQScreenObservation.model_validate_json(result.text)
+        observation = validate_model_json(QQScreenObservation, result.text)
     except (ValidationError, ValueError):
         # Never put the original model output into exceptions or logs.
         raise QQVisionError("Vision response does not match the QQ observation schema") from None

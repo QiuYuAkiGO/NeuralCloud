@@ -1,0 +1,177 @@
+{
+  "schema_version": "qq-semantic-incident-v1",
+  "source_release": "20261008-current-evidence-v2",
+  "window": "2026-10-08 17:31-17:40 Asia/Shanghai",
+  "anonymization": "Stable per-speaker pseudonyms; original text, order and times preserved. Member statements are not independently verified facts.",
+  "messages": [
+    {
+      "id": "incident-01",
+      "author": "member_1",
+      "role": "user",
+      "time": "2026-10-08T09:31:02+00:00",
+      "text": "精神病院的住院费就是天价",
+      "status": "user_claim"
+    },
+    {
+      "id": "incident-02",
+      "author": "member_1",
+      "role": "user",
+      "time": "2026-10-08T09:31:19+00:00",
+      "text": "里面很多人都是进去就被抛弃了，联系父母子女联系不上",
+      "status": "user_claim"
+    },
+    {
+      "id": "incident-03",
+      "author": "member_1",
+      "role": "user",
+      "time": "2026-10-08T09:31:37+00:00",
+      "text": "因为精神病人被抛弃到社会是很恐怖的事情",
+      "status": "user_claim"
+    },
+    {
+      "id": "incident-04",
+      "author": "member_1",
+      "role": "user",
+      "time": "2026-10-08T09:31:49+00:00",
+      "text": "所以只能养着，还有医疗",
+      "status": "user_claim"
+    },
+    {
+      "id": "incident-05",
+      "author": "member_1",
+      "role": "user",
+      "time": "2026-10-08T09:32:04+00:00",
+      "text": "就导致愿意付费的人，得付天价",
+      "status": "user_claim"
+    },
+    {
+      "id": "incident-06",
+      "author": "misty",
+      "role": "assistant",
+      "time": "2026-10-08T09:32:23+00:00",
+      "text": "天价这两个字听着就沉，家属那边大概也不是不想管，是真的扛不住",
+      "status": "verified_delivery"
+    },
+    {
+      "id": "incident-07",
+      "author": "member_2",
+      "role": "user",
+      "time": "2026-10-08T09:33:34+00:00",
+      "text": "这可以走法律途径吧",
+      "status": "user_claim"
+    },
+    {
+      "id": "incident-08",
+      "author": "member_1",
+      "role": "user",
+      "time": "2026-10-08T09:34:02+00:00",
+      "text": "[引用消息 5212725] 有些是警察抓紧去的病人",
+      "status": "user_claim"
+    },
+    {
+      "id": "incident-09",
+      "author": "member_1",
+      "role": "user",
+      "time": "2026-10-08T09:34:08+00:00",
+      "text": "[引用消息 5212725] 有些是警察抓进去的病人",
+      "status": "user_claim"
+    },
+    {
+      "id": "incident-10",
+      "author": "member_1",
+      "role": "user",
+      "time": "2026-10-08T09:34:32+00:00",
+      "text": "可以说自己没钱付，也不是自愿让他进去住",
+      "status": "user_claim"
+    },
+    {
+      "id": "incident-11",
+      "author": "member_1",
+      "role": "user",
+      "time": "2026-10-08T09:34:52+00:00",
+      "text": "有些是送进去就不管了，联系上就哭穷",
+      "status": "user_claim"
+    },
+    {
+      "id": "incident-12",
+      "author": "member_1",
+      "role": "user",
+      "time": "2026-10-08T09:34:56+00:00",
+      "text": "要么就是真穷你",
+      "status": "user_claim"
+    },
+    {
+      "id": "incident-13",
+      "author": "member_1",
+      "role": "user",
+      "time": "2026-10-08T09:34:58+00:00",
+      "text": "要么就是真穷",
+      "status": "user_claim"
+    },
+    {
+      "id": "incident-14",
+      "author": "misty",
+      "role": "assistant",
+      "time": "2026-10-08T09:35:20+00:00",
+      "text": "真穷这个说法，听着有点难受……有时候不是不想管，是真的拿不出那笔钱",
+      "status": "verified_delivery"
+    },
+    {
+      "id": "incident-15",
+      "author": "member_1",
+      "role": "user",
+      "time": "2026-10-08T09:36:02+00:00",
+      "text": "我们哪一栋几百号人，一周开放两次探望，但是一次只来一二十号人探望",
+      "status": "user_claim"
+    },
+    {
+      "id": "incident-16",
+      "author": "member_1",
+      "role": "user",
+      "time": "2026-10-08T09:36:24+00:00",
+      "text": "实际上，我们这几百号人里面有人管的，可能就不到百人",
+      "status": "user_claim"
+    },
+    {
+      "id": "incident-17",
+      "author": "misty",
+      "role": "assistant",
+      "time": "2026-10-08T09:36:50+00:00",
+      "text": "不到百人……",
+      "status": "verified_delivery"
+    },
+    {
+      "id": "incident-18",
+      "author": "misty",
+      "role": "assistant",
+      "time": "2026-10-08T09:36:50+00:00",
+      "text": "这几百个人里，大部分大概都只能自己待着吧",
+      "status": "verified_delivery"
+    },
+    {
+      "id": "incident-19",
+      "author": "member_1",
+      "role": "user",
+      "time": "2026-10-08T09:40:19+00:00",
+      "text": "精神病人们再怎么孤单也不能随随便便被抛到社会上",
+      "status": "user_claim"
+    },
+    {
+      "id": "incident-20",
+      "author": "misty",
+      "role": "assistant",
+      "time": "2026-10-08T09:40:38+00:00",
+      "text": "这句话听着很沉，但也确实是实话",
+      "status": "verified_delivery"
+    },
+    {
+      "id": "incident-21",
+      "author": "misty",
+      "role": "assistant",
+      "time": "2026-10-08T09:40:38+00:00",
+      "text": "孤单是一回事，被随随便便丢下又是另一回事，这两样不该混在一起",
+      "status": "verified_delivery"
+    }
+  ]
+}
+

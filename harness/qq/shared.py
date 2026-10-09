@@ -211,7 +211,7 @@ def _import_remote_trace(trace: QQTurnTrace, remote: dict, *, started: float, en
                 raise ValueError
             values = configuration["values"]
             for name, entry in values.items():
-                scope_list = (isinstance(entry, dict) and name == "qq_latency_conversations"
+                scope_list = (isinstance(entry, dict) and name in {"qq_latency_conversations", "qq_semantic_alignment_conversations", "reply_internalization_conversations"}
                     and isinstance(entry.get("value"), list) and len(entry["value"]) <= 128
                     and all(isinstance(item, str) and len(item) <= 128 for item in entry["value"]))
                 if (not isinstance(entry, dict) or set(entry) != {"value", "source"}

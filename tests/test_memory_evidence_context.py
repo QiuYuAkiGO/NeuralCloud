@@ -57,7 +57,7 @@ def test_valid_history_and_json_escaped_newlines_reach_final_context():
     assert ModelContext.model_validate_json(context.model_dump_json()).memory_evidence == context.memory_evidence
 
 
-@pytest.mark.parametrize("damage", ["cut", "changed", "source_id", "audience", "private", "current", "trigger_ref"])
+@pytest.mark.parametrize("damage", ["cut", "changed", "source_id", "audience", "private", "trigger_ref"])
 def test_missing_or_wrong_scope_or_current_records_never_authorize_history(damage):
     segment, evidence = _source()
     required = True
@@ -71,7 +71,7 @@ def test_missing_or_wrong_scope_or_current_records_never_authorize_history(damag
     else:
         changes = {"audience": "qq:group:other"} if damage == "audience" else (
             {"audience": "qq:private:20001:20002", "source_channel": "qq_private"} if damage == "private" else
-            {"kind": "current"} if damage == "current" else {"source_refs": ["current-1"]})
+            {"source_refs": ["current-1"]})
         evidence = evidence.model_copy(update={"entries": [evidence.entries[0].model_copy(update=changes)]})
     context = _compile(segment, evidence, required=required)
     assert context.memory_evidence.entries == []
@@ -79,6 +79,43 @@ def test_missing_or_wrong_scope_or_current_records_never_authorize_history(damag
     result = rule_check("你上次说喜欢红茶。", persona=None, insights=[], memory_empty=False,
                         memory_evidence=context.memory_evidence)
     assert "fabricated_memory" in result.violations
+
+
+def test_current_trigger_reaches_critic_without_authorizing_history():
+    segment, evidence = _source(text="吓哭了", kind="current", source_id="current-1",
+                                speaker_id="alice", current_speaker_id="alice")
+    context = _compile(segment, evidence)
+    assert context.memory_evidence.entries == evidence.entries
+    assert not context.memory_evidence.has_history
+    result = rule_check("你上次说喜欢红茶。", persona=None, insights=[],
+                        memory_evidence=context.memory_evidence)
+    assert "fabricated_memory" in result.violations
+    critic = _Critic()
+    check = ResponseValidator(settings=Settings(validator_sample_rate=1), llm=critic)
+    check.check(CandidateResponse(text="你说吓哭了"), persona=None,
+                memory_evidence=context.memory_evidence, run_llm=True)
+    projected = critic.calls[0][1]["memory_evidence"]
+    assert projected["rows"][0][0] == projected["current_speaker_id"]
+    assert projected["rows"][0][-1] == "吓哭了"
+    assert projected["metadata"][0][-2:] == ["user_claim", "current"]
+
+
+@pytest.mark.parametrize("damage", ["cut", "changed", "source_id", "audience", "trigger_segment", "status"])
+def test_current_evidence_requires_complete_scoped_source_admission(damage):
+    segment, evidence = _source(text="吓哭了", kind="current", source_id="current-1")
+    segments = [segment]
+    if damage == "cut":
+        segments = []
+    elif damage == "changed":
+        segments = [segment.model_copy(update={"text": "吓哭"})]
+    elif damage == "source_id":
+        segments = [segment.model_copy(update={"source_ids": []})]
+    elif damage == "trigger_segment":
+        segments = [segment.model_copy(update={"why": "trigger_utterance"})]
+    else:
+        change = {"audience": "qq:group:other"} if damage == "audience" else {"status": "retained_fact"}
+        evidence = evidence.model_copy(update={"entries": [evidence.entries[0].model_copy(update=change)]})
+    assert evidence.admitted(segments, trigger_ref="current-1").entries == []
 
 
 def test_source_ids_and_json_claims_do_not_create_metadata():

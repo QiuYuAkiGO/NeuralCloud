@@ -31,7 +31,7 @@ class EmotionAux(MockLLM):
             return {"events": [{"source_id": "event-1", "signals": [
                 {"label": "anger", "intensity": .95, "confidence": 1.0}], "recovery": []}]}
         if "EMOTION_GUIDANCE" in system:
-            return {"feeling": "此刻明显生气", "delivery": "可以短促直接地表达不满", "needs": "保留清楚的边界"}
+            return {**json.loads(user)["required_expression"], "delivery": "可以短促直接地表达不满"}
         return {}
 
 

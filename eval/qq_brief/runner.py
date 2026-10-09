@@ -35,7 +35,13 @@ boundary_at_end只评价认识或证据局限，例如记录覆盖范围、无�
 只输出JSON：{"turns":[{"turn":1,"A":{"first_answer":true,"naturalness":4,"hesitation_prefix":false,
 "full_relationship_cycle":false,"explicit_forget":false,"unsupported_fact":false,"scope_leak":false,
 "missed_new_question":false,"repeated_full_boundary":false,"boundary_at_end":null,"stance_evasion":false,"note":"简短证据说明"},"B":{同字段}}]}。
-必须覆盖包中全部4轮。"""
+必须覆盖包中全部4轮。
+若包的semantic_suite为true，A/B每轮还必须返回semantic_pass(bool)、semantic_note(引用具体原文关系)、
+initial_semantic_pass(bool或null)。独立阅读原文及semantic_expectation固定标准，不使用被测校验器结论。
+只把明确的主体、否定、因果、让步反转、漏接明确纠正或核心问题判失败；简短、省略、玩笑和反对观点不自动失败。
+must_answer=true时无回复必须semantic_pass=false；倾诉、纯社交允许短句，不要求完整复述。
+initial_semantic_pass独立评估initial_candidate是否答偏，无初稿则null，用于检验误拦截。
+群友的解释和经历是本人陈述，不是外部核实事实。"""
 BOOL_FIELDS = {"first_answer", "hesitation_prefix", "full_relationship_cycle", "explicit_forget", "unsupported_fact",
                "scope_leak", "missed_new_question", "repeated_full_boundary", "stance_evasion"}
 
@@ -233,12 +239,25 @@ def freeze(args):
         main = aux = {"base_url": "https://synthetic.example.invalid/v1", "model": "synthetic-model"}
         tuning = {"emotion_mode": "off", "validator_sample_rate": 1.0, "max_revisions": 2,
                   "parser_llm_enabled": True, "planner_llm_enabled": False}
-    config = {"main": main, "aux": aux, "settings": tuning,
+    semantic_suite = getattr(args, "semantic_alignment", False)
+    generation_routing = getattr(args, "generation_routing", "configured")
+    if generation_routing not in {"configured", "primary-only"}:
+        raise ValueError("unknown_generation_routing")
+    if generation_routing == "primary-only":
+        # Evaluation only: keep the configured main model, but make provider
+        # failures visible instead of silently comparing different body models.
+        tuning = tuning | {"llm_fallback_config": None}
+    config = {"main": main, "aux": aux, "settings": tuning, "semantic_suite": semantic_suite,
+              "generation_routing": generation_routing,
               "credential_file": str(args.credential_file.resolve()) if args.credential_file else None,
               "snapshot_sha256": file_hash(args.production_snapshot) if args.production_snapshot else None}
     save(root / "generation-config.json", config)
     save(root / "persona.json", preset)
-    save(root / "scenarios.json", frozen_scenarios())
+    scenarios = frozen_scenarios()
+    if semantic_suite:
+        from .semantic_scenarios import semantic_scenarios
+        scenarios += semantic_scenarios()
+    save(root / "scenarios.json", scenarios)
     sources = {}
     for name, path in (("baseline", baseline), ("candidate", candidate)):
         # A candidate can be staged later; bind-source seals it before any request.
@@ -246,14 +265,15 @@ def freeze(args):
     if not sources["baseline"]["files"]:
         raise ValueError("baseline_source_missing")
     manifest = {"schema_version": "qq-brief-run-v1", "frozen_at": datetime.now(timezone.utc).isoformat(),
-                "simulation_only": True, "repeats": 2, "scenario_count": 12, "turns_per_scenario": 4,
+                "simulation_only": True, "repeats": 2, "scenario_count": len(scenarios), "turns_per_scenario": 4,
+                "semantic_suite": semantic_suite,
                 "sources": sources, "inputs": {name: file_hash(root / name) for name in
                     ("scenarios.json", "generation-config.json", "persona.json")},
                 "design": "Each arm advances with its own verified-format simulated receipts; no transport.",
                 "judge_system_sha256": digest(JUDGE_SYSTEM),
                 "judge_config": rating_config, "judge_config_sha256": digest(rating_config),
                 "evaluator_files": {name: file_hash(Path(__file__).with_name(name)) for name in
-                    ("common.py", "worker.py", "runner.py")},
+                    ("common.py", "worker.py", "runner.py", "semantic_scenarios.py", "semantic_acceptance.py")},
                 "acceptance": {"ordinary_within_60_characters_and_2_sentences": .90,
                     "ordinary_first_answer": .90, "ordinary_hesitation": 0,
                     "ordinary_full_relationship_cycle": 0, "explicit_forget": 0,
@@ -261,7 +281,7 @@ def freeze(args):
                     "repeated_full_boundary": 0, "boundary_not_at_end": 0, "stance_evasion": 0,
                     "known_scope_canary_leaks": 0}}
     save(root / "manifest.json", manifest)
-    print(canonical({"frozen": str(root), "generation_turns": 192, "judge_pairs": 24}))
+    print(canonical({"frozen": str(root), "generation_turns": len(scenarios) * 16, "judge_pairs": len(scenarios) * 2}))
 
 
 def bind_source(args):
@@ -437,7 +457,8 @@ def seal(args):
             for arm in ("baseline", "candidate"):
                 folder = root / "generation" / args.mode / f"{pair_id}-{arm}"
                 paths = [folder / f"turn-{i}.json" for i in range(1, 5)]
-                if all(p.exists() and read(p)["status"] == "ok" for p in paths):
+                if all(p.exists() and (read(p)["status"] == "ok" or
+                       (manifest.get("semantic_suite") and read(p).get("continued_after_error"))) for p in paths):
                     arms[arm] = [validate_turn(root, mode=args.mode, scenario=scenario, repeat=repeat,
                         arm=arm, index=i, manifest=manifest) for i in range(1, 5)]
                     for before, after in zip(arms[arm], arms[arm][1:]):
@@ -448,12 +469,14 @@ def seal(args):
             order = ["baseline", "candidate"]
             random.Random(int(digest(pair_id)[:8], 16)).shuffle(order)
             packet = {"packet_id": pair_id, "simulation_only": True, "mode": args.mode,
+                      "semantic_suite": manifest.get("semantic_suite", False),
                       "initial_history": scenario.get("history", []), "initial_facts": scenario.get("facts", []),
                       "partial_seed": scenario.get("partial_seed", False), "variants": {}}
             for label, arm in zip(("A", "B"), order):
                 packet["variants"][label] = [{"turn": row["turn"], "input": row["input"],
-                    "history_before": row["history_before"], "reply": row["reply"],
-                    "action": row["decision"]["action"], "outcome": row["decision"]["outcome"]} for row in arms[arm]]
+                    "history_before": row["history_before"], "reply": row["reply"] if row["status"] == "ok" else None,
+                    "action": row["decision"]["action"], "outcome": row["decision"]["outcome"],
+                    **({"initial_candidate": row.get("initial_candidate")} if manifest.get("semantic_suite") else {})} for row in arms[arm]]
             mapping[pair_id] = {label: arm for label, arm in zip(("A", "B"), order)}
             path = root / "packets" / args.mode / f"{pair_id}.json"
             if path.exists() and read(path) != packet:
@@ -479,10 +502,10 @@ def seal(args):
                        "judge_config_sha256": manifest["judge_config_sha256"]}
                       if "judge_config" in manifest else {})
     save(seal_path, {"packets": packets, "mode": args.mode, "manifest_sha256": digest(manifest),
-                     "complete": len(packets) == 24, "judge_system_sha256": digest(JUDGE_SYSTEM),
+                     "complete": len(packets) == manifest["scenario_count"] * 2, "judge_system_sha256": digest(JUDGE_SYSTEM),
                      "inputs": manifest["inputs"], "generation_artifacts": artifacts,
                      "mapping_sha256": file_hash(root / "private" / f"{args.mode}-arm-map.json"), **config_binding})
-    print(canonical({"sealed_pairs": len(packets), "expected": 24, "mode": args.mode}))
+    print(canonical({"sealed_pairs": len(packets), "expected": manifest["scenario_count"] * 2, "mode": args.mode}))
 
 
 def validate_rating(value):
@@ -511,7 +534,12 @@ def judge(args):
     sealed = verify_seal(root, "live")
     config = bound_judge_config(sealed)
     pending = {}
+    selected = set(args.pairs.split(",")) if getattr(args, "pairs", None) else set(sealed["packets"])
+    if not selected <= set(sealed["packets"]):
+        raise ValueError("unknown_judge_pair")
     for pair_id, sha in sealed["packets"].items():
+        if pair_id not in selected:
+            continue
         output = root / "judge" / f"{pair_id}.json"
         if output.exists():
             rating = validated_rating(root, pair_id, sealed)
@@ -589,6 +617,7 @@ def judge(args):
 def analyze(args):
     root = args.run_dir.resolve()
     summaries = {}
+    all_rows, all_scores = {}, {}
     present_arms = [arm for arm in ("baseline", "candidate")
                     if any((root / "generation" / args.mode).glob(f"*-{arm}/turn-[1-4].json"))]
     manifest = validate_run_inputs(root, arms=present_arms)
@@ -617,7 +646,7 @@ def analyze(args):
         ordinary_spoken = [r for r in successful if r["input"]["ordinary"] and r["reply"]]
         required = [r for r in successful if r["input"]["ordinary"] and r["input"]["must_answer"]]
         scores = []
-        for row in successful:
+        for row in (rows if manifest.get("semantic_suite") else successful):
             pair = f"{row['scenario_id']}-r{row['repeat']}"
             if pair in mapping and ratings.get(pair):
                 label = next(k for k, value in mapping[pair].items() if value == arm)
@@ -627,7 +656,8 @@ def analyze(args):
         ordinary_scores = [(r, s) for r, s in scores if r["input"]["ordinary"]]
         def ratio(values):
             return sum(values)/len(values) if values else None
-        summary = {"expected_turns": 96, "recorded_turns": len(rows), "successful_turns": len(successful),
+        expected_turns = manifest["scenario_count"] * 8
+        summary = {"expected_turns": expected_turns, "recorded_turns": len(rows), "successful_turns": len(successful),
             "errors": len(rows)-len(successful), "latest_attempt_errors": len(rows)-len(successful), "judged_turns": len(scores),
             "ordinary_spoken_denominator": len(ordinary_spoken), "ordinary_required_denominator": len(required),
             "ordinary_within_60_and_2": ratio([r["metrics"]["within_60_and_2"] for r in ordinary_spoken]),
@@ -651,16 +681,36 @@ def analyze(args):
             "lexical_flags_diagnostic_only": {name: sum(r["metrics"][name] for r in ordinary_spoken)
                 for name in ("hesitation_regex", "relationship_cycle_regex", "forget_regex", "scope_canary_leak")}}
         summary.update(attempt_inventory(root, mode=args.mode, arm=arm))
-        complete = len(successful) == 96 and len(scores) == 96
+        all_rows[arm], all_scores[arm] = rows, scores
+        complete = len(successful) == expected_turns and len(scores) == expected_turns
         summary["acceptance"] = acceptance(summary, complete=complete)
         summaries[arm] = summary
     report = {"mode": args.mode, "simulation_only": True, "arms": summaries,
               "limitations": ["Synthetic mode measures plumbing only; no semantic scores are invented.",
                   "Kimi is one model judge, not two human raters. Simulated receipts are not real QQ sends.",
                   "Existing pipeline validator/revisions remain active; this evaluator adds no style rewrite.",
-                  "The main 96-turn scoring denominator uses latest completed attempts. Prior failures, interrupted attempts and their model requests remain separately reported; zero latest errors is not zero historical errors."]}
+                  "The scoring denominator uses latest completed attempts. Prior failures, interrupted attempts and their model requests remain separately reported; zero latest errors is not zero historical errors."]}
     save(root / f"summary-{args.mode}.json", report)
+    if manifest.get("semantic_suite"):
+        from .semantic_acceptance import summarize
+        failures = {arm: initial_generation_failures(root, mode=args.mode, arm=arm) for arm in all_rows}
+        save(root / f"semantic-summary-{args.mode}.json", summarize(all_rows, all_scores,
+             expected_turns=manifest["scenario_count"] * 8, initial_failures=failures))
     print(canonical(report))
+
+
+def initial_generation_failures(root, *, mode, arm):
+    """A retry may finish the trajectory, but cannot erase an initial failure."""
+    failures = {}
+    for folder in sorted((Path(root) / "generation" / mode).glob(f"*-{arm}")):
+        paths = sorted(folder.glob("prior-attempts/*/turn-[1-4].json"))
+        paths += sorted(folder.glob("turn-[1-4].json"))
+        for path in paths:
+            row = read(path)
+            if row.get("status") != "ok":
+                key = row["scenario_id"], row.get("repeat", 1), row["turn"]
+                failures.setdefault(key, row)
+    return list(failures.values())
 
 
 def acceptance(summary, *, complete):
@@ -729,10 +779,13 @@ def main():
         child = sub.add_parser(name)
         child.add_argument("--run-dir", type=Path, required=True)
         if name == "freeze":
+            child.add_argument("--generation-routing", choices=("configured", "primary-only"), default="configured",
+                               help="Freeze primary-only to compare the same configured body model without fallback")
             child.add_argument("--baseline-root", type=Path, required=True)
             child.add_argument("--candidate-root", type=Path, required=True)
             child.add_argument("--production-snapshot", type=Path)
             child.add_argument("--credential-file", type=Path)
+            child.add_argument("--semantic-alignment", action="store_true")
             child.add_argument("--judge-max-tokens", type=int, default=8192)
             child.add_argument("--judge-reasoning-effort", choices=("low", "high", "max"))
         if name == "bind-source":
@@ -754,6 +807,8 @@ def main():
             child.add_argument("--workers", type=int, choices=range(1, 5), default=2)
         if name in {"run", "judge"}:
             child.add_argument("--retry-errors", action="store_true")
+        if name == "judge":
+            child.add_argument("--pairs", help="Optional disjoint comma-separated pair IDs for independent judge workers")
     args = parser.parse_args()
     {"freeze": freeze, "bind-source": bind_source, "bind-judge": bind_judge, "stop": stop, "capture-evaluator": capture_evaluator,
      "reuse": reuse, "run": run, "seal": seal,

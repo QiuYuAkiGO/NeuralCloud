@@ -39,7 +39,7 @@ def test_real_qq_gate_and_goal_capability_requests_share_same_wire_persona(setup
         calls.append(owner.chat.llm.calls[0][0])
     stable = persona_prefix(preset.persona)
     assert all(call[0]["role"] == "system" and call[0]["content"].startswith(stable) for call in calls)
-    assert calls[0][0]["content"] == stable + (decision._PRIVATE_RULES if private else decision._RULES)
+    assert calls[0][0]["content"] == stable + (decision._PRIVATE_RULES if private else decision._RULES) + decision.VISION_TOOL_RULES
     assert calls[0][0]["content"].count("当前完整人格：\n") == 1
     # Compare UTF-8 HTTP envelopes from real captured messages. Task rules
     # differ, but no different label, field order or whitespace precedes persona.
@@ -91,7 +91,9 @@ def test_prepared_web_schema_stays_system_and_resume_reuses_exact_persona_first_
 def test_gate_classifier_uses_exact_persona_boundary_and_keeps_legacy_compatibility():
     user = {"role": "user", "content": "{}"}
     persona = {"version": "test", "quoted_text": decision._RULES + "\n\nquoted, not active rules"}
-    for rule in (decision._RULES, decision._PRIVATE_RULES):
+    for rule in (decision._RULES, decision._PRIVATE_RULES,
+                 decision._gate_rules(semantic_mode="enforce"),
+                 decision._gate_rules(private=True, semantic_mode="enforce")):
         current = [{"role": "system", "content": persona_prefix(persona) + rule}, user]
         legacy = [{"role": "system", "content": rule + "\nlegacy persona"}, user]
         assert decision.is_qq_gate_messages(current) and decision.is_qq_gate_messages(legacy)

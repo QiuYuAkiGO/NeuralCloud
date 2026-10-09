@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from harness.config import Settings, get_settings
+from harness.core.expression import ResponseExpressionContext, mode_for as expression_mode_for
+from harness.compiler.expression import rules_for as expression_rules
 from harness.core.inference import (
     ContextBudget,
     ContextSegment,
@@ -251,6 +253,17 @@ class ContextCompiler:
         insights = insights or []
         session = session or []
         additional_segments = additional_segments or []
+        expression_contexts = [s.response_expression for s in additional_segments if s.response_expression is not None]
+        if len(expression_contexts) > 1:
+            raise ValueError("ambiguous expression context")
+        expression = expression_contexts[0] if expression_contexts else None
+        if expression is None and not prefix_messages and (memory_evidence is None or memory_evidence.audience == "local:main"):
+            local_mode = expression_mode_for(self.settings, "local:main")
+            if local_mode != "off":
+                expression = ResponseExpressionContext(mode=local_mode, audience="local:main",
+                    recent_replies=[t.text[:240] for t in session if t.role in {"character", "assistant"}][-8:])
+        if expression is not None and memory_evidence is not None and expression.audience != memory_evidence.audience:
+            raise ValueError("expression audience mismatch")
         use_emotion = emotion_enabled(self.settings) and opaque_interoception is None
         if use_emotion:
             additional_segments = [item for item in additional_segments
@@ -347,6 +360,12 @@ class ContextCompiler:
             )
 
         constraint_lines = [ins.constraint for ins in insights if ins.constraint]
+        # QQ's frozen system prefix already carries the same contract. Ordinary
+        # local/voice generations use this required compiler segment instead.
+        if expression is not None and expression.mode == "enforce" and not any(
+                expression.version in item.get("content", "") for item in prefix_messages or [] if item["role"] == "system"):
+            remaining = _push_required(segments, kind="expression_contract", text=expression_rules("enforce"),
+                source_ids=[], why="trusted_expression_policy", remaining=remaining)
         # The old boolean remains accepted for callers, but cannot grant memory
         # authority. Only evidence bound by a trusted adapter can do that.
         empty_memory = not situation.relevant_memories and memory_evidence is None
@@ -533,6 +552,7 @@ class ContextCompiler:
             trigger_text=situation.utterance,
             memory_evidence=admitted_evidence,
             prefix_messages=list(prefix_messages or []),
+            response_expression=expression.admitted(admitted_evidence) if expression is not None else None,
         )
 
 

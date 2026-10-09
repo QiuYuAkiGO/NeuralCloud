@@ -221,7 +221,7 @@ def test_bad_input_never_fetches_or_calls_model(pair_factory, kwargs):
 
 
 @pytest.mark.parametrize("invalid", ["fake_id", "operation", "evidence", "number_id", "not_json"])
-def test_model_cannot_claim_transport_ids_actions_or_evidence(pair_factory, invalid):
+def test_model_cannot_claim_transport_ids_actions_or_evidence_legacy_mode(legacy_json_mode, pair_factory, invalid):
     response = screen()
     if invalid == "fake_id":
         response["groups"][0]["messages"][0]["message_id"] = "invented-message-id"

@@ -1,0 +1,72 @@
+{
+  "schema": "misty-semantic-provider-block-v1",
+  "exported_at": "2026-10-09T02:10:25.224022+00:00",
+  "policy_version": "reply-semantics-v6",
+  "generation_routing": "primary-only",
+  "frozen_manifest_sha256": "9c0fe0a2a9866155fd8830b7f0e1a64f0f1896ff2279a7de6d4cc996745556c8",
+  "recorded_turns": 320,
+  "arms": {
+    "baseline": {
+      "status": {
+        "ok": 147,
+        "generation_error": 13
+      },
+      "error_types": {
+        "model_http": 9,
+        "model_invalid": 4
+      },
+      "actual_body_models": {
+        "qwen3.8-27b": 157
+      }
+    },
+    "candidate": {
+      "status": {
+        "ok": 71,
+        "generation_error": 89
+      },
+      "error_types": {
+        "model_invalid": 3,
+        "model_http": 86
+      },
+      "actual_body_models": {
+        "qwen3.8-27b": 82
+      }
+    }
+  },
+  "http_errors": [
+    {
+      "http_status": 402,
+      "host": "api.deepseek.com",
+      "responses": 279
+    }
+  ],
+  "first_402_utc": "2026-10-09T02:03:01.582857+00:00",
+  "independent_scoring": {
+    "valid_pairs": 0,
+    "cancelled_inflight_requests": 2
+  },
+  "incident_replays_recorded": 6,
+  "incident_replay_validated": false,
+  "credential_files_remaining": [],
+  "production": {
+    "release": "/opt/neuralcloud/releases/20261009-provisional-trust-v2",
+    "same_release": true,
+    "config_unchanged": {
+      "gui-settings.json": true,
+      "manifest.json": true,
+      "structured-llm.json": true,
+      "emotion-deepseek.json": true,
+      "main-fallback.json": true
+    },
+    "semantic_mode": "off"
+  },
+  "acceptance": "blocked_by_auxiliary_provider_http_402",
+  "enforce_allowed": false,
+  "notes": [
+    "Runtime sources were not changed during this frozen run. A suspected rewrite-budget change was investigated and reverted locally; resumed missing turns used the same source and retained all earlier failures.",
+    "HTTP 402 affected emotion and gate calls, before a body model could run; these records cannot establish semantic quality.",
+    "No generation failures were retried or removed. All scheduled follow-up judge and incident jobs were stopped; incomplete HTTP request markers remain as evidence.",
+    "Provider-denial soft-stop protection was subsequently added locally and tested; it was not retroactively applied to or used to rewrite this run.",
+    "Restore the existing DeepSeek auxiliary service access before a fresh acceptance run; do not silently switch the model or treat payment failures as valid semantic test results."
+  ]
+}

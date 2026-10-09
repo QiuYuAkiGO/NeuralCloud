@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from harness.llm.json_output import model_json_value
+
 from harness.llm.deepseek_structured import decision_format
 
 import asyncio
@@ -63,7 +65,7 @@ def _parse(text: str) -> GoalChoice:
     if len(text.encode("utf-8")) > 64_000:
         raise GoalDecisionError("goal_output_too_large")
     try:
-        raw = json.loads(text, object_pairs_hook=capabilities._unique_object, parse_constant=capabilities._reject_constant)
+        raw = model_json_value(text, schema=GoalChoice.model_json_schema(), legacy=lambda source: json.loads(source, object_pairs_hook=capabilities._unique_object, parse_constant=capabilities._reject_constant))
     except (TypeError, ValueError, RecursionError):
         raise GoalDecisionError("goal_invalid_json") from None
     try:

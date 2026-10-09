@@ -1,6 +1,8 @@
 """Small independent structured call; no main-generation or memory-owner lock."""
 from __future__ import annotations
 
+from harness.llm.json_output import model_json_value
+
 import asyncio
 import json
 import time
@@ -89,7 +91,7 @@ class InterruptionAssessor:
             return value
         def invalid(_):
             raise ValueError("interruption_nonfinite")
-        decision = InterruptionDecision.model_validate(json.loads(result.text, object_pairs_hook=unique, parse_constant=invalid))
+        decision = InterruptionDecision.model_validate(model_json_value(result.text, schema=InterruptionDecision.model_json_schema(), legacy=lambda source: json.loads(source, object_pairs_hook=unique, parse_constant=invalid)))
         if not set(decision.evidence_ids).issubset({m["id"] for m in request.messages}):
             raise ValueError("interruption_unknown_evidence")
         return decision.model_dump()

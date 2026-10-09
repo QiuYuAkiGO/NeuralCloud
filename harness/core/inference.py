@@ -5,11 +5,12 @@ from __future__ import annotations
 from datetime import datetime
 import hashlib
 import json
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from harness.core.ids import new_id
+from harness.core.expression import ResponseExpressionContext
 from harness.core.models import (
     CharacterSnapshot,
     RelationshipState,
@@ -190,8 +191,11 @@ class MemoryEvidenceContext(BaseModel):
         admitted = []
         for entry in self.entries:
             segment = by_digest.get(entry.segment_sha256)
-            if (entry.audience != self.audience or entry.kind == "current"
-                    or trigger_ref in {entry.source_id, *entry.source_refs}
+            # Current source records ground replies to this turn, but never
+            # establish past interactions or independently verified facts.
+            if (entry.audience != self.audience
+                    or (entry.kind == "current" and entry.status != "user_claim")
+                    or (entry.kind != "current" and trigger_ref in {entry.source_id, *entry.source_refs})
                     or segment is None or entry.source_id not in segment.source_ids):
                 continue
             # JSON quotes/newlines must be decoded before checking completeness.
@@ -233,6 +237,27 @@ def _contains_evidence_text(value: Any, text: str) -> bool:
     return False
 
 
+class ReplyUnderstanding(BaseModel):
+    """A fallible model interpretation, never an evidence or authority source."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    acts: list[Literal["question", "explanation", "correction", "emotion", "social", "other"]] = Field(min_length=1, max_length=3)
+    summary: str = Field(min_length=1, max_length=240)
+    source_ids: list[Annotated[str, Field(min_length=1, max_length=160)]] = Field(min_length=1, max_length=8)
+
+
+class ResponseSemanticContext(BaseModel):
+    """Adapter-bound task references; all meaning is checked against admitted sources."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    version: Literal["reply-semantics-v1", "reply-semantics-v2", "reply-semantics-v3", "reply-semantics-v4", "reply-semantics-v5", "reply-semantics-v6"] = "reply-semantics-v6"
+    mode: Literal["observe", "enforce"]
+    audience: str = Field(min_length=1)
+    trigger_source_ids: list[str] = Field(min_length=1, max_length=200)
+    understanding: ReplyUnderstanding | None = None
+    must_address: str = Field(default="", max_length=240)
+
+
 class ContextSegment(BaseModel):
     kind: str
     text: str
@@ -241,6 +266,7 @@ class ContextSegment(BaseModel):
     token_estimate: int = 0
     # Internal metadata. render_messages serializes text only.
     memory_evidence: MemoryEvidenceContext | None = None
+    response_expression: ResponseExpressionContext | None = None
 
 
 class ContextBudget(BaseModel):
@@ -263,6 +289,8 @@ class ModelContext(BaseModel):
     trigger_text: str = ""
     memory_evidence: MemoryEvidenceContext | None = None
     prefix_messages: list[dict[str, str]] = Field(default_factory=list)
+    response_semantics: ResponseSemanticContext | None = None
+    response_expression: ResponseExpressionContext | None = None
 
     def render_messages(self) -> list[dict[str, str]]:
         user_parts = [seg.text for seg in self.segments if seg.kind == "user" and seg.text]
@@ -377,6 +405,8 @@ class ValidationResult(BaseModel):
     severity: float = Field(default=0.0, ge=0.0, le=1.0)
     instruction: str | None = None
     skipped: bool = False
+    alignment: dict[str, Any] | None = None
+    expression: dict[str, Any] | None = None
 
 
 class SessionTurn(BaseModel):

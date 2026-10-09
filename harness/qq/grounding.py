@@ -1,6 +1,8 @@
 """Screenshot-bound QQ geometry. Model output is data, never a tool call."""
 from __future__ import annotations
 
+from harness.llm.json_output import validate_model_json
+
 import base64
 from typing import Literal
 
@@ -211,7 +213,7 @@ def inspect_qq_frame(llm: OpenAICompatClient, png: bytes, *, frame_id: str, evid
             **({"response_format": format_} if format_["type"] == "json_schema" else {}))
         if len(response.text) > 128000:
             raise ValueError("oversized response")
-        reading = ScreenReading.model_validate_json(response.text)
+        reading = validate_model_json(ScreenReading, response.text)
         return GroundedScreen(**reading.model_dump(), frame_id=frame_id, evidence_ref=evidence_ref, width=width, height=height)
     except ValidationError as exc:
         # A bounded schema error type is diagnostic; never include raw model

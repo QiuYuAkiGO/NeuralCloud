@@ -209,7 +209,7 @@ def request():
 
 @pytest.mark.parametrize("raw", ["not json", '{"action":"continue","action":"wait"}',
     json.dumps(result("regenerate", "unknown")), json.dumps({**result(), "evidence_ids": [] , "x": 1})])
-def test_assessor_rejects_invalid_structured_output(raw):
+def test_assessor_rejects_invalid_structured_output_legacy_mode(legacy_json_mode, raw):
     class LLM:
         def complete_chat_result(self, messages, **kwargs):
             assert kwargs["max_tokens"] == 256

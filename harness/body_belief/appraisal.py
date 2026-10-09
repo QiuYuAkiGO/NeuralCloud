@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from harness.llm.json_output import model_json_value
+
 import json
 from datetime import UTC, datetime
 
@@ -58,7 +60,7 @@ class BodyBeliefAppraiser:
             raw_hash = content_hash(raw)
             if not isinstance(raw, str) or len(raw.encode("utf-8")) > 32_768:
                 raise ValueError("bounded appraisal JSON required")
-            decoded = json.loads(raw, object_pairs_hook=_unique_object, parse_constant=_reject_constant)
+            decoded = model_json_value(raw, schema=_Proposals.model_json_schema(), legacy=lambda source: json.loads(source, object_pairs_hook=_unique_object, parse_constant=_reject_constant))
             proposals = _Proposals.model_validate(decoded)
             now = max((item.completed_at for item in episodes), default=datetime.now(UTC))
             candidates = []

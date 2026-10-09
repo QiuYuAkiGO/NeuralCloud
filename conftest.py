@@ -40,3 +40,11 @@ def service(settings: Settings, tmp_path) -> MemoryService:
     svc.bootstrap_persona(vaelith())
     yield svc
     svc.close()
+
+
+@pytest.fixture
+def legacy_json_mode(monkeypatch):
+    """Verify the rollback switch preserves pre-repair parser contracts."""
+    from harness.config import get_settings
+    monkeypatch.setenv("NC_JSON_REPAIR_ENABLED", "false")
+    monkeypatch.setattr(get_settings(), "json_repair_enabled", False)

@@ -34,21 +34,24 @@ class EmotionEndpoint:
         stage = kwargs["response_format"]["json_schema"]["name"]
         self.calls.append((stage, payload, kwargs))
         self.order.append(stage)
+        if stage == "semantic_review":
+            return {"coverage_complete": True, "claims": [], "violations": [], "instruction": "",
+                    "alignment": {"status": "aligned", "issues": []}}
         if stage == "emotion_appraisal":
             return {"events": [{"source_id": source_id, "signals": [
                 {"label": "anger", "intensity": .9, "confidence": 1.0}], "recovery": []}
                 for source_id in payload["new_source_ids"]]}
         assert stage == "emotion_guidance"
-        return {"feeling": "此刻明显愤怒，语气可以直接、尖锐，减少客套，不必强行温柔。",
-                "delivery": "措辞贴合当前心情", "needs": "保持事实与行动边界"}
+        return {**payload["required_expression"], "delivery": "措辞贴合当前心情"}
 
     def close(self):
         pass
 
 
 @pytest.mark.parametrize("action", ["wait", "speak"])
+@pytest.mark.parametrize("semantic_mode", ["off", "observe", "enforce"])
 def test_runtime_qq_keeps_two_real_emotion_steps_once_across_prepare_resume_and_replay(
-        setup, tmp_path, monkeypatch, action):
+        setup, tmp_path, monkeypatch, action, semantic_mode):
     async def run():
         store, main, _, args, records = setup
         monkeypatch.setattr("gui.service.probe_llm", lambda *args, **kwargs: True)
@@ -61,10 +64,14 @@ def test_runtime_qq_keeps_two_real_emotion_steps_once_across_prepare_resume_and_
         host, _ = _host(tmp_path, monkeypatch, ["unused"])
         settings, preset = decision._load_configuration(args["config_path"], args["preset_path"])
         settings = settings.model_copy(update={"emotion_mode": "on", "qq_web_policy": "after_gate",
+            "qq_semantic_alignment_mode": semantic_mode, "qq_semantic_alignment_conversations": ["29999/10001"],
             "validator_enabled": False, "aux_llm_base_url": "https://aux.invalid/v1", "aux_llm_model": "qwen-test"})
         order = []
         aux = EmotionEndpoint(order)
         routed = RoutingLLMClient(main, aux)
+        if semantic_mode == "enforce":
+            settings = settings.model_copy(update={"validator_enabled": True})
+            main._structured = SimpleNamespace(settings=settings)
         host.chat.settings = host.chat.pipeline.settings = settings
         host.chat.llm = host.chat.pipeline.llm = routed
         host._emotion_mode = "on"
@@ -108,9 +115,10 @@ def test_runtime_qq_keeps_two_real_emotion_steps_once_across_prepare_resume_and_
             assert value.new_source_ids == [source.record_id]
             return actual_observe(value)
 
-        def guidance(value):
+        def guidance(value, **options):
             service_calls["guidance"] += 1
-            return actual_guidance(value)
+            assert options.get("expression_only", False) == (semantic_mode == "enforce")
+            return actual_guidance(value, **options)
 
         monkeypatch.setattr(emotion, "observe", observe)
         monkeypatch.setattr(emotion, "guidance", guidance)
@@ -140,10 +148,10 @@ def test_runtime_qq_keeps_two_real_emotion_steps_once_across_prepare_resume_and_
         actual_resume = host.resume_qq_response
 
         async def checked_resume(command):
-            before, calls = emotion.snapshot(), list(aux.calls)
+            before, calls = emotion.snapshot(), [call for call in aux.calls if call[0].startswith("emotion_")]
             result = await actual_resume(command)
             assert emotion.snapshot() == before
-            assert aux.calls == calls
+            assert [call for call in aux.calls if call[0].startswith("emotion_")] == calls
             assert command.deadline == original_deadline
             assert command.payload["turn_binding"]["deadline_at"] == original_deadline.isoformat()
             resume_calls.append(command)
@@ -158,7 +166,8 @@ def test_runtime_qq_keeps_two_real_emotion_steps_once_across_prepare_resume_and_
             monkeypatch.setattr(runtime.affect, "submit", unexpected_background)
             runtime._submit_affect_after_qq(event, request, result)
             assert result.detail["decision"]["action"] == action
-            assert order == ["emotion_appraisal", "emotion_guidance", "gate", *(["body"] if action == "speak" else [])]
+            assert order == ["emotion_appraisal", "emotion_guidance", "gate", *(["body"] if action == "speak" else []),
+                             *(["semantic_review"] if semantic_mode == "enforce" and action == "speak" else [])]
             assert service_calls == {"observe": 1, "guidance": 1}
             assert len(recalls) == len(main.gate_messages) == 1
             assert len(main.chat_calls) == len(resume_calls) == int(action == "speak")
@@ -178,7 +187,7 @@ def test_runtime_qq_keeps_two_real_emotion_steps_once_across_prepare_resume_and_
                 assert measured["counters"][f"emotion_{stage}_reused_results"] == 0
                 assert sum(item["name"] == f"emotion.{stage}.model" for item in measured["stages"]) == 1
             assert measured["counters"]["gate_model_calls"] == 1
-            assert measured["counters"].get("persona_model_calls", 0) == int(action == "speak")
+            assert measured["counters"].get("persona_model_calls", 0) == int(action == "speak") * (2 if semantic_mode == "enforce" else 1)
             assert measured["counters"]["web_requested"] == 0
             intents = [item.data["envelope"] for item in runtime.journal.iter_records()
                        if item.record_type == "domain_command_intent"]
@@ -193,7 +202,7 @@ def test_runtime_qq_keeps_two_real_emotion_steps_once_across_prepare_resume_and_
             assert replay.detail["decision"]["decision_id"] == result.detail["decision"]["decision_id"]
             assert emotion.snapshot() == state
             assert service_calls == {"observe": 1, "guidance": 1}
-            assert len(aux.calls) == 2 and len(main.gate_messages) == 1
+            assert len(aux.calls) == 2 + int(semantic_mode == "enforce" and action == "speak") and len(main.gate_messages) == 1
             assert len(main.chat_calls) == int(action == "speak")
             for stage in ("appraisal", "guidance"):
                 assert replay.detail["trace"]["counters"][f"emotion_{stage}_model_calls"] == 1

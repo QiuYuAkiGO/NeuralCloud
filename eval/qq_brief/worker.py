@@ -11,6 +11,7 @@ import shutil
 import sqlite3
 import sys
 import time
+from types import SimpleNamespace
 
 from common import canonical, digest, file_hash, lexical_metrics, read, save
 
@@ -64,6 +65,10 @@ def main():
         "continuation_enabled": False, "max_reply_segments": 3,
         "trace_dir": job / "traces", "model_version": "live",
     }
+    if config.get("semantic_suite"):
+        safe_tuning.update(call_log_enabled=True, qq_latency_conversations=None,
+            qq_semantic_alignment_mode="enforce" if args.arm == "candidate" else "off",
+            qq_semantic_alignment_conversations=None)
     if args.mode == "live":
         credentials = read(config["credential_file"])
         main_key = credentials.get("api_key")
@@ -86,6 +91,14 @@ def main():
         """Exercise real gates/compiler/validator, with clearly marked fake inference."""
         def __init__(self):
             super().__init__(chat_routes={"": "我会先选安静的，睡觉舒服些；预算紧就先试用。"})
+            if config.get("semantic_suite"):
+                self._structured = SimpleNamespace(settings=settings)
+
+        def complete_json(self, **options):
+            if "response_semantics" in options.get("user", ""):
+                return {"coverage_complete": True, "claims": [], "violations": [], "instruction": "",
+                        "alignment": {"status": "aligned", "issues": []}}
+            return super().complete_json(**options)
 
         def complete_chat_result(self, messages, **kwargs):
             if decision.is_qq_gate_messages(messages):
@@ -94,19 +107,21 @@ def main():
             return super().complete_chat_result(messages, **kwargs)
 
     def add_observation(store, text, serial, *, target=group, historical=False):
+        author = text.get("speaker", member) if isinstance(text, dict) else member
+        text = text["text"] if isinstance(text, dict) else text
         # Historical fixtures are an hour old. Live opportunities and their
         # delivered replies use the actual clock, so the cross-turn recency
         # policy sees the same temporal situation as a running QQ conversation.
         stamp = (base_time + timedelta(seconds=-3600 + serial) if historical
                  else datetime.now(timezone.utc))
         evidence = "qq-protocol://sha256/" + digest({"scope": target, "text": text, "serial": serial})
-        profile = store.record_protocol_profile(QQVerifiedProfileInput(group_id=target, member_id=member,
+        profile = store.record_protocol_profile(QQVerifiedProfileInput(group_id=target, member_id=author,
             display_name="合成对话者", display_name_source="qq_metadata", verification="qq_protocol_verified",
             capture_id=f"eval-profile:{serial}:{target}", observed_at=stamp,
             group_evidence=[evidence], member_evidence=[evidence])).profile
         message_id = str(10000 + serial)
-        ref = protocol_message_evidence_ref(target, member, message_id)
-        return store.record_protocol_observation(QQVisualObservationInput(group_id=target, member_id=member,
+        ref = protocol_message_evidence_ref(target, author, message_id)
+        return store.record_protocol_observation(QQVisualObservationInput(group_id=target, member_id=author,
             profile_record_id=profile.record_id, capture_id=f"eval-event:{serial}:{target}",
             capture_item_id=f"eval-item:{serial}:{target}", observed_at=stamp, text=text,
             evidence=[evidence, ref], author_attribution="qq_protocol_verified", attribution_evidence=[evidence, ref],
@@ -155,7 +170,7 @@ def main():
         result_path = job / f"turn-{index}.json"
         if result_path.exists():
             prior = read(result_path)
-            if prior["status"] == "ok":
+            if prior["status"] == "ok" or prior.get("continued_after_error"):
                 transcript = prior["transcript"]
                 continue
             if not args.retry_errors:
@@ -187,8 +202,9 @@ def main():
         client = SyntheticLLM() if args.mode == "synthetic" else build_llm_client(settings)
         memory = build_inmemory_service(settings=settings, llm=client)
         memory.bootstrap_persona(preset.persona)
+        current_member = observations[-1].member_id
         binding = SharedQQBinding(settings, preset, client,
-            ScopedQQMemoryView(memory, group_id=group, member_id=member), {}, (), None)
+            ScopedQQMemoryView(memory, group_id=group, member_id=current_member), {}, (), None)
         trace = QQTurnTrace()
         aliases = [decision.QQVerifiedSelfAlias(group_id=group, self_member_id=self_id, alias="Misty",
                     evidence_refs=[simulation_ref], verification="qq_protocol_verified")]
@@ -196,14 +212,33 @@ def main():
                       "mode": args.mode, "simulation_only": True, "input_sha256": digest(incoming)})
         started = time.monotonic()
         previous = list(transcript)
-        transcript.extend({"role": "user", "text": text} for text in incoming["messages"])
+        transcript.extend({"role": "user", "text": o.text, "speaker": o.member_id} for o in observations)
         outcome = None
+        emotion = None
         try:
-            with observation_scope(sink):
+            from harness.qq.telemetry import qq_trace_scope
+            with observation_scope(sink), qq_trace_scope(trace):
+                guidance = None
+                deadline = QQDeadline.after(60)
+                if config.get("semantic_suite") and args.mode == "live" and settings.emotion_mode != "off":
+                    from harness.emotion import EmotionService, EmotionInput, EmotionMessage
+                    emotion = EmotionService(settings, client)
+                    previous_emotion = job / f"emotion-state-{index-1}.json"
+                    if previous_emotion.exists():
+                        emotion.load(read(previous_emotion))
+                    from harness.qq.conversation import conversation_audience
+                    scope = conversation_audience(group)
+                    frame = emotion.observe(EmotionInput(context_id=f"eval:{scenario['id']}:{index}",
+                        scope=scope, as_of=datetime.now(timezone.utc), persona=preset.persona,
+                        messages=[EmotionMessage(source_id=o.record_id, scope=scope, role="user", text=o.text,
+                            timestamp=o.observed_at, speaker=o.member_id) for o in observations],
+                        new_source_ids=[o.record_id for o in observations],
+                        deadline_at=datetime.now(timezone.utc)+timedelta(seconds=deadline.remaining())))
+                    guidance = emotion.guidance(frame, **({"expression_only": True} if args.arm == "candidate" else {}))
                 outcome = decision.decide_qq_reply(memory_db=state_path, group_id=group, self_member_id=self_id,
-                    trigger_member_id=member, shared_owner=binding, verified_self_aliases=aliases,
+                    trigger_member_id=current_member, shared_owner=binding, verified_self_aliases=aliases,
                     recent_limit_per_member=20, history_limit_per_member=5,
-                    deadline=QQDeadline.after(60), trace=trace)
+                    deadline=deadline, trace=trace, **({"emotion_guidance": guidance} if guidance is not None else {}))
             if outcome.outcome not in {"ready", "natural_wait", "guard_wait"}:
                 raise RuntimeError("generation_outcome_" + outcome.outcome)
             texts = decision.effective_reply_segments(outcome)
@@ -226,12 +261,23 @@ def main():
                     protocol_message_ids=receipt_ids, source_record_ids=[o.record_id for o in observations], delivered_at=stamp)
                 transcript.append({"role": "assistant", "text": outcome.reply, "delivery": "simulated_complete"})
             checkpoint(job / f"state-{index}.sqlite3")
+            if emotion is not None:
+                save(job / f"emotion-state-{index}.json", emotion.snapshot())
             status = "ok"
         except Exception as exc:
             status = "generation_error"
             error = {"type": type(exc).__name__, "outcome": getattr(outcome, "outcome", None),
                      "error_type": getattr(outcome, "error_type", None)}
+            if config.get("semantic_suite"):
+                # Keep the failed turn and its observed input/emotion state.
+                # Continue later opportunities without simulating a delivery of
+                # the error notice or regenerating this failed response.
+                checkpoint(job / f"state-{index}.sqlite3")
+                if emotion is not None:
+                    save(job / f"emotion-state-{index}.json", emotion.snapshot())
         finally:
+            if emotion is not None and emotion._emotion_client is not None:
+                emotion._emotion_client.close()
             memory.close()
             close = getattr(client, "close", None)
             if callable(close):
@@ -247,12 +293,43 @@ def main():
             "http_evidence_sha256": file_hash(http_path), "input_sha256": digest(incoming),
             "metrics": lexical_metrics(getattr(outcome, "reply", None) or ""),
             "source_manifest_sha256": digest(manifest["sources"][args.arm]["files"])}
+        if config.get("semantic_suite"):
+            candidates = []
+            for event in requests:
+                if event.get("record_type") != "http_request_prepared":
+                    continue
+                payload = event.get("payload", {})
+                for message in payload.get("input", payload.get("messages", [])):
+                    content = message.get("content")
+                    if message.get("role") != "user" or not isinstance(content, str):
+                        continue
+                    try:
+                        import json
+                        data = json.loads(content)
+                    except (ValueError, TypeError):
+                        continue
+                    if isinstance(data, dict) and "concrete_physical_evidence_available" in data and "text" in data:
+                        if not candidates or data["text"] != candidates[-1]:
+                            candidates.append(data["text"])
+            result["initial_candidate"] = candidates[0] if candidates else None
+            result["reviewed_candidates"] = candidates
+        provider_block = next((event["http_status"] for event in requests
+            if event.get("record_type") == "http_response_received"
+            and event.get("http_status") in {401, 402, 403, 429}), None)
+        if provider_block is not None:
+            blocked = {"reason": "generation_provider_denied", "http_status": provider_block,
+                       "scenario": scenario["id"], "turn": index, "arm": args.arm,
+                       "policy": "stop before next turn; preserve in-flight and completed evidence"}
+            result["provider_blocked"] = blocked
+            for arm in ("baseline", "candidate"):
+                save(root / f"STOP-{arm}", blocked)
         if status != "ok":
             result["error"] = error
+            result["continued_after_error"] = bool(config.get("semantic_suite")) and provider_block is None
         save(result_path, result)
         marker.unlink(missing_ok=True)
         print(f"DONE {scenario['id']} r{args.repeat} {args.arm} turn={index} {status}", flush=True)
-        if status != "ok":
+        if provider_block is not None or (status != "ok" and not config.get("semantic_suite")):
             return
 
 

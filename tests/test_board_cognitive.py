@@ -309,7 +309,7 @@ def test_fenced_model_json_uses_existing_parser_without_another_model_call(tmp_p
     ('```json\n{"text":"PRIVATE_MODEL_TEXT"}\n```', "model_schema:ValidationError:missing"),
     ("PRIVATE_MODEL_TEXT SECRET_VALUE", "model_json:ValueError"),
 ])
-def test_strict_schema_and_safe_diagnostics_never_return_model_content(raw, diagnostic, tmp_path, monkeypatch):
+def test_strict_schema_and_safe_diagnostics_never_return_model_content_legacy_mode(legacy_json_mode, raw, diagnostic, tmp_path, monkeypatch):
     async def run():
         host, _ = _host(tmp_path, monkeypatch, ["unused"])
         llm, original = use_llm(host, [raw])

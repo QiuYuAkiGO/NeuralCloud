@@ -40,6 +40,84 @@ def test_suite_is_twelve_independent_four_turn_threads():
     assert digest(suite) == digest(frozen_scenarios())
 
 
+def test_primary_only_freeze_preserves_model_and_disables_only_eval_fallback(tmp_path):
+    from harness.config import Settings
+    from harness.llm.fallback import build_main_client, FallbackLLMClient
+
+    outputs = {}
+    for routing in ("configured", "primary-only"):
+        folder = tmp_path / routing
+        runner.freeze(Namespace(run_dir=folder, baseline_root=ROOT, candidate_root=ROOT,
+            production_snapshot=None, credential_file=None, generation_routing=routing))
+        outputs[routing] = read(folder / "generation-config.json")
+    primary = outputs["primary-only"]
+    assert primary["main"] == outputs["configured"]["main"]
+    assert primary["aux"] == outputs["configured"]["aux"]
+    assert "llm_fallback_config" not in outputs["configured"]["settings"]
+    assert primary["settings"]["llm_fallback_config"] is None
+    settings = Settings(_env_file=None, **primary["settings"], llm_api_key="test-only",
+                        llm_base_url=primary["main"]["base_url"], llm_model=primary["main"]["model"])
+    client = build_main_client(settings)
+    try:
+        assert not isinstance(client, FallbackLLMClient)
+        assert client.settings.llm_model == primary["main"]["model"]
+    finally:
+        client.close()
+    manifest = read(tmp_path / "primary-only/manifest.json")
+    assert manifest["inputs"]["generation-config.json"] == file_hash(tmp_path / "primary-only/generation-config.json")
+
+
+def test_freeze_rejects_unknown_generation_routing(tmp_path):
+    with pytest.raises(ValueError, match="unknown_generation_routing"):
+        runner.freeze(Namespace(run_dir=tmp_path, baseline_root=ROOT, candidate_root=ROOT,
+            production_snapshot=None, credential_file=None, generation_routing="random"))
+
+
+def test_semantic_suite_adds_eight_frozen_threads_and_preserves_author_relations(tmp_path):
+    from eval.qq_brief.semantic_scenarios import semantic_scenarios
+    added = semantic_scenarios()
+    assert len(added) == 8 and all(len(s["turns"]) == 4 for s in added)
+    assert all(t["semantic_expectation"] for s in added for t in s["turns"])
+    runner.freeze(Namespace(run_dir=tmp_path, baseline_root=ROOT, candidate_root=ROOT,
+        production_snapshot=None, credential_file=None, semantic_alignment=True))
+    assert read(tmp_path / "manifest.json")["scenario_count"] == 20
+    assert read(tmp_path / "scenarios.json")[:12] == frozen_scenarios()
+    path, _ = worker(tmp_path, arm="candidate", scenario="s18_multiple_speakers")
+    rows = [read(path / f"turn-{i}.json") for i in range(1, 5)]
+    assert all(r["status"] == "ok" for r in rows)
+    assert [r["decision"]["trigger_member_id"] for r in rows] == ["20004", "20003", "20004", "20003"]
+
+
+def test_semantic_suite_retains_failed_turns_and_completes_later_opportunities(tmp_path):
+    import shutil
+    runner.freeze(Namespace(run_dir=tmp_path, baseline_root=ROOT, candidate_root=ROOT,
+        production_snapshot=None, credential_file=None, semantic_alignment=True))
+    fake = tmp_path / "test-worker"
+    fake.mkdir()
+    source = (ROOT / "eval/qq_brief/worker.py").read_text(encoding="utf-8")
+    source = source.replace("return super().complete_chat_result(messages, **kwargs)",
+                            'raise TimeoutError("synthetic_provider_timeout")')
+    (fake / "worker.py").write_text(source, encoding="utf-8")
+    shutil.copy2(ROOT / "eval/qq_brief/common.py", fake / "common.py")
+    for arm in ("baseline", "candidate"):
+        command = [sys.executable, str(fake / "worker.py"), "--run-dir", str(tmp_path),
+            "--arm", arm, "--scenario", "s13_incident_relations", "--repeat", "1", "--mode", "synthetic"]
+        completed = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", timeout=60)
+        assert completed.returncode == 0, completed.stderr
+        folder = tmp_path / "generation/synthetic" / f"s13_incident_relations-r1-{arm}"
+        rows = [read(folder / f"turn-{i}.json") for i in range(1, 5)]
+        assert all(r["status"] == "generation_error" and r["continued_after_error"] for r in rows)
+        assert not any(r["role"] == "assistant" for r in rows[-1]["transcript"])
+        assert all((folder / f"state-{i}.sqlite3").exists() for i in range(1, 5))
+        before = [file_hash(folder / f"turn-{i}.json") for i in range(1, 5)]
+        repeated = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", timeout=60)
+        assert repeated.returncode == 0 and before == [file_hash(folder / f"turn-{i}.json") for i in range(1, 5)]
+    runner.seal(Namespace(run_dir=tmp_path, mode="synthetic"))
+    packet = read(tmp_path / "packets/synthetic/s13_incident_relations-r1.json")
+    assert all(r["reply"] is None for rows in packet["variants"].values() for r in rows)
+
+
+
 def test_lexical_checks_are_not_semantic_claims():
     assert lexical_metrics("我选安静的。晚上睡觉不容易被吵醒。 ")["within_60_and_2"]
     assert not lexical_metrics("字" * 61)["within_60_and_2"]
@@ -47,6 +125,41 @@ def test_lexical_checks_are_not_semantic_claims():
     assert lexical_metrics("嗯，我想先试试。")["hesitation_regex"]
     assert lexical_metrics("我不记得那件事。")["forget_regex"]
     assert not lexical_metrics("")["within_60_and_2"]
+
+
+@pytest.mark.parametrize("http_status", [401, 402, 403, 429, 503])
+def test_provider_denial_stops_both_arms_without_erasing_first_failure(tmp_path, http_status):
+    import shutil
+    runner.freeze(Namespace(run_dir=tmp_path, baseline_root=ROOT, candidate_root=ROOT,
+        production_snapshot=None, credential_file=None, semantic_alignment=True))
+    fake = tmp_path / "test-worker"
+    fake.mkdir()
+    source = (ROOT / "eval/qq_brief/worker.py").read_text(encoding="utf-8")
+    source = source.replace("return super().complete_chat_result(messages, **kwargs)",
+        'from infra.trace.diagnostics import emit_diagnostic\n'
+        f'            emit_diagnostic({{"record_type": "http_response_received", "http_status": {http_status}}})\n'
+        '            raise RuntimeError("synthetic_provider_denial")')
+    (fake / "worker.py").write_text(source, encoding="utf-8")
+    shutil.copy2(ROOT / "eval/qq_brief/common.py", fake / "common.py")
+    command = [sys.executable, str(fake / "worker.py"), "--run-dir", str(tmp_path),
+               "--arm", "candidate", "--scenario", "s13_incident_relations", "--repeat", "1", "--mode", "synthetic"]
+    completed = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", timeout=60)
+    assert completed.returncode == 0, completed.stderr
+    folder = tmp_path / "generation/synthetic/s13_incident_relations-r1-candidate"
+    first = read(folder / "turn-1.json")
+    assert first["status"] == "generation_error" and (folder / "state-1.sqlite3").exists()
+    blocked = http_status != 503
+    assert (folder / "turn-2.json").exists() is not blocked
+    assert first["continued_after_error"] is not blocked
+    for arm in ("baseline", "candidate"):
+        assert (tmp_path / f"STOP-{arm}").exists() is blocked
+        if blocked:
+            assert read(tmp_path / f"STOP-{arm}")["http_status"] == http_status
+    if blocked:
+        assert first["provider_blocked"]["http_status"] == http_status
+        before = file_hash(folder / "turn-1.json")
+        rerun = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", timeout=60)
+        assert "STOPPED" in rerun.stdout and file_hash(folder / "turn-1.json") == before
 
 
 def test_freeze_contains_no_credential_contents_and_is_immutable(tmp_path):
@@ -281,6 +394,27 @@ def test_attempt_inventory_retains_failures_and_all_attempt_requests(tmp_path):
     assert value["http_model_requests_latest"] == 2
     assert value["http_model_requests_prior_attempts"] == 2
     assert value["http_model_requests_all_attempts"] == 4
+
+
+def test_semantic_acceptance_retry_keeps_initial_failure_and_latency(tmp_path):
+    from eval.qq_brief.semantic_acceptance import summarize
+    row = {"scenario_id": "s13", "repeat": 1, "turn": 1, "status": "ok", "reply": "理解了。",
+        "input": {"semantic_expectation": "解释", "must_answer": True, "focus": "answer"},
+        "trace": {"counters": {}}, "latency_ms": 10, "model_requests": 5,
+        "reviewed_candidates": ["理解了。"]}
+    failed = row | {"status": "generation_error", "latency_ms": 100, "error": {"error_type": "model_timeout"}}
+    folder = tmp_path / "generation/live/s13-r1-candidate"
+    save(folder / "prior-attempts/first/turn-1.json", failed)
+    save(folder / "turn-1.json", row)
+    failures = runner.initial_generation_failures(tmp_path, mode="live", arm="candidate")
+    score = {"semantic_pass": True}
+    result = summarize({a: [row] for a in ("baseline", "candidate")},
+        {a: [(row, score)] for a in ("baseline", "candidate")}, expected_turns=1,
+        initial_failures={"baseline": [], "candidate": failures})
+    assert result["arms"]["candidate"]["semantic_passes"] == 0
+    assert result["arms"]["candidate"]["p95_latency_ms"] == 100
+    assert result["human_review_queue"][0]["initial_generation_failure"] == failed["error"]
+    assert not result["rollout_enforce_allowed"]
 
 
 def test_legacy_judge_payload_is_byte_equivalent_and_has_no_effort():

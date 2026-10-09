@@ -281,7 +281,8 @@ def test_emotion_projection_keeps_memory_evidence_exact_and_rejects_source_tampe
     options = dict(trusted_context=context, current_observation_ids={item.record_id for item in observations},
                    receipts=[], partial_receipts=[], shared_owner=owner)
     entries = build_qq_memory_evidence(payload=payload, **options)
-    assert {entry.text for entry in entries} == {"一起讨论过任务", "愿意讨论细节"}
+    assert {entry.text for entry in entries if entry.kind != "current"} == {"一起讨论过任务", "愿意讨论细节"}
+    assert {entry.text for entry in entries if entry.kind == "current"} == {item.text for item in observations}
     assert owner.context["entries"][0]["psych"] == {"mood": "angry"}
     assert owner.derived_memory["entries"][0]["trust"] == .3
     field = "text" if container == "shared_memory" else "current_impression"

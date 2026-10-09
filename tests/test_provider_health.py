@@ -1,7 +1,7 @@
 import httpx
 
 from harness.config import Settings
-from harness.llm.client import OpenAICompatClient
+from harness.llm.client import ChatResult, OpenAICompatClient
 from harness.llm.health import ProviderHealth
 from tests.test_main_reply_fallback import wrapper, MESSAGES, status_error
 
@@ -32,10 +32,16 @@ def test_unknown_stale_failure_and_recovery_never_wait_for_a_probe():
     health.probe()
     assert not health.snapshot()["ready"]
     health.probe()
-    assert health.snapshot()["ready"]
-    now[0] = 12
+    assert not health.snapshot()["ready"]
     assert client.complete_chat(MESSAGES) == "备用回复"
-    assert len(main.calls) == 2 and len(fallback.calls) == 3
+    now[0] = 30
+    health.probe()
+    main.result = ChatResult(text="恢复回复")
+    assert client.complete_chat(MESSAGES) == "恢复回复"
+    assert health.snapshot()["ready"]
+    now[0] = 42
+    assert client.complete_chat(MESSAGES) == "备用回复"
+    assert len(main.calls) == 3 and len(fallback.calls) == 4
     client.close()
 
 
@@ -73,3 +79,27 @@ def test_primary_connect_cap_survives_per_call_timeout():
         assert observed == [{"connect": 1, "read": 9, "write": 9, "pool": 9}]
     finally:
         client.close()
+
+
+def test_model_listing_does_not_heal_generation_and_only_one_trial_is_leased():
+    now = [0]
+    health = monitor(good, lambda: now[0])
+    health.probe()
+    health.probe()
+    old_epoch = health.begin_attempt(10)
+    health.failed("ReadTimeout")
+    health.succeeded(old_epoch)
+    for tick in [5, 10, 20]:
+        now[0] = tick
+        health.probe()
+        assert not health.snapshot()["ready"]
+        assert health.begin_attempt(10) is None
+    now[0] = 30
+    health.probe()
+    lease = health.begin_attempt(10)
+    assert lease is not None
+    assert health.begin_attempt(10) is None
+    health.failed("ReadTimeout")
+    health.succeeded(lease)
+    assert not health.snapshot()["ready"]
+    health.close()

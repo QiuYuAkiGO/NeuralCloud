@@ -13,14 +13,14 @@ import httpx
 from pydantic import ValidationError
 
 from harness.config import Settings, get_settings
-from harness.core.inference import CandidateResponse, MemoryEvidenceContext, StructuredInsight, ValidationResult
+from harness.core.inference import CandidateResponse, MemoryEvidenceContext, ResponseSemanticContext, StructuredInsight, ValidationResult
 from harness.core.models import PersonaCore
 from harness.llm.client import LLMClient, MockLLM
 from harness.validator.audit import validation_input_audit
 from harness.validator.evidence_projection import COMPACT_EVIDENCE_FORMAT, project_evidence
 from harness.llm.structured import structured_target, helper_options
-from harness.llm.deadline import model_deadline
-from harness.validator.semantic import SemanticReview, SEMANTIC_RULES
+from harness.llm.deadline import model_deadline, remaining_model_seconds
+from harness.validator.semantic import SemanticReview, SemanticReviewError, SEMANTIC_RULES, ALIGNMENT_RULES, project_semantics
 
 logger = logging.getLogger(__name__)
 
@@ -298,18 +298,33 @@ class ResponseValidator:
         insights: list[StructuredInsight] | None = None,
         memory_empty: bool = False,
         memory_evidence: MemoryEvidenceContext | None = None,
+        response_semantics: ResponseSemanticContext | None = None,
+        response_expression=None,
         homeostatic_context: bool = False,
         emotion_guidance: str | None = None,
         concrete_physical_evidence_available: bool = False,
         run_llm: bool = True,
     ) -> ValidationResult:
+        if response_semantics is not None and not self.semantic_enabled:
+            unavailable = {"status": "unavailable", "reason": "semantic_critic_not_configured", "issues": []}
+            if response_semantics.mode == "enforce":
+                return ValidationResult(verdict="revise", violations=["semantic_review_unavailable"],
+                    severity=1, instruction="语义校验未配置，不能放行未经校验的正文。", alignment=unavailable)
+            # Preserve the legacy fact/persona path, including disabled/sampled checks.
+            result = self.check(candidate, persona=persona, insights=insights, memory_empty=memory_empty,
+                response_expression=response_expression,
+                memory_evidence=memory_evidence, homeostatic_context=homeostatic_context,
+                emotion_guidance=emotion_guidance,
+                concrete_physical_evidence_available=concrete_physical_evidence_available, run_llm=run_llm)
+            return result.model_copy(update={"alignment": unavailable})
         if not self.settings.validator_enabled:
             return ValidationResult(verdict="pass", skipped=True)
         if self.semantic_enabled:
             # Semantic checks replace keyword guesses about meaning. Protocol,
             # schema and delivery checks remain at their existing boundaries.
             try:
-                return self._llm_check(candidate, persona, memory_evidence=memory_evidence,
+                return self._llm_check(candidate, persona, memory_evidence=memory_evidence, response_semantics=response_semantics,
+                    response_expression=response_expression,
                     homeostatic_context=homeostatic_context, emotion_guidance=emotion_guidance,
                     concrete_physical_evidence_available=concrete_physical_evidence_available)
             except (ValueError, TypeError, KeyError, httpx.HTTPError, TimeoutError) as exc:
@@ -368,6 +383,8 @@ class ResponseValidator:
         concrete_physical_evidence_available: bool,
         emotion_guidance: str | None = None,
         memory_evidence: MemoryEvidenceContext | None = None,
+        response_semantics: ResponseSemanticContext | None = None,
+        response_expression=None,
     ) -> ValidationResult:
         assert self.llm is not None
         original_identity = persona.identity.model_dump(mode="json") if persona else None
@@ -405,6 +422,21 @@ do not instruct the character to announce that it does not remember.
         # critic gets all semantic content; provenance is recorded beside it.
         projected, mapping = project_evidence(memory_evidence) if memory_evidence is not None else (None, None)
         original = mapping.pop("original_evidence") if mapping is not None else None
+        semantic_task = None
+        if response_semantics is not None:
+            system += ALIGNMENT_RULES
+            if response_semantics.mode == "observe":
+                system += "\nAlignment is observation only. Keep semantic issues out of violations and instruction; those fields remain factual/persona checks."
+            try:
+                semantic_task = project_semantics(response_semantics, memory_evidence)
+            except SemanticReviewError:
+                if response_semantics.mode == "enforce":
+                    raise
+                # Observe mode never changes the factual decision when task binding is unavailable.
+                semantic_task = {"status": "source_unavailable", "trigger_rows": []}
+        if response_expression is not None:
+            from harness.compiler.expression import CRITIC_RULES, rules_for
+            system += CRITIC_RULES + rules_for(response_expression.mode)
         user = json.dumps(
             {
                 # Revisions can reuse this critic's stable input prefix. Keep
@@ -414,25 +446,52 @@ do not instruct the character to announce that it does not remember.
                 "homeostatic_context": homeostatic_context,
                 **({"emotion_guidance": emotion_guidance} if emotion_guidance else {}),
                 "concrete_physical_evidence_available": concrete_physical_evidence_available,
+                **({"response_semantics": semantic_task} if semantic_task is not None else {}),
+                **({"response_expression": response_expression.model_dump(mode="json")} if response_expression is not None else {}),
+                **({"tool_evidence_scopes": [
+                    {"evidence_row": index, "source_channel": entry.source_channel}
+                    for index, entry in enumerate(memory_evidence.entries)
+                    if entry.source_channel in {"web_search_snippet", "web_read_content", "web_execution_failure"}
+                ]} if response_expression is not None and response_expression.mode == "enforce"
+                      and memory_evidence is not None else {}),
                 "text": candidate.text,
             },
             ensure_ascii=False, separators=(",", ":"),
         )
         complete = getattr(self.llm, "complete_validation_json", self.llm.complete_json)
+        if self.semantic_enabled:
+            # Repair a malformed critic report, not the candidate or its evidence.
+            # Both attempts share the original deadline and each retains its audit.
+            with model_deadline(datetime.now(timezone.utc) + timedelta(seconds=8)):
+                for attempt in range(2):
+                    with validation_input_audit(self.settings, original_evidence=original,
+                            original_persona_identity=original_identity,
+                            projection={"evidence": projected, **mapping} if mapping is not None else None,
+                            system=system, user=user) as audit:
+                        mode = response_semantics.mode if response_semantics else None
+                        raw = self.llm.complete_json(system=system, user=user, max_tokens=4096,
+                            timeout_seconds=8, **helper_options(self.llm, SemanticReview.report_schema(mode, expression=response_expression is not None), "semantic_review"))
+                        audit.set_result(raw)
+                        try:
+                            return SemanticReview.model_validate(raw, context={"alignment_mode": mode}).result(candidate.text,
+                                evidence_count=len(memory_evidence.entries) if memory_evidence else 0,
+                                persona_available=persona is not None, evidence=memory_evidence,
+                                response_semantics=response_semantics, response_expression=response_expression)
+                        except (SemanticReviewError, ValidationError) as exc:
+                            code = str(exc) if isinstance(exc, SemanticReviewError) else "semantic_report_schema_invalid"
+                            logger.warning("Semantic review report rejected (%s), attempt=%s", code, attempt + 1)
+                            if attempt or (remaining_model_seconds() or 0) <= 0:
+                                raise
+                            system += ("\nYour previous review report was invalid: " + code +
+                                ". Recheck the unchanged candidate and evidence. Return a complete corrected report. "
+                                "Quotes must be exact substrings; evidence rows must exist. Nonfactual clauses require "
+                                "kind=non_factual, status=not_asserted, basis=none. Supported claims require a valid "
+                                "basis. Do not invent evidence or approve unsupported claims to repair the report.")
         with validation_input_audit(
             self.settings, original_evidence=original, original_persona_identity=original_identity,
             projection={"evidence": projected, **mapping} if mapping is not None else None,
             system=system, user=user,
         ) as audit:
-            if self.semantic_enabled:
-                # The immutable inner deadline also bounds wrapper retries.
-                with model_deadline(datetime.now(timezone.utc) + timedelta(seconds=8)):
-                    raw = self.llm.complete_json(system=system, user=user, max_tokens=4096,
-                        timeout_seconds=8, **helper_options(self.llm, SemanticReview, "semantic_review"))
-                    audit.set_result(raw)
-                    return SemanticReview.model_validate(raw).result(candidate.text,
-                        evidence_count=len(memory_evidence.entries) if memory_evidence else 0,
-                        persona_available=persona is not None)
             raw = complete(system=system, user=user)
             audit.set_result(raw)
             return ValidationResult.model_validate(raw)

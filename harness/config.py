@@ -117,6 +117,10 @@ class Settings(BaseSettings, QQLatencyOptions):
     call_log_enabled: bool = False
     # Content-free physical HTTP request accounting is independent of call logs.
     model_request_log_enabled: bool = True
+    json_repair_enabled: bool = True
+    json_repair_evidence_enabled: bool = True
+    json_repair_retention_days: int = Field(default=7, ge=1)
+    json_repair_evidence_max_bytes: int = Field(default=256 * 1024 * 1024, ge=1)
     consolidation_threshold: float = 0.70
     initial_candidate_confidence: float = 0.15
     confidence_increment: float = 0.35

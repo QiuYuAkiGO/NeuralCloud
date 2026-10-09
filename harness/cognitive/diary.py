@@ -139,7 +139,7 @@ def _expression(response, diagnostic):
         diagnostic.stage = "model_empty"
         raise ValueError("diary_model_empty_content")
     diagnostic.stage = "model_json"
-    decoded = parse_json_object(response.text)
+    decoded = parse_json_object(response.text, schema=_Expression.model_json_schema())
     diagnostic.stage = "model_schema"
     return _Expression.model_validate(decoded)
 

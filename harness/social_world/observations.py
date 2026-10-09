@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from harness.llm.json_output import model_json_value
+
 import json
 from pathlib import Path
 from typing import Literal, Protocol
@@ -121,7 +123,7 @@ class SocialWorldService:
             def reject_constant(_value):
                 raise ValueError("non-finite appraisal JSON constant")
 
-            proposal = EntityAppraisalProposal.model_validate(json.loads(raw, object_pairs_hook=unique_object, parse_constant=reject_constant))
+            proposal = EntityAppraisalProposal.model_validate(model_json_value(raw, schema=EntityAppraisalProposal.model_json_schema(), legacy=lambda source: json.loads(source, object_pairs_hook=unique_object, parse_constant=reject_constant)))
             # Anonymous aliases must be translated back only using the current
             # session's known actor mapping; arbitrary stable identity claims fail.
             aliases = {self._alias(actor): actor for item in self.memory.events() for actor in item.actor_refs}

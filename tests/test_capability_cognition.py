@@ -158,7 +158,7 @@ def test_no_live_ready_offer_requires_no_model_or_memory_query(items):
     ({"kind": "observe", "offer_id": "board:append:private"}, "capability_invalid_channel_choice"),
     ({"kind": "wait", "offer_id": "board:append:private"}, "capability_invalid_schema"),
 ])
-def test_bad_output_is_rejected_without_retry_or_private_error(output, code):
+def test_bad_output_is_rejected_without_retry_or_private_error_legacy_mode(legacy_json_mode, output, code):
     owner = host(FakeLLM(output))
     with pytest.raises(CapabilitySelectionError) as error:
         run(owner, command())

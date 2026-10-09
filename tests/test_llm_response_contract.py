@@ -33,6 +33,7 @@ def test_json_mode_is_per_call_preserves_thinking_and_records_safe_finish_metada
         "usage": {"prompt_tokens": 5075, "completion_tokens": 500, "total_tokens": 5575,
                   "completion_tokens_details": {"reasoning_tokens": 500}}}
     client = _client(tmp_path, payload, captured)
+    client.settings.json_repair_enabled = False  # Legacy contract metadata remains available with repair disabled.
     try:
         with trace_scope(event_id="event:board", command_id="command:board", stage="board.prepare.model",
                          model_attempt=2, model_budget_seconds=3.5):

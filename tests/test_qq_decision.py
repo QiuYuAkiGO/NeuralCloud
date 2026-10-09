@@ -104,7 +104,7 @@ def test_multimember_speak_uses_user_side_history_and_is_replayable(setup):
     assert result.automatic_send is False and result.new_decision is True
     assert set(result.source_record_ids) == {item.record_id for item in records}
     assert result.model == "synthetic-model" and result.persona_version
-    assert result.prompt_version == "qq-group-turn-taking-v27-referenced-images"
+    assert result.prompt_version == decision.PROMPT_VERSION
     assert result.usage.calls >= 2
     assert builds[0].call_log_enabled is False and builds[0].record_interaction is False
     all_messages = client.gate_messages + client.chat_calls
@@ -304,7 +304,6 @@ def test_delivery_addresses_explicit_subset_not_all_considered_history(setup):
 
 
 @pytest.mark.parametrize("choice,origin", [
-    ('{"action":"wait","reason":"skip","reply":"not allowed"}', "model_invalid"),
     ('{"action":"speak","reason":""}', "model_invalid"),
     (RuntimeError("synthetic-secret PRIVATE_CHAT"), "model_error"),
 ])
@@ -886,3 +885,11 @@ def test_trace_flush_contains_no_group_text_names_quotes_or_persona(setup, tmp_p
     assert result.decision_id in raw and trace.trace_id in raw
     for private in ("UNTRUSTED", "PRIVATE_OPERATOR_REQUEST", "synthetic-private-api-key", result.reply):
         assert private not in raw
+
+
+def test_extra_gate_fields_are_ignored_without_generating_body(setup, monkeypatch):
+    _, client, _, kwargs, _ = setup
+    client.choice = '{"action":"wait","reason":"skip","reply":"not allowed"}'
+    monkeypatch.setattr(decision, "_prepare_group_speech", lambda **kwargs: pytest.fail("wait generated speech"))
+    result = decision.decide_qq_reply(**kwargs)
+    assert result.action == "wait" and result.outcome != "error_fallback"

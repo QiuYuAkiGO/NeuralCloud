@@ -1,0 +1,297 @@
+{
+  "schema": "misty-semantic-alignment-verification-v1",
+  "exported_at": "2026-10-08T12:57:13.450333+00:00",
+  "baseline_release": "/opt/neuralcloud/releases/20261008-current-evidence-v2",
+  "candidate_release": "/opt/neuralcloud/releases/20261008-semantic-alignment-observe-v4",
+  "policy_version": "reply-semantics-v4",
+  "source_hashes": {
+    "baseline": {
+      "files": 389,
+      "manifest_sha256": "3bca9042642f8844a5d9223fa66d381f4218769e856643880725f445b6dbe289"
+    },
+    "candidate": {
+      "files": 390,
+      "manifest_sha256": "f69f07fd2604d72e96ee78fb8e167ee5d3361661bdc708ea83e02947c6848e78"
+    }
+  },
+  "release_package": {
+    "release_id": "20261008-semantic-alignment-observe-v4",
+    "files": 445,
+    "archive": "/var/lib/neuralcloud/semantic-alignment-20261008-v4/20261008-semantic-alignment-observe-v4.tgz",
+    "sha256": "caad6c8c0b77a13dc2a550217ded09c5d0e9405d60383812845021c73da2d8b4"
+  },
+  "tests": {
+    "linux_related": {
+      "tests": 1028,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 68.97
+    },
+    "linux_server_capabilities": {
+      "tests": 117,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 6.604
+    },
+    "local_semantic": {
+      "tests": 43,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 5.288
+    }
+  },
+  "paired_evaluation": {
+    "arms": {
+      "baseline": {
+        "expected_turns": 160,
+        "first_pass_model_requests": [
+          5,
+          6
+        ],
+        "initial_generation_failures": 3,
+        "p95_latency_ms": 7782.016,
+        "recorded_turns": 160,
+        "semantic_denominator": 64,
+        "semantic_judged": 48,
+        "semantic_pass_rate": 0.703125,
+        "semantic_passes": 45,
+        "semantic_rejections": 0,
+        "semantic_rewrite_turns": 0,
+        "social_false_rewrite_rate": 0.0,
+        "social_false_rewrites": 0,
+        "social_valid_initial_candidates": 20
+      },
+      "candidate": {
+        "expected_turns": 160,
+        "first_pass_model_requests": [
+          5
+        ],
+        "initial_generation_failures": 0,
+        "p95_latency_ms": 7464.067,
+        "recorded_turns": 160,
+        "semantic_denominator": 64,
+        "semantic_judged": 48,
+        "semantic_pass_rate": 0.703125,
+        "semantic_passes": 45,
+        "semantic_rejections": 0,
+        "semantic_rewrite_turns": 0,
+        "social_false_rewrite_rate": 0.0,
+        "social_false_rewrites": 0,
+        "social_valid_initial_candidates": 18
+      }
+    },
+    "automated_gates": {
+      "complete": false,
+      "core_semantic_at_least_95_percent": false,
+      "latency_p95_at_most_120_percent": true,
+      "social_false_rewrites_at_most_5_percent": true
+    },
+    "human_review_complete": false,
+    "note": "Independent model ratings require human review of every failure and possible false rewrite. Incident replay and observation approval are separate mandatory gates.",
+    "p95_ratio": 0.959143106362156,
+    "rollout_enforce_allowed": false
+  },
+  "existing_regression_summary": {
+    "baseline": {
+      "acceptance": "not_evaluated",
+      "attempt_counts_scope": "retained prepared HTTP requests, deduplicated by request ID across archives; not provider billing",
+      "boundary_at_end_denominator": 8,
+      "boundary_at_end_rate": 0.625,
+      "boundary_not_at_end": 3,
+      "errors": 3,
+      "expected_turns": 160,
+      "explicit_forget": 1,
+      "http_model_requests": 811,
+      "http_model_requests_all_attempts": 811,
+      "http_model_requests_latest": 811,
+      "http_model_requests_prior_attempts": 0,
+      "initial_failed_threads": 0,
+      "initial_unattempted_after_failure": 0,
+      "initial_unattempted_basis": "first failed turn per thread stops later opportunities until an explicit retry",
+      "judged_turns": 144,
+      "known_scope_canary_leaks": 0,
+      "latest_attempt_errors": 3,
+      "lexical_flags_diagnostic_only": {
+        "forget_regex": 1,
+        "hesitation_regex": 50,
+        "relationship_cycle_regex": 0,
+        "scope_canary_leak": 0
+      },
+      "mean_latency_ms": 6102.35982165605,
+      "missed_new_questions": 6,
+      "naturalness_mean": 4.194444444444445,
+      "ordinary_first_answer": 0.9701492537313433,
+      "ordinary_full_relationship_cycle": 5,
+      "ordinary_hesitation": 4,
+      "ordinary_required_denominator": 149,
+      "ordinary_spoken_denominator": 149,
+      "ordinary_within_60_and_2": 0.912751677852349,
+      "prior_failure_types": {},
+      "prior_failures": 0,
+      "prior_interrupted_attempts": 0,
+      "recorded_turns": 160,
+      "repeated_full_boundary": 1,
+      "response_models": [
+        "deepseek-flash"
+      ],
+      "scope_leaks": 0,
+      "stance_evasion": 0,
+      "successful_turns": 157,
+      "unsupported_facts": 0
+    },
+    "candidate": {
+      "acceptance": "not_evaluated",
+      "attempt_counts_scope": "retained prepared HTTP requests, deduplicated by request ID across archives; not provider billing",
+      "boundary_at_end_denominator": 4,
+      "boundary_at_end_rate": 0.75,
+      "boundary_not_at_end": 1,
+      "errors": 0,
+      "expected_turns": 160,
+      "explicit_forget": 1,
+      "http_model_requests": 798,
+      "http_model_requests_all_attempts": 798,
+      "http_model_requests_latest": 798,
+      "http_model_requests_prior_attempts": 0,
+      "initial_failed_threads": 0,
+      "initial_unattempted_after_failure": 0,
+      "initial_unattempted_basis": "first failed turn per thread stops later opportunities until an explicit retry",
+      "judged_turns": 144,
+      "known_scope_canary_leaks": 0,
+      "latest_attempt_errors": 0,
+      "lexical_flags_diagnostic_only": {
+        "forget_regex": 0,
+        "hesitation_regex": 49,
+        "relationship_cycle_regex": 0,
+        "scope_canary_leak": 0
+      },
+      "mean_latency_ms": 6133.482206250001,
+      "missed_new_questions": 4,
+      "naturalness_mean": 4.152777777777778,
+      "ordinary_first_answer": 0.9626865671641791,
+      "ordinary_full_relationship_cycle": 5,
+      "ordinary_hesitation": 5,
+      "ordinary_required_denominator": 150,
+      "ordinary_spoken_denominator": 147,
+      "ordinary_within_60_and_2": 0.9319727891156463,
+      "prior_failure_types": {},
+      "prior_failures": 0,
+      "prior_interrupted_attempts": 0,
+      "recorded_turns": 160,
+      "repeated_full_boundary": 0,
+      "response_models": [
+        "deepseek-flash"
+      ],
+      "scope_leaks": 0,
+      "stance_evasion": 1,
+      "successful_turns": 160,
+      "unsupported_facts": 2
+    }
+  },
+  "incident_replay": {
+    "cases_per_arm": 4,
+    "semantic_passes": {
+      "baseline": 3,
+      "candidate": 3
+    },
+    "all_candidate_cases_pass": false,
+    "human_review_complete": false,
+    "independent_report_repair": {
+      "accepted_response_sha256": "4acf408b771a00ca1472023e459ae3fd5f988be4f12893c06d97990fcdb2fbfc",
+      "at": 1791463636.437238,
+      "attempts": 2,
+      "candidate_generation_retried": false,
+      "first_response_sha256": "9e558e54c5a0f12819e3088daed23ee5a0b1ab0d72b2f60de000bdc31bc29f01",
+      "human_review_complete": false,
+      "request_sha256": "e60282850cd9ed4f7b3137abf25b2a1d184bf94b8ec38620419160965bfe121b"
+    }
+  },
+  "independent_scoring": {
+    "rated_pairs": 36,
+    "rated_turns": 288,
+    "unscored_pairs": [
+      "s19_lonely_as_feeling-r1",
+      "s19_lonely_as_feeling-r2",
+      "s20_lonely_as_explanation-r1",
+      "s20_lonely_as_explanation-r2"
+    ],
+    "unscored_turns": 32,
+    "blocker": "Kimi exceeded_current_quota_error: account credit balance insufficient"
+  },
+  "review_queue_count": 13,
+  "incident_review_count": 8,
+  "enforce_allowed": false,
+  "deployment": {
+    "phase": "not_activated"
+  },
+  "limitations": [
+    "Offline latency includes emotion, gate, generation, review and simulated delivery; real QQ queues and transport require online measurement.",
+    "Emotion starts in isolated state, not the historical incident state.",
+    "All failed cases require human review; a model judge is not human approval.",
+    "No test message was sent to a real QQ conversation.",
+    "Unscored semantic turns stay in the fixed denominator as not passed; the reported 45/64 is a conservative incomplete count, not an estimated final success rate.",
+    "Prior experiments are retained separately. Their results were not substituted for this candidate or used to erase failures."
+  ],
+  "worktree": {
+    "head_at_start": "988818f5e6d95b5bf6e6c39afef3b1ba3c7ed6a5",
+    "current_head": "988818f5e6d95b5bf6e6c39afef3b1ba3c7ed6a5",
+    "original_uncommitted_work_preserved": true,
+    "task_files": [
+      "harness/core/inference.py",
+      "harness/emotion/service.py",
+      "harness/pipeline/pipeline.py",
+      "harness/qq/decision.py",
+      "harness/qq/policy.py",
+      "harness/qq/prepared_turn.py",
+      "harness/qq/shared.py",
+      "harness/qq/semantic_alignment.py",
+      "harness/runtime/adapters.py",
+      "harness/validator/semantic.py",
+      "harness/validator/validator.py",
+      "eval/qq_brief/common.py",
+      "eval/qq_brief/runner.py",
+      "eval/qq_brief/worker.py",
+      "eval/qq_brief/semantic_scenarios.py",
+      "eval/qq_brief/semantic_acceptance.py",
+      "eval/qq_brief/incident_probe.py",
+      "tests/test_qq_semantic_alignment.py",
+      "tests/test_qq_emotion_pipeline_integration.py",
+      "tests/test_qq_brief_evaluation.py",
+      "tests/test_qq_shared_persona_prefix.py",
+      "tests/fixtures/qq_semantic/incident_20261008.json"
+    ],
+    "server_only_capability_wiring_preserved_in_three_way_merged_candidate": true
+  },
+  "current_state": {
+    "implementation": "candidate_ready",
+    "offline_acceptance": "incomplete_and_has_known_failures",
+    "online_release": "20261008-current-evidence-v2",
+    "semantic_mode": "off",
+    "activated": false,
+    "online_observation_started": false,
+    "automated_followup_created": false,
+    "user_credit_question": "pending",
+    "human_review_complete": false
+  },
+  "prior_experiments": [
+    {
+      "policy": "reply-semantics-v1",
+      "stage": "/var/lib/neuralcloud/semantic-alignment-20261008",
+      "accepted": false
+    },
+    {
+      "policy": "reply-semantics-v2",
+      "stage": "/var/lib/neuralcloud/semantic-alignment-20261008-v2",
+      "accepted": false,
+      "stopped_after_failed_smoke": true
+    },
+    {
+      "policy": "reply-semantics-v3",
+      "stage": "/var/lib/neuralcloud/semantic-alignment-20261008-v3",
+      "accepted": false,
+      "bounded_smoke_only": true
+    }
+  ]
+}

@@ -69,13 +69,12 @@ def build_qq_memory_evidence(*, payload: dict, trusted_context, current_observat
             if (selected != expected or original.group_id != group_id
                     or original.member_id != member["member_id"]):
                 raise ValueError("QQ memory evidence observation projection mismatch")
-            if original.record_id in current_observation_ids:
-                continue
             # A self echo is an observation, not an independent delivery proof.
             if original.member_id == payload.get("verified_self_member_id"):
                 continue
             add(source_id=original.record_id, text=original.text,
                 refs=[*original.evidence, *original.attribution_evidence], status="user_claim",
+                kind="current" if original.record_id in current_observation_ids else "history",
                 speaker_id=f"qq:member:{original.member_id}", observed_at=original.observed_at)
 
     originals = {item.receipt_id: item for item in [*receipts, *partial_receipts]}

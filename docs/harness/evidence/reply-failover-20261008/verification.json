@@ -1,0 +1,369 @@
+{
+  "plan": {
+    "release": "/opt/neuralcloud/releases/20261008-reply-failover-v1",
+    "previous_release": "/opt/neuralcloud/releases/20261008-operation-progress-v3",
+    "files": [
+      {
+        "path": "harness/llm/health.py",
+        "sha256": "172a202c37c1babb3dcc585a7f351643c4d7f57c40a307caea6850f917535361"
+      },
+      {
+        "path": "harness/llm/fallback.py",
+        "sha256": "81b9d6aa8526af22ee4cb69751c69da372af434758deebddaefa6ae7080ab667"
+      },
+      {
+        "path": "harness/validator/semantic.py",
+        "sha256": "26f6b94d86ed31f77d061ffa989792c781d0fae016758669948484bc7e4fec62"
+      },
+      {
+        "path": "harness/validator/validator.py",
+        "sha256": "b29fc5233c6474d1f7ea6624862088ef9a836cb2736ca44aa001ce454bbddbd0"
+      },
+      {
+        "path": "tests/test_provider_health.py",
+        "sha256": "5758c618f8066265d888be4667c8d59c30d17240527e71435f419cf079030e55"
+      },
+      {
+        "path": "tests/test_semantic_validator.py",
+        "sha256": "2d30b2838a7035ce1ae4c7adf6b47862a25c701c8005dcba223fdcc735a3cffc"
+      },
+      {
+        "path": "tests/test_main_reply_fallback.py",
+        "sha256": "9a5da1ea0565db0091dfa1c901ff1e359a88c29603a67a1efe97e4b1e25499fd"
+      }
+    ]
+  },
+  "activation": {
+    "phase": "started",
+    "release": "/opt/neuralcloud/releases/20261008-reply-failover-v1",
+    "previous_release": "/opt/neuralcloud/releases/20261008-operation-progress-v3",
+    "started_at": 1791443404.6222346,
+    "configuration_before": {
+      "/etc/neuralcloud/deploy.json": "3863304aef943fab745170212743d7992feeb2c74b6acc12a90a8d3fdd685d76",
+      "/etc/neuralcloud/main-fallback.json": "84f3c279d40cedf01586aa5ec9fdfb3942f569d4110ba93ed36a4ca54b823124",
+      "/etc/neuralcloud/structured-llm.json": "84523b0df11e938d2a451cc7e01e8ed69a17fe1f8f9f41a94621330047343f4c",
+      "/etc/neuralcloud/gui-settings.json": "8effc6196de05b9f8daadb8cad0fc701aa8ba0bb1df5cc62100dd81d7d0d8a8e",
+      "/etc/neuralcloud/manifest.json": "c1d6d6465ca372f1e18fa10ec730a5b0f6f912eee286d5b963a6bdb9d7a955ef",
+      "/etc/neuralcloud/homeostasis-profile.json": "1a4348b35d078bf69767ff8c543f60760c1c90c019ade062a5d1ff8db2252212"
+    },
+    "completed_at": 1791443642.7142348,
+    "configuration_unchanged": true
+  },
+  "verification": {
+    "at": 1791443672.4879525,
+    "release": "/opt/neuralcloud/releases/20261008-reply-failover-v1",
+    "activation": {
+      "phase": "started",
+      "release": "/opt/neuralcloud/releases/20261008-reply-failover-v1",
+      "previous_release": "/opt/neuralcloud/releases/20261008-operation-progress-v3",
+      "started_at": 1791443404.6222346,
+      "configuration_before": {
+        "/etc/neuralcloud/deploy.json": "3863304aef943fab745170212743d7992feeb2c74b6acc12a90a8d3fdd685d76",
+        "/etc/neuralcloud/main-fallback.json": "84f3c279d40cedf01586aa5ec9fdfb3942f569d4110ba93ed36a4ca54b823124",
+        "/etc/neuralcloud/structured-llm.json": "84523b0df11e938d2a451cc7e01e8ed69a17fe1f8f9f41a94621330047343f4c",
+        "/etc/neuralcloud/gui-settings.json": "8effc6196de05b9f8daadb8cad0fc701aa8ba0bb1df5cc62100dd81d7d0d8a8e",
+        "/etc/neuralcloud/manifest.json": "c1d6d6465ca372f1e18fa10ec730a5b0f6f912eee286d5b963a6bdb9d7a955ef",
+        "/etc/neuralcloud/homeostasis-profile.json": "1a4348b35d078bf69767ff8c543f60760c1c90c019ade062a5d1ff8db2252212"
+      },
+      "completed_at": 1791443642.7142348,
+      "configuration_unchanged": true
+    },
+    "cognitive": {
+      "healthy": true,
+      "service": "cognitive"
+    },
+    "runtime": {
+      "lifecycle": "RUNNING",
+      "health": {
+        "lifecycle": "RUNNING",
+        "journal_writable": true,
+        "cognitive_healthy": true,
+        "homeostasis_healthy": true,
+        "llm_healthy": true,
+        "body_healthy": true,
+        "degraded_reasons": [],
+        "last_heartbeat_at": "2026-10-08T07:14:55.850803Z",
+        "last_journal_append_at": "2026-10-08T07:14:59.001713Z",
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "body_episode_id": null,
+        "body_revision": null,
+        "body_state_age_seconds": null
+      },
+      "pending_events": 2
+    },
+    "gui": {
+      "available": true,
+      "runtime": {
+        "schema_version": "runtime-v1",
+        "character_id": "character",
+        "runtime_instance_id": "rt_60df3c8bf640679d51c2ab2c930d6840",
+        "manifest_revision": 11,
+        "lifecycle": "RUNNING",
+        "lifecycle_since": "2026-10-08T07:14:00.189479Z",
+        "receive_seq": 189721,
+        "process_seq": 217797,
+        "version_vector": {
+          "runtime_goal": 0,
+          "runtime_action": 0,
+          "cognitive_world": 0,
+          "cognitive_relationship": 0,
+          "cognitive_memory": 5918,
+          "cognitive_session": 744,
+          "cognitive_maintenance": 5891,
+          "homeostasis_state": 189954
+        },
+        "queue": {
+          "size": 0,
+          "capacity": 1024,
+          "high_watermark": 819,
+          "by_priority": {},
+          "coalesced": 0,
+          "dropped": 0,
+          "rejected": 0
+        },
+        "health": {
+          "lifecycle": "RUNNING",
+          "journal_writable": true,
+          "cognitive_healthy": true,
+          "homeostasis_healthy": true,
+          "llm_healthy": true,
+          "body_healthy": true,
+          "degraded_reasons": [],
+          "last_heartbeat_at": "2026-10-08T07:14:05.355391Z",
+          "last_journal_append_at": "2026-10-08T07:14:31.082843Z",
+          "embodiment": {
+            "state": "disabled",
+            "provider_id": null,
+            "body_instance_id": null,
+            "activated_capabilities": [],
+            "effective_capabilities": [],
+            "negotiated": null,
+            "health": null,
+            "reason": "embodiment disabled by manifest"
+          },
+          "agency_state": "AVAILABLE",
+          "body_episode_id": null,
+          "body_revision": null,
+          "body_state_age_seconds": null
+        },
+        "current_action": null,
+        "pending_actions": 0,
+        "pending_events": 0,
+        "embodiment": {
+          "state": "disabled",
+          "provider_id": null,
+          "body_instance_id": null,
+          "activated_capabilities": [],
+          "effective_capabilities": [],
+          "negotiated": null,
+          "health": null,
+          "reason": "embodiment disabled by manifest"
+        },
+        "agency_state": "AVAILABLE",
+        "affect": [
+          {
+            "capability": "affect.window.read.v1",
+            "status": "available",
+            "implementation_version": null,
+            "limits": {},
+            "detail": null
+          },
+          {
+            "capability": "affect.appraise.v1",
+            "status": "available",
+            "implementation_version": null,
+            "limits": {},
+            "detail": null
+          }
+        ],
+        "recovery": {
+          "mode": "strict",
+          "fallback_reason": null,
+          "checkpoint_seq": 1573165,
+          "checkpoint_at": "2026-10-08T07:14:33.649416+00:00",
+          "checkpoint_age_seconds": 0.019059,
+          "projected_seq": 1573165,
+          "cache_lag": 0,
+          "persistent": true,
+          "error": null,
+          "pending": {
+            "events": 643,
+            "commands": 0,
+            "actions": 0
+          },
+          "timings": {
+            "journal_open_seconds": 142.7168878550292,
+            "runtime_indexes_seconds": 0.001765661989338696,
+            "module_recovery_seconds": 0.013830796990077943,
+            "service_checks_seconds": 0.43357221997575834,
+            "homeostasis_reconcile_seconds": 0.00042428902816027403,
+            "cognitive_reconcile_seconds": 0.0013353510294109583,
+            "action_reconcile_seconds": 0.0003599119954742491,
+            "pending_events_seconds": 2.707357719016727,
+            "boot_seconds": 3.1632612699759193
+          },
+          "replayed_records": 1571888,
+          "audit": {
+            "state": "scheduled"
+          },
+          "monitor": {
+            "backfill_state": "running",
+            "cursor": 1572134,
+            "lag": 1031
+          }
+        },
+        "background": {
+          "heartbeat": {
+            "active": true,
+            "pending": 1,
+            "running": true,
+            "coalesced": 4,
+            "thread_jobs": 2,
+            "last_duration_ms": null,
+            "last_error": null
+          },
+          "passive_state": {
+            "active": true,
+            "pending": 0,
+            "running": false,
+            "coalesced": 0,
+            "thread_jobs": 0,
+            "last_duration_ms": null,
+            "last_error": null
+          },
+          "affect": {
+            "pending": 0,
+            "running": 0,
+            "scopes": 0,
+            "degraded": false
+          }
+        },
+        "production": null
+      }
+    },
+    "services": {
+      "cognitive": {
+        "MainPID": "300616",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "runtime": {
+        "MainPID": "300652",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "gui": {
+        "MainPID": "301422",
+        "ActiveState": "active",
+        "SubState": "running"
+      },
+      "qq-direct": {
+        "MainPID": "301424",
+        "ActiveState": "active",
+        "SubState": "running"
+      }
+    },
+    "qq_direct": {
+      "running": true,
+      "connected": true,
+      "repository_root": "/opt/neuralcloud/releases/20261008-reply-failover-v1",
+      "heartbeat_at": "2026-10-08T07:15:31.378182+00:00",
+      "last_error_type": null
+    },
+    "verified_at": "2026-10-08T07:15:33.109661+00:00"
+  },
+  "live": {
+    "primary_failure_injected": true,
+    "external_messages_sent": 0,
+    "runs": [
+      {
+        "case": "connection_failure",
+        "elapsed_seconds": 1.924,
+        "text": "\u4f60\u597d\u5440\uff0c\u4eca\u5929\u4e5f\u633a\u5f00\u5fc3\u7684\u3002",
+        "validation": {
+          "verdict": "pass",
+          "violations": [],
+          "severity": 0.0,
+          "instruction": null,
+          "skipped": false
+        },
+        "scoped_error": null,
+        "primary_calls": 1,
+        "health": {
+          "ready": false,
+          "reason": "ConnectError",
+          "generation_circuit_open": true,
+          "retry_after_seconds": 30.0,
+          "checked_age_seconds": 0,
+          "interval_seconds": 5.0,
+          "timeout_seconds": 1.0,
+          "recovery_successes": 2
+        }
+      },
+      {
+        "case": "circuit_open_after_healthy_listing",
+        "elapsed_seconds": 1.577,
+        "text": "\u4f60\u597d\u5440\uff0c\u4eca\u5929\u4e5f\u633a\u9ad8\u5174\u89c1\u5230\u4f60\u3002",
+        "validation": {
+          "verdict": "pass",
+          "violations": [],
+          "severity": 0.0,
+          "instruction": null,
+          "skipped": false
+        },
+        "scoped_error": null,
+        "primary_calls": 1,
+        "health": {
+          "ready": false,
+          "reason": "ConnectError",
+          "generation_circuit_open": true,
+          "retry_after_seconds": 20.0,
+          "checked_age_seconds": 0,
+          "interval_seconds": 5.0,
+          "timeout_seconds": 1.0,
+          "recovery_successes": 2
+        }
+      }
+    ],
+    "passed": true
+  },
+  "baseline-comparison": {
+    "unmodified_release": "20261008-operation-progress-v3",
+    "reproduced_failures": [
+      "test_json_nesting_error_remains_safe[False]",
+      "test_json_nesting_error_remains_safe[True]"
+    ],
+    "same_errors": [
+      "IndexError: list index out of range",
+      "KeyError: reason"
+    ],
+    "scope": "DeepSeek JSON nesting diagnostics; no modified code in this path"
+  },
+  "tests": {
+    "passed": 183,
+    "deselected_known_baseline_failures": 2,
+    "initial_run": "183 passed, 2 failed",
+    "lint": "passed"
+  },
+  "normalized_source_sha256": {
+    "harness/llm/health.py": "172a202c37c1babb3dcc585a7f351643c4d7f57c40a307caea6850f917535361",
+    "harness/llm/fallback.py": "81b9d6aa8526af22ee4cb69751c69da372af434758deebddaefa6ae7080ab667",
+    "harness/validator/semantic.py": "26f6b94d86ed31f77d061ffa989792c781d0fae016758669948484bc7e4fec62",
+    "harness/validator/validator.py": "b29fc5233c6474d1f7ea6624862088ef9a836cb2736ca44aa001ce454bbddbd0",
+    "tests/test_provider_health.py": "5758c618f8066265d888be4667c8d59c30d17240527e71435f419cf079030e55",
+    "tests/test_semantic_validator.py": "2d30b2838a7035ce1ae4c7adf6b47862a25c701c8005dcba223fdcc735a3cffc",
+    "tests/test_main_reply_fallback.py": "35117310f277799549fa7be463cc56006d64da7870754e12f101ac43f494e6c0"
+  }
+}
+
+

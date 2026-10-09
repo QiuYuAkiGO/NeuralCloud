@@ -1,0 +1,103 @@
+{
+  "verified_at": "2026-10-08T10:02:28.552857+00:00",
+  "release": {
+    "release_id": "20261008-current-evidence-v2",
+    "verified_files": 446
+  },
+  "previous_release": "/opt/neuralcloud/releases/20261008-current-evidence-v1",
+  "configuration_unchanged": true,
+  "checks": {
+    "cognitive": true,
+    "runtime": true,
+    "gui": true,
+    "qq": true,
+    "qq_release": true
+  },
+  "services": {
+    "neuralcloud-cognitive": {
+      "active": true,
+      "release": "/opt/neuralcloud/releases/20261008-current-evidence-v2"
+    },
+    "neuralcloud-runtime": {
+      "active": true,
+      "release": "/opt/neuralcloud/releases/20261008-current-evidence-v2"
+    },
+    "neuralcloud-gui": {
+      "active": true,
+      "release": "/opt/neuralcloud/releases/20261008-current-evidence-v2"
+    },
+    "neuralcloud-qq-direct": {
+      "active": true,
+      "release": "/opt/neuralcloud/releases/20261008-current-evidence-v2"
+    }
+  },
+  "tests": {
+    "tests": 786,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "live_pre_deploy": {
+    "passed": true,
+    "release_source": "/opt/neuralcloud/releases/20261008-current-evidence-v2/harness/core/inference.py",
+    "original_evidence_count": 68,
+    "fixed_evidence_count": 70,
+    "requests": 11,
+    "incident_passes": 6,
+    "controls_rejected": 5,
+    "external_messages_sent": 0,
+    "state_commits": 0,
+    "completed_at": "2026-10-08T09:56:57.511644+00:00"
+  },
+  "live_post_deploy": {
+    "passed": true,
+    "release_source": "/opt/neuralcloud/releases/20261008-current-evidence-v2/harness/core/inference.py",
+    "original_evidence_count": 68,
+    "fixed_evidence_count": 70,
+    "requests": 11,
+    "incident_passes": 6,
+    "controls_rejected": 5,
+    "external_messages_sent": 0,
+    "state_commits": 0,
+    "completed_at": "2026-10-08T10:00:10.616892+00:00"
+  },
+  "files": [
+    {
+      "path": "harness/core/inference.py",
+      "sha256": "a05a86fd6090c9683ce2ea01fc7b4d5babaa51900d40fdec65eb0c2e3256dae7"
+    },
+    {
+      "path": "harness/qq/memory_evidence.py",
+      "sha256": "8085007e0ea726421c7b109de9196ac04fe45424d7a279c8ed124c328b545623"
+    },
+    {
+      "path": "harness/validator/semantic.py",
+      "sha256": "f48fd00486aadf2bfb6d586d66d954dc5c8f4e178156a163040e41fe59d6e94f"
+    },
+    {
+      "path": "harness/validator/validator.py",
+      "sha256": "be61de86b4b1679d68dc3fb0e98dfc69467111eb9a4cc0938f778bd9251d7196"
+    },
+    {
+      "path": "tests/test_memory_evidence_context.py",
+      "sha256": "8b87f633571e0857508378c1392234498235d066db5d80d73be49224430ecc9f"
+    },
+    {
+      "path": "tests/test_qq_brief_reply.py",
+      "sha256": "29bbf2a19a8af968385eabd8330f6acceb427207b61f07ce110a42ebfc92da35"
+    },
+    {
+      "path": "tests/test_qq_emotion_window.py",
+      "sha256": "83aa383013a932682b12b9140c01a8b805cccaf34b6be959b8b9f11e413183bb"
+    },
+    {
+      "path": "tests/test_semantic_validator.py",
+      "sha256": "838efd98564a6402e913d870b29bc0f1b0681dff8d8cb7b863dc94ee1bd20514"
+    },
+    {
+      "path": "tests/test_validator_context_routing.py",
+      "sha256": "113c6aedb1a7568e16e0c865f42f56d84d7c4f38747c7575ee9d723e74e0f146"
+    }
+  ],
+  "scope": "Current QQ source messages admitted as current/user_claim; speaker attribution preserved."
+}

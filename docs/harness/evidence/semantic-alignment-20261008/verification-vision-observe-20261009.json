@@ -1,0 +1,223 @@
+{
+  "schema": "misty-semantic-observe-rollout-v1",
+  "checked_at": "2026-10-09T11:56:47.019109+00:00",
+  "policy_version": "reply-semantics-v6",
+  "baseline": "/opt/neuralcloud/releases/20261009-vision-budget-v2",
+  "release_plan": {
+    "previous_release": "/opt/neuralcloud/releases/20261009-vision-budget-v2",
+    "release": "/opt/neuralcloud/releases/20261009-semantic-observe-vision-v6",
+    "package": {
+      "release_id": "20261009-semantic-observe-vision-v6",
+      "files": 436,
+      "archive": "/var/lib/neuralcloud/semantic-alignment-20261009-vision-v6/20261009-semantic-observe-vision-v6.tgz",
+      "sha256": "ec02a230ae76a849cb288164260cfa099812eaaa1294f5e9678031a620d03f47"
+    },
+    "verified": {
+      "release_id": "20261009-semantic-observe-vision-v6",
+      "verified_files": 436
+    },
+    "delta_from_production": [
+      "harness/core/inference.py",
+      "harness/emotion/service.py",
+      "harness/llm/deepseek_structured.py",
+      "harness/pipeline/pipeline.py",
+      "harness/qq/decision.py",
+      "harness/qq/policy.py",
+      "harness/qq/prepared_turn.py",
+      "harness/qq/semantic_alignment.py",
+      "harness/qq/shared.py",
+      "harness/runtime/adapters.py",
+      "harness/validator/semantic.py",
+      "harness/validator/validator.py"
+    ],
+    "semantic_mode": "observe",
+    "semantic_conversations": [
+      "2015188508/712342021"
+    ]
+  },
+  "regression": {
+    "tests": 1560,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 9,
+    "seconds": 101.413
+  },
+  "compatibility": {
+    "default_gate_rules_byte_identical": true,
+    "production_vision_changes_preserved": true,
+    "merge_resolution": "retain include_semantics and vision_continuation_reserve"
+  },
+  "first_attempt": {
+    "phase": "rolled_back",
+    "release": "/opt/neuralcloud/releases/20261009-semantic-observe-vision-v6",
+    "previous_release": "/opt/neuralcloud/releases/20261009-vision-budget-v2",
+    "started_at": "2026-10-09T10:28:01.101248+00:00",
+    "mode": "observe",
+    "conversations": [
+      "2015188508/712342021"
+    ],
+    "services_before": {
+      "neuralcloud-qq-direct": "active",
+      "neuralcloud-gui": "inactive",
+      "neuralcloud-runtime": "active",
+      "neuralcloud-cognitive": "active"
+    },
+    "configuration_before_sha256": "8effc6196de05b9f8daadb8cad0fc701aa8ba0bb1df5cc62100dd81d7d0d8a8e",
+    "configuration_after_sha256": "e4205ed0331903db1ef1b57dc96064b2e43b7c5aa807f8f889adca6fbabb8563",
+    "enforce_allowed": false,
+    "error_type": "TimeoutExpired",
+    "recovery_updated_at": "2026-10-09T10:37:52.566353+00:00",
+    "rollback_health": {
+      "services": true,
+      "cognitive": true,
+      "runtime": true,
+      "qq": true,
+      "release": true,
+      "configuration_restored": true
+    },
+    "completed_at": "2026-10-09T10:37:52.566342+00:00"
+  },
+  "active_attempt": {
+    "phase": "verified",
+    "release": "/opt/neuralcloud/releases/20261009-semantic-observe-vision-v6",
+    "previous_release": "/opt/neuralcloud/releases/20261009-vision-budget-v2",
+    "started_at": "2026-10-09T10:38:28.761554+00:00",
+    "mode": "observe",
+    "conversations": [
+      "2015188508/712342021"
+    ],
+    "services_before": {
+      "neuralcloud-qq-direct": "active",
+      "neuralcloud-gui": "inactive",
+      "neuralcloud-runtime": "active",
+      "neuralcloud-cognitive": "active"
+    },
+    "configuration_before_sha256": "8effc6196de05b9f8daadb8cad0fc701aa8ba0bb1df5cc62100dd81d7d0d8a8e",
+    "configuration_after_sha256": "e4205ed0331903db1ef1b57dc96064b2e43b7c5aa807f8f889adca6fbabb8563",
+    "enforce_allowed": false,
+    "health": {
+      "service_states_preserved": true,
+      "cognitive": true,
+      "runtime": true,
+      "qq_connected": true,
+      "qq_release": true
+    },
+    "completed_at": "2026-10-09T10:43:30.481465+00:00"
+  },
+  "live_verification": {
+    "configured_mode": "observe",
+    "configured_scope": [
+      "2015188508/712342021"
+    ],
+    "loaded_mode": "observe",
+    "loaded_scope": [
+      "2015188508/712342021"
+    ],
+    "current": "/opt/neuralcloud/releases/20261009-semantic-observe-vision-v6",
+    "health": {
+      "service_states_preserved": true,
+      "cognitive": true,
+      "runtime": true,
+      "qq_connected": true,
+      "qq_release": true
+    },
+    "completed_at": "2026-10-09T10:43:30.481465+00:00",
+    "scope_verified": true
+  },
+  "evaluation": {
+    "status": {
+      "phase": "generation_complete_judge_required",
+      "generation_exit": 1,
+      "at": 1791544409.4636176,
+      "enforce_allowed": false
+    },
+    "completed": 320,
+    "planned": 320,
+    "generation_routing": "primary-only",
+    "frozen_manifest_sha256": "bb90d14a28269cda4afebebb77a70b9ab2a03e907aa59c6173dff1de26bd41c7",
+    "human_review_complete": false,
+    "independent_scoring": "40 of 40 pairs valid, 320 of 320 turns rated; two invalid reports each retried once"
+  },
+  "enforce_allowed": false,
+  "test_messages_sent_to_real_qq": 0,
+  "git_fetch": "retry succeeded; local ab2f025 matches freshly fetched upstream; no unmerged files",
+  "final_live_health": {
+    "checked_at": "2026-10-09T11:56:44.249563+00:00",
+    "cognitive_healthy": true,
+    "runtime_lifecycle": "RUNNING",
+    "runtime_checks": {
+      "journal_writable": true,
+      "cognitive_healthy": true,
+      "homeostasis_healthy": true,
+      "llm_healthy": true
+    },
+    "qq_running": true,
+    "qq_connected": true,
+    "qq_heartbeat_age_seconds": 0.769321,
+    "qq_release": "/opt/neuralcloud/releases/20261009-semantic-observe-vision-v6",
+    "services": {
+      "neuralcloud-cognitive": "active",
+      "neuralcloud-runtime": "active",
+      "neuralcloud-qq-direct": "active",
+      "neuralcloud-gui": "inactive"
+    }
+  },
+  "process_and_credentials_check": {
+    "jobs": {
+      "generation": {
+        "active": false,
+        "process": ""
+      },
+      "judge_paired": {
+        "active": false,
+        "process": ""
+      },
+      "incident_wrapper": {
+        "active": false,
+        "process": ""
+      },
+      "judge-repair": {
+        "active": false,
+        "process": ""
+      },
+      "judge-json-repair": {
+        "active": false,
+        "process": ""
+      }
+    },
+    "remaining_temporary_keys": 0,
+    "unchanged_other_configs": {
+      "manifest.json": true,
+      "structured-llm.json": true,
+      "emotion-deepseek.json": true,
+      "main-fallback.json": true
+    },
+    "changed_config_fields": [
+      "qq_latency.qq_semantic_alignment_conversations",
+      "qq_latency.qq_semantic_alignment_mode"
+    ],
+    "current": "/opt/neuralcloud/releases/20261009-semantic-observe-vision-v6",
+    "mode": "observe"
+  },
+  "online_observation": {
+    "collected_at": "2026-10-09T11:55:45.429518+00:00",
+    "since": "2026-10-09T10:43:30.481465+00:00",
+    "scope": "2015188508/712342021",
+    "unique_candidate_turns": 4,
+    "candidate_turns_with_alignment": 4,
+    "twenty_candidate_threshold_met": false,
+    "actual_complete_replies": 3,
+    "outcomes": {
+      "ready": 4,
+      "natural_wait": 2
+    },
+    "ready_without_complete_receipt": 1,
+    "prior_delivered_latency_samples": 30,
+    "current_candidate_latency_samples": 4,
+    "prior_p95_ms": 38826.154,
+    "current_p95_ms": 46140.547,
+    "p95_ratio": 1.188388296198485,
+    "human_review_complete": false,
+    "enforce_allowed": false
+  }
+}

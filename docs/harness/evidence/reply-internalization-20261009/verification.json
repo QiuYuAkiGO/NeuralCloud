@@ -1,0 +1,357 @@
+{
+  "policy_version": "reply-internalization-v1",
+  "final_candidate_stage": "v6",
+  "production_changed_by_this_task": false,
+  "default_mode": "off",
+  "default_conversations": [],
+  "release_accepted": false,
+  "baseline": {
+    "frozen_at": "2026-10-09T12:14:34.328494+00:00",
+    "release": "/opt/neuralcloud/releases/20261009-semantic-observe-vision-v6",
+    "source_sha256": "f170d5f389d40f85fa15e32b16c66f70044511180c12548b89fa36c138b69056"
+  },
+  "production_configuration_sha256": "65a925ddb5b29e2076523aaaa2d351f8725c9f3ca4476cae652d566674496053",
+  "live_release_at_finish": "/opt/neuralcloud/releases/20261009-json-repair-v2",
+  "requires_merge_against_changed_live_release_before_deployment": true,
+  "runtime_files": {
+    "harness/compiler/compiler.py": "a5188cef519bf35ca74538e6ec61f6cc7dad6f2a908656d3ed9cfdbc5a971514",
+    "harness/compiler/expression.py": "36213590a40b2c737939d89e2990e560eb7ac5a213e8e2120a2a134d35b7c7cf",
+    "harness/core/expression.py": "89adb2698e6ae5906e8a96e366d5802a052b7a436617a5c913892f523e8b5266",
+    "harness/core/inference.py": "c18e39f2822bc5a7ccfbbe9f0e7975377f2e0e1f087aa981cb26516649310ab2",
+    "harness/pipeline/pipeline.py": "57a4ae215e1411c59d198dbc061d8c144c0404f3e6716e01c3b4875e335bdcbc",
+    "harness/qq/decision.py": "85b86ae3341b0c58681c1781eedb684dc3103d0a8ee961fef3f32f88cca00827",
+    "harness/qq/policy.py": "d5bf76c1bdb11071e05de5767b38e98f4b00b20dcbc0bb5f4556b1d886fe91db",
+    "harness/qq/prepared_turn.py": "7b2068a48a6e4ae38dd4bc709e4ebc4ce4d3681d2e10fe3a33e2b19cfedc4930",
+    "harness/qq/shared.py": "4f64dde75e17141e6e4d16c5e5bb606b154b6647dc53a51f157e1a97b2e5bbe5",
+    "harness/qq/tool_evidence.py": "a3e63d954ccf37cda406c176b6b0ec2cc839b231bdc10ebfebaed708450d3be0",
+    "harness/qq/vision_tool.py": "cdb80d1d266eaf2338be99a2664cf8ef79d589ecc2d8dd0fd3425128704b569a",
+    "harness/validator/semantic.py": "87ef57c1dedbb69e825a7c7ff6e19e3d45f357cea4b78e65d27ba001a6259e72",
+    "harness/validator/validator.py": "5bbaead24fa7b6dd1d6e34e764be770a7a208004d86a96b38c9ce2859a7941c6"
+  },
+  "runtime_patch": {
+    "path": "docs/harness/evidence/reply-internalization-20261009/feature-runtime.patch",
+    "sha256": "ebbd6469478e5ec257285b0afcfce02a257af910cbb7e39977075fba4dfe4940",
+    "scope": "Runtime delta against frozen production only. Does not include unrelated workspace JSON repair changes.",
+    "git_apply_check_against_frozen_baseline": "passed"
+  },
+  "tests": [
+    {
+      "candidate": "v4",
+      "passed": 561,
+      "seconds": 39.4,
+      "source_isolation_asserted": true,
+      "scope": "QQ preparation, vision, attention, direct settings, compiler, pipeline, semantic validation, memory, emotion and cache regressions"
+    },
+    {
+      "candidate": "v5",
+      "passed": 159,
+      "seconds": 26.1,
+      "source_isolation_asserted": true
+    },
+    {
+      "candidate": "v6",
+      "passed": 160,
+      "seconds": 23.1,
+      "source_isolation_asserted": true,
+      "files": [
+        "test_reply_internalization.py",
+        "test_reply_internalization_evaluation.py",
+        "test_qq_prepared_turn.py",
+        "test_qq_vision_tool.py",
+        "test_compiler.py",
+        "test_semantic_validator.py",
+        "test_validator_context_routing.py"
+      ]
+    },
+    {
+      "candidate": "shared_workspace_after_v5",
+      "passed": 39,
+      "seconds": 3.41,
+      "scope": "Feature and evaluation tests only; not a claim about other concurrent workspace changes"
+    },
+    {
+      "candidate": "shared_workspace_final",
+      "passed": 40,
+      "seconds": 2.33,
+      "scope": "Feature and evaluation tests; retains concurrent JSON output repair edits."
+    }
+  ],
+  "lint": "ruff passed on feature runtime, evaluation, diagnostics and tests",
+  "ablation_v3": {
+    "turns": 54,
+    "status_by_arm": {
+      "baseline": {
+        "ok": 18
+      },
+      "candidate": {
+        "ok": 18
+      },
+      "prompt_only": {
+        "ok": 18
+      }
+    },
+    "model_requests_distribution": {
+      "baseline": {
+        "4": 11,
+        "3": 7
+      },
+      "candidate": {
+        "4": 11,
+        "3": 7
+      },
+      "prompt_only": {
+        "4": 11,
+        "3": 7
+      }
+    },
+    "failures": [],
+    "manifest_sha256": "86a7653727ddd3c70617c378c3676a5479e8bce5f475657eeb39f69f58bf09c0"
+  },
+  "full_comparison_v3": {
+    "turns": 288,
+    "status_by_arm": {
+      "baseline": {
+        "ok": 140,
+        "generation_error": 4
+      },
+      "candidate": {
+        "ok": 141,
+        "generation_error": 3
+      }
+    },
+    "model_requests_distribution": {
+      "baseline": {
+        "3": 83,
+        "5": 12,
+        "4": 49
+      },
+      "candidate": {
+        "3": 85,
+        "5": 13,
+        "4": 43,
+        "6": 2,
+        "2": 1
+      }
+    },
+    "failures": [
+      "live-evidence-v3/comparison-r1/generation/live/e02_frustration-r1-candidate/turn-2.json",
+      "live-evidence-v3/comparison-r1/generation/live/m02_missing-r1-baseline/turn-2.json",
+      "live-evidence-v3/comparison-r1/generation/live/t01_success-r1-baseline/turn-1.json",
+      "live-evidence-v3/comparison-r1/generation/live/t01_success-r2-baseline/turn-1.json",
+      "live-evidence-v3/comparison-r1/generation/live/t03_partial-r1-candidate/turn-1.json",
+      "live-evidence-v3/comparison-r1/generation/live/t03_partial-r2-baseline/turn-1.json",
+      "live-evidence-v3/comparison-r1/generation/live/v10_ocr_injection-r1-candidate/turn-1.json"
+    ],
+    "manifest_sha256": "91d44cda19b4b8be55700a9837622181e4e7ce5b181d0bf5b8d6db32a8519b85",
+    "acceptance": {
+      "candidate_votes": 0,
+      "expected_turns_per_arm": 144,
+      "failures": [
+        "generation/live/m02_missing-r1-baseline/turn-2.json",
+        "generation/live/t01_success-r1-baseline/turn-1.json",
+        "generation/live/t01_success-r2-baseline/turn-1.json",
+        "generation/live/t03_partial-r2-baseline/turn-1.json",
+        "generation/live/v10_ocr_injection-r1-candidate/turn-1.json",
+        "generation/live/e02_frustration-r1-candidate/turn-2.json",
+        "generation/live/t03_partial-r1-candidate/turn-1.json"
+      ],
+      "gates": {
+        "all_turns_successful": false,
+        "blind_preference_70pct": false,
+        "calls_not_increased": false,
+        "full_24_case_comparison": true,
+        "human_review_complete": false,
+        "known_identity_no_regression": false,
+        "live_production_baseline": true,
+        "necessary_qualification_100pct": false,
+        "p95_within_10pct": true,
+        "same_response_models": false,
+        "unnecessary_reduction_70pct": false,
+        "zero_factual_violations": false
+      },
+      "invalid_reviews": [],
+      "known_identity_correct": {
+        "baseline": 0,
+        "candidate": 0
+      },
+      "missing": [],
+      "note": "Synthetic runs only validate harness plumbing. Failed/missing/unscored samples remain in denominators. No auto-promotion.",
+      "offline_accepted": false,
+      "p95_ms": {
+        "baseline": 13410.489,
+        "candidate": 13750.723
+      },
+      "p95_ratio": 1.0253707377859227,
+      "pending_release_gates": [
+        "public_image_e2e",
+        "observe_30_deliveries_10_vision",
+        "enforce_30_deliveries_10_vision"
+      ],
+      "release_accepted": false,
+      "reviewed_pairs": 0,
+      "unnecessary_counts": {
+        "baseline": 0,
+        "candidate": 0
+      },
+      "unnecessary_reduction": null,
+      "unscored_per_arm": {
+        "baseline": 144,
+        "candidate": 144
+      }
+    },
+    "candidate_stage": "v3",
+    "note": "Pilot comparison of a frozen earlier candidate. Not final v6 release evidence."
+  },
+  "historical_incident_replay_v3": {
+    "runs": 6,
+    "status": {
+      "completed": 6
+    },
+    "fixed_input_sha256": [
+      "408e75b301dab94837b8c34c5ada5c3c1970ca54fb1f2b1a6a2967b720f9bf76"
+    ],
+    "calls_per_run": [
+      3
+    ],
+    "finding": "Candidate replies focused on expression and caption. One candidate plan still mixed uncertainty into must_address. Baseline also omitted irrelevant identity in these two replays; no causal percentage is established."
+  },
+  "public_image_e2e_v3": {
+    "rows": [
+      {
+        "case": "c01",
+        "outcome": "ready",
+        "seconds": 19.922,
+        "model_call_counts": {
+          "gate": 2,
+          "persona": 2,
+          "vision": 1
+        }
+      },
+      {
+        "case": "c02",
+        "outcome": "error_fallback",
+        "seconds": 23.377,
+        "model_call_counts": {
+          "gate": 2,
+          "persona": 5,
+          "vision": 1
+        }
+      },
+      {
+        "case": "c05",
+        "outcome": "ready",
+        "seconds": 13.43,
+        "model_call_counts": {
+          "gate": 2,
+          "persona": 2,
+          "vision": 1
+        }
+      },
+      {
+        "case": "c07",
+        "outcome": "ready",
+        "seconds": 20.835,
+        "model_call_counts": {
+          "gate": 2,
+          "persona": 2,
+          "vision": 1
+        }
+      },
+      {
+        "case": "no_vision",
+        "outcome": "ready",
+        "seconds": 4.915,
+        "model_call_counts": {
+          "gate": 1,
+          "persona": 2
+        }
+      }
+    ],
+    "public_images": 4,
+    "public_images_ready": 3,
+    "no_image_controls": 1,
+    "no_image_controls_ready": 1,
+    "quality_review": "Successful identity case still added unrelated outfit speculation; ready is not a quality pass."
+  },
+  "tool_focus": {
+    "v4": {
+      "turns": 24,
+      "status_by_arm": {
+        "candidate": {
+          "ok": 24
+        }
+      },
+      "model_requests_distribution": {
+        "candidate": {
+          "3": 23,
+          "5": 1
+        }
+      },
+      "failures": [],
+      "manifest_sha256": "5a8eaf71b0323b6ad6d4cfdfa870ac96324752c523163bda87401ffdcbf0076b"
+    },
+    "v5": {
+      "turns": 24,
+      "status_by_arm": {
+        "candidate": {
+          "generation_error": 3,
+          "ok": 21
+        }
+      },
+      "model_requests_distribution": {
+        "candidate": {
+          "5": 4,
+          "6": 1,
+          "3": 19
+        }
+      },
+      "failures": [
+        "live-evidence-tool-focus/v5/generation/live/t01_success-r1-candidate/turn-1.json",
+        "live-evidence-tool-focus/v5/generation/live/t01_success-r1-candidate/turn-2.json",
+        "live-evidence-tool-focus/v5/generation/live/t03_partial-r1-candidate/turn-1.json"
+      ],
+      "manifest_sha256": "8a08162f7500273acc54e33b8f0c45aa8d45b17e956d623c7a37692cc489422c"
+    },
+    "v6": {
+      "turns": 24,
+      "status_by_arm": {
+        "candidate": {
+          "ok": 24
+        }
+      },
+      "model_requests_distribution": {
+        "candidate": {
+          "3": 20,
+          "6": 1,
+          "5": 3
+        }
+      },
+      "failures": [],
+      "manifest_sha256": "1fe927e7994a777a8f201ea4d9958fb8b2f44ff2c3f4a5c6e55e71e2dc04aed2"
+    }
+  },
+  "limitations": [
+    "Frozen web/vision evidence in the 24-case suite; public-image tool execution is separate.",
+    "Follow-up turns have each arm's own generated history. First ablation turn has fixed history.",
+    "No human blind ratings were supplied. All 288 full-comparison turns remain unscored.",
+    "V5 corrects the success fixture to carry read content; old frozen scenarios and results are preserved.",
+    "Final v6 adds explicit admitted acquisition scopes to the existing critic; it has not run a new full 288-turn comparison.",
+    "Production moved to json-repair-v2 during this task. The baseline and isolated candidates remain immutable; the runtime patch is for the frozen baseline and must be merged, not copied over the newer release.",
+    "Partial-source wording, compact-evidence interpretation, and generated reply format failures remain release risks.",
+    "No live observe/enforce 30-delivery/10-image rollout samples were collected. Evaluation receipts are simulated and rejected by the rollout collector."
+  ],
+  "evidence_archives": [
+    {
+      "path": "data/internalization-20261009/live-evidence-v3/artifacts.tar.gz",
+      "sha256": "4637ac8260bf2454ce93c6f9e7cab973e5815532c3008beb905a0a6eb9f6540a"
+    },
+    {
+      "path": "data/internalization-20261009/live-evidence-tool-focus/artifacts.tar.gz",
+      "sha256": "d5d1f4dfd8c972b85d66e9b051fc90ebf6df3e4a3c1e752933b7ec382825636d"
+    },
+    {
+      "path": "data/internalization-20261009/live-evidence-tool-focus-v6/artifacts.tar.gz",
+      "sha256": "05055ceb93239d68a28bc11e6eedcfa012305cbd25bbea748998a2fa5112024b"
+    }
+  ]
+}

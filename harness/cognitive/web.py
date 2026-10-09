@@ -1,6 +1,8 @@
 """One shared-owner web decision, with no provider or conversation side effects."""
 from __future__ import annotations
 
+from harness.llm.json_output import validate_model_json
+
 from harness.llm.deepseek_structured import decision_format
 
 import asyncio
@@ -400,7 +402,7 @@ async def prepare(host, command) -> dict[str, Any]:
             or response.has_tool_calls or response.has_refusal):
         raise WebSelectionError("web_step_response_invalid")
     try:
-        choice = WebStepChoice.model_validate_json(response.text)
+        choice = validate_model_json(WebStepChoice, response.text)
         if choice.kind == "call":
             selected = next((item for item in ready if item.offer_id == choice.offer_id), None)
             if selected is None or selected.valid_until <= datetime.now(timezone.utc):

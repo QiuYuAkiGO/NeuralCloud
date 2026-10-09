@@ -69,7 +69,12 @@ def decision_format(client, schema: dict[str, Any], name: str) -> dict[str, Any]
 
 def request_payload(payload: dict[str, Any], settings: Settings) -> tuple[dict[str, Any], dict[str, Any]]:
     definition = payload["response_format"]["json_schema"]
-    schema = json.loads(json.dumps(definition["schema"], ensure_ascii=False, sort_keys=True, allow_nan=False))
+    # Enforced QQ semantics deliberately orders understanding before action.
+    # Alphabetical canonicalization silently reverses that application choice.
+    semantic_gate = (definition["name"] == "qq_gate" and "understanding" in
+                     definition["schema"].get("$defs", {}).get("QQReplyPlan", {}).get("properties", {}))
+    schema = json.loads(json.dumps(definition["schema"], ensure_ascii=False,
+                                   sort_keys=not semantic_gate, allow_nan=False))
     Draft202012Validator.check_schema(schema)
     messages = deepcopy(payload["messages"])
     for message in messages:
@@ -187,7 +192,7 @@ def _json_diagnostic(text, exc):
     return result
 
 
-def validate_response(body, schema):
+def validate_response(body, schema, *, settings=None, summary=None, metadata=None):
     if not isinstance(body, dict) or body.get("status") != "completed" or body.get("error"):
         code = (body.get("error") or {}).get("code") if isinstance(body, dict) else None
         safe = code if code in {"rate_limit_exceeded", "insufficient_quota", "credit_balance_exhausted"} else "incomplete_or_failed"
@@ -196,6 +201,16 @@ def validate_response(body, schema):
     message = normalized["choices"][0]["message"]
     if message["refusal"] or message["tool_calls"]:
         raise StructuredResponseError("deepseek_structured_nontext_response")
+    if settings is not None and settings.json_repair_enabled:
+        from harness.llm.json_output import JSONOutputError, decode_model_json
+        try:
+            return decode_model_json(message["content"], schema=schema, settings=settings,
+                metadata={**(metadata or {}), "response_id": body.get("id")}, summary=summary).text
+        except JSONOutputError as exc:
+            code = ("deepseek_structured_schema_invalid" if "schema" in exc.error_code or "missing_value" in exc.error_code
+                    else "deepseek_structured_nonfinite_number" if "nonfinite" in exc.error_code
+                    else "deepseek_structured_json_invalid")
+            raise StructuredResponseError(code, diagnostics=exc.diagnostics) from None
     # Only host-defined schema property names are safe to include in diagnostics.
     names = set()
 
@@ -230,3 +245,4 @@ def validate_response(body, schema):
                 if error.validator == "required" and isinstance(error.instance, dict) else []}
             for error in errors]
         raise StructuredResponseError("deepseek_structured_schema_invalid", diagnostics=diagnostics)
+    return message["content"]

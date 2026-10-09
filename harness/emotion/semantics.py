@@ -8,7 +8,7 @@ from typing import Any
 from harness.core.models import PersonaCore
 
 DIMENSIONS = ("energy_reserve", "cognitive_load", "safety_predictability", "competence", "autonomy", "social_connection", "novelty")
-GUIDANCE_VALIDATION_VERSION = "emotion-guidance-guard-v2"
+GUIDANCE_VALIDATION_VERSION = "emotion-guidance-guard-v3"
 NEEDS = {
     ("energy_reserve", "low"): "可用精力不足，需要减少消耗",
     ("energy_reserve", "high"): "可用精力充足，可以增加投入",
@@ -139,6 +139,24 @@ def required_feelings(frame) -> list[dict]:
     return [{"label": label, "feeling": LABEL_TEXT[label],
              "degree": "明显" if amount >= .5 else "轻微", "trend": frame.dialogue_trends.get(label, "steady")}
             for label, amount in sorted(frame.labels.items(), key=lambda item: -item[1])[:2] if amount >= .15]
+
+
+def required_expression(frame) -> dict[str, str]:
+    """Bind mandatory feeling/need text to the committed frame, not model guesses.
+
+    Each feeling owns its degree and trend. In particular a recovering positive
+    affect is weakening, and cannot borrow a neighboring affect's trend word.
+    """
+    trends = {"recovering": "强度正在减弱", "rising": "强度正在增强", "steady": "程度保持稳定"}
+    clauses = [f"{item['degree']}{item['feeling']}，{trends[item['trend']]}" for item in required_feelings(frame)]
+    feeling = "；".join(clauses) + "。" if clauses else "当前没有明显心情，保持自然平静。"
+    needs = "当前没有已确认的额外需要。"
+    if frame.homeostatic_needs:
+        first = frame.homeostatic_needs[0]
+        needs = first["semantic_need"].rstrip("。") + "。"
+        needs += {"recovering": "这份需要正在缓和。", "worsening": "这份偏离正在加重。",
+                  "steady": "这份偏离仍然存在。"}.get(first.get("trend"), "")
+    return {"feeling": feeling, "needs": needs}
 
 
 def semantic_priority(frame) -> str:

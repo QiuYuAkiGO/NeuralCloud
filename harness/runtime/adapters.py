@@ -522,8 +522,17 @@ class PipelineCognitiveAdapter:
             raise ValueError("emotion_guidance_scope_mismatch")
         # Cache the second model result before main generation, including when
         # generation fails. Reading it never adds a new emotional stimulus.
+        options = {}
+        if command.command_type in {"PrepareQQResponse", "PrepareQQTurn"}:
+            from harness.qq.policy import QQLatencyOptions
+            from harness.qq.semantic_alignment import mode_for
+            frozen = command.payload.get("qq_frozen_policy")
+            policy = QQLatencyOptions.model_validate(frozen) if frozen is not None else self.pipeline.settings
+            if mode_for(policy, group_id=command.payload["group_id"],
+                        self_member_id=command.payload.get("self_member_id")) == "enforce":
+                options["expression_only"] = True
         guidance = await asyncio.to_thread(call_before_deadline, command.deadline,
-            self.emotion_service.guidance, reference)
+            self.emotion_service.guidance, reference, **options)
         if guidance.revision != command.payload.get("emotion_revision"):
             raise ValueError("emotion_guidance_revision_mismatch")
         return guidance

@@ -66,7 +66,7 @@ def test_memory_treatments_have_distinct_auditable_bounded_context(store):
     assert compile_body_memory(treatment="body_causal_beliefs", experiences=episodes, beliefs=(belief,), max_tokens=10) is None
 
 
-def test_appraiser_rejects_model_invented_evidence_and_reasoning_text():
+def test_appraiser_rejects_model_invented_evidence_and_reasoning_text_legacy_mode(legacy_json_mode, ):
     class BadModel:
         def complete_chat_result(self, messages, *, stream=False):
             return ChatResult(text='I know the answer. {"candidates":[]}')

@@ -6,6 +6,8 @@ is an uncommitted candidate; Runtime owns execution and its independent evidence
 
 from __future__ import annotations
 
+from harness.llm.json_output import model_json_value
+
 import asyncio
 from datetime import datetime, timedelta, timezone
 import hashlib
@@ -93,7 +95,7 @@ def _parse(text: str) -> CapabilityChoice:
     if len(text.encode("utf-8")) > 64_000:
         raise CapabilitySelectionError("capability_output_too_large")
     try:
-        data = json.loads(text, object_pairs_hook=_unique_object, parse_constant=_reject_constant)
+        data = model_json_value(text, schema=CapabilityChoice.model_json_schema(), legacy=lambda source: json.loads(source, object_pairs_hook=_unique_object, parse_constant=_reject_constant))
     except (TypeError, ValueError, RecursionError):
         raise CapabilitySelectionError("capability_invalid_json") from None
     try:

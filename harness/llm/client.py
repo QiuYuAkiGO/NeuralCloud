@@ -38,6 +38,8 @@ class ChatResult(BaseModel):
     reasoning_tokens: int | None = Field(default=None, ge=0)
     has_tool_calls: bool = False
     has_refusal: bool = False
+    original_content_characters: int | None = None
+    json_repair: dict[str, Any] | None = None
 
     def response_metadata(self) -> dict[str, Any]:
         """Operational fields only; never completion, refusal or reasoning text."""
@@ -45,7 +47,7 @@ class ChatResult(BaseModel):
             "finish_reason": self.finish_reason,
             "response_id": self.response_id,
             "content_type": self.content_type,
-            "content_characters": len(self.text),
+            "content_characters": self.original_content_characters if self.original_content_characters is not None else len(self.text),
             "reasoning_tokens": self.reasoning_tokens,
             "has_tool_calls": self.has_tool_calls,
             "has_refusal": self.has_refusal,
@@ -84,7 +86,11 @@ class LLMClient(Protocol):
 _JSON_RE = re.compile(r"\{.*\}", re.DOTALL)
 
 
-def parse_json_object(text: str) -> dict[str, Any]:
+def parse_json_object(text: str, *, schema=None, settings=None) -> dict[str, Any]:
+    settings = settings or get_settings()
+    if settings.json_repair_enabled:
+        from harness.llm.json_output import decode_model_json
+        return decode_model_json(text, schema=schema, settings=settings).value
     text = text.strip()
     if text.startswith("```"):
         text = re.sub(r"^```(?:json)?", "", text).removesuffix("```").strip()
@@ -293,7 +299,7 @@ class OpenAICompatClient:
                 **({} if response_format is None else {"response_format": response_format}),
                 **({} if timeout_seconds is None else {"timeout_seconds": timeout_seconds}),
             ).text
-        return parse_json_object(content)
+        return parse_json_object(content, settings=self.settings)
 
     def complete_chat(
         self,
@@ -393,12 +399,36 @@ class OpenAICompatClient:
             response.raise_for_status()
             if not isinstance(body, dict):
                 raise ValueError("llm_response_invalid_json_object")
-            if response_schema is not None:
-                deepseek_structured.validate_response(body, response_schema)
-            result = _chat_result(normalized, messages)
+            result = self._validated_json_result(body, normalized, messages, response_schema, response_format, span)
             span.update(usage=result.usage.model_dump(mode="json"), usage_source=result.usage.source,
                         **result.response_metadata())
             return result
+
+    def _validated_json_result(self, body, normalized, messages, response_schema, response_format, span):
+        from harness.llm import deepseek_structured
+        from harness.llm.json_output import decode_model_json
+        result = _chat_result(normalized, messages)
+        summary = {}
+        if response_schema is not None:
+            try:
+                text = deepseek_structured.validate_response(body, response_schema, settings=self.settings, summary=summary,
+                    metadata={"span_id": span.get("span_id")})
+            finally:
+                if summary:
+                    span["json_repair"] = summary
+        elif self.settings.json_repair_enabled and (response_format or {}).get("type") in {"json_object", "json_schema"}:
+            if result.finish_reason not in {None, "stop"} or result.has_refusal or result.has_tool_calls or result.content_type != "text":
+                raise ValueError("json_response_contract_invalid")
+            schema = (response_format or {}).get("json_schema", {}).get("schema")
+            try:
+                text = decode_model_json(result.text, schema=schema, settings=self.settings,
+                    metadata={"response_id": result.response_id, "span_id": span.get("span_id")}, summary=summary).text
+            finally:
+                span["json_repair"] = summary
+        else:
+            return result
+        return result.model_copy(update={"text": text, "original_content_characters": len(result.text),
+                                         "json_repair": summary or None})
 
     def _complete_observed(self, payload, headers, request_options, messages, span, metering=None,
                            *, endpoint=None, response_schema=None) -> ChatResult:
@@ -446,9 +476,7 @@ class OpenAICompatClient:
             response.raise_for_status()
             if not isinstance(body, dict):
                 raise ValueError("llm_response_invalid_json_object")
-            if response_schema is not None:
-                deepseek_structured.validate_response(body, response_schema)
-            result = _chat_result(normalized, messages)
+            result = self._validated_json_result(body, normalized, messages, response_schema, payload.get("response_format"), span)
             span.update(usage=result.usage.model_dump(mode="json"), usage_source=result.usage.source,
                         **result.response_metadata())
             return result

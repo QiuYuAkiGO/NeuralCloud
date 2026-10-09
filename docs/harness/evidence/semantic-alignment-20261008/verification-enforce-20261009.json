@@ -1,0 +1,58 @@
+{
+  "checked_at": "2026-10-09T12:06:37.706747+00:00",
+  "activation": {
+    "phase": "verified",
+    "release": "/opt/neuralcloud/releases/20261009-semantic-observe-vision-v6",
+    "previous_release": "/opt/neuralcloud/releases/20261009-semantic-observe-vision-v6",
+    "started_at": "2026-10-09T12:00:50.020159+00:00",
+    "mode": "enforce",
+    "conversations": [
+      "2015188508/712342021"
+    ],
+    "services_before": {
+      "neuralcloud-qq-direct": "active",
+      "neuralcloud-gui": "inactive",
+      "neuralcloud-runtime": "active",
+      "neuralcloud-cognitive": "active"
+    },
+    "configuration_before_sha256": "e4205ed0331903db1ef1b57dc96064b2e43b7c5aa807f8f889adca6fbabb8563",
+    "configuration_after_sha256": "65a925ddb5b29e2076523aaaa2d351f8725c9f3ca4476cae652d566674496053",
+    "activation_basis": "explicit_user_request_for_direct_update",
+    "human_review_complete": false,
+    "full_online_acceptance_complete": false,
+    "health": {
+      "service_states_preserved": true,
+      "cognitive": true,
+      "runtime": true,
+      "qq_connected": true,
+      "qq_release": true
+    },
+    "completed_at": "2026-10-09T12:06:08.698459+00:00"
+  },
+  "scope": {
+    "target": "enforce",
+    "other_group": "off",
+    "other_account": "off",
+    "policy_version": "qq-policy:ad52e941d8d1d48c881ce151eea9461f8f24c5b11eeb349b1c1ddd9271aa7c7c",
+    "semantic_version": "reply-semantics-v6"
+  },
+  "changed_configuration_fields": [
+    "qq_latency.qq_semantic_alignment_mode"
+  ],
+  "other_configs_unchanged": {
+    "manifest.json": true,
+    "structured-llm.json": true,
+    "emotion-deepseek.json": true,
+    "main-fallback.json": true
+  },
+  "health": {
+    "cognitive": true,
+    "runtime": true,
+    "qq_connected": true,
+    "heartbeat_age_seconds": 0.7058
+  },
+  "source_release_unchanged": true,
+  "test_messages_sent": 0,
+  "human_review_complete": false,
+  "online_24h_30_replies_complete": false
+}

@@ -54,7 +54,7 @@ def source_hashes(root):
 
 
 def turn(text, *, ordinary=True, must_answer=True, focus="answer"):
-    return {"messages": [text] if isinstance(text, str) else text, "ordinary": ordinary,
+    return {"messages": [text] if isinstance(text, (str, dict)) else text, "ordinary": ordinary,
             "must_answer": must_answer, "focus": focus}
 
 

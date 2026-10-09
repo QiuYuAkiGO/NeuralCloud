@@ -32,6 +32,7 @@ class FallbackConfig(BaseModel):
     health_check_interval_seconds: float = Field(default=0, ge=0, le=300)
     health_check_timeout_seconds: float = Field(default=1, gt=0, le=5)
     health_recovery_successes: int = Field(default=2, ge=1, le=5)
+    health_failure_cooldown_seconds: float = Field(default=30, gt=0, le=300)
 
     @field_validator("base_url")
     @classmethod
@@ -85,7 +86,8 @@ class FallbackLLMClient:
         end = time.monotonic() + total
         reserve = min(self.config.fallback_reserve_seconds, total / 2)
         primary_timeout = min(self.config.primary_timeout_seconds, total - reserve)
-        attempted_primary = self.health is None or self.health.snapshot()["ready"]
+        epoch = self.health.begin_attempt(primary_timeout) if self.health is not None else None
+        attempted_primary = self.health is None or epoch is not None
         try:
             if not attempted_primary:
                 raise _PrimaryNotReady()
@@ -101,6 +103,8 @@ class FallbackLLMClient:
                 self.health.failed(reason)
         else:
             if result.text.strip() or result.has_tool_calls or result.has_refusal:
+                if self.health is not None:
+                    self.health.succeeded(epoch)
                 return result
             reason = "EmptyCompletion"
             if self.health is not None:
@@ -145,7 +149,8 @@ def build_main_client(settings: Settings):
         "llm_model": config.model, "llm_api_key": config.api_key, "llm_fallback_config": None})
     from harness.llm.health import ProviderHealth
     health = (ProviderHealth(settings, interval=config.health_check_interval_seconds,
-              timeout=config.health_check_timeout_seconds, recovery_successes=config.health_recovery_successes)
+              timeout=config.health_check_timeout_seconds, recovery_successes=config.health_recovery_successes,
+              failure_cooldown=config.health_failure_cooldown_seconds)
               if config.health_check_interval_seconds else None)
     return FallbackLLMClient(OpenAICompatClient(settings,
         connect_timeout=config.health_check_timeout_seconds if health else None),

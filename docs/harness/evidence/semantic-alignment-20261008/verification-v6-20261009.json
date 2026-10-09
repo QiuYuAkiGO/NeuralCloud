@@ -1,0 +1,234 @@
+{
+  "schema": "misty-semantic-alignment-verification-v1",
+  "exported_at": "2026-10-09T02:08:59.986402+00:00",
+  "baseline_release": "/opt/neuralcloud/releases/20261009-provisional-trust-v2",
+  "candidate_release": null,
+  "policy_version": "reply-semantics-v6",
+  "source_hashes": {
+    "baseline": {
+      "files": 393,
+      "manifest_sha256": "1b9edede56c68b987450a806c5926ad552ee26984565948375c42bbf2c924a2b"
+    },
+    "candidate": {
+      "files": 394,
+      "manifest_sha256": "2fdc8d12ff6f8e617d4d3adbc442205fd9fa6ab536da8e4ec09aefda3a561d93"
+    }
+  },
+  "release_package": null,
+  "frozen_manifest_sha256": "1311a3bc2166bf28ed8a1bd42904f243fbc4abb7dc2972de7ea42143e1ed5f37",
+  "tests": {
+    "linux_related": {
+      "tests": 1088,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 64.494
+    }
+  },
+  "paired_evaluation": {
+    "arms": {
+      "baseline": {
+        "expected_turns": 160,
+        "first_pass_model_requests": [
+          5,
+          6
+        ],
+        "initial_generation_failures": 2,
+        "p95_latency_ms": 6831.258,
+        "recorded_turns": 160,
+        "semantic_denominator": 64,
+        "semantic_judged": 64,
+        "semantic_pass_rate": 0.9375,
+        "semantic_passes": 60,
+        "semantic_rejections": 0,
+        "semantic_rewrite_turns": 0,
+        "social_false_rewrite_rate": 0.0,
+        "social_false_rewrites": 0,
+        "social_valid_initial_candidates": 27
+      },
+      "candidate": {
+        "expected_turns": 160,
+        "first_pass_model_requests": [
+          5
+        ],
+        "initial_generation_failures": 5,
+        "p95_latency_ms": 7394.322,
+        "recorded_turns": 160,
+        "semantic_denominator": 64,
+        "semantic_judged": 64,
+        "semantic_pass_rate": 0.984375,
+        "semantic_passes": 63,
+        "semantic_rejections": 1,
+        "semantic_rewrite_turns": 1,
+        "social_false_rewrite_rate": 0.0,
+        "social_false_rewrites": 0,
+        "social_valid_initial_candidates": 29
+      }
+    },
+    "automated_gates": {
+      "complete": false,
+      "core_semantic_at_least_95_percent": true,
+      "latency_p95_at_most_120_percent": true,
+      "social_false_rewrites_at_most_5_percent": true
+    },
+    "human_review_complete": false,
+    "note": "Independent model ratings require human review of every failure and possible false rewrite. Incident replay and observation approval are separate mandatory gates.",
+    "p95_ratio": 1.0824246427231998,
+    "rollout_enforce_allowed": false
+  },
+  "existing_regression_summary": {
+    "baseline": {
+      "acceptance": "not_evaluated",
+      "attempt_counts_scope": "retained prepared HTTP requests, deduplicated by request ID across archives; not provider billing",
+      "boundary_at_end_denominator": 3,
+      "boundary_at_end_rate": 0.0,
+      "boundary_not_at_end": 3,
+      "errors": 2,
+      "expected_turns": 160,
+      "explicit_forget": 0,
+      "http_model_requests": 796,
+      "http_model_requests_all_attempts": 796,
+      "http_model_requests_latest": 796,
+      "http_model_requests_prior_attempts": 0,
+      "initial_failed_threads": 0,
+      "initial_unattempted_after_failure": 0,
+      "initial_unattempted_basis": "first failed turn per thread stops later opportunities until an explicit retry",
+      "judged_turns": 156,
+      "known_scope_canary_leaks": 0,
+      "latest_attempt_errors": 2,
+      "lexical_flags_diagnostic_only": {
+        "forget_regex": 1,
+        "hesitation_regex": 47,
+        "relationship_cycle_regex": 1,
+        "scope_canary_leak": 0
+      },
+      "mean_latency_ms": 5432.230240506329,
+      "missed_new_questions": 7,
+      "naturalness_mean": 4.128205128205129,
+      "ordinary_first_answer": 0.958904109589041,
+      "ordinary_full_relationship_cycle": 2,
+      "ordinary_hesitation": 1,
+      "ordinary_required_denominator": 149,
+      "ordinary_spoken_denominator": 146,
+      "ordinary_within_60_and_2": 0.9383561643835616,
+      "prior_failure_types": {},
+      "prior_failures": 0,
+      "prior_interrupted_attempts": 0,
+      "recorded_turns": 160,
+      "repeated_full_boundary": 0,
+      "response_models": [
+        "deepseek-flash",
+        "qwen3.8-27b"
+      ],
+      "scope_leaks": 0,
+      "stance_evasion": 0,
+      "successful_turns": 158,
+      "unsupported_facts": 0
+    },
+    "candidate": {
+      "acceptance": "not_evaluated",
+      "attempt_counts_scope": "retained prepared HTTP requests, deduplicated by request ID across archives; not provider billing",
+      "boundary_at_end_denominator": 2,
+      "boundary_at_end_rate": 0.0,
+      "boundary_not_at_end": 2,
+      "errors": 5,
+      "expected_turns": 160,
+      "explicit_forget": 1,
+      "http_model_requests": 814,
+      "http_model_requests_all_attempts": 814,
+      "http_model_requests_latest": 814,
+      "http_model_requests_prior_attempts": 0,
+      "initial_failed_threads": 0,
+      "initial_unattempted_after_failure": 0,
+      "initial_unattempted_basis": "first failed turn per thread stops later opportunities until an explicit retry",
+      "judged_turns": 156,
+      "known_scope_canary_leaks": 0,
+      "latest_attempt_errors": 5,
+      "lexical_flags_diagnostic_only": {
+        "forget_regex": 0,
+        "hesitation_regex": 50,
+        "relationship_cycle_regex": 0,
+        "scope_canary_leak": 0
+      },
+      "mean_latency_ms": 6083.493883870968,
+      "missed_new_questions": 7,
+      "naturalness_mean": 4.051282051282051,
+      "ordinary_first_answer": 0.9726027397260274,
+      "ordinary_full_relationship_cycle": 3,
+      "ordinary_hesitation": 3,
+      "ordinary_required_denominator": 147,
+      "ordinary_spoken_denominator": 150,
+      "ordinary_within_60_and_2": 0.9133333333333333,
+      "prior_failure_types": {},
+      "prior_failures": 0,
+      "prior_interrupted_attempts": 0,
+      "recorded_turns": 160,
+      "repeated_full_boundary": 3,
+      "response_models": [
+        "deepseek-flash",
+        "qwen3.8-27b"
+      ],
+      "scope_leaks": 0,
+      "stance_evasion": 1,
+      "successful_turns": 155,
+      "unsupported_facts": 0
+    }
+  },
+  "incident_replay": {
+    "cases_per_arm": 4,
+    "semantic_passes": {
+      "baseline": 4,
+      "candidate": 4
+    },
+    "all_candidate_cases_pass": true,
+    "human_review_complete": false,
+    "independent_report_repair": null
+  },
+  "independent_scoring": {
+    "rated_pairs": 39,
+    "rated_turns": 312,
+    "unscored_pairs": [
+      "s07_partial_delivery-r1"
+    ],
+    "unscored_turns": 8,
+    "blocker": "Independent scoring incomplete; inspect retained judge errors"
+  },
+  "review_queue_count": 14,
+  "incident_review_count": 8,
+  "enforce_allowed": false,
+  "deployment": {
+    "phase": "not_activated"
+  },
+  "limitations": [
+    "Offline latency includes emotion, gate, generation, review and simulated delivery; real QQ queues and transport require online measurement.",
+    "Emotion starts in isolated state, not the historical incident state.",
+    "All failed cases require human review; a model judge is not human approval.",
+    "No test message was sent to a real QQ conversation.",
+    "Mixed fallback and primary body models cannot establish strict same-model acceptance; inspect model_routing."
+  ],
+  "model_routing": {
+    "frozen_policy": "configured",
+    "configured_main_model": "qwen3.8-27b",
+    "requested_body_models": {
+      "baseline": {
+        "deepseek-v4-flash": 153,
+        "qwen3.8-27b": 4
+      },
+      "candidate": {
+        "deepseek-v4-flash": 159,
+        "qwen3.8-27b": 8
+      }
+    },
+    "actual_body_models": {
+      "baseline": {
+        "deepseek-flash": 153,
+        "qwen3.8-27b": 4
+      },
+      "candidate": {
+        "deepseek-flash": 159,
+        "qwen3.8-27b": 8
+      }
+    },
+    "strict_same_body_model_verified": false
+  }
+}

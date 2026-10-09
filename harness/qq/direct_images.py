@@ -8,6 +8,8 @@ the original Host and TLS SNI are retained. No attachment can invoke an action.
 
 from __future__ import annotations
 
+from harness.llm.json_output import validate_model_json
+
 import asyncio
 import base64
 import binascii
@@ -542,7 +544,7 @@ async def load_and_describe_image(
                         or getattr(result, "finish_reason", None) in {"length", "content_filter"}):
                     raise _ImageFailure("vision_invalid")
                 try:
-                    description = _Description.model_validate_json(result.text)
+                    description = validate_model_json(_Description, result.text)
                 except (ValueError, ValidationError):
                     raise _ImageFailure("vision_invalid") from None
                 deadline.check()

@@ -9,7 +9,7 @@ import httpx
 
 class ProviderHealth:
     def __init__(self, settings, *, interval=5.0, timeout=1.0, recovery_successes=2,
-                 transport=None, clock=time.monotonic, start=True):
+                 transport=None, clock=time.monotonic, start=True, failure_cooldown=30.0):
         self.interval = interval
         self.timeout = timeout
         self.recovery_successes = recovery_successes
@@ -25,6 +25,10 @@ class ProviderHealth:
         self._ready = False
         self._checked = None
         self._reason = "initializing"
+        self.failure_cooldown = failure_cooldown
+        self._generation_failed = False
+        self._retry_at = 0.0
+        self._trial_until = 0.0
         self._thread = None
         if start:
             self._thread = threading.Thread(target=self._run, name="llm-readiness", daemon=True)
@@ -34,7 +38,10 @@ class ProviderHealth:
         with self._lock:
             age = None if self._checked is None else max(0, self._clock() - self._checked)
             fresh = age is not None and age <= self.interval * 2 + self.timeout
-            return {"ready": self._ready and fresh, "reason": self._reason if fresh else "unknown_or_stale",
+            return {"ready": self._ready and fresh and not self._generation_failed,
+                    "reason": self._reason if fresh else "unknown_or_stale",
+                    "generation_circuit_open": self._generation_failed,
+                    "retry_after_seconds": max(0, max(self._retry_at, self._trial_until) - self._clock()),
                     "checked_age_seconds": age, "interval_seconds": self.interval,
                     "timeout_seconds": self.timeout, "recovery_successes": self.recovery_successes}
 
@@ -45,6 +52,30 @@ class ProviderHealth:
             self._successes = 0
             self._checked = self._clock()
             self._reason = reason
+            self._generation_failed = True
+            self._retry_at = self._clock() + self.failure_cooldown
+            self._trial_until = 0.0
+
+    def begin_attempt(self, timeout):
+        """Lease one recovery attempt; model-list success cannot heal generation."""
+        with self._lock:
+            now = self._clock()
+            fresh = self._checked is not None and now - self._checked <= self.interval * 2 + self.timeout
+            if not self._ready or not fresh:
+                return None
+            if self._generation_failed:
+                if now < max(self._retry_at, self._trial_until):
+                    return None
+                self._trial_until = now + timeout + self.failure_cooldown
+            return self._epoch
+
+    def succeeded(self, epoch):
+        with self._lock:
+            if epoch != self._epoch:
+                return
+            self._generation_failed = False
+            self._retry_at = self._trial_until = 0.0
+            self._reason = "ready"
 
     def probe(self):
         with self._lock:
@@ -64,7 +95,8 @@ class ProviderHealth:
             self._checked = self._clock()
             self._successes = self._successes + 1 if ready else 0
             self._ready = self._successes >= self.recovery_successes
-            self._reason = "ready" if self._ready else ("recovering" if ready else "probe_failed")
+            if not self._generation_failed:
+                self._reason = "ready" if self._ready else ("recovering" if ready else "probe_failed")
 
     def _run(self):
         while not self._stop.is_set():

@@ -96,7 +96,7 @@ def test_deepseek_responses_preserves_three_stage_cache_and_usage(tmp_path):
 
 
 @pytest.mark.parametrize("bad", ["length", "null", "fence", "tool", "schema"])
-def test_incomplete_or_invalid_response_cannot_become_a_proposal(tmp_path, bad):
+def test_incomplete_or_invalid_response_cannot_become_a_proposal_legacy_mode(legacy_json_mode, tmp_path, bad):
     config, queue, records, run_id = setup(tmp_path)
     def handler(request):
         if bad == "length":

@@ -5,6 +5,8 @@ records are data, never instructions. Only final content is parsed or cached.
 """
 from __future__ import annotations
 
+from harness.llm.json_output import validate_model_json
+
 from collections import Counter
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
@@ -374,7 +376,7 @@ class DailyRevisionProvider:
                     or not isinstance(message.get("content"), str) or not message["content"].strip()):
                 raise ValueError
             # Deliberately strict: no regex extraction, code fences or reasoning fallback.
-            return model.model_validate_json(message["content"], strict=True)
+            return validate_model_json(model, message["content"], strict=True)
         except (KeyError, IndexError, TypeError, ValueError):
             raise RevisionProviderError("daily_revision_provider_response_invalid", retryable=False) from None
 

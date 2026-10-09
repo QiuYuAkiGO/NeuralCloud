@@ -42,7 +42,7 @@ def test_actual_image_block_and_external_frame_binding():
 
 
 @pytest.mark.parametrize("fault", ["out_of_frame", "zero_size", "negative", "string_coordinate", "unknown_field", "fake_message_id", "wrong_profile_scene"])
-def test_invalid_coordinates_or_model_authority_fail_closed(fault):
+def test_invalid_coordinates_or_model_authority_fail_closed_legacy_mode(legacy_json_mode, fault):
     data = reading()
     if fault == "out_of_frame":
         data["group_title"]["rect"]["x"] = 1279
@@ -89,7 +89,7 @@ def test_profile_prompt_omits_background_and_leaves_room_for_model_reasoning():
     assert result.messages == [] and result.visible_draft is None
 
 
-def test_truncated_profile_response_is_never_repaired_or_used():
+def test_truncated_profile_response_is_never_repaired_or_used_legacy_mode(legacy_json_mode, ):
     class LLM:
         def complete_chat_result(self, *args, **kwargs):
             return SimpleNamespace(text='{"scene":"group_profile","blocked":false,"opened_profile":{"group_id":"10001')
@@ -103,7 +103,7 @@ def test_truncated_profile_response_is_never_repaired_or_used():
     ("scene", "qq_coherent_scene", "opened_profile.kind"),
     ("private_extra_key", "extra_forbidden", "item"),
 ])
-def test_schema_diagnostics_contain_only_types_and_fixed_field_names(fault, kind, field):
+def test_schema_diagnostics_contain_only_types_and_fixed_field_names_legacy_mode(legacy_json_mode, fault, kind, field):
     data = reading()
     if fault == "bounds":
         data["group_title"]["rect"]["x"] = 1279

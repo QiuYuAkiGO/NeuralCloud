@@ -121,7 +121,7 @@ def test_appraisal_accepts_only_runtime_event_subset():
     ("goal_id", "forged"), ("episode_id", "forged"), ("permission", "all"),
     ("target_dimensions", ["energy_reserve"]), ("evidence_refs", ["invented"]),
 ])
-def test_model_cannot_invent_identity_authority_energy_or_evidence(field, value):
+def test_model_cannot_invent_identity_authority_energy_or_evidence_legacy_mode(legacy_json_mode, field, value):
     output = start_choice()
     output[field] = value
     with pytest.raises(goals.GoalDecisionError):
@@ -133,7 +133,7 @@ def test_model_cannot_invent_identity_authority_energy_or_evidence(field, value)
     {"observed_event_refs": ["invented"]}, {"suggested_impacts": {"energy_reserve": 0.1}},
     {"suggested_impacts": {"cognitive_load": float("nan")}},
 ])
-def test_appraisal_cannot_self_certify_or_invent_evidence(update):
+def test_appraisal_cannot_self_certify_or_invent_evidence_legacy_mode(legacy_json_mode, update):
     output = start_choice()
     output["appraisal"] = {"appraisal_kind": "event_interpretation", "observed_event_refs": ["fact:1"],
         "suggested_impacts": {"cognitive_load": 0.01}, "model_confidence": 0.5, **update}
@@ -163,7 +163,7 @@ def test_capability_target_is_validated_without_second_selection():
     ("PRIVATE_BAD_JSON", "goal_invalid_json"), ("", "goal_empty_content"),
     ('{"episode_operation":"wait","episode_operation":"start","choice":{"kind":"wait"}}', "goal_invalid_json"),
 ])
-def test_invalid_output_is_rejected_with_safe_error(output, code):
+def test_invalid_output_is_rejected_with_safe_error_legacy_mode(legacy_json_mode, output, code):
     with pytest.raises(goals.GoalDecisionError, match=code):
         run(output)
 
@@ -204,7 +204,7 @@ def test_offer_already_expired_before_thinking_is_not_selectable():
         run(start_choice(action=True), request)
 
 
-def test_invalid_schema_diagnostics_do_not_leak_model_text_or_unknown_keys(caplog):
+def test_invalid_schema_diagnostics_do_not_leak_model_text_or_unknown_keys_legacy_mode(legacy_json_mode, caplog):
     output = start_choice()
     output["PRIVATE_FIELD"] = "PRIVATE_CONTENT"
     with pytest.raises(goals.GoalDecisionError, match="goal_invalid_schema"):

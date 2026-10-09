@@ -29,7 +29,8 @@ def body(text='{"decision":"wait"}', status="completed"):
 def wire(tmp_path):
     state = SimpleNamespace(body=body(), calls=[], status=200, diagnostics=[])
     settings = Settings(_env_file=None, llm_base_url="https://api.deepseek.com/v1", llm_model="deepseek-v4-flash",
-                        llm_api_key="PRIVATE_API_KEY", trace_dir=tmp_path, model_request_log_enabled=True)
+                        llm_api_key="PRIVATE_API_KEY", trace_dir=tmp_path, model_request_log_enabled=True,
+                        json_repair_enabled=False)
     client = OpenAICompatClient(settings)
     client._client.close()
 
@@ -42,6 +43,23 @@ def wire(tmp_path):
     state.path = tmp_path
     yield state
     client.close()
+
+
+@pytest.mark.parametrize("semantic", [False, True])
+def test_qq_gate_property_order_survives_actual_http_transport(wire, semantic):
+    from harness.qq.decision import _gate_schema
+    schema = _gate_schema(include_semantics=semantic)
+    wire.body = body('{"action":"wait","reason":"No new request."}')
+    wire.client.complete_chat_result([], response_format=decision_format(wire.client, schema, "qq_gate"))
+    actual = json.loads(wire.calls[0].content)["text"]["format"]["schema"]
+    plan = actual["$defs"]["QQReplyPlan"]["properties"]
+    if semantic:
+        assert next(iter(actual["properties"])) == "reply_plan"
+        assert next(iter(plan)) == "understanding"
+    else:
+        assert next(iter(actual["properties"])) == "action"
+        assert "understanding" not in plan
+    assert len(wire.calls) == 1
 
 
 @pytest.mark.parametrize("observed", [False, True])
@@ -171,7 +189,12 @@ def test_json_nesting_error_remains_safe(wire, wrapped):
     wire.body = body('{"decision":' + text + '}' if wrapped else text)
     with pytest.raises(StructuredResponseError) as caught:
         wire.client.complete_chat_result([], response_format=decision_format(wire.client, SCHEMA, "decision"))
-    assert caught.value.diagnostics[0]['reason'] == 'nesting_limit'
+    # JSON nesting limits differ across CPython builds. If decoding succeeds,
+    # the deeply nested value must still be rejected by the supplied schema.
+    assert caught.value.error_code in {"deepseek_structured_json_invalid", "deepseek_structured_schema_invalid"}
+    if caught.value.error_code == "deepseek_structured_json_invalid":
+        assert caught.value.diagnostics[0]['reason'] == 'nesting_limit'
+    assert "PRIVATE" not in json.dumps(caught.value.diagnostics)
     assert "PRIVATE" not in (wire.path / "model_requests.jsonl").read_text()
 
 

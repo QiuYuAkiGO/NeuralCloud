@@ -5,10 +5,12 @@ from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 
-from harness.core.inference import MemoryEvidenceEntry, TokenUsage
+from harness.core.inference import MemoryEvidenceEntry, TokenUsage, ResponseSemanticContext
 from harness.core.models import CharacterSnapshot
 from harness.qq.memory import QQVerifiedProfile, QQVisualObservation
 from harness.qq.policy import QQLatencyOptions
+from harness.qq import semantic_alignment as alignment
+from harness.core.expression import EXPRESSION_VERSION, ResponseExpressionContext, qq_context as expression_qq_context, mode_for as expression_mode_for
 from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace, classify_error
 from harness.qq.turn_checkpoints import QQTurnCheckpointStore, QQTurnStateError, binding_identity, digest
 
@@ -17,11 +19,21 @@ def _json(value):
     return value.model_dump(mode="json") if hasattr(value, "model_dump") else value
 
 
+def _expression_binding(settings):
+    if settings.reply_internalization_mode == "off" and settings.reply_internalization_conversations == []:
+        return None
+    return {"version": EXPRESSION_VERSION, "mode": settings.reply_internalization_mode,
+            "conversations": settings.reply_internalization_conversations}
+
+
 def _generation_binding(settings, preset):
-    return digest({"model": settings.llm_model, "endpoint": settings.llm_base_url,
+    return digest({**({"expression": _expression_binding(settings)} if _expression_binding(settings) is not None else {}),
+                   "model": settings.llm_model, "endpoint": settings.llm_base_url,
                    "model_version": settings.model_version, "prompt_version": settings.prompt_version,
                    "persona": preset.persona.model_dump(mode="json"), "emotion_mode": settings.emotion_mode,
-                   "validator_enabled": settings.validator_enabled})
+                   "validator_enabled": settings.validator_enabled, "semantic_version": alignment.VERSION,
+                   "semantic_mode": settings.qq_semantic_alignment_mode,
+                   "semantic_conversations": settings.qq_semantic_alignment_conversations})
 
 
 def get_qq_turn_preparation(*, memory_db, turn_binding):
@@ -90,7 +102,13 @@ def checkpoint_gate(*, preparation, path, settings, preset, result, choice, raw_
             new_observation_ids=set(new_ids), trigger_record_id=trigger_latest_id),
         receipts=receipts, partial_receipts=partial_receipts, shared_owner=shared_owner)
     evidence.extend(vision_evidence)
+    semantic_mode = alignment.mode_for(settings, group_id=result.group_id, self_member_id=result.self_member_id)
+    semantics = alignment.task_context(mode=semantic_mode, audience=qq.conversation_audience(result.group_id),
+        trigger_ids=set(payload.get("current_request_observation_ids") or []) | ({trigger_latest_id} if trigger_latest_id else set()),
+        choice=choice, entries=evidence)
     policy = QQLatencyOptions.from_settings(settings)
+    expression = expression_qq_context(settings, group_id=result.group_id, self_member_id=result.self_member_id,
+        plan=choice.reply_plan, style_window=payload.get("delivered_style_window"))
     source_records = {"qq_visual_profiles": {}, "qq_visual_observations": {}}
     for member in context.members:
         for profile in member.profiles:
@@ -104,9 +122,13 @@ def checkpoint_gate(*, preparation, path, settings, preset, result, choice, raw_
         "format": "qq-prepared-turn-v1", "binding": preparation["binding"], "request": preparation["request"],
         "policy": policy.model_dump(), "policy_version": policy.version,
         "generation_binding": _generation_binding(settings, preset),
+        "expression_binding": _expression_binding(settings),
+        "response_expression": _json(expression),
         "context_token_budget": settings.context_token_budget,
         "input_character_budget": settings.qq_input_token_budget * 2,
         "prompt_version": result.prompt_version,
+        "response_semantics": _json(semantics),
+        "gate_body_text": choice.model_dump_json() if semantic_mode == "enforce" or (expression and expression.mode == "enforce") else raw_gate,
         "messages": messages, "raw_gate": raw_gate, "choice": choice.model_dump(mode="json"),
         "selected_payload": payload, "source_records": source_records,
         "body_selected_payload": body_selection.payload,
@@ -184,6 +206,10 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
     snapshot = row.get("snapshot")
     if snapshot is None:
         raise QQTurnStateError("qq_turn_not_prepared")
+    current_settings, _ = ((shared_owner.settings, shared_owner.preset) if shared_owner is not None
+                          else qq._load_configuration(config_path, preset_path))
+    if snapshot.get("expression_binding") != _expression_binding(current_settings):
+        raise QQTurnStateError("qq_turn_configuration_changed")
     from harness.production.metering import _scope
     active_scope = _scope.get()
     frozen_production = snapshot.get("production_context")
@@ -234,6 +260,12 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
     if _generation_binding(settings, preset) != snapshot["generation_binding"]:
         raise QQTurnStateError("qq_turn_configuration_changed")
     expected_prompt = qq.PRIVATE_PROMPT_VERSION if qq.conversation_scope(turn_binding["group_id"])["kind"] == "private" else qq.PROMPT_VERSION
+    expression_mode = expression_mode_for(settings, f"{turn_binding['self_member_id']}/{turn_binding['group_id']}")
+    if expression_mode != "off":
+        expected_prompt += ":" + EXPRESSION_VERSION + ":" + expression_mode
+    semantic_mode = alignment.mode_for(settings, group_id=turn_binding["group_id"], self_member_id=turn_binding["self_member_id"])
+    if semantic_mode != "off":
+        expected_prompt += ":" + alignment.VERSION + ":" + semantic_mode
     if snapshot["prompt_version"] != expected_prompt:
         raise QQTurnStateError("qq_turn_prompt_changed")
     try:
@@ -274,7 +306,7 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
             body_payload["web_context"] = {"sources": [], "failures": [{"code": "web_plan_invalid"}], "status": "unavailable"}
         body_text = qq._checked_model_payload(body_payload, trace=trace, stage="persona",
                                               max_characters=snapshot["input_character_budget"])
-        prefix = [*snapshot["messages"], {"role": "assistant", "content": snapshot["raw_gate"]},
+        prefix = [*snapshot["messages"], {"role": "assistant", "content": snapshot.get("gate_body_text", snapshot["raw_gate"])},
                   *snapshot.get("body_extra_messages", [])]
         # Check the actual complete user/assistant wire payload, not the large
         # internal DTO. Web never displaces a mandatory current observation.
@@ -294,7 +326,12 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
                 shared_memory=shared_owner.memory if shared_owner else None,
                 homeostatic_interoception=snapshot["homeostatic_interoception"],
                 emotion_guidance=snapshot["emotion_guidance"], memory_evidence_entries=entries,
+                runtime_web_context=body_payload.get("web_context"),
+                response_expression=(ResponseExpressionContext.model_validate(snapshot["response_expression"])
+                                     if snapshot.get("response_expression") else None),
                 current_speaker_id=f"qq:member:{result.trigger_member_id}" if result.trigger_member_id else None,
+                response_semantics=(ResponseSemanticContext.model_validate(snapshot["response_semantics"])
+                                    if snapshot.get("response_semantics") else None),
                 prefix_messages=prefix, character_snapshot=(CharacterSnapshot.model_validate(snapshot["character_snapshot"])
                                                            if snapshot["character_snapshot"] else None))
         usage = usage.add(final.usage)
@@ -306,6 +343,8 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
             used_sources_validator(snapshot["used_sources"])
         if llm.failed_error_type is not None:
             raise RuntimeError("QQ persona call failed")
+        if alignment.rejected(final):
+            raise alignment.SemanticReplyRejected()
         if not final.text.strip() or len(final.text) > 8000 or (final.validation is not None and final.validation.verdict != "pass"):
             raise qq.QQDraftError("The prepared reply failed validation.")
         segments, reply = qq._prepared_group_segments(final, trace, reply_style=choice.reply_style)
@@ -316,10 +355,13 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
             "seen_observation_record_ids": ([] if result.initiated_by != "message" else
                 sorted(set(result.seen_observation_record_ids) | set(body_ids))),
             "new_observation_record_ids": presentation.get("body_new_observation_ids", result.new_observation_record_ids),
-            "outcome": "ready", "style_diagnostics": {**qq.style_diagnostics(reply, segments=len(segments),
+            "outcome": "ready", "expression_diagnostics": final.validation.expression if final.validation else None,
+            "style_diagnostics": {**qq.style_diagnostics(reply, segments=len(segments),
                 detail_level=choice.reply_plan.detail_level if choice.reply_plan else "brief"),
                 **result.style_diagnostics, "body_presented_observations": len(body_ids),
                 "web_plan_invalid": snapshot["web_plan_invalid"]}})
+    except alignment.SemanticReplyRejected:
+        result = alignment.guard_wait(result, trace)
     except QQTurnStateError:
         # Revoked/corrected evidence is not an ordinary model or web failure.
         store.terminate(turn_binding, "cancelled")

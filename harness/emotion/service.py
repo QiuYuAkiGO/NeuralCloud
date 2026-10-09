@@ -23,14 +23,14 @@ from pydantic import AwareDatetime, Field, ValidationError
 
 from harness.emotion.models import (EmotionAppraisal, EmotionFrame, EmotionGuidance, EmotionInput,
                                    EmotionMessage, EmotionLabel, GuidanceOutput, StrictModel, Unit)
-from harness.emotion.semantics import (GUIDANCE_VALIDATION_VERSION, compose_weights, dominant_need_expressed, fallback_guidance, feelings_expressed, need_recovery_expressed, project_persona, required_feelings,
+from harness.emotion.semantics import (GUIDANCE_VALIDATION_VERSION, compose_weights, dominant_need_expressed, fallback_guidance, feelings_expressed, need_recovery_expressed, project_persona, required_expression, required_feelings,
                                       semantic_homeostasis, semantic_priority, validate_guidance_text)
 from harness.llm.client import aux_model_distinct
 from harness.qq.telemetry import current_qq_trace, measure_stage
 from infra.trace.diagnostics import diagnostic_observer, emit_diagnostic, observation_scope
 from infra.trace.request_spans import trace_scope
 
-PROMPT_VERSION = "emotion-director-v5"
+PROMPT_VERSION = "emotion-director-v6"
 
 
 def _trace_stage(stage, **increments):
@@ -52,10 +52,14 @@ need_interpretation和personality_response可各写不超过25个中文字的结
 recovery只在本条新消息明确修复先前冲突时填写；evidence_quote必须逐字引用本条新消息，strength不大于0.5。
 没有实质情绪刺激可返回空signals；无证据不可凭空揣测敌意。禁止输出其他会话的原因、名字、消息或标识。
 """
-_GUIDANCE_RULES = """EMOTION_GUIDANCE_V1
-你是情绪演绎指示编写器，不扮演角色。只输出JSON三项：feeling逐一正向描述required_feelings的心情、程度及恢复趋势（无心情则自然平静）；delivery写语气、措辞与节奏；needs直述已确认的内稳态需要。每项15至35字，用无主语短语或指令，不写第一第二人称、对白或比喻。
-遵守semantic_priority主次顺序，两种明显心情必须同时保留，不用平静掩盖余怒，不以精力不足代替心情。零激活保持平静；性格是通常习惯，强烈愤怒可以尖锐直接。
-只用输入事实和本会话visible_context；共享余波没有原因，不推测动机或其他会话经历。不新增身体症状。不决定是否发言、结束对话或采取行动，不改变身份与权限，不输出数值或内部字段名。
+_GUIDANCE_RULES = """EMOTION_GUIDANCE_V2
+你是情绪演绎指示编写器，不扮演角色。只输出JSON三项feeling、delivery、needs。
+feeling逐条写出required_feelings中的每一种心情、原有程度和趋势。每种心情单独一个短句，紧接该心情描述其趋势，不用“两者”“整体”合并趋势。保留两种并存心情，不新增心情及其原因。
+情绪trend的准确含义：recovering表示该心情的强度正在减弱，不是该心情正在恢复或增强；rising表示强度正在增强；steady表示程度保持稳定。不论好奇、高兴、平静或愤怒都遵守同一含义。无必需心情时写自然平静。
+needs直述已确认的首要内稳态需要；homeostatic_needs[0].trend为recovering时，必须同时明确写“这份需要正在缓和”，这描述已发生的状态，不能替换为“希望减轻”或“需要减少”。worsening表示偏离正在加重；steady表示偏离仍在。
+delivery只写语气、措辞与节奏。遵守semantic_priority的主次顺序，性格是通常习惯，强烈愤怒可以尖锐直接。feeling不超过90字，delivery不超过80字，needs不超过80字，以完整表达为先。
+使用无主语短语或指令，不写第一第二人称、对白、比喻、数值或内部字段名。只用输入事实和本会话visible_context，不推测动机或其他会话经历，不新增身体症状，不决定是否发言、结束对话或采取行动，不改变身份与权限。
+required_expression是已核定的表达内容：feeling与needs必须分别逐字使用对应字段，不增删、不改写；只创作delivery。
 """
 
 
@@ -154,7 +158,8 @@ def _fallback_code(exc: Exception) -> str:
     known = {"aux_unavailable", "emotion_budget_exhausted", "emotion_input_budget_exceeded",
              "emotion_model_timeout", "emotion_appraisal_source_mismatch", "emotion_recovery_evidence_mismatch",
              "emotion_guidance_invalid", "emotion_guidance_dominant_need_missing", "emotion_guidance_feeling_missing",
-             "emotion_guidance_need_recovery_missing"}
+             "emotion_guidance_need_recovery_missing", "emotion_guidance_feeling_mismatch",
+             "emotion_guidance_need_mismatch"}
     if exc.args and isinstance(exc.args[0], str) and exc.args[0] in known:
         return exc.args[0]
     if isinstance(exc, (TimeoutException, TimeoutError)):
@@ -584,7 +589,7 @@ class EmotionService:
             intensity=intensity, dominant_source=max(weights, key=weights.get), homeostatic_needs=homeostasis["needs"],
             salience=homeostasis["salience"], persona=project_persona(request.persona), diagnostics=diagnostics)
 
-    def guidance(self, frame_or_ref: EmotionFrame | dict | str) -> EmotionGuidance:
+    def guidance(self, frame_or_ref: EmotionFrame | dict | str, *, expression_only: bool = False) -> EmotionGuidance:
         with self._operation_lock:
             with self._lock:
                 supplied = None if isinstance(frame_or_ref, str) else (frame_or_ref if isinstance(frame_or_ref, EmotionFrame)
@@ -599,11 +604,13 @@ class EmotionService:
                 frame = reservation.frame
                 if supplied is not None and supplied != frame:
                     raise ValueError("emotion_frame_binding_mismatch")
-                if reservation.guidance is not None:
+                delivery_policy = "expression-only-v1" if expression_only else "legacy"
+                if (reservation.guidance is not None and
+                        reservation.guidance.diagnostics.get("delivery_policy", "legacy") == delivery_policy):
                     self._emit_guidance(reservation.guidance, replayed=True)
                     return reservation.guidance.model_copy(deep=True)
                 diagnostics = {"model_calls": 0, "prompt_version": PROMPT_VERSION,
-                               "validation_version": GUIDANCE_VALIDATION_VERSION}
+                               "validation_version": GUIDANCE_VALIDATION_VERSION, "delivery_policy": delivery_policy}
                 text = fallback_guidance(frame)
                 status = "fallback"
                 request = reservation.request
@@ -611,11 +618,13 @@ class EmotionService:
                 # answer the user instead of directing the main model. Appraisal
                 # already interpreted that window; keep only its scoped conclusions.
                 appraisal = reservation.appraisal or EmotionAppraisal()
+                expression = required_expression(frame)
                 payload = {"persona": {key: frame.persona.get(key, []) for key in ("core_traits", "values")},
                            "homeostatic_needs": frame.homeostatic_needs,
                            "shared_affect": frame.labels, "weights": frame.weights, "intensity": frame.intensity,
                            "dominant_source": frame.dominant_source, "semantic_priority": semantic_priority(frame),
                            "required_feelings": required_feelings(frame),
+                           "required_expression": expression,
                            "dialogue_trends": frame.dialogue_trends,
                            "visible_context": {
                                "current_event_labels": sorted({signal.label for event in appraisal.events for signal in event.signals
@@ -627,9 +636,13 @@ class EmotionService:
                            "schema": _response_schema("guidance")}
             started = time.monotonic()
             try:
-                raw = self._model(request=request, stage="guidance", system=_GUIDANCE_RULES, payload=payload,
+                delivery_rules = ("\ndelivery严格只描述语气、措辞和节奏，不决定认同、安慰、反对什么，不解释事件，"
+                    "不替正文选择回应内容。理解原文优先于情绪表达；保留真实情绪与自主立场，"
+                    "但不能把对方的解释或纠正改写成倾诉。不要写先认同、先安慰等内容指令。" if expression_only else "")
+                raw = self._model(request=request, stage="guidance", system=_GUIDANCE_RULES + delivery_rules, payload=payload,
                                   diagnostics=diagnostics)
-                candidate = GuidanceOutput.model_validate(raw).compose(needs_first=frame.dominant_source == "homeostasis")
+                directed = GuidanceOutput.model_validate(raw)
+                candidate = directed.compose(needs_first=frame.dominant_source == "homeostasis")
                 if not dominant_need_expressed(candidate, frame):
                     raise ValueError("emotion_guidance_dominant_need_missing")
                 if not feelings_expressed(candidate, frame):
@@ -638,6 +651,13 @@ class EmotionService:
                     raise ValueError("emotion_guidance_need_recovery_missing")
                 if not validate_guidance_text(candidate, frame=frame):
                     raise ValueError("emotion_guidance_invalid")
+                # Whole-text cue matching cannot bind a degree/trend to one
+                # feeling. Require the two authoritative slots independently;
+                # never silently repair model text or erase a rejected result.
+                if directed.feeling != expression["feeling"]:
+                    raise ValueError("emotion_guidance_feeling_mismatch")
+                if directed.needs != expression["needs"]:
+                    raise ValueError("emotion_guidance_need_mismatch")
                 text, status = candidate, "model"
             except _DiagnosticSinkFailure as exc:
                 raise exc.cause

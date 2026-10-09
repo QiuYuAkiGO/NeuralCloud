@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from harness.llm.json_output import validate_model_json
+
 from harness.llm.deepseek_structured import decision_format
 
 import argparse
@@ -31,7 +33,7 @@ from harness.homeostasis.models import HomeostaticInteroceptiveSummary
 from harness.homeostasis.dynamics import AttentionAssessment
 from harness.core.error_notice import ERROR_FALLBACK_REPLY
 from harness.core.ids import new_id
-from harness.core.inference import ContextSegment, MemoryEvidenceContext, ParsedInteraction, TokenUsage
+from harness.core.inference import ContextSegment, MemoryEvidenceContext, ParsedInteraction, TokenUsage, ReplyUnderstanding
 from harness.llm.client import build_llm_client, deepseek_low_reasoning_options, estimate_chat_usage
 from harness.memory.service import build_inmemory_service
 from harness.pipeline.pipeline import InferencePipeline
@@ -56,8 +58,12 @@ from harness.qq.reply_context import (
 )
 from harness.qq.memory_evidence import build_qq_memory_evidence, current_qq_burst_ids
 from harness.qq.policy import QQLatencyOptions
+from harness.qq import semantic_alignment as alignment
 from harness.qq.web_plan import QQWebPlan
 from harness.qq.vision_tool import QQVisionRequest, QQVisionTool, TOOL_RULES as VISION_TOOL_RULES
+from harness.core.expression import (ReplyConstraint, DisclosureRequirement, EXPRESSION_VERSION,
+                                     mode_for as expression_mode_for, qq_context as expression_qq_context)
+from harness.compiler.expression import GATE_RULES as EXPRESSION_GATE_RULES, rules_for as expression_rules
 from harness.qq.turn_checkpoints import QQTurnStateError
 from harness.qq.telemetry import QQDeadline, QQDeadlineExpired, QQTurnTrace, classify_error
 from infra.trace.request_spans import trace_scope
@@ -116,16 +122,26 @@ _STATIC_PARSE_LIMIT = 8
 _STATIC_PARSE_CACHE: OrderedDict[str, tuple[float, ParsedInteraction]] = OrderedDict()
 _STATIC_PARSE_LOCK = threading.RLock()
 _STATIC_PARSE_CLOCK = time.monotonic
+_GATE_FORMAT_EXAMPLE = (
+    '\n输出JSON格式示例：{"action":"speak","reason":"有内容值得回应。",'
+    '"addressing":"ambient","addressing_source_record_id":null,"addressing_supporting_quote":null,'
+    '"reply_style":"conversational","reply_style_reason":"普通聊天。","reply_plan":null}。'
+    '示例仅说明格式，实际action依据本轮内容选择speak或wait；不要输出Markdown围栏或JSON外文字。'
+)
+_REPLY_REPETITION_RULES = (
+    "topic_window引用最近180秒入模记录及实际发送回执。已完整回答的同题重复点名优先wait；"
+    "有新增条件、追问理由、新问题或明显澄清需求则回应增量。撤销、反转或恢复此前条件都算新的实质增量。"
+    "用户用‘到底’‘别绕圈’‘所以你的答案是什么’表示没有理解、误解或需要澄清立场时，应简短重申清楚的选择或解释变化，"
+    "不能仅因初题出现过而wait。只有没有新问题、没有条件变化、也没有澄清需求的纯重复才优先wait。"
+    "话题相似、连续@次数、曾考虑过该消息都不能单独作为忽略依据；未送达或partial_prefix不能推断整题已答完。"
+)
 _REPLY_PLANNING_RULES = (
     "回复计划不得发明自身经历：性格、情绪相似不证明自己有相似生活经历。没有明确自身事实证据时，"
     "可以表达对当前话题的理解、观点或假设，不得要求正文给出‘自己的真实经历’或暗示‘我也有过’。"
     "可选字段attention_assessment描述实际注意经历；无新证据时省略或null。字段topic、unexpectedness(0..1)、meaning(0..1)、"
     "wants_engagement、confidence(0..1)、impacts(安全safety_predictability/能力competence/自主autonomy/联结social_connection到-1..1)。"
     "仅基于当前实际事件评价，不按消息数量、工具成功或预期收益打分。"
-    '\n输出JSON格式示例：{"action":"speak","reason":"有内容值得回应。",'
-    '"addressing":"ambient","addressing_source_record_id":null,"addressing_supporting_quote":null,'
-    '"reply_style":"conversational","reply_style_reason":"普通聊天。","reply_plan":null}。'
-    '示例仅说明格式，实际action依据本轮内容选择speak或wait；不要输出Markdown围栏或JSON外文字。'
+    + _GATE_FORMAT_EXAMPLE +
     "\nreply_plan是可选的覆盖计划，speak时可提供，wait时为null；它只约束‘需要回应什么’，不写逐步推理，也不替角色拟正文。"
     "顶层严格只输出已列字段，计划说明使用已有reason，禁止新增reply_plan_note等注释字段，即使值为null。"
     "reply_plan字段：intent只能为answer、stance、relationship、clarify、acknowledge或other；"
@@ -141,17 +157,17 @@ _REPLY_PLANNING_RULES = (
     "部分历史中没有某条记录，不证明对方从未说过或那件事从未发生；necessary_boundary只在确实影响理解时使用。"
     "delivered_style_window是最近8轮实际已发的结构提示，只用于避免短时间内机械复用相同开场、口头禅、感谢循环或关系动作；"
     "自然停顿、语气词、害羞、笑或简短社会性回应本身不是违规，也不要把它们规划成每轮固定模板。"
-    "topic_window引用最近180秒入模记录及实际发送回执。已完整回答的同题重复点名优先wait；"
-    "有新增条件、追问理由、新问题或明显澄清需求则回应增量。撤销、反转或恢复此前条件都算新的实质增量。"
-    "用户用‘到底’‘别绕圈’‘所以你的答案是什么’表示没有理解、误解或需要澄清立场时，应简短重申清楚的选择或解释变化，"
-    "不能仅因初题出现过而wait。只有没有新问题、没有条件变化、也没有澄清需求的纯重复才优先wait。"
-    "话题相似、连续@次数、曾考虑过该消息都不能单独作为忽略依据；未送达或partial_prefix不能推断整题已答完。"
+    + _REPLY_REPETITION_RULES
 )
-_RULES = (
+_GROUP_PARTICIPATION_RULES = (
     "你是当前人设的群聊参与者，判断此刻是否值得开口，而不是每来一条消息就回复。根据当群多人近期对话、与当前问题相关的持久历史、已经考虑过的观察以及已核验的自己发言判断。考虑过一条观察不等于回复过它；回执的source_record_ids只表示调用者明确核验已回应的观察。被叫到或被提问可以增加回复价值，但不强制说话；多人正在彼此闲聊时可以等待。没有新需求、自己已经回应、仅看到自己的新消息、内容不足或身份未知时优先等待。可以根据人设自然参与有价值的话题，不要求必须被点名。值得开口可以是对当前事情有具体观点、判断、偏好、感受或有针对性的问题，不必把群聊变成提供帮助；如果只能泛泛安抚、邀对方继续聊或重复表态，优先wait。"
     "ambient闲聊若只是重复、无承接的机械附和或泛泛安抚，优先wait。"
     "但对明确称赞、玩笑、关系确认、共同情绪或冲突修复，可以给简短的社会性回应，即使信息增量很低；关键是承接当前具体内容并符合人设。"
     "direct有新需求时仍须作答，并落到具体内容；纯重复点名仍优先wait。"
+)
+_RULES = (
+    _GROUP_PARTICIPATION_RULES
+    +
     "先前草稿或speak决定不是发送记录；只有delivery_receipts才代表调用者已核验发送。"
     "segment_delivery_receipts只证明其中各条单段已实际发送，未包含的后续段没有发送证据；"
     "不能把部分已发前缀当成整个decision已发或某个问题已全部答完。完整聚合回执不会再重复列出这些单段。"
@@ -232,7 +248,8 @@ _PRIVATE_DRAFT_RULES = (
 
 
 def is_qq_gate_messages(messages) -> bool:
-    rules = (_RULES, _PRIVATE_RULES)
+    rules = (_RULES, _PRIVATE_RULES, _gate_rules(semantic_mode="enforce"),
+             _gate_rules(private=True, semantic_mode="enforce"))
     if _is_qq_gate_messages(messages, rule_prefixes=rules):
         return True  # Historical diagnostic requests used a rules-first layout.
     if not messages or messages[0].get("role") != "system":
@@ -288,6 +305,46 @@ class QQReplyPlan(_StrictModel):
     new_questions: list[Annotated[str, Field(min_length=1, max_length=120)]] = Field(default_factory=list, max_length=3)
     detail_level: Literal["brief", "expanded"] = "brief"
     necessary_boundary: str | None = Field(default=None, max_length=120)
+    internal_constraints: list[ReplyConstraint] = Field(default_factory=list, max_length=4)
+    disclosure_requirements: list[DisclosureRequirement] = Field(default_factory=list, max_length=3)
+    understanding: ReplyUnderstanding | None = None
+    _understanding_invalid: bool = PrivateAttr(default=False)
+
+    @model_serializer(mode="wrap")
+    def omit_absent_understanding(self, handler):
+        value = handler(self)
+        if self.understanding is None:
+            value.pop("understanding", None)
+        for key in ("internal_constraints", "disclosure_requirements"):
+            if not getattr(self, key):
+                value.pop(key, None)
+        return value
+
+    @model_validator(mode="wrap")
+    @classmethod
+    def optional_understanding(cls, value, handler):
+        invalid = getattr(value, "_understanding_invalid", False)
+        if isinstance(value, dict):
+            value = dict(value)
+            for key, cls_, limit in (("internal_constraints", ReplyConstraint, 4),
+                                     ("disclosure_requirements", DisclosureRequirement, 3)):
+                try:
+                    raw = value.get(key, [])
+                    if not isinstance(raw, list) or len(raw) > limit:
+                        raise ValueError("invalid expression plan")
+                    value[key] = [cls_.model_validate(item) for item in raw]
+                except (ValueError, TypeError):
+                    value[key] = []
+        if isinstance(value, dict) and value.get("understanding") is not None:
+            value = dict(value)
+            try:
+                value["understanding"] = ReplyUnderstanding.model_validate(value["understanding"])
+            except (ValueError, TypeError):
+                value["understanding"] = None
+                invalid = True
+        result = handler(value)
+        result._understanding_invalid = invalid
+        return result
 
     @model_validator(mode="after")
     def bounded_questions(self):
@@ -373,10 +430,10 @@ class _ProductionGateDecision(_GateDecision):
 
 
 def _parse_gate_response(response, trace: QQTurnTrace, *, production=False) -> _GateDecision:
-    """Validate one whole response; tolerate only a complete JSON code fence.
+    """Validate the effective JSON response after bounded deterministic repair.
 
     Diagnostics deliberately contain no model text, exception message, input,
-    or unrecognized field name. The exact received text remains the body prefix.
+    or unrecognized field name. Raw anomalies go to the private repair store.
     """
     if (response.finish_reason not in {None, "stop"}
             or response.content_type not in {None, "text"}
@@ -394,7 +451,13 @@ def _parse_gate_response(response, trace: QQTurnTrace, *, production=False) -> _
         trace.add_counter("gate_response_json_fence")
     choice_model = _ProductionGateDecision if production else _GateDecision
     try:
-        choice = choice_model.model_validate_json(text)
+        repair_schema = choice_model.model_json_schema()
+        # Match the wire schema: advisory understanding is deliberately allowed
+        # through so QQReplyPlan's validator can discard an invalid interpretation.
+        understanding = repair_schema.get("$defs", {}).get("QQReplyPlan", {}).get("properties", {}).get("understanding")
+        if understanding is not None:
+            understanding.setdefault("anyOf", []).append({})
+        choice = validate_model_json(choice_model, text, repair_schema=repair_schema)
     except ValidationError as exc:
         known_types = {"json_invalid", "model_type", "missing", "extra_forbidden", "literal_error",
                        "string_type", "string_too_short", "string_too_long", "value_error"}
@@ -450,6 +513,7 @@ class QQReplyDecision(_StrictModel):
     reply_style_reason: str = Field(default="默认简短口语。", min_length=1, max_length=256)
     reply_plan: QQReplyPlan | None = None
     style_diagnostics: dict[str, int | bool] = Field(default_factory=dict)
+    expression_diagnostics: dict[str, Any] | None = None
     decision_source: Literal["model", "no_attributed_observations", "unknown_trigger", "no_new_observations", "self_only_update", "model_invalid", "model_error", "expired", "pending"]
     group_id: QQConversationID
     trigger_member_id: QQID | None = None
@@ -487,6 +551,8 @@ class QQReplyDecision(_StrictModel):
         value = handler(self)
         if not self.used_memory_ids:
             value.pop("used_memory_ids", None)
+        if self.expression_diagnostics is None:
+            value.pop("expression_diagnostics", None)
         return value
 
     @model_validator(mode="after")
@@ -716,15 +782,57 @@ class _QQContextBudgetExceeded(QQDraftError):
     """A local input-budget failure, distinct from transport and model output."""
 
 
-def _assessment_reserve(*, include_web_plan: bool = False, include_vision_request: bool = False, production=False) -> int:
+def _gate_rules(*, private=False, semantic_mode="off"):
+    rules = _PRIVATE_RULES if private else _RULES
+    if semantic_mode != "enforce":
+        return rules
+    rules = rules.replace(_GROUP_PARTICIPATION_RULES, alignment.PARTICIPATION_RULES)
+    rules = rules.replace(_REPLY_REPETITION_RULES, alignment.REPETITION_RULES)
+    rules = rules.replace(_GATE_FORMAT_EXAMPLE, "\n输出schema规定的JSON对象。")
+    rules = rules.replace("speak时可提供，wait时为null", "speak或wait时都可提供理解摘要")
+    return rules + alignment.GATE_RULES
+
+
+def _gate_schema(*, production=False, include_semantics=False, include_expression=False):
+    schema = (_ProductionGateDecision if production else _GateDecision).model_json_schema()
+    if not include_semantics:
+        schema["$defs"]["QQReplyPlan"]["properties"].pop("understanding", None)
+        schema["$defs"].pop("ReplyUnderstanding", None)
+    else:
+        # This field is advisory: transport validation must not reject an otherwise
+        # usable gate before QQReplyPlan can discard a malformed interpretation.
+        schema["$defs"]["QQReplyPlan"]["properties"]["understanding"]["anyOf"].append({})
+        # Read the current author's meaning before choosing participation. Keep
+        # the summary optional, including for a legitimate wait decision.
+        properties = schema["properties"]
+        schema["properties"] = {"reply_plan": properties.pop("reply_plan"), **properties}
+        properties = schema["$defs"]["QQReplyPlan"]["properties"]
+        schema["$defs"]["QQReplyPlan"]["properties"] = {"understanding": properties.pop("understanding"), **properties}
+    _expression_schema(schema, include_expression)
+    return schema
+
+
+def _expression_schema(schema, enabled):
+    for key in ("internal_constraints", "disclosure_requirements"):
+        if not enabled:
+            schema["$defs"]["QQReplyPlan"]["properties"].pop(key, None)
+    if not enabled:
+        for key in ("ReplyConstraint", "DisclosureRequirement"):
+            schema["$defs"].pop(key, None)
+
+
+def _assessment_reserve(*, include_web_plan: bool = False, include_vision_request: bool = False, production=False, include_semantics=False, include_expression=False) -> int:
     """Worst serialized assessment allowed by the gate DTO, including escapes."""
     schema = (_ProductionGateDecision if production else _GateDecision).model_json_schema()
+    _expression_schema(schema, include_expression)
     # Web plans are bounded by validators as well as JSON-schema fields. Their
     # separate finite reserve avoids treating pattern-only source refs as free
     # strings, and leaves historical legacy budgets unchanged.
     schema["properties"].pop("web_plan", None)
     schema["properties"].pop("vision_request", None)
     schema["properties"].pop("attention_assessment", None)
+    if not include_semantics:
+        schema["$defs"]["QQReplyPlan"]["properties"].pop("understanding", None)
 
     def largest_value(field):
         if "$ref" in field:
@@ -1230,7 +1338,8 @@ def _apply_append_window(path: Path, group_id: str, context, *, trace: QQTurnTra
 def _prepare_group_speech(*, settings, preset, llm, payload: str, evidence_refs: list[str], group_id: str,
                           shared_memory=None, homeostatic_interoception=None, emotion_guidance=None,
                           memory_evidence_entries=None, current_speaker_id: str | None = None,
-                          prefix_messages: list[dict[str, str]] | None = None, character_snapshot=None):
+                          prefix_messages: list[dict[str, str]] | None = None, character_snapshot=None, response_semantics=None,
+                          response_expression=None, runtime_web_context=None, runtime_web_in_prefix=False):
     # The ordinary disabled-continuation path parses every segment in this one
     # model output. It never requests a second character generation.
     settings = settings.model_copy(update={"max_reply_segments": 3, "continuation_enabled": False})
@@ -1246,25 +1355,35 @@ def _prepare_group_speech(*, settings, preset, llm, payload: str, evidence_refs:
             pipeline.parser = _StaticInstructionParser(pipeline.parser, settings=settings, preset=preset, llm=llm,
                                                        instruction=instruction)
         evidence_entries = memory_evidence_entries or []
+        web_evidence = []
+        if response_expression is not None and response_expression.mode == "enforce":
+            from harness.qq.tool_evidence import web_entries
+            web_evidence = web_entries(runtime_web_context, audience=conversation_audience(group_id))
         visible = "\n".join(item.get("content") or "" for item in (prefix_messages or []) if item.get("role") == "user")
-        user_segment = ContextSegment(kind="user", text=payload,
-            source_ids=sorted(set([*evidence_refs, *(entry.source_id for entry in evidence_entries)])))
+        user_segment = ContextSegment(kind="user", text=payload, response_expression=response_expression,
+            source_ids=sorted(set([*evidence_refs, *(entry.source_id for entry in [*evidence_entries, *web_evidence])])))
         memory_evidence = MemoryEvidenceContext.bind(
             audience=conversation_audience(group_id), entries=evidence_entries,
             segment=user_segment.model_copy(update={"text": visible or payload}),
             current_speaker_id=current_speaker_id)
+        if web_evidence:
+            bound = MemoryEvidenceContext.bind(audience=conversation_audience(group_id), entries=web_evidence,
+                segment=user_segment.model_copy(update={"text": visible}) if runtime_web_in_prefix else user_segment)
+            memory_evidence = memory_evidence.model_copy(update={"entries": [*memory_evidence.entries, *bound.entries]})
         prepare = pipeline.prepare_qq_response if direct_body else pipeline.prepare
         return prepare(
             instruction,
             session_id=f"qq-private-draft:{group_id}" if private else f"qq-group-draft:{group_id}", speaker="operator",
             homeostatic_interoception=homeostatic_interoception,
             memory_evidence=memory_evidence,
+            response_semantics=response_semantics,
             prefix_messages=prefix_messages,
             **({} if emotion_guidance is None else {"emotion_guidance": emotion_guidance}),
             **({"character_snapshot": character_snapshot} if direct_body and character_snapshot is not None else {}),
             context_segments=[ContextSegment(kind="qq_draft_rules", text=emotion_draft_rules(
                                   _PRIVATE_DRAFT_RULES if private else _GROUP_DRAFT_RULES,
-                                  enabled=emotion_enabled(settings))),
+                                  enabled=emotion_enabled(settings)) + (alignment.BODY_RULES
+                                      if response_semantics is not None and response_semantics.mode == "enforce" else "")),
                               user_segment],
         )
     finally:
@@ -1550,6 +1669,12 @@ def decide_qq_reply(
         history_limit_per_member=history_limit_per_member, window_mode="chronological_append")
     settings, preset = ((shared_owner.settings, shared_owner.preset) if shared_owner is not None
                         else _load_configuration(config_path, preset_path))
+    semantic_mode = alignment.mode_for(settings, group_id=group_id, self_member_id=self_member_id)
+    expression_mode = expression_mode_for(settings, f"{self_member_id}/{group_id}")
+    if expression_mode != "off":
+        prompt_version += ":" + EXPRESSION_VERSION + ":" + expression_mode
+    if semantic_mode != "off":
+        prompt_version += ":" + alignment.VERSION + ":" + semantic_mode
     production_store = getattr(shared_owner, "production_store", None)
     if production_store is not None:
         context = production_store.filter_qq_context(context, memory_db=path)
@@ -1767,9 +1892,10 @@ def decide_qq_reply(
         payload["emotion_guidance_text"] = trusted_fingerprint["emotion_guidance"]["text"]
     assessment_reserve = _assessment_reserve(include_web_plan=_turn_preparation is not None,
                                             include_vision_request=vision_tool is not None,
-                                              production=production_store is not None)
-    # Reserve serialized tool evidence before freezing the gate prefix.
-    # This is headroom, not permission to exceed the hard cap.
+                                              production=production_store is not None, include_semantics=semantic_mode == "enforce",
+                                              include_expression=expression_mode == "enforce")
+    # Reserve serialized tool evidence before freezing the gate prefix. This
+    # is headroom, not permission to truncate evidence or exceed the hard cap.
     vision_continuation_reserve = 16_384 if vision_tool is not None else 0
     trace.add_counter("context_vision_reserved_characters", vision_continuation_reserve)
     input_character_budget = settings.qq_input_token_budget * 2
@@ -1933,8 +2059,10 @@ def decide_qq_reply(
             result = result.model_copy(update={"source_record_ids": list(selection.observation_ids),
                                               "evidence_refs": evidence_refs, "delivery_refs": list(selection.delivery_ids)})
             messages = [{"role": "system", "content": persona_prefix(preset.persona)
-                        + (_PRIVATE_RULES if private else _RULES) + web_rules
+                        + _gate_rules(private=private, semantic_mode=semantic_mode) + web_rules
                         + VISION_TOOL_RULES
+                        + expression_rules(expression_mode)
+                        + (EXPRESSION_GATE_RULES if expression_mode == "enforce" else "")
                         + (_PRODUCTION_MEMORY_USE_RULES if production_store is not None else "")
                         + ((_PRODUCTION_IDLE_RULES if production_idle else _IDLE_RULES) if idle_intent is not None else "")},
                         *({"role": "user", "content": content} for content in encoded_messages)]
@@ -1948,7 +2076,8 @@ def decide_qq_reply(
                 with trace.stage("gate"), trace_scope(phase="qq_gate", stage="qq_gate"):
                     response = llm.complete_chat_result(messages, temperature=0.2, stream=False,
                         max_tokens=gate_token_budget, response_format=decision_format(raw_llm,
-                            (_ProductionGateDecision if production_store is not None else _GateDecision).model_json_schema(), "qq_gate"))
+                            _gate_schema(production=production_store is not None, include_semantics=semantic_mode == "enforce",
+                                         include_expression=expression_mode == "enforce"), "qq_gate"))
                     reported_usage = response.usage if response.usage.total_tokens else estimate_chat_usage(messages, response.text)
                     usage = usage.add(reported_usage.for_call())
                     choice = _parse_gate_response(response, trace, production=production_store is not None)
@@ -2011,7 +2140,8 @@ def decide_qq_reply(
                                     {"role": "user", "content": tool_message}]
                         response = llm.complete_chat_result(messages, temperature=0.2, stream=False,
                             max_tokens=gate_token_budget, response_format=decision_format(raw_llm,
-                                (_ProductionGateDecision if production_store is not None else _GateDecision).model_json_schema(), "qq_gate"))
+                                _gate_schema(production=production_store is not None, include_semantics=semantic_mode == "enforce",
+                                             include_expression=expression_mode == "enforce"), "qq_gate"))
                         reported_usage = response.usage if response.usage.total_tokens else estimate_chat_usage(messages, response.text)
                         usage = usage.add(reported_usage.for_call())
                         choice = _parse_gate_response(response, trace, production=production_store is not None)
@@ -2022,6 +2152,22 @@ def decide_qq_reply(
             if self_member_id is not None:
                 addressing = _gate_addressing(choice, candidates, addressing)
             production_use = {}
+            if choice.reply_plan is not None:
+                if expression_mode != "enforce":
+                    choice = choice.model_copy(update={"reply_plan": choice.reply_plan.model_copy(update={
+                        "internal_constraints": [], "disclosure_requirements": []})})
+                else:
+                    allowed_expression_ids = set(body_selection.observation_ids) | {e.source_id for e in vision_evidence}
+                    choice = choice.model_copy(update={"reply_plan": choice.reply_plan.model_copy(update={
+                        "internal_constraints": [c for c in choice.reply_plan.internal_constraints
+                            if not c.source_ids or set(c.source_ids) <= allowed_expression_ids]})})
+                understanding = choice.reply_plan.understanding
+                invalid = choice.reply_plan._understanding_invalid or (understanding is not None and
+                    not set(understanding.source_ids) <= set(selection.observation_ids))
+                if invalid or semantic_mode != "enforce":
+                    choice = choice.model_copy(update={"reply_plan": choice.reply_plan.model_copy(update={"understanding": None})})
+                if invalid:
+                    trace.add_counter("reply_understanding_invalid")
             if production_store is not None:
                 # Only the SQL entries actually admitted to this gate count as
                 # presented. A model cannot cite trimmed, stale or hidden IDs.
@@ -2068,7 +2214,16 @@ def decide_qq_reply(
                             receipts=receipts, partial_receipts=partial_receipts, shared_owner=shared_owner,
                         )
                         speech_kwargs["memory_evidence_entries"].extend(vision_evidence)
-                        speech_kwargs["prefix_messages"] = [*messages, {"role": "assistant", "content": response.text},
+                        speech_kwargs["response_expression"] = expression_qq_context(settings, group_id=group_id,
+                            self_member_id=self_member_id, plan=choice.reply_plan,
+                            style_window=payload.get("delivered_style_window"))
+                        speech_kwargs["runtime_web_context"] = base_payload.get("web_context")
+                        speech_kwargs["runtime_web_in_prefix"] = True
+                        speech_kwargs["response_semantics"] = alignment.task_context(mode=semantic_mode,
+                            audience=conversation_audience(group_id),
+                            trigger_ids=set(request_observation_ids) | ({trigger_latest_id} if trigger_latest_id else set()),
+                            choice=choice, entries=speech_kwargs["memory_evidence_entries"])
+                        speech_kwargs["prefix_messages"] = [*messages, {"role": "assistant", "content": choice.model_dump_json() if semantic_mode == "enforce" or expression_mode == "enforce" else response.text},
                                                             *body_extra_messages]
                         if (sum(len(item["content"]) for item in speech_kwargs["prefix_messages"]
                                 if item["role"] != "system") + len(speech_payload) > input_character_budget):
@@ -2086,6 +2241,8 @@ def decide_qq_reply(
                             # Some ordinary pipeline helpers catch model errors
                             # and fall back. A QQ turn must expose that failure.
                             raise RuntimeError("A QQ persona helper model call failed.")
+                        if alignment.rejected(final):
+                            raise alignment.SemanticReplyRejected()
                         if not final.text.strip() or len(final.text) > 8000 or (final.validation is not None and final.validation.verdict != "pass"):
                             raise QQDraftError("The prepared reply failed validation.")
                         segments, reply = _prepared_group_segments(final, trace, reply_style=choice.reply_style)
@@ -2096,12 +2253,15 @@ def decide_qq_reply(
                             "seen_observation_record_ids": ([] if idle_intent is not None else
                                 sorted(set(result.seen_observation_record_ids) | body_ids)),
                             "new_observation_record_ids": sorted(set(new_ids) & body_ids),
+                            "expression_diagnostics": final.validation.expression if final.validation else None,
                             "style_diagnostics": {**style_diagnostics(reply, segments=len(segments),
                                 detail_level=choice.reply_plan.detail_level if choice.reply_plan else "brief"),
                                 **result.style_diagnostics,
                                 "body_presented_observations": len(body_selection.observation_ids)}})
                 finally:
                     timings["persona"] = round(max(0.0, trace.clock() - persona_started) * 1000, 3)
+        except alignment.SemanticReplyRejected:
+            result = alignment.guard_wait(result, trace)
         except QQTurnStateError:
             raise
         except Exception as exc:
