@@ -535,6 +535,11 @@ class DirectQQActor:
                 raise ValueError("frozen_plan_mismatch")
         except Exception:
             raise OneBotError("direct_frozen_plan_mismatch") from None
+        if decision.outcome == "error_fallback" and self.store.cooldown(
+                event["group_id"], 300, text=decision.reply):
+            self.store.update(event["event_id"], state="rate_limited",
+                              terminal_reason="direct_error_notice_cooldown", terminal_stage="protocol.delivery")
+            return
         if self.store.cooldown(event["group_id"], 10 if decision.addressing == "direct" else 60,
                 exclude_events=self.text_turns.cooldown_exclusions(event)):
             self.store.update(event["event_id"], state="rate_limited",

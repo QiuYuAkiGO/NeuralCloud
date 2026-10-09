@@ -188,7 +188,8 @@ class QQHistorySelections:
 
 
 def select_bounded_history(payload, *, required_ids: set[str], gate_target: int, body_target: int,
-                           max_characters: int, assessment_reserve: int, projection: str) -> QQHistorySelections:
+                           max_characters: int, assessment_reserve: int, projection: str,
+                           gate_tool_reserve: int = 0) -> QQHistorySelections:
     # Soft targets measure model-visible history. Large private proof attachments
     # are retained in the source store, but must not evict dialogue from prompts.
     payload = {**payload, "group_context": project_group_context(payload["group_context"])}
@@ -200,7 +201,14 @@ def select_bounded_history(payload, *, required_ids: set[str], gate_target: int,
     options = dict(required_ids=required_ids, max_characters=max_characters, assessment_reserve=assessment_reserve,
                    projection=projection, original_ids=original_ids)
     body = _bounded(payload, target=max(gate_target, body_target), **options)
-    gate = _bounded(body.payload, target=gate_target, **options)
+    # The gate prefix becomes immutable once dispatched. Leave room for its
+    # tool request and the returned evidence before pinning historical records.
+    # Body-only history can still use this space until a tool actually runs.
+    gate = _bounded(body.payload, target=gate_target,
+        **{**options, "assessment_reserve": assessment_reserve + gate_tool_reserve})
+    # Tool headroom is a selection target, not the hard-limit verdict. A
+    # mandatory-only prefix can miss that target and still admit a text turn.
+    gate = replace(gate, fits=gate.characters + assessment_reserve <= max_characters)
     body = fit_body_history(body, gate, prefix_characters=gate.characters, max_characters=max_characters,
         assessment_reserve=assessment_reserve, projection=projection, original_ids=original_ids)
     return QQHistorySelections(gate, body)
@@ -220,11 +228,13 @@ def fit_body_history(body: ModelContextSelection, gate: ModelContextSelection, *
         extra = additional_body_messages(candidate, gate, projection=projection)
         return prefix_characters + sum(len(item["content"]) for item in extra) + assessment_reserve <= max_characters
 
-    if gate.fits and body.fits and not combined_fits(body):
+    # Recompute from the serialized combination; earlier fits flags may have
+    # used other reserves and must never prevent optional-history pruning.
+    if not combined_fits(body):
         return _bounded(body.payload, target=history_wire_characters(body.payload, projection=projection),
             required_ids=set(gate.observation_ids), max_characters=max_characters,
             assessment_reserve=assessment_reserve, projection=projection, original_ids=original_ids, accept=combined_fits)
-    return body
+    return replace(body, fits=body.characters + assessment_reserve <= max_characters)
 
 
 def additional_body_messages(body: ModelContextSelection, gate: ModelContextSelection, *, projection: str):

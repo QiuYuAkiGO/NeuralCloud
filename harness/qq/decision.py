@@ -1768,6 +1768,10 @@ def decide_qq_reply(
     assessment_reserve = _assessment_reserve(include_web_plan=_turn_preparation is not None,
                                             include_vision_request=vision_tool is not None,
                                               production=production_store is not None)
+    # Reserve serialized tool evidence before freezing the gate prefix.
+    # This is headroom, not permission to exceed the hard cap.
+    vision_continuation_reserve = 16_384 if vision_tool is not None else 0
+    trace.add_counter("context_vision_reserved_characters", vision_continuation_reserve)
     input_character_budget = settings.qq_input_token_budget * 2
     projection = getattr(settings, "qq_context_projection", "compact")
     trace.add_counter("context_input_token_budget", settings.qq_input_token_budget)
@@ -1776,7 +1780,7 @@ def decide_qq_reply(
         payload, required_observation_ids=set(new_ids) | set(request_observation_ids)
         | set(_reply_reference_record_ids or []) | ({trigger_latest_id} if trigger_latest_id else set()),
         handled_observation_ids=handled, max_characters=input_character_budget,
-        assessment_reserve=assessment_reserve,
+        assessment_reserve=assessment_reserve + vision_continuation_reserve,
         projection=projection,
     )
     history_mode = getattr(settings, "qq_history_selection", "bounded")
@@ -1790,7 +1794,8 @@ def decide_qq_reply(
         bounded = select_bounded_history(payload, required_ids=mandatory,
             gate_target=settings.qq_gate_history_soft_characters,
             body_target=settings.qq_body_history_soft_characters,
-            max_characters=input_character_budget, assessment_reserve=assessment_reserve, projection=projection)
+            max_characters=input_character_budget, assessment_reserve=assessment_reserve, projection=projection,
+            gate_tool_reserve=vision_continuation_reserve)
         for stage, candidate in (("gate", bounded.gate), ("body", bounded.body)):
             trace.add_counter(f"context_{stage}_history_candidate_observations", len(candidate.observation_ids))
             trace.add_counter(f"context_{stage}_history_candidate_characters",

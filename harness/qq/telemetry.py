@@ -44,6 +44,7 @@ _DIRECT_TERMINAL_REASONS = _ERRORS | {
     "text_interruption_wait", "text_interruption_regenerate", "text_interruption_expired", "text_interruption_coalesced",
     "sent", "observed_history", "observed_own", "observed_read_only", "decision_wait",
     "natural_wait", "guard_wait", "decision_replayed", "decision_not_sendable", "direct_cooldown",
+    "direct_error_notice_cooldown",
 }
 _DIRECT_TERMINAL_STAGES = frozenset({
     "protocol.attention",
