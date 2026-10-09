@@ -1,0 +1,644 @@
+{
+  "document": "docs/MISTY_MANUAL_ZH.md",
+  "basis_date": "2026-10-09",
+  "timezone": "Asia/Shanghai",
+  "basis": "local_working_tree_including_uncommitted_changes",
+  "head": "56ef933b4df550e0fd880bfeda22d01355f9666e",
+  "runtime_configuration_verified": false,
+  "live_model_calls_performed": false,
+  "fingerprint_algorithm": "SHA-256 of raw file bytes",
+  "sources": [
+    {
+      "path": "harness/agency/planner.py",
+      "sha256": "7c31e350b28ce629a61c1f3f6ce33ad0ea46d726f944a561ea963d5a12a6174e"
+    },
+    {
+      "path": "harness/body_belief/appraisal.py",
+      "sha256": "e18066bd79dbacff3203b1155221b235c47b519e25028f5f2f9cb3502ba0b258"
+    },
+    {
+      "path": "harness/cognitive/autonomous.py",
+      "sha256": "4ca0958a7d6778a4d8cd819d751a75ec49c4852414b217d89a618876b8fbee32"
+    },
+    {
+      "path": "harness/cognitive/basic_terminal.py",
+      "sha256": "7b4c0edb0c686cec6aaa8a68ffd216ddefb0b85e1a2ffaf7bb668f8a30447642"
+    },
+    {
+      "path": "harness/cognitive/board.py",
+      "sha256": "c030bebe931c5d4394430a326cab9d51a220a622e365bbaee660699772ba195b"
+    },
+    {
+      "path": "harness/cognitive/capabilities.py",
+      "sha256": "bb43afaadd99ea239c031fcaaae3e18cf2e1f93926664a322076242054f4a38f"
+    },
+    {
+      "path": "harness/cognitive/diary.py",
+      "sha256": "932ba221b45d6445b9a9baa6744bee99ba0201db19a63d33ac119877044dd73d"
+    },
+    {
+      "path": "harness/cognitive/diary_reflection.py",
+      "sha256": "343750a26af53dec09d97abb1c52673c622680d5137c9ef27ca3cd9ef1e28fb0"
+    },
+    {
+      "path": "harness/cognitive/goals.py",
+      "sha256": "c502ba5c6fcbe3841ce6590dbebbf458c58d5039513da04a080f6cd66db0bfa0"
+    },
+    {
+      "path": "harness/cognitive/grounded_agency.py",
+      "sha256": "41be1c52b20862ff8ef894e83146693e66cbbb41ed3da940e1dd74531faf404d"
+    },
+    {
+      "path": "harness/cognitive/interruption.py",
+      "sha256": "8f744ad431e82db8e93d7fcd6a8dce3433f2592d409a2d2961c2909ce9272d9d"
+    },
+    {
+      "path": "harness/cognitive/production.py",
+      "sha256": "6353995b5657e34210cb8d8268f56ce48698570164c499fe2cd59c01ce0d0cfe"
+    },
+    {
+      "path": "harness/cognitive/qq_memory.py",
+      "sha256": "431fea7deafa473abbe2a2376b9447d2c67c87da2c1fc40c71d803a7f9a75265"
+    },
+    {
+      "path": "harness/cognitive/qq_turn.py",
+      "sha256": "725e074d7a238d5f77eb6fed9d589bebcaf95e123d7d93df047b400409c2329c"
+    },
+    {
+      "path": "harness/cognitive/service.py",
+      "sha256": "da53f3e3886a4b3df9afb852ed80295ad2a4d8efe86427f47930c70c9cbc0984"
+    },
+    {
+      "path": "harness/cognitive/shared_memory.py",
+      "sha256": "821fec08dd52e6684637563df12cc5ad7dae4badad274b3a9dc4acf8a0594860"
+    },
+    {
+      "path": "harness/cognitive/web.py",
+      "sha256": "574f0c5fbb5ebb1948e4d5ddb3440f631faa2b2722c089e30ed50d290d59a108"
+    },
+    {
+      "path": "harness/compiler/compiler.py",
+      "sha256": "c70a2ee85bc6320b9f759bdf4487bc0d79270e24a8725ea44cac1fa5332b0054"
+    },
+    {
+      "path": "harness/compiler/expression.py",
+      "sha256": "36213590a40b2c737939d89e2990e560eb7ac5a213e8e2120a2a134d35b7c7cf"
+    },
+    {
+      "path": "harness/core/inference.py",
+      "sha256": "2a581cbc3f56cb7cac8df05451a6d89f07c4ffb8e851113852567e77ec38dd59"
+    },
+    {
+      "path": "harness/emotion/endpoint.py",
+      "sha256": "5335a8ca7e0e8d426ddd596e3b24cbd17f815fd17f99d5c1947cc6dc819c32b3"
+    },
+    {
+      "path": "harness/emotion/service.py",
+      "sha256": "1a3210b3408ed784ad18a8fd44635c01a32d995af58ae9d501cb7262e641b444"
+    },
+    {
+      "path": "harness/llm/character.py",
+      "sha256": "8345b7ab45714c0f50ec8e514cd124bab7f8f26c44e2b5f297633efe6d62467b"
+    },
+    {
+      "path": "harness/llm/client.py",
+      "sha256": "bfadae3663a151b4341f2ec3977f968b5a4659f48cf95bfc2ba2fa5e2b89d58a"
+    },
+    {
+      "path": "harness/llm/deepseek_structured.py",
+      "sha256": "4ae0bfd6f7d34c8c9bef682c441f3b96f26aaa1cccbfe4bde19e8b13f73f073f"
+    },
+    {
+      "path": "harness/llm/fallback.py",
+      "sha256": "81b9d6aa8526af22ee4cb69751c69da372af434758deebddaefa6ae7080ab667"
+    },
+    {
+      "path": "harness/llm/json_output.py",
+      "sha256": "30581430b2fc18600c651a316922f7a38d02e4b96df3bfead6e58eda2db1450d"
+    },
+    {
+      "path": "harness/llm/structured.py",
+      "sha256": "35f51771231ddb11402dd7f5b654f6f0429583522d504d9faa141b0bd5cbd19a"
+    },
+    {
+      "path": "harness/memory/dual.py",
+      "sha256": "758f3aa64305d67ce32d947410c3cbc7feee5cbcf05d0d114b17d284c72b7c47"
+    },
+    {
+      "path": "harness/memory/qq_assimilation.py",
+      "sha256": "852212981ae829438ae50fcdfc78a1f4927a4f81ad7d3e02eb474c001e195c7b"
+    },
+    {
+      "path": "harness/memory/retrieval/hybrid.py",
+      "sha256": "27dc90421872ef3ec78da5ebcdf55ae77fd67fabf61704b6e15e9dc048852c99"
+    },
+    {
+      "path": "harness/memory/retrieval/planner.py",
+      "sha256": "ecdb9a2588651ff038a27220396ec14f033ee1ab7ec4d88dc83543d2b69aef4b"
+    },
+    {
+      "path": "harness/memory/service.py",
+      "sha256": "b49893b67470a3c416c57b5356b2d67ad0f749053be208bd3ec7e5313986f0f4"
+    },
+    {
+      "path": "harness/memory/tier.py",
+      "sha256": "2b6e1f6fce511cb803550f3c53abb65c4416f4078084059272337a0d1cb8f44d"
+    },
+    {
+      "path": "harness/memory/writer/curator.py",
+      "sha256": "95ef5e3994ec2f376637af0302fcf71c209492b05a76c1a4a824272f29f38e53"
+    },
+    {
+      "path": "harness/pipeline/parser.py",
+      "sha256": "0acc0c16bfa60ef1ae627dbf1bf7c7751ae36fe0450bd7f9a4c056a3728ba9a1"
+    },
+    {
+      "path": "harness/pipeline/pipeline.py",
+      "sha256": "60d986366dae8a6e849649371f1fb9a0998c3c6b0f67db8084e36a7613653e9e"
+    },
+    {
+      "path": "harness/pipeline/state_builder.py",
+      "sha256": "1eb3edb2132fa9264b16fffc96899e0aa9d3b3beeb42338d14cf305f3219486c"
+    },
+    {
+      "path": "harness/qq/context_budget.py",
+      "sha256": "15241b2516529cea4a80fc061adce526cf1601bda25599b07f4c427d80ec9be8"
+    },
+    {
+      "path": "harness/qq/context_window.py",
+      "sha256": "d3354ecba7dfc74cb13df34f0733cc98b238689a50fbec5e4607082f10c04a10"
+    },
+    {
+      "path": "harness/qq/decision.py",
+      "sha256": "e217069ad2a8a8e87b11f8b4325633a5a953fafd3511887274af49d416e8e10a"
+    },
+    {
+      "path": "harness/qq/desktop.py",
+      "sha256": "f99a807634a3e42ea292742c6c6c13b572707f328decd6b3d336ddeca3976a5c"
+    },
+    {
+      "path": "harness/qq/direct_images.py",
+      "sha256": "d55e1c50d8411998e460495ba0a63811c90a85da410bdb334f63503e53089a4f"
+    },
+    {
+      "path": "harness/qq/draft.py",
+      "sha256": "f3c169702acd22f6ea163dbf0754d5389fc0a98c84bfe00048311c938041d43e"
+    },
+    {
+      "path": "harness/qq/grounding.py",
+      "sha256": "e96faea62931825f72bc163614dcb90235a11235031b53530019b118c7f954e1"
+    },
+    {
+      "path": "harness/qq/history_selection.py",
+      "sha256": "c0e2cc0b16a53ed54bd0e7b6d66b50f716b6ee57614aa9ede183bbd66906d8c1"
+    },
+    {
+      "path": "harness/qq/memory_evidence.py",
+      "sha256": "8085007e0ea726421c7b109de9196ac04fe45424d7a279c8ed124c328b545623"
+    },
+    {
+      "path": "harness/qq/model_projection.py",
+      "sha256": "a29b9389c59cc95e40813d1536f21695271700c4cf7d534496153a29b49516bc"
+    },
+    {
+      "path": "harness/qq/policy.py",
+      "sha256": "d5bf76c1bdb11071e05de5767b38e98f4b00b20dcbc0bb5f4556b1d886fe91db"
+    },
+    {
+      "path": "harness/qq/prepared_turn.py",
+      "sha256": "3fc7724a7e04b4305a91e4c3b294d7aca9cbc25956b9e4f75cf1106d43b92c28"
+    },
+    {
+      "path": "harness/qq/semantic_alignment.py",
+      "sha256": "695bdea9cac361a9a095aca83c4e0e55686c336d72489d450ff8aeb6d5aae3a4"
+    },
+    {
+      "path": "harness/qq/telemetry.py",
+      "sha256": "c0d84b928e7afeecdf6df2b72593ec28e0202adbab4b754e18106f19d34c8b86"
+    },
+    {
+      "path": "harness/qq/tool_evidence.py",
+      "sha256": "a3e63d954ccf37cda406c176b6b0ec2cc839b231bdc10ebfebaed708450d3be0"
+    },
+    {
+      "path": "harness/qq/turn_checkpoints.py",
+      "sha256": "101172baf3bbf77af5b754fa0976f729f93e269ae553f2f1981b50a7410f62de"
+    },
+    {
+      "path": "harness/qq/vision.py",
+      "sha256": "7da8317cb7b3d124e6e29affd4747c082267eb16f2c40a3893c9930f30e03b7d"
+    },
+    {
+      "path": "harness/qq/vision_tool.py",
+      "sha256": "8b08478c79b6acfa9d18444473fd4e03a5981265d757848749ac722975a1838d"
+    },
+    {
+      "path": "harness/router/gate.py",
+      "sha256": "eb2965d45c0089e65883382c2741e4bdcf17fa8afb884e8b127d5ea672e60fcd"
+    },
+    {
+      "path": "harness/runtime/emotion.py",
+      "sha256": "20c15d532d0e1ae2a6f05a134fb7a0597308afc2923748ad484cb6976137755d"
+    },
+    {
+      "path": "harness/runtime/goals.py",
+      "sha256": "5fba2dcf349677e3bf6adeca9fd6ac59d5a478b14cc1dc6e1d339e8637d2e17e"
+    },
+    {
+      "path": "harness/runtime/qq_pipeline.py",
+      "sha256": "559536c96cd62cd2e979061ed8eb785ce9e9014a5e65bd1e288013b53a39d401"
+    },
+    {
+      "path": "harness/runtime/qq_web.py",
+      "sha256": "2e8bacd978e2f5169de45c458e90e26e3a2e73a53df9262afc9839fbbf3a1bdd"
+    },
+    {
+      "path": "harness/runtime/supervisor.py",
+      "sha256": "85e69683d5fa4ff18af91d2e4eb6ddc717a53b2171813d806f36fff72b30cd47"
+    },
+    {
+      "path": "harness/runtime/voice.py",
+      "sha256": "b2cb17490160e574972040de5300ed6a1e01d9aad06f7ebdb2d7b2a329ae0cf2"
+    },
+    {
+      "path": "harness/social_world/observations.py",
+      "sha256": "6d8f504ba98b6fe907422fce5c5582eb309ed5ab09f25f68b4faf798875965c6"
+    },
+    {
+      "path": "harness/subagents/interpreter.py",
+      "sha256": "e9cce0a85c295a494f7f90f5d82b2a3305034ffcabc94bebd506b7d95065b367"
+    },
+    {
+      "path": "harness/validator/audit.py",
+      "sha256": "3c8c5595671c810e795a8ff6a03c89e294a2e569e40bd110d3fffae677c45583"
+    },
+    {
+      "path": "harness/validator/evidence_projection.py",
+      "sha256": "b46940939e7933c54466bc3ab72115594251d0b3e84bc8552e568cf5116ca03d"
+    },
+    {
+      "path": "harness/validator/semantic.py",
+      "sha256": "0fa80165e8e4002eab2922114b59ecdb9bd6f704fda0c1f9b0d62c2e63e257d0"
+    },
+    {
+      "path": "harness/validator/validator.py",
+      "sha256": "a1c493ac98df2a97686eab0f46221dcdf539b5d90338322da407b5ca4005196c"
+    },
+    {
+      "path": "infra/trace/request_spans.py",
+      "sha256": "7c524420d4cb9d493d5fd20801f813f7b0787ddcd08fbe50e5d7b7d1484c1729"
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "2485e08a61863758dbc918f330526e3bd703264e49efd5629bba80fcc3e340e6"
+    },
+    {
+      "path": "uv.lock",
+      "sha256": "ca6f99a8597c2194e59a2ecb6029fd8cfe122214c47f7fafae68a838edfee480"
+    }
+  ],
+  "model_api_references": [
+    {
+      "path": "harness/agency/planner.py",
+      "line": 168,
+      "owner": "AgencyService.reconsider",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/body_belief/appraisal.py",
+      "line": 59,
+      "owner": "BodyBeliefAppraiser.appraise",
+      "api": "complete_chat"
+    },
+    {
+      "path": "harness/cognitive/autonomous.py",
+      "line": 158,
+      "owner": "run_or_load_assessment",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/cognitive/basic_terminal.py",
+      "line": 242,
+      "owner": "BasicTerminalActionPlanner.decide",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/cognitive/basic_terminal.py",
+      "line": 244,
+      "owner": "BasicTerminalActionPlanner.decide",
+      "api": "complete_chat"
+    },
+    {
+      "path": "harness/cognitive/board.py",
+      "line": 256,
+      "owner": "prepare",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/cognitive/capabilities.py",
+      "line": 376,
+      "owner": "prepare",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/cognitive/diary.py",
+      "line": 220,
+      "owner": "prepare",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/cognitive/diary_reflection.py",
+      "line": 154,
+      "owner": "DiaryReflectionWorker.ask.invoke",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/cognitive/goals.py",
+      "line": 192,
+      "owner": "prepare",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/cognitive/grounded_agency.py",
+      "line": 136,
+      "owner": "GroundedAgencyDecisionModel.decide",
+      "api": "complete_chat"
+    },
+    {
+      "path": "harness/cognitive/interruption.py",
+      "line": 78,
+      "owner": "InterruptionAssessor._call",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/cognitive/production.py",
+      "line": 253,
+      "owner": "_ask",
+      "api": "complete_chat"
+    },
+    {
+      "path": "harness/cognitive/web.py",
+      "line": 393,
+      "owner": "prepare",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/emotion/endpoint.py",
+      "line": 21,
+      "owner": "DeepSeekEmotionClient.complete_json",
+      "api": "complete_json"
+    },
+    {
+      "path": "harness/emotion/endpoint.py",
+      "line": 28,
+      "owner": "DeepSeekEmotionClient.complete_json",
+      "api": "complete_json"
+    },
+    {
+      "path": "harness/emotion/service.py",
+      "line": 423,
+      "owner": "EmotionService._model.invoke",
+      "api": "complete_json"
+    },
+    {
+      "path": "harness/llm/character.py",
+      "line": 68,
+      "owner": "CharacterModel._complete",
+      "api": "complete_chat"
+    },
+    {
+      "path": "harness/llm/client.py",
+      "line": 292,
+      "owner": "OpenAICompatClient.complete_json",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/llm/client.py",
+      "line": 311,
+      "owner": "OpenAICompatClient.complete_chat",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/llm/client.py",
+      "line": 612,
+      "owner": "RoutingLLMClient.complete_json",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/llm/client.py",
+      "line": 620,
+      "owner": "RoutingLLMClient.complete_json",
+      "api": "complete_json"
+    },
+    {
+      "path": "harness/llm/client.py",
+      "line": 634,
+      "owner": "RoutingLLMClient.complete_validation_json",
+      "api": "complete_json"
+    },
+    {
+      "path": "harness/llm/client.py",
+      "line": 642,
+      "owner": "RoutingLLMClient.complete_validation_json",
+      "api": "complete_json"
+    },
+    {
+      "path": "harness/llm/client.py",
+      "line": 662,
+      "owner": "RoutingLLMClient.complete_validation_json",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/llm/client.py",
+      "line": 667,
+      "owner": "RoutingLLMClient.complete_validation_json",
+      "api": "complete_json"
+    },
+    {
+      "path": "harness/llm/client.py",
+      "line": 677,
+      "owner": "RoutingLLMClient.complete_chat",
+      "api": "complete_chat"
+    },
+    {
+      "path": "harness/llm/client.py",
+      "line": 696,
+      "owner": "RoutingLLMClient.complete_chat_result",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/llm/client.py",
+      "line": 708,
+      "owner": "RoutingLLMClient.complete_chat_result",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/llm/client.py",
+      "line": 733,
+      "owner": "RoutingLLMClient.complete_aux_text_result",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/llm/client.py",
+      "line": 949,
+      "owner": "MockLLM.complete_chat",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/llm/fallback.py",
+      "line": 58,
+      "owner": "FallbackLLMClient.complete_json",
+      "api": "complete_json"
+    },
+    {
+      "path": "harness/llm/fallback.py",
+      "line": 61,
+      "owner": "FallbackLLMClient.complete_chat",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/llm/fallback.py",
+      "line": 94,
+      "owner": "FallbackLLMClient.complete_chat_result",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/llm/fallback.py",
+      "line": 121,
+      "owner": "FallbackLLMClient.complete_chat_result",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/memory/dual.py",
+      "line": 40,
+      "owner": "DualMemoryWriter.enrich",
+      "api": "complete_json"
+    },
+    {
+      "path": "harness/memory/qq_assimilation.py",
+      "line": 488,
+      "owner": "QQMemoryProposer._generate",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/memory/qq_assimilation.py",
+      "line": 499,
+      "owner": "QQMemoryProposer._generate",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/memory/qq_assimilation.py",
+      "line": 505,
+      "owner": "QQMemoryProposer._generate",
+      "api": "complete_json"
+    },
+    {
+      "path": "harness/memory/qq_assimilation.py",
+      "line": 535,
+      "owner": "QQMemoryProposer._complete_without_thinking",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/memory/retrieval/planner.py",
+      "line": 34,
+      "owner": "RetrievalPlanner.plan",
+      "api": "complete_json"
+    },
+    {
+      "path": "harness/memory/tier.py",
+      "line": 90,
+      "owner": "TierClassifier.classify",
+      "api": "complete_json"
+    },
+    {
+      "path": "harness/memory/writer/curator.py",
+      "line": 62,
+      "owner": "LLMCurator.propose",
+      "api": "complete_json"
+    },
+    {
+      "path": "harness/pipeline/parser.py",
+      "line": 59,
+      "owner": "ContextParser.parse",
+      "api": "complete_json"
+    },
+    {
+      "path": "harness/qq/decision.py",
+      "line": 1478,
+      "owner": "_QQScopedLLM.complete_chat",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/qq/decision.py",
+      "line": 2077,
+      "owner": "decide_qq_reply",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/qq/decision.py",
+      "line": 2141,
+      "owner": "decide_qq_reply",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/qq/desktop.py",
+      "line": 346,
+      "owner": "DesktopBackend._vision_client.BoundedVision.complete_chat_result",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/qq/direct_images.py",
+      "line": 406,
+      "owner": "_describe",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/qq/grounding.py",
+      "line": 212,
+      "owner": "inspect_qq_frame",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/qq/vision.py",
+      "line": 217,
+      "owner": "observe_qq_frame",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/qq/vision_tool.py",
+      "line": 399,
+      "owner": "QQVisionTool.invoke",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/router/gate.py",
+      "line": 113,
+      "owner": "ComplexityGate._decide",
+      "api": "complete_json"
+    },
+    {
+      "path": "harness/social_world/observations.py",
+      "line": 108,
+      "owner": "SocialWorldService.appraise",
+      "api": "complete_chat_result"
+    },
+    {
+      "path": "harness/subagents/interpreter.py",
+      "line": 44,
+      "owner": "SocialInterpreter.interpret",
+      "api": "complete_json"
+    },
+    {
+      "path": "harness/validator/validator.py",
+      "line": 461,
+      "owner": "ResponseValidator._llm_check",
+      "api": "complete_json"
+    },
+    {
+      "path": "harness/validator/validator.py",
+      "line": 472,
+      "owner": "ResponseValidator._llm_check",
+      "api": "complete_json"
+    }
+  ]
+}
