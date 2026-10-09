@@ -1,0 +1,16 @@
+--- a/harness/validator/semantic.py
++++ b/harness/validator/semantic.py
+@@ -286,9 +286,11 @@
+                 for issue in self.alignment.issues:
+                     if issue.candidate_quote is not None and (not issue.candidate_quote or issue.candidate_quote not in text):
+                         raise SemanticReviewError("semantic_alignment_quote_invalid")
+-                    if any(i < 0 or i >= evidence_count or evidence.entries[i].status != "user_claim"
++                    # project_semantics already binds trigger rows to original user claims.
++                    # Supporting rows may be admitted image/tool/history context;
++                    # they do not replace the mandatory trigger intersection below.
++                    if any(i < 0 or i >= evidence_count
+                            or evidence.entries[i].audience != response_semantics.audience
+-                           or evidence.entries[i].source_conversation_id != response_semantics.audience
+                            for i in issue.evidence_rows):
+                         raise SemanticReviewError("semantic_alignment_reference_invalid")
+                     if not set(issue.evidence_rows).intersection(task["trigger_rows"]):

@@ -90,3 +90,34 @@ def test_fail_closed_does_not_count_as_a_correct_critic_assessment(tmp_path):
         metrics = report["metrics"]["control"][state]
         assert metrics["correct"] == 0 and metrics["scored"] == 0 and metrics["unscored"] == 1
         assert metrics["accepted_bad"] == 0
+
+
+def test_explicit_task_view_uses_exact_admitted_sources(monkeypatch):
+    from eval.reply_source_authority.adapters import install
+    from harness.core.inference import MemoryEvidenceContext, MemoryEvidenceEntry
+    from harness.validator import validator
+
+    # Register restorations before the research-only installer replaces them.
+    monkeypatch.setattr(validator.ResponseValidator, "_llm_check", validator.ResponseValidator._llm_check)
+    monkeypatch.setattr(validator, "project_semantics", validator.project_semantics)
+    evidence = MemoryEvidenceContext(audience="a", entries=[MemoryEvidenceEntry(source_id="original", text="图收到了吗？",
+        audience="a", source_conversation_id="a", source_channel="qq_group", status="user_claim", kind="current")])
+    task = ResponseSemanticContext(mode="enforce", audience="a", trigger_source_ids=["original"], must_address="错误解释")
+    install("source_explicit")
+    projected = validator.project_semantics(source_contexts({"response_semantics": task})["response_semantics"], evidence)
+    assert projected["source_messages"] == [{"evidence_row": 0, "text": "图收到了吗？"}]
+    assert projected["must_address"] == "" and projected["understanding"] is None
+
+
+def test_portable_replay_inputs_reject_modified_evidence():
+    import pytest
+    from eval.qq_brief.common import digest
+    from eval.reply_source_authority.report_replay import bundled_input
+
+    value = {"candidate": "收到啦。", "evidence": {"entries": [{"text": "原始记录"}]}}
+    reference = digest(value)
+    bundle = {"inputs": {reference: value}, "trials": {"mechanism": {"trial": reference}}}
+    assert bundled_input(bundle, "mechanism", "trial") == value
+    value["evidence"]["entries"][0]["text"] = "被改写的记录"
+    with pytest.raises(ValueError, match="bundle_hash_mismatch"):
+        bundled_input(bundle, "mechanism", "trial")
