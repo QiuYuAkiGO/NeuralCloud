@@ -1,0 +1,56 @@
+{
+  "checked_at": "2026-10-11T10:42:04.568110+00:00",
+  "release": "20261009-json-repair-v2",
+  "models": [
+    {
+      "phase": "qq_memory_consolidation",
+      "stage": null,
+      "status": "success",
+      "count": 1
+    }
+  ],
+  "errors": [],
+  "services": {
+    "cognitive": "active",
+    "homeostasis": "active",
+    "runtime": "active",
+    "gui": "active",
+    "board": "active",
+    "qq_direct": "active"
+  },
+  "runtime": {
+    "lifecycle": "RUNNING",
+    "health": {
+      "lifecycle": "RUNNING",
+      "journal_writable": true,
+      "cognitive_healthy": true,
+      "homeostasis_healthy": true,
+      "llm_healthy": true,
+      "body_healthy": true,
+      "degraded_reasons": [],
+      "last_heartbeat_at": "2026-10-11T10:41:56.009182Z",
+      "last_journal_append_at": "2026-10-11T10:42:05.525002Z",
+      "embodiment": {
+        "state": "disabled",
+        "provider_id": null,
+        "body_instance_id": null,
+        "activated_capabilities": [],
+        "effective_capabilities": [],
+        "negotiated": null,
+        "health": null,
+        "reason": "embodiment disabled by manifest"
+      },
+      "agency_state": "AVAILABLE",
+      "body_episode_id": null,
+      "body_revision": null,
+      "body_state_age_seconds": null
+    }
+  },
+  "qq_direct": {
+    "running": true,
+    "connected": true,
+    "heartbeat_at": "2026-10-11T10:42:03.940127+00:00"
+  },
+  "observation_start": "2026-10-11T10:33:00+00:00",
+  "natural_acceptance": "pending_no_model_samples"
+}

@@ -1,0 +1,36 @@
+{
+  "schema_version": "cognitive-dynamics-replay-v1",
+  "passed": true,
+  "timeline_sha256": "fd2d5ba587ed2296ef28f1abc6bd3da08dbc87c557fef87ea605d82056f90c52",
+  "messages": 224,
+  "groups": {
+    "1060979317": 207,
+    "1044946257": 10,
+    "712342021": 7
+  },
+  "heartbeats": 3826,
+  "watchdog_events": [],
+  "peak_load": 0.39999999999940067,
+  "initial_values": {
+    "autonomy": 0.6750000000001821,
+    "cognitive_load": 0.39999999999940067,
+    "competence": 0.6249999999991347,
+    "energy_reserve": 0.6649999999996343,
+    "novelty": 0.16,
+    "safety_predictability": 0.6649999999997562,
+    "social_connection": 0.22
+  },
+  "final_values": {
+    "autonomy": 0.6750000000001821,
+    "cognitive_load": 0.10000000000000014,
+    "competence": 0.6249999999991347,
+    "energy_reserve": 0.6649999999996343,
+    "novelty": 0.4999999999999969,
+    "safety_predictability": 0.6649999999997562,
+    "social_connection": 0.22
+  },
+  "actual_processing_receipts": 0,
+  "initialization": "recorded_seven_values_unknown_latents",
+  "scope": "Raw intake regression; the historical archive has no processing receipts. No work or semantic appraisals are fabricated.",
+  "finished_at": "2026-10-11T10:15:33.347702+00:00"
+}

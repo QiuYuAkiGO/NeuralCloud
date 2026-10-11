@@ -1,0 +1,181 @@
+{
+  "started_at": "2026-10-11T10:15:13.741282+00:00",
+  "phase": "running",
+  "release_id": "20261009-json-repair-v2",
+  "change": "configuration-only active promotion",
+  "base_release": "20261009-json-repair-v2",
+  "shadow_gate": {
+    "schema_version": "cognitive-dynamics-shadow-gate-v1",
+    "ready": true,
+    "reasons": [],
+    "observation": {
+      "continuous_seconds": 137632.6071369999,
+      "samples": 121780,
+      "maximum_gap_seconds": 1057.189392,
+      "last_sample_at": "2026-10-11T10:15:30.985474+00:00"
+    },
+    "assessment_coverage": {
+      "exposures": 8762,
+      "assessed": 817,
+      "unassessed": 7945,
+      "work_units": 82265867,
+      "last_work_at": "2026-10-11T10:11:21.728737+00:00"
+    },
+    "snapshot_revision": 266444,
+    "profile_ref": "qq-social-drive-v1@3",
+    "checked_at": "2026-10-11T10:15:33.379581+00:00"
+  },
+  "last_recent_user_control": null,
+  "control_audit": [
+    {
+      "at": "2026-10-11T10:15:52.659075Z",
+      "type": "pause",
+      "authorized_maintenance": true
+    }
+  ],
+  "finished_at": "2026-10-11T10:33:30.641859+00:00",
+  "backup": {
+    "path": "/var/backups/neuralcloud/20261011-before-homeostasis-active",
+    "files_verified": 65484,
+    "symlinks_verified": 7,
+    "databases_quick_check": 2902,
+    "archive_bytes": 12755612463,
+    "archive_sha256": "6cf735dd4ebc0afe5e2fbd1d0da1d58c444d9fba0c569f52f13439a56e9b9838",
+    "source_hashes_unchanged": true
+  },
+  "database_changes": "none; existing WAL and job state retained",
+  "preservation": {
+    "profile_manifest_direct_unchanged_before_promotion": true,
+    "attention_sha256": "623d29711e2a298e01add4e053042a4244516742fa1cb7da107b810f2feb899b",
+    "attention_unchanged_before_restart": true
+  },
+  "configuration": {
+    "profile_revision": 4,
+    "mode": "active",
+    "base_manifest_revision": 6,
+    "fair_input_budget": true,
+    "only_added_capability": "communication.qq.attention.set.v1"
+  },
+  "activation": {
+    "release": "20261009-json-repair-v2",
+    "configuration_only": true
+  },
+  "verification": {
+    "release_id": "20261009-json-repair-v2",
+    "verified_files": 438,
+    "configuration_valid": true,
+    "business_services_started": false
+  },
+  "runtime": {
+    "lifecycle": "RUNNING",
+    "health": {
+      "lifecycle": "RUNNING",
+      "journal_writable": true,
+      "cognitive_healthy": true,
+      "homeostasis_healthy": true,
+      "llm_healthy": true,
+      "body_healthy": true,
+      "degraded_reasons": [
+        "qq_homeostatic_feedback"
+      ],
+      "last_heartbeat_at": "2026-10-11T10:33:28.210663Z",
+      "last_journal_append_at": "2026-10-11T10:33:28.587096Z",
+      "embodiment": {
+        "state": "disabled",
+        "provider_id": null,
+        "body_instance_id": null,
+        "activated_capabilities": [],
+        "effective_capabilities": [],
+        "negotiated": null,
+        "health": null,
+        "reason": "embodiment disabled by manifest"
+      },
+      "agency_state": "AVAILABLE",
+      "body_episode_id": null,
+      "body_revision": null,
+      "body_state_age_seconds": null
+    },
+    "pending_events": 0,
+    "background": {
+      "heartbeat": {
+        "active": true,
+        "pending": 0,
+        "running": true,
+        "coalesced": 0,
+        "thread_jobs": 2,
+        "last_duration_ms": null,
+        "last_error": null
+      },
+      "passive_state": {
+        "active": true,
+        "pending": 0,
+        "running": false,
+        "coalesced": 0,
+        "thread_jobs": 0,
+        "last_duration_ms": null,
+        "last_error": null
+      },
+      "affect": {
+        "pending": 0,
+        "running": 0,
+        "scopes": 0,
+        "degraded": false
+      }
+    }
+  },
+  "direct": {
+    "running": true,
+    "connected": true,
+    "heartbeat_at": "2026-10-11T10:33:30.117495+00:00"
+  },
+  "services": {
+    "cognitive": {
+      "MainPID": "488572",
+      "Result": "success",
+      "LoadState": "loaded",
+      "ActiveState": "active",
+      "SubState": "running",
+      "FragmentPath": "/etc/systemd/system/neuralcloud-cognitive.service"
+    },
+    "homeostasis": {
+      "MainPID": "488666",
+      "Result": "success",
+      "LoadState": "loaded",
+      "ActiveState": "active",
+      "SubState": "running",
+      "FragmentPath": "/etc/systemd/system/neuralcloud-homeostasis.service"
+    },
+    "runtime": {
+      "MainPID": "488794",
+      "Result": "success",
+      "LoadState": "loaded",
+      "ActiveState": "active",
+      "SubState": "running",
+      "FragmentPath": "/etc/systemd/system/neuralcloud-runtime.service"
+    },
+    "gui": {
+      "MainPID": "490163",
+      "Result": "success",
+      "LoadState": "loaded",
+      "ActiveState": "active",
+      "SubState": "running",
+      "FragmentPath": "/etc/systemd/system/neuralcloud-gui.service"
+    },
+    "board": {
+      "MainPID": "488770",
+      "Result": "success",
+      "LoadState": "loaded",
+      "ActiveState": "active",
+      "SubState": "running",
+      "FragmentPath": "/etc/systemd/system/neuralcloud-board.service"
+    },
+    "qq_direct": {
+      "MainPID": "490187",
+      "Result": "success",
+      "LoadState": "loaded",
+      "ActiveState": "active",
+      "SubState": "running",
+      "FragmentPath": "/etc/systemd/system/neuralcloud-qq-direct.service"
+    }
+  }
+}

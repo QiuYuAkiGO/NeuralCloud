@@ -1,0 +1,133 @@
+{
+  "checked_at": "2026-10-11T10:35:27.436684+00:00",
+  "release": "20261009-json-repair-v2",
+  "services": {
+    "cognitive": "active",
+    "homeostasis": "active",
+    "runtime": "active",
+    "gui": "active",
+    "board": "active",
+    "qq_direct": "active"
+  },
+  "runtime": {
+    "lifecycle": "RUNNING",
+    "manifest_revision": 12,
+    "health": {
+      "lifecycle": "RUNNING",
+      "journal_writable": true,
+      "cognitive_healthy": true,
+      "homeostasis_healthy": true,
+      "llm_healthy": true,
+      "body_healthy": true,
+      "degraded_reasons": [],
+      "last_heartbeat_at": "2026-10-11T10:35:16.095054Z",
+      "last_journal_append_at": "2026-10-11T10:35:27.236221Z",
+      "embodiment": {
+        "state": "disabled",
+        "provider_id": null,
+        "body_instance_id": null,
+        "activated_capabilities": [],
+        "effective_capabilities": [],
+        "negotiated": null,
+        "health": null,
+        "reason": "embodiment disabled by manifest"
+      },
+      "agency_state": "AVAILABLE",
+      "body_episode_id": null,
+      "body_revision": null,
+      "body_state_age_seconds": null
+    },
+    "background": {
+      "heartbeat": {
+        "active": true,
+        "pending": 1,
+        "running": true,
+        "coalesced": 9,
+        "thread_jobs": 0,
+        "last_duration_ms": 11210.514,
+        "last_error": null
+      },
+      "passive_state": {
+        "active": true,
+        "pending": 0,
+        "running": true,
+        "coalesced": 0,
+        "thread_jobs": 0,
+        "last_duration_ms": null,
+        "last_error": null
+      },
+      "affect": {
+        "pending": 0,
+        "running": 0,
+        "scopes": 0,
+        "degraded": false
+      }
+    }
+  },
+  "gui_available": true,
+  "qq": {
+    "running": true,
+    "connected": true,
+    "heartbeat_at": "2026-10-11T10:35:26.425823+00:00"
+  },
+  "profile_revision": 4,
+  "mode": "active",
+  "manifest_revision": 6,
+  "manifest_profile": "qq-social-drive-v1@4",
+  "fair_input": true,
+  "other_direct_settings_unchanged": true,
+  "attention_observe_guard": true,
+  "watchdog": [],
+  "snapshot_revision": 266472,
+  "coverage": {
+    "exposures": 8762,
+    "assessed": 817,
+    "unassessed": 7945,
+    "work_units": 82265867,
+    "last_work_at": "2026-10-11T10:11:21.728737+00:00"
+  },
+  "work_total_applied": [
+    8762,
+    8762
+  ],
+  "memory_queue": {
+    "applied": 3801,
+    "skipped": 624
+  },
+  "policies": [
+    {
+      "group_id": "1044946257",
+      "mode": "open",
+      "revision": 0,
+      "origin": "default",
+      "changed_at": null,
+      "closed_at": null,
+      "opened_at": null,
+      "next_review_at": null,
+      "review_count": 0
+    },
+    {
+      "group_id": "1060979317",
+      "mode": "open",
+      "revision": 0,
+      "origin": "default",
+      "changed_at": null,
+      "closed_at": null,
+      "opened_at": null,
+      "next_review_at": null,
+      "review_count": 0
+    },
+    {
+      "group_id": "712342021",
+      "mode": "open",
+      "revision": 0,
+      "origin": "default",
+      "changed_at": null,
+      "closed_at": null,
+      "opened_at": null,
+      "next_review_at": null,
+      "review_count": 0
+    }
+  ],
+  "policies_identical_to_predeployment": true
+}
