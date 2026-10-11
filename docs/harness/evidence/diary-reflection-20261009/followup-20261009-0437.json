@@ -1,0 +1,181 @@
+{
+  "health": {
+    "checked_at": "2026-10-08T20:39:14.756417+00:00",
+    "release": "20261009-provisional-trust-v2",
+    "config": {
+      "autonomous_enabled": true,
+      "window_local": "21:00-02:00",
+      "max_entries_per_day": 1,
+      "quiet_seconds": 60,
+      "opportunity_seconds": 1800,
+      "timezone": "Asia/Shanghai",
+      "reflection_enabled": true
+    },
+    "runtime": "RUNNING",
+    "cognitive_healthy": true,
+    "services": {
+      "cognitive": "active",
+      "homeostasis": "active",
+      "runtime": "active",
+      "gui": "inactive",
+      "board": "active",
+      "qq_direct": "active"
+    },
+    "summary_status": {
+      "jobs": {
+        "committed": 1
+      },
+      "latest": {
+        "status": "committed",
+        "completed_batches": 19,
+        "expected_batches": 19,
+        "error_type": null
+      },
+      "model_calls": 21,
+      "total_tokens": 112522
+    },
+    "turns": [
+      {
+        "entry_id": "diary-entry:9cc1a938eb26cc812a9980a85e4364edc209c3f0",
+        "status": "committed",
+        "requested_at": "2026-10-08T17:31:07.624314+00:00",
+        "timing": {
+          "total_ms": 3905.354,
+          "reflection": {
+            "reason": "accepted",
+            "source_count": 1311,
+            "expected_batches": 19,
+            "completed_batches": 19,
+            "excluded_count": 1126,
+            "jobs": {
+              "ready": 1
+            },
+            "latest": {
+              "status": "ready",
+              "completed_batches": 19,
+              "expected_batches": 19,
+              "error_type": null
+            },
+            "model_calls": 21,
+            "total_tokens": 112522
+          }
+        },
+        "error_type": null,
+        "wait_reason": null,
+        "confirmed_at": "2026-10-08T17:31:12.036427+00:00"
+      },
+      {
+        "entry_id": "diary-entry:1b2f0de297020dc2f84d78e0d20c39190b38a056",
+        "status": "wait",
+        "requested_at": "2026-10-08T17:00:10.715787+00:00",
+        "timing": {
+          "total_ms": 118.89,
+          "reflection": {
+            "reason": "summary_pending",
+            "source_count": 0,
+            "expected_batches": 0,
+            "completed_batches": 0,
+            "excluded_count": 0,
+            "jobs": {
+              "pending": 1
+            },
+            "latest": {
+              "status": "pending",
+              "completed_batches": null,
+              "expected_batches": null,
+              "error_type": null
+            },
+            "model_calls": 0,
+            "total_tokens": 0
+          }
+        },
+        "error_type": null,
+        "wait_reason": null,
+        "confirmed_at": null
+      }
+    ],
+    "entries": [
+      {
+        "entry_id": "diary-entry:9cc1a938eb26cc812a9980a85e4364edc209c3f0",
+        "written_at": "2026-10-08T17:31:11.654144+00:00",
+        "body_hash": "c48f4fc8a68be76b6dc6e6d2c5700d3e6d4d2dc8da76993a052600b33c5bb8bd"
+      },
+      {
+        "entry_id": "diary-entry:6a08e8d6632db558878a9708e96c622343a3079e",
+        "written_at": "2026-10-07T16:05:26.338190+00:00",
+        "body_hash": "13a1ddc93c93e67b4c63d9f304ea7e081549b51be6bdca60b572fbd2d95b7f22"
+      },
+      {
+        "entry_id": "diary-entry:210a663c59c734def96a9efe36b0e79a93fd6fdb",
+        "written_at": "2026-10-06T16:01:01.328433+00:00",
+        "body_hash": "a9662817e0610318341ca55a8cabd33ce0167538ec7fb557c678eeaa31cc750f"
+      }
+    ]
+  },
+  "lineage": {
+    "coverage": {
+      "archive": "/var/lib/neuralcloud/shared-memory.sqlite3",
+      "end": 21913,
+      "since": "2026-10-07T16:05:26.338190+00:00",
+      "start": 19476,
+      "until": "2026-10-09T01:00:10.917245+08:00"
+    },
+    "source_count": 1311,
+    "excluded_count": 1126,
+    "indexed_range_count": 2437,
+    "range_fully_accounted": true,
+    "no_source_exclusion_overlap": true,
+    "leaf_lineage_complete": true,
+    "final_lineage_complete": true,
+    "batch_citations_valid": true,
+    "candidate_citations_valid": true,
+    "body_hash_valid": true,
+    "identical_body_count": 1,
+    "review": {
+      "grounded": true,
+      "meaningful_change": true,
+      "reason": "changed_reflection"
+    },
+    "unsupported_claims_count": 0,
+    "reflection_delta_present": true,
+    "usage_by_phase": {
+      "summary": {
+        "calls": 19,
+        "tokens": 97994,
+        "errors": 0
+      },
+      "expression": {
+        "calls": 1,
+        "tokens": 7521,
+        "errors": 0
+      },
+      "review": {
+        "calls": 1,
+        "tokens": 7007,
+        "errors": 0
+      }
+    },
+    "gui_state": {
+      "MainPID": "0",
+      "Result": "success",
+      "LoadState": "loaded",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "FragmentPath": "/etc/systemd/system/neuralcloud-gui.service"
+    }
+  },
+  "window": {
+    "start_local": "2026-10-08T21:00:00+08:00",
+    "end_local": "2026-10-09T02:00:00+08:00",
+    "partial_after_deployment": true,
+    "natural_opportunities": 2,
+    "waits": {
+      "summary_pending": 1
+    },
+    "committed": 1,
+    "source_cutoff_advanced_only_on_commit": true,
+    "outcome": "passed_recorded_review_and_source_lineage",
+    "semantic_check_scope": "Recorded production review; no extra model calls or manual invitations."
+  },
+  "operational_note": "Current release advanced to provisional-trust-v2; diary feature retained. GUI cleanly inactive (Result=success); no service changes made."
+}

@@ -400,22 +400,39 @@
   },
   "release_archive_sha256": "fdc41e14f35f344068ae433a466f05d557e1f637df5641fbb3d07d76c4171556",
   "natural_acceptance": {
-    "status": "pending_natural_windows",
+    "status": "three_window_observation_complete_with_open_reliability_issue",
     "automation_id": "misty",
     "cadence_hours": 4,
     "required_windows": 3,
-    "completed_windows": 0,
+    "completed_windows": 3,
     "extend_if_all_no_change": true,
     "start_after_utc": "2026-10-08T16:42:34.395156+00:00",
     "pre_deployment_errors_excluded": [
       "2026-10-08T16:00:07.609968+00:00",
       "2026-10-08T16:30:08.604564+00:00"
-    ]
+    ],
+    "first_valid_new_content": true,
+    "latest_checked_at": "2026-10-11T06:23:23.507849+00:00",
+    "latest_evidence": "followup-20261011-1422.json",
+    "remaining_windows": 0,
+    "observed_prepare_revision_conflicts": 4,
+    "outcome_counts": {
+      "writes": 2,
+      "summary_pending_waits": 3,
+      "unsupported_waits": 1,
+      "prepare_errors": 4
+    },
+    "source_and_coverage_checks_passed": true,
+    "model_calls": 58,
+    "total_tokens": 315398,
+    "summary_call_errors": 0,
+    "repetition_rejections": 0,
+    "open_issue": "PrepareDiaryEntry optimistic revision conflicts; no fix deployed during read-only observation."
   },
   "limitations": [
     "Historical replay reconstructs source availability; original prompts were not retained.",
     "Full model replay uses the current model, minimal persona and supplied feelings, not the original state.",
     "Cumulative replay usage includes development iterations; final writer/reviewer usage is isolated separately.",
-    "Natural production acceptance is pending; zero summaries at first health check means no post-deployment opportunity yet."
+    "Three windows meet write-or-explained-wait and lineage criteria, but four prepare revision conflicts remain unresolved. Semantic verdicts are recorded production reviews, not independent model re-evaluations."
   ]
 }

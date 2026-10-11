@@ -1,0 +1,363 @@
+{
+  "health": {
+    "checked_at": "2026-10-11T06:23:23.507849+00:00",
+    "release": "20261009-json-repair-v2",
+    "config": {
+      "autonomous_enabled": true,
+      "window_local": "21:00-02:00",
+      "max_entries_per_day": 1,
+      "quiet_seconds": 60,
+      "opportunity_seconds": 1800,
+      "timezone": "Asia/Shanghai",
+      "reflection_enabled": true
+    },
+    "runtime": "RUNNING",
+    "cognitive_healthy": true,
+    "probe_errors": {
+      "cognitive": null,
+      "runtime": null
+    },
+    "services": {
+      "cognitive": "active",
+      "homeostasis": "active",
+      "runtime": "active",
+      "gui": "inactive",
+      "board": "active",
+      "qq_direct": "active"
+    },
+    "summary_status": {
+      "jobs": {
+        "committed": 2,
+        "wait": 1
+      },
+      "latest": {
+        "status": "wait",
+        "completed_batches": 14,
+        "expected_batches": 14,
+        "error_type": null
+      },
+      "model_calls": 58,
+      "total_tokens": 315398
+    },
+    "turns": [
+      {
+        "entry_id": "diary-entry:e073ff5d41306418b2f392bc8e9b43aba4e843cc",
+        "status": "error",
+        "requested_at": "2026-10-10T17:35:07.621367+00:00",
+        "timing": null,
+        "error_type": "DomainCommandError",
+        "wait_reason": null,
+        "confirmed_at": null
+      },
+      {
+        "entry_id": "diary-entry:a47c9c49dee6d2ff673535dfade079cbcc349bd0",
+        "status": "wait",
+        "requested_at": "2026-10-10T17:05:01.357574+00:00",
+        "timing": {
+          "total_ms": 7701.583,
+          "reflection": {
+            "reason": "unsupported",
+            "source_count": 989,
+            "expected_batches": 14,
+            "completed_batches": 14,
+            "excluded_count": 835,
+            "jobs": {
+              "committed": 2,
+              "wait": 1
+            },
+            "latest": {
+              "status": "wait",
+              "completed_batches": 14,
+              "expected_batches": 14,
+              "error_type": null
+            },
+            "model_calls": 58,
+            "total_tokens": 315398
+          }
+        },
+        "error_type": null,
+        "wait_reason": null,
+        "confirmed_at": null
+      },
+      {
+        "entry_id": "diary-entry:c477e7a0231422c2169cf2221fbeea840d6a936b",
+        "status": "error",
+        "requested_at": "2026-10-10T16:34:58.730398+00:00",
+        "timing": null,
+        "error_type": "DomainCommandError",
+        "wait_reason": null,
+        "confirmed_at": null
+      },
+      {
+        "entry_id": "diary-entry:61116dd7c252e2e0b876a89cf27fe005f6022c2d",
+        "status": "wait",
+        "requested_at": "2026-10-10T16:04:56.952833+00:00",
+        "timing": {
+          "total_ms": 2113.626,
+          "reflection": {
+            "reason": "summary_pending",
+            "source_count": 0,
+            "expected_batches": 0,
+            "completed_batches": 0,
+            "excluded_count": 0,
+            "jobs": {
+              "committed": 2,
+              "pending": 1
+            },
+            "latest": {
+              "status": "pending",
+              "completed_batches": null,
+              "expected_batches": null,
+              "error_type": null
+            },
+            "model_calls": 42,
+            "total_tokens": 228552
+          }
+        },
+        "error_type": null,
+        "wait_reason": null,
+        "confirmed_at": null
+      },
+      {
+        "entry_id": "diary-entry:30a10e360c25936981375f7d91e7bed1ff49a5a1",
+        "status": "committed",
+        "requested_at": "2026-10-09T17:30:24.286977+00:00",
+        "timing": {
+          "total_ms": 9481.469,
+          "reflection": {
+            "reason": "accepted",
+            "source_count": 1342,
+            "expected_batches": 19,
+            "completed_batches": 19,
+            "excluded_count": 1110,
+            "jobs": {
+              "committed": 1,
+              "ready": 1
+            },
+            "latest": {
+              "status": "ready",
+              "completed_batches": 19,
+              "expected_batches": 19,
+              "error_type": null
+            },
+            "model_calls": 42,
+            "total_tokens": 228552
+          }
+        },
+        "error_type": null,
+        "wait_reason": null,
+        "confirmed_at": "2026-10-09T17:30:34.128093+00:00"
+      },
+      {
+        "entry_id": "diary-entry:52dd601edb4ee21363cf02a163e45167484f9680",
+        "status": "wait",
+        "requested_at": "2026-10-09T17:00:11.225426+00:00",
+        "timing": {
+          "total_ms": 1293.295,
+          "reflection": {
+            "reason": "summary_pending",
+            "source_count": 0,
+            "expected_batches": 0,
+            "completed_batches": 0,
+            "excluded_count": 0,
+            "jobs": {
+              "committed": 1,
+              "pending": 1
+            },
+            "latest": {
+              "status": "pending",
+              "completed_batches": null,
+              "expected_batches": null,
+              "error_type": null
+            },
+            "model_calls": 21,
+            "total_tokens": 112522
+          }
+        },
+        "error_type": null,
+        "wait_reason": null,
+        "confirmed_at": null
+      },
+      {
+        "entry_id": "diary-entry:8db6e1abb17b56dfcbcaaae455944d72f79a634c",
+        "status": "error",
+        "requested_at": "2026-10-09T16:30:06.559976+00:00",
+        "timing": null,
+        "error_type": "DomainCommandError",
+        "wait_reason": null,
+        "confirmed_at": null
+      },
+      {
+        "entry_id": "diary-entry:df02ea0732c36fa79ef39764f2988a5142f611c9",
+        "status": "error",
+        "requested_at": "2026-10-09T16:00:03.527750+00:00",
+        "timing": null,
+        "error_type": "DomainCommandError",
+        "wait_reason": null,
+        "confirmed_at": null
+      },
+      {
+        "entry_id": "diary-entry:9cc1a938eb26cc812a9980a85e4364edc209c3f0",
+        "status": "committed",
+        "requested_at": "2026-10-08T17:31:07.624314+00:00",
+        "timing": {
+          "total_ms": 3905.354,
+          "reflection": {
+            "reason": "accepted",
+            "source_count": 1311,
+            "expected_batches": 19,
+            "completed_batches": 19,
+            "excluded_count": 1126,
+            "jobs": {
+              "ready": 1
+            },
+            "latest": {
+              "status": "ready",
+              "completed_batches": 19,
+              "expected_batches": 19,
+              "error_type": null
+            },
+            "model_calls": 21,
+            "total_tokens": 112522
+          }
+        },
+        "error_type": null,
+        "wait_reason": null,
+        "confirmed_at": "2026-10-08T17:31:12.036427+00:00"
+      },
+      {
+        "entry_id": "diary-entry:1b2f0de297020dc2f84d78e0d20c39190b38a056",
+        "status": "wait",
+        "requested_at": "2026-10-08T17:00:10.715787+00:00",
+        "timing": {
+          "total_ms": 118.89,
+          "reflection": {
+            "reason": "summary_pending",
+            "source_count": 0,
+            "expected_batches": 0,
+            "completed_batches": 0,
+            "excluded_count": 0,
+            "jobs": {
+              "pending": 1
+            },
+            "latest": {
+              "status": "pending",
+              "completed_batches": null,
+              "expected_batches": null,
+              "error_type": null
+            },
+            "model_calls": 0,
+            "total_tokens": 0
+          }
+        },
+        "error_type": null,
+        "wait_reason": null,
+        "confirmed_at": null
+      }
+    ],
+    "entries": [
+      {
+        "entry_id": "diary-entry:30a10e360c25936981375f7d91e7bed1ff49a5a1",
+        "written_at": "2026-10-09T17:30:33.806826+00:00",
+        "body_hash": "de6750c2c188959e75cf41e85e334545e08ff001b07296821e938c2356fd46dd"
+      },
+      {
+        "entry_id": "diary-entry:9cc1a938eb26cc812a9980a85e4364edc209c3f0",
+        "written_at": "2026-10-08T17:31:11.654144+00:00",
+        "body_hash": "c48f4fc8a68be76b6dc6e6d2c5700d3e6d4d2dc8da76993a052600b33c5bb8bd"
+      },
+      {
+        "entry_id": "diary-entry:6a08e8d6632db558878a9708e96c622343a3079e",
+        "written_at": "2026-10-07T16:05:26.338190+00:00",
+        "body_hash": "13a1ddc93c93e67b4c63d9f304ea7e081549b51be6bdca60b572fbd2d95b7f22"
+      }
+    ]
+  },
+  "lineage": {
+    "coverage": {
+      "archive": "/var/lib/neuralcloud/shared-memory.sqlite3",
+      "end": 26189,
+      "since": "2026-10-10T01:00:12.633075+08:00",
+      "start": 24365,
+      "until": "2026-10-11T00:04:59.051641+08:00"
+    },
+    "persisted_coverage": {
+      "archive": "/var/lib/neuralcloud/shared-memory.sqlite3",
+      "end": 24365,
+      "since": "2026-10-09T01:00:10.917245+08:00",
+      "start": 21913,
+      "until": "2026-10-10T01:00:12.633075+08:00"
+    },
+    "job_status": "wait",
+    "source_count": 989,
+    "excluded_count": 835,
+    "indexed_range_count": 1824,
+    "range_fully_accounted": true,
+    "no_source_exclusion_overlap": true,
+    "leaf_lineage_complete": true,
+    "final_lineage_complete": true,
+    "batch_citations_valid": true,
+    "candidate_citations_valid": true,
+    "body_hash_valid": true,
+    "identical_body_count": 1,
+    "review": {
+      "grounded": false,
+      "meaningful_change": true,
+      "reason": "unsupported"
+    },
+    "unsupported_claims_count": 5,
+    "reflection_delta_present": true,
+    "usage_by_phase": {
+      "summary": {
+        "calls": 52,
+        "tokens": 269720,
+        "errors": 0
+      },
+      "expression": {
+        "calls": 3,
+        "tokens": 23571,
+        "errors": 0
+      },
+      "review": {
+        "calls": 3,
+        "tokens": 22107,
+        "errors": 0
+      }
+    },
+    "gui_state": {
+      "MainPID": "0",
+      "Result": "success",
+      "LoadState": "loaded",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "FragmentPath": "/etc/systemd/system/neuralcloud-gui.service"
+    }
+  },
+  "window": {
+    "start_local": "2026-10-10T21:00:00+08:00",
+    "end_local": "2026-10-11T02:00:00+08:00",
+    "natural_opportunities": 4,
+    "committed": 0,
+    "waits": {
+      "summary_pending": 1,
+      "unsupported": 1
+    },
+    "prepare_conflicts": [
+      {
+        "local_time": "2026-10-11T00:34:58+08:00",
+        "expected": 7867,
+        "current": 7868
+      },
+      {
+        "local_time": "2026-10-11T01:35:08+08:00",
+        "expected": 7892,
+        "current": 7899
+      }
+    ],
+    "incremental_tokens": 86846,
+    "expression_review_ms": 7701.583,
+    "coverage_not_consumed": true
+  },
+  "conclusion": "Three-window observation completed: two writes and one grounded-check wait. Source accounting and coverage verified. Four prepare revision conflicts remain an open reliability issue; this is not an error-free acceptance.",
+  "verification_scope": "Recorded production checks and source lineage; no extra model calls or diary invitations, no production mutations."
+}
