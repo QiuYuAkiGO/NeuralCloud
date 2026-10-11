@@ -1,42 +1,42 @@
 {
-  "checked_at": "2026-10-11T12:12:17.922839+00:00",
+  "checked_at": "2026-10-11T13:13:44.674708+00:00",
   "release": "20261009-json-repair-v2",
   "models": [
     {
       "phase": "qq_memory_consolidation",
       "stage": null,
       "status": "success",
-      "count": 24
+      "count": 54
     },
     {
       "phase": "emotion_guidance",
       "stage": null,
       "status": "success",
-      "count": 23
+      "count": 35
     },
     {
       "phase": "goal_decision",
       "stage": null,
       "status": "success",
-      "count": 9
+      "count": 14
     },
     {
       "phase": "emotion_appraisal",
       "stage": null,
       "status": "success",
-      "count": 14
+      "count": 21
     },
     {
       "phase": "qq_gate",
       "stage": "qq_gate",
       "status": "success",
-      "count": 21
+      "count": 29
     },
     {
       "phase": "qq_persona",
       "stage": "generate",
       "status": "success",
-      "count": 11
+      "count": 18
     },
     {
       "phase": "qq_persona",
@@ -48,11 +48,23 @@
       "phase": "capability_selection",
       "stage": null,
       "status": "success",
-      "count": 4
+      "count": 8
     },
     {
       "phase": "qq_persona",
       "stage": "validate",
+      "status": "success",
+      "count": 16
+    },
+    {
+      "phase": "qq_memory_consolidation",
+      "stage": null,
+      "status": "error",
+      "count": 1
+    },
+    {
+      "phase": "diary_summary",
+      "stage": "diary.summary",
       "status": "success",
       "count": 9
     }
@@ -90,6 +102,27 @@
         "code": "deepseek_structured_json_invalid",
         "diagnostics": []
       }
+    },
+    {
+      "started_at": "2026-10-11T12:22:59.595161+00:00",
+      "phase": "qq_memory_consolidation",
+      "stage": null,
+      "error": {
+        "type": "StructuredResponseError",
+        "message": "model request failed",
+        "code": "deepseek_structured_schema_invalid",
+        "diagnostics": [
+          {
+            "validator": "maxItems",
+            "path": [
+              "impressions",
+              2,
+              "subject_refs"
+            ],
+            "missing_fields": []
+          }
+        ]
+      }
     }
   ],
   "services": {
@@ -110,8 +143,8 @@
       "llm_healthy": true,
       "body_healthy": true,
       "degraded_reasons": [],
-      "last_heartbeat_at": "2026-10-11T12:12:11.124876Z",
-      "last_journal_append_at": "2026-10-11T12:12:20.184820Z",
+      "last_heartbeat_at": "2026-10-11T13:13:37.304700Z",
+      "last_journal_append_at": "2026-10-11T13:13:47.868154Z",
       "embodiment": {
         "state": "disabled",
         "provider_id": null,
@@ -131,8 +164,8 @@
   "qq_direct": {
     "running": true,
     "connected": true,
-    "heartbeat_at": "2026-10-11T12:12:20.031764+00:00"
+    "heartbeat_at": "2026-10-11T13:13:47.344823+00:00"
   },
   "observation_start": "2026-10-11T10:33:00+00:00",
-  "natural_acceptance": "successful_deliveries_observed_pending_new_fallback_investigation"
+  "natural_acceptance": "passed_with_recorded_limitations"
 }

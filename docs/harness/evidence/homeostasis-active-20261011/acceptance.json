@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-11T12:12:38.480711+00:00",
+  "checked_at": "2026-10-11T13:14:00.448065+00:00",
   "release": "20261009-json-repair-v2",
   "services": {
     "cognitive": "active",
@@ -20,8 +20,8 @@
       "llm_healthy": true,
       "body_healthy": true,
       "degraded_reasons": [],
-      "last_heartbeat_at": "2026-10-11T12:12:29.456055Z",
-      "last_journal_append_at": "2026-10-11T12:12:38.366504Z",
+      "last_heartbeat_at": "2026-10-11T13:13:47.942764Z",
+      "last_journal_append_at": "2026-10-11T13:13:48.104552Z",
       "embodiment": {
         "state": "disabled",
         "provider_id": null,
@@ -42,15 +42,15 @@
         "active": true,
         "pending": 0,
         "running": true,
-        "coalesced": 22,
-        "thread_jobs": 0,
-        "last_duration_ms": 8872.943,
+        "coalesced": 30,
+        "thread_jobs": 1,
+        "last_duration_ms": 10526.155,
         "last_error": null
       },
       "passive_state": {
         "active": true,
         "pending": 0,
-        "running": true,
+        "running": false,
         "coalesced": 0,
         "thread_jobs": 0,
         "last_duration_ms": null,
@@ -68,7 +68,7 @@
   "qq": {
     "running": true,
     "connected": true,
-    "heartbeat_at": "2026-10-11T12:12:38.084228+00:00"
+    "heartbeat_at": "2026-10-11T13:13:59.378603+00:00"
   },
   "profile_revision": 4,
   "mode": "active",
@@ -78,20 +78,20 @@
   "other_direct_settings_unchanged": true,
   "attention_observe_guard": true,
   "watchdog": [],
-  "snapshot_revision": 267876,
+  "snapshot_revision": 268902,
   "coverage": {
-    "exposures": 8886,
-    "assessed": 838,
-    "unassessed": 8048,
-    "work_units": 83220845,
-    "last_work_at": "2026-10-11T12:02:46.025136+00:00"
+    "exposures": 8977,
+    "assessed": 845,
+    "unassessed": 8132,
+    "work_units": 83966340,
+    "last_work_at": "2026-10-11T13:10:02.664857+00:00"
   },
   "work_total_applied": [
-    8886,
-    8886
+    8977,
+    8977
   ],
   "memory_queue": {
-    "applied": 3824,
+    "applied": 3850,
     "skipped": 624
   },
   "policies": [
