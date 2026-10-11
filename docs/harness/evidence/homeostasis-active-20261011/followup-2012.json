@@ -1,0 +1,930 @@
+{
+  "checked_at": "2026-10-11T12:12:17.922839+00:00",
+  "decisions": {
+    "decisions": [
+      {
+        "trace_digest": "e247cac7a8099e20c8b70f4ab6751875f0224fe1322aac46410d3937174d7e7c",
+        "completed_at": "2026-10-11T10:45:24.672819Z",
+        "outcome": "error_fallback",
+        "error_type": "model_invalid",
+        "action": "speak",
+        "deliveries": []
+      },
+      {
+        "trace_digest": "85ff297d26c8f7bdafeaff48c1a7944f7f27fcb191e99df8d7ae2ae81d710367",
+        "completed_at": "2026-10-11T11:26:02.431603Z",
+        "outcome": "ready",
+        "error_type": null,
+        "action": "speak",
+        "deliveries": []
+      },
+      {
+        "trace_digest": "073d988ee1f1671c8415aa2e3bec1d1b5e55a33b3b700f247b3bf855c02ad3cd",
+        "completed_at": "2026-10-11T11:26:40.215995Z",
+        "outcome": "ready",
+        "error_type": null,
+        "action": "speak",
+        "deliveries": []
+      },
+      {
+        "trace_digest": "ad3641bfaa3049347948fef2857eb68267754b75a33b4ee940970bb17233869a",
+        "completed_at": "2026-10-11T11:37:30.851749Z",
+        "outcome": "error_fallback",
+        "error_type": "model_invalid",
+        "action": "speak",
+        "deliveries": [
+          {
+            "delivered_at": "2026-10-11T11:37:35.153128Z",
+            "verification": "qq_protocol_verified"
+          }
+        ]
+      },
+      {
+        "trace_digest": "b7599b528ea6b8aedb4661dfaec8b09fc287df758d8e9c2ebc4616e488fcc97e",
+        "completed_at": "2026-10-11T11:38:04.751858Z",
+        "outcome": "ready",
+        "error_type": null,
+        "action": "speak",
+        "deliveries": []
+      },
+      {
+        "trace_digest": "630a9f537045088d7eddd6a1b4227909c38c39f2c3bd5f1cd4cbcb430d771bdd",
+        "completed_at": "2026-10-11T11:40:46.315479Z",
+        "outcome": "natural_wait",
+        "error_type": null,
+        "action": "wait",
+        "deliveries": []
+      },
+      {
+        "trace_digest": "abc1dff4b5fed84a061eaf7566b8dfca6db1b9e687b75a4ed0f9dfa7878282ac",
+        "completed_at": "2026-10-11T11:41:07.009390Z",
+        "outcome": "natural_wait",
+        "error_type": null,
+        "action": "wait",
+        "deliveries": []
+      },
+      {
+        "trace_digest": "f5467c6a2f1aa0ac8d1628af2b48b3a6a8d7a5a0542b0bb41542c3cbed89358b",
+        "completed_at": "2026-10-11T11:49:02.918564Z",
+        "outcome": "ready",
+        "error_type": null,
+        "action": "speak",
+        "deliveries": []
+      },
+      {
+        "trace_digest": "a1a5c34c2f7ea4313fc0aea0eb304041c278f4f3219225480bc3c82bb5976146",
+        "completed_at": "2026-10-11T11:49:35.867220Z",
+        "outcome": "ready",
+        "error_type": null,
+        "action": "speak",
+        "deliveries": []
+      },
+      {
+        "trace_digest": "1b4a04b3e2fcd9603d8006bdcb77be433c8fcf350c865c4ac83cf192cbc08218",
+        "completed_at": "2026-10-11T11:50:07.668013Z",
+        "outcome": "ready",
+        "error_type": null,
+        "action": "speak",
+        "deliveries": [
+          {
+            "delivered_at": "2026-10-11T11:50:08.785228Z",
+            "verification": "qq_protocol_verified"
+          }
+        ]
+      },
+      {
+        "trace_digest": "346cc64a3d04905aaab422e32a8531d299b4e9b00ac2d20b81256fd4f8bc6968",
+        "completed_at": "2026-10-11T11:53:57.715979Z",
+        "outcome": "ready",
+        "error_type": null,
+        "action": "speak",
+        "deliveries": [
+          {
+            "delivered_at": "2026-10-11T11:54:02.482630Z",
+            "verification": "qq_protocol_verified"
+          }
+        ]
+      },
+      {
+        "trace_digest": "b092873e1e6a9445de33c894b4a0aac4141a81ea266e5e8551549b7e01306245",
+        "completed_at": "2026-10-11T11:59:38.747421Z",
+        "outcome": "ready",
+        "error_type": null,
+        "action": "speak",
+        "deliveries": [
+          {
+            "delivered_at": "2026-10-11T11:59:42.737668Z",
+            "verification": "qq_protocol_verified"
+          }
+        ]
+      },
+      {
+        "trace_digest": "40af66c10dd0fd54ad67518e1a5d20977d6adfc25ee66f90b996b715822621ef",
+        "completed_at": "2026-10-11T12:02:01.905101Z",
+        "outcome": "error_fallback",
+        "error_type": "model_invalid",
+        "action": "speak",
+        "deliveries": [
+          {
+            "delivered_at": "2026-10-11T12:02:07.018381Z",
+            "verification": "qq_protocol_verified"
+          }
+        ]
+      }
+    ],
+    "outcomes": {
+      "error_fallback": 3,
+      "ready": 8,
+      "natural_wait": 2
+    }
+  },
+  "physical_error_chains": [
+    {
+      "trace_digest": "e247cac7a8099e20c8b70f4ab6751875f0224fe1322aac46410d3937174d7e7c",
+      "started_at": "2026-10-11T10:45:21.504980+00:00",
+      "phase": "qq_persona",
+      "stage": "validate",
+      "http_status": 200,
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      },
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 5639,
+        "completion_tokens": 275,
+        "total_tokens": 5914,
+        "cache_hit_tokens": 3584,
+        "cache_miss_tokens": 2055,
+        "cache_known_prompt_tokens": 5639,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "latency_ms": 1400.163,
+      "error": {
+        "type": "StructuredResponseError",
+        "message": "model request failed",
+        "code": "deepseek_structured_json_invalid",
+        "diagnostics": []
+      },
+      "decision": {
+        "outcome": "error_fallback",
+        "error_type": "model_invalid",
+        "completed_at": "2026-10-11T10:45:24.672819Z",
+        "action": "speak",
+        "deliveries": []
+      }
+    },
+    {
+      "trace_digest": "e247cac7a8099e20c8b70f4ab6751875f0224fe1322aac46410d3937174d7e7c",
+      "started_at": "2026-10-11T10:45:22.917050+00:00",
+      "phase": "qq_persona",
+      "stage": "validate",
+      "http_status": 200,
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      },
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 5723,
+        "completion_tokens": 269,
+        "total_tokens": 5992,
+        "cache_hit_tokens": 3584,
+        "cache_miss_tokens": 2139,
+        "cache_known_prompt_tokens": 5723,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "latency_ms": 1748.437,
+      "error": {
+        "type": "StructuredResponseError",
+        "message": "model request failed",
+        "code": "deepseek_structured_json_invalid",
+        "diagnostics": []
+      },
+      "decision": {
+        "outcome": "error_fallback",
+        "error_type": "model_invalid",
+        "completed_at": "2026-10-11T10:45:24.672819Z",
+        "action": "speak",
+        "deliveries": []
+      }
+    },
+    {
+      "trace_digest": "346cc64a3d04905aaab422e32a8531d299b4e9b00ac2d20b81256fd4f8bc6968",
+      "started_at": "2026-10-11T11:53:55.110397+00:00",
+      "phase": "qq_persona",
+      "stage": "validate",
+      "http_status": 200,
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      },
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 5421,
+        "completion_tokens": 238,
+        "total_tokens": 5659,
+        "cache_hit_tokens": 3584,
+        "cache_miss_tokens": 1837,
+        "cache_known_prompt_tokens": 5421,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "latency_ms": 1309.745,
+      "error": {
+        "type": "StructuredResponseError",
+        "message": "model request failed",
+        "code": "deepseek_structured_json_invalid",
+        "diagnostics": []
+      },
+      "decision": {
+        "outcome": "ready",
+        "error_type": null,
+        "completed_at": "2026-10-11T11:53:57.715979Z",
+        "action": "speak",
+        "deliveries": [
+          {
+            "delivered_at": "2026-10-11T11:54:02.482630Z",
+            "verification": "qq_protocol_verified"
+          }
+        ]
+      }
+    }
+  ],
+  "fallback_traces": [
+    {
+      "trace_digest": "ad3641bfaa3049347948fef2857eb68267754b75a33b4ee940970bb17233869a",
+      "counters": {
+        "protocol_queue_wait_ms": 5,
+        "scheduler_mode_shadow": 1,
+        "media_cache_enabled": 0,
+        "media_parallel_enabled": 0,
+        "image_mode_all": 1,
+        "input_image_count": 0,
+        "input_has_images": 0,
+        "input_reply_eligible": 1,
+        "emotion_appraisal_model_calls": 1,
+        "emotion_appraisal_results": 1,
+        "emotion_appraisal_fallbacks": 0,
+        "emotion_appraisal_reused_results": 0,
+        "emotion_guidance_model_calls": 1,
+        "emotion_guidance_results": 1,
+        "emotion_guidance_fallbacks": 0,
+        "emotion_guidance_reused_results": 0,
+        "context_source_characters": 286674,
+        "context_base_characters": 202973,
+        "context_vision_reserved_characters": 0,
+        "context_input_token_budget": 60000,
+        "context_input_character_budget": 120000,
+        "context_gate_history_candidate_observations": 2,
+        "context_gate_history_candidate_characters": 6334,
+        "context_gate_history_candidate_omitted": 118,
+        "context_gate_history_candidate_fits": 0,
+        "context_body_history_candidate_observations": 2,
+        "context_body_history_candidate_characters": 6334,
+        "context_body_history_candidate_omitted": 118,
+        "context_body_history_candidate_fits": 0,
+        "context_budget_prefix_rebuilds": 1,
+        "context_assessment_reserved_characters": 61541,
+        "context_selected_observations": 2,
+        "context_omitted_observations": 118,
+        "context_wire_characters": 62067,
+        "context_compact_projection": 1,
+        "context_history_wire_characters": 6334,
+        "context_gate_history_soft_target_exceeded": 0,
+        "context_body_history_soft_target_exceeded": 0,
+        "context_final_characters": 62067,
+        "context_final_estimated_tokens": 31034,
+        "context_budget_exceeded": 1,
+        "context_budget_exceeded_final": 1,
+        "decision_outcome_error_fallback": 1,
+        "web_requested": 0,
+        "web_used": 0,
+        "protocol_error_fallback": 1,
+        "protocol_first_verified_segment_ms": 18437,
+        "protocol_fully_verified_ms": 18446
+      },
+      "termination": {
+        "reason": "sent",
+        "stage": "protocol.delivery"
+      },
+      "stages": [
+        {
+          "name": "protocol.observation_commit",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "protocol.read",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "protocol.precheck",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.sqlite_commit",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.sqlite_commit",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "emotion.appraisal.input",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "emotion.appraisal.model",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.sqlite_commit",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.sqlite_commit",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "emotion.observe",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "cognitive.lock_wait",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "source.verify",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "memory.import_qq",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "memory.import_local",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "memory.shared_query",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "memory.shared_query",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "memory.reply_preset",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "memory.shared_query",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "memory.prepare",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "shared_memory",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "emotion.guidance.input",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "emotion.guidance.model",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.sqlite_commit",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "emotion.guidance",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "context.history_selection",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "context.prefix_rebuild.budget",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "decision.context_budget",
+          "outcome": "error",
+          "error_type": "model_invalid"
+        },
+        {
+          "name": "decision",
+          "outcome": "error",
+          "error_type": "model_invalid"
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.sqlite_commit",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.command",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "shared_cognitive.rpc",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "protocol.shared_prepare",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "protocol.first_verified_segment",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "protocol.fully_verified",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "protocol.delivery",
+          "outcome": "ok",
+          "error_type": null
+        }
+      ]
+    },
+    {
+      "trace_digest": "40af66c10dd0fd54ad67518e1a5d20977d6adfc25ee66f90b996b715822621ef",
+      "counters": {
+        "protocol_queue_wait_ms": 5,
+        "scheduler_mode_shadow": 1,
+        "media_cache_enabled": 0,
+        "media_parallel_enabled": 0,
+        "image_mode_all": 1,
+        "input_image_count": 0,
+        "input_has_images": 0,
+        "input_reply_eligible": 1,
+        "emotion_appraisal_model_calls": 1,
+        "emotion_appraisal_results": 1,
+        "emotion_appraisal_fallbacks": 0,
+        "emotion_appraisal_reused_results": 0,
+        "emotion_guidance_model_calls": 1,
+        "emotion_guidance_results": 1,
+        "emotion_guidance_fallbacks": 0,
+        "emotion_guidance_reused_results": 0,
+        "context_source_characters": 235260,
+        "context_base_characters": 163921,
+        "context_vision_reserved_characters": 16384,
+        "context_input_token_budget": 60000,
+        "context_input_character_budget": 120000,
+        "context_gate_history_candidate_observations": 24,
+        "context_gate_history_candidate_characters": 15414,
+        "context_gate_history_candidate_omitted": 64,
+        "context_gate_history_candidate_fits": 1,
+        "context_body_history_candidate_observations": 56,
+        "context_body_history_candidate_characters": 27781,
+        "context_body_history_candidate_omitted": 32,
+        "context_body_history_candidate_fits": 1,
+        "context_budget_prefix_rebuilds": 1,
+        "context_assessment_reserved_characters": 56300,
+        "context_selected_observations": 24,
+        "context_omitted_observations": 64,
+        "context_wire_characters": 40978,
+        "context_compact_projection": 1,
+        "context_history_wire_characters": 15414,
+        "context_gate_history_soft_target_exceeded": 0,
+        "context_body_history_soft_target_exceeded": 0,
+        "context_final_characters": 40978,
+        "context_final_estimated_tokens": 20490,
+        "context_body_extra_characters": 20791,
+        "context_combined_characters": 61769,
+        "model_calls": 3,
+        "gate_model_calls": 1,
+        "gate_cache_hit_tokens": 6272,
+        "gate_cache_miss_tokens": 16619,
+        "gate_prompt_tokens": 22891,
+        "gate_completion_tokens": 289,
+        "gate_cache_known_prompt_tokens": 22891,
+        "gate_cache_unknown_prompt_tokens": 0,
+        "gate_usage_calls": 1,
+        "gate_cache_known_calls": 1,
+        "gate_input_api_calls": 1,
+        "gate_output_api_calls": 1,
+        "gate_api_usage_calls": 1,
+        "gate_estimated_prompt_tokens": 0,
+        "gate_estimated_completion_tokens": 0,
+        "gate_response_validated": 1,
+        "web_requested": 0,
+        "web_used": 0,
+        "context_persona_characters": 2015,
+        "context_persona_estimated_tokens": 1008,
+        "persona_model_calls": 2,
+        "persona_cache_hit_tokens": 4224,
+        "persona_cache_miss_tokens": 27549,
+        "persona_prompt_tokens": 31773,
+        "persona_completion_tokens": 89,
+        "persona_cache_known_prompt_tokens": 31773,
+        "persona_cache_unknown_prompt_tokens": 0,
+        "persona_usage_calls": 1,
+        "persona_cache_known_calls": 1,
+        "persona_input_api_calls": 1,
+        "persona_output_api_calls": 1,
+        "persona_api_usage_calls": 1,
+        "persona_estimated_prompt_tokens": 0,
+        "persona_estimated_completion_tokens": 0,
+        "paragraph_segmentation": 1,
+        "decision_outcome_error_fallback": 1,
+        "protocol_error_fallback": 1,
+        "protocol_first_verified_segment_ms": 25605,
+        "protocol_fully_verified_ms": 25613
+      },
+      "termination": {
+        "reason": "sent",
+        "stage": "protocol.delivery"
+      },
+      "stages": [
+        {
+          "name": "protocol.observation_commit",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "protocol.read",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "protocol.precheck",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.sqlite_commit",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.sqlite_commit",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "emotion.appraisal.input",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "emotion.appraisal.model",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.sqlite_commit",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.sqlite_commit",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "emotion.observe",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "cognitive.lock_wait",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "source.verify",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "memory.import_qq",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "memory.import_local",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "memory.shared_query",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "memory.reply_preset",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "memory.shared_query",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "memory.prepare",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "shared_memory",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "emotion.guidance.input",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "emotion.guidance.model",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.sqlite_commit",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "emotion.guidance",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "context.history_selection",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "context.prefix_rebuild.budget",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "gate.model_call",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "gate",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.sqlite_commit",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.command",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "runtime.web",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "cognitive.lock_wait",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "source.verify",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persona.model_call",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persona.model_call",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persona",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.project",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.serialize",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.sqlite_commit",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "persistence.command",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "shared_cognitive.rpc",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "protocol.shared_prepare",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "protocol.first_verified_segment",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "protocol.fully_verified",
+          "outcome": "ok",
+          "error_type": null
+        },
+        {
+          "name": "protocol.delivery",
+          "outcome": "ok",
+          "error_type": null
+        }
+      ]
+    }
+  ],
+  "controls": {
+    "at": "2026-10-11T12:13:01.030215+00:00",
+    "files": [
+      "runtime-000137.jsonl",
+      "runtime-000138.jsonl"
+    ],
+    "parse_errors": 0,
+    "since": "2026-10-11T10:33:00",
+    "controls": [],
+    "transitions": [],
+    "lifecycle": "RUNNING"
+  }
+}

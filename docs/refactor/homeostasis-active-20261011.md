@@ -47,3 +47,12 @@ Runtime 冷启动日志恢复约六分钟，期间未另行重启；启动初期
 两次起点 UTC 10:45:21.504980 / 10:45:22.917050，HTTP200、completed/stop，输出 275 / 269 tokens，耗时 1400 / 1748 ms。顶层错误 deepseek_structured_json_invalid 诊断为空；读取服务器私有 repair 证据的安全字段确认细码 json_output_object_required。只在服务器分析输出结构，不导出正文：各有两个候选，现有逻辑选择最后一个，类型为 list，重复键数 0；原始严格 JSON 解析 Extra data 偏移 700 / 678。不是输出预算耗尽，也无证据说明 active 配置导致该问题。未调用模型重放、改解析策略、增加重试或重启。
 
 六服务 active、Runtime RUNNING 无降级、QQ 连接、watchdog 空。真实工作 8785 全 applied（比上线初期 +23）、评价 821（+4），后台 applied3808 / skipped624，队列空。最近两个运行日志无新增 pause/emergency_stop 控制事件。保留 active，继续自然回复成功链路验收；同一已报告异常未变化不重复通知。证据 followup-1911.json。
+
+
+## 北京时间 20:12 自然流量跟进
+
+上线后累计记忆24、guidance23、appraisal14、gate21、goal9、capability4、正文生成11次成功；正文校验9成功3错误。第三次物理校验错误 UTC11:53:55 后，同一最终决策 ready，UTC11:54:02 获 qq_protocol_verified 回执，不能算最终失败。最终决策合计 ready8（其中3有验证回执）、natural_wait2、error_fallback3。后两次新增 error_fallback 也有验证回执，仍是兜底，不能当正常正文成功。
+
+UTC11:37:30 的兜底在 decision.context_budget 阶段触发：最终输入62067字符+预留61541=123608，超过120000上限；是输入上下文限制，不是输出token预算。UTC12:02:01 的兜底发生在gate/persona调用均成功之后，尚需进一步核查业务校验原因，不把它归入JSON物理错误。无证据据此认定active数学配置故障，不回滚、不调整模型预算或重试。
+
+六服务健康、Runtime RUNNING无降级、QQ连接、watchdog空；工作8886全部applied（上线初期+124）、评价838（+21），后台3824applied/skipped624、队列空，群策略保持相同。已取得正常自然回复及验证回执，但新增兜底原因仍待核查，跟进保留。证据followup-2012.json，不宣称零错误或永久修复。
