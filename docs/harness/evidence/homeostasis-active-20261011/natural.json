@@ -1,15 +1,80 @@
 {
-  "checked_at": "2026-10-11T10:42:04.568110+00:00",
+  "checked_at": "2026-10-11T11:11:44.796725+00:00",
   "release": "20261009-json-repair-v2",
   "models": [
     {
       "phase": "qq_memory_consolidation",
       "stage": null,
       "status": "success",
+      "count": 7
+    },
+    {
+      "phase": "emotion_guidance",
+      "stage": null,
+      "status": "success",
+      "count": 3
+    },
+    {
+      "phase": "goal_decision",
+      "stage": null,
+      "status": "success",
+      "count": 1
+    },
+    {
+      "phase": "emotion_appraisal",
+      "stage": null,
+      "status": "success",
+      "count": 2
+    },
+    {
+      "phase": "qq_gate",
+      "stage": "qq_gate",
+      "status": "success",
+      "count": 4
+    },
+    {
+      "phase": "qq_persona",
+      "stage": "generate",
+      "status": "success",
+      "count": 2
+    },
+    {
+      "phase": "qq_persona",
+      "stage": "validate",
+      "status": "error",
+      "count": 2
+    },
+    {
+      "phase": "capability_selection",
+      "stage": null,
+      "status": "success",
       "count": 1
     }
   ],
-  "errors": [],
+  "errors": [
+    {
+      "started_at": "2026-10-11T10:45:21.504980+00:00",
+      "phase": "qq_persona",
+      "stage": "validate",
+      "error": {
+        "type": "StructuredResponseError",
+        "message": "model request failed",
+        "code": "deepseek_structured_json_invalid",
+        "diagnostics": []
+      }
+    },
+    {
+      "started_at": "2026-10-11T10:45:22.917050+00:00",
+      "phase": "qq_persona",
+      "stage": "validate",
+      "error": {
+        "type": "StructuredResponseError",
+        "message": "model request failed",
+        "code": "deepseek_structured_json_invalid",
+        "diagnostics": []
+      }
+    }
+  ],
   "services": {
     "cognitive": "active",
     "homeostasis": "active",
@@ -28,8 +93,8 @@
       "llm_healthy": true,
       "body_healthy": true,
       "degraded_reasons": [],
-      "last_heartbeat_at": "2026-10-11T10:41:56.009182Z",
-      "last_journal_append_at": "2026-10-11T10:42:05.525002Z",
+      "last_heartbeat_at": "2026-10-11T11:11:43.603905Z",
+      "last_journal_append_at": "2026-10-11T11:11:52.863399Z",
       "embodiment": {
         "state": "disabled",
         "provider_id": null,
@@ -49,8 +114,8 @@
   "qq_direct": {
     "running": true,
     "connected": true,
-    "heartbeat_at": "2026-10-11T10:42:03.940127+00:00"
+    "heartbeat_at": "2026-10-11T11:11:51.260156+00:00"
   },
   "observation_start": "2026-10-11T10:33:00+00:00",
-  "natural_acceptance": "pending_no_model_samples"
+  "natural_acceptance": "pending_reply_validation_failure"
 }

@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-11T10:35:27.436684+00:00",
+  "checked_at": "2026-10-11T11:10:55.282677+00:00",
   "release": "20261009-json-repair-v2",
   "services": {
     "cognitive": "active",
@@ -20,8 +20,8 @@
       "llm_healthy": true,
       "body_healthy": true,
       "degraded_reasons": [],
-      "last_heartbeat_at": "2026-10-11T10:35:16.095054Z",
-      "last_journal_append_at": "2026-10-11T10:35:27.236221Z",
+      "last_heartbeat_at": "2026-10-11T11:10:45.265311Z",
+      "last_journal_append_at": "2026-10-11T11:10:55.070629Z",
       "embodiment": {
         "state": "disabled",
         "provider_id": null,
@@ -40,11 +40,11 @@
     "background": {
       "heartbeat": {
         "active": true,
-        "pending": 1,
+        "pending": 0,
         "running": true,
-        "coalesced": 9,
+        "coalesced": 10,
         "thread_jobs": 0,
-        "last_duration_ms": 11210.514,
+        "last_duration_ms": 9799.445,
         "last_error": null
       },
       "passive_state": {
@@ -68,7 +68,7 @@
   "qq": {
     "running": true,
     "connected": true,
-    "heartbeat_at": "2026-10-11T10:35:26.425823+00:00"
+    "heartbeat_at": "2026-10-11T11:10:55.101989+00:00"
   },
   "profile_revision": 4,
   "mode": "active",
@@ -78,20 +78,20 @@
   "other_direct_settings_unchanged": true,
   "attention_observe_guard": true,
   "watchdog": [],
-  "snapshot_revision": 266472,
+  "snapshot_revision": 266964,
   "coverage": {
-    "exposures": 8762,
-    "assessed": 817,
-    "unassessed": 7945,
-    "work_units": 82265867,
-    "last_work_at": "2026-10-11T10:11:21.728737+00:00"
+    "exposures": 8785,
+    "assessed": 821,
+    "unassessed": 7964,
+    "work_units": 82406009,
+    "last_work_at": "2026-10-11T11:03:20.976801+00:00"
   },
   "work_total_applied": [
-    8762,
-    8762
+    8785,
+    8785
   ],
   "memory_queue": {
-    "applied": 3801,
+    "applied": 3808,
     "skipped": 624
   },
   "policies": [
@@ -128,6 +128,5 @@
       "next_review_at": null,
       "review_count": 0
     }
-  ],
-  "policies_identical_to_predeployment": true
+  ]
 }

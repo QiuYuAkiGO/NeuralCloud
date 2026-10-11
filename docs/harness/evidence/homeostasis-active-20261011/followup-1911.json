@@ -1,0 +1,183 @@
+{
+  "chain": [
+    {
+      "trace_digest": "e247cac7a8099e20c8b70f4ab6751875f0224fe1322aac46410d3937174d7e7c",
+      "started_at": "2026-10-11T10:45:21.504980+00:00",
+      "phase": "qq_persona",
+      "stage": "validate",
+      "http_status": 200,
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      },
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 5639,
+        "completion_tokens": 275,
+        "total_tokens": 5914,
+        "cache_hit_tokens": 3584,
+        "cache_miss_tokens": 2055,
+        "cache_known_prompt_tokens": 5639,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "latency_ms": 1400.163,
+      "error": {
+        "type": "StructuredResponseError",
+        "message": "model request failed",
+        "code": "deepseek_structured_json_invalid",
+        "diagnostics": []
+      },
+      "decision": {
+        "outcome": "error_fallback",
+        "error_type": "model_invalid",
+        "completed_at": "2026-10-11T10:45:24.672819Z",
+        "action": "speak",
+        "deliveries": []
+      }
+    },
+    {
+      "trace_digest": "e247cac7a8099e20c8b70f4ab6751875f0224fe1322aac46410d3937174d7e7c",
+      "started_at": "2026-10-11T10:45:22.917050+00:00",
+      "phase": "qq_persona",
+      "stage": "validate",
+      "http_status": 200,
+      "structured_response": {
+        "status": "completed",
+        "output_items": 1,
+        "message_items": 1,
+        "text_parts": 1
+      },
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 5723,
+        "completion_tokens": 269,
+        "total_tokens": 5992,
+        "cache_hit_tokens": 3584,
+        "cache_miss_tokens": 2139,
+        "cache_known_prompt_tokens": 5723,
+        "cache_unknown_prompt_tokens": 0,
+        "cache_status": "known",
+        "prompt_tokens_source": "api",
+        "completion_tokens_source": "api",
+        "calls": 0,
+        "revision_calls": 0,
+        "revision_tokens": 0,
+        "source": "api"
+      },
+      "latency_ms": 1748.437,
+      "error": {
+        "type": "StructuredResponseError",
+        "message": "model request failed",
+        "code": "deepseek_structured_json_invalid",
+        "diagnostics": []
+      },
+      "decision": {
+        "outcome": "error_fallback",
+        "error_type": "model_invalid",
+        "completed_at": "2026-10-11T10:45:24.672819Z",
+        "action": "speak",
+        "deliveries": []
+      }
+    }
+  ],
+  "repair_metadata": [
+    {
+      "evidence_ref": "repair-f9e15db9aad64d95934b5b91fcd93684.json",
+      "recorded_at": "2026-10-11T10:45:22.902164+00:00",
+      "original_bytes": 1192,
+      "original_sha256": "02bc1df6fa659f6b6586975e217b959d00e7844a1bcc8defd5365e69ff6c9581",
+      "original_truncated": false,
+      "actions": {
+        "last_candidate": 1,
+        "extract": 1
+      },
+      "error_code": "json_output_object_required",
+      "diagnostics": []
+    },
+    {
+      "evidence_ref": "repair-2a8d6f53231347d687d0377f8baf11d0.json",
+      "recorded_at": "2026-10-11T10:45:24.662407+00:00",
+      "original_bytes": 1146,
+      "original_sha256": "c9df58e7bf18ff5478f51d747aa41f313fa85cbdbb9757a33e7a49b25030183d",
+      "original_truncated": false,
+      "actions": {
+        "last_candidate": 1,
+        "extract": 1
+      },
+      "error_code": "json_output_object_required",
+      "diagnostics": []
+    }
+  ],
+  "structure_only": [
+    {
+      "evidence_ref": "repair-f9e15db9aad64d95934b5b91fcd93684.json",
+      "candidate_count": 2,
+      "selected_type": "list",
+      "duplicates": 0,
+      "extracted": true,
+      "original_json_error": {
+        "message": "Extra data",
+        "offset": 700
+      }
+    },
+    {
+      "evidence_ref": "repair-2a8d6f53231347d687d0377f8baf11d0.json",
+      "candidate_count": 2,
+      "selected_type": "list",
+      "duplicates": 0,
+      "extracted": true,
+      "original_json_error": {
+        "message": "Extra data",
+        "offset": 678
+      }
+    }
+  ],
+  "controls_last_two_journals": {
+    "at": "2026-10-11T11:11:41.005596+00:00",
+    "files": [
+      "runtime-000136.jsonl",
+      "runtime-000137.jsonl"
+    ],
+    "parse_errors": 0,
+    "since": "2026-10-11T10:33:00",
+    "controls": [],
+    "transitions": [
+      {
+        "at": "2026-10-11T10:33:17.447787Z",
+        "record_seq": 2391130,
+        "from": null,
+        "to": null,
+        "automatic_boundary_pause": false,
+        "keys": [
+          "at",
+          "current",
+          "previous",
+          "reason"
+        ]
+      },
+      {
+        "at": "2026-10-11T10:33:23.056226Z",
+        "record_seq": 2391137,
+        "from": null,
+        "to": null,
+        "automatic_boundary_pause": false,
+        "keys": [
+          "at",
+          "current",
+          "previous",
+          "reason"
+        ]
+      }
+    ],
+    "lifecycle": "RUNNING"
+  }
+}
