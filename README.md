@@ -304,3 +304,5 @@ docs/                    TECHNICAL.md 技术文档 + harness/ 设计文档集 00
 start.* / stop.*         Windows / WSL2 一键启停脚本
 ```
 - **每日认知修订**：[配置、回放与回滚](docs/DAILY_REVISION.md) — 独立外部模型清洗每日经历、综合记忆/印象/关系，证据去重、自动复核与可撤销提交；默认关闭，使用 `/daily-revision` 管理。
+
+独立跨平台在线安装包与 CI 下载说明：[STANDALONE_RELEASE.md](docs/STANDALONE_RELEASE.md)。

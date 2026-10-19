@@ -1,0 +1,154 @@
+name: production-pair
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-pair:
+    runs-on: ubuntu-24.04
+    outputs:
+      revision: ${{ steps.pair.outputs.revision }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Require an immutable published production body revision
+        id: pair
+        env:
+          MISTYAI_PRODUCTION_REVISION: ${{ vars.MISTYAI_PRODUCTION_REVISION }}
+        run: |
+          revision=$(python tools/ci/release_pair.py)
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+
+  python:
+    needs: release-pair
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out NeuralCloud
+        uses: actions/checkout@v4
+        with:
+          path: neuralcloud
+      - name: Check out MistyAI contracts
+        id: mistyai
+        uses: actions/checkout@v4
+        with:
+          repository: QiuYuAkiGO/MistyAI
+          ref: ${{ needs.release-pair.outputs.revision }}
+          path: mistyai
+          token: ${{ secrets.MISTYAI_REPO_TOKEN || github.token }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: neuralcloud/pyproject.toml
+      - name: Require and record the production release pair
+        working-directory: neuralcloud
+        env:
+          MISTYAI_PRODUCTION_REVISION: ${{ needs.release-pair.outputs.revision }}
+        run: python tools/ci/release_pair.py --mistyai ../mistyai > "$RUNNER_TEMP/production-release-pair.json"
+      - name: Install NeuralCloud
+        working-directory: neuralcloud
+        run: |
+          python -m pip install uv==0.12.10
+          uv sync --locked --extra dev --extra gui --extra qq
+      - name: Static checks
+        working-directory: neuralcloud
+        run: uv run --no-sync python -m ruff check harness tests gui eval infra tools/ci tools/selfcheck/probes_production.py
+      - name: Tests
+        working-directory: neuralcloud
+        run: uv run --no-sync python -m pytest -q
+      - name: Cross-repository schema gate
+        working-directory: neuralcloud
+        env:
+          MISTYAI_PRODUCTION_ROOT: ${{ github.workspace }}/mistyai
+        run: uv run --no-sync python -m pytest -q tests/test_release_pair.py::test_live_production_contract_matches_reviewed_lock
+
+      - name: Upload release pair
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-release-pair
+          path: ${{ runner.temp }}/production-release-pair.json
+          if-no-files-found: error
+
+  mistyai-cross-process:
+    needs: release-pair
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out NeuralCloud
+        uses: actions/checkout@v4
+        with:
+          path: neuralcloud
+      - name: Check out MistyAI
+        id: mistyai
+        uses: actions/checkout@v4
+        with:
+          repository: QiuYuAkiGO/MistyAI
+          ref: ${{ needs.release-pair.outputs.revision }}
+          path: mistyai
+          token: ${{ secrets.MISTYAI_REPO_TOKEN || github.token }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            neuralcloud/pyproject.toml
+            mistyai/pyproject.toml
+      - name: Require and record the production release pair
+        working-directory: neuralcloud
+        env:
+          MISTYAI_PRODUCTION_REVISION: ${{ needs.release-pair.outputs.revision }}
+        run: python tools/ci/release_pair.py --mistyai ../mistyai > "$RUNNER_TEMP/production-release-pair.json"
+      - name: Install both projects
+        run: |
+          python -m pip install uv==0.12.10
+          uv sync --project neuralcloud --locked --extra dev --extra gui --extra qq
+          uv sync --project mistyai --locked --extra test
+      - name: Start MistyAI fixture process
+        env:
+          MISTYAI_FIXTURE_STATE_DIR: ${{ runner.temp }}/mistyai-cross-process
+          MISTYAI_SERVICE_TOKEN: cross-process-service-token
+          MISTYAI_ACCOUNTING_TOKEN: cross-process-accounting-token
+          MISTYAI_FIXTURE_PRODUCTION: "1"
+          PYTHONPATH: ${{ github.workspace }}/neuralcloud
+        run: |
+          mistyai/.venv/bin/python -m uvicorn tests.cross_process.mistyai_fixture_app:app \
+            --host 127.0.0.1 --port 8787 \
+            >"${RUNNER_TEMP}/mistyai-cross-process.log" 2>&1 &
+          echo $! >"${RUNNER_TEMP}/mistyai-cross-process.pid"
+          for attempt in $(seq 1 40); do
+            if curl --fail --silent \
+              -H "Authorization: Bearer ${MISTYAI_SERVICE_TOKEN}" \
+              http://127.0.0.1:8787/v1/health >/dev/null; then
+              exit 0
+            fi
+            sleep 0.25
+          done
+          cat "${RUNNER_TEMP}/mistyai-cross-process.log"
+          exit 1
+      - name: Exercise NeuralCloud adapter over TCP
+        working-directory: neuralcloud
+        env:
+          NC_CROSS_PROCESS_MISTYAI_URL: http://127.0.0.1:8787
+          NC_CROSS_PROCESS_MISTYAI_TOKEN: cross-process-service-token
+          NC_CROSS_PROCESS_MISTYAI_ACCOUNTING_TOKEN: cross-process-accounting-token
+        run: uv run --no-sync python -m pytest -q tests/test_cross_process_mistyai.py
+      - name: Stop MistyAI fixture process
+        if: always()
+        run: |
+          if test -f "${RUNNER_TEMP}/mistyai-cross-process.pid"; then
+            kill "$(cat "${RUNNER_TEMP}/mistyai-cross-process.pid")" || true
+          fi
+      - name: Upload cross-process logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mistyai-cross-process-log
+          path: ${{ runner.temp }}/mistyai-cross-process.log
+          if-no-files-found: ignore

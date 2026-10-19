@@ -65,3 +65,10 @@ Deepseek-api-key-affect.txt
 /eval/reports/qq-group-*/
 /eval/reports/qq-memory-prepare-*/
 /eval/reports/qq-voice-*/
+
+# Standalone package local state
+.bootstrap/
+.uv-cache/
+.standalone.lock
+standalone.json
+standalone-data/
