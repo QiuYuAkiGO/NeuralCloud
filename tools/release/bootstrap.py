@@ -1,4 +1,4 @@
-"""Online, project-local bootstrap for the standalone demo distribution (stdlib only)."""
+"""Online, project-local bootstrap for the standalone distribution (stdlib only)."""
 from __future__ import annotations
 
 import argparse
@@ -34,13 +34,25 @@ def read_config(root):
     except FileExistsError:
         pass
     config = json.loads(path.read_text(encoding="utf-8-sig"))
-    if not isinstance(config, dict) or set(config) != {"mode", "ports"} or config["mode"] != "demo":
-        raise ValueError("standalone.json supports mode=demo only. Live models require separate explicit configuration; see docs/STANDALONE_RELEASE.md.")
+    if not isinstance(config, dict) or set(config) != {"mode", "ports"} or config["mode"] not in {"demo", "live", "ollama"}:
+        raise ValueError("standalone.json mode must be demo, live or ollama; see docs/STANDALONE_RELEASE.md.")
     ports = config["ports"]
     if (not isinstance(ports, dict) or set(ports) != set(MODULES)
             or any(type(p) is not int or not 1024 <= p <= 65535 for p in ports.values())
             or len(set(ports.values())) != 4):
         raise ValueError("standalone.json needs four distinct integer ports from 1024 to 65535")
+    if config["mode"] != "demo":
+        settings_path = root / "standalone-data/gui_settings.json"
+        if not settings_path.is_file():
+            raise ValueError("Configure standalone-data/gui_settings.json with base_url, model and api_key (live), or start demo and save model settings in the GUI first. See docs/STANDALONE_RELEASE.md.")
+        settings = json.loads(settings_path.read_text(encoding="utf-8"))
+        required = ["base_url", "model"] + (["api_key"] if config["mode"] == "live" else [])
+        if not isinstance(settings, dict) or any(not isinstance(settings.get(k), str) or not settings[k].strip() for k in required):
+            raise ValueError("Missing model configuration: set base_url, model and api_key for live in standalone-data/gui_settings.json; ollama needs base_url and model.")
+        from urllib.parse import urlparse
+        endpoint = urlparse(settings["base_url"])
+        if endpoint.scheme not in {"http", "https"} or not endpoint.hostname or endpoint.username or endpoint.password:
+            raise ValueError("Model base_url must be an http(s) endpoint without embedded credentials.")
     return config
 
 
@@ -82,12 +94,12 @@ def prepare(root, log):
     return python_in(root / ".venv")
 
 
-def environment(root, ports):
+def environment(root, ports, mode="demo"):
     # Never inherit production bindings or provider credentials from the host.
     env = {k: v for k, v in os.environ.items() if not k.startswith("NC_") and k not in {"PYTHONPATH", "PYTHONHOME"}}
     state = root / "standalone-data"
     state.mkdir(exist_ok=True)
-    env.update({"NC_MODE": "demo", "NC_CONTROL_MODE": "development_debug", "NC_ISOLATED_DEVELOPMENT": "1",
+    env.update({"NC_MODE": mode, "NC_CONTROL_MODE": "development_debug", "NC_ISOLATED_DEVELOPMENT": "1",
                 "NC_EMBODIMENT_PROVIDER": "none", "NC_SERVICE_TOKEN": secrets.token_hex(32),
                 "NC_CONTROL_TOKEN": secrets.token_hex(32), "PYTHONUNBUFFERED": "1",
                 "XDG_STATE_HOME": str(state / "os-state"), "LOCALAPPDATA": str(state / "os-state"),
@@ -119,7 +131,7 @@ def serve(root, python, config, smoke):
                 probe.bind(("127.0.0.1", port))
             except OSError:
                 raise RuntimeError(f"Port {port} is occupied. Stop the other instance or edit standalone.json; no existing process was stopped.") from None
-    env = environment(root, ports)
+    env = environment(root, ports, config["mode"])
     children, logs = [], []
     # Ignore system HTTP proxies for local health checks.
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
@@ -150,8 +162,8 @@ def serve(root, python, config, smoke):
                 if time.monotonic() >= deadline:
                     raise RuntimeError(f"{name} readiness timed out; inspect logs/standalone-{name}.log")
                 time.sleep(0.25)
-        print(f"READY: http://127.0.0.1:{ports['gui']} (standalone demo, four real services)", flush=True)
-        print("No model key needed in demo. MistyAI/QQ are disabled. See docs/STANDALONE_RELEASE.md for live configuration boundaries.", flush=True)
+        print(f"READY: http://127.0.0.1:{ports['gui']} (standalone {config['mode']}, four real services)", flush=True)
+        print("MistyAI/QQ are disabled. Demo needs no key; live/ollama use standalone-data/gui_settings.json. See docs/STANDALONE_RELEASE.md.", flush=True)
         if smoke:
             print("SMOKE PASSED: authenticated domain health, runtime status and composite GUI status.", flush=True)
             return
@@ -182,6 +194,8 @@ def main():
     try:
         with launch_lock(ROOT):
             config = read_config(ROOT)
+            if args.smoke_test and config["mode"] != "demo":
+                raise ValueError("--smoke-test requires mode=demo to prevent real model calls.")
             (ROOT / "logs").mkdir(exist_ok=True)
             python = prepare(ROOT, ROOT / "logs/install.log")
             if os.name != "nt":

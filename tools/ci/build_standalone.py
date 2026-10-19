@@ -1,4 +1,4 @@
-"""Build a tracked-source-only, online standalone demo ZIP; never include runtime data."""
+"""Build a tracked-source-only, online standalone ZIP; never include runtime data."""
 from pathlib import Path
 import hashlib
 import json
@@ -25,7 +25,7 @@ def build(root=ROOT):
             raise ValueError(f"private file in source allowlist: {name}")
         blobs[name] = path.read_bytes()
     sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
-    manifest = {"kind": "standalone-demo-online", "revision": sha, "production_pair": False,
+    manifest = {"kind": "standalone-online", "revision": sha, "production_pair": False,
                 "files": {n: hashlib.sha256(b).hexdigest() for n, b in blobs.items()}}
     output = root / "dist/neuralcloud-standalone.zip"
     output.parent.mkdir(exist_ok=True)

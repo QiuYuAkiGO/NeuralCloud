@@ -1,4 +1,4 @@
-# 独立在线安装包（Standalone demo）
+# 独立在线安装包（Standalone）
 
 在 GitHub Actions 的 **ci** 成功运行页下载 `neuralcloud-standalone-online`，
 解开 artifact 后再解开其中 `neuralcloud-standalone.zip`。SHA-256 文件可核对 ZIP，
@@ -6,8 +6,8 @@
 `standalone-candidate` 只是未经完整门禁验证的构建候选，不能当作验证通过的发行包。
 不会自动创建 GitHub Release 或正式标签。
 
-这是可运行的 NeuralCloud 独立 **demo / development_debug** 四进程拓扑：
-GUI、Runtime、Cognitive、Homeostasis 都是真实进程；模型响应使用 demo，身体 provider=none。
+这是可运行的 NeuralCloud 独立 **development_debug** 四进程拓扑：
+GUI、Runtime、Cognitive、Homeostasis 都是真实进程；首次默认模型响应使用 demo，也支持现有 live/ollama 模型接口，身体 provider=none。
 这不代表 MistyAI 生产配对、真实模型能力或 QQ 集成已经通过验收。
 
 ## 首次运行
@@ -32,10 +32,26 @@ Linux 若发行版拆分 venv，请先安装对应的 Python 3.12 venv 包。本
 
 ## 配置和边界
 
-首次无需模型密钥。`standalone.json` 只允许 demo；不要把生产密钥写进它。
-如需要真实模型，需另行配置模型 endpoint、model 和 API key，并授权其调用费用；
-该独立启动入口不自动启用 live/ollama，也不继承主机的 `NC_*` 生产环境绑定。
-GUI 内主动改变模型设置不属于自动部署或 smoke 的验证范围。
+首次无需模型密钥。启动模式由 `standalone.json` 的 `mode` 指定：`demo`、`live` 或 `ollama`。
+端口配置保持原样。真实模型连接使用现有 GUI 配置机制：
+
+1. 先以 demo 启动，在 GUI 保存模型配置；也可以创建 `standalone-data/gui_settings.json`：
+   ```json
+   {"mode":"live","base_url":"https://your-provider.example/v1","model":"your-model","api_key":"your-key"}
+   ```
+2. 停止启动器，将 `standalone.json` 的 `mode` 改为 `live`，再次运行 shell/bat。
+   缺少配置或密钥时启动器会报出具体文件和所需字段，不会静默退回 demo。
+3. 本地 Ollama 使用 `mode=ollama`，在 GUI 配置中填写
+   `base_url=http://127.0.0.1:11434/v1` 和已安装模型名称；无需 API key。
+   Ollama 本身及模型需要用户事先安装并启动，包不会自动下载模型。
+
+真实模式可能产生模型费用；只有用户主动配置并选择后启用。
+密钥仅保存在本地 GUI 配置文件，勿分享该文件或运行数据，勿提交 Git。
+启动器不覆盖现有配置，也不继承主机 `NC_*` 生产绑定。
+`--smoke-test` 只允许 demo，避免测试时误调用真实模型。
+本地模拟 OpenAI HTTP endpoint 测试覆盖 Cognitive 读取配置、模型名、Authorization
+及 `/v1/chat/completions` 实际请求；没有进行线上模型质量、连通性或费用实测。
+
 MistyAI、QQ、NapCat、外部模型均不会由此入口启动。生产部署请参阅 `LINUX_DEPLOYMENT.md`
 及现有共享启动文档，并先满足明确的生产配对契约。
 
