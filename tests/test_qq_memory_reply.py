@@ -104,7 +104,7 @@ def test_qq_owner_prepares_from_memory_committed_after_runtime_snapshot(tmp_path
     asyncio.run(run())
 
 
-def test_fixed_latency_reply_does_not_wait_for_background_cleaner(setup, tmp_path, monkeypatch):
+def test_reply_completes_before_blocked_background_cleaner_is_released(setup, tmp_path, monkeypatch):
     async def run():
         _, client, _, args, _ = setup
         monkeypatch.setattr('gui.service.probe_llm', lambda *a, **kw: True)
@@ -115,32 +115,35 @@ def test_fixed_latency_reply_does_not_wait_for_background_cleaner(setup, tmp_pat
             time.sleep(.025)
             return original_chat(*a, **kw)
         monkeypatch.setattr(client, 'complete_chat_result', fixed_chat)
-        started = threading.Event()
+        started, release = threading.Event(), threading.Event()
+        background = None
         original_proposer = host.qq_memory.proposer
         def fixed_background(job, **kw):
             started.set()
-            time.sleep(1.2)
+            assert release.wait(10), "background cleaner was not released"
             return original_proposer.propose(job, **kw)
         host.qq_memory.proposer = SimpleNamespace(propose=fixed_background)
         try:
-            start = time.perf_counter()
             baseline = await asyncio.to_thread(decision.decide_qq_reply, **args,
                 shared_owner=binding, request='baseline', deadline=QQDeadline.after(1))
-            baseline_seconds = time.perf_counter() - start
             assert baseline.outcome == 'ready', baseline.error_type
             background = asyncio.create_task(host.qq_memory.tick())
             assert await asyncio.to_thread(started.wait, 5)
-            start = time.perf_counter()
+            # A barrier proves independence without comparing scheduler latency.
+            # The actual reply still has its original one-second deadline.
             async with host.adapter._lock:
                 concurrent = await asyncio.to_thread(decision.decide_qq_reply, **args,
                     shared_owner=binding, request='during cleaner', deadline=QQDeadline.after(1))
-            concurrent_seconds = time.perf_counter() - start
             assert concurrent.outcome == 'ready', concurrent.error_type
             assert not background.done()
-            assert concurrent_seconds < baseline_seconds + .35
+            assert not release.is_set()
+            release.set()
             await background
             assert host.qq_memory.last_error is None
         finally:
+            release.set()
+            if background is not None:
+                await asyncio.gather(background, return_exceptions=True)
             await host.close()
             memory.close()
     asyncio.run(run())
