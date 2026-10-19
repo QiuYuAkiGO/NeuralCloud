@@ -57,7 +57,9 @@ MistyAI、QQ、NapCat、外部模型均不会由此入口启动。生产部署�
 
 ## CI 边界与验证
 
-`ci` 独立运行完整 Python 测试与静态检查、现有 Windows 启动器测试，构建同一个源码 ZIP，
+`ci` 将完整测试分配到合适平台：核心 Python 测试与静态检查在 Linux，
+`tools/ci/run_tests.py` 明确列出的 16 个 Windows 启动器模块在 Windows；没有删除这些测试。
+它们依赖 Windows ACL、原生 PowerShell 或 WSL 入口，仅检测到 Linux 的 pwsh 并不满足条件。工作流构建同一个源码 ZIP，
 分别在 Linux 和 Windows 从解压包执行真实 shell/bat smoke 两次，验证四服务 HTTP 就绪、
 中文/空格路径、非仓库工作目录、配置与数据保留及错误退出码。smoke 不调用付费模型或 QQ。
 只有上述检查通过才上传 `neuralcloud-standalone-online`；失败时下载 smoke 日志排查。
