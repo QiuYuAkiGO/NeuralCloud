@@ -123,7 +123,7 @@ def case(setup, monkeypatch):
     desktop = SegmentDesktop(clock)
     monkeypatch.setattr(module, "now", clock.wall)
     monkeypatch.setattr(module, "time", NS(monotonic=clock.mono, sleep=clock.sleep))
-    monkeypatch.setattr(module, "QQTurnTrace", lambda **kwargs: QQTurnTrace(**kwargs, clock=clock.mono))
+    monkeypatch.setattr(module, "QQTurnTrace", lambda **kwargs: QQTurnTrace(**{**kwargs, "clock": clock.mono}))
     monkeypatch.setattr(module, "QQDeadline", type("Deadline", (QQDeadline,), {
         "__init__": lambda self, deadline_mono, *args, **kwargs: QQDeadline.__init__(self, deadline_mono, clock=clock.mono)}))
     monkeypatch.setattr(segments, "chat_change_signature", lambda tree: ChatChangeSignature(True, tree["signature"]))

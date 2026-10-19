@@ -95,7 +95,7 @@ def scenario(setup, monkeypatch):
             super().__init__(deadline_mono, clock=clock.mono)
 
     monkeypatch.setattr(module, "QQDeadline", ControlledDeadline)
-    monkeypatch.setattr(module, "QQTurnTrace", lambda **kwargs: QQTurnTrace(**kwargs, clock=clock.mono))
+    monkeypatch.setattr(module, "QQTurnTrace", lambda **kwargs: QQTurnTrace(**{**kwargs, "clock": clock.mono}))
     settings = settings.model_copy(update={"accessibility_enabled": True})
 
     def answer(action="wait", *, outcome=None, priority="ambient", reply=None, cached=False):
