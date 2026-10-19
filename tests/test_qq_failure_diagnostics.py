@@ -46,7 +46,7 @@ def test_unknown_or_mismatched_diagnostics_are_not_propagated(value):
 @pytest.mark.parametrize("failure, category, code, legacy_error", [
     ("evidence", "evidence_rejected", "production_memory_proposals_rejected", "qq_turn_rejected:ValueError"),
     ("timeout", "timeout", "qq_model_timeout", "qq_turn_rejected:TimeoutError"),
-    ("invalid", "model_invalid", "qq_model_response_invalid", "qq_turn_rejected:ValueError"),
+    ("invalid", "model_invalid", "qq_model_response_invalid", "qq_turn_rejected:JSONOutputError"),
 ])
 def test_real_host_rejection_is_durable_safe_and_not_a_wait(setup, tmp_path, monkeypatch,
                                                           failure, category, code, legacy_error):

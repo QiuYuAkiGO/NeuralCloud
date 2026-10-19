@@ -337,7 +337,7 @@ class QQWatcher(QQGroupObservationMixin, QQEmbodiedMixin, SegmentedDeliveryMixin
     @contextmanager
     def _observation_preparation(self, *, first_seen_at, first_seen_mono, phase="capture", observation_sequence=None):
         trace = QQTurnTrace(first_seen_at=first_seen_at, first_seen_mono=first_seen_mono,
-                            observation_sequence=observation_sequence)
+                            observation_sequence=observation_sequence, clock=time.monotonic)
         trace.add_counter("preparation_attempts")
         with self._guard:
             self._active_preparation, self._preparation_phase = trace, phase
@@ -366,7 +366,7 @@ class QQWatcher(QQGroupObservationMixin, QQEmbodiedMixin, SegmentedDeliveryMixin
     def _audit_observation_expiry(self, *, first_seen_at, first_seen_mono, observation_sequence=None,
                                   counter="expired_observations", outcome="expired"):
         trace = QQTurnTrace(first_seen_at=first_seen_at, first_seen_mono=first_seen_mono,
-                            observation_sequence=observation_sequence)
+                            observation_sequence=observation_sequence, clock=time.monotonic)
         trace.add_counter(counter)
         trace.record("observation_completed", outcome=outcome,
                      error_type="deadline_expired" if outcome == "expired" else "internal_error")
@@ -496,7 +496,7 @@ class QQWatcher(QQGroupObservationMixin, QQEmbodiedMixin, SegmentedDeliveryMixin
             return prior
         age = max(0, (now() - first_seen_at).total_seconds())
         trace = QQTurnTrace(event_id=event.event_id, first_seen_at=first_seen_at,
-                            first_seen_mono=first_seen_mono if first_seen_mono is not None else max(0, time.monotonic() - age))
+                            first_seen_mono=first_seen_mono if first_seen_mono is not None else max(0, time.monotonic() - age), clock=time.monotonic)
         self._traces[event.event_id] = trace
         while len(self._traces) > 128:
             self._traces.pop(next(iter(self._traces)))
@@ -1099,7 +1099,7 @@ class QQWatcher(QQGroupObservationMixin, QQEmbodiedMixin, SegmentedDeliveryMixin
                 cold = turn.trace.snapshot()["counters"].get("cold_path", 0)
                 self._finish_trace(turn.trace, "rate_limited")
                 turn.trace = QQTurnTrace(event_id=event.event_id, first_seen_at=turn.trace.first_seen_at,
-                                         first_seen_mono=turn.trace.first_seen_mono)
+                                         first_seen_mono=turn.trace.first_seen_mono, clock=time.monotonic)
                 turn.trace.add_counter("cold_path", cold)
                 turn.event = event
                 turn.retry_at = None
@@ -1229,7 +1229,7 @@ class QQWatcher(QQGroupObservationMixin, QQEmbodiedMixin, SegmentedDeliveryMixin
             first_seen = event.first_seen_at or event.observed_at
             trace = self._new_trace(event, first_seen, first_seen_mono if event.event_id in {e.event_id for e in batch.events} else None)
             trace.merge_preparation(preparation)
-            deadline = QQDeadline(trace.first_seen_mono + self.settings.turn_deadline_seconds)
+            deadline = QQDeadline(trace.first_seen_mono + self.settings.turn_deadline_seconds, clock=time.monotonic)
             try:
                 deadline.check()
                 with self._desktop_turn(deadline, trace), trace.stage("attribution"):

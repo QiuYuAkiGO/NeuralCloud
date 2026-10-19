@@ -54,10 +54,8 @@ def test_actual_director_and_main_requests_differ_only_after_weight_intervention
             assert "speech_style" not in guidance_call["user"]["persona"]
             schema = guidance_call["response_format"]["json_schema"]["schema"]
             assert set(schema["required"]) == {"feeling", "delivery", "needs"}
-            for feeling in guidance_call["user"]["required_feelings"]:
-                assert feeling["feeling"] in guidance_call["response"]["feeling"]
-                if feeling["trend"] == "recovering":
-                    assert "正在缓和" in guidance_call["response"]["feeling"]
+            for field in ("feeling", "needs"):
+                assert guidance_call["response"][field] == guidance_call["user"]["required_expression"][field]
         treatment_fields = {"weights", "dominant_source", "semantic_priority"}
         assert {key: value for key, value in dg["user"].items() if key not in treatment_fields} == {
             key: value for key, value in fg["user"].items() if key not in treatment_fields}
@@ -313,7 +311,8 @@ def test_mixed_feelings_survive_strong_need_and_omissions_are_not_counted_as_acc
             else:
                 if self.omit_anger:
                     result["feeling"] = "明显平静，正在缓和，仍有余韵。"
-                if self.omit_recovery:
+                if self.omit_recovery and any(item["trend"] == "recovering"
+                                             for item in json.loads(kwargs["user"])["required_feelings"]):
                     result["feeling"] = "明显平静，同时明显愤怒。"
             return result
 

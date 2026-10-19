@@ -25,7 +25,7 @@ from harness.llm.client import (
     MockLLM, OpenAICompatClient, RoutingLLMClient, aux_runtime_payload, deepseek_low_reasoning_options,
 )
 
-from eval.emotional_expression_diagnostics.emotion import FIXED_AT, offline_settings, scripted_feeling
+from eval.emotional_expression_diagnostics.emotion import FIXED_AT, offline_settings
 from eval.homeostatic_expression.evaluation import DEFAULT_PERSONA_PATH
 from eval.homeostatic_expression.production import (
     ProductionPairPipeline, context_hash_without_homeostasis, homeostatic_segment, json_hash,
@@ -97,16 +97,11 @@ class _ScriptedAux(MockLLM):
                     "recovery": [{"label": "anger", "strength": .5, "evidence_quote": REPAIR}]
                         if text == REPAIR else []})
             return {"events": events}
-        if "EMOTION_GUIDANCE_V1" in system:
+        if "EMOTION_GUIDANCE_V2" in system:
             weights = payload["weights"]
             delivery = (DIALOGUE_BRIEF if weights["dialogue"] > .5 else
                         NEED_BRIEF if weights["homeostasis"] > .5 else BALANCED_BRIEF)
-            feeling = scripted_feeling(payload)
-            needs = ("可用精力不足，需要减少消耗。" if payload["dominant_source"] == "homeostasis"
-                     else "保留事实边界，不补造情绪原因。")
-            if any(item["trend"] == "recovering" for item in payload["homeostatic_needs"]):
-                needs += "这份需要正在缓和，表达节奏可以逐步恢复。"
-            return {"feeling": feeling, "delivery": delivery, "needs": needs}
+            return {**payload["required_expression"], "delivery": delivery}
         raise ValueError("unexpected multi-turn helper request")
 
 

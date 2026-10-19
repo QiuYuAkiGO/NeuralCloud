@@ -211,7 +211,13 @@ def test_qq_resume_cannot_reuse_gate_from_before_pause(monkeypatch):
     binding = {"event_id": "event", "transport": "test", "group_id": "group", "self_member_id": "self",
                "runtime_instance_id": "runtime", "manifest_revision": 1,
                "deadline_at": (datetime.now(timezone.utc) + timedelta(seconds=20)).isoformat()}
-    row = {"snapshot_hash": "hash", "snapshot": {"production_context": context()}}
+    from harness.config import Settings
+    settings = Settings(_env_file=None)
+    from harness.qq import decision
+    monkeypatch.setattr(decision,
+                        "_load_configuration", lambda *args: (settings, None))
+    row = {"snapshot_hash": "hash", "snapshot": {"production_context": context(),
+           "expression_binding": prepared_turn._expression_binding(settings)}}
     monkeypatch.setattr(prepared_turn, "QQTurnCheckpointStore", lambda path: SimpleNamespace(get=lambda value: row))
     with production_call_scope({**context(), "epoch": 1}, command_id="resume", meter=object()):
         with pytest.raises(QQTurnStateError, match="qq_turn_cancelled"):

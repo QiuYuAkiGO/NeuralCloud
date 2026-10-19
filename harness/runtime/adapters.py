@@ -50,6 +50,14 @@ from infra.trace.request_spans import trace_scope
 _CommandResult = TypeVar("_CommandResult")
 
 
+class DomainResponseError(ConnectionError):
+    """A remote domain rejected a request, without exposing its transport."""
+
+    def __init__(self, status_code: int):
+        super().__init__("domain_request_rejected")
+        self.status_code = status_code
+
+
 class DomainSnapshot(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 

@@ -308,7 +308,8 @@ def test_empty_model_fields_do_not_count_as_identification(tmp_path):
     (Vision(text="private invalid JSON"), "vision_invalid"),
     (Vision(text='{"description":"invented","ocr_text":null,"uncertainties":[],"action":"send"}'), "vision_invalid"),
 ])
-def test_vision_failure_keeps_evidence_and_explicit_unknown(tmp_path, vision, error):
+# Strict rollback mode; default repair has separate positive and safety coverage.
+def test_vision_failure_keeps_evidence_and_explicit_unknown(legacy_json_mode, tmp_path, vision, error):
     result, _, _, _ = run_image(tmp_path, vision=vision)
     assert result.status == "unknown" and result.error == error
     assert result.evidence_ref and (tmp_path / f"{result.sha256}.png").exists()

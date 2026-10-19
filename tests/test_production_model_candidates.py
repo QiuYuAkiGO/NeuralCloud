@@ -189,7 +189,8 @@ def test_http_fatal_one_post_one_usage_five_skipped(tmp_path, inputs, monkeypatc
     ('{"kind":"reply", "text":"bad "quotes""}', {}, "JSONDecodeError"),
     (None, {"reasoning": CONTENT}, "ValueError"),
 ])
-def test_other_fields_never_repair_empty_or_invalid_decision(tmp_path, inputs, monkeypatch, content, message_extras, expected):
+# Strict rollback mode; default repair has separate positive and safety coverage.
+def test_other_fields_never_repair_empty_or_invalid_decision(legacy_json_mode, tmp_path, inputs, monkeypatch, content, message_extras, expected):
     calls = wire(monkeypatch, content=content, message_extras=message_extras)
     assert runner.main(args(tmp_path, inputs)) == 1
     output = tmp_path / "result"

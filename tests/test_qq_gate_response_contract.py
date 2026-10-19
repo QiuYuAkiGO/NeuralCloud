@@ -50,7 +50,8 @@ def test_whole_gate_json_or_fence_validates_once(setup, monkeypatch, envelope):
     '{"action":"send_now","reason":"x"}', '{"action":"speak","reason":"x","force_send":true}',
     '{"action":"speak","reason":"x","addressing":"owner"}',
 ])
-def test_ambiguous_or_invalid_gate_is_not_salvaged(text):
+# Strict rollback mode; default repair has separate positive and safety coverage.
+def test_ambiguous_or_invalid_gate_is_not_salvaged(legacy_json_mode, text):
     with pytest.raises(ValidationError):
         decision._parse_gate_response(ChatResult(text=text), QQTurnTrace())
 
@@ -66,7 +67,8 @@ def test_valid_looking_json_cannot_hide_incomplete_or_nontext_response(metadata)
     assert trace.snapshot()["counters"]["gate_response_contract_invalid"] == 1
 
 
-def test_validation_diagnostics_name_only_allowlisted_fields_and_error_types():
+# Strict rollback mode; default repair has separate positive and safety coverage.
+def test_validation_diagnostics_name_only_allowlisted_fields_and_error_types(legacy_json_mode):
     trace = QQTurnTrace()
     raw = {"action": "PRIVATE_BAD_ACTION", "reason": None, "PRIVATE_FIELD_NAME": "PRIVATE_VALUE"}
     with pytest.raises(ValidationError):
@@ -81,7 +83,8 @@ def test_validation_diagnostics_name_only_allowlisted_fields_and_error_types():
     assert "PRIVATE" not in json.dumps(trace.snapshot())
 
 
-def test_invalid_gate_still_falls_back_without_another_model_call(setup):
+# Strict rollback mode; default repair has separate positive and safety coverage.
+def test_invalid_gate_still_falls_back_without_another_model_call(legacy_json_mode, setup):
     _, client, _, kwargs, _ = setup
     client.choice = '{"action":"speak","reason":"x","PRIVATE_EXTRA":null}'
     trace = QQTurnTrace()
@@ -91,7 +94,8 @@ def test_invalid_gate_still_falls_back_without_another_model_call(setup):
     assert trace.snapshot()["counters"]["gate_invalid_type_extra_forbidden"] == 1
 
 
-def test_empty_gate_is_identified_without_inventing_a_wait_decision():
+# Strict rollback mode; default repair has separate positive and safety coverage.
+def test_empty_gate_is_identified_without_inventing_a_wait_decision(legacy_json_mode):
     trace = QQTurnTrace()
     with pytest.raises(ValidationError):
         decision._parse_gate_response(ChatResult(text="  "), trace)

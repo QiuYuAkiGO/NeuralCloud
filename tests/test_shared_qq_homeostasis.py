@@ -351,7 +351,10 @@ def test_default_manifest_hash_unchanged_and_social_contract_explicit():
     assert json.loads(explicit.canonical_json())["autonomous_chat_enabled"] is False
     social = load_experiment_manifest(Path("presets/runtime/shared-misty-v1.json"))
     assert social.homeostatic_profile == "qq-social-drive-v1@1"
-    for ref in ("unrecognized@1", "qq-social-drive-v1@2"):
+    for revision in (1, 2, 3):
+        assert ExperimentManifest.model_validate({**social.model_dump(),
+            "homeostatic_profile": f"qq-social-drive-v1@{revision}"})
+    for ref in ("unrecognized@1", "qq-social-drive-v1@0"):
         with pytest.raises(ValueError):
             ExperimentManifest.model_validate({**social.model_dump(), "homeostatic_profile":ref})
 

@@ -452,11 +452,11 @@ def _parse_gate_response(response, trace: QQTurnTrace, *, production=False) -> _
     choice_model = _ProductionGateDecision if production else _GateDecision
     try:
         repair_schema = choice_model.model_json_schema()
-        # Match the wire schema: advisory understanding is deliberately allowed
-        # through so QQReplyPlan's validator can discard an invalid interpretation.
-        understanding = repair_schema.get("$defs", {}).get("QQReplyPlan", {}).get("properties", {}).get("understanding")
-        if understanding is not None:
-            understanding.setdefault("anyOf", []).append({})
+        # Optional plans have domain-specific fallback validators. Preserve their
+        # raw values until those validators run, while validating the gate itself.
+        for field in ("reply_plan", "web_plan", "vision_request", "attention_assessment"):
+            if field in repair_schema.get("properties", {}):
+                repair_schema["properties"][field] = {}
         choice = validate_model_json(choice_model, text, repair_schema=repair_schema)
     except ValidationError as exc:
         known_types = {"json_invalid", "model_type", "missing", "extra_forbidden", "literal_error",

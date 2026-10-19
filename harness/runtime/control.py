@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import httpx
+from harness.runtime.adapters import DomainResponseError
 
 import asyncio
 import inspect
@@ -205,8 +205,8 @@ def create_control_app(
             raise HTTPException(status_code=408, detail="text_interruption_timeout") from None
         except ValueError:
             raise HTTPException(status_code=422, detail="text_interruption_invalid") from None
-        except httpx.HTTPStatusError as exc:
-            status = exc.response.status_code if exc.response.status_code in {408, 422} else 503
+        except DomainResponseError as exc:
+            status = exc.status_code if exc.status_code in {408, 422} else 503
             raise HTTPException(status_code=status, detail="text_interruption_unavailable") from None
         except Exception:
             raise HTTPException(status_code=503, detail="text_interruption_unavailable") from None

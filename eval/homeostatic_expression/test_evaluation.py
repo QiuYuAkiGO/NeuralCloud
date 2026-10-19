@@ -412,7 +412,7 @@ def test_fresh_soak_state_is_profile_v3_durable_and_never_reused(
     assert ref == "functional-proxy-v1@3:snapshot:0"
     snapshot = json.loads((state_dir / "snapshot.json").read_text(encoding="utf-8"))
     marker = json.loads((state_dir / "soak-state.json").read_text(encoding="utf-8"))
-    assert snapshot["schema_version"] == "homeostasis-state-v2"
+    assert snapshot["schema_version"] == "homeostasis-state-v3"
     assert snapshot["profile_revision"] == 3
     assert snapshot["interoceptive_summary"]["salience"] == "nominal"
     assert marker["schema_version"] == "homeostatic-expression-soak-state-v2"

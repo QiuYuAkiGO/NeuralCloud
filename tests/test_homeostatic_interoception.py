@@ -78,7 +78,7 @@ def test_profile_v3_initializes_a_same_revision_nominal_summary(tmp_path) -> Non
 
     summary = engine.snapshot.interoceptive_summary
     assert profile.revision == 3
-    assert engine.snapshot.schema_version == "homeostasis-state-v2"
+    assert engine.snapshot.schema_version == "homeostasis-state-v3"
     assert summary is not None
     assert summary.schema_version == "homeostatic-interoception-v1"
     assert summary.profile_ref == profile.profile_ref
@@ -564,7 +564,7 @@ def test_legacy_snapshot_migration_preserves_factor_evidence(
 
     restored = HomeostasisEngine(profile, state_dir=tmp_path, now=NOW)
     migrated = restored.snapshot.dimensions["energy_reserve"]
-    assert restored.snapshot.schema_version == "homeostasis-state-v2"
+    assert restored.snapshot.schema_version == "homeostasis-state-v3"
     assert restored.snapshot.revision == snapshot.revision + 1
     assert migrated.value == pytest.approx(0.31)
     assert migrated.velocity == pytest.approx(-0.07)

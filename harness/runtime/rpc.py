@@ -9,7 +9,7 @@ import httpx
 
 from harness.contracts.decisions import AutonomousAssessment, PreparedResponse
 from harness.contracts.envelope import DomainCommandEnvelope, DomainCommandResult, VersionVector
-from harness.runtime.adapters import DomainSnapshot, ServiceHealth
+from harness.runtime.adapters import DomainResponseError, DomainSnapshot, ServiceHealth
 from harness.homeostasis.models import QQFactLookup, QQFactStatus
 from harness.runtime.models import utc_now
 
@@ -210,7 +210,10 @@ class HttpCognitiveClient(_HttpDomainClient):
         # One physical request per charged judgment, with a total I/O deadline.
         response = await asyncio.wait_for(self.client.post("/v1/text/interruption",
             json=request.model_dump(mode="json"), timeout=request.timeout_seconds), request.timeout_seconds)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError:
+            raise DomainResponseError(response.status_code) from None
         return response.json()
 
     async def control(self, operation: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:

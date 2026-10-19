@@ -417,8 +417,11 @@ class OpenAICompatClient:
                 if summary:
                     span["json_repair"] = summary
         elif self.settings.json_repair_enabled and (response_format or {}).get("type") in {"json_object", "json_schema"}:
-            if result.finish_reason not in {None, "stop"} or result.has_refusal or result.has_tool_calls or result.content_type != "text":
-                raise ValueError("json_response_contract_invalid")
+            if (result.finish_reason != "stop" or result.has_refusal or result.has_tool_calls
+                    or result.content_type != "text" or not result.text.strip()):
+                # Preserve response metadata/usage for the owning business gate
+                # and bounded length recovery. Never repair ineligible content.
+                return result
             schema = (response_format or {}).get("json_schema", {}).get("schema")
             try:
                 text = decode_model_json(result.text, schema=schema, settings=self.settings,

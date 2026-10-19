@@ -40,7 +40,7 @@ class BoardDiagnostics:
         error_name = type(error).__name__
         if error_name not in {"ValidationError", "ValueError", "TypeError", "KeyError", "AttributeError",
             "TimeoutError", "RuntimeError", "OSError", "FileNotFoundError", "PermissionError", "JSONDecodeError",
-            "BoardError", "SharedMemoryConflict", "SharedMemoryStorageError", "HTTPStatusError",
+            "JSONOutputError", "BoardError", "SharedMemoryConflict", "SharedMemoryStorageError", "HTTPStatusError",
             "ConnectError", "ReadTimeout", "ConnectTimeout", "RemoteProtocolError"}:
             error_name = "Exception"
         code = self.stage + ":" + error_name

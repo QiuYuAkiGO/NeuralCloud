@@ -244,7 +244,9 @@ class BasicTerminalActionPlanner:
                 raw = self.llm.complete_chat(messages, temperature=0, stream=False)
             if len(raw) > 32_768:
                 return self._defer("终端规划输出超过安全长度上限。")
-            selected = _DECISION.validate_python(model_json_value(raw, schema=_DECISION.json_schema()))
+            # Keep authority-bearing extras for the strict decision validator.
+            # Schema projection must not silently erase attempted overrides.
+            selected = _DECISION.validate_python(model_json_value(raw))
         except (ValidationError, ValueError, TypeError):
             return self._defer("终端规划未返回有效的严格动作格式。")
         except Exception:

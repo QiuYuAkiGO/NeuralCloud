@@ -300,6 +300,8 @@ class ExperimentManifest(BaseModel):
     def canonical_json(self) -> str:
         # An absent opt-in extension must not invalidate existing journal hashes.
         payload = self.model_dump(mode="json")
+        if self.text_interruption == InterruptionOptions():
+            payload.pop("text_interruption")
         if self.emotion_mode == "off":
             payload.pop("emotion_mode")
         if self.web_access == WebAccessCondition():

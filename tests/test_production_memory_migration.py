@@ -3,6 +3,7 @@ import json
 import hashlib
 from pathlib import Path
 import sqlite3
+from contextlib import closing
 import shutil
 
 import pytest
@@ -68,7 +69,7 @@ def test_interrupted_migration_continues_without_duplicate_sources_or_receipts(t
 def test_same_path_replaced_snapshot_rejected_before_any_target_mutation(tmp_path, legacy_source):
     source, _, shared, _, _ = snapshot(tmp_path)
     if legacy_source:
-        with sqlite3.connect(shared) as db:
+        with closing(sqlite3.connect(shared)) as db, db:
             db.execute("DROP TABLE shared_memory_source_index")
     manifest = json.loads(source.read_text(encoding="utf-8"))
     manifest["tombstones"] = []
@@ -83,7 +84,7 @@ def test_same_path_replaced_snapshot_rejected_before_any_target_mutation(tmp_pat
     for index in range(3):
         replacement.record_local(local(event_id="new-snapshot-" + str(index), text="replacement synthetic source"))
     if legacy_source:
-        with sqlite3.connect(replacement.path) as db:
+        with closing(sqlite3.connect(replacement.path)) as db, db:
             db.execute("DROP TABLE shared_memory_source_index")
     shared.write_bytes(replacement.path.read_bytes())
     manifest["shared_sha256"] = hashlib.sha256(shared.read_bytes()).hexdigest()
@@ -155,7 +156,7 @@ def test_binding_commit_survives_interruption_before_production_schema(tmp_path,
     monkeypatch.setattr(production_migration, "ProductionMemoryStore", interrupted)
     with pytest.raises(RuntimeError, match="synthetic_interruption_after_binding"):
         migrate_snapshot(source, target)
-    with sqlite3.connect(target) as db:
+    with closing(sqlite3.connect(target)) as db, db:
         assert db.execute("SELECT count(*) FROM pm_migration_input").fetchone()[0] == 1
         assert not db.execute("SELECT 1 FROM sqlite_master WHERE name='pm_identity'").fetchone()
     monkeypatch.setattr(production_migration, "ProductionMemoryStore", ProductionMemoryStore)
@@ -196,7 +197,7 @@ def test_synthetic_benchmark_batches_and_resume(tmp_path):
     assert preparation["memory_entries"]["min"] > 0
     assert preparation["external_model_calls"] == 0
     assert "no_drop_caches" in preparation["cache_condition"]
-    with sqlite3.connect(path) as db:
+    with closing(sqlite3.connect(path)) as db, db:
         assert db.execute("SELECT count(*) FROM pm_sources").fetchone()[0] == 100
     with pytest.raises(ValueError, match="destination_exists"):
         benchmark(path, rows=100, queries=1)
@@ -223,10 +224,10 @@ def test_benchmark_uses_actual_production_messages_and_receipts_on_copy(tmp_path
     report = benchmark(source, rows=10, queries=2)
     assert len(seen) == 7
     copied = Path(report["production_context_preparation"]["retained_working_copy"]) / "production.sqlite3"
-    with sqlite3.connect(source) as db:
+    with closing(sqlite3.connect(source)) as db, db:
         assert db.execute("SELECT count(*) FROM pm_sources").fetchone()[0] == 10
         assert db.execute("SELECT count(*) FROM pm_receipts").fetchone()[0] == 0
-    with sqlite3.connect(copied) as db:
+    with closing(sqlite3.connect(copied)) as db, db:
         assert db.execute("SELECT count(*) FROM pm_sources").fetchone()[0] == 17
         kinds = dict(db.execute("SELECT kind,count(*) FROM pm_receipts GROUP BY kind"))
         assert kinds == {"retrieval_hit": 7, "context_exposure": 7}
@@ -242,7 +243,7 @@ def test_pre_index_historical_archive_migrates_read_only_and_resumes(tmp_path):
 
     shared = SharedMemoryStore(tmp_path / "historical.sqlite3")
     records = [shared.record_local(local(event_id="historical-" + str(index))).record for index in range(3)]
-    with sqlite3.connect(shared.path) as db:
+    with closing(sqlite3.connect(shared.path)) as db, db:
         db.execute("DROP TABLE shared_memory_source_index")
         db.execute("DROP TABLE shared_memory_identity")
         db.execute("DROP TABLE shared_memory_archive_coverage")
@@ -261,7 +262,7 @@ def test_pre_index_historical_archive_migrates_read_only_and_resumes(tmp_path):
     memory = ProductionMemoryStore(target, owner_id="misty", preset_id="misty")
     assert memory.validate_references([row.record_id for row in records], audience="local:main")
     assert hashlib.sha256(shared.path.read_bytes()).hexdigest() == before
-    with sqlite3.connect(shared.path) as db:
+    with closing(sqlite3.connect(shared.path)) as db, db:
         assert not db.execute("SELECT 1 FROM sqlite_master WHERE name='shared_memory_source_index'").fetchone()
     # The live incremental reader still requires its explicit schema upgrade.
     with pytest.raises(SharedMemoryStorageError, match="requires migration"):

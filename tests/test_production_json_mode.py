@@ -81,7 +81,8 @@ def test_choice_and_qq_appraisal_use_json_mode_on_main_once(wire, schema, conten
     ('{"kind":"invented","reason":"Invalid schema despite valid JSON."}', 200, ValidationError),
     (VALID_CHOICE, 400, httpx.HTTPStatusError),
 ])
-def test_invalid_or_rejected_json_mode_retains_usage_without_retry(wire, content, status, error):
+# Strict rollback mode; default repair has separate positive and safety coverage.
+def test_invalid_or_rejected_json_mode_retains_usage_without_retry(legacy_json_mode, wire, content, status, error):
     wire.content, wire.status = content, status
     with pytest.raises(error):
         ask(wire)
@@ -202,3 +203,9 @@ def test_metadata_capable_adapter_cannot_downgrade_missing_metadata_to_legacy(tm
         _ask(llm, {}, ProductionChoice, context=context(), command_id="missing-metadata", autonomous=False,
              meter=ProductionStore(tmp_path / "missing-metadata.sqlite3"))
     assert llm.calls == 1
+
+
+def test_default_repair_preserves_physical_usage_without_another_call(wire):
+    wire.content = '{"kind":"wait","reason":"unescaped\nnewline"}'
+    assert ask(wire).reason == "unescaped\nnewline"
+    assert_one_main_call(wire)

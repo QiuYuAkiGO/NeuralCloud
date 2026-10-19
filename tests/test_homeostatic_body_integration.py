@@ -51,7 +51,7 @@ def test_natural_drift_heartbeat_reaches_body_with_durable_evidence(tmp_path, mo
         text = "安静了一会儿，我想给这块小小的留言板留下一句话。"
         answer = ("This is not valid JSON." if model_action == "malformed" else
             json.dumps({"action": action, "title": "", "text": text if action == "write" else ""}, ensure_ascii=False))
-        llm = MockLLM(chat_script=(["This is not valid JSON.", answer] if model_action.startswith("repair_") else [answer]))
+        llm = MockLLM(chat_script=(["This is not valid JSON.", answer] if model_action.startswith("repair_") else [answer, answer] if model_action == "malformed" else [answer]))
         host.chat.llm = llm
 
         # Replay historical elapsed time, keeping real wall-clock command and
@@ -148,7 +148,7 @@ def test_natural_drift_heartbeat_reaches_body_with_durable_evidence(tmp_path, mo
                 if model_action == "malformed":
                     errors = [record.data["result"].get("error") for record in supervisor.journal.iter_records()
                         if record.record_type == "domain_command_result" and record.event_id == reflection.event_id]
-                    assert errors == ["board_shared_prepare_failed:model_json:ValueError"]
+                    assert errors == ["board_shared_prepare_failed:model_json:JSONOutputError"]
                 host.chat.llm = original_llm
                 await supervisor.stop()
                 await controller.close()

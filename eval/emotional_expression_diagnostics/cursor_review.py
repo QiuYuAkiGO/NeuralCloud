@@ -217,7 +217,10 @@ def _isolation_directory(prefix: str) -> tempfile.TemporaryDirectory[str]:
     # Cursor loads AGENTS/rules from every ancestor. The usual Windows temp
     # directory is under the real user profile, so a fresh child alone is not
     # enough. Use a drive-root sibling of the user's home and repository.
-    return tempfile.TemporaryDirectory(prefix=prefix, dir=Path(tempfile.gettempdir()).anchor)
+    # POSIX /tmp is outside the user profile and does not require root.
+    # _assert_clean_ancestors still rejects inherited repository/user rules.
+    parent = Path(tempfile.gettempdir()).anchor if os.name == "nt" else tempfile.gettempdir()
+    return tempfile.TemporaryDirectory(prefix=prefix, dir=parent)
 
 
 def _assert_clean_ancestors(workspace: Path) -> None:

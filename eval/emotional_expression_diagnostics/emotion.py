@@ -36,17 +36,9 @@ class ScriptedEmotionAux(MockLLM):
         if "EMOTION_APPRAISAL_V1" in system:
             return {"events": [{"source_id": source, "signals": [], "recovery": []}
                                for source in payload["new_source_ids"]]}
-        if "EMOTION_GUIDANCE_V1" in system:
-            needs = payload["homeostatic_needs"]
-            if needs:
-                need_text = needs[0]["semantic_need"] + "。"
-                if any(item["trend"] == "recovering" for item in needs):
-                    need_text += "这份需要正在缓和，表达也逐渐恢复平常节奏。"
-            else:
-                need_text = "没有明显需要，不制造情绪或原因。"
-            return {"feeling": scripted_feeling(payload),
-                    "delivery": "让当前感受自然影响语气与投入，保持事实边界。",
-                    "needs": need_text}
+        if "EMOTION_GUIDANCE_V2" in system:
+            return {**payload["required_expression"],
+                    "delivery": "让当前感受自然影响语气与投入，保持事实边界。"}
         raise ValueError("unexpected offline helper request")
 
 

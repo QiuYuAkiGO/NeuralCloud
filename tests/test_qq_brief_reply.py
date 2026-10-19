@@ -452,7 +452,8 @@ def test_invalid_optional_plan_falls_back_to_existing_prompt_and_records_diagnos
 
 @pytest.mark.parametrize("invalid", [{"action": "send_now"}, {"addressing": "force_direct"},
                                       {"force_send": True}, {"reply_plan_note": None}])
-def test_invalid_top_level_gate_is_still_rejected_even_with_optional_plan(setup, invalid):
+# Retain strict rollback behavior in addition to default repair coverage.
+def test_invalid_top_level_gate_is_still_rejected_even_with_optional_plan(legacy_json_mode, setup, invalid):
     _, client, _, kwargs, _ = setup
     client.choice = json.dumps({"action": "speak", "reason": "有新问题", "reply_plan": {"intent": "invalid"}, **invalid})
     result = decision.decide_qq_reply(**kwargs)

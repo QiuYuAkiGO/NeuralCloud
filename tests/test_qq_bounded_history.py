@@ -69,7 +69,9 @@ def test_bounded_first_import_is_optional_but_trigger_supplements_and_reply_are_
                 assert rendered[item.record_id]["claims"] == item.model_dump(mode="json")["claims"]
         evidence = build_qq_memory_evidence(payload=stage.payload, trusted_context=context,
             current_observation_ids={records[-1].record_id}, receipts=[], partial_receipts=[])
-        assert {entry.source_id for entry in evidence} == set(stage.observation_ids) - {records[-1].record_id}
+        assert {entry.source_id for entry in evidence} == set(stage.observation_ids)
+        assert {entry.source_id for entry in evidence if entry.kind == "current"} == {records[-1].record_id}
+        assert {entry.source_id for entry in evidence if entry.kind == "history"} == set(stage.observation_ids) - {records[-1].record_id}
         assert stage.characters == sum(map(len, encode_model_payload(stage.payload, projection="compact")))
         assert set(stage.payload["bounded_history"]["omitted_observation_record_ids"]).isdisjoint(stage.observation_ids)
 

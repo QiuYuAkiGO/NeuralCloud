@@ -91,7 +91,8 @@ def test_appraisal_rejects_unrendered_history_even_when_event_exists_in_store(tm
 
 
 @pytest.mark.parametrize("raw", ('{"candidates":[],"candidates":[]}', '{"candidates":NaN}', 'x'*65537), ids=("duplicate", "nonfinite", "oversized"))
-def test_appraisal_rejects_duplicate_nonfinite_and_oversized_json(tmp_path, raw):
+# Strict rollback mode; default repair has separate positive and safety coverage.
+def test_appraisal_rejects_duplicate_nonfinite_and_oversized_json(legacy_json_mode, tmp_path, raw):
     service = SocialWorldService(tmp_path / "memory.sqlite", OpenSocialCondition(enabled=True, entity_memory="general_beliefs"))
     result = service.appraise(Appraiser(raw), observation(1))
     assert not result.accepted and result.rejected_reasons
