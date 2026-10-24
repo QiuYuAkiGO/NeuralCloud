@@ -447,6 +447,42 @@
   },
   "components": {
     "schemas": {
+      "ContentPerception": {
+        "properties": {
+          "source_uri": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Source Uri"
+          },
+          "coverage": {
+            "type": "string",
+            "enum": [
+              "title",
+              "description",
+              "subtitles",
+              "frames",
+              "audio",
+              "complete"
+            ],
+            "title": "Coverage"
+          },
+          "observed_fraction": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Observed Fraction"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source_uri",
+          "coverage",
+          "observed_fraction"
+        ],
+        "title": "ContentPerception"
+      },
       "Correction": {
         "properties": {
           "schema_version": {
@@ -1026,6 +1062,7 @@
             "type": "string",
             "enum": [
               "observation",
+              "self_expression",
               "summary",
               "relationship",
               "persona_history"
@@ -1076,6 +1113,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/LegacyProvenance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "perception": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContentPerception"
               },
               {
                 "type": "null"
@@ -1160,6 +1207,7 @@
             "type": "string",
             "enum": [
               "observation",
+              "self_expression",
               "summary",
               "relationship",
               "persona_history"
@@ -1210,6 +1258,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/LegacyProvenance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "perception": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContentPerception"
               },
               {
                 "type": "null"

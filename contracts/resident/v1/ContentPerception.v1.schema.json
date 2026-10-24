@@ -1,0 +1,36 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "source_uri": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Source Uri",
+      "type": "string"
+    },
+    "coverage": {
+      "enum": [
+        "title",
+        "description",
+        "subtitles",
+        "frames",
+        "audio",
+        "complete"
+      ],
+      "title": "Coverage",
+      "type": "string"
+    },
+    "observed_fraction": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Observed Fraction",
+      "type": "number"
+    }
+  },
+  "required": [
+    "source_uri",
+    "coverage",
+    "observed_fraction"
+  ],
+  "title": "ContentPerception",
+  "type": "object"
+}

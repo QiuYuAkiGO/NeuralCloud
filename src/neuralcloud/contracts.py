@@ -47,6 +47,12 @@ class LegacyProvenance(Contract):
     original_important: bool = False
 
 
+class ContentPerception(Contract):
+    source_uri: str = Field(min_length=1, max_length=2048)
+    coverage: Literal["title", "description", "subtitles", "frames", "audio", "complete"]
+    observed_fraction: float = Field(ge=0, le=1, allow_inf_nan=False)
+
+
 class SourceEvent(Contract):
     schema_version: Literal[1] = 1
     character_id: str = Field(min_length=1, max_length=128)
@@ -57,13 +63,14 @@ class SourceEvent(Contract):
     activity_id: str | None = Field(default=None, max_length=256)
     occurred_at: float = Field(ge=0, allow_inf_nan=False)
     content: str = Field(min_length=1, max_length=32768)
-    kind: Literal["observation", "summary", "relationship", "persona_history"] = "observation"
+    kind: Literal["observation", "self_expression", "summary", "relationship", "persona_history"] = "observation"
     privacy: Literal["public", "private", "sensitive"] = "private"
     participants: list[str] = Field(default_factory=list, max_length=64)
     aliases: list[str] = Field(default_factory=list, max_length=64)
     source_ids: list[str] = Field(default_factory=list, max_length=128)
     pinned: bool = False
     provenance: LegacyProvenance | None = None
+    perception: ContentPerception | None = None
 
 
 class Correction(Contract):
