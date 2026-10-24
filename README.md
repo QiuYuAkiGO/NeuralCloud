@@ -22,5 +22,8 @@ The thin Harness integration provides scoped memory tools, a bounded persistent 
 - [Verified baseline](docs/refactor/misty-harness-rollout/00-remote-progress-sync.md)
 - [Execution status](docs/refactor/misty-harness-rollout/progress.json)
 - [Checkpoints](docs/refactor/misty-harness-rollout/implementation-checkpoints.md)
+- [Isolated implementation and validation](docs/refactor/misty-harness-rollout/03-isolated-implementation.md)
+
+Explicit legacy import is available through `python -m neuralcloud.migration --help`. Owner contracts are generated with `python tools/export_resident_contracts.py` and checked with `--check` (requires the archive extra). The migration and archive management modules never run during ordinary service startup.
 
 Legacy GUI, inference, QQ, body and voice integrations remain recoverable in the source history but are excluded from the new default wheel and test path. Their production services have not been removed or restarted by this refactor.

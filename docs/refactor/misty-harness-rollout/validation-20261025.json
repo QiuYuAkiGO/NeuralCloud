@@ -1,0 +1,454 @@
+{
+  "format": "misty-isolated-validation-v1",
+  "created_at": "2026-10-24T20:12:01.415689+00:00",
+  "implementation_commits": {
+    "neuralcloud": "72cd497c39d107c5dbb971932f7d79bccd97d499",
+    "mistyai": "780293f2e2a09646594c4849eb8495c0d3413d7b"
+  },
+  "production_changed": false,
+  "real_external_messages": 0,
+  "production_model_calls": 0,
+  "counts_per_platform": {
+    "neuralcloud_pytest": 15,
+    "mistyai_pytest": 10,
+    "nc_node": 3,
+    "harness_qq_node": 12,
+    "tcp_services_harness": 1
+  },
+  "total_per_platform": 41,
+  "windows": {
+    "python": "3.12.13",
+    "node": "24.15.0",
+    "all_tests_passed": true,
+    "ruff_passed": true,
+    "contracts_checked": true,
+    "wheel_builds_passed": true,
+    "legacy_default_wheel_modules": 0
+  },
+  "linux": {
+    "root": "/tmp/misty-refactor-20261025-4wd4l7kf",
+    "uid": 1000,
+    "source_bundle_sha256": "fd798eef9a0f0f48b8d10cf62c2a471650be0752b4ee931c63792cb9c28b51d8",
+    "production_changed": false,
+    "tests": {
+      "NeuralCloud_pytest": {
+        "exit_code": 0,
+        "elapsed_seconds": 0.901,
+        "output": "...............                                                          [100%]\n=============================== warnings summary ===============================\n.venv/lib/python3.12/site-packages/fastapi/testclient.py:1\n  /tmp/misty-refactor-20261025-4wd4l7kf/NeuralCloud/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n.venv/lib/python3.12/site-packages/starlette/testclient.py:53\n  /tmp/misty-refactor-20261025-4wd4l7kf/NeuralCloud/.venv/lib/python3.12/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.\n    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n15 passed, 2 warnings in 0.63s\n"
+      },
+      "NeuralCloud_contracts": {
+        "exit_code": 0,
+        "elapsed_seconds": 0.256,
+        "output": "{\"generated_contracts\": 15, \"check\": true}\n"
+      },
+      "MistyAI_pytest": {
+        "exit_code": 0,
+        "elapsed_seconds": 0.501,
+        "output": "..........                                                               [100%]\n=============================== warnings summary ===============================\n.venv/lib/python3.12/site-packages/fastapi/testclient.py:1\n  /tmp/misty-refactor-20261025-4wd4l7kf/MistyAI/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n10 passed, 1 warning in 0.29s\n"
+      },
+      "MistyAI_contracts": {
+        "exit_code": 0,
+        "elapsed_seconds": 0.231,
+        "output": "{\"generated_contracts\": 15, \"check\": true}\n"
+      },
+      "NeuralCloud_ruff": {
+        "exit_code": 0,
+        "elapsed_seconds": 0.022,
+        "output": "All checks passed!\n"
+      },
+      "MistyAI_ruff": {
+        "exit_code": 0,
+        "elapsed_seconds": 0.023,
+        "output": "All checks passed!\n"
+      },
+      "npm_ci": {
+        "exit_code": 0,
+        "elapsed_seconds": 0.457,
+        "output": "\nadded 78 packages in 406ms\n"
+      },
+      "qq_patch": {
+        "exit_code": 0,
+        "elapsed_seconds": 0.028,
+        "output": "{\"version\":\"0.5.2\",\"patched\":6,\"explicit_send\":true,\"real_channel_tested\":false}\n"
+      },
+      "harness_node_tests": {
+        "exit_code": 0,
+        "elapsed_seconds": 0.329,
+        "output": "\n> test\n> node --test test/*.test.mjs\n\n✔ public owner handle: inject is idle, followup wakes, stable IDs survive consumption (20.974997ms)\n✔ dynamic context refresh preserves literal external braces and fixed persona (3.287618ms)\n✔ cancel at idle does not poison later work (4.631868ms)\n✔ Misty guard actually denies unreviewed tools inside the pinned Harness pipeline (16.102087ms)\n✔ delivery records UNKNOWN after SDK ambiguity and WAIT never touches transport (0.215554ms)\n✔ durable ingress does not replay a PREPARED input after a process interruption (12.621699ms)\n✔ a real SDK receipt stays SENT even when the state receipt acknowledgment is lost (0.444863ms)\n✔ real JSONL persistence restores pending input after a process exits without disposal (137.758776ms)\n✔ actual patched QQ router emits no implicit WAIT, chunk, tool or turn-error message (0.548261ms)\n✔ only explicit allowlisted SDK delivery returns an external receipt (0.620461ms)\n✔ session-creation failure does not trigger a hidden fallback QQ reply (0.441888ms)\n✔ QQ replay preserves the platform input identity rather than minting a random message ID (0.593539ms)\nℹ tests 12\nℹ suites 0\nℹ pass 12\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 241.606804\n"
+      },
+      "nc_node_tests": {
+        "exit_code": 0,
+        "elapsed_seconds": 0.156,
+        "output": "\n> @misty/dsh-neuralcloud@1.0.0-alpha.1 test\n> node --test test/*.test.mjs\n\n✔ flush failure never advances the durable consumer cursor (7.297312ms)\n✔ outbox survives restart, refuses overflow, and only removes durable acknowledgments (10.866821ms)\n✔ disconnected cache withholds possibly corrected text and does not claim absence (12.110127ms)\nℹ tests 3\nℹ suites 0\nℹ pass 3\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 69.960553\n"
+      },
+      "tcp_services_harness": {
+        "exit_code": 0,
+        "elapsed_seconds": 1.464,
+        "output": "✔ actual Python HTTP owners + Harness + patched QQ + durable outbox + content appraisal (154.472207ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 282.27118\n{\"tcp_service_integration_exit_code\": 0, \"real_external_actions\": 0}\n"
+      }
+    },
+    "isolated_node": {
+      "version": "v24.15.0",
+      "sha256": "472655581fb851559730c48763e0c9d3bc25975c59d518003fc0849d3e4ba0f6",
+      "source": "https://nodejs.org/dist/v24.15.0/node-v24.15.0-linux-x64.tar.xz",
+      "production_node_replaced": false
+    }
+  },
+  "snapshot": {
+    "id": "memory-domain-20261024T192854Z",
+    "bytes": 1274318848,
+    "sha256": "241b0af23d371b46a7d9ead8eb812cdcf65aea10ae92040fad914e80c6242d5d",
+    "encrypted_restore_verified": true,
+    "single_database_consistent": true,
+    "cross_service_consistent": false,
+    "second_independent_recovery_copy": false,
+    "temporary_linux_copy_removed_after_verification": true
+  },
+  "migration": {
+    "format": "production-memory-import-v1",
+    "source_sha256": "241b0af23d371b46a7d9ead8eb812cdcf65aea10ae92040fad914e80c6242d5d",
+    "stage": "COMPLETE",
+    "records": 39811,
+    "revisions": 39816,
+    "statuses": {
+      "INACTIVE": 4840,
+      "ONLINE": 34875,
+      "SOURCE_CHANGED": 96
+    },
+    "source_snapshot_retention_required": true,
+    "old_actions_replayed": 0,
+    "historical_interpretations_are_current_facts": false
+  },
+  "conversion_steps_seconds": 38.297,
+  "migration_verification": {
+    "checked_versions": 39816,
+    "content_and_source_hashes_match": true,
+    "rowid_index_matches": true,
+    "foreign_keys_valid": true,
+    "source_snapshot_sha256": "241b0af23d371b46a7d9ead8eb812cdcf65aea10ae92040fad914e80c6242d5d",
+    "target_bytes": 155951104
+  },
+  "startup_windows_real_projection": {
+    "version": 1,
+    "platform": "win32",
+    "python": "3.12.13",
+    "cache_regime": "fresh process; OS/filesystem caches unspecified; no cache drop",
+    "measurements": [
+      {
+        "records": 39811,
+        "import_ms": 92.06439997069538,
+        "open_ms": 3.485299996100366,
+        "ready_ms": 95.65809997729957,
+        "ready_cpu_ms": 93.75,
+        "rss_at_ready_bytes": 35905536,
+        "io_read_bytes_to_ready": 2615292,
+        "io_read_operations_to_ready": 252,
+        "query_first_ms": 1.98529998306185,
+        "query_warm_median_ms": 0.17070001922547817,
+        "capabilities": [
+          "text_search",
+          "read_by_id",
+          "durable_ingest"
+        ],
+        "external_model_calls": 0,
+        "cold_store_reads": 0
+      },
+      {
+        "records": 39811,
+        "import_ms": 88.28730002278462,
+        "open_ms": 3.0783999827690423,
+        "ready_ms": 91.42540005268529,
+        "ready_cpu_ms": 78.125,
+        "rss_at_ready_bytes": 35946496,
+        "io_read_bytes_to_ready": 2615292,
+        "io_read_operations_to_ready": 252,
+        "query_first_ms": 1.763199979905039,
+        "query_warm_median_ms": 0.16759999562054873,
+        "capabilities": [
+          "text_search",
+          "read_by_id",
+          "durable_ingest"
+        ],
+        "external_model_calls": 0,
+        "cold_store_reads": 0
+      },
+      {
+        "records": 39811,
+        "import_ms": 89.02900002431124,
+        "open_ms": 2.8526000096462667,
+        "ready_ms": 91.98610001476482,
+        "ready_cpu_ms": 93.75,
+        "rss_at_ready_bytes": 35864576,
+        "io_read_bytes_to_ready": 2615292,
+        "io_read_operations_to_ready": 252,
+        "query_first_ms": 2.1086999913677573,
+        "query_warm_median_ms": 0.17010001465678215,
+        "capabilities": [
+          "text_search",
+          "read_by_id",
+          "durable_ingest"
+        ],
+        "external_model_calls": 0,
+        "cold_store_reads": 0
+      },
+      {
+        "records": 39811,
+        "import_ms": 89.41519999643788,
+        "open_ms": 2.7016999665647745,
+        "ready_ms": 92.17530000023544,
+        "ready_cpu_ms": 93.75,
+        "rss_at_ready_bytes": 35864576,
+        "io_read_bytes_to_ready": 2615292,
+        "io_read_operations_to_ready": 252,
+        "query_first_ms": 1.8147000228054821,
+        "query_warm_median_ms": 0.16870000399649143,
+        "capabilities": [
+          "text_search",
+          "read_by_id",
+          "durable_ingest"
+        ],
+        "external_model_calls": 0,
+        "cold_store_reads": 0
+      },
+      {
+        "records": 39811,
+        "import_ms": 88.23759999359027,
+        "open_ms": 2.810699981637299,
+        "ready_ms": 91.10709995729849,
+        "ready_cpu_ms": 93.75,
+        "rss_at_ready_bytes": 35921920,
+        "io_read_bytes_to_ready": 2615292,
+        "io_read_operations_to_ready": 252,
+        "query_first_ms": 1.7593000084161758,
+        "query_warm_median_ms": 0.17180002760142088,
+        "capabilities": [
+          "text_search",
+          "read_by_id",
+          "durable_ingest"
+        ],
+        "external_model_calls": 0,
+        "cold_store_reads": 0
+      }
+    ]
+  },
+  "startup_windows_synthetic_scales": [
+    {
+      "version": 1,
+      "platform": "win32",
+      "python": "3.12.13",
+      "cache_regime": "fresh process; OS/filesystem caches unspecified; no cache drop",
+      "measurements": [
+        {
+          "records": 0,
+          "import_ms": 84.9391000228934,
+          "open_ms": 2.39430001238361,
+          "ready_ms": 87.37220003968105,
+          "ready_cpu_ms": 125.0,
+          "rss_at_ready_bytes": 35803136,
+          "io_read_bytes_to_ready": 2606217,
+          "io_read_operations_to_ready": 250,
+          "query_first_ms": 0.9064000332728028,
+          "query_warm_median_ms": 0.02300000051036477,
+          "capabilities": [
+            "text_search",
+            "read_by_id",
+            "durable_ingest"
+          ],
+          "external_model_calls": 0,
+          "cold_store_reads": 0
+        },
+        {
+          "records": 0,
+          "import_ms": 86.4156000316143,
+          "open_ms": 2.377199998591095,
+          "ready_ms": 88.8289000140503,
+          "ready_cpu_ms": 78.125,
+          "rss_at_ready_bytes": 35860480,
+          "io_read_bytes_to_ready": 2606217,
+          "io_read_operations_to_ready": 250,
+          "query_first_ms": 0.895800010766834,
+          "query_warm_median_ms": 0.02239999594166875,
+          "capabilities": [
+            "text_search",
+            "read_by_id",
+            "durable_ingest"
+          ],
+          "external_model_calls": 0,
+          "cold_store_reads": 0
+        },
+        {
+          "records": 0,
+          "import_ms": 84.72970000002533,
+          "open_ms": 2.477400004863739,
+          "ready_ms": 87.24349999101833,
+          "ready_cpu_ms": 93.75,
+          "rss_at_ready_bytes": 35975168,
+          "io_read_bytes_to_ready": 2606217,
+          "io_read_operations_to_ready": 250,
+          "query_first_ms": 0.9041000157594681,
+          "query_warm_median_ms": 0.02329994458705187,
+          "capabilities": [
+            "text_search",
+            "read_by_id",
+            "durable_ingest"
+          ],
+          "external_model_calls": 0,
+          "cold_store_reads": 0
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "platform": "win32",
+      "python": "3.12.13",
+      "cache_regime": "fresh process; OS/filesystem caches unspecified; no cache drop",
+      "measurements": [
+        {
+          "records": 1000,
+          "import_ms": 83.84259999729693,
+          "open_ms": 2.372700022533536,
+          "ready_ms": 86.25880000181496,
+          "ready_cpu_ms": 78.125,
+          "rss_at_ready_bytes": 35897344,
+          "io_read_bytes_to_ready": 2610313,
+          "io_read_operations_to_ready": 251,
+          "query_first_ms": 2.7517000562511384,
+          "query_warm_median_ms": 1.3394999550655484,
+          "capabilities": [
+            "text_search",
+            "read_by_id",
+            "durable_ingest"
+          ],
+          "external_model_calls": 0,
+          "cold_store_reads": 0
+        },
+        {
+          "records": 1000,
+          "import_ms": 84.461199992802,
+          "open_ms": 2.4240000057034194,
+          "ready_ms": 86.93399996263906,
+          "ready_cpu_ms": 93.75,
+          "rss_at_ready_bytes": 35966976,
+          "io_read_bytes_to_ready": 2610313,
+          "io_read_operations_to_ready": 251,
+          "query_first_ms": 2.8193999896757305,
+          "query_warm_median_ms": 1.3265999732539058,
+          "capabilities": [
+            "text_search",
+            "read_by_id",
+            "durable_ingest"
+          ],
+          "external_model_calls": 0,
+          "cold_store_reads": 0
+        },
+        {
+          "records": 1000,
+          "import_ms": 83.81229999940842,
+          "open_ms": 2.4600999895483255,
+          "ready_ms": 86.31699997931719,
+          "ready_cpu_ms": 93.75,
+          "rss_at_ready_bytes": 35930112,
+          "io_read_bytes_to_ready": 2610313,
+          "io_read_operations_to_ready": 251,
+          "query_first_ms": 2.748300030361861,
+          "query_warm_median_ms": 1.3463999493978918,
+          "capabilities": [
+            "text_search",
+            "read_by_id",
+            "durable_ingest"
+          ],
+          "external_model_calls": 0,
+          "cold_store_reads": 0
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "platform": "win32",
+      "python": "3.12.13",
+      "cache_regime": "fresh process; OS/filesystem caches unspecified; no cache drop",
+      "measurements": [
+        {
+          "records": 10000,
+          "import_ms": 91.35810000589117,
+          "open_ms": 2.5218999944627285,
+          "ready_ms": 93.92579999985173,
+          "ready_cpu_ms": 93.75,
+          "rss_at_ready_bytes": 35889152,
+          "io_read_bytes_to_ready": 2610313,
+          "io_read_operations_to_ready": 251,
+          "query_first_ms": 12.946499977260828,
+          "query_warm_median_ms": 10.920999979134649,
+          "capabilities": [
+            "text_search",
+            "read_by_id",
+            "durable_ingest"
+          ],
+          "external_model_calls": 0,
+          "cold_store_reads": 0
+        },
+        {
+          "records": 10000,
+          "import_ms": 89.23360001062974,
+          "open_ms": 3.124499984551221,
+          "ready_ms": 92.40490000229329,
+          "ready_cpu_ms": 93.75,
+          "rss_at_ready_bytes": 35758080,
+          "io_read_bytes_to_ready": 2610313,
+          "io_read_operations_to_ready": 251,
+          "query_first_ms": 13.071800000034273,
+          "query_warm_median_ms": 10.622599977068603,
+          "capabilities": [
+            "text_search",
+            "read_by_id",
+            "durable_ingest"
+          ],
+          "external_model_calls": 0,
+          "cold_store_reads": 0
+        },
+        {
+          "records": 10000,
+          "import_ms": 86.44330000970513,
+          "open_ms": 2.453099994454533,
+          "ready_ms": 88.9415999990888,
+          "ready_cpu_ms": 78.125,
+          "rss_at_ready_bytes": 35876864,
+          "io_read_bytes_to_ready": 2610313,
+          "io_read_operations_to_ready": 251,
+          "query_first_ms": 12.991600029636174,
+          "query_warm_median_ms": 10.55800000904128,
+          "capabilities": [
+            "text_search",
+            "read_by_id",
+            "durable_ingest"
+          ],
+          "external_model_calls": 0,
+          "cold_store_reads": 0
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "No real QQ/media/model-provider acceptance",
+    "No production Harness launcher or session-rotation activation",
+    "No authenticated creator notification transport",
+    "No production cutover or cold eviction",
+    "No physical cold-cache or comparable full old/new startup profile"
+  ],
+  "wheel_artifacts": {
+    "NeuralCloud": {
+      "file": "neuralcloud_memory-1.0.0a1-py3-none-any.whl",
+      "sha256": "52240a1dec5beed51901aa9ff0948f8f1547150b6d77ab40e4a7c5311c75ffba",
+      "source_equivalence": true,
+      "python_module_count": 8,
+      "legacy_default_modules": 0
+    },
+    "MistyAI": {
+      "file": "mistyai-1.0.0a1-py3-none-any.whl",
+      "sha256": "f5a703f0a33cdab8c8337b84b79a7e28d51d700f3a84f077484fa201aaac68b3",
+      "source_equivalence": true,
+      "python_module_count": 8,
+      "legacy_default_modules": 0
+    }
+  }
+}
