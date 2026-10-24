@@ -432,8 +432,9 @@ function syncSpeakerFields(snap) {
 
 function renderTranscript() {
   const root = $("transcript");
-  if (!state.messages.length) {
-    root.innerHTML = `<div class="empty-chat">还没有对话。发送一句，观察九阶段如何装配语境。</div>`;
+  const tasks = state.snapshot?.agentic_tasks?.tasks || [];
+  if (!state.messages.length && !tasks.length) {
+    root.innerHTML = `<div class="empty-chat">还没有对话。发一句话，开始聊天吧。</div>`;
     return;
   }
   root.innerHTML = state.messages
@@ -451,6 +452,11 @@ function renderTranscript() {
       return `<div class="bubble ${msg.role}"><div class="who">${esc(speakerLabel(msg))}</div>${esc(body)}${meta}</div>`;
     })
     .join("");
+  const taskStatus = { queued: "等待整理", running: "正在写", applied: "已保存", rejected: "未能保存", failed: "处理失败", cancelled: "已取消" };
+  root.innerHTML += tasks.map((task) => `<article class="bubble character" data-task-id="${esc(task.id)}">
+    <div class="who">${esc(task.day)} · 日记 · ${esc(taskStatus[task.status] || task.status)}</div>
+    ${task.text ? `<details><summary>查看日记</summary><p>${esc(task.text)}</p></details>` : ""}
+  </article>`).join("");
   root.scrollTop = root.scrollHeight;
 }
 

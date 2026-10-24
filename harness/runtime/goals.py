@@ -108,6 +108,15 @@ class GoalController:
     def enabled(self):
         return self.config.enabled
 
+    @property
+    def native(self):
+        controller = getattr(self.supervisor, 'native_regulation', None)
+        return controller if controller and controller.settings.mode == 'on' and controller.settings.autonomous_enabled else None
+
+    @property
+    def reconsider_seconds(self):
+        return self.config.review_seconds if self.native else self.supervisor.capabilities.settings.opportunity_seconds
+
     def _save(self, kind, item):
         self.store.put(kind, item["id"], item)
         return item
@@ -159,7 +168,7 @@ class GoalController:
             end_reason="episode_time_limit" if expired else "episode_attempt_limit", causal_effect_verified=False)
         goal = self.store.get("goal", STANDING_ID)
         goal.update(status="observing", next_review_at=(now + timedelta(
-            seconds=self.supervisor.capabilities.settings.opportunity_seconds)).isoformat())
+            seconds=self.reconsider_seconds)).isoformat())
         with self.store.objects.atomic():
             self._save("episode", episode)
             self._save("goal", goal)
@@ -167,6 +176,9 @@ class GoalController:
 
     def budget(self, *, now=None):
         now = now or self.clock()
+        if self.native:
+            budget = self.native.model_budget()
+            return {k:v for k,v in budget.items() if k != 'attempts'}
         calls = [_when(v) for v in self._state()["calls"] if (now - _when(v)).total_seconds() < 3600]
         next_at = now
         if calls:
@@ -282,7 +294,14 @@ class GoalController:
     async def heartbeat(self):
         if not self.enabled:
             return
+        native_settings = getattr(self.supervisor.manifest, 'agentic_regulation', None)
+        if native_settings and native_settings.mode == 'on' and not native_settings.autonomous_enabled:
+            return
         cap, now = self.supervisor.capabilities, self.clock()
+        native = self.native
+        rest = native.rest() if native else {'resting':False}
+        if rest['resting'] and now < _when(rest['review_at']):
+            return
         self.reconcile()
         for episode in self._episodes():
             self._expire_autonomous_episode(episode, now)
@@ -303,24 +322,24 @@ class GoalController:
         if self.request_fault(goal):
             return
         state = self._state()
-        if (not episode and goal.get("blocked_reason") == "no_progress"
+        if (not rest['resting'] and not episode and goal.get("blocked_reason") == "no_progress"
                 and goal.get("blocked_signal_revision") == state["signal_revision"]):
             return
         if episode:
             if episode["status"] == "paused" or episode.get("unresolved_call"):
                 return
-            if episode.get("blocked_reason") == "no_progress" and episode.get("blocked_signal_revision") == state["signal_revision"]:
+            if not rest['resting'] and episode.get("blocked_reason") == "no_progress" and episode.get("blocked_signal_revision") == state["signal_revision"]:
                 return
-            if _when(episode.get("next_review_at")) and now < _when(episode["next_review_at"]):
+            if not rest['resting'] and _when(episode.get("next_review_at")) and now < _when(episode["next_review_at"]):
                 return
         elif goal["id"] == STANDING_ID:
-            if _when(goal.get("next_review_at")) and now < _when(goal["next_review_at"]):
+            if not rest['resting'] and _when(goal.get("next_review_at")) and now < _when(goal["next_review_at"]):
                 return
             summary = self.supervisor._response_homeostatic_interoception() or {}
-            if summary.get("salience") not in {"noticeable", "marked", "critical"}:
+            if not native and summary.get("salience") not in {"noticeable", "marked", "critical"}:
                 return
             # Energy alone cannot initiate a psychological regulation episode.
-            if deviation(self.supervisor._homeostasis_snapshot.payload, PSYCHOLOGICAL_DIMENSIONS) <= 0:
+            if not native and deviation(self.supervisor._homeostasis_snapshot.payload, PSYCHOLOGICAL_DIMENSIONS) <= 0:
                 return
         available_at = _when(self.budget(now=now)["next_available_at"])
         if now < available_at:
@@ -332,7 +351,7 @@ class GoalController:
         # Keep existing expression cooldowns without delaying a desktop plan's
         # independent next step by a full autonomous-opportunity interval.
         cooldown = set()
-        for call in cap.calls.all():
+        for call in ([] if native else cap.calls.all()):
             offer = call.get("offer", {})
             if offer.get("channel") in {"board", "qq", "voice"} and call.get("decision", {}).get("choice", {}).get("kind") == "act":
                 if (now - _when(call["created_at"])).total_seconds() < cap.settings.opportunity_seconds:
@@ -362,6 +381,10 @@ class GoalController:
                 "active_episode": _episode_context(episode), "known_evidence_refs": refs, "appraisal_evidence_refs": appraisal_refs,
                 "outcomes": _review_outcomes(episode),
                 "budget": self.budget(), "snapshot": state_snapshot}})
+        if native:
+            row['goal_request']['goal_context']['native_state'] = {
+                'runtime_instance_id':self.supervisor.runtime_instance_id,
+                'manifest_revision':self.supervisor.manifest.revision, 'rest_revision':rest['revision']}
         # Catch broken envelopes locally before consuming Cognitive capacity.
         from harness.contracts.goals import GoalDecisionRequest
         from pydantic import ValidationError
@@ -409,6 +432,31 @@ class GoalController:
             if accepted["hash"] != digest(raw):
                 raise ValueError("goal decision identity conflict")
             return result.result["prepared_capability_choice"]
+        native = self.native
+        native_binding = row['goal_request']['goal_context'].get('native_state')
+        if native_binding is not None:
+            if native is None or native_binding['rest_revision'] != native.rest()['revision']:
+                # An already committed rest receipt may be replayed after a
+                # crash between control commit and goal-decision persistence.
+                if decision.native_rest is None or native is None or native.store.get('native_control', decision.decision_id) is None:
+                    raise ValueError('native_goal_rest_state_changed')
+            if decision.choice.kind in {'act','observe'} and native.rest()['resting']:
+                raise ValueError('native_resting')
+        if decision.native_rest is not None:
+            if native_binding is None or decision.native_rest_revision != native_binding['rest_revision']:
+                raise ValueError('native_rest_proposal_unbound')
+            from harness.runtime.native_regulation import NativeRestRequest
+            receipt = native.set_rest(NativeRestRequest(request_id=decision.decision_id,
+                expires_at=decision.deadline_at,
+                runtime_instance_id=native_binding['runtime_instance_id'], manifest_revision=native_binding['manifest_revision'],
+                expected_rest_revision=decision.native_rest_revision, **decision.native_rest.model_dump(),
+                source_refs=decision.evidence_refs[:32]))
+            row['native_rest_receipt'] = receipt
+        elif native and native.rest()['resting']:
+            # Waiting at a rest review continues rest, without forcing a wake.
+            current_rest = native.rest()
+            native.store.put('native_self', 'rest', {**current_rest,
+                'review_at':(now + timedelta(seconds=self.config.review_seconds)).isoformat()})
         operation = decision.episode_operation
         prior_window = None
         if episode is None and operation not in {"start", "wait"}:
@@ -460,14 +508,14 @@ class GoalController:
                 if goal["id"] != STANDING_ID:
                     goal.update(status="completed", revision=goal["revision"] + 1)
                 else:
-                    goal.update(status="observing", next_review_at=(now + timedelta(seconds=self.supervisor.capabilities.settings.opportunity_seconds)).isoformat())
+                    goal.update(status="observing", next_review_at=(now + timedelta(seconds=self.reconsider_seconds)).isoformat())
             elif operation == "abandon":
                 episode.update(status="abandoned", ended_at=now.isoformat(), end_reason="model_abandoned")
                 if goal["id"] != STANDING_ID:
                     goal.update(status="abandoned", revision=goal["revision"] + 1)
                 else:
                     goal.update(status="observing", next_review_at=(now + timedelta(
-                        seconds=self.supervisor.capabilities.settings.opportunity_seconds)).isoformat())
+                        seconds=self.reconsider_seconds)).isoformat())
             elif decision.choice.kind in {"act", "observe"}:
                 step = next((s for s in episode["steps"] if s["status"] == "planned"), None)
                 if step is None:
@@ -483,7 +531,7 @@ class GoalController:
                 self._save("episode", episode)
                 self._save("goal", goal)
         else:
-            goal.update(next_review_at=(now + timedelta(seconds=self.supervisor.capabilities.settings.opportunity_seconds)).isoformat())
+            goal.update(next_review_at=(now + timedelta(seconds=self.reconsider_seconds)).isoformat())
             self._save("goal", goal)
         self.store.put("decision", decision.decision_id, {"hash": digest(raw), "decision": raw, "episode_id": binding["episode_id"]}, immutable=True)
         row["goal_decision"] = raw
@@ -670,7 +718,7 @@ class GoalController:
                 self._record_request_fault(call, goal)
                 if call["status"] not in {"wait", "defer", "no_action"}:
                     goal["no_progress"] = goal.get("no_progress", 0) + 1
-                if goal["no_progress"] >= self.config.maximum_no_progress and goal["status"] not in FINISHED | {"paused"}:
+                if goal.get("no_progress", 0) >= self.config.maximum_no_progress and goal["status"] not in FINISHED | {"paused"}:
                     goal.update(blocked_reason="no_progress", blocked_signal_revision=self._state()["signal_revision"])
                 self._save("goal", goal)
                 continue

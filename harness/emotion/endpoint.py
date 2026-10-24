@@ -30,6 +30,8 @@ class DeepSeekEmotionClient(OpenAICompatClient):
 
 
 def build_emotion_client(settings):
+    if getattr(settings, "agentic_enabled", False):
+        return None
     if getattr(settings, "structured_llm_config", None) is not None:
         from harness.llm.structured import build_structured_client
         return build_structured_client(settings)

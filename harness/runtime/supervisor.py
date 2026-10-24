@@ -294,6 +294,7 @@ class RuntimeSupervisor:
         self.homeostasis = homeostasis
         self.character_id = character_id
         self.runtime_instance_id = runtime_instance_id or new_id("runtime")
+        self.runtime_started_at = utc_now()
         self.state_dir = Path(state_dir)
         self.state_dir.mkdir(parents=True, exist_ok=True)
         from harness.runtime.text_interruption import RuntimeTextTurns
@@ -499,6 +500,8 @@ class RuntimeSupervisor:
         self.capabilities = CapabilityController(self, self.state_dir)
         from harness.runtime.goals import GoalController
         self.goals = GoalController(self, self.state_dir)
+        from harness.runtime.native_regulation import NativeRegulationController
+        self.native_regulation = NativeRegulationController(self)
         prior_execution_guard = self.action_coordinator.execution_guard
 
         async def capability_execution_guard(action):
@@ -1592,6 +1595,7 @@ class RuntimeSupervisor:
         from harness.homeostasis.work import configured_work_ledger
         ledger = configured_work_ledger()
         async with self._homeostasis_command_lock:
+            await self.native_regulation.drain(event)
             for receipt in ledger.pending() if ledger is not None else []:
                 exposure_event = event.model_copy(update={"source_time": receipt.attended_at,
                     "payload": {"cognitive_exposure": receipt.model_dump(mode="json")}})
@@ -2044,6 +2048,10 @@ class RuntimeSupervisor:
             },
         )
         if web_deadline is not None:
+            if web_deadline <= max(utc_now(), prepare_envelope.issued_at):
+                return EventDispatchResult(event_id=event.event_id, receive_seq=event.receive_seq,
+                    process_seq=process_seq, status="ignored", decision_kind="no_action",
+                    detail={"error_type": "web_turn_expired"})
             prepare_envelope = prepare_envelope.model_copy(update={"deadline": min(prepare_envelope.deadline, web_deadline)})
         self._journal_homeostatic_route(
             event=event,
@@ -4959,6 +4967,21 @@ class RuntimeSupervisor:
                 continue
             if self.production_runtime is not None and service == "homeostasis":
                 raise RuntimeStateError("production migration requires settling legacy Homeostasis commands before activation")
+            from harness.runtime.expired_web import expired_source
+            expired = expired_source(self, record)
+            if expired is not None:
+                self._process_seq += 1
+                result = EventDispatchResult(event_id=expired.event_id, receive_seq=expired.receive_seq,
+                    process_seq=self._process_seq, status="ignored", decision_kind="no_action",
+                    detail={"error_type": "web_turn_expired"})
+                self._append_journal("processing_completed", event=expired,
+                    process_seq=self._process_seq, data=result.model_dump(mode="json"))
+                # Finish the event first: a crash between these two appends
+                # leaves the intent pending for another safe expiry pass.
+                self._append_journal("domain_command_expired", event=expired,
+                    command_id=record.command_id, idempotency_key=record.idempotency_key,
+                    data={"service": service, "error_type": "web_turn_expired"})
+                continue
             envelope = DomainCommandEnvelope[dict[str, Any]].model_validate(envelope_data)
             if service == "cognitive" and envelope.command_type in {
                 "PrepareQQResponse", "PrepareQQTurn", "ResumeQQResponse", "ObserveEmotion", "PrepareWebStep",

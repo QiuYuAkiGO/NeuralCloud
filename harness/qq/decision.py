@@ -51,7 +51,7 @@ from harness.qq.memory import (
 )
 from harness.qq.idle import QQIdleIntent, validated_idle_intent
 from harness.qq.model_retry import transient_retry_delay
-from harness.qq.conversation import QQConversationID, conversation_audience, conversation_scope
+from harness.qq.conversation import official_scope_app, QQConversationID, conversation_audience, conversation_scope
 from harness.qq.emotion_window import remove_legacy_emotion_parameters
 from harness.qq.reply_context import (
     delivered_style_window, refresh_topic_window, select_partial_receipt_turns, style_diagnostics,
@@ -281,6 +281,25 @@ class _StrictModel(BaseModel):
         group_id = getattr(self, "group_id", None)
         if group_id is not None:
             scope = conversation_scope(group_id)
+            if official_scope_app(group_id):
+                from harness.qq.official_identity import identity, raw_message_id, split_identity
+                app = official_scope_app(group_id)
+                account = identity(app, "bot", app)
+                if getattr(self, "self_member_id", account) != account:
+                    raise ValueError("official conversation self account mismatch")
+                for member in [getattr(self, "trigger_member_id", None), *getattr(self, "participants", [])]:
+                    if member is not None and member != account:
+                        split_identity(member, kind="user" if scope["kind"] == "private" else "member", app_id=app)
+                for msg in [getattr(self, "protocol_message_id", None), *getattr(self, "protocol_message_ids", [])]:
+                    if msg is not None:
+                        raw_message_id(app, msg)
+                if getattr(self, "verification", "qq_protocol_verified") != "qq_protocol_verified":
+                    raise ValueError("official conversation requires protocol verification")
+            elif any(isinstance(value, str) and value.startswith("qqbot:") for value in [
+                    getattr(self, "self_member_id", None), getattr(self, "trigger_member_id", None),
+                    *getattr(self, "participants", []), getattr(self, "protocol_message_id", None),
+                    *getattr(self, "protocol_message_ids", [])]):
+                raise ValueError("official identity is outside numeric conversation")
             if scope["kind"] == "private":
                 if getattr(self, "self_member_id", None) != scope["self_member_id"]:
                     raise ValueError("private conversation self account mismatch")
@@ -353,7 +372,21 @@ class QQReplyPlan(_StrictModel):
         return self
 
 
+def _gate_style_reason_schema(schema: dict) -> None:
+    """A wait has no reply to style; keep speak's existing field contract."""
+    style_reason = schema["properties"]["reply_style_reason"]
+    schema["properties"]["reply_style_reason"] = {
+        "anyOf": [{**style_reason, "minLength": 0}, {"type": "null"}],
+    }
+    schema.setdefault("allOf", []).append({
+        "if": {"properties": {"action": {"const": "speak"}}},
+        "then": {"properties": {"reply_style_reason": style_reason}},
+    })
+
+
 class _GateDecision(_StrictModel):
+    model_config = ConfigDict(json_schema_extra=_gate_style_reason_schema)
+
     attention_assessment: AttentionAssessment | None = None
     action: Literal["speak", "wait"]
     reason: str = Field(min_length=1, max_length=512)
@@ -368,10 +401,19 @@ class _GateDecision(_StrictModel):
     _reply_plan_invalid: bool = PrivateAttr(default=False)
     _web_plan_invalid: bool = PrivateAttr(default=False)
     _vision_request_invalid: bool = PrivateAttr(default=False)
+    _wait_style_reason_defaulted: bool = PrivateAttr(default=False)
 
     @model_validator(mode="wrap")
     @classmethod
     def optional_plan_does_not_invalidate_gate(cls, value, handler):
+        wait_style_reason_defaulted = False
+        if isinstance(value, dict) and value.get("action") == "wait" and "reply_style_reason" in value:
+            style_reason = value["reply_style_reason"]
+            if style_reason is None or (isinstance(style_reason, str)
+                                        and len(style_reason) <= 256 and not style_reason.strip()):
+                value = dict(value)
+                value.pop("reply_style_reason")
+                wait_style_reason_defaulted = True
         if isinstance(value, dict) and value.get("attention_assessment") is not None:
             from harness.homeostasis.dynamics import AttentionAssessment
             value = dict(value)
@@ -407,6 +449,7 @@ class _GateDecision(_StrictModel):
         result._reply_plan_invalid = invalid
         result._web_plan_invalid = web_invalid
         result._vision_request_invalid = vision_invalid
+        result._wait_style_reason_defaulted = wait_style_reason_defaulted
         return result
 
     @model_validator(mode="after")
@@ -472,6 +515,8 @@ def _parse_gate_response(response, trace: QQTurnTrace, *, production=False) -> _
             trace.add_counter(name)
         raise
     trace.add_counter("gate_response_validated")
+    if choice._wait_style_reason_defaulted:
+        trace.add_counter("gate_wait_style_reason_defaulted")
     return choice
 
 
@@ -501,14 +546,15 @@ class QQReplyDecision(_StrictModel):
     initiated_by: Literal["message", "homeostasis", "production"] = "message"
     idle_intent_id: str | None = Field(default=None, min_length=1, max_length=160)
     shared_memory_source_ids: list[str] = Field(default_factory=list)
+    agentic_evidence: dict | None = None
     recalled_memory_ids: list[str] = Field(default_factory=list, max_length=8)
     used_memory_ids: list[Annotated[str, Field(min_length=1, max_length=256)]] = Field(
         default_factory=list, max_length=8)
     recalled_episode_ids: list[str] = Field(default_factory=list, max_length=40)
     action: Literal["speak", "wait"]
     reason: str = Field(min_length=1, max_length=512)
-    reply: str | None = Field(default=None, max_length=8000)
-    reply_segments: list[str] = Field(default_factory=list, max_length=3)
+    reply: str | None = Field(default=None, max_length=8008)
+    reply_segments: list[str] = Field(default_factory=list, max_length=5)
     reply_style: Literal["conversational", "formal"] = "conversational"
     reply_style_reason: str = Field(default="默认简短口语。", min_length=1, max_length=256)
     reply_plan: QQReplyPlan | None = None
@@ -591,10 +637,10 @@ class QQReplyDecision(_StrictModel):
 
 
 def _validate_reply_segments(segments: list[str], reply: str | None) -> list[str]:
-    if (not isinstance(segments, list) or not 1 <= len(segments) <= 3
+    if (not isinstance(segments, list) or not 1 <= len(segments) <= 5
             or any(not isinstance(item, str) or not item.strip() or len(item) > 4000
-                   or any(char in item for char in "\r\n\x85\u2028\u2029") for item in segments)
-            or reply != "\n\n".join(segments) or len(reply) > 8000):
+                   for item in segments)
+            or reply != "\n\n".join(segments) or len(reply) > 8008):
         raise QQDraftError("The prepared reply segments failed validation.")
     return list(segments)
 
@@ -651,8 +697,34 @@ def _conversational_sentence_segments(segments: list[str]) -> list[str] | None:
     return sentences
 
 
+def _official_reply_segments(text: str, trace: QQTurnTrace) -> tuple[list[str], str]:
+    """Pack arbitrary paragraphs into bounded official API messages, without truncation."""
+    if not text.strip() or len(text) > 8000:
+        raise QQDraftError("The prepared reply exceeds the text limit.")
+    units = lambda value: len(value.encode("utf-16-le")) // 2
+    paragraphs = text.split("\n\n")
+    if (1 <= len(paragraphs) <= 5 and all(p.strip() and units(p) <= 3000 for p in paragraphs)):
+        segments = paragraphs
+    else:
+        # Retain paragraph and line breaks within messages. JS validates UTF-16
+        # length, so astral characters count twice; never cut a code point.
+        segments, current, size = [], [], 0
+        for char in text:
+            width = 2 if ord(char) > 0xffff else 1
+            if size + width > 3000:
+                segments.append("".join(current))
+                current, size = [], 0
+            current.append(char)
+            size += width
+        if current:
+            segments.append("".join(current))
+        trace.add_counter("paragraph_transport_packing")
+    reply = "\n\n".join(segments)
+    return _validate_reply_segments(segments, reply), reply
+
+
 def _prepared_group_segments(final, trace: QQTurnTrace, *,
-                             reply_style: Literal["conversational", "formal"]) -> tuple[list[str], str]:
+                             reply_style: Literal["conversational", "formal"], official: bool = False) -> tuple[list[str], str]:
     """Accept explicit paragraph and line boundaries without rewriting prose.
 
     Conversational replies may additionally split on Chinese periods. Formal
@@ -661,7 +733,7 @@ def _prepared_group_segments(final, trace: QQTurnTrace, *,
     Empty parts and too many paragraphs still fail closed.
     """
     original = final.segments
-    if (not isinstance(original, list) or not 1 <= len(original) <= 3
+    if (not isinstance(original, list) or not 1 <= len(original) <= (5 if official else 3)
             or any(not isinstance(part, str) for part in original)
             or final.text != "\n\n".join(original)):
         raise QQDraftError("The prepared reply segments failed validation.")
@@ -669,6 +741,8 @@ def _prepared_group_segments(final, trace: QQTurnTrace, *,
             or _looks_like_gate_json_reply(final.text)):
         trace.add_counter("gate_json_body_rejected")
         raise QQDraftError("The prepared reply is a decision object, not sendable speech.")
+    if official:
+        return _official_reply_segments(final.text, trace)
     flattened = [part for body in original for part in re.split(r"\r?\n[ \t]*(?:\r?\n)+", body)]
     if flattened != original:
         trace.add_counter("paragraph_segmentation")
@@ -681,6 +755,8 @@ def _prepared_group_segments(final, trace: QQTurnTrace, *,
         if sentences is not None and sentences != flattened:
             trace.add_counter("sentence_segmentation")
             flattened = sentences
+    if len(flattened) > 3:
+        raise QQDraftError("The UI reply exceeds the segment limit.")
     reply = "\n\n".join(flattened)
     return _validate_reply_segments(flattened, reply), reply
 
@@ -688,8 +764,8 @@ def _prepared_group_segments(final, trace: QQTurnTrace, *,
 class QQSegmentDeliveryReceipt(_StrictModel):
     receipt_id: str
     decision_id: str
-    segment_index: int = Field(ge=0, le=2, strict=True)
-    segment_count: int = Field(ge=1, le=3, strict=True)
+    segment_index: int = Field(ge=0, le=4, strict=True)
+    segment_count: int = Field(ge=1, le=5, strict=True)
     group_id: QQConversationID
     self_member_id: QQID
     delivered_text: str = Field(min_length=1, max_length=4000)
@@ -715,16 +791,16 @@ class QQDeliveryReceipt(_StrictModel):
     receipt_id: str
     group_id: QQConversationID
     self_member_id: QQID
-    delivered_text: str = Field(min_length=1, max_length=8000)
+    delivered_text: str = Field(min_length=1, max_length=8008)
     evidence_refs: list[str] = Field(min_length=1, max_length=96)
     verification: Literal["qq_ui_verified", "qq_protocol_verified"]
-    protocol_message_ids: list[ProtocolMessageID] = Field(default_factory=list, max_length=3)
+    protocol_message_ids: list[ProtocolMessageID] = Field(default_factory=list, max_length=5)
     decision_id: str | None = None
     source_record_ids: list[str] = Field(default_factory=list)  # Explicitly addressed observations only.
     delivered_at: AwareDatetime
     origin: Literal["decision", "external_verification"]
-    delivered_segments: list[str] = Field(default_factory=list, max_length=3)
-    segment_receipt_ids: list[str] = Field(default_factory=list, max_length=3)
+    delivered_segments: list[str] = Field(default_factory=list, max_length=5)
+    segment_receipt_ids: list[str] = Field(default_factory=list, max_length=5)
 
     @model_validator(mode="after")
     def check_segments(self):
@@ -1049,7 +1125,7 @@ def _record_qq_segment_delivery(
     verification, source_record_ids=None, delivered_at=None, segment_count=None, protocol_message_id=None,
 ):
     _validate_lookup(group_id, decision_id)
-    if type(segment_index) is not int or not 0 <= segment_index <= 2:
+    if type(segment_index) is not int or not 0 <= segment_index <= 4:
         raise QQDraftError("An exact segment index is required.")
     with closing(_connect(Path(memory_db))) as connection, connection:
         connection.execute("BEGIN IMMEDIATE")
@@ -1339,7 +1415,8 @@ def _prepare_group_speech(*, settings, preset, llm, payload: str, evidence_refs:
                           shared_memory=None, homeostatic_interoception=None, emotion_guidance=None,
                           memory_evidence_entries=None, current_speaker_id: str | None = None,
                           prefix_messages: list[dict[str, str]] | None = None, character_snapshot=None, response_semantics=None,
-                          response_expression=None, runtime_web_context=None, runtime_web_in_prefix=False):
+                          response_expression=None, runtime_web_context=None, runtime_web_in_prefix=False,
+                          vision_tool=None, request_validator=None):
     # The ordinary disabled-continuation path parses every segment in this one
     # model output. It never requests a second character generation.
     settings = settings.model_copy(update={"max_reply_segments": 3, "continuation_enabled": False})
@@ -1350,7 +1427,10 @@ def _prepare_group_speech(*, settings, preset, llm, payload: str, evidence_refs:
         if shared_memory is None:
             memory.bootstrap_persona(preset.persona)
         pipeline = InferencePipeline(memory, settings=settings, llm=llm, compiler=_DraftCompiler(settings))
-        direct_body = getattr(settings, "qq_body_pipeline", "direct") == "direct"
+        # Agent turns must retain the authenticated QQ audience. A conversation
+        # outside the latency rollout may select the legacy body policy, whose
+        # generic prepare() entry is a local-chat entrance when Agent is enabled.
+        direct_body = settings.agentic_enabled or getattr(settings, "qq_body_pipeline", "direct") == "direct"
         if not direct_body:
             pipeline.parser = _StaticInstructionParser(pipeline.parser, settings=settings, preset=preset, llm=llm,
                                                        instruction=instruction)
@@ -1380,6 +1460,7 @@ def _prepare_group_speech(*, settings, preset, llm, payload: str, evidence_refs:
             prefix_messages=prefix_messages,
             **({} if emotion_guidance is None else {"emotion_guidance": emotion_guidance}),
             **({"character_snapshot": character_snapshot} if direct_body and character_snapshot is not None else {}),
+            **({"vision_tool": vision_tool, "request_validator": request_validator} if direct_body else {}),
             context_segments=[ContextSegment(kind="qq_draft_rules", text=emotion_draft_rules(
                                   _PRIVATE_DRAFT_RULES if private else _GROUP_DRAFT_RULES,
                                   enabled=emotion_enabled(settings)) + (alignment.BODY_RULES
@@ -1721,7 +1802,7 @@ def decide_qq_reply(
     vision_tool = (QQVisionTool.for_turn(settings, observations, group_id=group_id, self_member_id=self_member_id,
         current_ids=set(request_observation_ids or ([trigger_latest_id] if trigger_latest_id else [])),
         reply_reference_ids=set(_reply_reference_record_ids or []))
-        if idle_intent is None else None)
+        if idle_intent is None and not settings.agentic_enabled else None)
     base_payload = {"coverage": "partial_verified_observations",
                     "group_context": context.model_dump(mode="json"), "request": request,
                     "query_source": query_source, "effective_query": effective_query,
@@ -1994,6 +2075,9 @@ def decide_qq_reply(
         # It remains processed history; ordinary older mentions gain no grant.
         candidates.extend(item for item in observations if item.record_id == _request_authority_record_id)
     addressing = _explicit_addressing(candidates, aliases, context)
+    if self_member_id is not None and self_member_id.startswith("qqbot:"):
+        from harness.qq.official_events import explicit_addressing
+        addressing = explicit_addressing(candidates, self_member_id) or addressing
     if private and candidates and idle_intent is None:
         item = (next(item for item in candidates if item.record_id == _request_authority_record_id)
                 if _request_authority_record_id is not None else
@@ -2012,6 +2096,15 @@ def decide_qq_reply(
     elif guard is not None:
         result = result.model_copy(update={"decision_source": guard[0], "reason": guard[1], "outcome": "guard_wait"})
         trace.record("decision.guard", outcome="skipped")
+    elif settings.agentic_enabled and settings.agentic_regulation.mode == 'on' and shared_owner is not None:
+        from harness.agentic.qq_turn import decide as native_decide
+        agent = getattr(shared_owner.memory, 'agentic', None)
+        if agent is None or not agent.enabled:
+            raise ValueError('native_agent_unavailable')
+        result = native_decide(agent=agent, result=result, settings=settings, observations=observations,
+            context=context, payload=payload, selection=body_selection, receipts=receipts,
+            partial_receipts=partial_receipts, owner=shared_owner, new_ids=new_ids, trigger_id=trigger_latest_id,
+            evidence_refs=body_evidence_refs, preparation=_turn_preparation, deadline=deadline, trace=trace)
     else:
         raw_llm = None
         llm = None
@@ -2214,6 +2307,13 @@ def decide_qq_reply(
                             receipts=receipts, partial_receipts=partial_receipts, shared_owner=shared_owner,
                         )
                         speech_kwargs["memory_evidence_entries"].extend(vision_evidence)
+                        if settings.agentic_enabled and idle_intent is None:
+                            from harness.agentic.vision import for_qq_body
+                            speech_kwargs["vision_tool"] = for_qq_body(settings, observations,
+                                group_id=group_id, self_member_id=self_member_id, payload=payload,
+                                presented_ids=set(body_selection.observation_ids),
+                                current_ids=set(request_observation_ids or ([trigger_latest_id] if trigger_latest_id else [])))
+                            speech_kwargs["request_validator"] = (_turn_preparation or {}).get("request_validator")
                         speech_kwargs["response_expression"] = expression_qq_context(settings, group_id=group_id,
                             self_member_id=self_member_id, plan=choice.reply_plan,
                             style_window=payload.get("delivered_style_window"))
@@ -2245,8 +2345,9 @@ def decide_qq_reply(
                             raise alignment.SemanticReplyRejected()
                         if not final.text.strip() or len(final.text) > 8000 or (final.validation is not None and final.validation.verdict != "pass"):
                             raise QQDraftError("The prepared reply failed validation.")
-                        segments, reply = _prepared_group_segments(final, trace, reply_style=choice.reply_style)
+                        segments, reply = _prepared_group_segments(final, trace, reply_style=choice.reply_style, official=bool(official_scope_app(group_id)))
                         result = result.model_copy(update={"action": "speak", "reply": reply,
+                            "agentic_evidence": final.agentic,
                             "reply_segments": segments, "outcome": "ready",
                             "source_record_ids": list(body_selection.observation_ids),
                             "evidence_refs": body_evidence_refs,
@@ -2281,11 +2382,12 @@ def decide_qq_reply(
     result = _deadline_override(result, deadline)
     timings["total"] = round(max(0.0, trace.clock() - started_mono) * 1000, 3)
     counters = trace.snapshot()["counters"]
-    if not counters.get("gate_model_calls", 0) and result.outcome != "error_fallback":
+    if not counters.get("gate_model_calls", 0) and not counters.get('native_model_calls', 0) and result.outcome != "error_fallback":
         result = result.model_copy(update={"source_record_ids": [], "evidence_refs": [], "shared_memory_source_ids": []})
     result = result.model_copy(update={"completed_at": datetime.now(timezone.utc), "timings_ms": timings,
         "model_call_counts": {name: counters.get(f"{name}_model_calls", 0)
-                              for name in (("gate", "persona", "vision") if counters.get("vision_model_calls") else ("gate", "persona"))}})
+                              for name in (("native", "vision") if counters.get('native_model_calls') else
+                                  ("gate", "persona", "vision") if counters.get("vision_model_calls") else ("gate", "persona"))}})
     trace.record("decision", started_mono=started_mono,
                  outcome="expired" if result.outcome == "expired" else ("error" if result.error_type else "ok"),
                  error_type=result.error_type)

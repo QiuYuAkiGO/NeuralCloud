@@ -174,6 +174,7 @@ class CognitiveServiceHost:
         from harness.runtime.emotion import shared_observation_input
         self.adapter.emotion_input_provider = lambda command: shared_observation_input(self, command)
         self._emotion_mode = self.chat.settings.emotion_mode
+        self.production_configured = False
         manifest_path = os.environ.get("NC_COGNITIVE_MANIFEST_PATH") or os.environ.get("NC_RUNTIME_MANIFEST_PATH")
         if manifest_path:
             from harness.research.manifest import load_experiment_manifest
@@ -181,11 +182,16 @@ class CognitiveServiceHost:
             manifest = load_experiment_manifest(Path(manifest_path))
             self._emotion_mode = manifest.emotion_mode
             self.chat.settings.emotion_mode = manifest.emotion_mode
+            self.chat.settings.agentic_regulation = manifest.agentic_regulation
+            from harness.agentic.deepseek_tokens import native_model_supported
+            if manifest.agentic_regulation.mode != 'off' and not native_model_supported(self.chat.settings):
+                raise ValueError('native_regulation_requires_supported_agentic_model')
             if manifest.emotion_mode == "on":
                 self.chat.settings.prompt_version = manifest.prompt_version
             if manifest.grounded_agency is not None:
                 self.adapter.bind_research_manifest(manifest)
             if manifest.production is not None:
+                self.production_configured = True
                 from harness.cognitive.production import activate_host
                 activate_host(self)
             else:
@@ -210,6 +216,11 @@ class CognitiveServiceHost:
         from harness.cognitive.ui_snapshot import UISnapshotCache
         self._ui_memory_cache = UISnapshotCache()
         self._ui_catalog_cache = UISnapshotCache(refresh_after=5, max_age=30, cold_wait=0)
+        self.agentic = None
+        if self.chat.settings.agentic_enabled:
+            from harness.agentic.service import AgentService
+            self.chat.settings.production_memory_enabled = True
+            self.agentic = AgentService(self)
 
     @property
     def command_tasks(self):
@@ -226,6 +237,7 @@ class CognitiveServiceHost:
         return health.model_copy(update={"detail": {**health.detail, "qq_memory": self.qq_memory.status(),
             "diary_reflection": diary_status,
             "daily_revision": self.daily_revision.status(),
+            "agentic": await asyncio.to_thread(self.agentic.health) if self.agentic is not None else {"enabled": False},
             "production_memory_recovery": self.production_memory_recovery_status(),
             "qq_turn_commands": ["PrepareQQTurn", "ResumeQQResponse"]}})
 
@@ -250,7 +262,8 @@ class CognitiveServiceHost:
             from harness.cognitive.production import activate_host
             activate_host(self)
             await self.recover_production_memory()
-        with trace_scope(attention_context="local:" + str(command.payload.get("session_id", "main"))):
+        agent = getattr(self, 'agentic', None)
+        with (agent.priority.foreground_turn() if agent is not None and agent.enabled else nullcontext()), trace_scope(attention_context="local:" + str(command.payload.get("session_id", "main"))):
             return await self.adapter.prepare_response(command)
 
     async def observe_emotion(self, command):
@@ -487,12 +500,13 @@ class CognitiveServiceHost:
 
     async def _capability_command(self, command, *, goal_decision=False):
         from harness.production.metering import production_call_scope
+        from harness.agentic.metering import command_scope
         context = command.payload.get("production_context")
         if context is not None:
             from harness.cognitive.production import activate_host
             activate_host(self)
             await self.recover_production_memory()
-        with production_call_scope(context, command_id=command.command_id, autonomous=True,
+        with command_scope(self, command), production_call_scope(context, command_id=command.command_id, autonomous=True,
                                    meter=getattr(self.adapter, "production_meter", None)):
             return await self._capability_command_impl(command, goal_decision=goal_decision)
 
@@ -506,8 +520,10 @@ class CognitiveServiceHost:
 
         adapter = self.adapter
         production = command.payload.get("production_context") is not None
+        native = goal_decision and self.chat.settings.agentic_regulation.mode == 'on'
+        protected = production or native
         operation_lock = (adapter._production_session_locks.setdefault("capability", asyncio.Lock())
-                          if command.payload.get("production_context") is not None else adapter._lock)
+                          if protected else adapter._lock)
         async with operation_lock:
             replay = adapter._lookup_replay(command)
             if replay is not None:
@@ -539,7 +555,7 @@ class CognitiveServiceHost:
                 if production:
                     from harness.cognitive.production import validate_runtime_fence
                     await asyncio.to_thread(validate_runtime_fence, adapter, command.payload["production_context"])
-                if production and signature != digest((self.chat.active_preset_id, self.chat.memory.get_persona().model_dump(mode="json"))):
+                if protected and signature != digest((self.chat.active_preset_id, self.chat.memory.get_persona().model_dump(mode="json"))):
                     raise capabilities.CapabilitySelectionError("production_snapshot_superseded")
                 rejected = adapter._preflight(command)
                 if rejected is not None:
@@ -578,13 +594,14 @@ class CognitiveServiceHost:
                     ("goal_decision_expired" if goal_decision else "capability_selection_expired") if isinstance(exc, TimeoutError) else
                     ("goal_prepare_failed" if goal_decision else "capability_prepare_failed"))
                 result = adapter._failure(command, error)
-            async with adapter._lock if production else nullcontext():
+            async with adapter._lock if protected else nullcontext():
                 adapter._remember(command, result)
                 await asyncio.to_thread(adapter._persist_state)
             return result
 
     async def prepare_board_entry(self, command):
-        with trace_scope(correlation_id=command.correlation_id, event_id=command.event_id,
+        from harness.agentic.metering import command_scope
+        with command_scope(self, command), trace_scope(correlation_id=command.correlation_id, event_id=command.event_id,
                          command_id=command.command_id, phase="board_prepare", span_id=command.command_id):
             return await self.adapter._run_command(lambda: self._board_command(command, commit=False))
 
@@ -754,6 +771,8 @@ class CognitiveServiceHost:
 
     async def _close(self) -> None:
         try:
+            if getattr(self, "agentic", None) is not None:
+                await self.agentic.close()
             await self._ui_memory_cache.close()
             await self._ui_catalog_cache.close()
             await self.daily_revision.close()
@@ -827,10 +846,13 @@ class CognitiveServiceHost:
             await asyncio.to_thread(self.shared.sync_qq)
             await asyncio.to_thread(self.shared.sync_local)
             await self.recover_production_memory()
-            await self.qq_memory.start()
-            await self.daily_revision.start()
+            if self.agentic is not None:
+                await self.agentic.start()
+            else:
+                await self.qq_memory.start()
+                await self.daily_revision.start()
             from harness.diary.config import DiarySettings
-            if DiarySettings.from_environment().reflection_enabled:
+            if DiarySettings.from_environment().reflection_enabled and self.agentic is None:
                 from harness.cognitive.diary_reflection import worker
                 await worker(self).start()
         except BaseException:
@@ -874,6 +896,8 @@ class CognitiveServiceHost:
                 "mode": "production" if self.shared.production_enabled else "shared", "memory_records": None}}
         memory["memory_snapshot"] = freshness
         memory["preset_snapshot"] = catalog_freshness
+        if getattr(self, "agentic", None) is not None:
+            memory["agentic_tasks"] = await asyncio.to_thread(self.agentic.task_snapshot)
         if not self.shared.production_enabled:
             return {**self.chat.status(preset_summaries=catalog.get("items", [])), **memory, "qq_memory": self.qq_memory.status(),
                     "daily_revision": self.daily_revision.status()}
@@ -902,6 +926,17 @@ class CognitiveServiceHost:
 
     async def control(self, operation: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         body = payload or {}
+        if operation == "report.daily":
+            if self.agentic is None:
+                return {"available": False, "reason": "agentic_not_enabled"}
+            from harness.agentic.reporting import AgentReport
+            from harness.qq.attention import attention_policy_token
+            service = self.agentic
+            policy = await asyncio.to_thread(attention_policy_token)
+            result = await asyncio.to_thread(AgentReport(service).read, **body)
+            if self.agentic is not service or await asyncio.to_thread(attention_policy_token) != policy:
+                raise ValueError("report_authority_changed")
+            return result
         # These authenticated maintenance operations schedule work immediately.
         # They must not hold _control_lock while awaiting a provider or acquire
         # it twice during a rollback's atomic commit.
@@ -960,6 +995,10 @@ class CognitiveServiceHost:
                 )
                 return {"base_url": url, "models": names}
             require_development(operation, control_mode=self.control_mode)
+            if self.agentic is not None and (operation.startswith("presets.") or operation in {"config", "reset"}):
+                # Runtime replacement would orphan in-flight source/persona
+                # bindings. Change deployment settings and restart atomically.
+                raise ValueError("agentic_configuration_requires_service_restart")
             production = self.shared.production_enabled
             self._ui_memory_cache.invalidate()
             self._ui_catalog_cache.invalidate()

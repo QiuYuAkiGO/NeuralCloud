@@ -219,6 +219,8 @@ class InferencePipeline:
         homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
         emotion_guidance: Any = None,
         character_snapshot=None,
+        vision_tool=None,
+        request_validator=None,
     ) -> FinalResponse:
         """Realize an admitted QQ gate once, with the ordinary compiler/critic.
 
@@ -230,6 +232,14 @@ class InferencePipeline:
         """
         if not memory_evidence.audience.startswith("qq:") or not prefix_messages:
             raise ValueError("QQ response requires scoped evidence and an admitted gate prefix")
+        from harness.agentic.service import enabled_service
+        agent = enabled_service(self)
+        if agent is not None:
+            return agent.prepare_qq(audience=memory_evidence.audience,
+                entries=memory_evidence.entries, instruction=source,
+                vision_tool=vision_tool, request_validator=request_validator,
+                vision_trace=getattr(self.llm, "trace", None),
+                timeout=self.llm.deadline.check() if getattr(self.llm, "deadline", None) is not None else None)
         started = time.perf_counter()
         with self.memory.call_log.scope("prepare_qq_response", {"session_id": session_id}) as call:
             with self.memory.suppress_maintenance():
@@ -337,6 +347,12 @@ class InferencePipeline:
         homeostatic_interoception: HomeostaticInteroceptiveSummary | dict | None = None,
         emotion_guidance: Any = None,
     ) -> FinalResponse:
+        from harness.agentic.service import enabled_service
+        agent = enabled_service(self)
+        if agent is not None:
+            return agent.prepare_pipeline(InteractionEvent(event_id=event_id, timestamp=now,
+                channel=channel, speaker="character", session_id=session_id,
+                raw_text="现在可进行一次自然的主动表达；也可以选择等待。"), autonomous=True)
         started = time.perf_counter()
         retrieval_event = InteractionEvent(
             event_id=event_id,
@@ -475,6 +491,10 @@ class InferencePipeline:
     ) -> FinalResponse:
         started = time.perf_counter()
         event = self._traced("ingest", lambda: self.gateway.ingest(source, **ingest_kwargs))
+        from harness.agentic.service import enabled_service
+        agent = enabled_service(self)
+        if agent is not None:
+            return agent.prepare_pipeline(event)
         moment = now or event.timestamp
         if commit_interaction:
             self.session_store.append(

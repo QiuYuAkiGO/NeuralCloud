@@ -432,3 +432,4 @@ class FinalResponse(BaseModel):
     stopped_by: Literal["marker", "max_segments", "empty", "disabled", "duplicate"] = "disabled"
     usage: TokenUsage = Field(default_factory=TokenUsage)
     latency_ms: float = Field(default=0.0, ge=0.0)
+    agentic: dict[str, Any] | None = None

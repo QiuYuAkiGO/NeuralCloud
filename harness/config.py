@@ -9,6 +9,7 @@ from pathlib import Path
 from pydantic import Field, PrivateAttr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from harness.qq.policy import QQLatencyOptions
+from harness.agentic.affect_models import RegulationSettings
 
 SCHEMA_VERSION = "state-v1"
 PROMPT_VERSION = "homeostatic-interoception-v1"
@@ -60,11 +61,27 @@ class Settings(BaseSettings, QQLatencyOptions):
     llm_api_key: str = "not-needed"
     llm_model: str = "qwen"
     llm_timeout: float = 60.0
+    # Independent native-tool path. The legacy pipeline remains the rollback path.
+    agentic_enabled: bool = False
+    agentic_local_only: bool = True
+    agentic_input_tokens: int = Field(default=24_000, ge=4096, le=131072)
+    agentic_context_tokens: int = Field(default=65_536, ge=8192, le=262144)
+    agentic_output_tokens: int = Field(default=4096, ge=512, le=8192)
+    agentic_tool_tokens: int = Field(default=6000, ge=512, le=16000)
+    agentic_timeout_seconds: float = Field(default=45, gt=0, le=45)
+    agentic_tokenizer_path: Path | None = None
+    agentic_tokenizer_sha256: str | None = None
+    agentic_template_path: Path = Path("tools/deploy/templates/qwen38-neuralcloud.jinja")
+    agentic_template_sha256: str | None = None
+    agentic_background_enabled: bool = True
+    agentic_thinking: bool = False
+    agentic_background_seconds: float = Field(default=25, gt=0, le=60)
+    agentic_regulation: RegulationSettings = Field(default_factory=RegulationSettings)
     # Private endpoint/key file for a single alternate main reply attempt.
     llm_fallback_config: Path | None = None
     # Independent typed decisions/helpers; ordinary character text keeps llm_*.
     structured_llm_config: Path | None = None
-    # Private Kimi endpoint/key and local attachment cache for model-requested QQ vision.
+    # Private local/Kimi endpoint, key and attachment cache for on-demand QQ vision.
     qq_vision_tool_config: Path | None = None
     # Caps generation length for JSON-producing helper calls (parser / gate);
     # uncapped small models tend to ramble prose before the JSON object.

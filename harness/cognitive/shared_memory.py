@@ -291,11 +291,15 @@ class CognitiveSharedMemory:
         if session_id != self.host.chat.active_session_id:
             raise ValueError("local_archive_session_does_not_belong_to_active_preset")
         store.mark_archive_started("local_chat")
-        return store.record_local(SharedLocalEvent(
+        result = store.record_local(SharedLocalEvent(
             event_id=f"{event_id}.{role}", session_id=session_id,
             author_principal="character:misty" if role == "assistant" else "local:main",
             role=role, text=text, occurred_at=occurred_at, display_name=display_name,
             evidence_refs=(f"local-chat:{session_id}:{event_id}:{role}",)))
+        agent = getattr(self.host, "agentic", None)
+        if agent is not None and agent.enabled:
+            agent.archive_record(result.record)
+        return result
 
     def archive_action(self, *, event_id: str, session_id: str, intent_id: str, evidence):
         """Preserve the authenticated action receipt, never reconstruct it from prose."""
@@ -313,6 +317,9 @@ class CognitiveSharedMemory:
         return 0
 
     def local_context(self, event):
+        agent = getattr(self.host, "agentic", None)
+        if agent is not None and agent.enabled:
+            return []
         self.sync_qq()
         if self.production_enabled:
             self.sync_local()
@@ -530,8 +537,11 @@ class CognitiveSharedMemory:
                 subject_ids=(f"qq:member:{member_id}",) if member_id else (),
                 limit=settings.qq_memory_recall_max_items,
                 max_characters=settings.qq_memory_recall_max_characters,
-                event_id="qq-binding:" + uuid4().hex) if authorized else {}
-            return SharedQQBinding(settings, preset, self.host.chat.llm,
+                event_id="qq-binding:" + uuid4().hex) if authorized and not settings.agentic_enabled else {}
+            agent = getattr(self.host, "agentic", None)
+            if agent is not None and agent.enabled:
+                agent.sync_shared()
+            return SharedQQBinding(settings, preset, agent.llm if agent is not None and agent.enabled else self.host.chat.llm,
                 ScopedQQMemoryView(self.host.chat.memory, group_id=group_id, member_id=member_id),
                 {"schema_version": "production-memory-v1", "entries": [],
                  "coverage": "scoped_memory_in_derived_context"}, (), derived,

@@ -24,7 +24,7 @@ class WebConfigurationError(ValueError):
 class WebSettings(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    provider: Literal["tavily"] = "tavily"
+    provider: Literal["tavily", "deepseek"] = "tavily"
     base_url: str = "https://api.tavily.com"
     body_instance_id: str = Field(default="web-01", min_length=1, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9_.:-]*$")
     timeout_seconds: float = Field(default=12, gt=0, le=60, allow_inf_nan=False)
@@ -45,6 +45,8 @@ class WebSettings(BaseModel):
             raise ValueError("web_endpoint_requires_https_origin")
         if self.autonomous_daily_requests > self.daily_requests:
             raise ValueError("web_autonomous_quota_exceeds_total")
+        if self.provider == "deepseek" and (parsed.hostname != "api.deepseek.com" or parsed.port not in {None, 443}):
+            raise ValueError("web_deepseek_endpoint_invalid")
         return self
 
 
@@ -252,6 +254,8 @@ class WebConfigStore:
                 raise ValueError()
             settings = WebSettings.model_validate(payload.get("settings") or (saved.settings.model_dump() if saved else {}))
             supplied = payload.get("api_key")
+            if saved and settings.provider != saved.settings.provider and not supplied:
+                raise WebConfigurationError("web_api_key_required")
             clear = payload.get("clear_api_key", False)
             if type(clear) is not bool or (clear and supplied):
                 raise ValueError()

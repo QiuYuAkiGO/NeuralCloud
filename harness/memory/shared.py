@@ -23,14 +23,15 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstrai
 
 from harness.contracts.decisions import ActionOutcomeEvidence
 from harness.qq.memory import QQGroupContext, QQImageAnalysis, QQPersonContext, QQVerifiedProfile, QQVisualObservation
-from harness.qq.conversation import conversation_audience, conversation_scope, private_scope_id
+from harness.qq.conversation import OFFICIAL_PRIVATE, conversation_audience, conversation_scope, private_scope_id
 from harness.qq.telemetry import measure_stage
+from harness.qq.official_identity import GROUP, PERSON, split_identity
 
 
 NonBlank = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=2048, pattern=r"\S")]
 Identifier = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=256, pattern=r"^[A-Za-z0-9][A-Za-z0-9_.:-]*$")]
-Principal = Annotated[str, StringConstraints(strict=True, pattern=r"^(?:local:[A-Za-z0-9][A-Za-z0-9_.-]*|character:[A-Za-z0-9][A-Za-z0-9_.-]*|qq:member:[1-9][0-9]{0,19})$", max_length=256)]
-Audience = Annotated[str, StringConstraints(strict=True, pattern=r"^(?:local:[A-Za-z0-9][A-Za-z0-9_.-]*|qq:group:[1-9][0-9]{0,19}|qq:private:[1-9][0-9]{0,19}:[1-9][0-9]{0,19})$", max_length=256)]
+Principal = Annotated[str, StringConstraints(strict=True, pattern=rf"^(?:local:[A-Za-z0-9][A-Za-z0-9_.-]*|character:[A-Za-z0-9][A-Za-z0-9_.-]*|qq:member:(?:[1-9][0-9]{{0,19}}|{PERSON}))$", max_length=256)]
+Audience = Annotated[str, StringConstraints(strict=True, pattern=rf"^(?:local:[A-Za-z0-9][A-Za-z0-9_.-]*|qq:group:(?:[1-9][0-9]{{0,19}}|{GROUP})|qq:private:[1-9][0-9]{{0,19}}:[1-9][0-9]{{0,19}}|qq:{OFFICIAL_PRIVATE})$", max_length=256)]
 Channel = Literal["local_chat", "qq_group", "qq_private", "private_board", "private_diary", "body"]
 Kind = Literal["local_incoming", "local_outgoing", "qq_profile", "qq_observation", "qq_delivery", "qq_segment_delivery", "board_entry", "diary_entry", "action_outcome"]
 Evidence = Annotated[tuple[NonBlank, ...], Field(min_length=1, max_length=128)]
@@ -626,11 +627,24 @@ class SharedMemoryStore:
             QQDeliveryReceipt, QQSegmentDeliveryReceipt, _check_aggregate, _check_sources,
             _checked_receipt, _frozen_decision, _read_segment_receipts,
         )
-        if (not isinstance(allowed_group_ids, (tuple, list))
+        official = isinstance(self_member_id, str) and self_member_id.startswith("qqbot:")
+        if official:
+            if (not isinstance(allowed_group_ids, (tuple, list)) or len(allowed_group_ids) > 100
+                    or not isinstance(allowed_private_peer_ids, (tuple, list)) or len(allowed_private_peer_ids) > 100
+                    or not allowed_group_ids and not allowed_private_peer_ids):
+                raise ValueError("explicit official conversation scopes are required")
+            app_id = self_member_id.split(":")[1]
+            if split_identity(self_member_id, kind="bot", app_id=app_id) != app_id:
+                raise ValueError("official bot account does not match its application")
+            for group in allowed_group_ids:
+                split_identity(group, kind="group", app_id=app_id)
+            for peer in allowed_private_peer_ids:
+                split_identity(peer, kind="user", app_id=app_id)
+        elif (not isinstance(allowed_group_ids, (tuple, list))
                 or len(allowed_group_ids) > 100 or any(not isinstance(value, str) or not re.fullmatch(r"[1-9][0-9]{0,19}", value) for value in allowed_group_ids)
                 or not isinstance(self_member_id, str) or not re.fullmatch(r"[1-9][0-9]{0,19}", self_member_id)):
             raise ValueError("explicit numeric group and self-account scopes are required")
-        if (not isinstance(allowed_private_peer_ids, (tuple, list)) or len(allowed_private_peer_ids) > 100
+        if not official and (not isinstance(allowed_private_peer_ids, (tuple, list)) or len(allowed_private_peer_ids) > 100
                 or any(not isinstance(value, str) or not re.fullmatch(r"[1-9][0-9]{0,19}", value)
                        or value == self_member_id for value in allowed_private_peer_ids)
                 or not allowed_group_ids and not allowed_private_peer_ids):

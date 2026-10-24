@@ -1,7 +1,7 @@
 "use strict";
 
 const $ = (id) => document.getElementById(id);
-const fieldNames = ["base_url", "body_instance_id", "timeout_seconds", "max_results", "daily_requests", "autonomous_daily_requests"];
+const fieldNames = ["provider", "base_url", "body_instance_id", "timeout_seconds", "max_results", "daily_requests", "autonomous_daily_requests"];
 const authorizationNames = ["enabled", "conversation_enabled", "autonomous_enabled"];
 let savedRevision = 0;
 let ready = false;
@@ -39,7 +39,7 @@ function fill(config, status) {
   const auth = config.authorization || status?.authorization || {};
   authorizationNames.forEach((name) => { $(name).checked = Boolean(auth[name]); });
   $("api_key").value = "";
-  $("api_key").placeholder = config.api_key_configured ? "已配置，留空则保留" : "输入 Tavily API Key";
+  $("api_key").placeholder = config.api_key_configured ? "已配置，留空则保留" : "输入服务商 API Key";
   $("clear_api_key").checked = false;
   $("active_revision").textContent = config.active_revision || "尚未配置";
   $("saved_revision").textContent = config.saved_revision || "尚未保存";
@@ -69,8 +69,8 @@ function testSummary(result) {
 }
 
 function payload() {
-  const settings = { provider: "tavily" };
-  fieldNames.forEach((name) => { settings[name] = ["base_url", "body_instance_id"].includes(name) ? $(name).value.trim() : Number($(name).value); });
+  const settings = {};
+  fieldNames.forEach((name) => { settings[name] = ["provider", "base_url", "body_instance_id"].includes(name) ? $(name).value.trim() : Number($(name).value); });
   const authorization = {};
   authorizationNames.forEach((name) => { authorization[name] = $(name).checked; });
   return { base_revision: savedRevision, settings, authorization, api_key: $("api_key").value.trim() || null, clear_api_key: $("clear_api_key").checked };
@@ -86,6 +86,12 @@ async function refresh() {
   } catch (error) { message(error.message, true); }
   finally { busy(false); }
 }
+
+$("provider").addEventListener("change", () => {
+  $("base_url").value = $("provider").value === "deepseek" ? "https://api.deepseek.com" : "https://api.tavily.com";
+  $("api_key").value = "";
+  message("服务商已切换，请输入对应 API Key 后测试并保存。");
+});
 
 $("clear_api_key").addEventListener("change", () => {
   if ($("clear_api_key").checked) {

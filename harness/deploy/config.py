@@ -145,9 +145,21 @@ def load_config(path: str | Path) -> DeploymentConfig:
         raise DeployError("bindings must be an object")
     clean = {}
     budgets = {"NC_QQ_INPUT_TOKEN_BUDGET": 8192, "NC_QQ_MEMORY_RECALL_MAX_CHARACTERS": 1,
-               "NC_AUX_LLM_NUM_CTX": 1024}
+               "NC_CONTEXT_TOKEN_BUDGET": 512, "NC_GOAL_MAX_OUTPUT_TOKENS": 512,
+               "NC_AUX_LLM_NUM_CTX": 1024, "NC_AGENTIC_INPUT_TOKENS": 4096,
+               "NC_AGENTIC_CONTEXT_TOKENS": 8192, "NC_AGENTIC_OUTPUT_TOKENS": 512,
+               "NC_AGENTIC_TOOL_TOKENS": 512}
+    boolean_bindings = {"NC_AGENTIC_ENABLED", "NC_AGENTIC_LOCAL_ONLY", "NC_AGENTIC_BACKGROUND_ENABLED", "NC_AGENTIC_THINKING"}
     for key, value in bindings.items():
-        if key in budgets:
+        if key in boolean_bindings:
+            if str(value).lower() not in {"true", "false"}:
+                raise DeployError(f"invalid {key}")
+            clean[key] = str(value).lower()
+        elif key in {"NC_AGENTIC_TOKENIZER_SHA256", "NC_AGENTIC_TEMPLATE_SHA256"}:
+            if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value):
+                raise DeployError(f"invalid {key}")
+            clean[key] = value
+        elif key in budgets:
             if isinstance(value, bool) or not str(value).isdigit() or int(value) < budgets[key]:
                 raise DeployError(f"invalid {key}")
             clean[key] = str(value)

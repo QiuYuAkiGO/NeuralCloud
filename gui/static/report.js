@@ -42,12 +42,14 @@ function today() {
 }
 
 function number(value, digits = 0) {
+  if (value == null) return "—";
   const n = Number(value);
   if (!Number.isFinite(n)) return "—";
   return new Intl.NumberFormat("zh-CN", { maximumFractionDigits: digits, minimumFractionDigits: digits }).format(n);
 }
 
 function percent(value, digits = 1) {
+  if (value == null) return "—";
   const n = Number(value);
   if (!Number.isFinite(n)) return "—";
   const ratio = n > 1 ? n : n * 100;
@@ -55,6 +57,7 @@ function percent(value, digits = 1) {
 }
 
 function compact(value) {
+  if (value == null) return "—";
   const n = Number(value);
   if (!Number.isFinite(n)) return "—";
   if (n >= 1e8) return `${number(n / 1e8, 2)} 亿`;
@@ -63,6 +66,7 @@ function compact(value) {
 }
 
 function duration(seconds) {
+  if (seconds == null) return "—";
   const n = Number(seconds);
   if (!Number.isFinite(n) || n < 0) return "—";
   if (n < 60) return `${Math.round(n)} 秒`;
@@ -71,6 +75,7 @@ function duration(seconds) {
 }
 
 function bytes(value) {
+  if (value == null) return "—";
   const n = Number(value);
   if (!Number.isFinite(n) || n < 0) return "—";
   const units = ["B", "KiB", "MiB", "GiB", "TiB"];
@@ -84,6 +89,7 @@ function bytes(value) {
 }
 
 function millis(value) {
+  if (value == null) return "—";
   const n = Number(value);
   if (!Number.isFinite(n)) return "—";
   if (n < 1000) return `${Math.round(n)} ms`;
@@ -221,7 +227,12 @@ function table(headers, rows) {
   const body = document.createElement("tbody");
   for (const row of rows) {
     const tr = document.createElement("tr");
-    for (const cell of row) tr.append(el("td", "", cell));
+    for (const cell of row) {
+      const td = el("td");
+      if (cell instanceof Node) td.append(cell);
+      else td.textContent = cell == null ? "—" : String(cell);
+      tr.append(td);
+    }
     body.append(tr);
   }
   tableNode.append(head, body);
@@ -266,17 +277,15 @@ function renderDays(days, selected, lastFinalized) {
 }
 
 function renderSummary(report) {
-  const uptime = report.uptime || {};
-  const pipes = report.pipelines || {};
-  const tokens = (report.tokens || {}).combined || {};
-  const extras = report.extras || {};
-  const coverage = uptime.window_seconds ? (Number(uptime.sampled_seconds) || 0) / uptime.window_seconds : 0;
+  const run = report.current_run || {};
+  const compression = run.compaction || {};
+  const failures = report.failures || {};
   $("summary").replaceChildren(
-    metric("采样覆盖", percent(coverage), `${duration(uptime.sampled_seconds)} / ${duration(uptime.window_seconds)}`),
-    metric("推理次数", number(pipes.run_count), `${number((pipes.status || {}).completed)} 完成 · ${number((pipes.status || {}).failed)} 失败`),
-    metric("Token", compact(tokens.total_tokens), `缓存命中 ${percent(tokens.hit_rate)}`),
-    metric("估算费用", tokens.estimated_usd == null ? "—" : `$${number(tokens.estimated_usd, 2)}`, tokens.estimated ? "按 Flash 单价估算" : "账单金额"),
-    metric("异常", number(extras.errors), `${number(extras.llm_failed_events)} 次模型失败`),
+    metric("本次运行", duration(run.uptime_seconds), run.started_at ? `启动于 ${beijing(run.started_at)}` : "该日未记录运行起点"),
+    metric("连续健康运行", duration(run.stable_seconds), run.fresh ? "依据连续 RUNNING 健康采样" : "采样不足或已中断"),
+    metric("已压缩上下文", compression.turns == null ? "—" : `${number(compression.turns)} 轮`, `${number(compression.operations)} 次压缩 · ${number(compression.messages)} 条消息`),
+    metric("本次异常记录", run.available ? number((run.failures || []).length) : "—", "失败、重试与拒绝分项记录"),
+    metric("今日异常记录", number((failures.items || []).length), failures.background_available ? "含后台任务记录" : "后台数据尚不可用"),
     metric("日记", report.diary && report.diary.wrote ? "已写" : "未写", "仅统计是否主动落笔"),
   );
 }
@@ -290,14 +299,25 @@ function renderUptime(report) {
     value: Number(life[key]) || 0,
     color: LIFE_COLORS[key],
   }));
+  const run = report.current_run || {};
+  const compression = run.compaction || {};
   return panel("运行状态", [
     stack(parts, Number(uptime.window_seconds) || 0),
     kv([
       ["采样缺口", `${number(uptime.gap_count)} 段 · ${duration(uptime.gap_seconds)}`],
-      ["连续运行", duration(uptime.current_continuous_seconds)],
+      ["本次运行起点", beijing(run.started_at)],
+      ["健康采样起点", beijing(run.stable_since)],
+      ["上下文压缩轮数", number(compression.turns)],
+      ["压缩次数 / 消息数", `${number(compression.operations)} / ${number(compression.messages)}`],
+      ["今日压缩轮数", number((report.compaction_today || {}).turns)],
       ["重启估计", number(uptime.restart_estimate)],
       ["样本数", number(uptime.sample_count)],
     ]),
+    note("压缩轮数按已提交摘要覆盖的用户输入事件去重统计；包含本次启动后压缩的旧对话。健康运行依据采样，不表示后台从未发生失败。"),
+    note(report.telemetry_started_at ? `压缩与后台失败计时自 ${beijing(report.telemetry_started_at)} 开始记录。`
+      : "旧版没有完整的压缩与后台失败时间记录。"),
+    ...(compression.legacy_undated_operations ? [note(`另有 ${number(compression.legacy_undated_operations)} 次历史压缩未记录完成时间，不计入本次运行。`)] : []),
+    ...(report.finalized ? [note("本次运行数据为归档时的快照；记忆与事件解释按当前有效来源重新读取。")] : []),
   ]);
 }
 
@@ -344,7 +364,7 @@ function renderHomeostasis(report) {
   ];
   const needs = objectEntries(homeo.dominant_needs || {});
   children.push(needs.length ? bars(needs) : note("没有主导需要统计"));
-  const affect = objectEntries(homeo.core_affect_mean || {});
+  const affect = objectEntries(homeo.core_affect_mean || {}).filter(([key, value]) => key in AFFECT_LABELS && value != null);
   if (affect.length) {
     const list = el("div", "bar-list");
     for (const [key, value] of affect) {
@@ -538,6 +558,8 @@ function render(report) {
   renderSummary(report);
   const dashboard = $("dashboard");
   dashboard.replaceChildren(
+    renderTimeline(report),
+    renderMemories(report),
     renderUptime(report),
     el("div", "report-split"),
   );
@@ -547,7 +569,7 @@ function render(report) {
     el("div", "report-split"),
   );
   dashboard.lastElementChild.append(renderIntent(report), renderTokens(report));
-  dashboard.append(renderPipelines(report), renderExtras(report));
+  dashboard.append(renderFailures(report), renderPipelines(report), renderExtras(report));
   $("raw-json").textContent = JSON.stringify(report, null, 2);
 }
 

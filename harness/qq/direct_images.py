@@ -50,7 +50,7 @@ VISION_JPEG_QUALITY = 80
 MAX_REDIRECTS = 3
 DEFAULT_QQ_MEDIA_HOSTS = (
     "gchat.qpic.cn", "c2cpicdw.qpic.cn", "c2cpicdw2.qpic.cn",
-    "multimedia.nt.qq.com", "gchatpic.gtimg.com", "q.qlogo.cn",
+    "multimedia.nt.qq.com", "multimedia.nt.qq.com.cn", "gchatpic.gtimg.com", "q.qlogo.cn",
 )
 ImageError = Literal[
     "source_unavailable", "source_not_allowed", "local_path_not_allowed",

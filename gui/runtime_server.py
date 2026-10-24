@@ -257,6 +257,10 @@ def create_app(*, runtime_url: str | None = None, control_token: str | None = No
     async def report_days(request: Request):
         return await gateway(request).request("GET", "/v1/report/days")
 
+    @app.get("/api/report/memories")
+    async def report_memories(request: Request):
+        return await gateway(request).request("GET", "/v1/report/memories", params=dict(request.query_params))
+
     @app.get("/api/selfcheck")
     async def selfcheck_read(request: Request):
         return await gateway(request).request("GET", "/v1/selfcheck")

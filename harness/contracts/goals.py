@@ -8,13 +8,14 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, model_serializer, model_validator
 
 from harness.contracts.capability_calls import (
     CapabilityChoice, CapabilitySelectionRequest, Identifier, Moment,
     PreparedCapabilityChoice, _Strict, _bounded_json,
 )
 from harness.homeostasis.appraisal import PsychologicalAppraisal
+from harness.agentic.affect_models import RestArguments
 
 
 PsychologicalDimension = Literal[
@@ -125,6 +126,8 @@ class GoalDecisionRequest(CapabilitySelectionRequest):
 
 
 class PreparedGoalDecision(_Strict):
+    native_rest: RestArguments | None = None
+    native_rest_revision: int | None = Field(default=None, ge=0)
     decision_id: Identifier
     opportunity_id: Identifier
     snapshot_revision: int = Field(ge=0)
@@ -144,8 +147,13 @@ class PreparedGoalDecision(_Strict):
 
     @model_validator(mode="after")
     def _binding(self):
+        if (self.native_rest is None) != (self.native_rest_revision is None):
+            raise ValueError("native_rest_revision_required")
+        if self.native_rest is not None and (self.episode_operation != "wait" or self.choice.kind != "wait"):
+            raise ValueError("native_rest_cannot_dispatch")
         GoalChoice.model_validate(self.model_dump(exclude={
             "decision_id", "opportunity_id", "snapshot_revision", "appraisal", "prepared_at", "deadline_at", "catalog_hash",
+            "native_rest", "native_rest_revision",
         }))
         self.capability_choice
         if self.appraisal is not None and (
@@ -153,6 +161,14 @@ class PreparedGoalDecision(_Strict):
         ):
             raise ValueError("goal_appraisal_binding_mismatch")
         return self
+
+    @model_serializer(mode="wrap")
+    def _legacy_wire(self, handler):
+        data = handler(self)
+        if self.native_rest is None:
+            data.pop("native_rest", None)
+            data.pop("native_rest_revision", None)
+        return data
 
     @property
     def capability_choice(self) -> PreparedCapabilityChoice:

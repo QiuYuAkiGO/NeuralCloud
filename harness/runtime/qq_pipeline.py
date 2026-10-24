@@ -92,22 +92,27 @@ async def prepare(supervisor, event, request):
     if key not in supervisor._command_intent_seqs:
         summary = supervisor._response_homeostatic_interoception()
         production = getattr(supervisor, "production_runtime", None)
+        native = getattr(supervisor, 'native_regulation', None)
+        native_contact = bool(native and native.contact_enabled() and request.idle_intent is not None and
+            request.idle_intent.origin == 'production')
+        if native_contact:
+            native.authorize_contact(request.idle_intent.opportunity_ref, request.idle_intent.selection_ref, request.group_id)
         if production is not None:
             payload["production_context"] = await production.context(request.group_id, autonomous=request.idle_intent is not None)
             if request.idle_intent is not None and payload["production_context"]["restricted_dialogue"]:
                 raise QQTurnRejected("production_contact_body_restricted")
-        elif request.idle_intent is not None and request.idle_intent.origin == "production":
+        elif not native_contact and request.idle_intent is not None and request.idle_intent.origin == "production":
             raise QQTurnRejected("production_contact_not_enabled")
         if summary is not None and summary["salience"] == "critical":
             raise ValueError("critical_homeostasis_before_qq")
-        if production is None and request.idle_intent is not None and (summary is None or
+        if production is None and not native_contact and request.idle_intent is not None and (summary is None or
                 request.idle_intent.homeostatic_interoception.model_dump(mode="json") != summary):
             raise ValueError("qq_idle_homeostasis_changed")
-        payload.update(homeostatic_interoception=summary, qq_frozen_policy=frozen.model_dump(),
+        payload.update(homeostatic_interoception=None if native_contact else summary, qq_frozen_policy=frozen.model_dump(),
             qq_turn_runtime={"runtime_instance_id": supervisor.runtime_instance_id,
                              "manifest_revision": supervisor.manifest.revision},
             qq_web_capabilities=await web_capabilities(supervisor, event, request, policy=frozen))
-        goal = supervisor.goals.qq_context(request) if supervisor.goals.enabled else None
+        goal = supervisor.goals.qq_context(request) if supervisor.goals.enabled and not native_contact else None
         if goal is not None:
             payload["runtime_goal_context"] = goal
     envelope = supervisor._make_command(event, command_type="PrepareQQTurn", idempotency_key=key,

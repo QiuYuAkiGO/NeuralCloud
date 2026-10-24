@@ -105,8 +105,12 @@ class MemoryScope(BaseModel):
         """Return a bound QQ private audience, excluding unbound legacy scopes."""
         if self.channel != "qq_private" or not self.conversation_id:
             return None
-        match = re.fullmatch(r"qq:private:([1-9][0-9]{0,19}):([1-9][0-9]{0,19})", self.conversation_id)
-        if match is None or match[1] == match[2]:
+        from harness.qq.conversation import conversation_scope
+        try:
+            if not self.conversation_id.startswith("qq:private:"):
+                return None
+            conversation_scope(self.conversation_id.removeprefix("qq:"))
+        except ValueError:
             return None
         return self.conversation_id
 

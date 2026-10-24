@@ -18,17 +18,18 @@ from uuid import uuid4
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstraints, TypeAdapter, ValidationError, field_validator, model_validator
 
-from harness.qq.conversation import QQConversationID, conversation_scope
+from harness.qq.conversation import official_scope_app, QQConversationID, conversation_scope
 from harness.qq.attention import guarded_group_read
 from harness.qq.context_window import WINDOW_CANDIDATE_LIMIT
+from harness.qq.official_identity import IDENTITY, MESSAGE
 
 
-QQID = Annotated[str, StringConstraints(strict=True, pattern=r"^[1-9][0-9]{0,19}$")]
+QQID = Annotated[str, StringConstraints(strict=True, pattern=rf"^(?:[1-9][0-9]{{0,19}}|{IDENTITY})$")]
 Reference = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=2048)]
 Label = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=256)]
 ObservedText = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=32768)]
 Evidence = Annotated[list[Reference], Field(min_length=1, max_length=16)]
-ProtocolMessageID = Annotated[str, StringConstraints(strict=True, pattern=r"^-?[0-9]{1,20}$")]
+ProtocolMessageID = Annotated[str, StringConstraints(strict=True, pattern=rf"^(?:-?[0-9]{{1,20}}|{MESSAGE})$")]
 _QQ_ID_ADAPTER = TypeAdapter(QQID)
 _PROTOCOL_MESSAGE_ID_ADAPTER = TypeAdapter(ProtocolMessageID)
 
@@ -38,6 +39,19 @@ def protocol_message_evidence_ref(group_id: str, member_id: str, message_id: str
     scope = conversation_scope(group_id)
     member_id = _QQ_ID_ADAPTER.validate_python(member_id)
     message_id = _PROTOCOL_MESSAGE_ID_ADAPTER.validate_python(message_id)
+    if official_scope_app(group_id):
+        from harness.qq.official_identity import identity, raw_message_id, split_identity
+        app_id = official_scope_app(group_id)
+        if scope["kind"] == "group":
+            split_identity(group_id, kind="group", app_id=app_id)
+        elif member_id not in {scope["self_member_id"], scope["peer_id"]}:
+            raise ValueError("qqbot_private_author_invalid")
+        if member_id != identity(app_id, "bot", app_id):
+            split_identity(member_id, kind="user" if scope["kind"] == "private" else "member", app_id=app_id)
+        raw_message_id(app_id, message_id)
+        return "qqbot-protocol-message:" + ":".join((group_id, member_id, message_id))
+    if member_id.startswith("qqbot:") or message_id.startswith("qqbot:"):
+        raise ValueError("qqbot_numeric_scope_mismatch")
     if scope["kind"] == "private":
         if member_id not in {scope["self_member_id"], scope["peer_id"]}:
             raise ValueError("private message author is outside its conversation")
@@ -59,6 +73,20 @@ class _Model(BaseModel):
         if group_id is None:
             return self
         scope = conversation_scope(group_id)
+        if official_scope_app(group_id):
+            from harness.qq.official_identity import identity, split_identity
+            app_id = official_scope_app(group_id)
+            members = [getattr(self, "member_id", None), *(getattr(self, "participants", None) or []),
+                       *(getattr(self, "member_ids", None) or [])]
+            for member in members:
+                if member is not None and member != identity(app_id, "bot", app_id):
+                    split_identity(member, kind="user" if scope["kind"] == "private" else "member", app_id=app_id)
+            for field in ("verification", "author_attribution"):
+                if getattr(self, field, "qq_protocol_verified") != "qq_protocol_verified":
+                    raise ValueError("official conversation requires protocol verification")
+        elif any(str(member).startswith("qqbot:") for member in [getattr(self, "member_id", None),
+                *(getattr(self, "participants", None) or []), *(getattr(self, "member_ids", None) or [])]):
+            raise ValueError("official member is outside numeric conversation")
         if scope["kind"] == "private":
             allowed = {scope["self_member_id"], scope["peer_id"]}
             members = [getattr(self, "member_id", None)]
@@ -161,7 +189,9 @@ class QQVisualObservationInput(_Model):
     attribution_evidence: Evidence
     claims: list[QQAuthorClaim] = Field(default_factory=list, max_length=16)
     extraction_method: Label = "manual"
-    message_id: Label | None = None
+    # UI identifiers retain their old bound. Official opaque IDs are encoded
+    # losslessly and can be longer, but must pass the app-bound protocol checks.
+    message_id: Label | Annotated[str, StringConstraints(strict=True, pattern=rf"^{MESSAGE}$")] | None = None
     message_id_source: Literal["qq_metadata", "qq_visible_identifiers"] | None = None
     image_analysis: list[QQImageAnalysis] = Field(default_factory=list, max_length=8)
 

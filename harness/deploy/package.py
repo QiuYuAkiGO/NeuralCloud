@@ -10,9 +10,9 @@ from pathlib import Path, PurePosixPath
 from .config import DeployError, validate_release_id
 
 MANIFEST_NAME = "RELEASE-MANIFEST.json"
-SOURCE_ROOTS = ("harness", "infra", "gui", "presets", "contracts", "deploy", "tools/deploy")
+SOURCE_ROOTS = ("harness", "infra", "gui", "presets", "contracts", "deploy", "tools/deploy", "tools/qqbot")
 SOURCE_FILES = ("pyproject.toml", "uv.lock", "README.md")
-OPTIONAL_SOURCE_FILES = ("docs/LINUX_DEPLOYMENT.md", "docs/LINUX_NAPCAT.md")
+OPTIONAL_SOURCE_FILES = ("docs/LINUX_DEPLOYMENT.md", "docs/LINUX_NAPCAT.md", "docs/QQ_OFFICIAL_BOT.md")
 EXCLUDED = {"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", ".git", ".venv", "node_modules"}
 MAX_EXPANDED = 512 * 1024 * 1024
 

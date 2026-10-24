@@ -57,6 +57,12 @@ class FallbackLLMClient:
     def complete_json(self, **kwargs):
         return self._main.complete_json(**kwargs)
 
+    def complete_agent_turn(self, messages, **kwargs):
+        return self._main.complete_agent_turn(messages, **kwargs)
+
+    async def acomplete_agent_turn(self, messages, **kwargs):
+        return await self._main.acomplete_agent_turn(messages, **kwargs)
+
     def complete_chat(self, messages, *, temperature=0.7, stream=False):
         return self.complete_chat_result(messages, temperature=temperature, stream=stream).text
 
@@ -136,6 +142,8 @@ class _PrimaryNotReady(Exception):
 def build_main_client(settings: Settings):
     from harness.llm.client import OpenAICompatClient
 
+    if settings.agentic_enabled and settings.agentic_local_only:
+        return OpenAICompatClient(settings)
     path = settings.llm_fallback_config
     if path is None:
         return OpenAICompatClient(settings)

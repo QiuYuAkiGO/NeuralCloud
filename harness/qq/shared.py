@@ -33,7 +33,7 @@ class QQSharedTraceOrigin(BaseModel):
 
 class QQSharedPrepareRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
-    transport: Literal["desktop", "onebot"] = "desktop"
+    transport: Literal["desktop", "onebot", "qqbot"] = "desktop"
     group_id: QQConversationID
     self_member_id: QQID
     trigger_member_id: QQID | None = None
@@ -56,7 +56,7 @@ class QQSharedPrepareRequest(BaseModel):
         batch = (self.request_id, self.revision, self.source_event_ids, self.authority_anchor)
         if any(value is not None for value in batch):
             import re
-            if (not all(value is not None for value in batch) or self.transport != "onebot"
+            if (not all(value is not None for value in batch) or self.transport not in {"onebot", "qqbot"}
                     or self.idle_intent is not None or self.authority_anchor != self.trace.event_id
                     or self.source_event_ids[0] != self.authority_anchor
                     or len(set(self.source_event_ids)) != len(self.source_event_ids)
@@ -66,7 +66,7 @@ class QQSharedPrepareRequest(BaseModel):
         scope = conversation_scope(self.group_id)
         production_idle = self.idle_intent is not None and self.idle_intent.origin == "production"
         if scope["kind"] == "private":
-            if (self.transport != "onebot" or self.self_member_id != scope["self_member_id"]
+            if (self.transport not in {"onebot", "qqbot"} or self.self_member_id != scope["self_member_id"]
                     or (self.trigger_member_id is not None if production_idle else self.trigger_member_id != scope["peer_id"])
                     or (self.idle_intent is not None and not production_idle)
                     or any(member not in {scope["self_member_id"], scope["peer_id"]}
@@ -75,7 +75,21 @@ class QQSharedPrepareRequest(BaseModel):
         if any(x.group_id != self.group_id or x.self_member_id != self.self_member_id
                for x in self.verified_self_aliases):
             raise ValueError("shared_qq_alias_scope_mismatch")
-        expected_verification = "qq_protocol_verified" if self.transport == "onebot" else "qq_ui_verified"
+        expected_verification = "qq_protocol_verified" if self.transport in {"onebot", "qqbot"} else "qq_ui_verified"
+        if self.transport == "qqbot":
+            from harness.qq.official_identity import identity, split_identity
+            app_id = self.self_member_id.split(":")[1] if self.self_member_id.startswith("qqbot:") else ""
+            if self.self_member_id != identity(app_id, "bot", app_id) or self.idle_intent is not None:
+                raise ValueError("qqbot_source_scope_invalid")
+            if scope["kind"] == "group":
+                split_identity(self.group_id, kind="group", app_id=app_id)
+            split_identity(self.trigger_member_id, kind="user" if scope["kind"] == "private" else "member", app_id=app_id)
+            for member in self.member_ids or []:
+                if member != self.self_member_id:
+                    split_identity(member, kind="user" if scope["kind"] == "private" else "member", app_id=app_id)
+        elif any(str(value).startswith("qqbot:") for value in (
+                self.group_id, self.self_member_id, self.trigger_member_id, *(self.member_ids or []))):
+            raise ValueError("qqbot_transport_mismatch")
         if any(x.verification != expected_verification for x in self.verified_self_aliases):
             raise ValueError("shared_qq_alias_transport_mismatch")
         if self.idle_intent is not None and (

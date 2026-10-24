@@ -228,10 +228,18 @@ class QQTurnTrace:
             self.decision_id = value
 
     def bind_conversation(self, *, group_id: str, self_member_id: str) -> str:
-        from harness.qq.conversation import QQ_NUMBER, conversation_scope
+        from harness.qq.conversation import official_scope_app, QQ_NUMBER, conversation_scope
         import hashlib
         scope = conversation_scope(group_id)
-        if (not isinstance(self_member_id, str) or re.fullmatch(QQ_NUMBER, self_member_id) is None
+        if official_scope_app(group_id):
+            from harness.qq.official_identity import identity
+            app_id = official_scope_app(group_id)
+            if self_member_id != identity(app_id, "bot", app_id):
+                raise ValueError("Invalid trace conversation scope")
+            self_pattern = re.escape(self_member_id)
+        else:
+            self_pattern = QQ_NUMBER
+        if (not isinstance(self_member_id, str) or re.fullmatch(self_pattern, self_member_id) is None
                 or (scope["kind"] == "private" and scope["self_member_id"] != self_member_id)):
             raise ValueError("Invalid trace conversation scope")
         key = "qq-scope:" + hashlib.sha256((self_member_id + "\0" + group_id).encode()).hexdigest()

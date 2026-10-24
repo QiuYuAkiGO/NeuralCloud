@@ -20,6 +20,8 @@ class StructuredEndpoint(BaseModel):
 
 
 def build_structured_client(settings):
+    if getattr(settings, "agentic_enabled", False) and getattr(settings, "agentic_local_only", True):
+        return None
     if getattr(settings, "structured_llm_config", None) is None:
         return None
     from harness.llm.client import OpenAICompatClient

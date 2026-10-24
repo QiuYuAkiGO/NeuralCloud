@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from harness.embodiment.capabilities import CapabilityRequirement
 from harness.regulation.config import RegulationConfig
+from harness.agentic.affect_models import RegulationSettings as NativeRegulationSettings
 from harness.production.config import ProductionConfig
 from harness.interruption import InterruptionOptions
 from harness.research.grounded_agency.manifest import GroundedAgencyBinding, GroundedAgencyCondition
@@ -206,6 +207,7 @@ class ExperimentManifest(BaseModel):
     watchdog_action: str = Field(min_length=1)
     timezone: str = Field(default="Asia/Shanghai", min_length=1)
     emotion_mode: Literal["off", "shadow", "on"] = "off"
+    agentic_regulation: NativeRegulationSettings = Field(default_factory=NativeRegulationSettings)
     homeostatic_expression: HomeostaticExpressionCondition = Field(
         default_factory=HomeostaticExpressionCondition
     )
@@ -218,6 +220,11 @@ class ExperimentManifest(BaseModel):
 
     @model_validator(mode="after")
     def _validate_study_authority(self) -> ExperimentManifest:
+        if self.agentic_regulation.mode != "off":
+            if self.emotion_mode != "off" or self.production is not None or self.grounded_agency is not None:
+                raise ValueError("native regulation requires an independent non-legacy manifest")
+            if self.agentic_regulation.autonomous_enabled and not (self.goal_regulation.enabled and self.autonomous_capabilities.enabled):
+                raise ValueError("native autonomy requires shared goals and capabilities")
         if self.production is not None:
             if self.grounded_agency is not None:
                 raise ValueError("production and historical research require separate manifests")
@@ -302,6 +309,8 @@ class ExperimentManifest(BaseModel):
         payload = self.model_dump(mode="json")
         if self.emotion_mode == "off":
             payload.pop("emotion_mode")
+        if self.agentic_regulation == NativeRegulationSettings():
+            payload.pop("agentic_regulation")
         if self.web_access == WebAccessCondition():
             payload.pop("web_access")
         if self.server_access == ServerAccessCondition():

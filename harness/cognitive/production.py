@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError
 
 from harness.contracts.decisions import DeferDecision, GoalProposal, NoActionDecision, PreparedResponse, ReplyDecision
 from harness.contracts.envelope import DomainCommandResult
-from harness.core.inference import FinalResponse
+from harness.core.inference import FinalResponse, TokenUsage
 from harness.core.models import InteractionEvent
 from harness.production.metering import production_call_scope
 from harness.production.models import ProductionGoalUpdate
@@ -56,6 +56,8 @@ class ProductionAppraisal(BaseModel):
 
 
 class ProductionChoice(ProductionAppraisal):
+    _agentic: dict | None = PrivateAttr(default=None)
+    _agentic_usage: TokenUsage = PrivateAttr(default_factory=TokenUsage)
     kind: Literal["reply", "wait", "defer", "rest_start", "rest_end", "act"]
     reason: str = Field(min_length=1, max_length=800)
     text: str | None = Field(default=None, max_length=8000)
@@ -402,14 +404,16 @@ async def prepare(adapter, command):
             event = InteractionEvent(event_id=command.event_id, timestamp=source_time,
                 session_id=scope, speaker=str(command.payload.get("speaker") or "user"),
                 channel=str(command.payload.get("channel") or "chat"), raw_text=str(command.payload.get("text") or ""))
-            segments = adapter._context_provider(event) if adapter._context_provider else []
+            from harness.agentic.service import enabled_service
+            agent = enabled_service(adapter.pipeline)
+            segments = adapter._context_provider(event) if adapter._context_provider and agent is None else []
             sources = {event.event_id, *(ref for segment in segments for ref in segment.source_ids)}
             for goal in context.get("goals", []):
                 sources.update(goal.get("evidence_refs", []))
                 sources.update(goal.get("outcomes", []))
                 for outcome in goal.get("results", []):
                     sources.update(outcome.get("evidence_refs", []))
-            ingest = getattr(adapter, "production_ingest", None)
+            ingest = agent.ingest_local if agent is not None else getattr(adapter, "production_ingest", None)
             current_source = ingest(event) if callable(ingest) and not context.get("autonomous") and event.raw_text.strip() else None
             if current_source:
                 sources.add(current_source)
@@ -423,7 +427,7 @@ async def prepare(adapter, command):
                 payload["text_interruption_context"] = command.payload["text_interruption_context"]
             signature = digest((frozen_persona, recent))
         try:
-            choice = await asyncio.to_thread(call_before_deadline, command.deadline, _ask,
+            choice = await asyncio.to_thread(call_before_deadline, command.deadline, agent.production_choice if agent is not None else _ask,
                 adapter.pipeline.llm, payload, ProductionChoice, context=context, command_id=command.command_id,
                 autonomous=bool(context.get("autonomous", command.payload.get("autonomous", False))), meter=getattr(adapter, "production_meter", None),
                 record_use=getattr(adapter, "production_record_use", None),
@@ -451,6 +455,8 @@ async def prepare(adapter, command):
                 validate = getattr(adapter, "production_validate_context", None)
                 memory_store = getattr(adapter, "production_evidence_store", None)
                 _validate_manifest(choice, memory_store, audience="local:main", context=context)
+                if agent is not None:
+                    agent.validate_evidence(choice._agentic, audience="local:main")
                 if memory_store is not None and current_source and not memory_store.validate_references(
                         [current_source], audience="local:main"):
                     raise ValueError("production_current_source_superseded")
@@ -479,7 +485,8 @@ async def prepare(adapter, command):
                         "verified_evidence_refs": sorted(sources)} if choice.goal_update is not None else None)
                 text = decision.text if isinstance(decision, ReplyDecision) else ""
                 final = FinalResponse(text=text, segments=[text] if text else [], path="fast",
-                                      situation_id="production:" + event.event_id, event_id=event.event_id)
+                                      situation_id="production:" + event.event_id, event_id=event.event_id,
+                                      agentic=choice._agentic, usage=choice._agentic_usage)
                 adapter._prepared[prepared.prepare_id] = _PreparedEntry(event=event, final=final, prepared=prepared,
                     capability=isinstance(decision, GoalProposal), production=True,
                     production_autonomous=bool(context.get("autonomous")))
@@ -506,6 +513,15 @@ async def appraise_qq(host, command, request, source, owner):
     from harness.qq.conversation import conversation_audience, conversation_scope
     scope = conversation_audience(request.group_id)
     context = dict(command.payload["production_context"])
+    agent = getattr(host, "agentic", None)
+    if agent is not None and agent.enabled:
+        # Scheduling/resource authorization remains in Runtime; expression and
+        # memory no longer require a preceding affect appraisal model call.
+        if request.idle_intent is None:
+            host.shared.production_store.ingest_qq(source["source"],
+                memory_db=getattr(getattr(host.shared, "qq_settings", None), "memory_db", None))
+        agent.sync_shared()
+        return {key: value for key, value in context.items() if key not in {"affect", "interpersonal_orientation"}}
     context["affect"] = _affect(host.adapter, scope)
     member_id = request.trigger_member_id or conversation_scope(request.group_id).get("peer_id")
     subject = "qq:member:" + member_id if member_id else None

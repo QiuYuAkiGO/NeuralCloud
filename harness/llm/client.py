@@ -37,6 +37,9 @@ class ChatResult(BaseModel):
     content_type: Literal["text", "null", "missing", "array", "object", "invalid"] | None = None
     reasoning_tokens: int | None = Field(default=None, ge=0)
     has_tool_calls: bool = False
+    # Never include arguments or private reasoning in operational metadata.
+    tool_calls: list[Any] = Field(default_factory=list, exclude=True, repr=False)
+    reasoning_content: str | None = Field(default=None, exclude=True, repr=False)
     has_refusal: bool = False
     original_content_characters: int | None = None
     json_repair: dict[str, Any] | None = None
@@ -259,7 +262,21 @@ def _chat_result(body: dict[str, Any], messages: list[dict[str, Any]]) -> ChatRe
     return ChatResult(text=text, usage=usage_from_api_payload(raw_usage, messages, text),
         finish_reason=finish, response_id=response_id, content_type=content_type,
         reasoning_tokens=reasoning_tokens, has_tool_calls=bool(message.get("tool_calls") or message.get("function_call")),
-        has_refusal=bool(message.get("refusal")))
+        has_refusal=bool(message.get("refusal")),
+        tool_calls=message.get("tool_calls") if isinstance(message.get("tool_calls"), list) else [],
+        reasoning_content=message.get("reasoning_content") if isinstance(message.get("reasoning_content"), str) else None)
+
+
+def _native_tool_payload(payload, tools, tool_choice):
+    if tools:
+        payload.update(tools=tools, tool_choice=tool_choice, parallel_tool_calls=False)
+    else:
+        if tool_choice not in ("auto", "none", None):
+            raise ValueError("native_tools_required_but_empty")
+        # OpenAI-compatible servers may reject an explicitly empty tools array.
+        # No-tool calls also override any tools inherited from extra_payload.
+        for key in ("tools", "tool_choice", "parallel_tool_calls"):
+            payload.pop(key, None)
 
 
 class OpenAICompatClient:
@@ -273,6 +290,10 @@ class OpenAICompatClient:
         connect_timeout: float | None = None,
     ) -> None:
         self.settings = settings or get_settings()
+        if self.settings.agentic_enabled and self.settings.agentic_local_only:
+            from harness.agentic.context import local_endpoint
+            if not local_endpoint(self.settings.llm_base_url):
+                raise ValueError("agentic_requires_local_main_endpoint")
         self._extra_payload = dict(extra_payload or {})
         self._request_observer = request_observer
         self._connect_timeout = connect_timeout
@@ -282,6 +303,49 @@ class OpenAICompatClient:
 
     def close(self) -> None:
         self._client.close()
+
+    def complete_agent_turn(self, messages, *, tools, tool_choice="auto", **kwargs):
+        """Native main-model route, without structured routing or affect injection."""
+        from harness.agentic.background import dispatch
+        if dispatch.get() is not None:
+            return dispatch.get()(self, messages, tools=tools, tool_choice=tool_choice, **kwargs)
+        return self.complete_chat_result(messages, _agent_tools=tools,
+            _agent_tool_choice=tool_choice, **kwargs)
+
+    async def acomplete_agent_turn(self, messages, *, tools, tool_choice="auto",
+                                   max_tokens=512, timeout_seconds=25, temperature=0.1, response_format=None):
+        """Cancellation closes HTTP; server slot release requires live measurement."""
+        from harness.production.metering import production_attempt, mark_production_dispatch
+        payload = {**self._extra_payload, "model": self.settings.llm_model,
+            "messages": messages, "max_tokens": max_tokens,
+            "temperature": temperature, "chat_template_kwargs": {"enable_thinking": False},
+            "stream": True, "stream_options": {"include_usage": True}}
+        _native_tool_payload(payload, tools, tool_choice)
+        from harness.agentic.deepseek_tokens import supported as deepseek_agent_supported
+        if deepseek_agent_supported(self.settings):
+            payload.pop("chat_template_kwargs", None)
+            payload["thinking"] = {"type": "disabled"}
+        if response_format is not None:
+            payload['response_format'] = response_format
+        with production_attempt(model=self.settings.llm_model) as metering, model_request_span(
+                self.settings, role="main", messages=messages) as span:
+            async with httpx.AsyncClient(timeout=timeout_seconds) as client:
+                mark_production_dispatch(metering)
+                from harness.llm.native_stream import NativeStream
+                stream = NativeStream()
+                # A streaming reader detects disconnects promptly in llama.cpp.
+                # Merely cancelling a non-streaming HTTP request can leave its
+                # generation occupying a slot until max_tokens is reached.
+                async with client.stream("POST", self.settings.llm_base_url.rstrip("/") + "/chat/completions",
+                        json=payload, headers={"Authorization": "Bearer " + self.settings.llm_api_key}) as response:
+                    span["http_status"] = response.status_code
+                    response.raise_for_status()
+                    async for line in response.aiter_lines():
+                        stream.line(line)
+                body = stream.result()
+                _record_production_response(metering, body)
+                _record_provider_response(span, body, messages)
+                return _chat_result(body, messages)
 
     def complete_json(
         self, *, system: str, user: str, max_tokens: int | None = None,
@@ -321,6 +385,8 @@ class OpenAICompatClient:
         response_format: dict[str, Any] | None = None,
         reasoning_effort: str | None = None,
         thinking: dict[str, str] | None = None,
+        _agent_tools: list[dict[str, Any]] | None = None,
+        _agent_tool_choice: Any = "auto",
     ) -> ChatResult:
         if stream:
             raise NotImplementedError("streaming is reserved for a later milestone")
@@ -331,7 +397,7 @@ class OpenAICompatClient:
             from harness.llm.structured import cache_messages
             messages = cache_messages(messages)
         production_context = current_production_context()
-        if production_context is not None:
+        if production_context is not None and _agent_tools is None:
             from harness.cognitive.production import augment_messages
             messages = augment_messages(messages, production_context,
                 cache_friendly=deepseek_structured.cache_friendly_enabled(self)
@@ -363,6 +429,15 @@ class OpenAICompatClient:
             payload["reasoning_effort"] = reasoning_effort
         if thinking is not None:
             payload["thinking"] = thinking
+        if _agent_tools is not None:
+            _native_tool_payload(payload, _agent_tools, _agent_tool_choice)
+            payload["chat_template_kwargs"] = {**payload.get("chat_template_kwargs", {}),
+                "enable_thinking": self.settings.agentic_thinking,
+                "reasoning_effort": reasoning_effort or "low", "preserve_thinking": True}
+            from harness.agentic.deepseek_tokens import supported as deepseek_agent_supported
+            if deepseek_agent_supported(self.settings):
+                payload.pop("chat_template_kwargs", None)
+                payload["thinking"] = {"type": "enabled" if self.settings.agentic_thinking else "disabled"}
         response_schema = None
         endpoint = f"{self.settings.llm_base_url.rstrip('/')}/chat/completions"
         if (deepseek_structured.supported(self.settings)
@@ -601,6 +676,12 @@ class RoutingLLMClient:
     def production_dispatch_aware(self) -> bool:
         return getattr(self._main, "production_dispatch_aware", False) is True
 
+    def complete_agent_turn(self, messages, **kwargs):
+        return self._main.complete_agent_turn(messages, **kwargs)
+
+    async def acomplete_agent_turn(self, messages, **kwargs):
+        return await self._main.acomplete_agent_turn(messages, **kwargs)
+
     def complete_json(
         self, *, system: str, user: str, max_tokens: int | None = None,
         timeout_seconds: float | None = None,
@@ -752,6 +833,10 @@ class RoutingLLMClient:
 
 def build_llm_client(settings: Settings) -> LLMClient:
     """Live-mode client: route helpers to aux when configured, otherwise a single endpoint."""
+    if settings.agentic_enabled and settings.agentic_local_only:
+        # No cloud fallback, structured helper, or auxiliary probe is part of
+        # the local agent deployment, including legacy owner/resume calls.
+        return OpenAICompatClient(settings)
     from harness.llm.fallback import build_main_client
     from harness.llm.structured import build_structured_client
     main = build_main_client(settings)

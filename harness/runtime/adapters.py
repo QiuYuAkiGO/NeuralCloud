@@ -503,6 +503,8 @@ class PipelineCognitiveAdapter:
             return result
 
     async def emotion_guidance(self, command):
+        if self.pipeline.settings.agentic_enabled:
+            return None
         reference = command.payload.get("emotion_context_ref")
         if reference is None or self.pipeline.settings.emotion_mode == "off":
             return None
@@ -538,6 +540,8 @@ class PipelineCognitiveAdapter:
         return guidance
 
     def _emotion_model_deadline(self, command):
+        if self.pipeline.settings.agentic_enabled:
+            return command.deadline
         if self.pipeline.settings.emotion_mode == "off":
             return None
         reference = command.payload.get("emotion_context_ref")
@@ -791,7 +795,7 @@ class PipelineCognitiveAdapter:
                     prompt_version=self.pipeline.settings.prompt_version,
                 )
             except Exception as exc:
-                if internal or mode in {"basic_terminal_task", "grounded_agency_decision"}:
+                if self.pipeline.settings.agentic_enabled or internal or mode in {"basic_terminal_task", "grounded_agency_decision"}:
                     result = self._failure(command, str(exc))
                     self._remember(command, result)
                     await asyncio.to_thread(self._persist_state)
@@ -1215,6 +1219,9 @@ class PipelineCognitiveAdapter:
 
     async def pause_maintenance(self, *, timeout: float) -> bool:
         self._maintenance_paused = True
+        agent = getattr(self.pipeline.memory, "agentic", None)
+        if agent is not None:
+            agent.pause_background()
         deadline = asyncio.get_running_loop().time() + timeout
         judge_jobs = getattr(getattr(self, "_interruption_assessor", None), "jobs", set())
         workers = tuple(task for task in self.research_tasks | self.command_tasks | judge_jobs if not task.done())
@@ -1342,7 +1349,7 @@ class PipelineCognitiveAdapter:
                 # to leave the supervisor trying to pause while Cognitive was still
                 # blocked in synchronous enrichment.  Keep the objective audit event,
                 # but reserve enrichment for conversational deliveries.
-                enrich = not entry.production and not isinstance(evidence, ActionOutcomeEvidence)
+                enrich = not self.pipeline.settings.agentic_enabled and not entry.production and not isinstance(evidence, ActionOutcomeEvidence)
                 self.pipeline.memory.record_event(
                     event,
                     generate_insight=enrich,
@@ -1351,6 +1358,10 @@ class PipelineCognitiveAdapter:
                 )
 
         if isinstance(evidence, DeliveryEvidence) and evidence.success:
+            from harness.agentic.service import enabled_service
+            agent = enabled_service(self.pipeline)
+            if agent is not None:
+                agent.acknowledge_delivery(entry.final, evidence.external_ref or "delivery:" + evidence.delivery_id)
             if not entry.production and self.pipeline.settings.emotion_mode != "off":
                 from harness.emotion import EmotionMessage
 

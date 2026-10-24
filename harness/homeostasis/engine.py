@@ -21,6 +21,7 @@ from harness.embodiment.contracts import (
     evidence_ref_strings,
 )
 from harness.homeostasis.appraisal import ApplyPsychologicalAppraisal, PsychologicalAppraisal
+from harness.homeostasis.native_appraisal import NativeAppraisalReceipt, apply_native
 from harness.homeostasis.dynamics import (
     CognitiveExposure, DynamicsState, PSYCHOLOGICAL, advance, expose, appraise as appraise_dynamics,
 )
@@ -189,6 +190,16 @@ class HomeostasisEngine:
             if len(traces) >= cap:
                 break
         return traces
+
+    async def read_report_traces(self, *, since: str, until: str) -> list[dict[str, Any]]:
+        # The report projection owns its SQLite connection and never occupies
+        # the domain's event loop while scanning persisted telemetry.
+        task = asyncio.create_task(asyncio.to_thread(self._command_ledger.report_traces, since, until))
+        try:
+            return await asyncio.shield(task)
+        except asyncio.CancelledError:
+            await task
+            raise
 
     async def get_snapshot(self) -> DomainSnapshot:
         async with self._lock:
@@ -558,7 +569,7 @@ class HomeostasisEngine:
                         regulation_feedback=command.payload.get("regulation_feedback") is True))
                     if new_fact and fact.kind in {"verified_message", "verified_interaction", "verified_novelty"}:
                         activity_at = max(activity_at, min(fact.occurred_at, command.issued_at))
-                elif "cognitive_exposure" in payload:
+                elif "cognitive_exposure" in payload or 'native_appraisal' in payload:
                     appraisal = EventAppraisal(source="runtime", precision=.8, suggested_impacts={})
                 else:
                     appraisal = self._appraise(event, kind=kind, event_id=command.event_id)
@@ -567,6 +578,8 @@ class HomeostasisEngine:
             next_dynamics = self._dynamics
             exposure = None
             new_exposure = False
+            native_receipt = None
+            new_native = False
             causal_evidence = []
             if next_dynamics is not None and self.profile.cognitive_dynamics.mode != "off":
                 next_dynamics = advance(next_dynamics, effective_at, self.profile.cognitive_dynamics)
@@ -604,6 +617,26 @@ class HomeostasisEngine:
                                 exposure.assessment.impacts, exposure.assessment.confidence,
                                 self.profile.cognitive_dynamics, eligible_dimensions=eligible)
                             causal_evidence = [(ref, dimension) for ref in refs for dimension in eligible]
+                if 'native_appraisal' in payload:
+                    try:
+                        native_receipt = NativeAppraisalReceipt.model_validate(payload['native_appraisal'])
+                    except ValidationError:
+                        return self._failure(command, request_hash, 'invalid native appraisal', 'rejected')
+                    if fact is not None or psychological is not None or exposure is not None or kind == 'heartbeat':
+                        return self._failure(command, request_hash, 'native appraisal requires an independent interpretation', 'rejected')
+                    old_hash = self._command_ledger.native_appraisal_status(native_receipt.receipt_id)
+                    if old_hash is not None and old_hash != native_receipt.receipt_hash:
+                        return self._failure(command, request_hash, 'native appraisal identity conflict', 'conflict')
+                    new_native = old_hash is None
+                    if new_native:
+                        refs = native_receipt.source_refs
+                        dimensions = set(native_receipt.assessment.impacts) if native_receipt.assessment else set()
+                        eligible = self._command_ledger.eligible_affect_dimensions(refs, dimensions)
+                        before_native = next_dynamics.native_appraisals
+                        next_dynamics = apply_native(next_dynamics, native_receipt, effective_at, self.profile.cognitive_dynamics,
+                            eligible_dimensions=eligible)
+                        if next_dynamics.native_appraisals > before_native:
+                            causal_evidence = [(ref, dimension) for ref in refs for dimension in eligible]
                 if psychological is not None:
                     eligible = self._command_ledger.eligible_affect_dimensions(
                         psychological.observed_event_refs, set(psychological.suggested_impacts).intersection(PSYCHOLOGICAL))
@@ -616,7 +649,7 @@ class HomeostasisEngine:
                             and bool(set(psychological.observed_event_refs).intersection(trusted.verified_outcome_refs))))
                     causal_evidence = [(ref, dimension) for ref in psychological.observed_event_refs for dimension in eligible]
             shadow_only = self.profile.cognitive_dynamics.mode == "shadow" and (
-                "cognitive_exposure" in payload or command.payload.get("passive_only") is True or payload.get("passive_only") is True)
+                "cognitive_exposure" in payload or 'native_appraisal' in payload or command.payload.get("passive_only") is True or payload.get("passive_only") is True)
             if shadow_only:
                 factors = dict(self.snapshot.dimensions)
                 applied = {k: 0.0 for k in DIMENSIONS}
@@ -715,11 +748,9 @@ class HomeostasisEngine:
                 episode_id=psychological.episode_id if psychological is not None else None,
                 values_before=(
                     {name: factor.value for name, factor in self.snapshot.dimensions.items()}
-                    if psychological is not None else {}
                 ),
                 values_after=(
                     {name: factor.value for name, factor in factors.items()}
-                    if psychological is not None else {}
                 ),
                 **_trace_affect(summary, affect),
             )
@@ -775,6 +806,7 @@ class HomeostasisEngine:
                         if psychological is not None else None
                     ),
                     cognitive_exposure=(exposure.exposure_id, exposure.receipt_hash, exposure.content_hash) if new_exposure else None,
+                    native_appraisal=(native_receipt.receipt_id, native_receipt.receipt_hash) if new_native else None,
                     causal_evidence=causal_evidence,
                 )
             except (CommandLedgerConflictError, StaleSnapshotError):

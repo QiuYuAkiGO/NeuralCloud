@@ -94,3 +94,40 @@ def verified_qq_source(request, config=None):
     references = _reply_references(request, batch["sources"] if batch is not None else [value], config)
     require_attention(request.group_id, revision=attention_revision)
     return {"digest": digest, "text": text, "source": value, "reply_reference_record_ids": references}
+
+
+def protocol_wake(request, source):
+    """A wake grant comes from verified protocol addressing, never message prose."""
+    from harness.qq.conversation import conversation_scope
+    if request.idle_intent is not None or request.transport not in {'onebot', 'qqbot'}:
+        return False
+    if conversation_scope(request.group_id)['kind'] == 'private':
+        return True
+    from harness.qq.direct_config import DirectQQSettings
+    config = DirectQQSettings.read(Path(os.environ['NC_QQ_DIRECT_CONFIG']))
+    for ref in source.get('attribution_evidence', []):
+        if not re.fullmatch(r'qq-protocol://sha256/[0-9a-f]{64}', ref):
+            continue
+        path = config.evidence_dir / (ref.rsplit('/',1)[1] + '.json')
+        if path.is_symlink() or path.stat().st_size > 2 * 1024 * 1024:
+            continue
+        raw = path.read_bytes()
+        if hashlib.sha256(raw).hexdigest() != ref.rsplit('/',1)[1]:
+            continue
+        event = json.loads(raw)
+        if request.transport == 'qqbot':
+            from harness.qq.official_events import normalize_official
+            normalized = normalize_official(event, self_id=request.self_member_id, groups={request.group_id})
+            if (normalized is not None and normalized['member_id'] == request.trigger_member_id
+                    and normalized['message_id'] == source.get('message_id')
+                    and normalized['text'] == source.get('text')
+                    and normalized['protocol_addressing'] == 'self_mention'):
+                return True
+            continue
+        if (str(event.get('message_id')) != str(source.get('message_id')) or
+                str(event.get('group_id')) != request.group_id or str(event.get('self_id')) != request.self_member_id):
+            continue
+        if any(isinstance(p,dict) and p.get('type') == 'at' and
+               str((p.get('data') or {}).get('qq')) == request.self_member_id for p in event.get('message', [])):
+            return True
+    return False

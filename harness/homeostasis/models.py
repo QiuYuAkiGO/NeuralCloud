@@ -10,6 +10,7 @@ from typing import Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
 from harness.homeostasis.dynamics import DynamicsConfig
+from harness.qq.official_identity import GROUP
 
 DimensionName = Literal[
     "energy_reserve",
@@ -86,7 +87,7 @@ class QQHomeostaticFact(BaseModel):
 
     schema_version: Literal["qq-homeostatic-fact-v1"] = "qq-homeostatic-fact-v1"
     fact_id: str = Field(min_length=1, max_length=256)
-    group_id: str = Field(pattern=r"^[1-9][0-9]{0,19}$")
+    group_id: str = Field(pattern=rf"^(?:[1-9][0-9]{{0,19}}|{GROUP})$")
     kind: Literal["verified_message", "verified_interaction", "verified_novelty", "send_attempt", "no_response"]
     occurred_at: AwareDatetime
     verification: Literal["qq_ui_verified", "qq_protocol_verified"]
@@ -122,7 +123,7 @@ class QQDriveContext(BaseModel):
 
 class QQFactLookup(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid", strict=True)
-    group_id: str = Field(pattern=r"^[1-9][0-9]{0,19}$")
+    group_id: str = Field(pattern=rf"^(?:[1-9][0-9]{{0,19}}|{GROUP})$")
     fact_id: str = Field(min_length=1, max_length=256)
 
     @property

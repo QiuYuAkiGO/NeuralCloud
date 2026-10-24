@@ -59,6 +59,16 @@ class GoalDecisionError(capabilities.CapabilitySelectionError):
     pass
 
 
+def native_rules():
+    rules = '\n'.join(line for line in _RULES.splitlines() if 'appraisal' not in line)
+    return rules.replace('只输出 decision_schema 对应的 JSON，不输出逐步推理。',
+        '可自主调用记忆和状态工具，最后必须调用 submit_action 提交一个 goal 或 rest；不输出逐步推理。') + (
+        '\n休息暂停后台认知和主动行为，可在复查或直接呼唤时继续休息或结束休息。不能直接修改身体数值。'
+        '\n需要记录新的情绪解释时，使用 affect_propose 引用实际读过的外部原始来源；不使用旧 appraisal 或 attention_assessment。'
+        '\n不必为了复查而创建计划；等待可只提交 episode_operation=wait、choice.kind=wait。'
+        '自主休息或恢复用 rest；自身状态复查不是需要外部完成回执的活动。')
+
+
 def _parse(text: str) -> GoalChoice:
     if not isinstance(text, str) or not text.strip():
         raise GoalDecisionError("goal_empty_content")
@@ -154,59 +164,83 @@ async def prepare(host: Any, command: Any) -> dict[str, Any]:
         return value
 
     remaining()
-    emotion_guidance = await resolve_command_emotion(host, command)
-    # Unlike an idle capability opportunity, a goal can be reviewed with no body available.
-    try:
-        context = await asyncio.wait_for(asyncio.to_thread(capabilities._context, host, command, now), timeout=remaining())
-    except TimeoutError:
-        raise TimeoutError("goal_decision_expired") from None
+    agent = getattr(host, "agentic", None)
+    native = agent is not None and agent.enabled and host.chat.settings.agentic_regulation.mode == 'on'
+    native_rest = None
     catalog_at = datetime.now(timezone.utc)
     ready = [offer for offer in request.offers if offer.supported and offer.available and offer.ready
              and offer.valid_until > catalog_at]
-    definitions, current_offers = split_offer_catalog([capabilities._visible_offer(offer) for offer in ready])
-    payload = {
-        "shared_memory": context["shared_memory"], "recent_dialogue": context["recent_dialogue"],
-        "available_offers": current_offers, "goal_context": request.goal_context,
-        "homeostatic_summary": request.homeostatic_summary, "snapshot_revision": request.snapshot_revision,
-    }
-    choice_rules = capabilities._RULES.replace("只输出符合 choice_schema 的一个 JSON 对象", "choice 字段必须符合 CapabilityChoice schema")
-    emotion_text = ""
-    if emotion_enabled(getattr(host.chat, "settings", None)):
-        payload.pop("homeostatic_summary")
-        emotion_text = render_emotion_guidance(emotion_guidance, homeostasis=request.homeostatic_summary)
-    messages = build_messages(persona=context["persona"],
-        rules=_RULES + "\n以下规则仅约束 choice 字段：\n" + choice_rules + "\n" + OFFER_DEFINITION_RULE,
-        fixed_payload={"decision_schema": GoalChoice.model_json_schema(), "criterion_schema": capabilities._CRITERIA.json_schema(),
-                       "available_offer_definitions": definitions, "source_authority": "untrusted_attributed_records"},
-        payload=payload, emotion_text=emotion_text)
-    timeout = remaining()
-    settings = getattr(host.chat, "settings", None)
-    # This bounded JSON decision must reserve its output budget for the result.
-    # Thinking otherwise consumed all 4096 tokens before producing any JSON.
-    reasoning_options = ({"thinking": {"type": "disabled"}}
-                         if settings is not None and deepseek_low_reasoning_options(settings) else {})
-    model_started = time.monotonic()
-    with trace_scope(event_id=command.event_id, command_id=command.command_id,
-                     phase="goal_decision", model_attempt=1, model_budget_seconds=timeout):
+    if native:
+        from harness.agentic.autonomy import decide
+        from harness.contracts.capability_calls import CapabilityChoice
+        definitions, current_offers = split_offer_catalog([capabilities._visible_offer(o) for o in ready])
+        model_started = time.monotonic()
+        turn = await decide(agent, request, ready, {'instruction':
+            native_rules(),
+            'available_offer_definitions': definitions, 'available_offers': current_offers,
+            'goal_context': request.goal_context}, timeout=remaining())
+        if turn.action is None:
+            raise GoalDecisionError('native_action_required')
+        native_rest = turn.action.rest
+        output = turn.action.goal or GoalChoice(choice=CapabilityChoice(kind='wait'), episode_operation='wait')
+        model_ms = (time.monotonic() - model_started) * 1000
+        usage, model_calls, emotion_text = turn.usage.model_dump(mode='json'), turn.calls, ''
+    else:
+        emotion_guidance = await resolve_command_emotion(host, command)
+        # Unlike an idle capability opportunity, a goal can be reviewed with no body available.
         try:
-            response = await asyncio.wait_for(asyncio.to_thread(host.chat.llm.complete_chat_result,
-                messages, stream=False, max_tokens=MAX_OUTPUT_TOKENS, timeout_seconds=timeout,
-                response_format=decision_format(host.chat.llm, GoalChoice.model_json_schema(), "goal_choice"),
-                **reasoning_options), timeout=timeout)
+            context = await asyncio.wait_for(asyncio.to_thread(capabilities._context, host, command, now), timeout=remaining())
         except TimeoutError:
             raise TimeoutError("goal_decision_expired") from None
-        except Exception:
-            raise GoalDecisionError("goal_model_call_failed") from None
-    model_ms = (time.monotonic() - model_started) * 1000
-    remaining()
-    if getattr(response, "finish_reason", None) == "length":
-        raise GoalDecisionError("goal_output_truncated")
-    if getattr(response, "finish_reason", None) not in {None, "stop"}:
-        raise GoalDecisionError("goal_invalid_finish_reason")
-    if (getattr(response, "content_type", None) not in {None, "text"} or
-            getattr(response, "has_tool_calls", False) or getattr(response, "has_refusal", False)):
-        raise GoalDecisionError("goal_invalid_content_type")
-    output = _parse(response.text)
+        catalog_at = datetime.now(timezone.utc)
+        ready = [offer for offer in request.offers if offer.supported and offer.available and offer.ready
+                 and offer.valid_until > catalog_at]
+        definitions, current_offers = split_offer_catalog([capabilities._visible_offer(offer) for offer in ready])
+        payload = {
+            "shared_memory": context["shared_memory"], "recent_dialogue": context["recent_dialogue"],
+            "available_offers": current_offers, "goal_context": request.goal_context,
+            "homeostatic_summary": request.homeostatic_summary, "snapshot_revision": request.snapshot_revision,
+        }
+        choice_rules = capabilities._RULES.replace("只输出符合 choice_schema 的一个 JSON 对象", "choice 字段必须符合 CapabilityChoice schema")
+        emotion_text = ""
+        if emotion_enabled(getattr(host.chat, "settings", None)):
+            payload.pop("homeostatic_summary")
+            emotion_text = render_emotion_guidance(emotion_guidance, homeostasis=request.homeostatic_summary)
+        messages = build_messages(persona=context["persona"],
+            rules=_RULES + "\n以下规则仅约束 choice 字段：\n" + choice_rules + "\n" + OFFER_DEFINITION_RULE,
+            fixed_payload={"decision_schema": GoalChoice.model_json_schema(), "criterion_schema": capabilities._CRITERIA.json_schema(),
+                           "available_offer_definitions": definitions, "source_authority": "untrusted_attributed_records"},
+            payload=payload, emotion_text=emotion_text)
+        timeout = remaining()
+        settings = getattr(host.chat, "settings", None)
+        # This bounded JSON decision must reserve its output budget for the result.
+        # Thinking otherwise consumed all 4096 tokens before producing any JSON.
+        reasoning_options = ({"thinking": {"type": "disabled"}}
+                             if settings is not None and deepseek_low_reasoning_options(settings) else {})
+        model_started = time.monotonic()
+        with trace_scope(event_id=command.event_id, command_id=command.command_id,
+                         phase="goal_decision", model_attempt=1, model_budget_seconds=timeout):
+            try:
+                response = await asyncio.wait_for(asyncio.to_thread(host.chat.llm.complete_chat_result,
+                    messages, stream=False, max_tokens=MAX_OUTPUT_TOKENS, timeout_seconds=timeout,
+                    response_format=decision_format(host.chat.llm, GoalChoice.model_json_schema(), "goal_choice"),
+                    **reasoning_options), timeout=timeout)
+            except TimeoutError:
+                raise TimeoutError("goal_decision_expired") from None
+            except Exception:
+                raise GoalDecisionError("goal_model_call_failed") from None
+        model_ms = (time.monotonic() - model_started) * 1000
+        remaining()
+        if getattr(response, "finish_reason", None) == "length":
+            raise GoalDecisionError("goal_output_truncated")
+        if getattr(response, "finish_reason", None) not in {None, "stop"}:
+            raise GoalDecisionError("goal_invalid_finish_reason")
+        if (getattr(response, "content_type", None) not in {None, "text"} or
+                getattr(response, "has_tool_calls", False) or getattr(response, "has_refusal", False)):
+            raise GoalDecisionError("goal_invalid_content_type")
+        output = _parse(response.text)
+        usage = response.usage.model_dump(mode="json")
+        model_calls = 1
     _validate_episode(output, request)
     if output.choice.offer_id is not None:
         offer = next((item for item in ready if item.offer_id == output.choice.offer_id), None)
@@ -231,15 +265,15 @@ async def prepare(host: Any, command: Any) -> dict[str, Any]:
         )
     prepared = PreparedGoalDecision(
         **output.model_dump(exclude={"choice", "appraisal"}),
+        native_rest=native_rest, native_rest_revision=request.goal_context["native_state"]["rest_revision"] if native_rest is not None else None,
         choice=output.choice.model_copy(update={"reason": None}), appraisal=appraisal,
         decision_id="goal-decision:" + identity, opportunity_id=request.opportunity_id,
         snapshot_revision=request.snapshot_revision, prepared_at=prepared_at, deadline_at=deadline,
         catalog_hash=capabilities.catalog_hash(request.offers),
     )
-    usage = response.usage.model_dump(mode="json")
     return {"decision": prepared.model_dump(mode="json"),
         "prepared_capability_choice": prepared.capability_choice.model_dump(mode="json"),
-        "timing": {"model_calls": 1, "model_ms": round(model_ms, 3),
+        "timing": {"model_calls": model_calls, "model_ms": round(model_ms, 3),
                    "total_ms": round((time.monotonic() - started) * 1000, 3), "usage": usage}}
 
 

@@ -32,6 +32,7 @@ def _generation_binding(settings, preset):
                    "model_version": settings.model_version, "prompt_version": settings.prompt_version,
                    "persona": preset.persona.model_dump(mode="json"), "emotion_mode": settings.emotion_mode,
                    "validator_enabled": settings.validator_enabled, "semantic_version": alignment.VERSION,
+                   "agentic_enabled": settings.agentic_enabled, "agentic_thinking": settings.agentic_thinking,
                    "semantic_mode": settings.qq_semantic_alignment_mode,
                    "semantic_conversations": settings.qq_semantic_alignment_conversations})
 
@@ -55,7 +56,7 @@ def get_qq_turn_checkpoint(*, memory_db, prepare_id):
 
 
 def prepare_qq_turn(*, turn_binding: dict, web_capabilities: dict | None = None,
-                   used_sources_provider=None, request_validator=None, **kwargs) -> dict:
+                   used_sources_provider=None, request_validator=None, native_wake=False, **kwargs) -> dict:
     from harness.qq import decision as qq
 
     path = kwargs["memory_db"]
@@ -74,6 +75,7 @@ def prepare_qq_turn(*, turn_binding: dict, web_capabilities: dict | None = None,
             "binding": turn_binding, "web_capabilities": web_capabilities or {"enabled": False},
             "used_sources_provider": used_sources_provider,
             "request_validator": request_validator,
+            'native_wake': native_wake,
             "request": {key: _json(kwargs[key]) for key in (
                 "group_id", "self_member_id", "trigger_member_id", "request", "query", "member_ids",
                 "idle_intent", "homeostatic_interoception") if key in kwargs}}
@@ -206,10 +208,6 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
     snapshot = row.get("snapshot")
     if snapshot is None:
         raise QQTurnStateError("qq_turn_not_prepared")
-    current_settings, _ = ((shared_owner.settings, shared_owner.preset) if shared_owner is not None
-                          else qq._load_configuration(config_path, preset_path))
-    if snapshot.get("expression_binding") != _expression_binding(current_settings):
-        raise QQTurnStateError("qq_turn_configuration_changed")
     from harness.production.metering import _scope
     active_scope = _scope.get()
     frozen_production = snapshot.get("production_context")
@@ -218,6 +216,11 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
     if active_scope is not None:
         if frozen_production.get("epoch") != active_scope.context.get("epoch"):
             raise QQTurnStateError("qq_turn_cancelled")
+    current_settings, _ = ((shared_owner.settings, shared_owner.preset) if shared_owner is not None
+                          else qq._load_configuration(config_path, preset_path))
+    if snapshot.get("expression_binding") != _expression_binding(current_settings):
+        raise QQTurnStateError("qq_turn_configuration_changed")
+    if active_scope is not None:
         # Resume uses the same body/affect/audience snapshot as its gate.
         # Budget authorization is still checked live for every physical call.
         active_scope.context = frozen_production
@@ -320,6 +323,18 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
         llm.stage_name = "persona"
         llm.stable_messages = snapshot["messages"][:-1]
         entries = [MemoryEvidenceEntry.model_validate(item) for item in snapshot["memory_evidence"]]
+        vision_kwargs = {}
+        if settings.agentic_enabled and result.initiated_by == "message":
+            from harness.agentic.vision import for_qq_body
+            def validate_images():
+                if request_validator is not None:
+                    request_validator()
+                _verify_source_records(memory_db, snapshot)
+            vision_kwargs = {"request_validator": validate_images, "vision_tool": for_qq_body(settings,
+                [QQVisualObservation.model_validate(item) for item in snapshot["source_records"]["qq_visual_observations"].values()],
+                group_id=result.group_id, self_member_id=result.self_member_id,
+                payload=snapshot["selected_payload"],
+                presented_ids=set(snapshot["presentation"]["body_observation_ids"]))}
         with trace.stage("persona"), qq.trace_scope(phase="qq_persona"):
             final = qq._prepare_group_speech(settings=settings, preset=preset, llm=llm, payload=body_text,
                 evidence_refs=snapshot.get("body_evidence_refs", result.evidence_refs), group_id=result.group_id,
@@ -327,6 +342,7 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
                 homeostatic_interoception=snapshot["homeostatic_interoception"],
                 emotion_guidance=snapshot["emotion_guidance"], memory_evidence_entries=entries,
                 runtime_web_context=body_payload.get("web_context"),
+                **vision_kwargs,
                 response_expression=(ResponseExpressionContext.model_validate(snapshot["response_expression"])
                                      if snapshot.get("response_expression") else None),
                 current_speaker_id=f"qq:member:{result.trigger_member_id}" if result.trigger_member_id else None,
@@ -351,6 +367,7 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
         presentation = snapshot.get("presentation", {})
         body_ids = presentation.get("body_observation_ids", result.source_record_ids)
         result = result.model_copy(update={"action": "speak", "reply": reply, "reply_segments": segments,
+            "agentic_evidence": final.agentic,
             "source_record_ids": body_ids, "evidence_refs": snapshot.get("body_evidence_refs", result.evidence_refs),
             "seen_observation_record_ids": ([] if result.initiated_by != "message" else
                 sorted(set(result.seen_observation_record_ids) | set(body_ids))),
@@ -381,8 +398,10 @@ def resume_qq_response(*, memory_db, prepare_id, snapshot_hash, turn_binding: di
     result = qq.QQReplyDecision.model_validate(result.model_copy(update={"usage": usage,
         "completed_at": datetime.now(timezone.utc), "timings_ms": timings,
         "model_call_counts": {"gate": gate_calls, "persona": trace.snapshot()["counters"].get("persona_model_calls", 0),
-            **({"vision": snapshot["trace"]["counters"]["vision_model_calls"]}
-               if snapshot["trace"]["counters"].get("vision_model_calls") else {})}}).model_dump())
+            **({"vision": max(snapshot["trace"]["counters"].get("vision_model_calls", 0),
+                trace.snapshot()["counters"].get("vision_model_calls", 0))}
+               if snapshot["trace"]["counters"].get("vision_model_calls")
+               or trace.snapshot()["counters"].get("vision_model_calls") else {})}}).model_dump())
     try:
         if request_validator is not None:
             request_validator()

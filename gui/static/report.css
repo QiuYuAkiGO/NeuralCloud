@@ -52,8 +52,37 @@
 .raw-panel { margin-top: 12px; }
 .raw-panel summary { cursor: pointer; color: var(--muted); }
 .actions { display: flex; gap: 8px; margin-top: 12px; }
+.trend-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 18px 0 8px; }
+.trend-choice { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.trend-choice input { accent-color: var(--blue); width: auto; flex: none; margin: 0; }
+.trend-choice span { flex: none; }
+.trend-choice i { width: 14px; height: 3px; border-radius: 2px; flex: none; }
+.window-field { white-space: nowrap; }
+.trend-canvas { width: 100%; overflow-x: auto; margin-top: 10px; }
+.trend-canvas svg { width: 100%; min-width: 620px; display: block; }
+.trend-grid { stroke: var(--line); stroke-width: 1; }
+.trend-axis { fill: var(--muted); font-size: 12px; }
+.trend-cursor { stroke: var(--muted); stroke-dasharray: 4 4; pointer-events: none; }
+.trend-event { fill: var(--amber); cursor: pointer; }
+.trend-event:hover { fill: var(--ink); r: 6; }
+.trend-readout, .trend-detail { background: var(--surface-2); border-radius: 9px; padding: 12px 14px; margin-top: 12px; font-size: 13px; overflow-wrap: anywhere; }
+.trend-readout { min-height: 42px; color: var(--muted); }
+.trend-detail p { white-space: pre-wrap; }
+.report-panel h3 { margin: 20px 0 10px; font-size: 14px; }
+.event-row { display: grid; grid-template-columns: 160px minmax(0, 1fr) 80px; width: 100%; text-align: left;
+  gap: 10px; padding: 10px 8px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+.event-row:hover, .event-row:focus-visible { background: var(--surface-2); outline-color: var(--blue); }
+.event-row time, .event-row small { color: var(--muted); }
+.report-pagination { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 14px 0 6px; font-size: 13px; color: var(--muted); }
+.report-pagination button:disabled { opacity: .4; cursor: default; }
+.report-table td { vertical-align: top; white-space: normal; overflow-wrap: anywhere; }
+.memory-detail { min-width: 180px; max-width: 720px; }
+.memory-detail summary { cursor: pointer; white-space: pre-wrap; line-height: 1.6; }
+.source-refs { display: block; font-size: 11px; overflow-wrap: anywhere; color: var(--muted); margin-top: 8px; }
 @media (max-width: 900px) {
   .report-split { grid-template-columns: 1fr; }
   .bar-row { grid-template-columns: 84px 1fr; }
   .bar-row > em { grid-column: 2; }
+  .event-row { grid-template-columns: 120px minmax(0, 1fr); font-size: 12px; }
+  .event-row small { grid-column: 2; }
 }

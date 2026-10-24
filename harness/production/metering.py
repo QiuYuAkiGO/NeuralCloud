@@ -355,6 +355,8 @@ def mark_production_dispatch(metering):
 
 @contextmanager
 def production_attempt(*, model, defer_on_reserve_failure=False):
+    from harness.agentic.metering import reserve_attempt
+    reserve_attempt()
     current = _scope.get()
     evidence: dict[str, Any] = {}
     if current is None:

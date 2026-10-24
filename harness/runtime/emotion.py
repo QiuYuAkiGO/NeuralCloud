@@ -179,7 +179,7 @@ def shared_observation_input(host, command):
     watcher = Path(configured) if configured else status.parent / "watcher.json" if status else None
     _source(settings, watcher, request)
     protocol_state_db = None
-    if request.transport == "onebot":
+    if request.transport in {"onebot", "qqbot"}:
         from harness.qq.direct_config import DirectQQSettings
         from harness.qq.reply_requests import validate_reply_request
 
@@ -217,7 +217,7 @@ def affect_observation_input(host, command):
     watcher = Path(configured) if configured else status.parent / "watcher.json" if status else None
     protocol_state_db = None
     transport = payload["transport"]
-    if transport == "onebot":
+    if transport in {"onebot", "qqbot"}:
         from harness.qq.direct_config import DirectQQSettings
 
         protocol_state_db = DirectQQSettings.read(Path(os.environ["NC_QQ_DIRECT_CONFIG"])).state_db

@@ -1,4 +1,4 @@
-"""A main-model-requested Kimi tool for visible, verified conversation images.
+"""A main-model-requested vision tool for verified conversation images.
 
 Only verified ingress downloads pixels. This tool accepts opaque offered IDs,
 never paths or URLs, and returns untrusted observations to the ordinary main
@@ -48,8 +48,9 @@ class QQVisionRequest(BaseModel):
 class VisionToolConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     enabled: bool = False
-    base_url: Literal["https://api.moonshot.cn/v1"] = "https://api.moonshot.cn/v1"
-    model: Literal["kimi-k2.6"] = "kimi-k2.6"
+    provider: Literal["moonshot", "local", "deepseek"] = "moonshot"
+    base_url: str = "https://api.moonshot.cn/v1"
+    model: str = Field(default="kimi-k2.6", min_length=1, max_length=160)
     api_key: SecretStr
     image_cache_dir: Path
     timeout_seconds: float = Field(default=12.0, gt=0, le=20)
@@ -59,6 +60,17 @@ class VisionToolConfig(BaseModel):
     @model_validator(mode="after")
     def private_paths(self):
         _checked_path(self.image_cache_dir)
+        from harness.agentic.context import local_endpoint
+        if self.provider == "local":
+            if not local_endpoint(self.base_url):
+                raise ValueError("qq_vision_requires_local_endpoint")
+        elif self.provider == "deepseek":
+            from types import SimpleNamespace
+            from harness.agentic.deepseek_tokens import supported
+            if not supported(SimpleNamespace(llm_base_url=self.base_url, llm_model=self.model)):
+                raise ValueError("qq_vision_provider_invalid")
+        elif self.base_url != "https://api.moonshot.cn/v1" or self.model != "kimi-k2.6":
+            raise ValueError("qq_vision_provider_invalid")
         if not self.api_key.get_secret_value().strip():
             raise ValueError("qq_vision_key_missing")
         return self
@@ -244,6 +256,8 @@ class QQVisionTool:
         config = read_config(path)
         if not config.enabled:
             return None
+        if settings.agentic_enabled and settings.agentic_local_only and config.provider != "local":
+            raise ValueError("agentic_requires_local_vision")
         tool = cls(config, settings, images)
         tool.group_id, tool.attention_revision = group_id, revision
         tool.self_member_id = self_member_id
@@ -313,7 +327,7 @@ class QQVisionTool:
         return entries
 
     def invoke(self, request, *, deadline, trace, request_validator=None, client_factory=None):
-        """One paid vision request only when the main model selects valid images."""
+        """One bounded vision request when the main model selects valid images."""
         usage = TokenUsage()
         base = {"tool": "inspect_qq_images", "status": "unavailable", "untrusted": True, "images": []}
         offered = {image.image_id: image for image in self.images}
@@ -377,6 +391,7 @@ class QQVisionTool:
                     "call_log_enabled": False,
                     "model_request_log_enabled": False,
                     "record_interaction": False,
+                    "agentic_thinking": False,
                 }
             )
             if request_validator is not None:
@@ -396,12 +411,15 @@ class QQVisionTool:
                            "不把角色未知扩展成对已看清画面或文字的整体否定，不输出泛化免责声明。")
             try:
                 with trace.stage("vision.tool_call"):
-                    result = client.complete_chat_result(
+                    local = self.config.provider == "local"
+                    complete = client.complete_agent_turn if local else client.complete_chat_result
+                    result = complete(
                         [{"role": "system", "content": prompt}, {"role": "user", "content": parts}],
-                        temperature=0.6,
-                        thinking={"type": "disabled"},
+                        temperature=0.1 if local else 0.6,
+                        **({"tools": [], "tool_choice": "none"} if local else {"thinking": {"type": "disabled"}}),
                         max_tokens=self.config.max_tokens,
-                        response_format={"type": "json_object"},
+                        response_format=({"type": "json_schema", "json_schema": {"name": "image_observations",
+                            "schema": VisionAnswer.model_json_schema()}} if local else {"type": "json_object"}),
                         timeout_seconds=min(timeout, max(0.001, deadline.check() - 10.0)),
                     )
             finally:

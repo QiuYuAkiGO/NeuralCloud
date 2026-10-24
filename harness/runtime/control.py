@@ -401,7 +401,7 @@ def create_control_app(
     async def cognitive_control(payload: dict[str, Any]) -> dict[str, Any]:
         operation = str(payload.get("operation") or "")
         diagnostic = operation in {"presets.list", "debug.state", "models", "snapshot",
-            "daily_revision.status", "daily_revision.history", "daily_revision.diff"}
+            "daily_revision.status", "daily_revision.history", "daily_revision.diff", "report.daily"}
         maintenance = operation in {"daily_revision.configure", "daily_revision.run", "daily_revision.dry_run",
             "daily_revision.retry", "daily_revision.rollback"}
         try:

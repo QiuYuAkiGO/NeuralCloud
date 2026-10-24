@@ -26,6 +26,10 @@ def _preparation_failure_code(exc: BaseException) -> str:
 
 
 async def prepare_web_context(supervisor, event, *, channel="chat", deadline=None):
+    if getattr(supervisor, "native_web_tools_enabled", False):
+        # The native main-model loop chooses tools itself. Do not run a second
+        # legacy planner before its gate or consume its response deadline.
+        return None, None
     web = getattr(supervisor, "web", None)
     method = getattr(supervisor.cognitive, "prepare_web_step", None)
     if web is None or not web.conversation_enabled or method is None:

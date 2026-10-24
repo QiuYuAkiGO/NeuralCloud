@@ -218,7 +218,7 @@ def _qq_selector_context(settings, qq, *, as_of: datetime) -> dict[str, Any]:
     from harness.qq.feedback import _observation, _readonly, _receipts
 
     protocol_state_db = None
-    if qq.transport == "onebot":
+    if qq.transport in {"onebot", "qqbot"}:
         from harness.qq.direct_config import DirectQQSettings
 
         protocol_state_db = DirectQQSettings.read(Path(os.environ["NC_QQ_DIRECT_CONFIG"])).state_db

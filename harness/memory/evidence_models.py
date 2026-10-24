@@ -39,10 +39,10 @@ class Supersession(_Frozen):
 
 class ClaimProposal(_Frozen):
     # The runtime validator below cannot be inferred by Pydantic's schema
-    # generator. Publish the same exclusive choice to model callers, including
-    # when this model is nested in an appraisal or decision. Base properties
-    # still enforce Identifier/Text constraints; the other field may be absent
-    # or null so existing serialized proposals remain valid.
+    # generator. Publish the subject choice and revision/supersession
+    # dependencies, including when nested in an appraisal or decision. Base
+    # properties still enforce Identifier/Text constraints; unused nullable
+    # fields remain optional so existing serialized proposals stay valid.
     model_config = ConfigDict(json_schema_extra={
         "oneOf": [
             {
@@ -60,6 +60,36 @@ class ClaimProposal(_Frozen):
                 },
             },
         ],
+        "allOf": [
+            {
+                "if": {
+                    "required": ["expected_revision"],
+                    "properties": {"expected_revision": {"type": "integer", "minimum": 1}},
+                },
+                "then": {
+                    "required": ["record_id", "revision_reason"],
+                    "properties": {
+                        "record_id": {"type": "string"},
+                        "revision_reason": {"type": "string"},
+                    },
+                },
+            },
+            {
+                "if": {
+                    "required": ["supersedes"],
+                    "properties": {"supersedes": {"type": "array", "minItems": 1}},
+                },
+                "then": {
+                    "required": ["kind", "report_mode", "facet", "subject_id"],
+                    "properties": {
+                        "kind": {"const": "self_report"},
+                        "report_mode": {"const": "direct"},
+                        "facet": {"enum": ["preference", "intention"]},
+                        "subject_id": {"type": "string"},
+                    },
+                },
+            },
+        ],
     })
 
     record_id: Identifier | None = Field(default=None, description=(
@@ -68,7 +98,10 @@ class ClaimProposal(_Frozen):
         "set; only their spans/interpretation may be revised. New utterances require a new ID; preference/intention "
         "corrections use explicit supersedes. Future changes use a new ID plus explicit supersedes."
     ))
-    expected_revision: Revision = 0
+    expected_revision: Revision = Field(default=0, description=(
+        "Use 0 for a new judgment. A positive revision revises an existing record and requires both its supplied "
+        "record_id and a non-empty revision_reason; never invent an ID or revision."
+    ))
     subject_id: Identifier | None = Field(default=None, description=(
         "Supplied stable ID of this claim's subject. Set exactly one non-null subject_id or subject_mention; "
         "omit or set the other to null. The evidence author or reported speaker does not fill this field."
@@ -87,8 +120,14 @@ class ClaimProposal(_Frozen):
     valid_from: AwareDatetime | None = Field(default=None, description="For existing IDs null preserves the current interval; never moves its start.")
     valid_until: AwareDatetime | None = Field(default=None, description="For existing IDs null preserves the current interval; never removes an expiry.")
     anchors: list[EvidenceAnchor] = Field(min_length=1, max_length=32)
-    supersedes: list[Supersession] = Field(default_factory=list, max_length=8)
-    revision_reason: Text | None = None
+    supersedes: list[Supersession] = Field(default_factory=list, max_length=8, description=(
+        "Only direct self_report preference/intention claims with a supplied stable subject_id may supersede old "
+        "records. For other claims omit this field; preserve their actual kind, report_mode and facet."
+    ))
+    revision_reason: Text | None = Field(default=None, description=(
+        "Required with a supplied record_id whenever expected_revision is positive. Explain the evidence-supported "
+        "revision. Omit for a new judgment; this field is not a substitute for source evidence."
+    ))
 
     @model_validator(mode="after")
     def identity_and_interval(self):

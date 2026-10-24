@@ -19,14 +19,13 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StringConstraints, model_validator
 from harness.runtime.ownership import require_development
+from harness.qq.attention import is_group
 
 from harness.qq.memory import (
+    QQID,
     QQVerifiedProfileInput, QQVisualMemoryConflict, QQVisualMemoryStorageError,
     QQVisualMemoryStore, QQVisualObservationInput,
 )
-
-QQID = Annotated[str, StringConstraints(strict=True, pattern=r"^[1-9][0-9]{0,19}$")]
-
 
 class QQSessionSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -50,6 +49,17 @@ class QQSessionSettings(BaseModel):
                 or len(set(self.allowed_private_peer_ids)) != len(self.allowed_private_peer_ids)
                 or self.self_member_id in self.allowed_private_peer_ids):
             raise ValueError("qq_session_conversation_invalid")
+        if self.self_member_id.startswith("qqbot:"):
+            from harness.qq.official_identity import identity, split_identity
+            app_id = self.self_member_id.split(":")[1]
+            if self.self_member_id != identity(app_id, "bot", app_id):
+                raise ValueError("qqbot_session_scope_invalid")
+            for peer in self.allowed_private_peer_ids:
+                split_identity(peer, kind="user", app_id=app_id)
+            for group_id in self.allowed_group_ids:
+                split_identity(group_id, kind="group", app_id=app_id)
+        elif any(value.startswith("qqbot:") for value in [*self.allowed_group_ids, *self.allowed_private_peer_ids]):
+            raise ValueError("qqbot_session_transport_mismatch")
         return self
 
 
@@ -81,7 +91,7 @@ def _watcher_measurements(record: dict, *, allowed: frozenset[str] | None = None
             if not isinstance(entry, dict):
                 continue
             group_id = entry.get("group_id")
-            if (not isinstance(group_id, str) or not re.fullmatch(r"[1-9][0-9]{0,19}", group_id)
+            if (not isinstance(group_id, str) or not is_group(group_id)
                     or group_id in seen or allowed is not None and group_id not in allowed):
                 continue
             seen.add(group_id)
@@ -211,10 +221,11 @@ def read_direct_status(path: Path | None, *, allowed: frozenset[str], self_membe
             return inactive
         record = json.loads(path.read_text(encoding="utf-8"))
         age = (datetime.now(timezone.utc) - datetime.fromisoformat(record["heartbeat_at"])).total_seconds()
-        if (record.get("service") != "qq-direct-onebot-v1" or record.get("self_member_id") != self_member_id
+        expected_service = "qq-direct-official-v1" if self_member_id.startswith("qqbot:") else "qq-direct-onebot-v1"
+        if (record.get("service") != expected_service or record.get("self_member_id") != self_member_id
                 or record.get("running") is not True or not 0 <= age <= 30):
             return inactive
-        result = {"running": True}
+        result = {"running": True, "transport": "qqbot" if self_member_id.startswith("qqbot:") else "onebot"}
         for name in ("connected", "automatic_send", "images_enabled", "paused", "desktop_owner_active"):
             result[name] = record.get(name) is True
         if type(record.get("pid")) is int and record["pid"] > 0:
@@ -339,7 +350,7 @@ def create_qq_session_app(settings: QQSessionSettings, *, decide=None) -> FastAP
             "cognitive_owner": "isolated_development" if settings.development_mode else "shared_runtime",
             "automatic_screen_capture": watcher.get("automatic_screen_capture") is True,
             "automatic_send": watcher.get("automatic_send") is True or direct.get("automatic_send") is True,
-            "automatic_protocol_read": bool(protocol_active), "transport": "onebot" if protocol_active else "desktop",
+            "automatic_protocol_read": bool(protocol_active), "transport": direct.get("transport", "onebot") if protocol_active else "desktop",
             "watcher": watcher, "direct": direct,
             "standard_runtime_started_by_this_service": False,
         }

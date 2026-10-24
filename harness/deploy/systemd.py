@@ -134,10 +134,17 @@ def wait_healthy(cfg: DeploymentConfig, service: str, *, boot_only: bool = False
             elif service == "gui":
                 ready = isinstance(body.get("runtime"), dict) and body["runtime"].get("lifecycle") in ({"RUNNING", "PAUSED"} if boot_only else {"RUNNING"})
             elif service == "qq_direct":
+                from harness.qq.direct_config import DirectQQSettings
+                direct = DirectQQSettings.read(Path(cfg.effective_bindings()["NC_QQ_DIRECT_CONFIG"]))
+                official = direct.transport == "qqbot"
+                expected_service = "qq-direct-official-v1" if official else "qq-direct-onebot-v1"
                 stamp = datetime.fromisoformat(body.get("heartbeat_at", ""))
                 main_pid = int(unit.get("MainPID", "0"))
                 repository = body.get("repository_root")
-                ready = (body.get("service") == "qq-direct-onebot-v1"
+                ready = (body.get("service") == expected_service
+                    and (not official or (body.get("transport") == "qqbot"
+                        and body.get("app_id") == direct.qqbot_app_id
+                        and body.get("self_member_id") == direct.self_member_id))
                     and body.get("running") is True
                     and type(body.get("pid")) is int and body["pid"] == main_pid and main_pid > 0
                     and isinstance(repository, str) and Path(repository).is_absolute()

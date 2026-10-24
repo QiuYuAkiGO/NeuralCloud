@@ -42,7 +42,8 @@ def _same_image_locator(left, right):
         a, b = urlsplit(left), urlsplit(right)
         if (a.scheme != "https" or a.username or b.username or a.password or b.password
                 or a.netloc != b.netloc or a.scheme != b.scheme or a.path != b.path or a.fragment != b.fragment
-                or a.hostname not in {"multimedia.nt.qq.com", "gchat.qpic.cn", "c2cpicdw.qpic.cn", "c2cpicdw2.qpic.cn"}):
+                or a.hostname not in {"multimedia.nt.qq.com", "multimedia.nt.qq.com.cn",
+                                      "gchat.qpic.cn", "c2cpicdw.qpic.cn", "c2cpicdw2.qpic.cn"}):
             return False
         # Preserve the raw spelling/order of every other parameter. Only the
         # proven rotating access key is excluded, never the media identity.
@@ -97,6 +98,11 @@ def message_parts(parts):
 
 
 def normalize_message(payload, *, self_id, groups, private_peers=(), received_at=None, history_peer_id=None):
+    if self_id.startswith("qqbot:"):
+        from harness.qq.official_events import normalize_official
+        if history_peer_id is not None:
+            raise ValueError("qqbot_private_scope_not_supported")
+        return normalize_official(payload, self_id=self_id, groups=groups, private_peers=private_peers, received_at=received_at)
     if not isinstance(payload, dict):
         raise ValueError("onebot_message_event_invalid")
     if payload.get("post_type") not in {"message", "message_sent"} or payload.get("message_type") not in {"group", "private"}:
@@ -239,7 +245,13 @@ class DirectStore:
         return db
 
     def start_run(self, self_id):
-        self_id = numeric(self_id)
+        if isinstance(self_id, str) and self_id.startswith("qqbot:"):
+            from harness.qq.official_identity import identity
+            app_id = self_id.split(":")[1]
+            if self_id != identity(app_id, "bot", app_id):
+                raise ValueError("qqbot_self_identity_invalid")
+        else:
+            self_id = numeric(self_id)
         run_id = "qq-direct-run:" + uuid4().hex
         with closing(self.connect()) as db, db:
             db.execute("BEGIN IMMEDIATE")

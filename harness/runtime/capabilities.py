@@ -17,6 +17,8 @@ from harness.runtime.models import EventDispatchResult, RuntimeEventPriority, Ru
 
 
 TERMINAL = {"completed", "committed", "wait", "no_action", "defer", "error", "expired", "superseded", "rejected", "cancelled"}
+PENDING_CALL_WHERE = "coalesce(json_extract(record_json,'$.status'),'') NOT IN (" + ",".join(
+    "'" + status + "'" for status in sorted(TERMINAL)) + ")"
 
 # These diagnostics cross into persisted goal progress and the local UI. Never
 # retain arbitrary exception text, which can contain model output or body data.
@@ -104,6 +106,7 @@ class CapabilityCalls:
         self.db.execute("PRAGMA synchronous=FULL")
         self.db.execute("CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT NOT NULL)")
         self.db.execute("CREATE TABLE IF NOT EXISTS calls(opportunity_id TEXT PRIMARY KEY,record_json TEXT NOT NULL)")
+        self.db.execute("CREATE INDEX IF NOT EXISTS capability_pending_v1 ON calls(opportunity_id) WHERE " + PENDING_CALL_WHERE)
         self.db.commit()
 
     def meta(self, key, default=None):
@@ -138,6 +141,18 @@ class CapabilityCalls:
         from harness.runtime.background import read_background_records
 
         return await read_background_records(owner, self.path, "SELECT record_json FROM calls ORDER BY rowid DESC")
+
+    async def pending_background(self, owner):
+        # Historical terminal rows can contain entire model catalogues. Reading
+        # them on every heartbeat blocks Python for seconds as history grows.
+        # The partial index retains every unfinished/unknown status, even when
+        # new autonomous work is disabled and old effects still need recovery.
+        query = "SELECT record_json FROM calls WHERE " + PENDING_CALL_WHERE + " ORDER BY rowid DESC"
+        worker = getattr(owner, 'heartbeat', None)
+        if worker is None or not worker.active:
+            return [json.loads(row[0]) for row in self.db.execute(query)]
+        from harness.runtime.background import read_background_records
+        return await read_background_records(owner, self.path, query)
 
 
 class CapabilityController:
@@ -374,6 +389,9 @@ class CapabilityController:
         self.generation = current
         await self.reconcile()
         if getattr(self.supervisor, "_foreground_dispatches", ()):
+            return
+        native_settings = getattr(self.supervisor.manifest, 'agentic_regulation', None)
+        if native_settings and native_settings.mode == 'on' and not native_settings.autonomous_enabled:
             return
         goals = getattr(self.supervisor, "goals", None)
         if goals is not None and goals.enabled:
@@ -689,7 +707,13 @@ class CapabilityController:
         self._finish(row, {"succeeded": "completed", "failed": "error", "cancelled": "cancelled"}.get(state, "pending"), **values)
 
     async def reconcile(self):
-        for candidate in await self.calls.all_background(self.supervisor):
+        # ProductionRuntime still replays its idempotent terminal outcome
+        # receipts. Native/non-production operation has no such historical
+        # writer; only unfinished calls can change during reconciliation.
+        candidates = (await self.calls.all_background(self.supervisor)
+            if getattr(self.supervisor, 'production_runtime', None) is not None
+            else await self.calls.pending_background(self.supervisor))
+        for candidate in candidates:
             # The reader owns a separate SQLite snapshot. Foreground work may
             # have advanced the attempt during I/O, so act on the current row.
             row = self.calls.get(candidate["opportunity_id"])
@@ -772,7 +796,7 @@ class CapabilityController:
                     self._finish(row, "uncertain", voice_job_id=identity, error_type="voice_job_unavailable")
             elif row.get("channel") == "qq":
                 bridge = getattr(self.supervisor, "qq_capability_bridge", None)
-                if (row.get("production_context") and self.invalid_reason(row) and bridge is not None
+                if ((row.get("production_context") or row.get('goal_binding')) and self.invalid_reason(row) and bridge is not None
                         and callable(getattr(bridge, "revoke_contacts", None))):
                     bridge.revoke_contacts(row["opportunity_id"])
                 result = bridge.result(row["opportunity_id"]) if bridge else None

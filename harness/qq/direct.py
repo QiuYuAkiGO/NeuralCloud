@@ -21,7 +21,7 @@ from harness.qq.decision import (QQVerifiedSelfAlias, _frozen_decision, effectiv
     get_qq_delivery, get_qq_segment_deliveries,
     record_qq_protocol_delivery, record_qq_protocol_segment_delivery, sendable_speak_outcome)
 from harness.qq.direct_config import DirectQQSettings, atomic_status
-from harness.qq.attention import AttentionStore, attention_path, text_units
+from harness.qq.attention import AttentionStore, attention_path, text_units, is_group
 from harness.qq.direct_images import DirectImageObservation, REPLY_RESERVE_SECONDS, load_and_describe_image
 from harness.qq.direct_media import close_media_work, stage
 from harness.qq.direct_store import DirectStore, message_parts, normalize_message, numeric, utcnow
@@ -155,7 +155,8 @@ class DirectQQActor:
             path = os.environ.get("NC_QQ_DIRECT_CONFIG")
             current = DirectQQSettings.read(Path(path)) if path else self.settings
             if not current.enabled or any(getattr(current, key) != getattr(self.settings, key) for key in (
-                    "self_member_id", "ws_url", "token_file", "state_db", "evidence_dir", "session_config_path")):
+                    "self_member_id", "ws_url", "token_file", "state_db", "evidence_dir", "session_config_path",
+                    "transport", "qqbot_app_id", "qqbot_credentials_file")):
                 return set()
             session = QQSessionSettings.model_validate_json(current.session_config_path.read_text(encoding="utf-8"))
             if session.self_member_id != self.settings.self_member_id:
@@ -281,7 +282,7 @@ class DirectQQActor:
                     budget_enabled=self.settings.attention_budget_enabled and not historical and not event["own"],
                     group_count=len(self.groups))
                 reason = admission["disposition"]
-                if historical and self.settings.attention_budget_enabled and event["group_id"].isdigit() and reason == "admitted":
+                if historical and self.settings.attention_budget_enabled and is_group(event["group_id"]) and reason == "admitted":
                     reason = "attention_backlog"
                 if reason != "admitted":
                     self.store.update(event["event_id"], state="archived", terminal_reason=reason, terminal_stage="protocol.attention")
@@ -445,7 +446,8 @@ class DirectQQActor:
                     member_id=event["member_id"], profile_record_id=profile.record_id, capture_id=event["event_id"],
                     capture_item_id=event["event_id"], observed_at=datetime.fromisoformat(event["message_time"]), text=event["text"],
                     evidence=refs, author_attribution="qq_protocol_verified", attribution_evidence=[ref, message_ref],
-                    extraction_method="onebot11_message_array", message_id=event["message_id"], message_id_source="qq_metadata",
+                    extraction_method=(("qqbot_official_private_event" if conversation_scope(event["group_id"])["kind"] == "private" else "qqbot_official_group_event") if self.settings.transport == "qqbot" else "onebot11_message_array"),
+                    message_id=event["message_id"], message_id_source="qq_metadata",
                     image_analysis=analyses))
             observation = written.observation
         self.store.update(event["event_id"], state="bound", source_record_id=observation.record_id,
@@ -503,6 +505,9 @@ class DirectQQActor:
     async def send_decision(self, event, decision, deadline, epoch, *, trace=None):
         async with self._delivery_lock:
             await self._send_decision(event, decision, deadline, epoch, trace=trace or current_qq_trace())
+
+    def sent_message_id(self, result):
+        return numeric(result.get("message_id"), signed=True)
 
     async def transmit_text(self, event, text, *, timeout):
         """The sole protocol text-send primitive for replies and frozen notices."""
@@ -574,7 +579,7 @@ class DirectQQActor:
                 raise
             try:
                 result = await self.transmit_text(event, text, timeout=min(10, deadline.check()))
-                message_id = numeric(result.get("message_id"), signed=True)
+                message_id = self.sent_message_id(result)
                 send = self.store.update_send(send, "attempted", message_id=message_id)
                 ack = self.store.evidence({"action": action, "group_id": event["group_id"],
                     "self_id": self.settings.self_member_id, "result": result})
@@ -815,7 +820,7 @@ class DirectQQActor:
             terminal_stage = "protocol.shared_prepare"
             with trace.stage("protocol.shared_prepare"):
                 self.check_attention(event)
-                decision = await asyncio.to_thread(self.cognition, transport="onebot", deadline=deadline, trace=trace,
+                decision = await asyncio.to_thread(self.cognition, transport=self.settings.transport, deadline=deadline, trace=trace,
                     group_id=event["group_id"], self_member_id=self.settings.self_member_id,
                     trigger_member_id=event["member_id"], verified_self_aliases=self.aliases[event["group_id"]],
                     **({"text_interruption_context": self.text_turns.context(event)} if self.text_turns.context(event) else {}),
@@ -1086,7 +1091,11 @@ def main(argv=None):
         else:
             import fcntl
             fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        actor = DirectQQActor(settings)
+        if settings.transport == "qqbot":
+            from harness.qq.official_actor import OfficialQQActor
+            actor = OfficialQQActor(settings)
+        else:
+            actor = DirectQQActor(settings)
         # Preserve the launcher's absolute binding. Windows MSIX may map the
         # physical path into LocalCache when resolve() traverses virtualization.
         actor.state["config_path"] = str(args.config.absolute())

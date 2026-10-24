@@ -17,7 +17,7 @@ from harness.runtime.models import RuntimeEvent, RuntimeEventPriority, RuntimeEv
 
 
 def _source(config, watcher_path: Path | None, request: QQSharedPrepareRequest, *, completed_replay=False):
-    if request.transport == "onebot":
+    if request.transport in {"onebot", "qqbot"}:
         from harness.qq.direct_source import validate_direct_source
 
         return validate_direct_source(config, request, completed_replay=completed_replay)
@@ -174,7 +174,7 @@ class QQTurnIngress:
                 waiter = asyncio.get_running_loop().create_future()
                 self._waiters.setdefault(event_id, set()).add(waiter)
                 self._groups[event_id] = request.group_id
-                if request.transport == "onebot":
+                if request.transport in {"onebot", "qqbot"}:
                     from harness.qq.attention import require_attention
                     require_attention(request.group_id)
                 if prior is None:

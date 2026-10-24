@@ -80,6 +80,7 @@ class WorkSample(BaseModel):
     novelty: float | None = Field(default=None, ge=0, le=1)
     meaning: float | None = Field(default=None, ge=0, le=1)
     wants_engagement: bool = False
+    cause: str | None = None
 
 
 class Habit(BaseModel):
@@ -106,6 +107,13 @@ class DynamicsState(BaseModel):
     fatigue: float = Field(default=0, ge=0, le=1)
     boredom: float = Field(default=0, ge=0, le=1)
     wants_engagement: bool = False
+    intent_expiry_enabled: bool = False
+    engagement_until: AwareDatetime | None = None
+    engagement_at: AwareDatetime | None = None
+    engagement_cause: str | None = None
+    native_resting: bool = False
+    native_appraisals: int = 0
+    native_effects: dict[str, dict] = Field(default_factory=dict)
     meaning_target: float = Field(default=1, ge=0, le=1)
     latent_confidence: float = Field(default=0, ge=0, le=1)
     baselines: dict[str, float]
@@ -129,6 +137,10 @@ class DynamicsState(BaseModel):
 
     @model_validator(mode="after")
     def valid_affect(self):
+        # Nested dates must also round-trip through the durable engine JSON.
+        for effect in self.native_effects.values():
+            if isinstance(effect.get('at'), str):
+                effect['at'] = datetime.fromisoformat(effect['at'])
         if set(self.baselines) != set(PSYCHOLOGICAL) or set(self.responses) != set(PSYCHOLOGICAL):
             raise ValueError("cognitive dynamics requires four psychological baselines")
         if any(not math.isfinite(v) or not 0 <= v <= 1 for v in self.baselines.values()):
@@ -167,6 +179,7 @@ class DynamicsState(BaseModel):
                 "habituation": {k: h.value * math.exp(-max(0, (self.updated_at-h.at).total_seconds())/habituation_seconds)
                                 for k, h in self.habits.items()},
                 "assessment_coverage": {"exposures": self.exposures, "assessed": self.assessed_exposures,
+                                        "native_event_appraisals": self.native_appraisals,
                                         "unassessed": self.missing_assessments,
                                         "work_units": self.work_units,
                                         "last_work_at": self.last_work_at.isoformat() if self.last_work_at else None},
@@ -203,8 +216,12 @@ def advance(state: DynamicsState, at: datetime, config: DynamicsConfig) -> Dynam
         return sample.at+timedelta(seconds=config.work_window_seconds)
     while state.updated_at < at:
         now = state.updated_at
+        if state.intent_expiry_enabled and (state.native_resting or state.engagement_until is None or now >= state.engagement_until):
+            state.wants_engagement = False
         samples = [w for w in state.work if w.at <= now < expiry(w)]
         future = [point for w in state.work for point in (w.at, expiry(w)) if now < point < at]
+        if state.intent_expiry_enabled and state.engagement_until is not None and now < state.engagement_until < at:
+            future.append(state.engagement_until)
         end = min([at, *future])
         if not samples:
             seconds = (end-now).total_seconds()
@@ -253,6 +270,8 @@ def advance(state: DynamicsState, at: datetime, config: DynamicsConfig) -> Dynam
             state.recovered_since = None
         state.updated_at = end
     elapsed = (at-start).total_seconds()
+    if state.intent_expiry_enabled and (state.native_resting or state.engagement_until is None or at >= state.engagement_until):
+        state.wants_engagement = False
     state.responses = {k: relax(v, 0, elapsed, RESPONSE_TAU[k]) for k, v in state.responses.items()}
     state.work = [w for w in state.work if expiry(w) > at]
     state.changes = [c for c in state.changes if (at-c.at).total_seconds() < 86400]
@@ -280,7 +299,13 @@ def expose(state: DynamicsState, receipt: CognitiveExposure, config: DynamicsCon
         sample.novelty = 0 if repeated_content else .5+assessment.confidence*(assessment.unexpectedness*(.1+.9*(1-h))-.5)
         sample.meaning = 1-assessment.confidence*(1-assessment.meaning)
         sample.wants_engagement = assessment.wants_engagement
-        state.wants_engagement = assessment.wants_engagement
+        if not state.intent_expiry_enabled:
+            state.wants_engagement = assessment.wants_engagement
+        elif state.engagement_at is None or receipt.attended_at >= state.engagement_at:
+            state.engagement_until = receipt.attended_at + timedelta(seconds=1800)
+            state.engagement_at = receipt.attended_at
+            state.engagement_cause = receipt.exposure_id
+            state.wants_engagement = assessment.wants_engagement and not state.native_resting and state.engagement_until > state.updated_at
         state.meaning_target = sample.meaning
         fragment = hashlib.sha256((key+"|"+"|".join(sorted(receipt.evidence_refs or [receipt.exposure_id]))).encode()).hexdigest()
         if fragment not in state.habituation_fragments:

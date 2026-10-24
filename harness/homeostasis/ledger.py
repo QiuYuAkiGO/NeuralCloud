@@ -7,11 +7,12 @@ import sqlite3
 from contextlib import closing
 from collections import OrderedDict
 from copy import deepcopy
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterator
 
 from harness.contracts.envelope import DomainCommandResult
-from harness.homeostasis.models import HomeostaticSnapshot, HomeostaticTransitionTrace
+from harness.homeostasis.models import DIMENSIONS, HomeostaticSnapshot, HomeostaticTransitionTrace
 
 
 class CommandLedgerError(RuntimeError):
@@ -157,6 +158,11 @@ class CommandLedger:
             row = connection.execute("SELECT receipt_hash FROM cognitive_exposures WHERE exposure_id=?", (exposure_id,)).fetchone()
         return row[0] if row else None
 
+    def native_appraisal_status(self, receipt_id):
+        with closing(self._connect()) as connection:
+            row = connection.execute('SELECT receipt_hash FROM native_appraisals WHERE id=?', (receipt_id,)).fetchone()
+        return row[0] if row else None
+
     def content_seen(self, content_hash: str) -> bool:
         with closing(self._connect()) as connection:
             return connection.execute("SELECT 1 FROM cognitive_content WHERE content_hash=?", (content_hash,)).fetchone() is not None
@@ -207,6 +213,48 @@ class CommandLedger:
         finally:
             connection.close()
 
+    def report_traces(self, since: str, until: str) -> list[dict[str, Any]]:
+        """Actual recorded states only; keep each minute's extrema and events."""
+        if not isinstance(since, str) or not isinstance(until, str):
+            raise ValueError("invalid report window")
+        start, end = (datetime.fromisoformat(value.replace("Z", "+00:00")) for value in (since, until))
+        if start.utcoffset() is None or end.utcoffset() is None or not 0 < (end-start).total_seconds() <= 90000:
+            raise ValueError("invalid report window")
+        query = """SELECT trace_json FROM transition_traces
+            WHERE json_extract(trace_json,'$.values_after') != '{}'
+            AND julianday(json_extract(trace_json,'$.occurred_at'))>=julianday(?)
+            AND julianday(json_extract(trace_json,'$.occurred_at'))<julianday(?)
+            ORDER BY julianday(json_extract(trace_json,'$.occurred_at')),revision"""
+        retained, extrema, first, last, bucket = {}, {}, None, None, None
+
+        def flush():
+            for trace in [first, last, *(item[1] for item in extrema.values())]:
+                if trace is not None:
+                    retained[trace["revision"]] = trace
+
+        with closing(sqlite3.connect(self.path.resolve().as_uri()+"?mode=ro", uri=True)) as db:
+            for (raw,) in db.execute(query, (start.isoformat(), end.isoformat())):
+                trace = json.loads(raw)
+                current = int(datetime.fromisoformat(trace["occurred_at"].replace("Z", "+00:00")).timestamp() // 60)
+                if current != bucket:
+                    flush()
+                    extrema, first, bucket = {}, trace, current
+                last = trace
+                before, after = trace.get("values_before") or {}, trace.get("values_after") or {}
+                changed = any(key in before and abs(value-before[key]) > .000001 for key,value in after.items())
+                if changed and (trace["command_type"] != "ApplyHeartbeat" or trace.get("salience") in {"marked", "critical"}):
+                    retained[trace["revision"]] = trace
+                for name in DIMENSIONS:
+                    values = [state[name] for state in (before, after) if name in state]
+                    for label, select in (("min", min), ("max", max)):
+                        if not values:
+                            continue
+                        value, key = select(values), (name, label)
+                        if key not in extrema or select(value, extrema[key][0]) != extrema[key][0]:
+                            extrema[key] = (value, trace)
+            flush()
+        return sorted(retained.values(), key=lambda row: (row["occurred_at"], row["revision"]))
+
     def commit(
         self,
         key: str,
@@ -219,6 +267,7 @@ class CommandLedger:
         qq_fact: tuple[str, str] | None = None,
         psychological_appraisal: tuple[str, str, str, list[str]] | None = None,
         cognitive_exposure: tuple[str, str, str] | None = None,
+        native_appraisal: tuple[str, str] | None = None,
         causal_evidence: list[tuple[str, str]] | None = None,
     ) -> None:
         validated_result = DomainCommandResult[dict[str, Any]].model_validate(result)
@@ -308,6 +357,8 @@ class CommandLedger:
                 except sqlite3.IntegrityError as exc:
                     raise CommandLedgerConflictError("cognitive exposure already committed") from exc
                 connection.execute("INSERT OR IGNORE INTO cognitive_content VALUES (?,?)", (content_hash, revision))
+            if native_appraisal is not None:
+                connection.execute('INSERT INTO native_appraisals VALUES(?,?,?)', (*native_appraisal, revision))
             if causal_evidence:
                 try:
                     connection.executemany("INSERT INTO psychological_causal_evidence VALUES (?,?,?)",
@@ -428,6 +479,7 @@ class CommandLedger:
             connection.execute("PRAGMA synchronous=FULL")
             with connection:
                 connection.execute("CREATE TABLE IF NOT EXISTS cognitive_exposures(exposure_id TEXT PRIMARY KEY,receipt_hash TEXT NOT NULL,revision INTEGER NOT NULL)")
+                connection.execute('CREATE TABLE IF NOT EXISTS native_appraisals(id TEXT PRIMARY KEY,receipt_hash TEXT NOT NULL,revision INTEGER NOT NULL)')
                 connection.execute("CREATE TABLE IF NOT EXISTS cognitive_content(content_hash TEXT PRIMARY KEY,revision INTEGER NOT NULL)")
                 connection.execute("CREATE TABLE IF NOT EXISTS psychological_causal_evidence(evidence_ref TEXT NOT NULL,dimension TEXT NOT NULL,revision INTEGER NOT NULL,PRIMARY KEY(evidence_ref,dimension))")
                 connection.execute(
@@ -465,6 +517,9 @@ class CommandLedger:
                     )
                     """
                 )
+                connection.execute("""CREATE INDEX IF NOT EXISTS homeostasis_report_time_v1
+                    ON transition_traces(julianday(json_extract(trace_json,'$.occurred_at')))
+                    WHERE json_extract(trace_json,'$.values_after') != '{}'""")
                 connection.execute(
                     """CREATE TABLE IF NOT EXISTS qq_homeostatic_facts (
                         fact_key TEXT PRIMARY KEY,

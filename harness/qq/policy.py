@@ -60,8 +60,21 @@ class QQLatencyOptions(BaseModel):
             raise ValueError("duplicate QQ latency conversation")
         for key in value:
             account, separator, scope_id = key.partition("/")
+            if account.startswith("qqbot:"):
+                from harness.qq.official_identity import split_identity
+                app = account.split(":")[1]
+                if not separator or split_identity(account, kind="bot", app_id=app) != app:
+                    raise ValueError("invalid QQ latency conversation")
+                scope = conversation_scope(scope_id)
+                if scope["kind"] == "group":
+                    split_identity(scope_id, kind="group", app_id=app)
+                elif scope["self_member_id"] != account:
+                    raise ValueError("QQ latency conversation account mismatch")
+                continue
             if not separator or re.fullmatch(QQ_NUMBER, account) is None:
                 raise ValueError("invalid QQ latency conversation")
+            if scope_id.startswith("qqbot:"):
+                raise ValueError("QQ latency conversation account mismatch")
             scope = conversation_scope(scope_id)
             if scope["kind"] == "private" and scope["self_member_id"] != account:
                 raise ValueError("QQ latency conversation account mismatch")

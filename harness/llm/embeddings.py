@@ -159,6 +159,10 @@ def embedding_endpoint_candidates(settings: Settings) -> list[tuple[str, str, st
 
     def add(url: str | None, key: str | None) -> None:
         text = (url or "").strip()
+        if settings.agentic_enabled and settings.agentic_local_only:
+            from harness.agentic.context import local_endpoint
+            if not local_endpoint(text):
+                return
         marker = _norm_url(text)
         if not marker or marker in seen:
             return

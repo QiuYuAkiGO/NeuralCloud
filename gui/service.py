@@ -233,9 +233,8 @@ class HarnessChatService:
             self.aux_reachable = False
         else:
             new_llm = build_llm_client(self.settings)
-            self.aux_active = aux_explicitly_configured(self.settings) or aux_endpoint_distinct(
-                self.settings
-            )
+            self.aux_active = not (self.settings.agentic_enabled and self.settings.agentic_local_only) and (
+                aux_explicitly_configured(self.settings) or aux_endpoint_distinct(self.settings))
         old_llm = getattr(self, "llm", None)
         self.llm = new_llm
         if old_llm is not None and old_llm is not new_llm:

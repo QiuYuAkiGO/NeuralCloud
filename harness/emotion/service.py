@@ -193,7 +193,7 @@ class EmotionService:
 
     @property
     def enabled(self) -> bool:
-        return self._setting("emotion_mode", "off") in {"on", "shadow"}
+        return not self._setting("agentic_enabled", False) and self._setting("emotion_mode", "off") in {"on", "shadow"}
 
     def load(self, value: dict) -> None:
         with self._operation_lock, self._lock:

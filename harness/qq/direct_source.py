@@ -25,6 +25,8 @@ def validate_direct_source(config, request, *, completed_replay=False):
     if not path:
         raise ValueError("direct_qq_not_configured")
     settings = DirectQQSettings.read(Path(path))
+    from harness.qq.official_state import require_platform_scope
+    require_platform_scope(settings, request.group_id)
     from harness.qq.attention import AttentionStore, attention_path
     denied = AttentionStore(attention_path(settings)).check(request.group_id)
     if denied:
@@ -40,7 +42,7 @@ def validate_direct_source(config, request, *, completed_replay=False):
     authorized = (scope["peer_id"] in send_peers and scope["peer_id"] in config.allowed_private_peer_ids
         and scope["self_member_id"] == settings.self_member_id and request.trigger_member_id == scope["peer_id"]
         if scope["kind"] == "private" else request.group_id in send_groups and request.group_id in config.allowed_group_ids)
-    if (not settings.enabled or request.transport != "onebot" or request.idle_intent is not None
+    if (not settings.enabled or request.transport != settings.transport or request.idle_intent is not None
             or not authorized
             or request.self_member_id != settings.self_member_id or request.self_member_id != config.self_member_id
             or settings.session_config_path.is_symlink()):

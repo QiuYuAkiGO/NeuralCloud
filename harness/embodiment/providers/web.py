@@ -65,7 +65,12 @@ def _reject_constant(_value):
     raise ValueError("non_finite_number")
 
 
-class TavilyWebProvider:
+class WebPageError(WebError):
+    """A single inaccessible source does not disable the provider."""
+
+
+class WebProviderTransport:
+    provider_id = "tavily-web"
     supports_dispatch_hook = True
     def __init__(self, condition: EmbodimentCondition, base_url: str, api_key: str,
                  body_instance_id: str, timeout_seconds: float = 12,
@@ -103,7 +108,7 @@ class TavilyWebProvider:
 
     async def capabilities(self) -> ProviderCapabilities:
         return ProviderCapabilities(
-            provider_id="tavily-web", provider_kind="web_information_api",
+            provider_id=self.provider_id, provider_kind="web_information_api",
             provider_revision="web-v1:" + self._condition_hash, body_instance_id=self.body_instance_id,
             observed_at=datetime.now(UTC), capabilities=[
                 CapabilityDescriptor(capability=capability, status=CapabilityStatus.AVAILABLE,
@@ -126,7 +131,7 @@ class TavilyWebProvider:
         values = set(states.values())
         overall = (HealthStatus.UNAVAILABLE if values == {HealthStatus.UNAVAILABLE} else
                    HealthStatus.HEALTHY if values == {HealthStatus.HEALTHY} else HealthStatus.DEGRADED)
-        return ProviderHealth(provider_id="tavily-web", body_instance_id=self.body_instance_id, status=overall,
+        return ProviderHealth(provider_id=self.provider_id, body_instance_id=self.body_instance_id, status=overall,
             capability_health=states, observed_at=datetime.now(UTC), detail={"reason_codes": dict(self._reasons)})
 
     async def status(self) -> EmbodimentStatus:
@@ -156,6 +161,15 @@ class TavilyWebProvider:
             self._reasons[capability] = code
             self._cooldowns[capability] = time.monotonic() + COOLDOWN_SECONDS
 
+    def _check_status(self, capability: str, status: int):
+        if status in {401, 403}:
+            self._failure(capability, "web_authentication_failed", auth=True)
+            raise WebError("web_authentication_failed")
+        if status == 429:
+            raise WebError("web_rate_limited")
+        if not 200 <= status < 300:
+            raise WebError("web_provider_unavailable" if status >= 500 else "web_provider_rejected")
+
     async def _post(self, capability: str, path: str, payload: dict, *, before_dispatch=None) -> dict:
         # A fresh local guard immediately precedes each request; no discovery or
         # health probe spends credits. The HTTP transport never follows redirects.
@@ -166,16 +180,7 @@ class TavilyWebProvider:
                     before_dispatch()
                 async with self._client.stream("POST", self.base_url + path, json=payload) as response:
                     status = response.status_code
-                    if status in {401, 403}:
-                        self._failure(capability, "web_authentication_failed", auth=True)
-                        raise WebError("web_authentication_failed")
-                    if status == 429:
-                        self._failure(capability, "web_rate_limited")
-                        raise WebError("web_rate_limited")
-                    if not 200 <= status < 300:
-                        code = "web_provider_unavailable" if status >= 500 else "web_provider_rejected"
-                        self._failure(capability, code)
-                        raise WebError(code)
+                    self._check_status(capability, status)
                     media_type = response.headers.get("content-type", "").split(";", 1)[0].strip().lower()
                     if media_type != "application/json" and not media_type.endswith("+json"):
                         raise WebError("web_response_invalid")
@@ -191,6 +196,8 @@ class TavilyWebProvider:
                     except (ValueError, TypeError, UnicodeError, RecursionError):
                         raise WebError("web_response_invalid") from None
                     return value
+        except WebPageError:
+            raise
         except WebError as exc:
             if capability not in self._cooldowns and not self._auth_failed:
                 self._failure(capability, exc.code)
@@ -226,6 +233,12 @@ class TavilyWebProvider:
                     safe_usage[key] = item
         return {"provider_request_id": request_id, "usage": safe_usage}
 
+    async def close(self) -> None:
+        self._closed = True
+        await self._client.aclose()
+
+
+class TavilyWebProvider(WebProviderTransport):
     async def search(self, request: WebSearchArguments, *, before_dispatch=None) -> WebResult:
         try:
             request = WebSearchArguments.model_validate(request)

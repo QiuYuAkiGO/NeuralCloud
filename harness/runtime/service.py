@@ -223,13 +223,13 @@ def _create_owned_app(manifest, state_dir):
         )
         supervisor.voice = VoiceController(supervisor, voice_settings, state_dir, provider=voice_provider)
     from harness.runtime.web import WebController
-    from harness.embodiment.providers.web import TavilyWebProvider
+    from harness.embodiment.providers.deepseek_web import web_provider_class
     from harness.research.manifest import EmbodimentCondition
     from harness.embodiment.capabilities import CapabilityRequirement
     web_settings = web_store.load_settings()
 
     def web_test_provider(settings, key):
-        return TavilyWebProvider(EmbodimentCondition(mode="observe", body_instance_id=settings.body_instance_id,
+        return web_provider_class(settings)(EmbodimentCondition(mode="observe", body_instance_id=settings.body_instance_id,
             capability_requirements=[CapabilityRequirement(capability=c, required=False) for c in ("web.search.v1", "web.read.v1")]),
             settings.base_url, key, settings.body_instance_id, settings.timeout_seconds)
 
@@ -237,10 +237,11 @@ def _create_owned_app(manifest, state_dir):
     if web_settings is not None and manifest.web_access.enabled:
         web_key = web_store.load_api_key()
         if web_key:
-            web_provider = TavilyWebProvider(EmbodimentCondition(mode="observe", body_instance_id=web_settings.body_instance_id,
+            web_provider = web_provider_class(web_settings)(EmbodimentCondition(mode="observe", body_instance_id=web_settings.body_instance_id,
                 capability_requirements=manifest.web_access.capability_requirements), web_settings.base_url,
                 web_key, web_settings.body_instance_id, web_settings.timeout_seconds)
     supervisor.web_config_store = web_store
+    supervisor.native_web_tools_enabled = os.environ.get("NC_AGENTIC_ENABLED", "").lower() in {"true", "1", "yes", "on"}
     supervisor.web = WebController(supervisor, web_settings, state_dir, provider=web_provider,
         config_store=web_store, test_provider_factory=web_test_provider)
     from harness.runtime.server import ServerController
@@ -326,6 +327,7 @@ def _create_owned_app(manifest, state_dir):
             goals=getattr(supervisor, "goals", None),
             cognitive=supervisor.cognitive,
             runtime_status=supervisor.status,
+            runtime_started_at=supervisor.runtime_started_at,
         ),
         DailyReportStore(state_dir / "reports", retention_days=report_settings.retention_days),
         report_settings,
@@ -383,6 +385,8 @@ def _create_owned_app(manifest, state_dir):
 
     from harness.production.metering import install_metering_routes
     install_metering_routes(app, supervisor, token=service_token)
+    from harness.agentic.diary_runtime import install_routes as install_agentic_routes
+    install_agentic_routes(app, supervisor, token=service_token)
     from harness.production.accounting import install_operator_accounting_routes
     install_operator_accounting_routes(app, supervisor, token=control_token, service_token=service_token)
     app.state.supervisor = supervisor

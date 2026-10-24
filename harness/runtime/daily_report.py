@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import sqlite3
 from datetime import UTC, datetime, timedelta
@@ -16,6 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from harness.homeostasis.models import DIMENSIONS
 from harness.files import replace_path
 from harness.runtime.monitor import MonitorStore, _percentile, utc_now
+from harness.runtime.report_timing import capture_report_timing, report_phase, report_timed
 
 
 async def _report_io(function, *args, **kwargs):
@@ -143,7 +145,10 @@ class DailyReportStore:
     def save(self, report: dict[str, Any]) -> Path:
         path = self.path_for(str(report["day"]))
         tmp = path.with_suffix(".json.tmp")
-        tmp.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+        # Source visibility/retraction must still apply when opening archives.
+        # Store numerical/operator receipts; refresh sensitive projections.
+        stored = {key: value for key, value in report.items() if key not in {"timeline", "memories"}}
+        tmp.write_text(json.dumps(stored, ensure_ascii=False, indent=2), encoding="utf-8")
         replace_path(tmp, path)
         meta = self.meta()
         if report.get("finalized"):
@@ -189,6 +194,7 @@ class DailyReportBuilder:
         goals: Any | None = None,
         cognitive: Any | None = None,
         runtime_status: Any | None = None,
+        runtime_started_at: datetime | None = None,
     ) -> None:
         self.monitor = monitor
         self.state_dir = Path(state_dir)
@@ -200,53 +206,130 @@ class DailyReportBuilder:
         self.goals = goals
         self.cognitive = cognitive
         self.runtime_status = runtime_status
+        self.runtime_started_at = runtime_started_at
 
     async def build(self, day: str, *, finalized: bool = False) -> dict[str, Any]:
         start, end = day_bounds(day, self.settings.timezone)
         since, until = start.isoformat(), end.isoformat()
-        samples, runs, events, resources, actions = await _report_io(self._monitor_rows, since, until)
+        with report_phase("monitor_wait"):
+            samples, runs, events, resources, actions = await _report_io(self._monitor_rows, since, until)
         traces = await self._traces(since, until)
         revision = await self._revision(day)
         qq_tokens = await _report_io(self._qq_tokens, start, end)
         qq_idle = await _report_io(self._qq_idle, start, end)
         resource_summary = await _report_io(self._resources, resources)
-        return {
-            "schema_version": "daily-report-v1",
-            "day": day,
-            "timezone": self.settings.timezone,
-            "window": {"since": since, "until": until},
-            "finalized": finalized,
-            "generated_at": utc_now().isoformat(),
-            "uptime": self._uptime(samples, start, end),
-            "resources": resource_summary,
-            "homeostasis": self._homeostasis(traces, events),
-            "intent": self._intent(events, start, end, qq=qq_idle),
-            "pipelines": self._pipelines(runs, events),
-            "memory_revision": revision,
-            "tokens": self._tokens(runs, qq_tokens, revision, start),
-            "diary": {"wrote": bool(self.diary_store and self.diary_store.count(day) > 0)},
-            "extras": self._extras(events, actions, start, end),
-        }
+        from harness.runtime.report_insights import operation_counts
+        with report_phase("operations"):
+            operations = await _report_io(operation_counts, self.capabilities, self.board, self.goals, start, end)
+        goals_summary = {"available": False}
+        if self.goals is not None and hasattr(self.goals, "budget"):
+            with report_phase("goal_budget"):
+                goals_summary = {"available": True, "enabled": self.goals.enabled, "budget": self.goals.budget(),
+                                 "episode_count": operations["episode_count"]}
+        with report_phase("assembly"):
+            report = {
+                "schema_version": "daily-report-v2",
+                "day": day,
+                "timezone": self.settings.timezone,
+                "window": {"since": since, "until": until},
+                "finalized": finalized,
+                "generated_at": utc_now().isoformat(),
+                "uptime": self._uptime(samples, start, end),
+                "resources": resource_summary,
+                "homeostasis": self._homeostasis(traces, events),
+                "intent": self._intent(events, start, end, qq=qq_idle, operations=operations),
+                "pipelines": self._pipelines(runs, events),
+                "memory_revision": revision,
+                "tokens": self._tokens(runs, qq_tokens, revision, start),
+                "diary": {"wrote": bool(self.diary_store and self.diary_store.count(day) > 0)},
+                "extras": self._extras(events, actions, start, end, goals_summary=goals_summary),
+            }
+        await self.add_insights(report, traces=traces, events=events)
+        return report
 
+    @report_timed("cognitive")
+    async def agent_report(self, day, *, section="daily", offset=0, limit=25, run_since=None, after=None):
+        start, end = day_bounds(day, self.settings.timezone)
+        method = getattr(self.cognitive, "control", None)
+        if not callable(method):
+            return {"available": False, "reason": "cognitive_report_unavailable"}
+        try:
+            return await method("report.daily", {
+                "since": start.isoformat(), "until": end.isoformat(), "run_since": run_since,
+                "section": section, "offset": offset, "limit": limit, "after": after,
+            })
+        except Exception as exc:
+            return {"available": False, "error_type": type(exc).__name__}
+
+    @report_timed("insights")
+    async def add_insights(self, report, *, traces=None, events=None, archived=False):
+        from harness.runtime.report_insights import failure_events, run_health, timeline
+        start, end = day_bounds(report["day"], self.settings.timezone)
+        now = utc_now()
+        run_start = self.runtime_started_at if self.runtime_started_at and self.runtime_started_at < end else None
+        data = await self.agent_report(report["day"], run_since=run_start.isoformat() if run_start and not archived else None)
+        if traces is None:
+            traces = await self._traces(start.isoformat(), end.isoformat())
+        if events is None:
+            events = await _report_io(self.monitor.query_report_events, start.isoformat(), end.isoformat())
+        with report_phase("timeline"):
+            report["timeline"] = await _report_io(timeline, traces, data.get("affect") or {}, events)
+        report["timeline"]["affect_available"] = bool(data.get("available"))
+        report["memories"] = data.get("memories") or {"available": False, "items": [], "error_type": data.get("error_type")}
+        today = data.get("today") or {}
+        with report_phase("failures"):
+            failures = {
+                "items": sorted(failure_events(events) + today.get("failures", []), key=lambda row: row["at"], reverse=True),
+                "legacy_undated": today.get("legacy_undated_failures", []),
+                "background_available": bool(data.get("available")),
+            }
+        if not archived or "failures" not in report:
+            report["failures"] = failures
+        if not archived or "compaction_today" not in report:
+            report["compaction_today"] = today.get("compaction")
+        if not archived or "telemetry_started_at" not in report:
+            report["telemetry_started_at"] = data.get("telemetry_started_at")
+        if not archived:
+            run_samples, run_events = [], []
+            as_of = min(now, end)
+            if run_start:
+                with report_phase("run_rows"):
+                    run_samples, run_events = await _report_io(lambda: (
+                        self.monitor.query_samples(run_start.isoformat(), as_of.isoformat()),
+                        self.monitor.query_report_events(run_start.isoformat(), as_of.isoformat())))
+            with report_phase("run_health"):
+                status = (self.runtime_status() if callable(self.runtime_status) else self.runtime_status) if as_of == now else None
+                report["current_run"] = run_health(run_samples, run_start, as_of, status)
+            report["current_run"]["compaction"] = (data.get("run") or {}).get("compaction")
+            report["current_run"]["failures"] = sorted(
+                failure_events(run_events) + (data.get("run") or {}).get("failures", []),
+                key=lambda row: row["at"], reverse=True)
+
+    @report_timed("monitor")
     def _monitor_rows(self, since: str, until: str):
-        return (
-            self.monitor.query_samples(since, until),
-            self.monitor.query_runs(since, until),
-            self.monitor.query_events(since, until),
-            self.monitor.query_resources(since, until),
-            self.monitor.query_actions(since, until),
-        )
+        rows = []
+        for label, reader in (
+            ("samples", self.monitor.query_samples), ("runs", self.monitor.query_runs),
+            ("events", self.monitor.query_report_events), ("resource_rows", self.monitor.query_resources),
+            ("actions", self.monitor.query_actions),
+        ):
+            with report_phase(label):
+                rows.append(reader(since, until))
+        return tuple(rows)
 
+    @report_timed("homeostasis")
     async def _traces(self, since: str, until: str) -> list[dict[str, Any]]:
         client = self.homeostasis
         if client is None or not hasattr(client, "read_traces"):
             return []
         try:
-            traces = await client.read_traces(since=since, until=until, limit=20000)
+            reader = getattr(client, "read_report_traces", client.read_traces)
+            traces = await reader(since=since, until=until)
         except Exception:
             return []
         return [dict(item) for item in traces or [] if isinstance(item, dict)]
 
+    @report_timed("revision")
     async def _revision(self, day: str) -> dict[str, Any]:
         method = getattr(self.cognitive, "control", None)
         if not callable(method):
@@ -320,6 +403,7 @@ class DailyReportBuilder:
             "sample_count": len(samples),
         }
 
+    @report_timed("resources")
     def _resources(self, rows: list[dict[str, Any]]) -> dict[str, Any]:
         if not rows:
             return {"available": False, "roles": {}, "host": {}, "state_bytes": _dir_size(self.state_dir)}
@@ -396,16 +480,17 @@ class DailyReportBuilder:
             ),
         }
 
-    def _intent(self, events: list[dict[str, Any]], start: datetime, end: datetime, *, qq: dict[str, Any]) -> dict[str, Any]:
+    def _intent(self, events: list[dict[str, Any]], start: datetime, end: datetime, *, qq: dict[str, Any],
+                operations: dict[str, Any]) -> dict[str, Any]:
         marked: dict[str, int] = {}
         for event in events:
             topic = str(event.get("topic") or "")
             if topic in _MARKED_TOPICS:
                 key = topic.rsplit("_", 1)[-1]
                 marked[key] = marked.get(key, 0) + 1
-        capabilities: dict[str, Any] = {"available": False}
-        if self.capabilities is not None and hasattr(self.capabilities, "calls"):
-            rows = self.capabilities.calls.all()
+        capabilities: dict[str, Any] = {"available": operations["capabilities_available"]}
+        if operations["capabilities_available"]:
+            rows = operations["calls"]
             by_channel: dict[str, dict[str, int]] = {}
             for row in rows:
                 moment = _parse_dt(row.get("created_at") or row.get("completed_at") or row.get("requested_at"))
@@ -423,10 +508,10 @@ class DailyReportBuilder:
                 )
                 bucket[action] = bucket.get(action, 0) + 1
             capabilities = {"available": True, "by_channel": by_channel}
-        board = {"available": False}
-        if self.board is not None and hasattr(self.board, "turns"):
+        board = {"available": operations["board_available"]}
+        if operations["board_available"]:
             counts = {"write": 0, "wait": 0, "failed": 0}
-            for row in self.board.turns.all():
+            for row in operations["turns"]:
                 moment = _parse_dt(row.get("requested_at"))
                 if moment is None or not (start <= moment < end):
                     continue
@@ -449,6 +534,7 @@ class DailyReportBuilder:
             idle[status] = idle.get(status, 0) + 1
         return {"marked": marked, "capabilities": capabilities, "board": board, "idle": idle, "qq": qq}
 
+    @report_timed("qq_idle")
     def _qq_idle(self, start: datetime, end: datetime) -> dict[str, Any]:
         path = self.settings.qq_ledger_path
         if path is None or not Path(path).is_file():
@@ -562,6 +648,7 @@ class DailyReportBuilder:
             "event_types": event_types,
         }
 
+    @report_timed("qq_tokens")
     def _qq_tokens(self, start: datetime, end: datetime) -> dict[str, Any]:
         path = self.settings.qq_trace_path
         if path is None or not Path(path).is_file():
@@ -613,7 +700,8 @@ class DailyReportBuilder:
         combined["estimated"] = True
         return {"monitor_runs": monitor, "qq_trace": qq, "daily_revision_tokens": revision_tokens, "combined": combined}
 
-    def _extras(self, events: list[dict[str, Any]], actions: list[dict[str, Any]], start: datetime, end: datetime) -> dict[str, Any]:
+    def _extras(self, events: list[dict[str, Any]], actions: list[dict[str, Any]], start: datetime, end: datetime,
+                *, goals_summary: dict[str, Any]) -> dict[str, Any]:
         warnings = sum(1 for event in events if event.get("severity") == "warning")
         errors = sum(1 for event in events if event.get("severity") == "error")
         alerts = [event for event in events if event.get("severity") in {"warning", "error"}][:20]
@@ -631,23 +719,18 @@ class DailyReportBuilder:
         for event in events:
             payload = event.get("payload") or {}
             error = str(payload.get("error") or payload.get("error_type") or "").lower()
-            if "timeout" in error:
+            if "timeout" in error or payload.get("error_is_timeout"):
                 timeouts += 1
-            if "truncat" in error or "length" in error:
+            if "truncat" in error or "length" in error or payload.get("error_is_truncated"):
                 truncated += 1
             if event.get("topic") == "event.completed" and payload.get("status") == "failed":
                 llm_errors += 1
-        goals = {"available": False}
-        if self.goals is not None and hasattr(self.goals, "snapshot"):
-            snap = self.goals.snapshot()
-            goals = {"available": True, "enabled": snap.get("enabled"), "budget": snap.get("budget"),
-                     "episode_count": len(snap.get("episodes") or [])}
         return {
             "warnings": warnings, "errors": errors, "alerts": alerts,
             "actions": action_states, "watchdog": watchdog,
             "ingest_dropped": self.monitor.ingest_dropped,
             "llm_failed_events": llm_errors, "timeouts": timeouts, "truncated": truncated,
-            "goals": goals,
+            "goals": goals_summary,
         }
 
 
@@ -697,9 +780,12 @@ class DailyReportController:
             await asyncio.gather(self._task, return_exceptions=True)
             self._task = None
 
+    @report_timed("report")
     async def report(self, day: str, *, live: bool = True) -> dict[str, Any]:
-        archived = await _report_io(self.store.load, day)
+        with report_phase("archive"):
+            archived = await _report_io(self.store.load, day)
         if archived is not None:
+            await self.builder.add_insights(archived, archived=True)
             return archived
         if not live:
             raise FileNotFoundError(day)
@@ -721,6 +807,8 @@ class DailyReportController:
 
 def add_report_routes(router, supervisor, *, authorize=None):
     from fastapi import HTTPException
+    from fastapi.encoders import jsonable_encoder
+    from starlette.responses import JSONResponse
     from harness.runtime.control import ControlAuthorizationError, ControlPermission
 
     def controller():
@@ -743,22 +831,51 @@ def add_report_routes(router, supervisor, *, authorize=None):
         report = controller()
         target = day or utc_now().astimezone(ZoneInfo(report.settings.timezone)).date().isoformat()
         try:
-            datetime.fromisoformat(target)
+            if len(target) != 10 or datetime.fromisoformat(target).strftime("%Y-%m-%d") != target:
+                raise ValueError("invalid day")
         except ValueError as exc:
             raise HTTPException(status_code=422, detail="invalid day") from exc
-        return await report.report(target)
+        with capture_report_timing() as timing:
+            data = await report.report(target)
+            # Match FastAPI's default encoding, while measuring the two stages
+            # that happen after the controller returns.
+            with report_phase("encode"):
+                encoded = jsonable_encoder(data)
+            with report_phase("render"):
+                response = JSONResponse(encoded)
+        response.headers["Server-Timing"] = timing.header()
+        if timing.total_ms >= 10_000:
+            logging.getLogger(__name__).warning("daily_report_slow %s", json.dumps(timing.snapshot()))
+        return response
 
     @router.get("/v1/report/days")
     async def days():
         require("report.days")
         return {"days": controller().days(), "last_finalized_day": controller().store.meta().get("last_finalized_day")}
 
+    @router.get("/v1/report/memories")
+    async def memories(day: str, offset: int = 0, limit: int = 100, after: str | None = None):
+        require("report.memories")
+        try:
+            if len(day) != 10 or datetime.fromisoformat(day).strftime("%Y-%m-%d") != day:
+                raise ValueError("invalid day")
+            if not 0 <= offset <= 1_000_000 or not 1 <= limit <= 200:
+                raise ValueError("invalid page")
+            if after is not None:
+                from harness.agentic.reporting import decode_memory_cursor
+                start, end = day_bounds(day, controller().builder.settings.timezone)
+                decode_memory_cursor(after, start.timestamp(), end.timestamp())
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        return await controller().builder.agent_report(day, section="memories", offset=offset, limit=limit, after=after)
+
     @router.post("/v1/report/daily:finalize")
     async def finalize(payload: dict[str, Any] | None = None):
         require("report.finalize")
         day = str((payload or {}).get("day") or "")
         try:
-            datetime.fromisoformat(day)
+            if len(day) != 10 or datetime.fromisoformat(day).strftime("%Y-%m-%d") != day:
+                raise ValueError("invalid day")
         except ValueError as exc:
             raise HTTPException(status_code=422, detail="invalid day") from exc
         return await controller().finalize(day)

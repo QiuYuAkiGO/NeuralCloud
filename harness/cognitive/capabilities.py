@@ -143,7 +143,7 @@ def _bound_choice(choice: CapabilityChoice, offer: CapabilityOffer, *, now: date
                 raise CapabilitySelectionError("capability_invalid_voice_arguments") from None
         elif choice.arguments:
             raise CapabilitySelectionError("capability_invalid_voice_arguments")
-    elif offer.channel == "qq" and offer.provider_id == "qq-onebot":
+    elif offer.channel == "qq" and offer.provider_id in {"qq-onebot", "qq-official"}:
         from harness.qq.direct_capabilities import QQDirectReadArguments
         if offer.capability_id == "communication.qq.attention.set.v1":
             from harness.qq.attention import AttentionArguments
@@ -297,7 +297,7 @@ def _visible_offer(offer: CapabilityOffer) -> dict[str, Any]:
         from harness.contracts.capability_calls import VOICE_RENDER, VoiceCapabilityArguments
         value["input_schema"] = VoiceCapabilityArguments.model_json_schema() if offer.capability_id == VOICE_RENDER else {
             "type": "object", "properties": {}, "additionalProperties": False}
-    elif offer.channel == "qq" and offer.provider_id == "qq-onebot":
+    elif offer.channel == "qq" and offer.provider_id in {"qq-onebot", "qq-official"}:
         from harness.qq.direct_capabilities import QQDirectReadArguments
         from harness.qq.attention import ATTENTION_SET, AttentionArguments
         value["input_schema"] = (AttentionArguments.model_json_schema() if offer.capability_id == ATTENTION_SET else

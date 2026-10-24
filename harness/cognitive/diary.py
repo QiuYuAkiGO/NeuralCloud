@@ -171,6 +171,9 @@ async def prepare(host, command, *, diagnostic=None):
     if request.deadline_at > command.issued_at + timedelta(seconds=60):
         raise ValueError("diary_prepare_deadline_unbounded")
     deadline = command_emotion_deadline(host, command, request.deadline_at)
+    if getattr(host, "agentic", None) is not None and host.agentic.enabled:
+        from harness.agentic.expressions import prepare as prepare_agentic
+        return await prepare_agentic(host, command, request, deadline, kind="diary")
     from harness.production.metering import current_production_context
     production = current_production_context()
     emotion_guidance = None if production else await resolve_command_emotion(host, command)

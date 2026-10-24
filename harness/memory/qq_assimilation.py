@@ -20,7 +20,9 @@ import unicodedata
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstraints, field_validator, model_validator
 
 from harness.memory.shared import SharedMemoryConflict, SharedMemoryRecord, SharedMemoryStore, SharedMemoryStorageError
-from harness.qq.conversation import QQConversationID, conversation_audience, conversation_scope, private_scope_id
+from harness.qq.conversation import official_scope_app, QQConversationID, conversation_audience, conversation_scope, private_scope_id
+from harness.qq.memory import QQID
+from harness.qq.official_identity import GROUP, PERSON, split_identity
 
 
 PROCESSING_VERSION = "qq-memory-v1"
@@ -29,8 +31,7 @@ UNRECOVERABLE_JOB_ERRORS = frozenset({
     "ValueError", "ValidationError", "TypeError", "KeyError",
     "qq_proposal_invalid", "SharedMemoryStorageError", "invalid_frozen_job",
 })
-QQID = Annotated[str, StringConstraints(strict=True, pattern=r"^[1-9][0-9]{0,19}$")]
-MemberRef = Annotated[str, StringConstraints(strict=True, pattern=r"^qq:member:[1-9][0-9]{0,19}$")]
+MemberRef = Annotated[str, StringConstraints(strict=True, pattern=rf"^qq:member:(?:[1-9][0-9]{{0,19}}|{PERSON})$")]
 Text = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=4000, pattern=r"\S")]
 Reference = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=256, pattern=r"\S")]
 SourceIDs = Annotated[tuple[Reference, ...], Field(min_length=1, max_length=32)]
@@ -77,7 +78,7 @@ def _impression_group(item: Mapping[str, Any]) -> str | None:
     if isinstance(scope, BaseModel):
         scope = scope.model_dump()
     conversation = scope.get("conversation_id", "")
-    if isinstance(conversation, str) and re.fullmatch(r"qq:group:[1-9][0-9]{0,19}", conversation):
+    if isinstance(conversation, str) and re.fullmatch(rf"qq:group:(?:[1-9][0-9]{{0,19}}|{GROUP})", conversation):
         return conversation.removeprefix("qq:group:") if scope.get("channel", "qq_group") == "qq_group" else None
     if isinstance(conversation, str) and conversation.startswith("qq:private:"):
         key = conversation.removeprefix("qq:")
@@ -87,7 +88,7 @@ def _impression_group(item: Mapping[str, Any]) -> str | None:
             return None
         return key if scope.get("channel") == "qq_private" else None
     legacy = item.get("group_id") or scope.get("group_id")
-    return legacy if isinstance(legacy, str) and re.fullmatch(r"[1-9][0-9]{0,19}", legacy) else None
+    return legacy if isinstance(legacy, str) and re.fullmatch(rf"(?:[1-9][0-9]{{0,19}}|{GROUP})", legacy) else None
 
 
 class _Frozen(BaseModel):
@@ -130,6 +131,13 @@ class QQSource(_Frozen):
         if scope["kind"] == "private" and (scope["self_member_id"] != self.self_id
                 or self.member_id not in {self.self_id, scope["peer_id"]}):
             raise ValueError("private source must belong to this account and its peer")
+        if official_scope_app(self.group_id):
+            app_id = official_scope_app(self.group_id)
+            if split_identity(self.self_id, kind="bot", app_id=app_id) != app_id:
+                raise ValueError("official source account mismatch")
+            split_identity(self.member_id, kind="bot" if self.is_self else "user" if scope["kind"] == "private" else "member", app_id=app_id)
+        elif self.member_id.startswith("qqbot:") or self.self_id.startswith("qqbot:"):
+            raise ValueError("QQ transports must not share source identities")
         message_id = original.get("message_id")
         expected_key = None if message_id is None else ":".join(("qq-message", self.self_id,
                                                                    self.group_id, self.member_id, message_id))
@@ -146,11 +154,13 @@ class QQSource(_Frozen):
         original = json.loads(record.source.original_json)
         group, member, message_id = original["group_id"], original["member_id"], original.get("message_id")
         message_key = None if message_id is None else ":".join(("qq-message", self_id, group, member, message_id))
+        independent = ("qqbot-message:" + _digest(message_key) if official_scope_app(group) and message_key
+                       else message_key or "qq-legacy:" + _digest([self_id, group, member, _normal(record.text)]))
         quoted, quote_only, media_only = _evidence_flags(record.text)
         return cls(source_id=record.record_id, source_sha256=record.source.original_sha256,
                    group_id=group, member_id=member, self_id=self_id, occurred_at=record.occurred_at,
                    text=record.text, message_key=message_key,
-                   independent_key=message_key or "qq-legacy:" + _digest([self_id, group, member, _normal(record.text)]),
+                   independent_key=independent,
                    is_self=member == self_id, contains_quote=quoted, quote_only=quote_only, media_only=media_only,
                    independent_eligible=member != self_id and not quote_only and not media_only, record=record)
 

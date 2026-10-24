@@ -763,6 +763,35 @@ class MonitorStore:
     def query_events(self, since: str, until: str) -> list[dict[str, Any]]:
         return self._query_range("monitor_events", "observed_at", since, until, self._event_from_row)
 
+    def query_report_events(self, since: str, until: str) -> list[dict[str, Any]]:
+        """Project only report fields, without locking the live ingest connection."""
+        query = """SELECT seq,observed_at,source,topic,severity,correlation_id,run_id,event_id,
+            json_object('event_type',json_extract(payload_json,'$.event_type'),
+                'status',json_extract(payload_json,'$.status'),
+                'error_type',json_extract(payload_json,'$.error_type'),
+                'error_code',json_extract(payload_json,'$.error_code'),
+                'error_is_timeout',instr(lower(coalesce(json_extract(payload_json,'$.error'),'')),'timeout')>0,
+                'error_is_truncated',(instr(lower(coalesce(json_extract(payload_json,'$.error'),'')),'truncat')>0
+                                     OR instr(lower(coalesce(json_extract(payload_json,'$.error'),'')),'length')>0),
+                'event_id',json_extract(payload_json,'$.event_id'),
+                'detail',json_object('error_type',json_extract(payload_json,'$.detail.error_type'),
+                                    'error_code',json_extract(payload_json,'$.detail.error_code'))) AS payload_json
+            FROM monitor_events WHERE observed_at>=? AND observed_at<? AND
+              (topic='event.completed' OR severity IN ('error','warning')
+               OR topic LIKE 'journal.homeostatic_marked_trigger_%'
+               OR topic LIKE 'watchdog%' OR topic LIKE '%_failed')
+            ORDER BY seq"""
+        def read(connection):
+            return [self._event_from_row(row).model_dump(mode="json")
+                    for row in connection.execute(query, (_iso(since), _iso(until)))]
+        if str(self.path) == ":memory:":
+            with self._lock:
+                return read(self._connection)
+        from contextlib import closing
+        with closing(sqlite3.connect(self.path.resolve().as_uri() + "?mode=ro", uri=True)) as connection:
+            connection.row_factory = sqlite3.Row
+            return read(connection)
+
     def query_resources(self, since: str, until: str) -> list[dict[str, Any]]:
         with self._lock:
             rows = self._connection.execute(

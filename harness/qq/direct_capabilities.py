@@ -18,7 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_vali
 
 from harness.qq.conversation import QQConversationID, conversation_scope
 from harness.qq.direct_config import DirectQQSettings
-from harness.qq.attention import ATTENTION_SET, AttentionArguments, AttentionStore, attention_path, text_units
+from harness.qq.attention import is_group, ATTENTION_SET, AttentionArguments, AttentionStore, attention_path, text_units
 from harness.qq.direct_store import canonical, normalize_evidence
 from harness.qq.feedback import _readonly
 from harness.qq.memory import QQID, QQVerifiedProfile, QQVisualObservation, _history_match, _normalized_text, _query_terms
@@ -36,7 +36,7 @@ class QQDirectReadArguments(BaseModel):
 
 class QQDirectReadScope(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
-    transport: Literal["onebot"] = "onebot"
+    transport: Literal["onebot", "qqbot"] = "onebot"
     group_id: QQConversationID
     self_member_id: QQID
 
@@ -45,7 +45,22 @@ class QQDirectReadScope(BaseModel):
         scope = conversation_scope(self.group_id)
         if scope["kind"] == "private" and scope["self_member_id"] != self.self_member_id:
             raise ValueError("direct_read_private_account_invalid")
+        if self.transport == "qqbot":
+            from harness.qq.official_identity import split_identity
+            app = self.self_member_id.split(":")[1] if self.self_member_id.startswith("qqbot:") else ""
+            if split_identity(self.self_member_id, kind="bot", app_id=app) != app:
+                raise ValueError("direct_read_official_account_invalid")
+            if scope["kind"] == "group":
+                split_identity(self.group_id, kind="group", app_id=app)
+            else:
+                split_identity(scope["peer_id"], kind="user", app_id=app)
+        elif self.self_member_id.startswith("qqbot:") or self.group_id.startswith("qqbot:"):
+            raise ValueError("direct_read_transport_mismatch")
         return self
+
+
+def _provider(settings):
+    return "qq-official" if settings.transport == "qqbot" else "qq-onebot"
 
 
 def _time(value):
@@ -90,7 +105,7 @@ class QQDirectCapabilityBridge:
         reason = policy.check(group_id, revision=revision)
         if reason:
             raise ValueError(reason)
-        return policy.get(group_id)["revision"] if group_id.isdigit() else 0
+        return policy.get(group_id)["revision"] if is_group(group_id) else 0
 
     def attention_outcomes(self):
         """Operator-only counters; closed message bodies are never read."""
@@ -125,8 +140,8 @@ class QQDirectCapabilityBridge:
                 continue
             policy = store.get(group.group_id)
             offers.append({"offer_id": "qq-attention:"+group.group_id, "channel": "qq", "capability_id": ATTENTION_SET,
-                "provider_id": "qq-onebot", "body_instance_id": "qq-onebot:"+settings.self_member_id,
-                "scope": QQDirectReadScope(group_id=group.group_id, self_member_id=settings.self_member_id).model_dump(mode="json"),
+                "provider_id": _provider(settings), "body_instance_id": _provider(settings)+":"+settings.self_member_id,
+                "scope": QQDirectReadScope(transport=settings.transport, group_id=group.group_id, self_member_id=settings.self_member_id).model_dump(mode="json"),
                 "activation_revision": f"attention:{generation}:{policy['revision']}",
                 "input_schema": AttentionArguments.model_json_schema(), "observation_refs": [],
                 "supported": True, "available": True, "ready": True,
@@ -173,7 +188,7 @@ class QQDirectCapabilityBridge:
             raise ValueError("direct_read_status_invalid")
         status = json.loads(path.read_text(encoding="utf-8"))
         age = (self.clock() - _time(status["heartbeat_at"])).total_seconds()
-        if (status.get("service") != "qq-direct-onebot-v1" or not -2 <= age <= 15
+        if (status.get("service") != ("qq-direct-official-v1" if settings.transport == "qqbot" else "qq-direct-onebot-v1") or not -2 <= age <= 15
                 or status.get("running") is not True or status.get("connected") is not True
                 or status.get("paused") is not False or status.get("desktop_owner_active") is not False
                 or status.get("observation_gap") is True or status.get("self_member_id") != settings.self_member_id
@@ -187,8 +202,10 @@ class QQDirectCapabilityBridge:
         return settings, status
 
     def _scope_authorized(self, settings, scope):
+        from harness.qq.official_state import require_platform_scope
+        require_platform_scope(settings, scope.group_id)
         conversation = conversation_scope(scope.group_id)
-        if scope.self_member_id != settings.self_member_id:
+        if scope.self_member_id != settings.self_member_id or scope.transport != settings.transport:
             raise ValueError("direct_read_scope_invalid")
         if conversation["kind"] == "private":
             if (conversation["self_member_id"] != settings.self_member_id
@@ -226,36 +243,37 @@ class QQDirectCapabilityBridge:
                 policy = self.attention_store().get(group.group_id)
                 if policy["mode"] == "closed":
                     continue
-                scope = QQDirectReadScope(group_id=group.group_id, self_member_id=settings.self_member_id)
+                scope = QQDirectReadScope(transport=settings.transport, group_id=group.group_id, self_member_id=settings.self_member_id)
                 key = hashlib.sha256(canonical(scope.model_dump(mode="json")).encode()).hexdigest()
-                offers.append({"offer_id": "qq-onebot:" + key + ":read", "channel": "qq", "capability_id": READ,
-                    "provider_id": "qq-onebot", "body_instance_id": "qq-onebot:" + settings.self_member_id,
+                offers.append({"offer_id": _provider(settings) + ":" + key + ":read", "channel": "qq", "capability_id": READ,
+                    "provider_id": _provider(settings), "body_instance_id": _provider(settings) + ":" + settings.self_member_id,
                     "scope": scope.model_dump(mode="json"), "activation_revision": f"{status['run_id']}:{generation}"+(f":{policy['revision']}" if policy["revision"] else ""),
                     "input_schema": QQDirectReadArguments.model_json_schema(), "observation_refs": [],
                     "supported": True, "available": True, "ready": True,
                     "valid_until": (self.clock() + timedelta(seconds=10)).isoformat(),
                     "observation": {"group_id": group.group_id, "group_label": group.label, "read_only": True,
-                        "transport": "onebot", "current_live_observation": False,
+                        "transport": settings.transport, "current_live_observation": False,
                         "effect": "read_or_search_retained_protocol_messages_and_image_analysis",
                         **self._metadata(settings, group.group_id)}})
-            if getattr(self.supervisor, "production_runtime", None) is not None:
+            native = getattr(self.supervisor, 'native_regulation', None)
+            if settings.transport == "onebot" and (getattr(self.supervisor, "production_runtime", None) is not None or (native and native.contact_enabled())):
                 from harness.qq.conversation import private_scope_id
                 recipients = [(g.group_id, g.label) for g in settings.group_roster if g.observe and g.send]
                 recipients += [(private_scope_id(settings.self_member_id, p.peer_id), p.label)
                                for p in settings.private_contacts if p.observe and p.send]
                 with closing(_readonly(settings.state_db)) as db:
                     for group_id, label in recipients:
-                        if group_id.isdigit() and self.attention_store().get(group_id)["mode"] == "closed":
+                        if is_group(group_id) and self.attention_store().get(group_id)["mode"] == "closed":
                             continue
                         source = db.execute("SELECT event_id FROM qq_direct_events WHERE group_id=? AND self_id=? AND source_record_id IS NOT NULL AND json_extract(record_json,'$._production_contact') IS NULL ORDER BY received_at DESC LIMIT 1",
                                             (group_id, settings.self_member_id)).fetchone()
                         if source is None:
                             continue
-                        scope = QQDirectReadScope(group_id=group_id, self_member_id=settings.self_member_id)
+                        scope = QQDirectReadScope(transport=settings.transport, group_id=group_id, self_member_id=settings.self_member_id)
                         self._scope_authorized(settings, scope)
                         key = hashlib.sha256(canonical(scope.model_dump(mode="json")).encode()).hexdigest()
-                        offers.append({"offer_id": "qq-onebot:" + key + ":send", "channel": "qq", "capability_id": SEND,
-                            "provider_id": "qq-onebot", "body_instance_id": "qq-onebot:" + settings.self_member_id,
+                        offers.append({"offer_id": _provider(settings) + ":" + key + ":send", "channel": "qq", "capability_id": SEND,
+                            "provider_id": _provider(settings), "body_instance_id": _provider(settings) + ":" + settings.self_member_id,
                             "scope": scope.model_dump(mode="json"), "activation_revision": f"{status['run_id']}:{generation}:{self.attention_store().get(group_id)['revision']}",
                             "input_schema": {"type": "object", "properties": {}, "additionalProperties": False},
                             "observation_refs": [], "supported": True, "available": True, "ready": True,
@@ -271,7 +289,7 @@ class QQDirectCapabilityBridge:
             return control_offers
 
     def _verify(self, settings, observation):
-        scope = QQDirectReadScope(group_id=observation.group_id, self_member_id=settings.self_member_id)
+        scope = QQDirectReadScope(transport=settings.transport, group_id=observation.group_id, self_member_id=settings.self_member_id)
         conversation = self._scope_authorized(settings, scope)
         with closing(_readonly(settings.state_db)) as db:
             row = db.execute("SELECT * FROM qq_direct_events WHERE source_record_id=? AND group_id=? AND self_id=?",
@@ -517,10 +535,15 @@ class QQDirectCapabilityBridge:
         from harness.qq.idle import QQIdleIntent
         production = getattr(self.supervisor, "production_runtime", None)
         owner, generation = self._ownership()
-        if (production is None or owner != "shared" or row.get("generation") != generation
-                or row.get("arguments") or not row.get("production_context")
-                or row["production_context"].get("epoch") != production.epoch
-                or row["production_context"].get("restricted_dialogue")):
+        native = getattr(self.supervisor, 'native_regulation', None)
+        native_allowed = False
+        if native and native.contact_enabled():
+            native.authorize_contact(row['opportunity_id'], row['selection_ref'], row['scope']['group_id'])
+            native_allowed = True
+        production_allowed = bool(production and row.get('production_context') and
+            row['production_context'].get('epoch') == production.epoch and not row['production_context'].get('restricted_dialogue'))
+        if (owner != "shared" or row.get("generation") != generation or row.get("arguments")
+                or not (native_allowed or production_allowed)):
             raise ValueError("direct_contact_not_authorized")
         settings, status = self._active()
         scope = QQDirectReadScope.model_validate(row["scope"])

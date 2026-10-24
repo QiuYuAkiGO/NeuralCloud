@@ -16,6 +16,7 @@ from functools import lru_cache
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+from harness.qq.official_identity import GROUP
 
 
 ATTENTION_SET = "communication.qq.attention.set.v1"
@@ -24,7 +25,7 @@ ATTENTION_DENIALS = frozenset({"attention_closed", "attention_policy_changed", "
 
 class AttentionArguments(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
-    group_id: str = Field(pattern=r"^[1-9][0-9]{0,19}$")
+    group_id: str = Field(pattern=rf"^(?:[1-9][0-9]{{0,19}}|{GROUP})$")
     mode: Literal["open", "closed"]
     reason: str = Field(min_length=1, max_length=512, pattern=r"\S")
     review_after_seconds: int | None = Field(default=None, ge=900, le=14400)
@@ -52,11 +53,15 @@ def text_units(text):
     return len(cjk)+(len(other.encode("utf-8"))+3)//4
 
 
+def is_group(value):
+    return isinstance(value, str) and re.fullmatch(rf"(?:[1-9][0-9]{{0,19}}|{GROUP})", value) is not None
+
+
 def require_attention(group_id, *, revision=None, received_at=None):
     """Shared fence for Cognitive-side readers with no Direct actor instance."""
     import os
     path = os.environ.get("NC_QQ_DIRECT_CONFIG")
-    if path is None or not group_id.isdigit():
+    if path is None or not is_group(group_id):
         return None
     stat = Path(path).stat()
     policy = _configured_store(path, stat.st_mtime_ns, stat.st_size).get(group_id)
@@ -91,7 +96,7 @@ def attention_visible(conversation_id):
     value = str(conversation_id or "")
     if value.startswith("qq:group:"):
         value = value.removeprefix("qq:group:")
-    if not value.isdigit():
+    if not is_group(value):
         return True
     try:
         require_attention(value)
@@ -230,7 +235,7 @@ class AttentionStore:
             return receipt
 
     def check(self, group_id, *, revision=None, received_at=None):
-        if not group_id.isdigit():
+        if not is_group(group_id):
             return None  # This authority controls groups, never owner/private access.
         policy = self.get(group_id)
         if policy["mode"] == "closed":
@@ -242,7 +247,7 @@ class AttentionStore:
         return None
 
     def admit(self, event_id, group_id, *, received_at, units, addressed=False, budget_enabled=False, group_count=1, historical_read=False):
-        if not group_id.isdigit():
+        if not is_group(group_id):
             return {"disposition": "admitted", "revision": 0}
         now = self.clock()
         with closing(self.connect()) as db, db:

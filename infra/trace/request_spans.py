@@ -148,7 +148,7 @@ def model_request_span(settings: Settings, *, role: str,
         raise
     finally:
         assessment = result.pop("attention_assessment", None)
-        if messages is not None and (status == "success" or result.get("usage")):
+        if messages is not None and (status == "success" or result.get("usage") or result.get('http_status') == 200):
             try:
                 from harness.homeostasis.work import configured_work_ledger
                 ledger = configured_work_ledger()

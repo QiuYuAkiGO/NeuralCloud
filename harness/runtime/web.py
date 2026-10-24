@@ -202,7 +202,7 @@ class WebController:
                 schema["properties"]["max_results"].update(maximum=self.settings.max_results,
                                                          default=min(5, self.settings.max_results))
             offers.append(CapabilityOffer(offer_id="web:" + capability, channel="web", capability_id=capability,
-                provider_id=status.provider_id or "tavily", body_instance_id=self.settings.body_instance_id,
+                provider_id=status.provider_id or self.settings.provider, body_instance_id=self.settings.body_instance_id,
                 scope={"context_id": scope}, activation_revision=self._revision,
                 input_schema=schema, observation=context, observation_refs=context["evidence_refs"],
                 supported=supported, available=available, ready=ready,
@@ -368,7 +368,7 @@ class WebController:
                                        quota.daily_requests, quota.autonomous_daily_requests)
                     try:
                         async with asyncio.timeout(settings.timeout_seconds):
-                            result = await provider.search(WebSearchArguments(query="Tavily documentation", max_results=1)) if capability == SEARCH else await provider.read(urls)
+                            result = await provider.search(WebSearchArguments(query="DeepSeek API documentation" if settings.provider == "deepseek" else "Tavily documentation", max_results=1)) if capability == SEARCH else await provider.read(urls)
                         result = self._store_result(identity, scope, result)
                         outcomes.append({"capability": capability, "status": result.status, "source_count": len(result.sources)})
                         urls = [source.url for source in result.sources[:1]]

@@ -285,6 +285,10 @@ class HttpHomeostasisClient(_HttpDomainClient):
         traces = payload.get("traces") or []
         return [dict(item) for item in traces if isinstance(item, dict)]
 
+    async def read_report_traces(self, *, since: str, until: str) -> list[dict[str, Any]]:
+        payload = await self._request("POST", "/v1/report-traces:read", json={"since": since, "until": until})
+        return [dict(item) for item in payload.get("traces") or [] if isinstance(item, dict)]
+
 
 def create_domain_service_app(service: Any, *, service_token: str, service_name: str):
     """Create the private FastAPI surface consumed by HTTP domain clients."""
@@ -384,5 +388,15 @@ def create_domain_service_app(service: Any, *, service_token: str, service_name:
                 limit=int(payload.get("limit") or 5000),
             )
             return {"traces": traces}
+
+        @app.post("/v1/report-traces:read", dependencies=[Depends(authenticate)])
+        async def read_report_traces(payload: dict[str, Any]) -> dict[str, Any]:
+            method = getattr(service, "read_report_traces", None)
+            if method is None:
+                raise HTTPException(status_code=501, detail="homeostasis report unavailable")
+            try:
+                return {"traces": await method(since=payload["since"], until=payload["until"])}
+            except (KeyError, ValueError, TypeError):
+                raise HTTPException(status_code=422, detail="invalid report window") from None
 
     return app
