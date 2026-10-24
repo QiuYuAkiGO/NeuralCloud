@@ -1,0 +1,55 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "record_id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Record Id",
+      "type": "string"
+    },
+    "original_revision": {
+      "minimum": 0,
+      "title": "Original Revision",
+      "type": "integer"
+    },
+    "role": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Role",
+      "type": "string"
+    },
+    "start": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Start"
+    },
+    "end": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "End"
+    }
+  },
+  "required": [
+    "record_id",
+    "original_revision",
+    "role"
+  ],
+  "title": "EvidenceReference",
+  "type": "object"
+}

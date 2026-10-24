@@ -73,7 +73,7 @@ export class DurableOutbox {
     if (fresh) this.db.exec(`CREATE TABLE queue(id TEXT PRIMARY KEY, hash TEXT NOT NULL, body TEXT NOT NULL, bytes INTEGER NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, retry_at INTEGER NOT NULL DEFAULT 0);
       CREATE TABLE cursors(session TEXT PRIMARY KEY, seq INTEGER NOT NULL);
       PRAGMA user_version=1;`);
-    if (this.db.prepare('PRAGMA user_version').get().user_version !== 1) throw new Error('OUTBOX_MIGRATION_REQUIRED');
+    if (this.db.prepare('PRAGMA user_version').get().user_version !== 1) { this.db.close(); throw new Error('OUTBOX_MIGRATION_REQUIRED'); }
   }
   close() { this.db.close(); }
   cursor(session) { return this.db.prepare('SELECT seq FROM cursors WHERE session=?').get(session)?.seq ?? 0; }

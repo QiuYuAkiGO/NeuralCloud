@@ -9,7 +9,7 @@ import sqlite3
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.responses import JSONResponse
 
-from .contracts import Correction, Recall, SourceEvent
+from .contracts import Correction, Recall, SourceEvent, DurableReceipt, MissingReceipt, RecordView, RecallResult
 from .storage import MemoryStore, Refusal
 
 
@@ -61,29 +61,29 @@ def create_app(store: MemoryStore, token: str, *, close_on_shutdown=False):
     def health():
         return store.health()
 
-    @app.post("/v1/recall")
+    @app.post("/v1/recall", response_model=RecallResult, response_model_exclude_none=True)
     def recall(request: Recall):
         return store.recall(request.query, request.limit)
 
-    @app.get("/v1/records/{record_id}")
+    @app.get("/v1/records/{record_id}", response_model=RecordView, response_model_exclude_none=True)
     def read(record_id: str, offset: int = Query(0, ge=0), length: int = Query(4096, ge=1, le=16384)):
         return store.read(record_id, offset, length)
 
-    @app.post("/v1/ingest")
+    @app.post("/v1/ingest", response_model=DurableReceipt)
     def ingest(event: SourceEvent):
         return store.ingest(event)
 
-    @app.post("/v1/candidate")
+    @app.post("/v1/candidate", response_model=DurableReceipt)
     def candidate(event: SourceEvent):
         if event.kind not in {"summary", "relationship"} or not event.source_ids:
             raise Refusal("CANDIDATE_REQUIRES_SOURCES")
         return store.ingest(event)
 
-    @app.post("/v1/corrections")
+    @app.post("/v1/corrections", response_model=DurableReceipt)
     def correct(command: Correction):
         return store.correct(command)
 
-    @app.get("/v1/receipts")
+    @app.get("/v1/receipts", response_model=DurableReceipt | MissingReceipt)
     def receipt(source_instance: str = Query(max_length=128), event_id: str = Query(max_length=256)):
         return store.receipt(source_instance, event_id)
 

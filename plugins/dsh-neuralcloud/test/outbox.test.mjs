@@ -2,8 +2,14 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
 import { DurableOutbox, collectCommitted, MemoryClient } from '../src/index.mjs';
+
+function cleanup(root) {
+  assert.equal(dirname(resolve(root)), resolve(tmpdir()));
+  assert.ok(resolve(root).startsWith(resolve(join(tmpdir(), 'nc-outbox-'))));
+  rmSync(root, { recursive: true });
+}
 
 test('flush failure never advances the durable consumer cursor', async () => {
   const root = mkdtempSync(join(tmpdir(), 'nc-outbox-'));
@@ -14,7 +20,7 @@ test('flush failure never advances the durable consumer cursor', async () => {
       session: { header: { id: 's' }, seq: 1 }, sessions: { flush: async () => { throw new Error('disk full'); } } }, outbox, e => e), /disk full/);
     assert.equal(outbox.cursor('s'), 0);
     assert.equal(outbox.db.prepare('SELECT count(*) AS n FROM queue').get().n, 0);
-  } finally { outbox.close(); rmSync(root, { recursive: true }); }
+  } finally { outbox.close(); cleanup(root); }
 });
 
 test('outbox survives restart, refuses overflow, and only removes durable acknowledgments', async () => {
@@ -30,7 +36,7 @@ test('outbox survives restart, refuses overflow, and only removes durable acknow
     assert.equal(waiting.pending, 1);
     queue.db.exec('UPDATE queue SET retry_at=0');
     assert.equal((await queue.flush({ request: async () => ({ status: 'DURABLE' }) })).pending, 0);
-  } finally { queue.close(); rmSync(root, { recursive: true }); }
+  } finally { queue.close(); cleanup(root); }
 });
 
 test('disconnected cache withholds possibly corrected text and does not claim absence', async () => {

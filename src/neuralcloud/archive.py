@@ -15,14 +15,39 @@ import sqlite3
 import tempfile
 import time
 import uuid
+from typing import Literal
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
+from pydantic import Field
 
-from .contracts import canonical, digest
+from .contracts import Contract, canonical, digest
 from .storage import MemoryStore, Refusal
 
 MAX_BYTES = 8 * 1024 * 1024
+
+
+class RestoreGrant(Contract):
+    version: Literal[1] = 1
+    grant_id: str = Field(min_length=16, max_length=128)
+    character_id: str = Field(min_length=1, max_length=128)
+    database_id: str = Field(min_length=1, max_length=128)
+    target_environment: str = Field(min_length=1, max_length=128)
+    batch_id: str = Field(min_length=1, max_length=128)
+    envelope_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    record_ids: list[str] = Field(min_length=1, max_length=500)
+    purpose: str = Field(min_length=1, max_length=1024)
+    mode: Literal["permanent_online"] = "permanent_online"
+    issued_at: float = Field(ge=0, allow_inf_nan=False)
+    expires_at: float = Field(ge=0, allow_inf_nan=False)
+
+
+def sign_restore_grant(grant: RestoreGrant, operator_key: Ed25519PrivateKey):
+    """Operator-side operation after authenticated approval; never a role tool."""
+    return {
+        "grant": grant.model_dump(),
+        "signature": base64.b64encode(operator_key.sign(canonical(grant).encode())).decode(),
+    }
 
 
 def atomic_new(path: Path, data: bytes):
@@ -236,7 +261,7 @@ class ArchiveManager:
                 raise Refusal("ARCHIVE_REVISION_CHANGED")
             for row in expected:
                 db.execute("UPDATE records SET status='ARCHIVED_OFFLINE',batch_id=? WHERE id=?", (batch_id, row["id"]))
-                db.execute("DELETE FROM search WHERE record_id=?", (row["id"],))
+                self.store._unindex(db, row["id"])
                 db.execute(
                     "INSERT INTO changes(record_id,revision,operation,received_at) VALUES(?,?,'ARCHIVE',?)",
                     (row["id"], row["revision"], time.time()),
@@ -246,3 +271,98 @@ class ArchiveManager:
     def evict(self, batch_id):
         # No caller can accidentally turn partial detachment into an erasure claim.
         raise Refusal("LOCAL_EVICTION_BLOCKED_PENDING_DEPLOYMENT_COPY_INVENTORY")
+
+    def restore(
+        self, path: Path, key: bytes, approval: dict, *, operator_public_key: bytes, target_environment: str, now=None
+    ):
+        """Reintroduce only approved records, checking current tombstones first.
+
+        Requires the current online authority containing the archive placeholders.
+        Restoring into an empty database or without the current correction ledger
+        is refused. This is a management-plane function, absent from the role API.
+        """
+        grant = RestoreGrant.model_validate(approval["grant"])
+        Ed25519PublicKey.from_public_bytes(operator_public_key).verify(
+            base64.b64decode(approval["signature"], validate=True), canonical(grant).encode()
+        )
+        moment = time.time() if now is None else now
+        if not grant.issued_at <= moment < grant.expires_at or not 0 < grant.expires_at - grant.issued_at <= 3600:
+            raise Refusal("RESTORE_APPROVAL_EXPIRED")
+        if grant.target_environment != target_environment or grant.character_id != self.store.character_id:
+            raise Refusal("RESTORE_TARGET_MISMATCH")
+        if path.stat().st_size > MAX_BYTES * 2:
+            raise Refusal("ARCHIVE_TOO_LARGE")
+        if hashlib.sha256(path.read_bytes()).hexdigest() != grant.envelope_hash:
+            raise Refusal("RESTORE_ENVELOPE_MISMATCH")
+        data = decode(path, key)
+        if (data["character_id"], data["batch_id"]) != (grant.character_id, grant.batch_id):
+            raise Refusal("RESTORE_BATCH_MISMATCH")
+        selected = set(grant.record_ids)
+        archived = {row["id"]: row for row in data["records"]}
+        if len(selected) != len(grant.record_ids) or not selected <= archived.keys():
+            raise Refusal("RESTORE_SCOPE_MISMATCH")
+        with self.store.transaction() as db:
+            identity = db.execute("SELECT value FROM metadata WHERE key='database_id'").fetchone()
+            if not identity or identity[0] != grant.database_id:
+                raise Refusal("RESTORE_DATABASE_MISMATCH")
+            key_name = "restore.receipt:" + grant.grant_id
+            previous = db.execute("SELECT value FROM metadata WHERE key=?", (key_name,)).fetchone()
+            if previous:
+                receipt = json.loads(previous[0])
+                if receipt["grant_hash"] != digest(grant):
+                    raise Refusal("RESTORE_GRANT_ID_CONFLICT")
+                return receipt
+            for identifier in selected:
+                current = db.execute(
+                    "SELECT revision,status,batch_id FROM records WHERE id=?", (identifier,)
+                ).fetchone()
+                if not current or tuple(current) != (
+                    archived[identifier]["revision"],
+                    "ARCHIVED_OFFLINE",
+                    grant.batch_id,
+                ):
+                    raise Refusal("RESTORE_CURRENT_CORRECTION_CONFLICT")
+            for relation in data["sources"]:
+                if relation["record_id"] not in selected:
+                    continue
+                source_id = relation["source_id"]
+                current = db.execute("SELECT revision,status FROM records WHERE id=?", (source_id,)).fetchone()
+                expected_status = "ARCHIVED_OFFLINE" if source_id in selected else "ONLINE"
+                if not current or tuple(current) != (archived[source_id]["revision"], expected_status):
+                    raise Refusal("RESTORE_SOURCE_CORRECTED_OR_OFFLINE")
+            for row in data["revisions"]:
+                if row["record_id"] not in selected:
+                    continue
+                old = db.execute(
+                    "SELECT hash FROM revisions WHERE record_id=? AND revision=?", (row["record_id"], row["revision"])
+                ).fetchone()
+                if old and old[0] != row["hash"]:
+                    raise Refusal("RESTORE_REVISION_HASH_CONFLICT")
+                db.execute(
+                    "INSERT OR IGNORE INTO revisions VALUES(?,?,?,?)",
+                    (row["record_id"], row["revision"], row["payload"], row["hash"]),
+                )
+            for identifier in sorted(selected):
+                db.execute("UPDATE records SET status='ONLINE',batch_id=NULL WHERE id=?", (identifier,))
+                payload = json.loads(
+                    db.execute(
+                        "SELECT payload FROM revisions WHERE record_id=? AND revision=?",
+                        (identifier, archived[identifier]["revision"]),
+                    ).fetchone()[0]
+                )
+                self.store._index(db, identifier, payload)
+                db.execute(
+                    "INSERT INTO changes(record_id,revision,operation,received_at) VALUES(?,?,'AUTHORIZED_RESTORE',?)",
+                    (identifier, archived[identifier]["revision"], moment),
+                )
+            receipt = {
+                "status": "RESTORED",
+                "grant_id": grant.grant_id,
+                "grant_hash": digest(grant),
+                "record_count": len(selected),
+                "mode": grant.mode,
+                "generation": self.store.generation(),
+                "restored_at": moment,
+            }
+            db.execute("INSERT INTO metadata VALUES(?,?)", (key_name, canonical(receipt)))
+            return receipt

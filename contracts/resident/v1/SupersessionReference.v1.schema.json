@@ -1,0 +1,29 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "record_id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Record Id",
+      "type": "string"
+    },
+    "expected_revision": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Expected Revision"
+    }
+  },
+  "required": [
+    "record_id"
+  ],
+  "title": "SupersessionReference",
+  "type": "object"
+}

@@ -1,0 +1,239 @@
+{
+  "$defs": {
+    "EvidenceReference": {
+      "additionalProperties": false,
+      "properties": {
+        "record_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Record Id",
+          "type": "string"
+        },
+        "original_revision": {
+          "minimum": 0,
+          "title": "Original Revision",
+          "type": "integer"
+        },
+        "role": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Role",
+          "type": "string"
+        },
+        "start": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Start"
+        },
+        "end": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End"
+        }
+      },
+      "required": [
+        "record_id",
+        "original_revision",
+        "role"
+      ],
+      "title": "EvidenceReference",
+      "type": "object"
+    },
+    "SupersessionReference": {
+      "additionalProperties": false,
+      "properties": {
+        "record_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Record Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expected Revision"
+        }
+      },
+      "required": [
+        "record_id"
+      ],
+      "title": "SupersessionReference",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "format": {
+      "const": "production-memory-v1-v2",
+      "default": "production-memory-v1-v2",
+      "title": "Format",
+      "type": "string"
+    },
+    "snapshot_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Snapshot Sha256",
+      "type": "string"
+    },
+    "payload_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Payload Sha256",
+      "type": "string"
+    },
+    "original_id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Original Id",
+      "type": "string"
+    },
+    "original_revision": {
+      "minimum": 0,
+      "title": "Original Revision",
+      "type": "integer"
+    },
+    "semantic_status": {
+      "enum": [
+        "observation",
+        "self_expression",
+        "derived_summary",
+        "historical_interpretation"
+      ],
+      "title": "Semantic Status",
+      "type": "string"
+    },
+    "valid_from": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Valid From"
+    },
+    "valid_until": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Valid Until"
+    },
+    "topic": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Topic"
+    },
+    "context": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Context"
+    },
+    "source_channel": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Channel"
+    },
+    "visibility": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 128,
+      "title": "Visibility",
+      "type": "array"
+    },
+    "external_refs": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 128,
+      "title": "External Refs",
+      "type": "array"
+    },
+    "evidence": {
+      "items": {
+        "$ref": "#/$defs/EvidenceReference"
+      },
+      "maxItems": 128,
+      "title": "Evidence",
+      "type": "array"
+    },
+    "supersedes": {
+      "items": {
+        "$ref": "#/$defs/SupersessionReference"
+      },
+      "maxItems": 128,
+      "title": "Supersedes",
+      "type": "array"
+    },
+    "original_pinned": {
+      "default": false,
+      "title": "Original Pinned",
+      "type": "boolean"
+    },
+    "original_important": {
+      "default": false,
+      "title": "Original Important",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "snapshot_sha256",
+    "payload_sha256",
+    "original_id",
+    "original_revision",
+    "semantic_status"
+  ],
+  "title": "LegacyProvenance",
+  "type": "object"
+}

@@ -1,0 +1,23 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "query": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Query",
+      "type": "string"
+    },
+    "limit": {
+      "default": 10,
+      "maximum": 50,
+      "minimum": 1,
+      "title": "Limit",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "query"
+  ],
+  "title": "Recall",
+  "type": "object"
+}

@@ -1,0 +1,74 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "character_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Character Id",
+      "type": "string"
+    },
+    "source_instance": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Source Instance",
+      "type": "string"
+    },
+    "event_id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Event Id",
+      "type": "string"
+    },
+    "record_id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Record Id",
+      "type": "string"
+    },
+    "expected_revision": {
+      "minimum": 1,
+      "title": "Expected Revision",
+      "type": "integer"
+    },
+    "content": {
+      "anyOf": [
+        {
+          "maxLength": 32768,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Content"
+    },
+    "reason": {
+      "maxLength": 1024,
+      "minLength": 1,
+      "title": "Reason",
+      "type": "string"
+    },
+    "retract": {
+      "default": false,
+      "title": "Retract",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "character_id",
+    "source_instance",
+    "event_id",
+    "record_id",
+    "expected_revision",
+    "reason"
+  ],
+  "title": "Correction",
+  "type": "object"
+}

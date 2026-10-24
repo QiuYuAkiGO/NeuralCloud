@@ -8,6 +8,7 @@ import re
 import sqlite3
 import threading
 import time
+import uuid
 
 from .contracts import Correction, SourceEvent, canonical, digest
 from .ownership import Ownership
@@ -55,7 +56,7 @@ def tokens(text: str) -> list[str]:
     return sorted(found)
 
 
-def initialize(path: Path, character_id: str):
+def initialize(path: Path, character_id: str, *, migration_marker=None):
     """Explicit maintenance operation; normal startup never creates/migrates a DB."""
     if not character_id or len(character_id) > 128:
         raise ValueError("invalid character_id")
@@ -65,14 +66,27 @@ def initialize(path: Path, character_id: str):
     db = sqlite3.connect(path)
     try:
         db.executescript(SCHEMA)
-        db.executemany("INSERT INTO metadata VALUES(?,?)", [("character_id", character_id), ("format", "1")])
+        db.executemany(
+            "INSERT INTO metadata VALUES(?,?)",
+            [
+                ("character_id", character_id),
+                ("format", "1"),
+                ("index_format", "record-rowid-v1"),
+                ("database_id", str(uuid.uuid4())),
+            ],
+        )
+        if migration_marker:
+            db.executemany(
+                "INSERT INTO metadata VALUES(?,?)",
+                [("migration." + key, value) for key, value in migration_marker.items()],
+            )
         db.commit()
     finally:
         db.close()
 
 
 class MemoryStore:
-    def __init__(self, path: Path, character_id: str):
+    def __init__(self, path: Path, character_id: str, *, maintenance=False):
         started = time.perf_counter()
         if not path.is_file():
             raise Refusal("INITIALIZATION_REQUIRED")
@@ -89,6 +103,12 @@ class MemoryStore:
             row = self.db.execute("SELECT value FROM metadata WHERE key='character_id'").fetchone()
             if not row or row[0] != character_id:
                 raise Refusal("CHARACTER_MISMATCH")
+            migration = self.db.execute("SELECT value FROM metadata WHERE key='migration.stage'").fetchone()
+            if migration and migration[0] != "COMPLETE" and not maintenance:
+                raise Refusal("MIGRATION_NOT_COMPLETE")
+            index_format = self.db.execute("SELECT value FROM metadata WHERE key='index_format'").fetchone()
+            if (not index_format or index_format[0] != "record-rowid-v1") and not maintenance:
+                raise Refusal("EXPLICIT_INDEX_MAINTENANCE_REQUIRED")
             for setting in (
                 "journal_mode=WAL",
                 "synchronous=FULL",
@@ -176,9 +196,16 @@ class MemoryStore:
 
     @staticmethod
     def _index(db, record_id, payload):
-        db.execute("DELETE FROM search WHERE record_id=?", (record_id,))
+        rowid = db.execute("SELECT rowid FROM records WHERE id=?", (record_id,)).fetchone()[0]
+        db.execute("DELETE FROM search WHERE rowid=?", (rowid,))
         text = payload["content"] + " " + " ".join(payload.get("aliases", []) + payload.get("participants", []))
-        db.execute("INSERT INTO search VALUES(?,?)", (record_id, " ".join(tokens(text))))
+        db.execute(
+            "INSERT INTO search(rowid,record_id,terms) VALUES(?,?,?)", (rowid, record_id, " ".join(tokens(text)))
+        )
+
+    @staticmethod
+    def _unindex(db, record_id):
+        db.execute("DELETE FROM search WHERE rowid=(SELECT rowid FROM records WHERE id=?)", (record_id,))
 
     def ingest(self, event: SourceEvent):
         self._identity(event.character_id)
@@ -232,7 +259,7 @@ class MemoryStore:
                 "UPDATE records SET revision=?,status=? WHERE id=?",
                 (revision, "RETRACTED" if command.retract else "ONLINE", command.record_id),
             )
-            db.execute("DELETE FROM search WHERE record_id=?", (command.record_id,))
+            self._unindex(db, command.record_id)
             if not command.retract:
                 self._index(db, command.record_id, payload)
             dependents = db.execute(
@@ -246,7 +273,7 @@ class MemoryStore:
                 raise Refusal("CORRECTION_REQUIRES_MAINTENANCE_WINDOW")
             for dependent in dependents:
                 db.execute("UPDATE records SET status='SOURCE_CHANGED' WHERE id=? AND status='ONLINE'", dependent)
-                db.execute("DELETE FROM search WHERE record_id=?", dependent)
+                self._unindex(db, dependent[0])
                 db.execute(
                     "INSERT INTO changes(record_id,revision,operation,received_at) SELECT id,revision,'SOURCE_CHANGED',? FROM records WHERE id=?",
                     (time.time(), dependent[0]),

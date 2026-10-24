@@ -1,0 +1,30 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "const": "DURABLE",
+      "title": "Status",
+      "type": "string"
+    },
+    "seq": {
+      "title": "Seq",
+      "type": "integer"
+    },
+    "record_id": {
+      "title": "Record Id",
+      "type": "string"
+    },
+    "revision": {
+      "title": "Revision",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "status",
+    "seq",
+    "record_id",
+    "revision"
+  ],
+  "title": "DurableReceipt",
+  "type": "object"
+}

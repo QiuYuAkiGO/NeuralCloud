@@ -1,0 +1,15 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "const": "NOT_FOUND",
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "status"
+  ],
+  "title": "MissingReceipt",
+  "type": "object"
+}

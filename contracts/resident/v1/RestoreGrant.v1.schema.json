@@ -1,0 +1,91 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1,
+      "default": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "grant_id": {
+      "maxLength": 128,
+      "minLength": 16,
+      "title": "Grant Id",
+      "type": "string"
+    },
+    "character_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Character Id",
+      "type": "string"
+    },
+    "database_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Database Id",
+      "type": "string"
+    },
+    "target_environment": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Target Environment",
+      "type": "string"
+    },
+    "batch_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Batch Id",
+      "type": "string"
+    },
+    "envelope_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Envelope Hash",
+      "type": "string"
+    },
+    "record_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 500,
+      "minItems": 1,
+      "title": "Record Ids",
+      "type": "array"
+    },
+    "purpose": {
+      "maxLength": 1024,
+      "minLength": 1,
+      "title": "Purpose",
+      "type": "string"
+    },
+    "mode": {
+      "const": "permanent_online",
+      "default": "permanent_online",
+      "title": "Mode",
+      "type": "string"
+    },
+    "issued_at": {
+      "minimum": 0,
+      "title": "Issued At",
+      "type": "number"
+    },
+    "expires_at": {
+      "minimum": 0,
+      "title": "Expires At",
+      "type": "number"
+    }
+  },
+  "required": [
+    "grant_id",
+    "character_id",
+    "database_id",
+    "target_environment",
+    "batch_id",
+    "envelope_hash",
+    "record_ids",
+    "purpose",
+    "issued_at",
+    "expires_at"
+  ],
+  "title": "RestoreGrant",
+  "type": "object"
+}
