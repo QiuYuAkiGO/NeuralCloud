@@ -1,6 +1,6 @@
 {
   "baseline_id": "g0-20261024T182731Z",
-  "updated_at": "2026-10-24T18:34:44.021837+00:00",
+  "updated_at": "2026-10-24T19:18:55.762794+00:00",
   "production_changed": false,
   "stages": {
     "G0": {
@@ -8,22 +8,38 @@
       "evidence": "baseline-manifest.json"
     },
     "P0": {
-      "status": "NOT_STARTED"
+      "status": "RUNNING",
+      "checkpoint": "Pinned npm runtime contracts and real JSONL crash-resume tests passed on Windows. Linux validation and full legacy startup profiling remain.",
+      "evidence": "compatibility/harness in MistyAI; 01-production-observations.json in NeuralCloud"
     },
     "P1": {
-      "status": "NOT_STARTED"
+      "status": "RUNNING",
+      "checkpoint": "WAL authority, encrypted export, independent signed restore receipts and guarded detachment tested with synthetic data. Production local eviction remains disabled.",
+      "remaining": [
+        "legacy data converters",
+        "production copy inventory",
+        "controlled cold restore authorization"
+      ]
     },
     "P2": {
-      "status": "NOT_STARTED"
+      "status": "RUNNING",
+      "checkpoint": "Authenticated memory API, bounded retrieval, corrections and plugin outbox implemented. Full deployment composition and migration remain."
     },
     "P3": {
-      "status": "NOT_STARTED"
+      "status": "RUNNING",
+      "checkpoint": "One state owner; bounded drift, unique drive claim, cooldown/budgets, activity resource ownership and diminishing feedback tests passed."
     },
     "P4": {
-      "status": "NOT_STARTED"
+      "status": "RUNNING",
+      "checkpoint": "Default zero judge calls; action-bound single-use approvals; real Harness tool guards; explicit QQ send patch and durable ingress tested in isolation.",
+      "remaining": [
+        "authenticated creator notification/approval transport",
+        "audited browser/mobile tool bindings"
+      ]
     },
     "P5": {
-      "status": "NOT_STARTED"
+      "status": "BLOCKED",
+      "reason": "No isolated authorized real QQ identity/content route has been configured. Existing production role remains active; do not create a second normal Misty. Synthetic tests are not real-channel/media acceptance."
     },
     "P6": {
       "status": "BLOCKED",
@@ -33,5 +49,39 @@
   "cold_eviction": {
     "status": "BLOCKED",
     "reason": "I: is maintenance staging; H: and I: are the same USB disk. No second independent recovery copy is configured."
-  }
+  },
+  "implementation_commits": {
+    "neuralcloud": "4a65c7b",
+    "mistyai": "1882c13"
+  },
+  "tests": {
+    "windows": {
+      "neuralcloud_pytest": {
+        "passed": 11,
+        "exit_code": 0
+      },
+      "mistyai_pytest": {
+        "passed": 8,
+        "exit_code": 0
+      },
+      "nc_node": {
+        "passed": 3,
+        "exit_code": 0
+      },
+      "harness_qq_node": {
+        "passed": 11,
+        "exit_code": 0
+      },
+      "ruff": {
+        "exit_code": 0
+      },
+      "wheel_builds": {
+        "exit_code": 0
+      }
+    },
+    "linux": {
+      "status": "NOT_STARTED"
+    }
+  },
+  "next_step": "Validate isolated Linux execution; export owner contracts; implement bounded migration/checkpoint tooling and record remaining deployment gates."
 }

@@ -1,0 +1,131 @@
+{
+  "observed_at": "2026-10-24T18:40:00Z",
+  "restarted": false,
+  "warning": "systemd activation intervals and cgroup memory are observations, not per-module profiling or process-only RSS",
+  "units": {
+    "neuralcloud-cognitive.service": {
+      "systemd": {
+        "MainPID": "1256718",
+        "ExecMainStartTimestamp": "Fri 2026-10-23 17:08:32 CST",
+        "ExecMainStartTimestampMonotonic": "1582695038179",
+        "MemoryCurrent": "1884164096",
+        "ActiveState": "active",
+        "SubState": "running",
+        "ActiveEnterTimestampMonotonic": "1582705762080"
+      },
+      "startup_markers": [
+        {
+          "time_us": "1792716131794406",
+          "pid": "1125317",
+          "marker": "Started server process"
+        },
+        {
+          "time_us": "1792716131794901",
+          "pid": "1125317",
+          "marker": "Waiting for application startup."
+        },
+        {
+          "time_us": "1792716137414555",
+          "pid": "1125317",
+          "marker": "Application startup complete."
+        },
+        {
+          "time_us": "1792716770818263",
+          "pid": "1127854",
+          "marker": "Started server process"
+        },
+        {
+          "time_us": "1792716770818263",
+          "pid": "1127854",
+          "marker": "Waiting for application startup."
+        },
+        {
+          "time_us": "1792716775089569",
+          "pid": "1127854",
+          "marker": "Application startup complete."
+        },
+        {
+          "time_us": "1792720722293580",
+          "pid": "1149677",
+          "marker": "Started server process"
+        },
+        {
+          "time_us": "1792720722293580",
+          "pid": "1149677",
+          "marker": "Waiting for application startup."
+        },
+        {
+          "time_us": "1792720727609459",
+          "pid": "1149677",
+          "marker": "Application startup complete."
+        },
+        {
+          "time_us": "1792726720202398",
+          "pid": "1177475",
+          "marker": "Started server process"
+        },
+        {
+          "time_us": "1792726720202398",
+          "pid": "1177475",
+          "marker": "Waiting for application startup."
+        },
+        {
+          "time_us": "1792726725539737",
+          "pid": "1177475",
+          "marker": "Application startup complete."
+        },
+        {
+          "time_us": "1792746518498287",
+          "pid": "1256718",
+          "marker": "Started server process"
+        },
+        {
+          "time_us": "1792746518498287",
+          "pid": "1256718",
+          "marker": "Waiting for application startup."
+        },
+        {
+          "time_us": "1792746522696669",
+          "pid": "1256718",
+          "marker": "Application startup complete."
+        }
+      ]
+    },
+    "neuralcloud-runtime.service": {
+      "systemd": {
+        "MainPID": "1269800",
+        "ExecMainStartTimestamp": "Fri 2026-10-23 17:58:39 CST",
+        "ExecMainStartTimestampMonotonic": "1585702263126",
+        "MemoryCurrent": "40335237120",
+        "ActiveState": "active",
+        "SubState": "running",
+        "ActiveEnterTimestampMonotonic": "1586641657429"
+      },
+      "startup_markers": []
+    },
+    "neuralcloud-qq-direct.service": {
+      "systemd": {
+        "MainPID": "1398853",
+        "ExecMainStartTimestamp": "Sun 2026-10-25 02:13:41 CST",
+        "ExecMainStartTimestampMonotonic": "1701803559104",
+        "MemoryCurrent": "95969280",
+        "ActiveState": "active",
+        "SubState": "running",
+        "ActiveEnterTimestampMonotonic": "1701804756425"
+      },
+      "startup_markers": []
+    },
+    "neuralcloud-homeostasis.service": {
+      "systemd": {
+        "MainPID": "1098027",
+        "ExecMainStartTimestamp": "Fri 2026-10-23 06:18:07 CST",
+        "ExecMainStartTimestampMonotonic": "1543669747123",
+        "MemoryCurrent": "1319387136",
+        "ActiveState": "active",
+        "SubState": "running",
+        "ActiveEnterTimestampMonotonic": "1543690555764"
+      },
+      "startup_markers": []
+    }
+  }
+}
