@@ -66,6 +66,8 @@ def test_correction_invalidates_derived_memory_and_retraction_preserves_raw_hist
     )
     assert receipt["revision"] == 2
     assert store.read(summary["record_id"])["status"] == "SOURCE_CHANGED"
+    with pytest.raises(Refusal, match="SOURCE_UNAVAILABLE"):
+        store.ingest(event("stale-derived", kind="summary", source_ids=[summary["record_id"]]))
     assert not store.recall("星空")["items"]
     assert store.recall("海洋")["items"][0]["revision"] == 2
     store.correct(
@@ -80,6 +82,18 @@ def test_correction_invalidates_derived_memory_and_retraction_preserves_raw_hist
         )
     )
     assert store.read(original["record_id"])["status"] == "RETRACTED"
+    with pytest.raises(Refusal, match="SOURCE_UNAVAILABLE"):
+        store.correct(
+            Correction(
+                character_id="misty-test",
+                source_instance="fixture",
+                event_id="revive-derived",
+                record_id=summary["record_id"],
+                expected_revision=1,
+                content="reworded",
+                reason="cannot revive withdrawn evidence",
+            )
+        )
     assert (
         store.db.execute("SELECT count(*) FROM revisions WHERE record_id=?", (original["record_id"],)).fetchone()[0]
         == 3

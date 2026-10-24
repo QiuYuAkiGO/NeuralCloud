@@ -130,6 +130,8 @@ def test_export_retry_restore_and_detach_keep_local_originals(store, tmp_path):
     manager.detach(batch)
     manager.detach(batch)
     assert store.read(record["record_id"])["status"] == "ARCHIVED_OFFLINE"
+    with pytest.raises(Refusal, match="SOURCE_UNAVAILABLE"):
+        store.ingest(event("offline-derived", kind="summary", source_ids=[record["record_id"]]))
     assert not store.recall("秋语")["items"]
     with pytest.raises(Refusal, match="EVICTION_BLOCKED"):
         manager.evict(batch)

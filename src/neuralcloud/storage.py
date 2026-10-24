@@ -218,7 +218,7 @@ class MemoryStore:
                 return previous
             for ref in event.source_ids:
                 row = db.execute("SELECT status FROM records WHERE id=?", (ref,)).fetchone()
-                if not row or row[0] == "RETRACTED":
+                if not row or row[0] != "ONLINE":
                     raise Refusal("SOURCE_UNAVAILABLE")
             payload = event.model_dump(mode="json")
             db.execute(
@@ -245,6 +245,14 @@ class MemoryStore:
                 raise Refusal("OFFLINE_CORRECTION_REQUIRES_NEW_ONLINE_EVENT")
             if not command.retract and not command.content:
                 raise Refusal("CORRECTION_CONTENT_REQUIRED")
+            if (
+                not command.retract
+                and db.execute(
+                    "SELECT 1 FROM sources s JOIN records r ON r.id=s.source_id WHERE s.record_id=? AND r.status<>'ONLINE' LIMIT 1",
+                    (command.record_id,),
+                ).fetchone()
+            ):
+                raise Refusal("SOURCE_UNAVAILABLE")
             payload_row = db.execute(
                 "SELECT payload FROM revisions WHERE record_id=? AND revision=?", (command.record_id, row["revision"])
             ).fetchone()
