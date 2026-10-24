@@ -1,0 +1,9 @@
+{
+  "name": "@misty/dsh-neuralcloud",
+  "version": "1.0.0-alpha.1",
+  "type": "module",
+  "exports": "./src/index.mjs",
+  "engines": { "node": ">=24.9.0" },
+  "scripts": { "test": "node --test test/*.test.mjs" },
+  "peerDependencies": { "@deepseek-ai/cordis": "4.0.5", "@deepseek-ai/dsh-agent": "0.2.1-rc.3", "@deepseek-ai/dsh-tools": "0.2.1-rc.3" }
+}
