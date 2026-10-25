@@ -1,6 +1,6 @@
 {
   "baseline_id": "g0-20261024T182731Z",
-  "updated_at": "2026-10-25T09:11:20.600075+00:00",
+  "updated_at": "2026-10-25T09:21:17.889153+00:00",
   "production_changed": true,
   "stages": {
     "G0": {
@@ -122,9 +122,13 @@
   "onebot_production": {
     "status": "ACTIVE_REAL_ACCEPTANCE_PASSED",
     "account": "765681548",
-    "release": "/opt/misty/releases/resident-20261025-8056c3d",
+    "release": "/opt/misty/releases/resident-20261025-f1522d8",
     "scope_count": 3,
     "evidence": "validation-onebot-production-20261025.json",
-    "operations": "08-onebot-production.md"
+    "operations": "08-onebot-production.md",
+    "unmentioned_groups": [
+      "1044946257"
+    ],
+    "group104_auto_evidence": "validation-group104-auto-20261025.json"
   }
 }

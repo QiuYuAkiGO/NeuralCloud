@@ -1,0 +1,67 @@
+{
+  "status": "ACTIVE_GROUP104_AUTO_RECEIVE",
+  "requested_group": "1044946257",
+  "previous_release": "/opt/misty/releases/resident-20261025-8056c3d",
+  "release": "/opt/misty/releases/resident-20261025-f1522d8",
+  "changed_source_files": [
+    "MistyAI/compatibility/harness/resident/onebot.mjs",
+    "MistyAI/deploy/resident/README.md",
+    "MistyAI/deploy/resident/onebot.example.json"
+  ],
+  "started_at": "2026-10-25T09:20:34.755150+00:00",
+  "deployed_decoder_check": {
+    "group104_without_at": true,
+    "group106_without_at": false,
+    "self_echo": false,
+    "external_actions": 0
+  },
+  "gates": {
+    "status": "GATES_PASSED",
+    "external_actions": false
+  },
+  "finished_at": "2026-10-25T09:20:34.952595+00:00",
+  "harness": {
+    "status": "READY",
+    "pending": 0,
+    "blocked": 0,
+    "bytes": 0,
+    "input_pending": 0,
+    "active": 3,
+    "channels": {
+      "official": {
+        "ready": true
+      },
+      "onebot": {
+        "ready": true,
+        "account_id": "765681548",
+        "connected": true,
+        "received": 0,
+        "accepted": 0,
+        "ignored": 0,
+        "ingress_errors": 0,
+        "disconnects": 0,
+        "sends": 0,
+        "last_error": null,
+        "queued": 0
+      }
+    },
+    "observed_at": 1792920075326
+  },
+  "unmentioned_groups": [
+    "1044946257"
+  ],
+  "services": {
+    "misty-harness": "active",
+    "misty-state": "active",
+    "neuralcloud-memory": "active",
+    "misty-operator-notifier": "active",
+    "nc_765681548": "active"
+  },
+  "verified_at": "2026-10-25T09:21:17.889153+00:00",
+  "running_process_release_confirmed": true,
+  "ci": {
+    "commit": "f1522d8b1dbf80f1ea768191f7e66f07a381e978",
+    "conclusion": "success",
+    "url": "https://github.com/QiuYuAkiGO/MistyAI/actions/runs/40180154510"
+  }
+}
