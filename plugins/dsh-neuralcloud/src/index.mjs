@@ -76,6 +76,18 @@ export class DurableOutbox {
     if (this.db.prepare('PRAGMA user_version').get().user_version !== 1) { this.db.close(); throw new Error('OUTBOX_MIGRATION_REQUIRED'); }
   }
   close() { this.db.close(); }
+  status() { return this.db.prepare('SELECT count(*) AS pending, coalesce(sum(attempts>=5),0) AS blocked, coalesce(sum(bytes),0) AS bytes FROM queue').get(); }
+  blocked(limit = 32) {
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new Error('BATCH_BOUNDS');
+    // Maintenance metadata only; neither credentials nor memory bodies enter diagnostics.
+    return this.db.prepare('SELECT id,hash,attempts,retry_at,bytes FROM queue WHERE attempts>=5 ORDER BY rowid LIMIT ?').all(limit);
+  }
+  retry(id, expectedHash) {
+    // The offline operator command owns authentication/audit. No role tool exposes this.
+    const changed = this.db.prepare('UPDATE queue SET attempts=0,retry_at=0 WHERE id=? AND hash=? AND attempts>=5').run(id, expectedHash);
+    if (changed.changes !== 1) throw new Error('OUTBOX_RECONCILIATION_CONFLICT');
+    return { status: 'RETRY_SCHEDULED', action_replayed: false };
+  }
   cursor(session) { return this.db.prepare('SELECT seq FROM cursors WHERE session=?').get(session)?.seq ?? 0; }
   stage(session, nextSeq, events) {
     this.db.exec('BEGIN IMMEDIATE');
@@ -107,7 +119,7 @@ export class DurableOutbox {
         this.db.prepare('UPDATE queue SET attempts=attempts+1,retry_at=? WHERE id=?').run(this.clock() + Math.min(60000, 1000 * 2 ** row.attempts), row.id);
       }
     }
-    return this.db.prepare('SELECT count(*) AS pending, coalesce(sum(attempts>=5),0) AS blocked FROM queue').get();
+    return this.status();
   }
 }
 

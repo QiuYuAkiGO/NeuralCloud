@@ -51,3 +51,22 @@ test('disconnected cache withholds possibly corrected text and does not claim ab
   assert.deepEqual((await client.recall('name')).items, []);
   assert.equal((await client.recall('unknown')).status, 'CACHE_MISS');
 });
+
+test('five failed deliveries stop; hash-bound operator retry preserves the exact memory event', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'nc-outbox-'));
+  let now = 0, calls = 0;
+  const queue = new DurableOutbox(join(root, 'queue.db'), { clock: () => now });
+  try {
+    const event = { source_instance: 'fixture', event_id: 'retry', content: 'unchanged evidence' };
+    queue.stage('s', 1, [event]);
+    const offline = { request: async () => { calls++; throw new Error('offline'); } };
+    for (let attempt = 0; attempt < 6; attempt++) { now += 60000; await queue.flush(offline); }
+    assert.equal(calls, 5); assert.equal(queue.status().blocked, 1);
+    const [blocked] = queue.blocked();
+    assert.equal(blocked.body, undefined);
+    assert.throws(() => queue.retry(blocked.id, '0'.repeat(64)), /CONFLICT/);
+    queue.retry(blocked.id, blocked.hash);
+    assert.equal((await queue.flush({ request: async (_path, body) => { assert.deepEqual(body, event); return { status: 'DURABLE' }; } })).pending, 0);
+    assert.equal(queue.cursor('s'), 1);
+  } finally { queue.close(); cleanup(root); }
+});
