@@ -1,5 +1,7 @@
 # 隔离实施与验收记录（2026-10-25）
 
+本文件保留当时的检查点；最新常驻编排进度见 [04-managed-harness.md](04-managed-harness.md) 与 progress.json。
+
 当前结论：核心服务、数据维护和 Harness 薄适配已实现并通过隔离验证；**整份方案未完成，生产尚未切换**。真实模型/内容工具接线、认证用户通知、P5 实机验收及 P6 单活切换仍有待办。实际状态以同目录 `progress.json` 为准。
 
 两仓库在 `I:\MistyMaintenance\worktrees` 下使用 `codex/misty-harness-implementation-20261025`，从已核实的 Linux 基线开发。原 D: NeuralCloud 仍在用户指定的方案分支；原有 1 个已跟踪改动和 57 个未跟踪文件保留，MistyAI 原有 3 个已跟踪改动和 151 个未跟踪文件保留。本轮提交尚未推送。

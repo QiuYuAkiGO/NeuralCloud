@@ -2,20 +2,20 @@
   "format": "misty-isolated-validation-v1",
   "created_at": "2026-10-24T20:12:01.415689+00:00",
   "implementation_commits": {
-    "neuralcloud": "72cd497c39d107c5dbb971932f7d79bccd97d499",
-    "mistyai": "780293f2e2a09646594c4849eb8495c0d3413d7b"
+    "neuralcloud": "a7e287a0dddbe92ae6e4eb1b85907c19ab69cd98",
+    "mistyai": "b14840cbb2f0aabad6639d57959318c5e76123c0"
   },
   "production_changed": false,
   "real_external_messages": 0,
   "production_model_calls": 0,
   "counts_per_platform": {
     "neuralcloud_pytest": 15,
-    "mistyai_pytest": 10,
-    "nc_node": 3,
-    "harness_qq_node": 12,
-    "tcp_services_harness": 1
+    "mistyai_pytest": 11,
+    "nc_node": 4,
+    "harness_qq_node": 22,
+    "tcp_services_harness": 2
   },
-  "total_per_platform": 41,
+  "total_per_platform": 54,
   "windows": {
     "python": "3.12.13",
     "node": "24.15.0",
@@ -28,63 +28,63 @@
   "linux": {
     "root": "/tmp/misty-refactor-20261025-4wd4l7kf",
     "uid": 1000,
-    "source_bundle_sha256": "fd798eef9a0f0f48b8d10cf62c2a471650be0752b4ee931c63792cb9c28b51d8",
+    "source_bundle_sha256": "6987af26e5121875913b2f00bfba19a4c230738b6d4368a0b5e44fd28db3ea61",
     "production_changed": false,
     "tests": {
       "NeuralCloud_pytest": {
         "exit_code": 0,
-        "elapsed_seconds": 0.901,
-        "output": "...............                                                          [100%]\n=============================== warnings summary ===============================\n.venv/lib/python3.12/site-packages/fastapi/testclient.py:1\n  /tmp/misty-refactor-20261025-4wd4l7kf/NeuralCloud/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n.venv/lib/python3.12/site-packages/starlette/testclient.py:53\n  /tmp/misty-refactor-20261025-4wd4l7kf/NeuralCloud/.venv/lib/python3.12/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.\n    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n15 passed, 2 warnings in 0.63s\n"
+        "elapsed_seconds": 0.888,
+        "output": "...............                                                          [100%]\n=============================== warnings summary ===============================\n.venv/lib/python3.12/site-packages/fastapi/testclient.py:1\n  /tmp/misty-refactor-20261025-4wd4l7kf/NeuralCloud/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n.venv/lib/python3.12/site-packages/starlette/testclient.py:53\n  /tmp/misty-refactor-20261025-4wd4l7kf/NeuralCloud/.venv/lib/python3.12/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.\n    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n15 passed, 2 warnings in 0.62s\n"
       },
       "NeuralCloud_contracts": {
         "exit_code": 0,
-        "elapsed_seconds": 0.256,
+        "elapsed_seconds": 0.253,
         "output": "{\"generated_contracts\": 15, \"check\": true}\n"
       },
       "MistyAI_pytest": {
         "exit_code": 0,
-        "elapsed_seconds": 0.501,
-        "output": "..........                                                               [100%]\n=============================== warnings summary ===============================\n.venv/lib/python3.12/site-packages/fastapi/testclient.py:1\n  /tmp/misty-refactor-20261025-4wd4l7kf/MistyAI/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n10 passed, 1 warning in 0.29s\n"
+        "elapsed_seconds": 0.513,
+        "output": "...........                                                              [100%]\n=============================== warnings summary ===============================\n.venv/lib/python3.12/site-packages/fastapi/testclient.py:1\n  /tmp/misty-refactor-20261025-4wd4l7kf/MistyAI/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n11 passed, 1 warning in 0.30s\n"
       },
       "MistyAI_contracts": {
         "exit_code": 0,
-        "elapsed_seconds": 0.231,
-        "output": "{\"generated_contracts\": 15, \"check\": true}\n"
+        "elapsed_seconds": 0.23,
+        "output": "{\"generated_contracts\": 17, \"check\": true}\n"
       },
       "NeuralCloud_ruff": {
         "exit_code": 0,
-        "elapsed_seconds": 0.022,
+        "elapsed_seconds": 0.02,
         "output": "All checks passed!\n"
       },
       "MistyAI_ruff": {
         "exit_code": 0,
-        "elapsed_seconds": 0.023,
+        "elapsed_seconds": 0.022,
         "output": "All checks passed!\n"
       },
       "npm_ci": {
         "exit_code": 0,
-        "elapsed_seconds": 0.457,
-        "output": "\nadded 78 packages in 406ms\n"
+        "elapsed_seconds": 1.487,
+        "output": "\nadded 166 packages in 1s\nnpm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead\n"
       },
       "qq_patch": {
         "exit_code": 0,
-        "elapsed_seconds": 0.028,
+        "elapsed_seconds": 0.031,
         "output": "{\"version\":\"0.5.2\",\"patched\":6,\"explicit_send\":true,\"real_channel_tested\":false}\n"
       },
       "harness_node_tests": {
         "exit_code": 0,
-        "elapsed_seconds": 0.329,
-        "output": "\n> test\n> node --test test/*.test.mjs\n\n✔ public owner handle: inject is idle, followup wakes, stable IDs survive consumption (20.974997ms)\n✔ dynamic context refresh preserves literal external braces and fixed persona (3.287618ms)\n✔ cancel at idle does not poison later work (4.631868ms)\n✔ Misty guard actually denies unreviewed tools inside the pinned Harness pipeline (16.102087ms)\n✔ delivery records UNKNOWN after SDK ambiguity and WAIT never touches transport (0.215554ms)\n✔ durable ingress does not replay a PREPARED input after a process interruption (12.621699ms)\n✔ a real SDK receipt stays SENT even when the state receipt acknowledgment is lost (0.444863ms)\n✔ real JSONL persistence restores pending input after a process exits without disposal (137.758776ms)\n✔ actual patched QQ router emits no implicit WAIT, chunk, tool or turn-error message (0.548261ms)\n✔ only explicit allowlisted SDK delivery returns an external receipt (0.620461ms)\n✔ session-creation failure does not trigger a hidden fallback QQ reply (0.441888ms)\n✔ QQ replay preserves the platform input identity rather than minting a random message ID (0.593539ms)\nℹ tests 12\nℹ suites 0\nℹ pass 12\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 241.606804\n"
+        "elapsed_seconds": 0.909,
+        "output": "\n> test\n> node --test test/*.test.mjs\n\n✔ public owner handle: inject is idle, followup wakes, stable IDs survive consumption (21.011556ms)\n✔ dynamic context refresh preserves literal external braces and fixed persona (4.512034ms)\n✔ cancel at idle does not poison later work (5.323458ms)\n✔ launcher rejects unsafe endpoints, implicit destinations, ambiguous credentials and changed release config before network use (3.402773ms)\n✔ Misty guard actually denies unreviewed tools inside the pinned Harness pipeline (16.821854ms)\n✔ delivery records UNKNOWN after SDK ambiguity and WAIT never touches transport (0.247211ms)\n✔ durable ingress does not replay a PREPARED input after a process interruption (22.45483ms)\n✔ a real SDK receipt stays SENT even when the state receipt acknowledgment is lost (0.342379ms)\n✔ real JSONL persistence restores pending input after a process exits without disposal (143.132511ms)\n✔ actual patched QQ router emits no implicit WAIT, chunk, tool or turn-error message (0.568712ms)\n✔ only explicit allowlisted SDK delivery returns an external receipt (0.462534ms)\n✔ session-creation failure does not trigger a hidden fallback QQ reply (0.693955ms)\n✔ QQ replay preserves the platform input identity rather than minting a random message ID (0.284011ms)\n✔ explicit ingress index migration preserves pending raw input and accepted dedupe receipts (32.785657ms)\n✔ resident single owner and missing OPEN history fail closed without an empty replacement (46.338728ms)\n✔ committed ingress is reconciled and acknowledged before bounded session rotation; old log remains (89.465291ms)\n✔ checkpointed PREPARED inbox survives process exit; restart reconciles without a duplicate wake (210.519955ms)\n✔ one dedicated autonomy handle owns the opportunity; idle does not settle or repeatedly wake it (49.909855ms)\n✔ patched QQ delegates lifecycle failures instead of falling back to create or cancelling idle input (0.495505ms)\n✔ operator stop parks claimed input durably instead of dropping it at the rejected step (39.958718ms)\n✔ raw QQ input survives unavailable state during first bind and only an undispatched input is retried (50.58195ms)\n✔ locked existing pi-ai adapter resolves offline and streams the actual protocol against a local fixture (113.886011ms)\nℹ tests 22\nℹ suites 0\nℹ pass 22\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 816.641643\n"
       },
       "nc_node_tests": {
         "exit_code": 0,
-        "elapsed_seconds": 0.156,
-        "output": "\n> @misty/dsh-neuralcloud@1.0.0-alpha.1 test\n> node --test test/*.test.mjs\n\n✔ flush failure never advances the durable consumer cursor (7.297312ms)\n✔ outbox survives restart, refuses overflow, and only removes durable acknowledgments (10.866821ms)\n✔ disconnected cache withholds possibly corrected text and does not claim absence (12.110127ms)\nℹ tests 3\nℹ suites 0\nℹ pass 3\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 69.960553\n"
+        "elapsed_seconds": 0.174,
+        "output": "\n> @misty/dsh-neuralcloud@1.0.0-alpha.1 test\n> node --test test/*.test.mjs\n\n✔ flush failure never advances the durable consumer cursor (7.062745ms)\n✔ outbox survives restart, refuses overflow, and only removes durable acknowledgments (9.988437ms)\n✔ disconnected cache withholds possibly corrected text and does not claim absence (12.086965ms)\n✔ five failed deliveries stop; hash-bound operator retry preserves the exact memory event (11.069085ms)\nℹ tests 4\nℹ suites 0\nℹ pass 4\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 85.874247\n"
       },
       "tcp_services_harness": {
         "exit_code": 0,
-        "elapsed_seconds": 1.464,
-        "output": "✔ actual Python HTTP owners + Harness + patched QQ + durable outbox + content appraisal (154.472207ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 282.27118\n{\"tcp_service_integration_exit_code\": 0, \"real_external_actions\": 0}\n"
+        "elapsed_seconds": 1.583,
+        "output": "✔ actual Python HTTP owners + Harness + patched QQ + durable outbox + content appraisal (150.581744ms)\n✔ managed launcher composition resumes the same authorized QQ session across actual service connections (88.636829ms)\nℹ tests 2\nℹ suites 0\nℹ pass 2\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 408.875137\n{\"tcp_service_integration_exit_code\": 0, \"real_external_actions\": 0}\n"
       }
     },
     "isolated_node": {
@@ -430,9 +430,9 @@
   ],
   "limitations": [
     "No real QQ/media/model-provider acceptance",
-    "No production Harness launcher or session-rotation activation",
-    "No authenticated creator notification transport",
-    "No production cutover or cold eviction",
+    "Managed launcher and rotation validated only in isolation; no production activation",
+    "No authenticated creator notification or audited live mobile/browser transport",
+    "No production cutover, independent recovery copy or cold eviction",
     "No physical cold-cache or comparable full old/new startup profile"
   ],
   "wheel_artifacts": {
@@ -445,10 +445,21 @@
     },
     "MistyAI": {
       "file": "mistyai-1.0.0a1-py3-none-any.whl",
-      "sha256": "f5a703f0a33cdab8c8337b84b79a7e28d51d700f3a84f077484fa201aaac68b3",
+      "sha256": "397774295c23e6749024b187e1ece80e6cd3bb3b8f7bf8277dd24949bd7f0668",
       "source_equivalence": true,
       "python_module_count": 8,
       "legacy_default_modules": 0
     }
+  },
+  "updated_at": "2026-10-25T02:01:05.670127+00:00",
+  "managed_harness": {
+    "status": "ISOLATED_VALIDATION_PASSED",
+    "ingress_format": 3,
+    "session_rotation": "BOUNDED_WITH_DURABLE_HANDOFF",
+    "model_adapter": "@deepseek-ai/dsh-llm-pi-ai@0.2.1-rc.3",
+    "provider_validation": "LOCAL_SYNTHETIC_SSE_ONLY",
+    "github_actions_run": false,
+    "production_pids_unchanged": true,
+    "cold_session_files_removed": 0
   }
 }

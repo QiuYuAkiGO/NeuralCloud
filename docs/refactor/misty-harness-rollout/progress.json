@@ -1,6 +1,6 @@
 {
   "baseline_id": "g0-20261024T182731Z",
-  "updated_at": "2026-10-24T20:12:01.415689+00:00",
+  "updated_at": "2026-10-25T02:01:05.670127+00:00",
   "production_changed": false,
   "stages": {
     "G0": {
@@ -9,10 +9,10 @@
     },
     "P0": {
       "status": "RUNNING",
-      "checkpoint": "Pinned npm Harness/QQ contracts, real JSONL crash-resume and actual TCP composition pass on Windows and Linux. Representative bounded-memory startup measurements recorded.",
+      "checkpoint": "Pinned Harness/QQ and existing pi-ai adapter pass Windows/Linux contracts and local protocol tests; actual production route metadata inspected read-only.",
       "remaining": [
         "Comparable segmented legacy/new Linux startup profiling",
-        "Actual production model adapter and browser/mobile compatibility verification"
+        "Live model-provider and audited browser/mobile compatibility acceptance"
       ],
       "evidence": "validation-20261025.json"
     },
@@ -27,18 +27,19 @@
     },
     "P2": {
       "status": "RUNNING",
-      "checkpoint": "Authenticated global memory API, schema/OpenAPI/types, corrections, scoped tools and durable QQ/content/delivery outbox pass real-service integration.",
+      "checkpoint": "Managed gated composition, bounded background drain, indexed durable ingress before first bind, log-based reconciliation, safe session rotation and offline audited outbox retry pass isolation tests.",
       "remaining": [
-        "Production Harness composition, bounded background drains and blocked-outbox operator reconciliation",
-        "Complete session lifecycle collection and safe retirement/rotation"
+        "Operator workflow for bound PREPARED input without a matching committed log",
+        "Deployment monitoring/notification and production session lifecycle acceptance",
+        "Closed-session side-copy inventory, retention and gated retirement cleanup"
       ]
     },
     "P3": {
       "status": "RUNNING",
-      "checkpoint": "Single state owner, drift limits, persistent budgets/cooldowns, drive claims, activity resources, evidence-based appraisal and operator UNKNOWN settlement tested.",
+      "checkpoint": "Dedicated autonomy handle, bounded rotation, current activity/drive/change cursor context and pending-input-preserving shutdown validated; idle never settles a drive.",
       "remaining": [
-        "Connect dedicated autonomous handle and bounded session rotation in the final launcher",
-        "Production persona import and explicit old-state reset/mapping report"
+        "Production persona import and explicit old-state reset/mapping report",
+        "Live model/capability autonomous lifecycle and long-running acceptance; autonomous defaults off"
       ]
     },
     "P4": {
@@ -63,20 +64,20 @@
     "reason": "I: is maintenance staging; H: and I: are the same USB disk. No second independent recovery copy is configured."
   },
   "implementation_commits": {
-    "neuralcloud": "72cd497c39d107c5dbb971932f7d79bccd97d499",
-    "mistyai": "780293f2e2a09646594c4849eb8495c0d3413d7b"
+    "neuralcloud": "a7e287a0dddbe92ae6e4eb1b85907c19ab69cd98",
+    "mistyai": "b14840cbb2f0aabad6639d57959318c5e76123c0"
   },
   "tests": {
     "windows": {
       "status": "PASSED",
       "counts": {
         "neuralcloud_pytest": 15,
-        "mistyai_pytest": 10,
-        "nc_node": 3,
-        "harness_qq_node": 12,
-        "tcp_services_harness": 1
+        "mistyai_pytest": 11,
+        "nc_node": 4,
+        "harness_qq_node": 22,
+        "tcp_services_harness": 2
       },
-      "total": 41,
+      "total": 54,
       "ruff_exit_code": 0,
       "contract_drift_exit_code": 0,
       "wheel_build_exit_code": 0
@@ -85,19 +86,20 @@
       "status": "PASSED",
       "counts": {
         "neuralcloud_pytest": 15,
-        "mistyai_pytest": 10,
-        "nc_node": 3,
-        "harness_qq_node": 12,
-        "tcp_services_harness": 1
+        "mistyai_pytest": 11,
+        "nc_node": 4,
+        "harness_qq_node": 22,
+        "tcp_services_harness": 2
       },
-      "total": 41,
-      "source_bundle_sha256": "fd798eef9a0f0f48b8d10cf62c2a471650be0752b4ee931c63792cb9c28b51d8",
+      "total": 54,
+      "source_bundle_sha256": "6987af26e5121875913b2f00bfba19a4c230738b6d4368a0b5e44fd28db3ea61",
       "python": "3.12.3",
       "isolated_node": "24.15.0",
       "all_steps_exit_code": 0
     }
   },
-  "next_step": "Configure the independent recovery destination and authenticated P5 recipient/capability route, then finish the production Harness launcher and session lifecycle acceptance. Do not bypass the recorded gates.",
+  "next_step": "Continue isolated persona/state migration and archive maintenance work. User deferred real recipient/capability and independent backup configuration; keep P5/P6 and cold eviction blocked.",
   "overall_status": "PARTIAL_IMPLEMENTATION_VALIDATED_PRODUCTION_BLOCKED",
-  "background_execution": false
+  "background_execution": false,
+  "user_direction": "Independent backup and isolated real test identity are not configured; continue isolated implementation and tests."
 }
