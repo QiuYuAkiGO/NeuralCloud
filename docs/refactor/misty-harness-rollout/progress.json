@@ -1,6 +1,6 @@
 {
   "baseline_id": "g0-20261024T182731Z",
-  "updated_at": "2026-10-25T02:01:05.670127+00:00",
+  "updated_at": "2026-10-25T02:35:07.017386+00:00",
   "production_changed": false,
   "stages": {
     "G0": {
@@ -18,11 +18,11 @@
     },
     "P1": {
       "status": "RUNNING",
-      "checkpoint": "Verified real SQLite snapshot conversion: 39811 records, 39816 version hashes/content checked. Bounded WAL memory, synthetic encrypted archive and signed scoped restore tests pass.",
+      "checkpoint": "Real memory migration remains verified; bounded archive export jobs, capacity pause/retries and signed expiring encrypted temporary views validated on Windows/Linux.",
       "remaining": [
         "Independent cold/recovery copy and key recovery on another physical device",
         "Production side-copy inventory and local eviction implementation gate",
-        "Temporary authorized-view expiry cleanup and deployed capacity/archive scheduling"
+        "Reviewed retention/candidate policy, scheduler, optional collection pressure handling and maintenance alerts"
       ]
     },
     "P2": {
@@ -36,9 +36,9 @@
     },
     "P3": {
       "status": "RUNNING",
-      "checkpoint": "Dedicated autonomy handle, bounded rotation, current activity/drive/change cursor context and pending-input-preserving shutdown validated; idle never settles a drive.",
+      "checkpoint": "Actual frozen persona and current SQLite homeostasis projection migrated in isolation; exact persona retained, explicit new-unit reset, stopped state and UNKNOWN reconciliation blocker verified; persona_history event ingested idempotently into a clone of 39811 real records.",
       "remaining": [
-        "Production persona import and explicit old-state reset/mapping report",
+        "Complete stopped-writer legacy execution ledger/inbox/outbox/cursor reconciliation and fresh persona verification before cutover",
         "Live model/capability autonomous lifecycle and long-running acceptance; autonomous defaults off"
       ]
     },
@@ -56,7 +56,7 @@
     },
     "P6": {
       "status": "BLOCKED",
-      "reason": "No second independent verified recovery copy, complete cross-service stopped-writer snapshot, full migration/rollback drill or P5 acceptance. Production cutover and cold eviction were not executed."
+      "reason": "No second independent verified recovery copy, complete cross-service stopped-writer snapshot, full legacy-ledger reconciliation/rollback drill or P5 acceptance. The isolated persona/state bundle remains stopped. Production cutover and cold eviction were not executed."
     }
   },
   "cold_eviction": {
@@ -64,20 +64,20 @@
     "reason": "I: is maintenance staging; H: and I: are the same USB disk. No second independent recovery copy is configured."
   },
   "implementation_commits": {
-    "neuralcloud": "a7e287a0dddbe92ae6e4eb1b85907c19ab69cd98",
-    "mistyai": "b14840cbb2f0aabad6639d57959318c5e76123c0"
+    "neuralcloud": "94f58e150b8834354e9cf868a2edad23404a4add",
+    "mistyai": "24b2c69d4a1f4a5c429a861c30079c8b31de31c9"
   },
   "tests": {
     "windows": {
       "status": "PASSED",
       "counts": {
-        "neuralcloud_pytest": 15,
-        "mistyai_pytest": 11,
+        "neuralcloud_pytest": 28,
+        "mistyai_pytest": 19,
         "nc_node": 4,
         "harness_qq_node": 22,
         "tcp_services_harness": 2
       },
-      "total": 54,
+      "total": 75,
       "ruff_exit_code": 0,
       "contract_drift_exit_code": 0,
       "wheel_build_exit_code": 0
@@ -85,21 +85,28 @@
     "linux": {
       "status": "PASSED",
       "counts": {
-        "neuralcloud_pytest": 15,
-        "mistyai_pytest": 11,
+        "neuralcloud_pytest": 28,
+        "mistyai_pytest": 19,
         "nc_node": 4,
         "harness_qq_node": 22,
         "tcp_services_harness": 2
       },
-      "total": 54,
-      "source_bundle_sha256": "6987af26e5121875913b2f00bfba19a4c230738b6d4368a0b5e44fd28db3ea61",
+      "total": 75,
+      "source_bundle_sha256": "f8c2fb525545b2bd2d4a9e28bd4f23fe5ca92513dd75be2c46ee3fea89a79da4",
       "python": "3.12.3",
       "isolated_node": "24.15.0",
       "all_steps_exit_code": 0
     }
   },
-  "next_step": "Continue isolated persona/state migration and archive maintenance work. User deferred real recipient/capability and independent backup configuration; keep P5/P6 and cold eviction blocked.",
+  "next_step": "Persona/state migration and archive maintenance isolation checkpoint completed. Remaining isolated work includes comparable startup profiling, capability compatibility, closed-session copy inventory and operator workflows; keep production unchanged and P5/P6/cold eviction blocked.",
   "overall_status": "PARTIAL_IMPLEMENTATION_VALIDATED_PRODUCTION_BLOCKED",
   "background_execution": false,
-  "user_direction": "Independent backup and isolated real test identity are not configured; continue isolated implementation and tests."
+  "user_direction": "Continue persona/legacy-state migration and archive maintenance implementation/testing in isolation; no production cutover. Independent recovery destination and real isolated QQ acceptance configuration remain deferred.",
+  "isolated_persona_state_archive": {
+    "status": "COMPLETE_ISOLATED",
+    "evidence": "05-persona-state-archive.md",
+    "validation": "validation-20261025.json",
+    "production_cutover": false,
+    "full_legacy_execution_reconciliation": false
+  }
 }

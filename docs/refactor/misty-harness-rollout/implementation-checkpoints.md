@@ -13,3 +13,5 @@ Baseline: g0-20261024T182731Z. Work only in isolated implementation branches.
 Budgets: tests use temporary synthetic data; no production model calls, test messages, database writes or restarts. Package installation stays inside maintenance worktrees. Each network operation has a bounded timeout; retry at most twice. Synthetic archive batches are bounded by record and byte limits. Cold production eviction remains disabled.
 
 On interruption: read progress.json, inspect both Git states, reuse committed checkpoints and verified archives. Never replay an unknown external effect. Source snapshots are not a consistent live business-data backup.
+
+后续已完成的人格、旧状态与归档维护隔离检查点见 [05-persona-state-archive.md](05-persona-state-archive.md)。生产切换和本地淘汰仍受门禁约束。

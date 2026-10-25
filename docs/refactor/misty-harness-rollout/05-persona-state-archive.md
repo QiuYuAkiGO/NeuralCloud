@@ -2,6 +2,8 @@
 
 本记录承接 [04-managed-harness.md](04-managed-harness.md)。本轮按用户指示完成这三部分的隔离实现和测试，**未切换生产、未启动第二个正式角色、未发送真实 QQ 消息、未调用生产模型**。P1/P3 的本轮隔离检查点通过；整体验收仍为 `PARTIAL_IMPLEMENTATION_VALIDATED_PRODUCTION_BLOCKED`。
 
+本轮实现提交：NeuralCloud `94f58e150b8834354e9cf868a2edad23404a4add`；MistyAI `24b2c69d4a1f4a5c429a861c30079c8b31de31c9`。MistyAI CI 固定配对前者；当前仅本地提交，尚未推送或触发 GitHub Actions。
+
 ## 人格与旧状态迁移
 
 MistyAI 新增 `python -m mistyai.integration.migration`。输入为冻结的 `preset-v1` 与 `homeostasis-state-v3` JSON，分别绑定 SHA256；维护进程可读取最大 256 MiB 的旧 preset、2 MiB 的当前状态，普通启动不导入旧 GUI/harness，也不加载整个历史文件。
