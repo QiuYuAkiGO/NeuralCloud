@@ -1,0 +1,142 @@
+{
+  "status": "PASSED_REAL_ONEBOT_PRODUCTION_ACCEPTANCE",
+  "verified_at": "2026-10-25T09:08:02.204Z",
+  "account": "765681548",
+  "napcat_version": "4.18.41",
+  "release": "/opt/misty/releases/resident-20261025-8056c3d",
+  "commits": {
+    "MistyAI": "8056c3dd574c32c093d503050299e765a501278f",
+    "NeuralCloud": "70d68c2c7c5d8a9d9b65a4eae0a91802322b187a"
+  },
+  "scopes": [
+    "c2c:2285027817",
+    "group:1044946257",
+    "group:1060979317"
+  ],
+  "group_requires_mention": true,
+  "model": {
+    "provider": "resident-main",
+    "id": "deepseek-flash"
+  },
+  "cases": [
+    {
+      "scope": "c2c:2285027817",
+      "nonce": "OB-20261025-A",
+      "status": "PASSED",
+      "incoming_message_id": "1946797789",
+      "sender_id": "2285027817",
+      "input_id": "1bb8a46bc8c818b1ea371a934e754f38f31164335cde9d9e64e7ad80ef68feed",
+      "ingress_status": "ACCEPTED",
+      "session_id": "deaaba73-91f9-4694-8aea-bc61ccc8a42a",
+      "assistant_events": 3,
+      "model_turn_completed": true,
+      "explicit_send_calls": 1,
+      "intent_id": "b05561092e4c255addb92e18f95acc787269013cef14aeff50a28e8b8ae960ec",
+      "external_id": "onebot:765681548:1622929974",
+      "platform_readback_confirmed": true,
+      "response_sha256": "394f9b3342182ca75889e5b9596467f455034a2575b18276e22f993c311228e6",
+      "reply_created_at": 1792918920.1231833,
+      "latency_seconds": 4.123183250427246,
+      "incoming_memory_record": "6d7d41ddfe0cf633b23b4c9dafc1674e82bf40dfc873233c675bcaaf27470e71",
+      "reply_memory_record": "5cffd49dd66014c3deff9fb370ee108e596a05fb4e66b418cfeefba875914bd2"
+    },
+    {
+      "scope": "group:1044946257",
+      "nonce": "OB-20261025-B",
+      "status": "PASSED",
+      "incoming_message_id": "120834643",
+      "sender_id": "2285027817",
+      "input_id": "bbf21702c8ad0397e24b094abbca11de70e384cc468edf507aba7d83828c9ee3",
+      "ingress_status": "ACCEPTED",
+      "session_id": "6125e3f3-4e34-447e-9a60-a1f0826bca69",
+      "assistant_events": 3,
+      "model_turn_completed": true,
+      "explicit_send_calls": 1,
+      "intent_id": "bcc330092eb5a508b2d9310d6a1bba88caff0f596030cb4cb063c3492943cb9f",
+      "external_id": "onebot:765681548:1359219008",
+      "platform_readback_confirmed": true,
+      "response_sha256": "22042bff3a159304f08673cb99315e87b5d0ca0a3124c9a0a28495ed061ccbd5",
+      "reply_created_at": 1792918904.5548606,
+      "latency_seconds": 5.554860591888428,
+      "incoming_memory_record": "610142523bf386154830fed418826b638d61e9b226ee82dd738c57cb42599a93",
+      "reply_memory_record": "03f073586f5f67424aca8953433185415381822c99a1ce7aa0f9b37e0157001e"
+    },
+    {
+      "scope": "group:1060979317",
+      "nonce": "OB-20261025-C",
+      "status": "PASSED",
+      "incoming_message_id": "278534499",
+      "sender_id": "2285027817",
+      "input_id": "9c0038b10f43c134ae2ad915e661905611ac2337abbb23aad1b0d0fd67a52f91",
+      "ingress_status": "ACCEPTED",
+      "session_id": "1ea9c8e9-6472-4473-9040-abbc185bb99d",
+      "assistant_events": 4,
+      "model_turn_completed": true,
+      "explicit_send_calls": 1,
+      "intent_id": "0355fa792765e35c4c4a9fecd2416df5f837da29337c49c56ea8aea0fecd9f8e",
+      "external_id": "onebot:765681548:1995840235",
+      "platform_readback_confirmed": true,
+      "response_sha256": "1c8195e6f3132c312702e3df231745cd1eab48e036090d71d32eeb47905df5bb",
+      "reply_created_at": 1792919030.1350744,
+      "latency_seconds": 4.1350743770599365,
+      "incoming_memory_record": "e609d26109023207d5018d7e36069bafcc43c5d37a4806c936b6d833feb3026d",
+      "reply_memory_record": "c56ea5f9f378892de2d50e3b73018640cb222d168c22a5a1907bdd69e54a90ff"
+    }
+  ],
+  "unsettled_deliveries": 0,
+  "harness": {
+    "status": "READY",
+    "pending": 0,
+    "blocked": 0,
+    "bytes": 0,
+    "input_pending": 0,
+    "active": 3,
+    "channels": {
+      "official": {
+        "ready": true
+      },
+      "onebot": {
+        "ready": true,
+        "account_id": "765681548",
+        "connected": true,
+        "received": 8,
+        "accepted": 3,
+        "ignored": 5,
+        "ingress_errors": 0,
+        "disconnects": 0,
+        "sends": 3,
+        "last_error": null,
+        "queued": 0
+      }
+    },
+    "observed_at": 1792919277494
+  },
+  "validation": {
+    "windows_harness_tests": 31,
+    "linux_release_harness_tests": 31,
+    "actual_python_service_integration_tests": 3,
+    "ci": "https://github.com/QiuYuAkiGO/MistyAI/actions/runs/40178599506"
+  },
+  "recovery": {
+    "id": "pre-onebot-20261025-8056c3d",
+    "target": "G:\\MistyRecovery\\pre-onebot-20261025-8056c3d",
+    "encrypted_sha256": "18e658aa3f4cd897ce9242939065f07334f7ca48ebf0361d8d045c7f68a45e24",
+    "archive_sha256": "24bce96dfdf8c68bab87a88caef908ad4f0786db5e3e420d4cd65179712758df",
+    "files_verified": 87,
+    "raw_bytes_verified": 2814476697,
+    "sqlite_checks": {
+      "neuralcloud/memory.sqlite3": "ok",
+      "mistyai/state.sqlite3": "ok",
+      "harness/runtime.sqlite3": "ok",
+      "harness/ingress.sqlite3": "ok",
+      "harness/outbox.sqlite3": "ok"
+    },
+    "key_stored_separately": true
+  },
+  "limits": [
+    "Text messaging only; attachments are marked unparsed",
+    "Only configured private contact and groups are accepted",
+    "Group messages require an at segment targeting QQ 765681548",
+    "No claim of long-running autonomous or cold-history acceptance"
+  ]
+}

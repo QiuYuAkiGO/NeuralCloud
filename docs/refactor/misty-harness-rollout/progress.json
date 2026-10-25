@@ -1,6 +1,6 @@
 {
   "baseline_id": "g0-20261024T182731Z",
-  "updated_at": "2026-10-25T05:08:00.996999+00:00",
+  "updated_at": "2026-10-25T09:11:20.600075+00:00",
   "production_changed": true,
   "stages": {
     "G0": {
@@ -43,10 +43,9 @@
     },
     "P5": {
       "status": "PASSED_BOUNDED_SCOPE",
-      "checkpoint": "Actual private QQ inbound/model/explicit reply receipt, actual model subtitle understanding, browser/mobile observation and increment restoration passed.",
+      "checkpoint": "Actual official private QQ and OneBot private/two-group inbound/model/explicit reply receipt passed; content/mobile and recovery checks remain recorded separately.",
       "limits": [
         "No actual video frame/audio observation",
-        "Two newly supplied numeric test groups not mapped/tested via official API",
         "Not a long-term autonomous acceptance result"
       ]
     },
@@ -119,5 +118,13 @@
     "discarded_bytes": 28370309120,
     "other_domains_deleted": false,
     "new_change_retention_seconds": 259200
+  },
+  "onebot_production": {
+    "status": "ACTIVE_REAL_ACCEPTANCE_PASSED",
+    "account": "765681548",
+    "release": "/opt/misty/releases/resident-20261025-8056c3d",
+    "scope_count": 3,
+    "evidence": "validation-onebot-production-20261025.json",
+    "operations": "08-onebot-production.md"
   }
 }

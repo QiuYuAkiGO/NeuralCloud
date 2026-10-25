@@ -6,6 +6,8 @@
 
 手机 emulator / MCP 是复用的能力后端，独立于退役的旧认知与 homeostasis 管线。正式角色、迁移和管理凭据分属不同 OS 用户。目录只开放启动门禁需要的 traverse/stat；数据库仍为各自用户 0600。不要以 root 运行正常角色来掩盖权限错误。
 
+当前新增 QQ 765681548 的 OneBot 通道；账号/群范围、@ 触发条件、真实回执和独立恢复副本见 [OneBot 生产接入记录](08-onebot-production.md)。`nc_765681548.service` 负责 QQ 登录与协议连接，推理和发送授权仍由同一个 `misty-harness.service` 承担。
+
 ## 审批与只读诊断
 
 本机受限目录 `D:\MistyOperator` 提供 `Start-MistyOperator.ps1`；启动隐藏 SSH 转发后访问 `http://127.0.0.1:18766/operator`。`operator.token` 只在该受限目录保存，页面输入框仅驻留内存。QQ 通知是提醒，QQ 回复不是批准；不把 operator token 粘贴到 Misty 对话。
