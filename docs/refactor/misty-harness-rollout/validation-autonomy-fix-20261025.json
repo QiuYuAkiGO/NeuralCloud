@@ -1,0 +1,217 @@
+{
+  "status": "AUTONOMY_FIX_ACTIVE",
+  "observed_at": "2026-10-25T14:43:57.545506+00:00",
+  "release": "/opt/misty/releases/resident-20261025-aec5e2c",
+  "code_commit": "aec5e2cf9889e3f1c51b64499931ab0046410f07",
+  "tests": {
+    "python_tests": 26,
+    "harness_tests": 37,
+    "tcp_service_integration_tests": 4,
+    "external_actions": 0
+  },
+  "linux_harness_tests": 37,
+  "ci": {
+    "commit": "aec5e2cf9889e3f1c51b64499931ab0046410f07",
+    "url": "https://github.com/QiuYuAkiGO/MistyAI/actions/runs/40202691939",
+    "conclusion": "success"
+  },
+  "harness": {
+    "status": "READY",
+    "pending": 0,
+    "blocked": 0,
+    "bytes": 0,
+    "input_pending": 0,
+    "active": 3,
+    "autonomy": {
+      "enabled": true,
+      "reason": "COOLDOWN",
+      "generation": {
+        "schema_version": 1,
+        "enabled": true,
+        "reason": "COOLDOWN",
+        "observed_at": 1792939437.3934984,
+        "last_tick_at": 1792939401.4087195,
+        "need": "novelty",
+        "need_value": 72.37483490970408,
+        "threshold": 65,
+        "cooldown_until": 1792985526.705882,
+        "cooldown_remaining_seconds": 46089.31238365173,
+        "drive_budget_used": 0,
+        "drive_budget_limit": 3,
+        "budget_resets_at": 1792972800,
+        "timer_status": "RUNNING"
+      }
+    },
+    "channels": {
+      "official": {
+        "ready": true,
+        "last_event": "READY",
+        "changed_at": 1792939433175,
+        "close_code": null
+      },
+      "onebot": {
+        "ready": true,
+        "account_id": "765681548",
+        "connected": true,
+        "received": 0,
+        "accepted": 0,
+        "ignored": 0,
+        "ingress_errors": 0,
+        "disconnects": 0,
+        "sends": 0,
+        "last_error": null,
+        "queued": 0
+      }
+    },
+    "observed_at": 1792939437394
+  },
+  "state_diagnostics": {
+    "schema_version": 1,
+    "enabled": true,
+    "reason": "COOLDOWN",
+    "observed_at": 1792939437.5565183,
+    "last_tick_at": 1792939401.4087195,
+    "need": "novelty",
+    "need_value": 72.37483490970408,
+    "threshold": 65.0,
+    "cooldown_until": 1792985526.705882,
+    "cooldown_remaining_seconds": 46089.14936375618,
+    "drive_budget_used": 0,
+    "drive_budget_limit": 3,
+    "budget_resets_at": 1792972800.0,
+    "timer_status": "RUNNING"
+  },
+  "services": {
+    "misty-harness": "MainPID=1543944\nNRestarts=0\nActiveState=active\nSubState=running",
+    "misty-state": "MainPID=1543940\nNRestarts=0\nActiveState=active\nSubState=running",
+    "neuralcloud-memory": "MainPID=1543577\nNRestarts=0\nActiveState=active\nSubState=running",
+    "misty-operator-notifier": "MainPID=1543945\nNRestarts=0\nActiveState=active\nSubState=running",
+    "nc_765681548": "MainPID=1499002\nNRestarts=0\nActiveState=active\nSubState=running"
+  },
+  "policy_and_persona_unchanged": true,
+  "database_schema_changed": false,
+  "recovery": {
+    "status": "VERIFIED_INDEPENDENT_PRE_AUTONOMY_FIX_COPY",
+    "id": "pre-autonomy-fix-20261025-aec5e2c-v2",
+    "verification": {
+      "status": "VERIFIED",
+      "members": 98,
+      "raw_bytes": 2817835135
+    },
+    "archive_sha256": "08df779502bff75835dbaf01af9cff9835a769c0b8f05f6acd0a11ac9648815c",
+    "sqlite_checks": {
+      "neuralcloud/memory.sqlite3": "ok",
+      "mistyai/state.sqlite3": "ok",
+      "harness/runtime.sqlite3": "ok",
+      "harness/ingress.sqlite3": "ok",
+      "harness/outbox.sqlite3": "ok"
+    },
+    "restored": {
+      "status": "RESTORED_NEW_DIRECTORY",
+      "files": 98
+    }
+  },
+  "real_autonomy_acceptance": "NOT_YET_RUN_INITIAL_COOLDOWN_RETAINED",
+  "post_deployment": {
+    "status": "POST_DEPLOYMENT_HEALTHY",
+    "observed_at": "2026-10-25T14:44:56.520692+00:00",
+    "tick_advanced": true,
+    "harness": {
+      "status": "READY",
+      "pending": 0,
+      "blocked": 0,
+      "bytes": 0,
+      "input_pending": 0,
+      "active": 3,
+      "autonomy": {
+        "enabled": true,
+        "reason": "COOLDOWN",
+        "generation": {
+          "schema_version": 1,
+          "enabled": true,
+          "reason": "COOLDOWN",
+          "observed_at": 1792939492.4848294,
+          "last_tick_at": 1792939491.9349487,
+          "need": "novelty",
+          "need_value": 72.42512725922805,
+          "threshold": 65,
+          "cooldown_until": 1792985526.705882,
+          "cooldown_remaining_seconds": 46034.22105264664,
+          "drive_budget_used": 0,
+          "drive_budget_limit": 3,
+          "budget_resets_at": 1792972800,
+          "timer_status": "RUNNING"
+        }
+      },
+      "channels": {
+        "official": {
+          "ready": true,
+          "last_event": "READY",
+          "changed_at": 1792939433175,
+          "close_code": null
+        },
+        "onebot": {
+          "ready": true,
+          "account_id": "765681548",
+          "connected": true,
+          "received": 0,
+          "accepted": 0,
+          "ignored": 0,
+          "ingress_errors": 0,
+          "disconnects": 0,
+          "sends": 0,
+          "last_error": null,
+          "queued": 0
+        }
+      },
+      "observed_at": 1792939492485
+    },
+    "state_diagnostics": {
+      "schema_version": 1,
+      "enabled": true,
+      "reason": "COOLDOWN",
+      "observed_at": 1792939496.4844391,
+      "last_tick_at": 1792939491.9349487,
+      "need": "novelty",
+      "need_value": 72.42512725922805,
+      "threshold": 65.0,
+      "cooldown_until": 1792985526.705882,
+      "cooldown_remaining_seconds": 46030.22144293785,
+      "drive_budget_used": 0,
+      "drive_budget_limit": 3,
+      "budget_resets_at": 1792972800.0,
+      "timer_status": "RUNNING"
+    },
+    "journal_events": [
+      {
+        "event": "QQ_CONNECTION",
+        "ready": true,
+        "last_event": "READY",
+        "changed_at": 1792939433175,
+        "close_code": null
+      },
+      {
+        "event": "AUTONOMY_STATUS",
+        "enabled": true,
+        "reason": "COOLDOWN",
+        "generation": {
+          "schema_version": 1,
+          "enabled": true,
+          "reason": "COOLDOWN",
+          "observed_at": 1792939437.3934984,
+          "last_tick_at": 1792939401.4087195,
+          "need": "novelty",
+          "need_value": 72.37483490970408,
+          "threshold": 65,
+          "cooldown_until": 1792985526.705882,
+          "cooldown_remaining_seconds": 46089.31238365173,
+          "drive_budget_used": 0,
+          "drive_budget_limit": 3,
+          "budget_resets_at": 1792972800,
+          "timer_status": "RUNNING"
+        }
+      }
+    ],
+    "external_test_messages_sent": 0
+  }
+}

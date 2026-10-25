@@ -12,11 +12,13 @@
 
 本机受限目录 `D:\MistyOperator` 提供 `Start-MistyOperator.ps1`；启动隐藏 SSH 转发后访问 `http://127.0.0.1:18766/operator`。`operator.token` 只在该受限目录保存，页面输入框仅驻留内存。QQ 通知是提醒，QQ 回复不是批准；不把 operator token 粘贴到 Misty 对话。
 
-查看四个 systemd 单元的状态、重启计数与内存；查看 `/var/lib/misty/harness/status.json` 的新鲜度、pending/blocked/input_pending，以及 operator notices 的 UNKNOWN。通过受认证 operator CLI 查询 retention 和待审批请求。状态中的 READY 表示调度与持久队列就绪，QQ 连接另看 SDK Bot ready / disconnected 事件；真实发送必须有外部回执。
+查看四个 systemd 单元的状态、重启计数与内存；查看 `/var/lib/misty/harness/status.json` 的新鲜度、pending/blocked/input_pending，以及 operator notices 的 UNKNOWN。通过受认证 operator CLI 查询 retention、autonomy 和待审批请求。状态中的 READY 表示调度与持久队列就绪；自主活动另看 `autonomy.reason` 与 `generation` 中的冷却截止时间、需求/阈值、预算和 timer_status。角色只读接口为 `/v1/autonomy/status`，管理只读接口为 `/operator/v1/autonomy`，查询不修改状态或触发活动。
+
+自主活动不再要求官方 QQ 与 OneBot 同时在线；实际发送只检查目标通道。官方连接 `READY` / `RESUMED` 都会恢复就绪标记，普通 SDK error 不等于掉线。systemd journal 中 `QQ_CONNECTION` 只记录固定事件名、时间和数字断开码；`AUTONOMY_STATUS` 记录自主阻塞原因变化。已知离线的发送在 SDK 调用前结算为 NOT_SENT，发送后不确定仍为 UNKNOWN；既有发送预算及不重试规则保留。真实发送必须有外部回执。
 
 `RECONCILIATION_REQUIRED`、UNKNOWN、outbox blocked 不自动清库或重放。使用部署中的 `ingress-status` / `outbox-status` 离线检查；人工核对后用带 expected hash / operator / evidence 的维护命令。原始输入和退役会话仍保全。无对应日志的 PREPARED 输入只能隔离处理，不能当作从未执行。
 
-72 小时变化正文的维护由状态服务每分钟 tick 有界执行，`retention` 显示最近维护游标。运行回执和操作审计不随生理变化过期。对后台任务不声称有未部署的 QQ 运维报警；当前持久状态和 systemd journal 是诊断入口，审批通知是实际配置的主动管理通道。
+72 小时变化正文的维护由状态服务每 30 秒 tick 有界执行，`retention` 显示最近维护游标。运行回执和操作审计不随生理变化过期。对后台任务不声称有未部署的 QQ 运维报警；当前持久状态和 systemd journal 是诊断入口，审批通知是实际配置的主动管理通道。
 
 ## 停止、保全与恢复
 

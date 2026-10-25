@@ -1,6 +1,6 @@
 {
   "baseline_id": "g0-20261024T182731Z",
-  "updated_at": "2026-10-25T09:21:17.889153+00:00",
+  "updated_at": "2026-10-25T14:43:57.545506+00:00",
   "production_changed": true,
   "stages": {
     "G0": {
@@ -81,7 +81,7 @@
     },
     "evidence": "validation-production-20261025.json"
   },
-  "next_step": "Observe normal production traffic and the first autonomous opportunity after retained cooldown; cold side-copy inventory/eviction, new-group mapping and long-running operational acceptance remain separate unfinished plan items.",
+  "next_step": "Validate the first actual autonomous lifecycle after the retained cooldown, including explicit settlement and evidence-bound feedback; long-running monitoring and cold-history work remain separate plan items.",
   "overall_status": "PRODUCTION_ACTIVE_REMAINING_PLAN_ITEMS_DOCUMENTED",
   "background_execution": false,
   "user_direction": "User authorized all-day maintenance, G repair, legacy physiology discard, real private/group test scopes and production switch.",
@@ -130,5 +130,15 @@
       "1044946257"
     ],
     "group104_auto_evidence": "validation-group104-auto-20261025.json"
+  },
+  "current_release": "/opt/misty/releases/resident-20261025-aec5e2c",
+  "autonomy_repair": {
+    "status": "AUTONOMY_FIX_ACTIVE",
+    "release": "/opt/misty/releases/resident-20261025-aec5e2c",
+    "code_commit": "aec5e2cf9889e3f1c51b64499931ab0046410f07",
+    "evidence": "validation-autonomy-fix-20261025.json",
+    "operations": "09-autonomy-repair.md",
+    "initial_cooldown_until": "2026-10-26T11:32:06.705882+08:00",
+    "real_autonomy_acceptance": "NOT_YET_RUN_INITIAL_COOLDOWN_RETAINED"
   }
 }
