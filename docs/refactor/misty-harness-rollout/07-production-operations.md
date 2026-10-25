@@ -46,4 +46,3 @@ G: 保存加密恢复包，D: 的独立受限密钥目录提供可携带恢复�
 ## 随副本携带的恢复工具
 
 G:\MistyRecovery\tools 保存独立解密校验工具、固定依赖说明及使用文档。工具支持本次完整 Zstd 快照和 resident-ready gzip capsule 的分块 AES-GCM 格式；两个格式的往返与损坏拒绝验证共 4 个场景通过，且从 G: 对实际 70 文件新数据包再次校验通过。工具只校验或向新路径输出已认证的压缩 tar，不自动覆盖运行数据或启动服务。源码在 MistyAI 的 tools/recover_encrypted_snapshot.py。
-

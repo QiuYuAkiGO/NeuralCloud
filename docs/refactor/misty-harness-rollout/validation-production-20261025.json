@@ -45,7 +45,7 @@
   "independent_resident_ready_copy": "PASSED",
   "poststart": {
     "status": "PRODUCTION_ACTIVE_SINGLE_ROLE",
-    "observed_at": "2026-10-25T05:03:12.093959+00:00",
+    "observed_at": "2026-10-25T05:08:00.996999+00:00",
     "qq_ready": true,
     "second_owner_rejected": {
       "memory": "REJECTED",
@@ -54,5 +54,11 @@
     },
     "retention_seconds": 259200,
     "cold_eviction_enabled": false
+  },
+  "portable_recovery_tool": {
+    "formats_tested": 2,
+    "roundtrip_and_tamper_cases_passed": 4,
+    "actual_g_resident_ready_members_verified": 70,
+    "sha256": "48d57bf9b3c8bc51790f534bf65808aa87224631beae11d01fe3aace2c436c86"
   }
 }
