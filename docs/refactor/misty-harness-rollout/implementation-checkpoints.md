@@ -15,3 +15,7 @@ Budgets: tests use temporary synthetic data; no production model calls, test mes
 On interruption: read progress.json, inspect both Git states, reuse committed checkpoints and verified archives. Never replay an unknown external effect. Source snapshots are not a consistent live business-data backup.
 
 后续已完成的人格、旧状态与归档维护隔离检查点见 [05-persona-state-archive.md](05-persona-state-archive.md)。生产切换和本地淘汰仍受门禁约束。
+
+## 2026-10-25 生产准备检查点
+
+固定发布 `resident-20261025-1656288`；两个仓库 CI 通过，83 项每平台验证与真实 QQ / 字幕 / 手机 / 审批通过。旧 writer 已停止，新正式角色未启动，等待 G: 全量独立恢复验证。详见 [06-production-cutover.md](06-production-cutover.md)。

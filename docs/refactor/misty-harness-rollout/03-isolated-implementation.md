@@ -1,5 +1,7 @@
 # 隔离实施与验收记录（2026-10-25）
 
+> 后续生产状态：本文保留历史检查点；最新授权、真实验收和切换进度见 [06-production-cutover.md](06-production-cutover.md) 与 progress.json。
+
 本文件保留当时的检查点；最新常驻编排进度见 [04-managed-harness.md](04-managed-harness.md) 与 progress.json。
 
 当前结论：核心服务、数据维护和 Harness 薄适配已实现并通过隔离验证；**整份方案未完成，生产尚未切换**。真实模型/内容工具接线、认证用户通知、P5 实机验收及 P6 单活切换仍有待办。实际状态以同目录 `progress.json` 为准。

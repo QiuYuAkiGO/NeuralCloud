@@ -1,7 +1,7 @@
 {
   "baseline_id": "g0-20261024T182731Z",
-  "updated_at": "2026-10-25T02:35:07.017386+00:00",
-  "production_changed": false,
+  "updated_at": "2026-10-25T04:28:01.472911+00:00",
+  "production_changed": true,
   "stages": {
     "G0": {
       "status": "PASSED",
@@ -9,104 +9,92 @@
     },
     "P0": {
       "status": "RUNNING",
-      "checkpoint": "Pinned Harness/QQ and existing pi-ai adapter pass Windows/Linux contracts and local protocol tests; actual production route metadata inspected read-only.",
+      "checkpoint": "Pinned versions, actual model/mobile compatibility and fresh-process legacy/resident store measurements passed.",
       "remaining": [
-        "Comparable segmented legacy/new Linux startup profiling",
-        "Live model-provider and audited browser/mobile compatibility acceptance"
-      ],
-      "evidence": "validation-20261025.json"
+        "Whole-gateway segmented startup comparison and physical cold-cache characterization"
+      ]
     },
     "P1": {
       "status": "RUNNING",
-      "checkpoint": "Real memory migration remains verified; bounded archive export jobs, capacity pause/retries and signed expiring encrypted temporary views validated on Windows/Linux.",
+      "checkpoint": "Real 39811-record migration, bounded archive jobs and expiring views passed; G small recovery proof passed; full independent stopped snapshot verification in progress.",
       "remaining": [
-        "Independent cold/recovery copy and key recovery on another physical device",
-        "Production side-copy inventory and local eviction implementation gate",
-        "Reviewed retention/candidate policy, scheduler, optional collection pressure handling and maintenance alerts"
+        "Full G snapshot verification",
+        "Production side-copy inventory and actual gated cold eviction",
+        "Scheduled archive maintenance and long-term pressure/alerts"
       ]
     },
     "P2": {
       "status": "RUNNING",
-      "checkpoint": "Managed gated composition, bounded background drain, indexed durable ingress before first bind, log-based reconciliation, safe session rotation and offline audited outbox retry pass isolation tests.",
+      "checkpoint": "Bounded managed composition, durable ingress, operator quarantine and real QQ handoff passed; real service OS permissions and readiness passed.",
       "remaining": [
-        "Operator workflow for bound PREPARED input without a matching committed log",
-        "Deployment monitoring/notification and production session lifecycle acceptance",
-        "Closed-session side-copy inventory, retention and gated retirement cleanup"
+        "Production activation and observation",
+        "Closed-session retention/copy retirement and ongoing operational alerting"
       ]
     },
     "P3": {
       "status": "RUNNING",
-      "checkpoint": "Actual frozen persona and current SQLite homeostasis projection migrated in isolation; exact persona retained, explicit new-unit reset, stopped state and UNKNOWN reconciliation blocker verified; persona_history event ingested idempotently into a clone of 39811 real records.",
+      "checkpoint": "Exact persona, explicit new-unit reset, 72h physiology history retention and isolated migration verified; fresh production state remains STOP until audited settlement.",
       "remaining": [
-        "Complete stopped-writer legacy execution ledger/inbox/outbox/cursor reconciliation and fresh persona verification before cutover",
-        "Live model/capability autonomous lifecycle and long-running acceptance; autonomous defaults off"
+        "Final frozen legacy settlement after independent restore",
+        "Live autonomous lifecycle and long-running observation"
       ]
     },
     "P4": {
-      "status": "RUNNING",
-      "checkpoint": "Default zero independent judge calls; one-use approval guards; explicit QQ transport; actual SDK receipt remains SENT when local acknowledgment is lost.",
-      "remaining": [
-        "Authenticated creator notification and approval transport",
-        "Audited live browser/mobile/content bindings"
-      ]
+      "status": "PASSED",
+      "checkpoint": "Actual authenticated creator notification/rejection, isolated operator credentials, explicit SDK receipts and bounded content/mobile routes verified; independent judge disabled."
     },
     "P5": {
-      "status": "BLOCKED",
-      "reason": "Real QQ/content acceptance requires a configured authorized isolated recipient and audited live capability route. The old production role is active; no second normal Misty may be started. Synthetic transport/model/content tests are not real acceptance."
+      "status": "PASSED_BOUNDED_SCOPE",
+      "checkpoint": "Actual private QQ inbound/model/explicit reply receipt, actual model subtitle understanding, browser/mobile observation and increment restoration passed.",
+      "limits": [
+        "No actual video frame/audio observation",
+        "Two newly supplied numeric test groups not mapped/tested via official API",
+        "Not a long-term autonomous acceptance result"
+      ]
     },
     "P6": {
-      "status": "BLOCKED",
-      "reason": "No second independent verified recovery copy, complete cross-service stopped-writer snapshot, full legacy-ledger reconciliation/rollback drill or P5 acceptance. The isolated persona/state bundle remains stopped. Production cutover and cold eviction were not executed."
+      "status": "RUNNING",
+      "checkpoint": "Old writers stopped, full snapshot frozen, new fixed release and service accounts preflight passed; rollback capsule restored.",
+      "remaining": [
+        "Independent full G restore verification",
+        "Audited settlement and new ready-data independent copy",
+        "Activation, old-unit disablement and poststart observation"
+      ]
     }
   },
   "cold_eviction": {
     "status": "BLOCKED",
-    "reason": "I: is maintenance staging; H: and I: are the same USB disk. No second independent recovery copy is configured."
+    "reason": "Cold-history scope/revision/reference and side-copy retirement gates remain incomplete. Full system backup does not authorize or prove cold eviction."
   },
   "implementation_commits": {
-    "neuralcloud": "94f58e150b8834354e9cf868a2edad23404a4add",
-    "mistyai": "24b2c69d4a1f4a5c429a861c30079c8b31de31c9"
+    "neuralcloud": "8dfb0c966cf861fd9e0ab94456ebe73e507be6c1",
+    "mistyai": "1656288f628094968bf9fceeb683ff745ca7d4ff"
   },
   "tests": {
-    "windows": {
-      "status": "PASSED",
-      "counts": {
-        "neuralcloud_pytest": 28,
-        "mistyai_pytest": 19,
-        "nc_node": 4,
-        "harness_qq_node": 22,
-        "tcp_services_harness": 2
-      },
-      "total": 75,
-      "ruff_exit_code": 0,
-      "contract_drift_exit_code": 0,
-      "wheel_build_exit_code": 0
+    "counts_per_platform": {
+      "neuralcloud_pytest": 28,
+      "mistyai_pytest": 23,
+      "nc_node": 4,
+      "harness_qq_node": 26,
+      "tcp_services_harness": 2
     },
-    "linux": {
-      "status": "PASSED",
-      "counts": {
-        "neuralcloud_pytest": 28,
-        "mistyai_pytest": 19,
-        "nc_node": 4,
-        "harness_qq_node": 22,
-        "tcp_services_harness": 2
-      },
-      "total": 75,
-      "source_bundle_sha256": "f8c2fb525545b2bd2d4a9e28bd4f23fe5ca92513dd75be2c46ee3fea89a79da4",
-      "python": "3.12.3",
-      "isolated_node": "24.15.0",
-      "all_steps_exit_code": 0
-    }
+    "total_per_platform": 83,
+    "ci": {
+      "neuralcloud": "https://github.com/QiuYuAkiGO/NeuralCloud/actions/runs/40160487269",
+      "mistyai": "https://github.com/QiuYuAkiGO/MistyAI/actions/runs/40161125486"
+    },
+    "evidence": "validation-production-20261025.json"
   },
-  "next_step": "Persona/state migration and archive maintenance isolation checkpoint completed. Remaining isolated work includes comparable startup profiling, capability compatibility, closed-session copy inventory and operator workflows; keep production unchanged and P5/P6/cold eviction blocked.",
-  "overall_status": "PARTIAL_IMPLEMENTATION_VALIDATED_PRODUCTION_BLOCKED",
-  "background_execution": false,
-  "user_direction": "Continue persona/legacy-state migration and archive maintenance implementation/testing in isolation; no production cutover. Independent recovery destination and real isolated QQ acceptance configuration remain deferred.",
+  "next_step": "Finish resumable encrypted frozen snapshot transfer, verify from independent G copy, audit migration settlement, preserve new increments independently, then activate and observe the fixed release.",
+  "overall_status": "PRODUCTION_CUTOVER_AWAITING_INDEPENDENT_RESTORE_VERIFICATION",
+  "background_execution": true,
+  "user_direction": "User authorized all-day maintenance, G repair, legacy physiology discard, real private/group test scopes and production switch.",
   "isolated_persona_state_archive": {
     "status": "COMPLETE_ISOLATED",
     "evidence": "05-persona-state-archive.md",
     "validation": "validation-20261025.json",
     "production_cutover": false,
     "full_legacy_execution_reconciliation": false
-  }
+  },
+  "production_state": "OLD_STOPPED_NEW_NOT_STARTED"
 }

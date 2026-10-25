@@ -1,0 +1,45 @@
+{
+  "format": "misty-production-qualification-v1",
+  "updated_at": "2026-10-25T04:28:01.472911+00:00",
+  "implementation_commits": {
+    "neuralcloud": "8dfb0c966cf861fd9e0ab94456ebe73e507be6c1",
+    "mistyai": "1656288f628094968bf9fceeb683ff745ca7d4ff"
+  },
+  "counts_per_platform": {
+    "neuralcloud_pytest": 28,
+    "mistyai_pytest": 23,
+    "nc_node": 4,
+    "harness_qq_node": 26,
+    "tcp_services_harness": 2
+  },
+  "total_per_platform": 83,
+  "windows": "83 passed at fc63f90; focused recovery test and Ruff passed at 1656288",
+  "linux": "83 passed in isolated Linux; final repository CI passed with paired pinned source",
+  "ci": {
+    "neuralcloud": "https://github.com/QiuYuAkiGO/NeuralCloud/actions/runs/40160487269",
+    "mistyai": "https://github.com/QiuYuAkiGO/MistyAI/actions/runs/40161125486"
+  },
+  "real_acceptance": {
+    "private_qq_pipeline": "PASSED",
+    "operator_notification_and_reject": "PASSED",
+    "model_and_subtitles": "PASSED_SUBTITLES_ONLY",
+    "mobile_bing_navigation": "PASSED",
+    "new_group_official_openid_mapping": "NOT_VERIFIED"
+  },
+  "performance": {
+    "scope": "fresh-process store import/open and bounded recall; not whole gateway startup",
+    "cache_regime": "OS cache unspecified, no global cache drop",
+    "runs": 5,
+    "legacy_store_ready_ms_median": 341.94385702721775,
+    "resident_store_ready_ms_median": 63.0010690074414,
+    "resident_first_query_ms_median": 1.2020759750157595,
+    "resident_warm_query_ms_median": 0.1657889224588871,
+    "limitations": [
+      "Old audience-scoped recall and new global online recall have different ranking semantics.",
+      "No conclusion about long-term or physical cold-cache performance."
+    ]
+  },
+  "production_state": "OLD_STOPPED_NEW_NOT_STARTED",
+  "independent_full_copy": "IN_PROGRESS_NOT_YET_A_GATE",
+  "cold_eviction_enabled": false
+}

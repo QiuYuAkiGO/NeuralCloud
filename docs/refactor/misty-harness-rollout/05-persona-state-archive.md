@@ -1,5 +1,7 @@
 # 人格、旧状态与归档维护：隔离验收记录
 
+> 后续生产状态：本文保留历史检查点；最新授权、真实验收和切换进度见 [06-production-cutover.md](06-production-cutover.md) 与 progress.json。
+
 本记录承接 [04-managed-harness.md](04-managed-harness.md)。本轮按用户指示完成这三部分的隔离实现和测试，**未切换生产、未启动第二个正式角色、未发送真实 QQ 消息、未调用生产模型**。P1/P3 的本轮隔离检查点通过；整体验收仍为 `PARTIAL_IMPLEMENTATION_VALIDATED_PRODUCTION_BLOCKED`。
 
 本轮实现提交：NeuralCloud `94f58e150b8834354e9cf868a2edad23404a4add`；MistyAI `24b2c69d4a1f4a5c429a861c30079c8b31de31c9`。MistyAI CI 固定配对前者；当前仅本地提交，尚未推送或触发 GitHub Actions。
