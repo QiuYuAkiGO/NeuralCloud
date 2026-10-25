@@ -16,6 +16,8 @@ Create the token file privately with a random credential of at least 32 characte
 
 The management-only archive library implements bounded encrypted export, hash/reference checks, signed destination restoration receipts, independent recovery-domain checks, and revision-guarded online detachment. Local eviction is intentionally blocked until the deployment's complete copy inventory and recovery gates are accepted. I: is maintenance staging; H: and I: are the same physical disk.
 
+`python -m neuralcloud.maintenance --help` provides explicit, bounded export jobs, capacity reporting and audited retries in an isolated maintenance root. `TemporaryViews` adds signed scoped reads with expiry, encrypted temporary copies and restart revocation; it is absent from role routes. The [persona/state and archive checkpoint](docs/refactor/misty-harness-rollout/05-persona-state-archive.md) records limits, commands, real frozen-input rehearsal and the remaining production gates.
+
 The thin Harness integration provides scoped memory tools, a bounded persistent outbox, actual SessionStore durability barriers and conservative disconnected-cache behavior. Install it only for trusted Misty handles. It does not install a replacement agent loop or grant every development agent global memory.
 
 - [Implementation plan](docs/refactor/misty-harness-refactor-20261025.md)

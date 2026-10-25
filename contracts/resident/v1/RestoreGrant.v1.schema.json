@@ -58,8 +58,11 @@
       "type": "string"
     },
     "mode": {
-      "const": "permanent_online",
       "default": "permanent_online",
+      "enum": [
+        "permanent_online",
+        "temporary_view"
+      ],
       "title": "Mode",
       "type": "string"
     },

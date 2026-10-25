@@ -37,7 +37,7 @@ class RestoreGrant(Contract):
     envelope_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     record_ids: list[str] = Field(min_length=1, max_length=500)
     purpose: str = Field(min_length=1, max_length=1024)
-    mode: Literal["permanent_online"] = "permanent_online"
+    mode: Literal["permanent_online", "temporary_view"] = "permanent_online"
     issued_at: float = Field(ge=0, allow_inf_nan=False)
     expires_at: float = Field(ge=0, allow_inf_nan=False)
 
@@ -155,12 +155,17 @@ class ArchiveManager:
             rows.append(dict(row))
         return rows
 
-    def plan(self, record_ids):
+    def plan(self, record_ids, *, batch_id=None):
         ids = sorted(set(record_ids))
         if not 0 < len(ids) <= 500:
             raise Refusal("ARCHIVE_BATCH_BOUNDS")
-        batch_id = str(uuid.uuid4())
+        batch_id = str(uuid.UUID(batch_id)) if batch_id is not None else str(uuid.uuid4())
         with self.store.transaction() as db:
+            existing = db.execute("SELECT plan FROM archive_batches WHERE id=?", (batch_id,)).fetchone()
+            if existing:
+                if [row["id"] for row in json.loads(existing[0])["records"]] != ids:
+                    raise Refusal("ARCHIVE_BATCH_ID_CONFLICT")
+                return batch_id
             rows = self._eligible(db, ids)
             plan = {
                 "format": "neuralcloud-cold-v1",
@@ -272,15 +277,18 @@ class ArchiveManager:
         # No caller can accidentally turn partial detachment into an erasure claim.
         raise Refusal("LOCAL_EVICTION_BLOCKED_PENDING_DEPLOYMENT_COPY_INVENTORY")
 
-    def restore(
-        self, path: Path, key: bytes, approval: dict, *, operator_public_key: bytes, target_environment: str, now=None
+    def authorize(
+        self,
+        path: Path,
+        key: bytes,
+        approval: dict,
+        *,
+        operator_public_key: bytes,
+        target_environment: str,
+        mode: str,
+        now=None,
     ):
-        """Reintroduce only approved records, checking current tombstones first.
-
-        Requires the current online authority containing the archive placeholders.
-        Restoring into an empty database or without the current correction ledger
-        is refused. This is a management-plane function, absent from the role API.
-        """
+        """Validate signed scope without granting normal-role cold access."""
         grant = RestoreGrant.model_validate(approval["grant"])
         Ed25519PublicKey.from_public_bytes(operator_public_key).verify(
             base64.b64decode(approval["signature"], validate=True), canonical(grant).encode()
@@ -288,6 +296,8 @@ class ArchiveManager:
         moment = time.time() if now is None else now
         if not grant.issued_at <= moment < grant.expires_at or not 0 < grant.expires_at - grant.issued_at <= 3600:
             raise Refusal("RESTORE_APPROVAL_EXPIRED")
+        if grant.mode != mode:
+            raise Refusal("RESTORE_MODE_MISMATCH")
         if grant.target_environment != target_environment or grant.character_id != self.store.character_id:
             raise Refusal("RESTORE_TARGET_MISMATCH")
         if path.stat().st_size > MAX_BYTES * 2:
@@ -297,6 +307,50 @@ class ArchiveManager:
         data = decode(path, key)
         if (data["character_id"], data["batch_id"]) != (grant.character_id, grant.batch_id):
             raise Refusal("RESTORE_BATCH_MISMATCH")
+        selected = set(grant.record_ids)
+        archived = {row["id"]: row for row in data["records"]}
+        if len(selected) != len(grant.record_ids) or not selected <= archived.keys():
+            raise Refusal("RESTORE_SCOPE_MISMATCH")
+        return grant, data, moment
+
+    def check_current(self, db, grant, data):
+        """Recheck authority on each temporary read as well as permanent restore."""
+        identity = db.execute("SELECT value FROM metadata WHERE key='database_id'").fetchone()
+        if not identity or identity[0] != grant.database_id:
+            raise Refusal("RESTORE_DATABASE_MISMATCH")
+        selected = set(grant.record_ids)
+        archived = {row["id"]: row for row in data["records"]}
+        for identifier in selected:
+            current = db.execute("SELECT revision,status,batch_id FROM records WHERE id=?", (identifier,)).fetchone()
+            if not current or tuple(current) != (archived[identifier]["revision"], "ARCHIVED_OFFLINE", grant.batch_id):
+                raise Refusal("RESTORE_CURRENT_CORRECTION_CONFLICT")
+        for relation in data["sources"]:
+            if relation["record_id"] not in selected:
+                continue
+            source_id = relation["source_id"]
+            current = db.execute("SELECT revision,status FROM records WHERE id=?", (source_id,)).fetchone()
+            expected_status = "ARCHIVED_OFFLINE" if source_id in selected else "ONLINE"
+            if not current or tuple(current) != (archived[source_id]["revision"], expected_status):
+                raise Refusal("RESTORE_SOURCE_CORRECTED_OR_OFFLINE")
+
+    def restore(
+        self, path: Path, key: bytes, approval: dict, *, operator_public_key: bytes, target_environment: str, now=None
+    ):
+        """Reintroduce only approved records, checking current tombstones first.
+
+        Requires the current online authority containing the archive placeholders.
+        Restoring into an empty database or without the current correction ledger
+        is refused. This is a management-plane function, absent from the role API.
+        """
+        grant, data, moment = self.authorize(
+            path,
+            key,
+            approval,
+            operator_public_key=operator_public_key,
+            target_environment=target_environment,
+            mode="permanent_online",
+            now=now,
+        )
         selected = set(grant.record_ids)
         archived = {row["id"]: row for row in data["records"]}
         if len(selected) != len(grant.record_ids) or not selected <= archived.keys():
@@ -312,24 +366,7 @@ class ArchiveManager:
                 if receipt["grant_hash"] != digest(grant):
                     raise Refusal("RESTORE_GRANT_ID_CONFLICT")
                 return receipt
-            for identifier in selected:
-                current = db.execute(
-                    "SELECT revision,status,batch_id FROM records WHERE id=?", (identifier,)
-                ).fetchone()
-                if not current or tuple(current) != (
-                    archived[identifier]["revision"],
-                    "ARCHIVED_OFFLINE",
-                    grant.batch_id,
-                ):
-                    raise Refusal("RESTORE_CURRENT_CORRECTION_CONFLICT")
-            for relation in data["sources"]:
-                if relation["record_id"] not in selected:
-                    continue
-                source_id = relation["source_id"]
-                current = db.execute("SELECT revision,status FROM records WHERE id=?", (source_id,)).fetchone()
-                expected_status = "ARCHIVED_OFFLINE" if source_id in selected else "ONLINE"
-                if not current or tuple(current) != (archived[source_id]["revision"], expected_status):
-                    raise Refusal("RESTORE_SOURCE_CORRECTED_OR_OFFLINE")
+            self.check_current(db, grant, data)
             for row in data["revisions"]:
                 if row["record_id"] not in selected:
                     continue
