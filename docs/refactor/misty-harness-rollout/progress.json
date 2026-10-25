@@ -1,6 +1,6 @@
 {
   "baseline_id": "g0-20261024T182731Z",
-  "updated_at": "2026-10-25T04:28:01.472911+00:00",
+  "updated_at": "2026-10-25T05:05:35.103976+00:00",
   "production_changed": true,
   "stages": {
     "G0": {
@@ -16,27 +16,25 @@
     },
     "P1": {
       "status": "RUNNING",
-      "checkpoint": "Real 39811-record migration, bounded archive jobs and expiring views passed; G small recovery proof passed; full independent stopped snapshot verification in progress.",
+      "checkpoint": "Actual migration, bounded archive jobs and temporary views passed; complete independent G stopped snapshot and resident-ready copy restored and verified.",
       "remaining": [
-        "Full G snapshot verification",
         "Production side-copy inventory and actual gated cold eviction",
         "Scheduled archive maintenance and long-term pressure/alerts"
       ]
     },
     "P2": {
       "status": "RUNNING",
-      "checkpoint": "Bounded managed composition, durable ingress, operator quarantine and real QQ handoff passed; real service OS permissions and readiness passed.",
+      "checkpoint": "Production managed resident active, exact configured OS accounts, actual SDK ready, bounded persistence queues and single-owner checks passed.",
       "remaining": [
-        "Production activation and observation",
-        "Closed-session retention/copy retirement and ongoing operational alerting"
+        "Closed-session retention/copy retirement",
+        "Long-running monitoring and operational alerting acceptance"
       ]
     },
     "P3": {
       "status": "RUNNING",
-      "checkpoint": "Exact persona, explicit new-unit reset, 72h physiology history retention and isolated migration verified; fresh production state remains STOP until audited settlement.",
+      "checkpoint": "Exact persona, explicit new-unit reset, 72h retention and audited legacy settlement activated; independent judge calls zero; initial 24h autonomy cooldown retained.",
       "remaining": [
-        "Final frozen legacy settlement after independent restore",
-        "Live autonomous lifecycle and long-running observation"
+        "First actual autonomous lifecycle after retained cooldown and long-running observation"
       ]
     },
     "P4": {
@@ -54,11 +52,10 @@
     },
     "P6": {
       "status": "RUNNING",
-      "checkpoint": "Old writers stopped, full snapshot frozen, new fixed release and service accounts preflight passed; rollback capsule restored.",
+      "checkpoint": "Controlled production cutover PASSED: independent restore, audited migration, ready-data backup, old unit/target disablement, new services and actual single-owner checks. Authorized old physiology ledger discarded.",
       "remaining": [
-        "Independent full G restore verification",
-        "Audited settlement and new ready-data independent copy",
-        "Activation, old-unit disablement and poststart observation"
+        "Retained legacy source/queue/backup side-copy inventory and complete off-server retirement",
+        "Long-running post-cutover acceptance"
       ]
     }
   },
@@ -85,9 +82,9 @@
     },
     "evidence": "validation-production-20261025.json"
   },
-  "next_step": "Finish resumable encrypted frozen snapshot transfer, verify from independent G copy, audit migration settlement, preserve new increments independently, then activate and observe the fixed release.",
-  "overall_status": "PRODUCTION_CUTOVER_AWAITING_INDEPENDENT_RESTORE_VERIFICATION",
-  "background_execution": true,
+  "next_step": "Observe normal production traffic and the first autonomous opportunity after retained cooldown; cold side-copy inventory/eviction, new-group mapping and long-running operational acceptance remain separate unfinished plan items.",
+  "overall_status": "PRODUCTION_ACTIVE_REMAINING_PLAN_ITEMS_DOCUMENTED",
+  "background_execution": false,
   "user_direction": "User authorized all-day maintenance, G repair, legacy physiology discard, real private/group test scopes and production switch.",
   "isolated_persona_state_archive": {
     "status": "COMPLETE_ISOLATED",
@@ -96,5 +93,31 @@
     "production_cutover": false,
     "full_legacy_execution_reconciliation": false
   },
-  "production_state": "OLD_STOPPED_NEW_NOT_STARTED"
+  "production_state": "ACTIVE_NEW_RESIDENT",
+  "resident_services_enabled": true,
+  "independent_recovery": {
+    "status": "PASSED",
+    "physical_destination": "G: on disk 3; independent from H:/I: disk 2 and D: key disk 0",
+    "frozen_members_verified": 28257,
+    "sqlite_databases_verified": 8,
+    "resident_ready_copy_files_verified": 70,
+    "portable_key_recovery": true
+  },
+  "production_acceptance": {
+    "status": "PRODUCTION_ACTIVE_SINGLE_ROLE",
+    "observed_at": "2026-10-25T05:03:12.093959+00:00",
+    "qq_ready": true,
+    "second_owner_rejected": {
+      "memory": "REJECTED",
+      "state": "REJECTED",
+      "harness": "REJECTED"
+    },
+    "retention_seconds": 259200,
+    "cold_eviction_enabled": false
+  },
+  "legacy_physiology": {
+    "discarded_bytes": 28370309120,
+    "other_domains_deleted": false,
+    "new_change_retention_seconds": 259200
+  }
 }

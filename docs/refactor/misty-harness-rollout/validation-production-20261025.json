@@ -1,6 +1,6 @@
 {
   "format": "misty-production-qualification-v1",
-  "updated_at": "2026-10-25T04:28:01.472911+00:00",
+  "updated_at": "2026-10-25T05:05:35.103976+00:00",
   "implementation_commits": {
     "neuralcloud": "8dfb0c966cf861fd9e0ab94456ebe73e507be6c1",
     "mistyai": "1656288f628094968bf9fceeb683ff745ca7d4ff"
@@ -39,7 +39,20 @@
       "No conclusion about long-term or physical cold-cache performance."
     ]
   },
-  "production_state": "OLD_STOPPED_NEW_NOT_STARTED",
-  "independent_full_copy": "IN_PROGRESS_NOT_YET_A_GATE",
-  "cold_eviction_enabled": false
+  "production_state": "ACTIVE_NEW_RESIDENT",
+  "independent_full_copy": "PASSED",
+  "cold_eviction_enabled": false,
+  "independent_resident_ready_copy": "PASSED",
+  "poststart": {
+    "status": "PRODUCTION_ACTIVE_SINGLE_ROLE",
+    "observed_at": "2026-10-25T05:03:12.093959+00:00",
+    "qq_ready": true,
+    "second_owner_rejected": {
+      "memory": "REJECTED",
+      "state": "REJECTED",
+      "harness": "REJECTED"
+    },
+    "retention_seconds": 259200,
+    "cold_eviction_enabled": false
+  }
 }

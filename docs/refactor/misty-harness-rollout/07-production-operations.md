@@ -42,3 +42,8 @@ sudo /opt/misty/current/MistyAI/.venv/bin/python -m mistyai.integration.recovery
 G: 保存加密恢复包，D: 的独立受限密钥目录提供可携带恢复密钥；I: 是维护暂存。完整快照和新 resident-ready 副本分别留验证报告。恢复应从 G: 密文和 D: 密钥开始，不依赖 I: 的明文副本或当前 Windows DPAPI。
 
 备份与冷剥离是两道门禁。生产 `cold_eviction_enabled=false`；普通角色没有 G: 的路径、挂载、密钥或回源工具。要剥离真实历史，仍须完成批准范围、revision 冻结、关系/引用、独立恢复和所有旁路副本清点，不能因为磁盘压力跳过。
+
+## 随副本携带的恢复工具
+
+G:\MistyRecovery\tools 保存独立解密校验工具、固定依赖说明及使用文档。工具支持本次完整 Zstd 快照和 resident-ready gzip capsule 的分块 AES-GCM 格式；两个格式的往返与损坏拒绝验证共 4 个场景通过，且从 G: 对实际 70 文件新数据包再次校验通过。工具只校验或向新路径输出已认证的压缩 tar，不自动覆盖运行数据或启动服务。源码在 MistyAI 的 tools/recover_encrypted_snapshot.py。
+

@@ -19,3 +19,7 @@ On interruption: read progress.json, inspect both Git states, reuse committed ch
 ## 2026-10-25 生产准备检查点
 
 固定发布 `resident-20261025-1656288`；两个仓库 CI 通过，83 项每平台验证与真实 QQ / 字幕 / 手机 / 审批通过。旧 writer 已停止，新正式角色未启动，等待 G: 全量独立恢复验证。详见 [06-production-cutover.md](06-production-cutover.md)。
+
+## 2026-10-25 生产切换完成
+
+G: 完整停写快照和新数据独立副本恢复验证通过；旧 writer/聚合 target 停用，新四个服务已启用并实测单活。旧内稳态账本按授权丢弃，新变化正文保留 72 小时。生产切换完成，剩余冷剥离与长期验证不标完成。
