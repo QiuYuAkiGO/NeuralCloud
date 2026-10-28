@@ -1,2 +1,4 @@
 *.sh text eol=lf
+tools/deploy/misty_oral_v2/*.mjs text eol=lf
+tools/deploy/misty_oral_v2/*.patch text eol=lf
 harness/llm/data/qwen3-4b-instruct-2507-tokenizer.json text eol=lf

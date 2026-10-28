@@ -65,3 +65,6 @@ Deepseek-api-key-affect.txt
 /eval/reports/qq-group-*/
 /eval/reports/qq-memory-prepare-*/
 /eval/reports/qq-voice-*/
+
+# Private oral-expression trials, production chat excerpts and human votes.
+/data/misty-oral-*/

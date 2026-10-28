@@ -1,0 +1,33 @@
+{
+  "hashes": {
+    "before": "49821d2b295f1da82bba80605acf65e8ae00da636ad2eda03ef271787eaec7cc",
+    "after": "4d37c98f223560137eecd4687de71415a00b7773c3956697ba12f249f9f5c425",
+    "policy": "5932d00a7e3fd67bf93a396c0f54e76dd35baab6dcf6d9a017eb29f27768fa80"
+  },
+  "preflight": {
+    "status": "GATES_PASSED",
+    "external_actions": false
+  },
+  "tests_passed": true,
+  "old_release": "/opt/misty/releases/resident-20261028-context-budget-v1",
+  "new_release": "/opt/misty/releases/resident-20261028-oral-v2",
+  "status": "DEPLOYED",
+  "runtime_status": "READY",
+  "main_pid": 1791885,
+  "backup": "/var/lib/misty/backups/oral-v2-20261028",
+  "service_dropin": "/etc/systemd/system/misty-harness.service.d/60-oral-v2.conf",
+  "session_bindings_preserved": true,
+  "input_pending": 0,
+  "channels": {
+    "official": {
+      "ready": true,
+      "connected": null
+    },
+    "onebot": {
+      "ready": true,
+      "connected": true
+    }
+  },
+  "real_qq_test_sent": false,
+  "verified_at_ms": 1793186700649
+}
