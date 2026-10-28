@@ -1,0 +1,43 @@
+{
+  "release": "/opt/neuralcloud/releases/misty-mobile-mcp-20261022-v3",
+  "services": {
+    "neuralcloud-cognitive": "active",
+    "neuralcloud-runtime": "active",
+    "neuralcloud-qq-direct": "active",
+    "neuralcloud-gui": "active",
+    "neuralcloud-homeostasis": "active",
+    "misty-mobile-emulator": "active",
+    "misty-mobile-mcp": "active",
+    "misty-mobile-viewer": "active"
+  },
+  "runtime_health": {
+    "lifecycle": "RUNNING"
+  },
+  "autonomy": {
+    "state": "idle",
+    "next_at": 1792682246.8199697,
+    "started_at": 1792681946.8199697,
+    "error": null,
+    "conversation": "conversation:bd1e9019734c4eeae72f687ff8612d10",
+    "phone_scope": "conversation:bd1e9019734c4eeae72f687ff8612d10:d4596436edcb4fbf885c0ab4b4ae69d0",
+    "last_result": "QQ 里还是之前那两条接入测试，没有新消息。这次就先不打扰他了。",
+    "last_calls": 2,
+    "completed_at": 1792681949.2384942
+  },
+  "config": {
+    "enabled": true,
+    "autonomous_enabled": true,
+    "token_file": "/etc/neuralcloud/mobile.token",
+    "audiences": [
+      "local:main",
+      "qq:private:qqbot:1905863573:bot:1905863573:qqbot:1905863573:user:E63CB5CB45B80A4E6071AD1B4C65E02B"
+    ]
+  },
+  "verification": {
+    "gateway_regressions": 5,
+    "explicit_production_search": true,
+    "explicit_production_qq_send_ui_ack": true,
+    "spontaneous_model_phone_calls": true,
+    "real_qq_command_roundtrip": "awaiting_user_test_message"
+  }
+}

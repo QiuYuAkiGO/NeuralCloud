@@ -1,0 +1,149 @@
+--- a/harness/qq/decision.py
++++ b/harness/qq/decision.py
+@@ -553,8 +553,8 @@
+     recalled_episode_ids: list[str] = Field(default_factory=list, max_length=40)
+     action: Literal["speak", "wait"]
+     reason: str = Field(min_length=1, max_length=512)
+-    reply: str | None = Field(default=None, max_length=8000)
+-    reply_segments: list[str] = Field(default_factory=list, max_length=3)
++    reply: str | None = Field(default=None, max_length=8008)
++    reply_segments: list[str] = Field(default_factory=list, max_length=5)
+     reply_style: Literal["conversational", "formal"] = "conversational"
+     reply_style_reason: str = Field(default="默认简短口语。", min_length=1, max_length=256)
+     reply_plan: QQReplyPlan | None = None
+@@ -637,10 +637,10 @@
+ 
+ 
+ def _validate_reply_segments(segments: list[str], reply: str | None) -> list[str]:
+-    if (not isinstance(segments, list) or not 1 <= len(segments) <= 3
++    if (not isinstance(segments, list) or not 1 <= len(segments) <= 5
+             or any(not isinstance(item, str) or not item.strip() or len(item) > 4000
+-                   or any(char in item for char in "\r\n\x85\u2028\u2029") for item in segments)
+-            or reply != "\n\n".join(segments) or len(reply) > 8000):
++                   for item in segments)
++            or reply != "\n\n".join(segments) or len(reply) > 8008):
+         raise QQDraftError("The prepared reply segments failed validation.")
+     return list(segments)
+ 
+@@ -697,8 +697,34 @@
+     return sentences
+ 
+ 
++def _official_reply_segments(text: str, trace: QQTurnTrace) -> tuple[list[str], str]:
++    """Pack arbitrary paragraphs into bounded official API messages, without truncation."""
++    if not text.strip() or len(text) > 8000:
++        raise QQDraftError("The prepared reply exceeds the text limit.")
++    units = lambda value: len(value.encode("utf-16-le")) // 2
++    paragraphs = text.split("\n\n")
++    if (1 <= len(paragraphs) <= 5 and all(p.strip() and units(p) <= 3000 for p in paragraphs)):
++        segments = paragraphs
++    else:
++        # Retain paragraph and line breaks within messages. JS validates UTF-16
++        # length, so astral characters count twice; never cut a code point.
++        segments, current, size = [], [], 0
++        for char in text:
++            width = 2 if ord(char) > 0xffff else 1
++            if size + width > 3000:
++                segments.append("".join(current))
++                current, size = [], 0
++            current.append(char)
++            size += width
++        if current:
++            segments.append("".join(current))
++        trace.add_counter("paragraph_transport_packing")
++    reply = "\n\n".join(segments)
++    return _validate_reply_segments(segments, reply), reply
++
++
+ def _prepared_group_segments(final, trace: QQTurnTrace, *,
+-                             reply_style: Literal["conversational", "formal"]) -> tuple[list[str], str]:
++                             reply_style: Literal["conversational", "formal"], official: bool = False) -> tuple[list[str], str]:
+     """Accept explicit paragraph and line boundaries without rewriting prose.
+ 
+     Conversational replies may additionally split on Chinese periods. Formal
+@@ -707,7 +733,7 @@
+     Empty parts and too many paragraphs still fail closed.
+     """
+     original = final.segments
+-    if (not isinstance(original, list) or not 1 <= len(original) <= 3
++    if (not isinstance(original, list) or not 1 <= len(original) <= (5 if official else 3)
+             or any(not isinstance(part, str) for part in original)
+             or final.text != "\n\n".join(original)):
+         raise QQDraftError("The prepared reply segments failed validation.")
+@@ -715,6 +741,8 @@
+             or _looks_like_gate_json_reply(final.text)):
+         trace.add_counter("gate_json_body_rejected")
+         raise QQDraftError("The prepared reply is a decision object, not sendable speech.")
++    if official:
++        return _official_reply_segments(final.text, trace)
+     flattened = [part for body in original for part in re.split(r"\r?\n[ \t]*(?:\r?\n)+", body)]
+     if flattened != original:
+         trace.add_counter("paragraph_segmentation")
+@@ -727,6 +755,8 @@
+         if sentences is not None and sentences != flattened:
+             trace.add_counter("sentence_segmentation")
+             flattened = sentences
++    if len(flattened) > 3:
++        raise QQDraftError("The UI reply exceeds the segment limit.")
+     reply = "\n\n".join(flattened)
+     return _validate_reply_segments(flattened, reply), reply
+ 
+@@ -734,8 +764,8 @@
+ class QQSegmentDeliveryReceipt(_StrictModel):
+     receipt_id: str
+     decision_id: str
+-    segment_index: int = Field(ge=0, le=2, strict=True)
+-    segment_count: int = Field(ge=1, le=3, strict=True)
++    segment_index: int = Field(ge=0, le=4, strict=True)
++    segment_count: int = Field(ge=1, le=5, strict=True)
+     group_id: QQConversationID
+     self_member_id: QQID
+     delivered_text: str = Field(min_length=1, max_length=4000)
+@@ -761,16 +791,16 @@
+     receipt_id: str
+     group_id: QQConversationID
+     self_member_id: QQID
+-    delivered_text: str = Field(min_length=1, max_length=8000)
++    delivered_text: str = Field(min_length=1, max_length=8008)
+     evidence_refs: list[str] = Field(min_length=1, max_length=96)
+     verification: Literal["qq_ui_verified", "qq_protocol_verified"]
+-    protocol_message_ids: list[ProtocolMessageID] = Field(default_factory=list, max_length=3)
++    protocol_message_ids: list[ProtocolMessageID] = Field(default_factory=list, max_length=5)
+     decision_id: str | None = None
+     source_record_ids: list[str] = Field(default_factory=list)  # Explicitly addressed observations only.
+     delivered_at: AwareDatetime
+     origin: Literal["decision", "external_verification"]
+-    delivered_segments: list[str] = Field(default_factory=list, max_length=3)
+-    segment_receipt_ids: list[str] = Field(default_factory=list, max_length=3)
++    delivered_segments: list[str] = Field(default_factory=list, max_length=5)
++    segment_receipt_ids: list[str] = Field(default_factory=list, max_length=5)
+ 
+     @model_validator(mode="after")
+     def check_segments(self):
+@@ -2315,7 +2345,7 @@
+                             raise alignment.SemanticReplyRejected()
+                         if not final.text.strip() or len(final.text) > 8000 or (final.validation is not None and final.validation.verdict != "pass"):
+                             raise QQDraftError("The prepared reply failed validation.")
+-                        segments, reply = _prepared_group_segments(final, trace, reply_style=choice.reply_style)
++                        segments, reply = _prepared_group_segments(final, trace, reply_style=choice.reply_style, official=bool(official_scope_app(group_id)))
+                         result = result.model_copy(update={"action": "speak", "reply": reply,
+                             "agentic_evidence": final.agentic,
+                             "reply_segments": segments, "outcome": "ready",
+--- a/harness/agentic/qq_turn.py
++++ b/harness/agentic/qq_turn.py
+@@ -1,5 +1,5 @@
+ """Native QQ cognition reuses verified sources and the existing delivery ledger."""
+-from harness.qq.conversation import conversation_audience
++from harness.qq.conversation import conversation_audience, official_scope_app
+ 
+ 
+ def decide(*, agent, result, settings, observations, context, payload, selection, receipts,
+@@ -45,7 +45,7 @@
+         validate()
+     trace.add_counter('native_model_calls', final.usage.calls)
+     if final.text.strip():
+-        segments, reply = _prepared_group_segments(final, trace, reply_style='conversational')
++        segments, reply = _prepared_group_segments(final, trace, reply_style='conversational', official=bool(official_scope_app(result.group_id)))
+         update = {'action':'speak', 'reply':reply, 'reply_segments':segments, 'outcome':'ready'}
+     else:
+         update = {'action':'wait', 'reply':None, 'reply_segments':[], 'outcome':'natural_wait'}

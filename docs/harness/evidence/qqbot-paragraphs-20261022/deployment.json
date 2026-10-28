@@ -1,0 +1,25 @@
+{
+  "release": "/opt/neuralcloud/releases/misty-qqbot-paragraphs-20261022-v1",
+  "base": "/opt/neuralcloud/releases/misty-qqbot-private-20261022-v1",
+  "status": "deployed_healthy",
+  "tests": {
+    "paragraph_regressions": 5,
+    "private_regressions": 5,
+    "node_bridge_tests": 8,
+    "transport_boundary_checks": "passed_no_sends"
+  },
+  "behavior": "Arbitrary paragraph count packed within 5 official messages, 3000 UTF-16 units per message; 8000-character source text limit retained; receipts allow 5 segments.",
+  "live_qq_reply_verified": false,
+  "runtime": "RUNNING",
+  "qq_connected": true,
+  "qq_paused": false,
+  "services_active": 6,
+  "verified_at": "2026-10-22T12:45:12Z",
+  "live_model_probe": {
+    "model": "deepseek-flash",
+    "source_paragraphs": 6,
+    "transport_messages": 1,
+    "text_preserved": true,
+    "qq_send_performed": false
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "status": {
+    "state": "running",
+    "next_at": 1792715813.794358,
+    "started_at": 1792715813.794358,
+    "error": null,
+    "conversation": "conversation:bd1e9019734c4eeae72f687ff8612d10",
+    "phone_scope": "conversation:bd1e9019734c4eeae72f687ff8612d10:09199fb607164874aea0043cd8b17b08",
+    "error_detail": "mobile_idle_fence_changed",
+    "last_result": "",
+    "last_calls": 2,
+    "completed_at": 1792715803.7805068
+  },
+  "guard": {
+    "seen": [
+      "0f61407bb9eddabe8dba726116015d434d304ef53ea916c74f774e6d3cda05c1",
+      "163f37a436137990264b38e96d77cb4b1adcc395cb3438a944663d08f2bd1280",
+      "202fb1db6ed4a9378ed06b2c1c681968f8136eb4d9ebcfdc98cf8ed02810fe18",
+      "455d1f85cd686e3889fab2d937c4c0ee0bebfb22383c982d8a04f2be3b735046",
+      "58be85a3a565e0dab0d71aec8f3d1b527292afc8527c5e73e73ecbd9d5639ffb",
+      "632772ba939afe8b9bae9aeebb18b4d5a82e6a6c0214c07b1cfcb624485f6748",
+      "6f5425935183a5547e5d63ff729ac3fccc974945677a1acb327a210479426b70",
+      "918981787339a4fe7359c7d057d26a263149d4f35b118a4c72cab602c3dc92bb",
+      "951686adedf7d8815cc00626c7b3aeaccbab90ee9aa8c1ed60891e4f52679032",
+      "b335bee0b0145e055644f4f8b2b04e831460b1ba6ea21964184d31c8caa78b1a",
+      "b9f31227ab9c8e661a56dfd82a378121eea9c6220a87679bbe438c4a0e698867",
+      "d0dc68ca4d3fb3726e131f034e1032d47cd687e77a637b5c6d604cdb0ec315c8",
+      "d1e397885cf49f5d712d0c14dd6aa70cf358687170ef784ad4f7c372117335b5",
+      "d752c9da26e245b9718f6a55b88a541fc51acc5cda0ea3ea739f327493ef4bdc",
+      "df6293f9e896ae69cbc14c8c785a9fcf2e9aa1cca4ea66fb06c74198ce58c0b3"
+    ],
+    "last_text": "北京今天风大不大呀？我这边窗外的光有点淡，看着像要降温的样子。你出门记得多穿一件。",
+    "status": "ui_submitted"
+  },
+  "calls_after_resume": [
+    [
+      "mobile_observe",
+      "observe",
+      "observed",
+      4
+    ]
+  ],
+  "tests_passed": 10,
+  "services": "active\nactive\nactive\n"
+}

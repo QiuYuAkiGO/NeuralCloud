@@ -1,0 +1,12 @@
+{
+  "release": "/opt/neuralcloud/releases/misty-qqbot-receipts-20261022-v1",
+  "cause": "_record_qq_segment_delivery retained segment_index <= 2 after schema expanded to five segments; fourth official ACK persisted but receipt commit failed, blocking later messages.",
+  "fix": "segment_index <= 4; restarted qq-direct only; cognition/runtime were not restarted",
+  "regression": "Five actual SQLite receipt writes, readback and aggregate receipt in temporary database passed",
+  "recovery": "Validated retained ACK hash, app, scope, trigger, returned message ID, sequence, and text digest; restored fourth receipt and aggregate using official ACK evidence; no resend",
+  "backup": "/var/backups/neuralcloud/qqbot-receipts-20261022-v1",
+  "connected": true,
+  "paused": false,
+  "unresolved_sends": 0,
+  "live_new_private_message_verified": false
+}

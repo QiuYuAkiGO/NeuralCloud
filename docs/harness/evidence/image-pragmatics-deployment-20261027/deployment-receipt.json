@@ -1,0 +1,27 @@
+{
+  "old_release": "/opt/misty/releases/resident-20261027-retrieval-v3",
+  "new_release": "/opt/misty/releases/resident-20261027-image-pragmatics-v1",
+  "preflight": {
+    "status": "GATES_PASSED",
+    "external_actions": false
+  },
+  "policy_sha256": "e474cba0135d5430b19b4e4517cbe4742cad19f7b2b191ff0718e8f3f1027809",
+  "backup": "/var/lib/misty/backups/image-pragmatics-20261027",
+  "shutdown": "CHECKPOINTED_CLEAN_EXIT",
+  "status": "DEPLOYED",
+  "main_pid": 1682068,
+  "verified_at_ms": 1793092283606,
+  "runtime_status": "READY",
+  "input_pending": 0,
+  "channels": {
+    "official": {
+      "ready": true,
+      "connected": null
+    },
+    "onebot": {
+      "ready": true,
+      "connected": true
+    }
+  },
+  "session_bindings_preserved": true
+}

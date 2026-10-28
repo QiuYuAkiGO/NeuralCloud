@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Misty 图片语用调研</title>
+<style>body{margin:0;background:#f6f5f1;color:#252b2e;font:16px/1.8 system-ui,'Microsoft YaHei',sans-serif}main{max-width:1000px;margin:auto;padding:40px 28px}h1{font-size:24px}h2{font-size:20px;margin-top:36px;border-top:1px solid #ccc;padding-top:22px}h3{font-size:17px}a{color:#176a6b}small,.meta{color:#626b6d}.lead{font-size:19px;border-left:4px solid #176a6b;padding-left:18px}nav{display:flex;gap:20px;flex-wrap:wrap}details{border-bottom:1px solid #d4d6d3;padding:12px 0}summary{cursor:pointer;font-weight:600}select{padding:10px;font:inherit;max-width:100%}.example{background:#e8eeeb;padding:18px;margin-top:16px}code{background:#e6e7e2;padding:2px 4px}li{margin:8px 0}blockquote{margin:16px 0;padding:16px 24px;background:#e8eeeb} @media print{nav,select{display:none}details{break-inside:avoid}}</style>
+<main>
+<p class="meta">NeuralCloud · 调研与设计建议 · 2026-10-27 · 尚未修改运行逻辑</p>
+<h1>Misty 如何理解“别人发来一张图”</h1>
+<p class="lead">建议把图片理解分成三个问题：图中有什么；发送者在当前对话里用它做什么；Misty 此时怎样回应合适。允许答案是“没有明确命题”，也允许暂时不知道。</p>
+<nav><a href="#evidence">研究依据</a><a href="#code">现有实现</a><a href="#cases">同图异义</a><a href="#design">修正方案</a><a href="#eval">验证方案</a></nav>
+<h2 id="evidence">1. 文献支持什么</h2>
+<p>本次是有针对性的文献调研与本地代码审阅，不是系统综述，也未对 Misty 真实聊天进行抽样实验。重点检索 reaction GIF、sticker、WeChat、pragmatics、phatic communication；优先采用原始研究。证据主要来自 GIF 和表情贴图，将结论扩展到截图、照片时需要额外验证。</p>
+<details open><summary>上下文与共同知识决定图片如何被理解</summary><p>Jiang、Fiesler 与 Brubaker 的 CSCW 2018 研究通过 24 次深入访谈发现，GIF 使用与理解依赖作品来源、人际关系等上下文；这些条件也会造成误解。因此，不应把某张图绑定为唯一情绪或意图。小样本定性研究解释机制，不提供所有用户的行为比例。<a href="https://arxiv.org/abs/1903.09623">The Perfect One（论文摘要，2018 发表／2019 arXiv）</a></p></details>
+<details open><summary>图片可以表达立场，而不只是展示情绪</summary><p>Wang、McVee 与 Ding（2023）分析三位中国留学生的微信群讨论，发现文字、表情符号和贴图参与表达认同、反对、抱怨以及协商互动位置。这个特定群体案例支持“图片承担言语行为”，不能据此概括所有中文群聊。<a href="https://journals.sagepub.com/doi/full/10.1177/21582440231193346">It is Hard to Say</a></p></details>
+<details open><summary>分享图也可能是在维持关系</summary><p>Liu（2023）访谈 10 位中国城市青年并参与观察三个微信群两个月，讨论贴图作为虚拟礼物、审美身份与亲密表达的作用。它支持“图本身也是社交行动”，而不要求每张图都含有待提取的观点。<a href="https://www.frontiersin.org/journals/communication/articles/10.3389/fcomm.2023.1172115/full">WeChat online visual language among Chinese Gen Z</a></p><p>Song 等（2026）的 arXiv 论文摘要报告了 21 位 Instagram 梗图私信用户的访谈，将分享梗图作为维持关系的交际实践讨论。平台与人群不同，本次仅核对摘要，作为补充证据。<a href="https://arxiv.org/abs/2603.22817">Don't Mess Up My Algorithm</a></p></details>
+<details><summary>技术上，图片回复已有“对话行为”建模的先例</summary><p>Wang 与 Jurgens（EMNLP Findings 2021）提供 156 万轮文本—GIF 数据并研究 GIF 回复选择。这说明评估可以围绕“对当前话轮是否合适”设计；它研究的是回复选择，不能证明任何模型能准确恢复发送者的真实意图。<a href="https://arxiv.org/abs/2109.12212">An animated picture says at least a thousand words</a></p></details>
+<p><strong>对“无明确意义”的处理：</strong>文献支持关系维持、玩笑和语义歧义；不能由此断言随机图背后总有隐藏的社交目的。设计上应同时保留“随手分享／没有明确命题”和“证据不足／无法判断”。这是本报告的工程建议，不是可由图片直接观测到的事实。</p>
+<h2 id="code">2. Misty 的现有基础与缺口</h2>
+<p>以下是 2026-10-27 本地源码的静态观察，未核验线上实际启用路径。当前实现已有重要的来源边界，修正应在其上增加会话理解。</p>
+<ul>
+<li><code>harness/agentic/context.py:17–32</code>：主模型 POLICY 已支持按需看图、引用优先、识图不确定性与 wait，但此段没有明确解释发图可以承担情绪、立场或轻量互动。</li>
+<li><code>harness/qq/vision_tool.py:106–159</code>：返回 description、ocr_text、characters、uncertainties；TOOL_RULES 已区分引用、当前图、近期候选，并限制无谓调用。TOOL_PROMPT 的职责是提供观察。</li>
+<li><code>harness/agentic/vision.py</code>：工具结果标注 untrusted_model_observation_not_sender_speech，并绑定来源。这个边界应保留。</li>
+<li><code>harness/qq/direct_images.py:103</code> 附近：自动识图提示侧重描述和 OCR；<code>harness/qq/vision.py:103</code> 附近是桌面截图观察器，不能把它误当聊天语用判断层。</li>
+</ul>
+<p><strong>诊断：</strong>已读的主要提示明确了“不能把图片当发送者原话”，但尚未明确“可以基于上下文，把发图作为一种表达来回应”。这是可检验的缺口假设，不代表已证明 Misty 在线上普遍误读。</p>
+<h2 id="cases">3. 同一张图，不同的回应</h2>
+<p>下面是人工构造的说明案例，不是线上日志。假设已可靠看见“趴着的猫，配字：不想动”。</p>
+<label for="scene">切换发图上下文：</label> <select id="scene"><option value="0">“今天连开六个会”之后发图</option><option value="1">“这图上的字是什么？”</option><option value="2">群内正在互发表情包</option><option value="3">“你同意明天加班吗？”之后发图</option><option value="4">没有可用上下文</option><option value="5">“这是别人发的，怎么回？”</option></select>
+<div class="example" id="example" aria-live="polite"></div>
+<p>其他关键对照：鼓掌图可以是真诚祝贺，也可能是反讽；争议观点截图可以表示赞同、反对或请人核实；自拍、风景、食物照也可能是在分享当下。图片类型只是线索，不能直接决定功能。</p>
+<h2 id="design">4. 建议的修正方式</h2>
+<h3>首先修正主模型的回应策略</h3>
+<p>优先在 agentic 主模型 POLICY 中做小范围提示实验；若旧 QQ 路径仍启用，再同步其主模型规则。不要先把视觉工具变成“读心分类器”。视觉层提供可见动作、表情、图文组合、反差与不确定性，主模型结合真实话轮判断沟通功能。</p>
+<blockquote>用户发图可能是在展示内容、请求识别，也可能借图表达当下状态、态度、玩笑或维持互动；还可能只是随手发图，没有明确命题。结合配文、回复关系和近期对话判断，不默认要求逐项讲解画面。图中人物的表情、台词和观点不自动等于发送者的真实状态或立场。有充分上下文时自然回应其表达；含义模糊且不影响交流时可轻量接话或等待，不强行解释或追问。只有歧义会明显影响回答时才澄清。识图失败时不编造内容，不把推测写成用户事实。</blockquote>
+<h3>区分观察、解释与行动</h3>
+<ol><li><strong>观察：</strong>可见内容、文字、动作、作者与引用来源分别保留；图内指令仍只是资料。</li><li><strong>解释：</strong>允许多个临时假设，例如“在说累了／在接梗”；结合当前配文、明确引用、邻近话轮与已核实的共同知识。不要输出未经校准的精确概率。</li><li><strong>行动：</strong>选择答题、承接情绪、回应立场、接梗、澄清或等待。识别置信度与回应强度分开：不确定含义，也能给低承诺、自然的回应。</li></ol>
+<p>如需可观测性，可以在评测记录中增加多选功能标签、证据来源、替代解释、是否需要澄清。首轮无需修改生产 schema 或添加额外模型调用。不要把解释结果按图片哈希永久缓存：同图在不同话轮可有不同作用。</p>
+<h3>明确几条容易越界的推断</h3>
+<ul><li>“图里的猫看起来委屈”不等于“用户确实遭受了委屈”；“发来一张反对观点的截图”不等于用户认同截图。</li><li>没有正文不等于没有交流行为；看不出明确意义也不等于必须追问“你想表达什么”。</li><li>不要从单次表情包推断稳定性格、真实生活经历或长期偏好。临时解释原则上不进入长期用户画像；确需保留时，应记录“发图事件及其上下文”，保留推测属性。</li><li>对明确问图、读字、排障和求解释的请求，正常完成任务，不能一概用“接梗”取代内容回答。</li><li>多人群聊先核对是谁在回应谁；是否轮到 Misty 参与，与图片有没有意思是两个判断。</li></ul>
+<h2 id="eval">5. 如何验证确实改好了</h2>
+<p>建议先建立约 120 条小型验证集（建议规模，尚未采集或运行）：60 条经许可、去标识化的真实会话片段与 60 条人工对照。至少覆盖状态、立场、反讽、轻量互动、随手分享、明确读图任务、截图转述、群聊指向、识图失败。保留足够上下文，不只给图片和一句话。</p>
+<p>使用“同图换上下文”“同上下文换图”“去掉配文”“更换发送者或被引用者”的成对样本。以同图同来源分组划分调试集和留出集，避免同一梗图跨集合造成虚高。不可恢复真实意图的样本标注为歧义，评判合理回应范围，不强造唯一答案。</p>
+<p>比较三组：A 当前策略；B 仅主模型提示修正；C B 加视觉描述改进。固定模型和采样设置，随机化展示顺序，由两位评审独立评价；分歧保留并复核。条件允许时让原发送者反馈，但不把第三方猜测当作发送者真值。</p>
+<ul><li><strong>主要质量：</strong>会话适切性、无依据状态／立场归因率、无必要的画面复述率、无必要澄清率。</li><li><strong>回归指标：</strong>明确读图任务完成度、内容事实准确性、群聊对象选对率、该回应却等待的比例。</li><li><strong>运行成本：</strong>识图调用率、端到端延迟，以及候选记忆中有无把推测升级为事实。</li></ul>
+<p>建议准入条件：留出集盲评总体改善，且明确读图任务不退化；来源与指令边界用例全部通过；严重无依据归因不增加。样本不足或差异不明确时只报告趋势，不宣布成功。通过后再做有限影子评估；影子阶段不改变实际发言。</p>
+<h2>6. 推荐决策</h2>
+<p><strong>值得修正。</strong>第一步采用主模型提示实验，目标是让 Misty 理解发图的会话作用，同时保留不确定性。是否需要更换视觉模型或新增分类器，当前证据不足。更适合先用真实失败样本确认：问题来自“没看清图”，还是“看清了，却没接住表达”。</p>
+<p class="meta">交付范围：文献调研、源码定位、提示草案与评测设计。没有修改生产代码、运行模型实验或访问私人聊天日志。论文结论、代码观察与工程建议已分别说明。</p>
+</main>
+<script>const scenes=[['可能在表达疲惫','“六个会，难怪只想趴着了。”','承接已有的“六个会”，不额外断言身体或心理状态。'],['明确的 OCR 请求','“图上写的是：不想动。”','先回答任务，不转成安慰。'],['接梗／维持互动','“进入省电模式。”；没有参与必要时可以等待。','不逐项介绍猫的外观，也不要求对方说明含义。'],['可能在婉转拒绝','“看来是不太想加班。”','可回应倾向；如果需要替其确认排班，必须核实，不能当成正式拒绝。'],['意义未定／可能随手分享','“这猫躺得好彻底。”；群聊中也可等待。','轻量回应可见内容，不断言“你今天很累”。'],['转述他人的表达','“可以顺着图回一句：那今天就先省电吧。”','先满足怎么回复的请求，不把图中状态归到当前用户。']];const select=document.getElementById('scene'),out=document.getElementById('example');function render(){const s=scenes[Number(select.value)];out.replaceChildren();for(const [label,value] of [['临时理解',s[0]],['示例回应',s[1]],['边界',s[2]]]){const p=document.createElement('p');const b=document.createElement('strong');b.textContent=label+'：';p.append(b,document.createTextNode(value));out.append(p)}}select.addEventListener('change',render);render();</script></html>

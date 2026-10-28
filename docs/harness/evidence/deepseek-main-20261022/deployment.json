@@ -1,0 +1,50 @@
+{
+  "status": "completed",
+  "verified_at": "2026-10-22T10:29:39.483479+00:00",
+  "remote_verification": "/var/backups/neuralcloud/deepseek-main-20261022T101754Z/verification.json",
+  "server": "yumemiyuki",
+  "authoritative_release": "/opt/neuralcloud/releases/misty-qqbot-body-20261021-v3",
+  "source_commit_from_release_record": "47255eace213b7d9c11c8ef524ac1312688b82f5",
+  "config_backup": "/var/backups/neuralcloud/deepseek-main-20261022T101754Z",
+  "changes": {
+    "/etc/neuralcloud/gui-settings.json": {
+      "base_url": "https://api.deepseek.com/v1",
+      "model": "deepseek-flash",
+      "credential_source": "/etc/neuralcloud/deepseek-agent.key"
+    },
+    "/etc/neuralcloud/deploy.json": {
+      "bindings.NC_AGENTIC_LOCAL_ONLY": "false"
+    }
+  },
+  "remote_source_changed": false,
+  "local_source_deployed": false,
+  "checks": {
+    "live_native_tool_roundtrip": "passed",
+    "live_async_stream": "passed",
+    "live_responses_json_schema": "passed",
+    "live_production_finish_turn_schema": "passed",
+    "isolated_qq_body_route_regression": "3 passed with DeepSeek settings",
+    "cognitive_model": "deepseek-flash",
+    "cognitive_local_only": false,
+    "cognitive_tokenizer_backend": "deepseek_offline",
+    "runtime_lifecycle": "RUNNING",
+    "runtime_degraded_reasons": [],
+    "gui_available": true,
+    "managed_services_active": 6,
+    "qq_connected": true,
+    "qq_automatic_send": true,
+    "qq_last_error_type": null,
+    "direct_and_session_configs_byte_identical_to_backup": true,
+    "persona_sha256_unchanged": "f0796dd2c25120220e63207b6c5d3cdf6a210cc2befba7ea43a32201b3fa8647"
+  },
+  "transport": "qqbot",
+  "bot_app_id": "1905863573",
+  "manual_qq_test_messages_sent": 0,
+  "end_to_end_new_qq_reply_verified": false,
+  "notes": [
+    "Existing remote DeepSeek adapters were reused; configuration change only.",
+    "Auxiliary and QQ memory model routes were preserved.",
+    "Runtime restarted through systemd dependencies, recovered in strict mode, and returned to RUNNING. Journal open took 569.086 seconds for 3557340 records; GUI and QQ then started successfully.",
+    "Official documentation lists deepseek-flash: https://api-docs.deepseek.com/api/create-chat-completion/"
+  ]
+}

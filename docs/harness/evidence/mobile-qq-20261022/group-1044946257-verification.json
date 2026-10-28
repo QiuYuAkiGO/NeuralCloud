@@ -1,0 +1,896 @@
+{
+  "group_id": "1044946257",
+  "status": {
+    "state": "idle",
+    "next_at": 1792716886.7193437,
+    "started_at": 1792716886.7193437,
+    "error": null,
+    "conversation": "conversation:2f3608ad09b9e24f6ea8774bc1e2b19b",
+    "phone_scope": "qq-group:1044946257:conversation:2f3608ad09b9e24f6ea8774bc1e2b19b:322ce75c9b4343b987bc8cc275d797d2",
+    "last_result": "",
+    "last_calls": 4,
+    "completed_at": 1792716890.7031827
+  },
+  "guard": {
+    "seen": [
+      "3cc2e31eb28e33773214184e9f0edee2403745e6ffe40762d771c6ed8194c8a5",
+      "ad6ef2d70c73e1027891f77eb83abdcf1ee0e4c3654bb1436514327b30632a7e"
+    ],
+    "last_text": "早上好，秋。能看到呀，早上好小绿、小南方。",
+    "status": "ui_submitted",
+    "at": 1792716857.6131232
+  },
+  "invocations": [
+    [
+      "qq-group:1044946257:conversation:2f3608ad09b9e24f6ea8774bc1e2b19b:322ce75c9b4343b987bc8cc275d797d2",
+      "mobile_observe",
+      "observe",
+      "observed",
+      1792716887.4973907
+    ],
+    [
+      "qq-group:1044946257:conversation:2f3608ad09b9e24f6ea8774bc1e2b19b:f396e64b91234247b797894e4773a269",
+      "mobile_observe",
+      "observe",
+      "observed",
+      1792716873.7124548
+    ],
+    [
+      "qq-group:1044946257:conversation:2f3608ad09b9e24f6ea8774bc1e2b19b:4ae8e581630c4a7ab4255d7859c54908",
+      "mobile_action",
+      "tap",
+      "executed",
+      1792716859.1681945
+    ],
+    [
+      "qq-group:1044946257:conversation:2f3608ad09b9e24f6ea8774bc1e2b19b:4ae8e581630c4a7ab4255d7859c54908",
+      "mobile_action",
+      "type",
+      "executed",
+      1792716856.456281
+    ],
+    [
+      "qq-group:1044946257:conversation:2f3608ad09b9e24f6ea8774bc1e2b19b:4ae8e581630c4a7ab4255d7859c54908",
+      "mobile_action",
+      "tap",
+      "executed",
+      1792716854.0597816
+    ],
+    [
+      "qq-group:1044946257:conversation:2f3608ad09b9e24f6ea8774bc1e2b19b:4ae8e581630c4a7ab4255d7859c54908",
+      "mobile_observe",
+      "observe",
+      "observed",
+      1792716849.4253094
+    ],
+    [
+      "qq-group:1044946257:conversation:2f3608ad09b9e24f6ea8774bc1e2b19b:3cd40781403149639aafad3cbbf51c9d",
+      "mobile_observe",
+      "observe",
+      "observed",
+      1792716833.117886
+    ],
+    [
+      "qq-group:1044946257:conversation:2f3608ad09b9e24f6ea8774bc1e2b19b:2288399ed0144087a4242cf98130d4de",
+      "mobile_observe",
+      "observe",
+      "observed",
+      1792716817.700372
+    ],
+    [
+      "qq-group:1044946257:conversation:2f3608ad09b9e24f6ea8774bc1e2b19b:2331aabcfab5403f8cb5ff461e2ba7a4",
+      "mobile_observe",
+      "observe",
+      "observed",
+      1792716803.0346882
+    ],
+    [
+      "qq-group:1044946257:conversation:2f3608ad09b9e24f6ea8774bc1e2b19b:11f94ccee51b4760931fe5fbb2333377",
+      "mobile_observe",
+      "observe",
+      "observed",
+      1792716786.1662722
+    ]
+  ],
+  "operations": [
+    {
+      "id": "misty-greet-1044946257-01",
+      "result": {
+        "operation_id": "misty-greet-1044946257-01",
+        "status": "executed",
+        "screen": {
+          "observation_id": "bc806e7854c456ceefcbe373141c20554b4e79da0a53625dbe0cfeb3585b3801",
+          "foreground": "Foreground app: QQ (com.tencent.mobileqq), activity: com.tencent.mobileqq.activity.SplashActivity",
+          "elements": [
+            {
+              "ref": "@e11",
+              "type": "android.widget.ImageView",
+              "text": "",
+              "label": "Android System notification: Serial console enabled",
+              "coordinates": {
+                "x": 154,
+                "y": 33,
+                "width": 58,
+                "height": 63
+              }
+            },
+            {
+              "ref": "@e31",
+              "type": "android.widget.TextView",
+              "text": "",
+              "label": "返回消息未读3",
+              "identifier": "com.tencent.mobileqq:id/ivTitleBtnLeft",
+              "coordinates": {
+                "x": 27,
+                "y": 163,
+                "width": 65,
+                "height": 65
+              }
+            },
+            {
+              "ref": "@e33",
+              "type": "android.widget.TextView",
+              "text": "⫰⫠PHANTOM-C",
+              "identifier": "com.tencent.mobileqq:id/3o4",
+              "coordinates": {
+                "x": 175,
+                "y": 166,
+                "width": 300,
+                "height": 58
+              }
+            },
+            {
+              "ref": "@e34",
+              "type": "android.widget.TextView",
+              "text": "(17)",
+              "label": "17",
+              "identifier": "com.tencent.mobileqq:id/3o2",
+              "coordinates": {
+                "x": 475,
+                "y": 166,
+                "width": 78,
+                "height": 58
+              }
+            },
+            {
+              "ref": "@e35",
+              "type": "android.widget.ImageView",
+              "text": "",
+              "label": "聊天设置",
+              "identifier": "com.tencent.mobileqq:id/1j_",
+              "coordinates": {
+                "x": 972,
+                "y": 163,
+                "width": 65,
+                "height": 65
+              }
+            },
+            {
+              "ref": "@e37",
+              "type": "android.widget.ImageButton",
+              "text": "",
+              "label": "语音",
+              "identifier": "com.tencent.mobileqq:id/y20",
+              "coordinates": {
+                "x": 37,
+                "y": 1416,
+                "width": 75,
+                "height": 75
+              }
+            },
+            {
+              "ref": "@e38",
+              "type": "android.widget.EditText",
+              "text": "",
+              "identifier": "com.tencent.mobileqq:id/input",
+              "coordinates": {
+                "x": 155,
+                "y": 1388,
+                "width": 666,
+                "height": 113
+              },
+              "focused": true
+            },
+            {
+              "ref": "@e40",
+              "type": "android.widget.ImageButton",
+              "text": "",
+              "label": "表情",
+              "identifier": "com.tencent.mobileqq:id/emo_btn",
+              "coordinates": {
+                "x": 853,
+                "y": 1415,
+                "width": 76,
+                "height": 76
+              }
+            },
+            {
+              "ref": "@e42",
+              "type": "android.widget.ImageButton",
+              "text": "",
+              "label": "更多功能",
+              "identifier": "com.tencent.mobileqq:id/fun_btn",
+              "coordinates": {
+                "x": 961,
+                "y": 1415,
+                "width": 76,
+                "height": 76
+              }
+            },
+            {
+              "ref": "@e52",
+              "type": "android.widget.ImageView",
+              "text": "",
+              "label": "表情[动画表情]",
+              "identifier": "com.tencent.mobileqq:id/mki",
+              "coordinates": {
+                "x": 162,
+                "y": 263,
+                "width": 365,
+                "height": 21
+              }
+            },
+            {
+              "ref": "@e55",
+              "type": "android.widget.TextView",
+              "text": "上午8:32",
+              "label": "上午8:32",
+              "coordinates": {
+                "x": 477,
+                "y": 328,
+                "width": 126,
+                "height": 48
+              }
+            },
+            {
+              "ref": "@e58",
+              "type": "android.widget.FrameLayout",
+              "text": "",
+              "label": "小南方☆摸鱼喵的资料卡",
+              "coordinates": {
+                "x": 32,
+                "y": 429,
+                "width": 108,
+                "height": 108
+              }
+            },
+            {
+              "ref": "@e60",
+              "type": "android.widget.TextView",
+              "text": "小南方☆摸鱼喵",
+              "identifier": "com.tencent.mobileqq:id/mjp",
+              "coordinates": {
+                "x": 161,
+                "y": 429,
+                "width": 221,
+                "height": 48
+              }
+            },
+            {
+              "ref": "@e63",
+              "type": "android.widget.TextView",
+              "text": "早上好",
+              "identifier": "com.tencent.mobileqq:id/mjm",
+              "coordinates": {
+                "x": 140,
+                "y": 477,
+                "width": 235,
+                "height": 168
+              }
+            },
+            {
+              "ref": "@e66",
+              "type": "android.widget.TextView",
+              "text": "秋🐷 揉了揉小南方☆摸鱼喵的脸爱你哦♡~",
+              "coordinates": {
+                "x": 41,
+                "y": 672,
+                "width": 998,
+                "height": 47
+              }
+            },
+            {
+              "ref": "@e69",
+              "type": "android.widget.TextView",
+              "text": "上午8:48",
+              "label": "上午8:48",
+              "coordinates": {
+                "x": 477,
+                "y": 795,
+                "width": 126,
+                "height": 48
+              }
+            },
+            {
+              "ref": "@e71",
+              "type": "android.widget.TextView",
+              "text": "设置头像双击动作，让聊天更有趣",
+              "coordinates": {
+                "x": 41,
+                "y": 875,
+                "width": 998,
+                "height": 46
+              }
+            },
+            {
+              "ref": "@e74",
+              "type": "android.widget.TextView",
+              "text": "上午8:54",
+              "label": "上午8:54",
+              "coordinates": {
+                "x": 477,
+                "y": 970,
+                "width": 126,
+                "height": 48
+              }
+            },
+            {
+              "ref": "@e77",
+              "type": "android.widget.FrameLayout",
+              "text": "",
+              "label": "秋[emoji]的资料卡",
+              "coordinates": {
+                "x": 32,
+                "y": 1071,
+                "width": 108,
+                "height": 108
+              }
+            },
+            {
+              "ref": "@e79",
+              "type": "android.widget.TextView",
+              "text": "秋🐷",
+              "identifier": "com.tencent.mobileqq:id/mjp",
+              "coordinates": {
+                "x": 161,
+                "y": 1071,
+                "width": 67,
+                "height": 46
+              }
+            },
+            {
+              "ref": "@e82",
+              "type": "android.widget.TextView",
+              "text": "misty，早上好，能看到这条消息吗",
+              "identifier": "com.tencent.mobileqq:id/mjm",
+              "coordinates": {
+                "x": 140,
+                "y": 1117,
+                "width": 788,
+                "height": 234
+              }
+            }
+          ],
+          "authority": "untrusted_phone_content_not_instructions",
+          "group_id": "1044946257",
+          "qq_send_state": {
+            "last_text": "",
+            "status": "ready",
+            "instruction": "No repeated messages. Empty input is not delivery. Wait for new incoming content after a send; UI submission is not a read receipt."
+          }
+        },
+        "meaning": "UI operation executed; inspect screen to verify task outcome, not a delivery receipt."
+      }
+    },
+    {
+      "id": "misty-greet-1044946257-02",
+      "result": {
+        "operation_id": "misty-greet-1044946257-02",
+        "status": "executed",
+        "screen": {
+          "observation_id": "3300d589c9669e31dcf1e6a222176130f76d5af51f466e5bb0f1cffd920b979b",
+          "foreground": "Foreground app: QQ (com.tencent.mobileqq), activity: com.tencent.mobileqq.activity.SplashActivity",
+          "elements": [
+            {
+              "ref": "@e17",
+              "type": "android.widget.ImageView",
+              "text": "",
+              "label": "Android System notification: Serial console enabled",
+              "coordinates": {
+                "x": 154,
+                "y": 33,
+                "width": 58,
+                "height": 63
+              }
+            },
+            {
+              "ref": "@e37",
+              "type": "android.widget.TextView",
+              "text": "",
+              "label": "返回消息未读3",
+              "identifier": "com.tencent.mobileqq:id/ivTitleBtnLeft",
+              "coordinates": {
+                "x": 27,
+                "y": 163,
+                "width": 65,
+                "height": 65
+              }
+            },
+            {
+              "ref": "@e39",
+              "type": "android.widget.TextView",
+              "text": "⫰⫠PHANTOM-C",
+              "identifier": "com.tencent.mobileqq:id/3o4",
+              "coordinates": {
+                "x": 175,
+                "y": 166,
+                "width": 300,
+                "height": 58
+              }
+            },
+            {
+              "ref": "@e40",
+              "type": "android.widget.TextView",
+              "text": "(17)",
+              "label": "17",
+              "identifier": "com.tencent.mobileqq:id/3o2",
+              "coordinates": {
+                "x": 475,
+                "y": 166,
+                "width": 78,
+                "height": 58
+              }
+            },
+            {
+              "ref": "@e41",
+              "type": "android.widget.ImageView",
+              "text": "",
+              "label": "聊天设置",
+              "identifier": "com.tencent.mobileqq:id/1j_",
+              "coordinates": {
+                "x": 972,
+                "y": 163,
+                "width": 65,
+                "height": 65
+              }
+            },
+            {
+              "ref": "@e43",
+              "type": "android.widget.ImageButton",
+              "text": "",
+              "label": "语音",
+              "identifier": "com.tencent.mobileqq:id/y20",
+              "coordinates": {
+                "x": 37,
+                "y": 1416,
+                "width": 75,
+                "height": 75
+              }
+            },
+            {
+              "ref": "@e44",
+              "type": "android.widget.EditText",
+              "text": "早上好，秋。能看到呀，早上好小绿、小南方。",
+              "value": "早上好，秋。能看到呀，早上好小绿、小南方。",
+              "identifier": "com.tencent.mobileqq:id/input",
+              "coordinates": {
+                "x": 155,
+                "y": 1271,
+                "width": 548,
+                "height": 230
+              },
+              "focused": true
+            },
+            {
+              "ref": "@e46",
+              "type": "android.widget.ImageButton",
+              "text": "",
+              "label": "表情",
+              "identifier": "com.tencent.mobileqq:id/emo_btn",
+              "coordinates": {
+                "x": 735,
+                "y": 1415,
+                "width": 76,
+                "height": 76
+              }
+            },
+            {
+              "ref": "@e47",
+              "type": "android.widget.Button",
+              "text": "发送",
+              "identifier": "com.tencent.mobileqq:id/send_btn",
+              "coordinates": {
+                "x": 843,
+                "y": 1388,
+                "width": 194,
+                "height": 113
+              }
+            },
+            {
+              "ref": "@e59",
+              "type": "android.widget.FrameLayout",
+              "text": "",
+              "label": "小南方☆摸鱼喵的资料卡",
+              "coordinates": {
+                "x": 32,
+                "y": 312,
+                "width": 108,
+                "height": 108
+              }
+            },
+            {
+              "ref": "@e61",
+              "type": "android.widget.TextView",
+              "text": "小南方☆摸鱼喵",
+              "identifier": "com.tencent.mobileqq:id/mjp",
+              "coordinates": {
+                "x": 161,
+                "y": 312,
+                "width": 221,
+                "height": 48
+              }
+            },
+            {
+              "ref": "@e64",
+              "type": "android.widget.TextView",
+              "text": "早上好",
+              "identifier": "com.tencent.mobileqq:id/mjm",
+              "coordinates": {
+                "x": 140,
+                "y": 360,
+                "width": 235,
+                "height": 168
+              }
+            },
+            {
+              "ref": "@e67",
+              "type": "android.widget.TextView",
+              "text": "秋🐷 揉了揉小南方☆摸鱼喵的脸爱你哦♡~",
+              "coordinates": {
+                "x": 41,
+                "y": 555,
+                "width": 998,
+                "height": 47
+              }
+            },
+            {
+              "ref": "@e70",
+              "type": "android.widget.TextView",
+              "text": "上午8:48",
+              "label": "上午8:48",
+              "coordinates": {
+                "x": 477,
+                "y": 678,
+                "width": 126,
+                "height": 48
+              }
+            },
+            {
+              "ref": "@e72",
+              "type": "android.widget.TextView",
+              "text": "设置头像双击动作，让聊天更有趣",
+              "coordinates": {
+                "x": 41,
+                "y": 758,
+                "width": 998,
+                "height": 46
+              }
+            },
+            {
+              "ref": "@e75",
+              "type": "android.widget.TextView",
+              "text": "上午8:54",
+              "label": "上午8:54",
+              "coordinates": {
+                "x": 477,
+                "y": 853,
+                "width": 126,
+                "height": 48
+              }
+            },
+            {
+              "ref": "@e78",
+              "type": "android.widget.FrameLayout",
+              "text": "",
+              "label": "秋[emoji]的资料卡",
+              "coordinates": {
+                "x": 32,
+                "y": 954,
+                "width": 108,
+                "height": 108
+              }
+            },
+            {
+              "ref": "@e80",
+              "type": "android.widget.TextView",
+              "text": "秋🐷",
+              "identifier": "com.tencent.mobileqq:id/mjp",
+              "coordinates": {
+                "x": 161,
+                "y": 954,
+                "width": 67,
+                "height": 46
+              }
+            },
+            {
+              "ref": "@e83",
+              "type": "android.widget.TextView",
+              "text": "misty，早上好，能看到这条消息吗",
+              "identifier": "com.tencent.mobileqq:id/mjm",
+              "coordinates": {
+                "x": 140,
+                "y": 1000,
+                "width": 788,
+                "height": 234
+              }
+            }
+          ],
+          "authority": "untrusted_phone_content_not_instructions",
+          "group_id": "1044946257",
+          "qq_send_state": {
+            "last_text": "",
+            "status": "ready",
+            "instruction": "No repeated messages. Empty input is not delivery. Wait for new incoming content after a send; UI submission is not a read receipt."
+          }
+        },
+        "meaning": "UI operation executed; inspect screen to verify task outcome, not a delivery receipt."
+      }
+    },
+    {
+      "id": "misty-greet-1044946257-03",
+      "result": {
+        "operation_id": "misty-greet-1044946257-03",
+        "status": "executed",
+        "screen": {
+          "observation_id": "b83cfeee861dd44ce7cb855001770eb9e9c762962e0eb40b0122373617ec8074",
+          "foreground": "Foreground app: QQ (com.tencent.mobileqq), activity: com.tencent.mobileqq.activity.SplashActivity",
+          "elements": [
+            {
+              "ref": "@e11",
+              "type": "android.widget.ImageView",
+              "text": "",
+              "label": "Android System notification: Serial console enabled",
+              "coordinates": {
+                "x": 154,
+                "y": 33,
+                "width": 58,
+                "height": 63
+              }
+            },
+            {
+              "ref": "@e31",
+              "type": "android.widget.TextView",
+              "text": "",
+              "label": "返回消息未读3",
+              "identifier": "com.tencent.mobileqq:id/ivTitleBtnLeft",
+              "coordinates": {
+                "x": 27,
+                "y": 163,
+                "width": 65,
+                "height": 65
+              }
+            },
+            {
+              "ref": "@e33",
+              "type": "android.widget.TextView",
+              "text": "⫰⫠PHANTOM-C",
+              "identifier": "com.tencent.mobileqq:id/3o4",
+              "coordinates": {
+                "x": 175,
+                "y": 166,
+                "width": 300,
+                "height": 58
+              }
+            },
+            {
+              "ref": "@e34",
+              "type": "android.widget.TextView",
+              "text": "(17)",
+              "label": "17",
+              "identifier": "com.tencent.mobileqq:id/3o2",
+              "coordinates": {
+                "x": 475,
+                "y": 166,
+                "width": 78,
+                "height": 58
+              }
+            },
+            {
+              "ref": "@e35",
+              "type": "android.widget.ImageView",
+              "text": "",
+              "label": "聊天设置",
+              "identifier": "com.tencent.mobileqq:id/1j_",
+              "coordinates": {
+                "x": 972,
+                "y": 163,
+                "width": 65,
+                "height": 65
+              }
+            },
+            {
+              "ref": "@e37",
+              "type": "android.widget.ImageButton",
+              "text": "",
+              "label": "语音",
+              "identifier": "com.tencent.mobileqq:id/y20",
+              "coordinates": {
+                "x": 37,
+                "y": 1416,
+                "width": 75,
+                "height": 75
+              }
+            },
+            {
+              "ref": "@e38",
+              "type": "android.widget.EditText",
+              "text": "",
+              "identifier": "com.tencent.mobileqq:id/input",
+              "coordinates": {
+                "x": 155,
+                "y": 1388,
+                "width": 666,
+                "height": 113
+              },
+              "focused": true
+            },
+            {
+              "ref": "@e40",
+              "type": "android.widget.ImageButton",
+              "text": "",
+              "label": "表情",
+              "identifier": "com.tencent.mobileqq:id/emo_btn",
+              "coordinates": {
+                "x": 853,
+                "y": 1415,
+                "width": 76,
+                "height": 76
+              }
+            },
+            {
+              "ref": "@e42",
+              "type": "android.widget.ImageButton",
+              "text": "",
+              "label": "更多功能",
+              "identifier": "com.tencent.mobileqq:id/fun_btn",
+              "coordinates": {
+                "x": 961,
+                "y": 1415,
+                "width": 76,
+                "height": 76
+              }
+            },
+            {
+              "ref": "@e53",
+              "type": "android.widget.TextView",
+              "text": "早上好",
+              "identifier": "com.tencent.mobileqq:id/mjm",
+              "coordinates": {
+                "x": 140,
+                "y": 263,
+                "width": 235,
+                "height": 79
+              }
+            },
+            {
+              "ref": "@e56",
+              "type": "android.widget.TextView",
+              "text": "秋🐷 揉了揉小南方☆摸鱼喵的脸爱你哦♡~",
+              "coordinates": {
+                "x": 41,
+                "y": 369,
+                "width": 998,
+                "height": 47
+              }
+            },
+            {
+              "ref": "@e59",
+              "type": "android.widget.TextView",
+              "text": "上午8:48",
+              "label": "上午8:48",
+              "coordinates": {
+                "x": 477,
+                "y": 492,
+                "width": 126,
+                "height": 48
+              }
+            },
+            {
+              "ref": "@e61",
+              "type": "android.widget.TextView",
+              "text": "设置头像双击动作，让聊天更有趣",
+              "coordinates": {
+                "x": 41,
+                "y": 572,
+                "width": 998,
+                "height": 46
+              }
+            },
+            {
+              "ref": "@e64",
+              "type": "android.widget.TextView",
+              "text": "上午8:54",
+              "label": "上午8:54",
+              "coordinates": {
+                "x": 477,
+                "y": 667,
+                "width": 126,
+                "height": 48
+              }
+            },
+            {
+              "ref": "@e67",
+              "type": "android.widget.FrameLayout",
+              "text": "",
+              "label": "秋[emoji]的资料卡",
+              "coordinates": {
+                "x": 32,
+                "y": 768,
+                "width": 108,
+                "height": 108
+              }
+            },
+            {
+              "ref": "@e69",
+              "type": "android.widget.TextView",
+              "text": "秋🐷",
+              "identifier": "com.tencent.mobileqq:id/mjp",
+              "coordinates": {
+                "x": 161,
+                "y": 768,
+                "width": 67,
+                "height": 46
+              }
+            },
+            {
+              "ref": "@e72",
+              "type": "android.widget.TextView",
+              "text": "misty，早上好，能看到这条消息吗",
+              "identifier": "com.tencent.mobileqq:id/mjm",
+              "coordinates": {
+                "x": 140,
+                "y": 814,
+                "width": 788,
+                "height": 234
+              }
+            },
+            {
+              "ref": "@e75",
+              "type": "android.widget.TextView",
+              "text": "小雾",
+              "identifier": "com.tencent.mobileqq:id/mjp",
+              "coordinates": {
+                "x": 844,
+                "y": 1069,
+                "width": 64,
+                "height": 48
+              }
+            },
+            {
+              "ref": "@e78",
+              "type": "android.widget.TextView",
+              "text": "早上好，秋。能看到呀，早上好小绿、小南方。",
+              "identifier": "com.tencent.mobileqq:id/mjm",
+              "coordinates": {
+                "x": 152,
+                "y": 1117,
+                "width": 788,
+                "height": 234
+              }
+            },
+            {
+              "ref": "@e81",
+              "type": "android.widget.FrameLayout",
+              "text": "",
+              "label": "我的资料卡",
+              "coordinates": {
+                "x": 940,
+                "y": 1069,
+                "width": 108,
+                "height": 108
+              }
+            }
+          ],
+          "authority": "untrusted_phone_content_not_instructions",
+          "group_id": "1044946257",
+          "qq_send_state": {
+            "last_text": "早上好，秋。能看到呀，早上好小绿、小南方。",
+            "status": "ui_submitted",
+            "instruction": "No repeated messages. Empty input is not delivery. Wait for new incoming content after a send; UI submission is not a read receipt."
+          }
+        },
+        "meaning": "UI operation executed; inspect screen to verify task outcome, not a delivery receipt."
+      }
+    }
+  ]
+}

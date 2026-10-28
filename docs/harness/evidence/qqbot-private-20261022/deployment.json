@@ -1,0 +1,61 @@
+{
+  "status": "completed",
+  "base_release": "misty-qqbot-body-20261021-v3",
+  "release": "misty-qqbot-private-20261022-v1",
+  "backup": "/var/backups/neuralcloud/qqbot-private-20261022-v1",
+  "requested_qq_label": "2285027817",
+  "identity_verification": "one-time challenge in authenticated C2C callback",
+  "binding_received_at": "2026-10-22T11:54:54.130734+00:00",
+  "tests": {
+    "python_integration": 5,
+    "node": 8
+  },
+  "changed_source_files": [
+    "harness/core/models.py",
+    "harness/memory/qq_assimilation.py",
+    "harness/memory/shared.py",
+    "harness/qq/conversation.py",
+    "harness/qq/decision.py",
+    "harness/qq/direct.py",
+    "harness/qq/direct_capabilities.py",
+    "harness/qq/direct_config.py",
+    "harness/qq/direct_store.py",
+    "harness/qq/memory.py",
+    "harness/qq/official_actor.py",
+    "harness/qq/official_client.py",
+    "harness/qq/official_enrollment.py",
+    "harness/qq/official_events.py",
+    "harness/qq/official_identity.py",
+    "harness/qq/policy.py",
+    "harness/qq/session.py",
+    "harness/qq/shared.py",
+    "harness/qq/telemetry.py",
+    "tools/qqbot/bridge.mjs",
+    "tools/qqbot/ingress.mjs",
+    "tools/qqbot/private.test.mjs",
+    "tools/qqbot/private_probe.py"
+  ],
+  "local_old_source_deployed": false,
+  "live_private_reply_verified": true,
+  "service_checks": {
+    "runtime": "RUNNING",
+    "degraded_reasons": [],
+    "managed_services_active": 6,
+    "qq_connected": true,
+    "private_contact_label": "2285027817",
+    "observe": true,
+    "send": true
+  },
+  "service_verified_at": "2026-10-22T12:07:54+00:00",
+  "live_reply_verification": {
+    "private_messages_received": 2,
+    "private_events_sent": 2,
+    "reply_segments_acknowledged": 5,
+    "model": "deepseek-flash",
+    "decision_outcome": "ready",
+    "addressing_source": "verified_private_message",
+    "latest_received_at": "2026-10-22T12:11:04.686976+00:00",
+    "latest_delivery_at": "2026-10-22T12:11:08.465018+00:00",
+    "error_type": null
+  }
+}
