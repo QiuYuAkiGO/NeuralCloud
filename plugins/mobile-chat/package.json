@@ -1,0 +1,23 @@
+{
+  "name": "@misty/dsh-mobile-chat",
+  "version": "0.2.0",
+  "description": "Private and shared Android chat channels for DeepSeek Harness",
+  "type": "module",
+  "exports": "./channel.mjs",
+  "files": [
+    "channel.mjs",
+    "invited.mjs",
+    "join.mjs",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=24.9.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "4.0.5",
+    "@deepseek-ai/dsh-tools": "0.2.1-rc.3"
+  },
+  "bin": {
+    "misty-join": "./join.mjs"
+  }
+}

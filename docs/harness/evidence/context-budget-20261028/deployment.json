@@ -1,0 +1,29 @@
+{
+  "release": "resident-20261028-context-budget-v1",
+  "baseline": "resident-20261028-memory-workflow-v4",
+  "context_window": 131072,
+  "output_reserve": 4096,
+  "compression_ratio": 0.7,
+  "threshold_tokens": 88883,
+  "background_summaries": true,
+  "summary_max_attempts": 3,
+  "tests": {
+    "passed": 58,
+    "failed": 0
+  },
+  "production_verification": {
+    "triggered_at": "2026-10-28T09:51:43+08:00",
+    "summary_ready_at": "2026-10-28T09:51:56+08:00",
+    "handoff_at": "2026-10-28T09:51:58+08:00",
+    "old_session": "20c8bf6c-614d-4356-a4fd-f927b13773ee",
+    "new_session": "4c118241-cbc6-484d-9da8-858a1e83627c",
+    "status": "READY",
+    "compression_running": 0,
+    "compression_exceptions": 0
+  },
+  "backup": "/var/lib/misty/backups/context-budget-20261028",
+  "service_dropin": "/etc/systemd/system/misty-harness.service.d/50-context-budget.conf",
+  "old_logs_preserved": true,
+  "old_group_messages_replayed": false,
+  "new_group_reply_delivery_tested": false
+}
