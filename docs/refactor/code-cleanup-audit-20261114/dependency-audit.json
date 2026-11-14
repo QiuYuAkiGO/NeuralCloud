@@ -1,0 +1,144 @@
+{
+  "scope": "Read-only dependency and historical activation audit; not current deployment attestation",
+  "baseline": {
+    "NeuralCloud": "4fcd8c335b4ee5ea32a84a6430955a027c443db6",
+    "MistyAI": "37e093595b512ca139dfda0d70fc43eda5df207d"
+  },
+  "live_access": {
+    "remote_desktop_devices": 0,
+    "current_process_config_hashes_verified": false
+  },
+  "resident_relative_imports": [
+    {
+      "from": "src/neuralcloud/__main__.py",
+      "line": 5,
+      "to": "contracts",
+      "relative_level": 1
+    },
+    {
+      "from": "src/neuralcloud/__main__.py",
+      "line": 6,
+      "to": "storage",
+      "relative_level": 1
+    },
+    {
+      "from": "src/neuralcloud/__main__.py",
+      "line": 39,
+      "to": "api",
+      "relative_level": 1
+    },
+    {
+      "from": "src/neuralcloud/api.py",
+      "line": 12,
+      "to": "contracts",
+      "relative_level": 1
+    },
+    {
+      "from": "src/neuralcloud/api.py",
+      "line": 13,
+      "to": "storage",
+      "relative_level": 1
+    },
+    {
+      "from": "src/neuralcloud/archive.py",
+      "line": 24,
+      "to": "contracts",
+      "relative_level": 1
+    },
+    {
+      "from": "src/neuralcloud/archive.py",
+      "line": 25,
+      "to": "storage",
+      "relative_level": 1
+    },
+    {
+      "from": "src/neuralcloud/maintenance.py",
+      "line": 21,
+      "to": "archive",
+      "relative_level": 1
+    },
+    {
+      "from": "src/neuralcloud/maintenance.py",
+      "line": 22,
+      "to": "contracts",
+      "relative_level": 1
+    },
+    {
+      "from": "src/neuralcloud/maintenance.py",
+      "line": 23,
+      "to": "ownership",
+      "relative_level": 1
+    },
+    {
+      "from": "src/neuralcloud/maintenance.py",
+      "line": 24,
+      "to": "storage",
+      "relative_level": 1
+    },
+    {
+      "from": "src/neuralcloud/migration.py",
+      "line": 19,
+      "to": "contracts",
+      "relative_level": 1
+    },
+    {
+      "from": "src/neuralcloud/migration.py",
+      "line": 20,
+      "to": "storage",
+      "relative_level": 1
+    },
+    {
+      "from": "src/neuralcloud/storage.py",
+      "line": 13,
+      "to": "contracts",
+      "relative_level": 1
+    },
+    {
+      "from": "src/neuralcloud/storage.py",
+      "line": 14,
+      "to": "ownership",
+      "relative_level": 1
+    },
+    {
+      "from": "src/neuralcloud/temporary_views.py",
+      "line": 19,
+      "to": "archive",
+      "relative_level": 1
+    },
+    {
+      "from": "src/neuralcloud/temporary_views.py",
+      "line": 20,
+      "to": "contracts",
+      "relative_level": 1
+    },
+    {
+      "from": "src/neuralcloud/temporary_views.py",
+      "line": 21,
+      "to": "ownership",
+      "relative_level": 1
+    },
+    {
+      "from": "src/neuralcloud/temporary_views.py",
+      "line": 22,
+      "to": "storage",
+      "relative_level": 1
+    }
+  ],
+  "deployed_patch_dependencies": [
+    {
+      "path": "compatibility/harness/resident/memory-stack.mjs",
+      "present_in_local_snapshot": false,
+      "evidence": "NeuralCloud/docs/harness/evidence/context-budget-20261028/source.patch"
+    },
+    {
+      "path": "compatibility/harness/resident/continuity.mjs",
+      "present_in_local_snapshot": false,
+      "evidence": "NeuralCloud/docs/harness/evidence/context-budget-20261028/source.patch"
+    },
+    {
+      "path": "compatibility/harness/resident/context-budget.mjs",
+      "present_in_local_snapshot": false,
+      "evidence": "NeuralCloud/docs/harness/evidence/context-budget-20261028/source.patch"
+    }
+  ]
+}
