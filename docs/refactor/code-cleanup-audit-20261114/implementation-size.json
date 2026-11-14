@@ -1,0 +1,3753 @@
+{
+  "revision": "ab421b125be0dc632eef51ea2744fa22a75bbf98",
+  "pygments_version": "2.21.0",
+  "method": "Recount repository-size.json excluding tests/evaluation/docs and comments.\n\nRun with the repository .venv Python (Pygments 2.21.0).\nPython counts reuse AST/tokenize results; JavaScript uses Node's bundled Acorn\ntokenizer (Node 24.19.0, Acorn 8.17.0); other languages use Pygments tokens.\nThe result is physical lines containing non-comment code, not statement counts.\n",
+  "total_files": 518,
+  "total_code_lines": 110880,
+  "categories": {
+    "other_entrypoints": {
+      "files": 10,
+      "code_lines": 1454
+    },
+    "legacy_gui": {
+      "files": 40,
+      "code_lines": 8162
+    },
+    "legacy_harness": {
+      "files": 392,
+      "code_lines": 88276
+    },
+    "legacy_infra": {
+      "files": 13,
+      "code_lines": 1017
+    },
+    "memory_plugin": {
+      "files": 1,
+      "code_lines": 144
+    },
+    "mobile_chat_plugin": {
+      "files": 3,
+      "code_lines": 175
+    },
+    "resident_python": {
+      "files": 10,
+      "code_lines": 1775
+    },
+    "other_tools": {
+      "files": 40,
+      "code_lines": 9255
+    },
+    "oral_deployment": {
+      "files": 2,
+      "code_lines": 99
+    },
+    "resident_tools": {
+      "files": 1,
+      "code_lines": 75
+    },
+    "qq_bridge_tools": {
+      "files": 6,
+      "code_lines": 448
+    }
+  },
+  "exclusions": {
+    "tests_and_fixtures": {
+      "files": 469,
+      "physical_lines": 104355
+    },
+    "documentation_and_evidence": {
+      "files": 30,
+      "physical_lines": 5603
+    },
+    "evaluation_and_reports": {
+      "files": 173,
+      "physical_lines": 29115
+    },
+    "generated_declarations": {
+      "files": 1,
+      "physical_lines": 15
+    },
+    "acceptance_validation_and_benchmarks": {
+      "files": 70,
+      "physical_lines": 12537
+    }
+  },
+  "files": [
+    {
+      "path": "dev.ps1",
+      "sha": "b0368203897c7c4c7c961750f20ba45228fe0c73",
+      "category": "other_entrypoints",
+      "code_lines": 85,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/__init__.py",
+      "sha": "9451356d7c756ab727b1ce11213b679979fa1822",
+      "category": "legacy_gui",
+      "code_lines": 0,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "gui/__main__.py",
+      "sha": "85e1199a02489061af9d43b0b72311f9907c61e2",
+      "category": "legacy_gui",
+      "code_lines": 3,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "gui/debug.py",
+      "sha": "8bba814f0dd157212ccecc5f754c406e2a858321",
+      "category": "legacy_gui",
+      "code_lines": 383,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "gui/demo_seed.py",
+      "sha": "faf7e5a10cb48145d7618acd01e2e64e8bbdc866",
+      "category": "legacy_gui",
+      "code_lines": 8,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "gui/observer.py",
+      "sha": "3a0381f7cb605a688a4b6604feddc55b699ac05f",
+      "category": "legacy_gui",
+      "code_lines": 71,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "gui/origin.py",
+      "sha": "717d0bc1e3cf9707cb146602643f26fe50ef4547",
+      "category": "legacy_gui",
+      "code_lines": 50,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "gui/persist.py",
+      "sha": "7ec009f43aba8830921a5d2992aa369568adaf7b",
+      "category": "legacy_gui",
+      "code_lines": 154,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "gui/presets.py",
+      "sha": "f6e7797df8608477f57533460f924fd4324cf04e",
+      "category": "legacy_gui",
+      "code_lines": 337,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "gui/runtime_server.py",
+      "sha": "6e978fdb0c0a79c114c3e83554c75a7bab04375c",
+      "category": "legacy_gui",
+      "code_lines": 509,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "gui/server.py",
+      "sha": "d291e2171a1cdb5545c2476551893bc42c1671a0",
+      "category": "legacy_gui",
+      "code_lines": 376,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "gui/service.py",
+      "sha": "d54da38de5b09b87c55a927ba7bba79e0963ee03",
+      "category": "legacy_gui",
+      "code_lines": 492,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "gui/static/app.js",
+      "sha": "35cfb619eb4326f0fef5230f9f9c5e6bd6d5575f",
+      "category": "legacy_gui",
+      "code_lines": 2017,
+      "method": "Acorn 8.17.0 tokenizer"
+    },
+    {
+      "path": "gui/static/attention.js",
+      "sha": "f42e7b05524b3bc3287adaca3998fe145d90029c",
+      "category": "legacy_gui",
+      "code_lines": 33,
+      "method": "Acorn 8.17.0 tokenizer"
+    },
+    {
+      "path": "gui/static/board.css",
+      "sha": "3249c56fecbea28da5fdd11d0796c8878358f69e",
+      "category": "legacy_gui",
+      "code_lines": 3,
+      "method": "CssLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/static/board.html",
+      "sha": "1821bcebbe98eb5e879715aeb7133caca0416ae2",
+      "category": "legacy_gui",
+      "code_lines": 22,
+      "method": "HtmlLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/static/board.js",
+      "sha": "2c62eb79a5ce14d2c4387e7376e04291315f5a76",
+      "category": "legacy_gui",
+      "code_lines": 10,
+      "method": "Acorn 8.17.0 tokenizer"
+    },
+    {
+      "path": "gui/static/daily-revision.css",
+      "sha": "e9ab274427f691c13ad145e332acf4c37dc4d195",
+      "category": "legacy_gui",
+      "code_lines": 1,
+      "method": "CssLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/static/daily-revision.html",
+      "sha": "a1bd085b93dbd5d56c4ebf4c41b54f68e9643124",
+      "category": "legacy_gui",
+      "code_lines": 26,
+      "method": "HtmlLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/static/daily-revision.js",
+      "sha": "cb4878eeecd418af7753cb65b842f8bd25334d6c",
+      "category": "legacy_gui",
+      "code_lines": 62,
+      "method": "Acorn 8.17.0 tokenizer"
+    },
+    {
+      "path": "gui/static/goals.css",
+      "sha": "6dafc216970589c74d0d19403251f3d2076c3632",
+      "category": "legacy_gui",
+      "code_lines": 2,
+      "method": "CssLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/static/goals.html",
+      "sha": "6d568b06df9d7ceb37eeb42b66e5fa38fe9662b1",
+      "category": "legacy_gui",
+      "code_lines": 57,
+      "method": "HtmlLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/static/goals.js",
+      "sha": "37c40c7129d3a223b206e694e23aab529f344c3a",
+      "category": "legacy_gui",
+      "code_lines": 293,
+      "method": "Acorn 8.17.0 tokenizer"
+    },
+    {
+      "path": "gui/static/index.html",
+      "sha": "734435451f26b92871f533ada19890c7a4cc321c",
+      "category": "legacy_gui",
+      "code_lines": 207,
+      "method": "HtmlLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/static/ops.css",
+      "sha": "27367595cbc4b7724d2dabf254963ad2f2233798",
+      "category": "legacy_gui",
+      "code_lines": 195,
+      "method": "CssLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/static/ops.html",
+      "sha": "ffa8610f917d1173d93740c78e81b5b90a829f1f",
+      "category": "legacy_gui",
+      "code_lines": 187,
+      "method": "HtmlLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/static/ops.js",
+      "sha": "7b1746a74055d58b969d20e68de74b7f4b5aae39",
+      "category": "legacy_gui",
+      "code_lines": 574,
+      "method": "Acorn 8.17.0 tokenizer"
+    },
+    {
+      "path": "gui/static/report-insights.js",
+      "sha": "debc824793bc51667e45cf841be41449301bfe7f",
+      "category": "legacy_gui",
+      "code_lines": 297,
+      "method": "Acorn 8.17.0 tokenizer"
+    },
+    {
+      "path": "gui/static/report.css",
+      "sha": "0c02a1a7c7bb932545f6a7e5c33710237ca3170c",
+      "category": "legacy_gui",
+      "code_lines": 88,
+      "method": "CssLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/static/report.html",
+      "sha": "353650def0de7110b64cc3f865fe72c09fc44d7b",
+      "category": "legacy_gui",
+      "code_lines": 55,
+      "method": "HtmlLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/static/report.js",
+      "sha": "2823f745dc9a86f3578d2a02fceadcf4756a005f",
+      "category": "legacy_gui",
+      "code_lines": 620,
+      "method": "Acorn 8.17.0 tokenizer"
+    },
+    {
+      "path": "gui/static/selfcheck.css",
+      "sha": "db0d0def3b6193473806e5c6d483f4d90e4838ac",
+      "category": "legacy_gui",
+      "code_lines": 7,
+      "method": "CssLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/static/selfcheck.html",
+      "sha": "e01c27e390ecee9ab578982f153143c132a666b3",
+      "category": "legacy_gui",
+      "code_lines": 44,
+      "method": "HtmlLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/static/selfcheck.js",
+      "sha": "0a04769e3e36fbe068b2d76c972003a1c17a7e4c",
+      "category": "legacy_gui",
+      "code_lines": 68,
+      "method": "Acorn 8.17.0 tokenizer"
+    },
+    {
+      "path": "gui/static/server.css",
+      "sha": "46a12743a1febc6ae935142b7b82cee7f0080426",
+      "category": "legacy_gui",
+      "code_lines": 1,
+      "method": "CssLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/static/server.html",
+      "sha": "6effe87e89d6b17ad77da950168e770c70ce4545",
+      "category": "legacy_gui",
+      "code_lines": 57,
+      "method": "HtmlLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/static/server.js",
+      "sha": "fa3f079ab004d4b0f1e81692f214891b7943b8f3",
+      "category": "legacy_gui",
+      "code_lines": 203,
+      "method": "Acorn 8.17.0 tokenizer"
+    },
+    {
+      "path": "gui/static/styles.css",
+      "sha": "78d0c3f79eb91e26f052d76653d2ec7144c119b4",
+      "category": "legacy_gui",
+      "code_lines": 488,
+      "method": "CssLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/static/web.css",
+      "sha": "6f36d8422f71cb04b7ecced0abad900b1c261d38",
+      "category": "legacy_gui",
+      "code_lines": 1,
+      "method": "CssLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/static/web.html",
+      "sha": "46f51654f778e6f89af6eb2199e6021030032cc8",
+      "category": "legacy_gui",
+      "code_lines": 43,
+      "method": "HtmlLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "gui/static/web.js",
+      "sha": "003159dacc3679fb481097ae7f0bbf0d9e93c903",
+      "category": "legacy_gui",
+      "code_lines": 118,
+      "method": "Acorn 8.17.0 tokenizer"
+    },
+    {
+      "path": "harness/__init__.py",
+      "sha": "3d14a51ada5f9ed23dcbc127a544ff8b463f3f56",
+      "category": "legacy_harness",
+      "code_lines": 39,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agency/__init__.py",
+      "sha": "67cefb4e90454193fa9649ceb9ef14ff48123001",
+      "category": "legacy_harness",
+      "code_lines": 7,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agency/arbitration.py",
+      "sha": "450edd3393a2219578c6b88fb2cf1a408ab78fdb",
+      "category": "legacy_harness",
+      "code_lines": 67,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agency/models.py",
+      "sha": "716a93cd66f740de74d75f0a98cb6a58f1d5d635",
+      "category": "legacy_harness",
+      "code_lines": 164,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agency/planner.py",
+      "sha": "9f88ccdf31ce63fdaee854ed8afc271b15991a83",
+      "category": "legacy_harness",
+      "code_lines": 244,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agency/review.py",
+      "sha": "82d41020b70a1c21398d1145c0e93353a4001261",
+      "category": "legacy_harness",
+      "code_lines": 30,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agency/scheduler.py",
+      "sha": "f771c611d7f593165a82ce5e73a5c255f3e0c0a1",
+      "category": "legacy_harness",
+      "code_lines": 50,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agency/store.py",
+      "sha": "043a133e438e29c18fd1a2941dbd9c53034b520f",
+      "category": "legacy_harness",
+      "code_lines": 198,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/__init__.py",
+      "sha": "16c3d482104708b9049474b330986b9e4c73eb2a",
+      "category": "legacy_harness",
+      "code_lines": 0,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/_deepseek_encoding.py",
+      "sha": "3c7c357dc9ae3ed37adacb8572a2e9498b7d1bcb",
+      "category": "legacy_harness",
+      "code_lines": 689,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/actions.py",
+      "sha": "dfd79d87c859b8564233b0a795fe208313563354",
+      "category": "legacy_harness",
+      "code_lines": 47,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/affect_models.py",
+      "sha": "0a0ed90d1945cfefdd07f13d7425518a080c1c74",
+      "category": "legacy_harness",
+      "code_lines": 73,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/affect_store.py",
+      "sha": "0fbd9c6fbc18b372ecf7c794f550180225d267a1",
+      "category": "legacy_harness",
+      "code_lines": 225,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/autonomy.py",
+      "sha": "670b60d20e48002879a9a996447a871f2f8bad63",
+      "category": "legacy_harness",
+      "code_lines": 73,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/background.py",
+      "sha": "114566852e9031538640339ac597a687560ed297",
+      "category": "legacy_harness",
+      "code_lines": 58,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/clock_tool.py",
+      "sha": "e763078877aa1fb276f4a19d6e539dec17bd1b52",
+      "category": "legacy_harness",
+      "code_lines": 19,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/context.py",
+      "sha": "ffcf4f447574a07739f56ad6c909cb361a2598a8",
+      "category": "legacy_harness",
+      "code_lines": 279,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/deepseek_tokens.py",
+      "sha": "05bc85a7de2ac94ed9d6817b878ab972f1a7b15d",
+      "category": "legacy_harness",
+      "code_lines": 59,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/diary_runtime.py",
+      "sha": "f6898fd32a01302ffb910415e80cd87636793e1a",
+      "category": "legacy_harness",
+      "code_lines": 129,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/expressions.py",
+      "sha": "2b29aed22a1e24c232463345f3d278e840379b26",
+      "category": "legacy_harness",
+      "code_lines": 37,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/internal_state.py",
+      "sha": "ece52f762a7c964e939517d3e6f9a385bcc4a941",
+      "category": "legacy_harness",
+      "code_lines": 52,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/memory.py",
+      "sha": "56f81733cb69ac41a678d6b9c80bf21be83c9020",
+      "category": "legacy_harness",
+      "code_lines": 74,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/memory_context.py",
+      "sha": "050cbdfd43fd9f3253840fab87250e07da12956e",
+      "category": "legacy_harness",
+      "code_lines": 22,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/metering.py",
+      "sha": "e26b55d3d62b9715bf54d32637c8502f4c4af862",
+      "category": "legacy_harness",
+      "code_lines": 37,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/mobile.py",
+      "sha": "84e730a029f27b430f870047508fcbef996991e5",
+      "category": "legacy_harness",
+      "code_lines": 72,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/mobile_autonomy.py",
+      "sha": "ea8589ad9cb573152c3c010374c7a0405b45934e",
+      "category": "legacy_harness",
+      "code_lines": 128,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/mobile_contracts.py",
+      "sha": "2c01700e0f73a779064dd326b28efe36ed38b450",
+      "category": "legacy_harness",
+      "code_lines": 31,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/models.py",
+      "sha": "64be991cd789598d4a0212534bcafba7a31f3f43",
+      "category": "legacy_harness",
+      "code_lines": 207,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/policy_migration.py",
+      "sha": "1905fd45212094c9e362fbde1c509ab992e3f05c",
+      "category": "legacy_harness",
+      "code_lines": 52,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/qq_turn.py",
+      "sha": "3a7af8228ec0e1332ed58325de80fe2f0b6d0ed1",
+      "category": "legacy_harness",
+      "code_lines": 52,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/reporting.py",
+      "sha": "21949bc3ac91c69acc3f115509800564555b1e23",
+      "category": "legacy_harness",
+      "code_lines": 225,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/runner.py",
+      "sha": "b43c406b88f9c0d537e33722f9c6fb9d534f0496",
+      "category": "legacy_harness",
+      "code_lines": 272,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/service.py",
+      "sha": "8c1a34ff9141fef975312a313334c866d7dcc6d8",
+      "category": "legacy_harness",
+      "code_lines": 335,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/store.py",
+      "sha": "b3dead22c937174b64b01102b060f2afd3f116c0",
+      "category": "legacy_harness",
+      "code_lines": 250,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/validation.py",
+      "sha": "f46f741af620ba6a8dde14e9324363c2b5037c8a",
+      "category": "legacy_harness",
+      "code_lines": 62,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/vision.py",
+      "sha": "d2324b9168086de5c4e7b1fccfad7aae264f0f42",
+      "category": "legacy_harness",
+      "code_lines": 60,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/web.py",
+      "sha": "82b5677bd80bf1027f62c0b39a23bd37468e488e",
+      "category": "legacy_harness",
+      "code_lines": 94,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/agentic/worker.py",
+      "sha": "b81999b201f60308ed9f6cd6041821da97cc1192",
+      "category": "legacy_harness",
+      "code_lines": 325,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/board/__init__.py",
+      "sha": "37fa409f53a75e358e1cb219b94497afdb697424",
+      "category": "legacy_harness",
+      "code_lines": 0,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/board/config.py",
+      "sha": "9a4ee235fa3f679c15bb7f5df0d07741c1c1812a",
+      "category": "legacy_harness",
+      "code_lines": 45,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/board/service.py",
+      "sha": "152cc458c46d31f216022fd7effc05128148f32e",
+      "category": "legacy_harness",
+      "code_lines": 136,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/board/store.py",
+      "sha": "57b540b373878f694cea49beaf58139973288fda",
+      "category": "legacy_harness",
+      "code_lines": 185,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/body/__init__.py",
+      "sha": "d533876bf997b58678fe1735cdb6e416bc43a1ea",
+      "category": "legacy_harness",
+      "code_lines": 2,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/body/mistyai.py",
+      "sha": "4d18c1d94e258a63841d650063fe48d7f9031f72",
+      "category": "legacy_harness",
+      "code_lines": 163,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/body_belief/__init__.py",
+      "sha": "73de4e75aa856d02e5d9ecc6bdea97a15c00c56e",
+      "category": "legacy_harness",
+      "code_lines": 12,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/body_belief/appraisal.py",
+      "sha": "cf42c4ecea32bae1074f6380c9a54f145625a3e1",
+      "category": "legacy_harness",
+      "code_lines": 64,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/body_belief/compiler.py",
+      "sha": "af1936b4d990a8beefe1abcbb95cbf3dcd14168f",
+      "category": "legacy_harness",
+      "code_lines": 55,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/body_belief/consolidation.py",
+      "sha": "102e8a30937e37b6b87707ca400e81556418925d",
+      "category": "legacy_harness",
+      "code_lines": 76,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/body_belief/models.py",
+      "sha": "7dff608c2c7ed958d641ccbaeab0dc8f1f5a0ebe",
+      "category": "legacy_harness",
+      "code_lines": 139,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/body_belief/retrieval.py",
+      "sha": "a94717991b706e8f010cedbe3f85f39ec3153417",
+      "category": "legacy_harness",
+      "code_lines": 35,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/body_belief/service.py",
+      "sha": "8141039eac0a5e2f2c44c4c353d7185a6eb02423",
+      "category": "legacy_harness",
+      "code_lines": 167,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/body_belief/store.py",
+      "sha": "36c8e75da9c01948a6a1e58f0f9ae5c787c026a7",
+      "category": "legacy_harness",
+      "code_lines": 202,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/__init__.py",
+      "sha": "4fc301068b1f1f7283796f9d3a7f436cc3c23727",
+      "category": "legacy_harness",
+      "code_lines": 1,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/action_planner.py",
+      "sha": "1bb5f0302c0f1e63773cec3befd703735453bdc5",
+      "category": "legacy_harness",
+      "code_lines": 559,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/autonomous.py",
+      "sha": "c002356c43fe8cbb95c928afded5e9296261ded5",
+      "category": "legacy_harness",
+      "code_lines": 299,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/basic_terminal.py",
+      "sha": "7b011c9fd6407e7b4c0e900648a2b2d9ba53f964",
+      "category": "legacy_harness",
+      "code_lines": 352,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/board.py",
+      "sha": "604f33720dac2e42759f047757740cf41444eced",
+      "category": "legacy_harness",
+      "code_lines": 318,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/capabilities.py",
+      "sha": "14d3e394ca45300d0960b2acc8c58afd5f953d86",
+      "category": "legacy_harness",
+      "code_lines": 371,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/daily_revision.py",
+      "sha": "abc0c7fc220b1a2935c0b0809fcbc56f4ed9ba40",
+      "category": "legacy_harness",
+      "code_lines": 377,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/decision_parser.py",
+      "sha": "8996ea8f47548d76372750b447a2e775d8642f5f",
+      "category": "legacy_harness",
+      "code_lines": 72,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/diary.py",
+      "sha": "247c32c9a94030363e9ce5ded39dd19626e0d315",
+      "category": "legacy_harness",
+      "code_lines": 271,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/diary_reflection.py",
+      "sha": "bc47b72c21ba961ad4472a8113a46ceeb89987ac",
+      "category": "legacy_harness",
+      "code_lines": 324,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/goals.py",
+      "sha": "84d1a0b8635cd8751e90de3ecc1a32b6e9049c2f",
+      "category": "legacy_harness",
+      "code_lines": 250,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/grounded_agency.py",
+      "sha": "e285289a6a33eb8f2759ce5f8155604f19cd9357",
+      "category": "legacy_harness",
+      "code_lines": 139,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/interruption.py",
+      "sha": "03dbf62adc40c7b480e99dc203c30f3a49fb45c5",
+      "category": "legacy_harness",
+      "code_lines": 81,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/production.py",
+      "sha": "e90971358218d1b7068e79eaba5e37e350697dc3",
+      "category": "legacy_harness",
+      "code_lines": 536,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/prompts.py",
+      "sha": "58613db0ad377d76ec36bcc835089b87763aa6c4",
+      "category": "legacy_harness",
+      "code_lines": 76,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/qq_memory.py",
+      "sha": "b39dad74b7e3e98dc546a40ef5f7eeae82fb36c4",
+      "category": "legacy_harness",
+      "code_lines": 898,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/qq_memory_import.py",
+      "sha": "6a089ad97f863c1a2b6acf9bf7185deef6be7d88",
+      "category": "legacy_harness",
+      "code_lines": 297,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/qq_turn.py",
+      "sha": "cf0fc93208a941034b2bdee707876b831f8cc5b7",
+      "category": "legacy_harness",
+      "code_lines": 305,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/service.py",
+      "sha": "9e563bfadf280c385989e063dbd562b7bb0a8e12",
+      "category": "legacy_harness",
+      "code_lines": 1045,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/shared_memory.py",
+      "sha": "e3a93fccbcce4d3ee38bf61e345f626659b0615e",
+      "category": "legacy_harness",
+      "code_lines": 547,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/ui_snapshot.py",
+      "sha": "b6b78f9a7d914ced1c257940f5e28627172b7a81",
+      "category": "legacy_harness",
+      "code_lines": 70,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/cognitive/web.py",
+      "sha": "50644546cb63a87e2bc2c1e13ba1496b685a1208",
+      "category": "legacy_harness",
+      "code_lines": 373,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/compiler/__init__.py",
+      "sha": "78a48269965d0a83cfb73d533f3005b93c32f667",
+      "category": "legacy_harness",
+      "code_lines": 2,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/compiler/compiler.py",
+      "sha": "c1ad50b18961e42a24263d1eed1acbbc543410bc",
+      "category": "legacy_harness",
+      "code_lines": 713,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/compiler/expression.py",
+      "sha": "a2bdae2f5a4e12c0ee0586c299ca357ad80d2dcb",
+      "category": "legacy_harness",
+      "code_lines": 53,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/config.py",
+      "sha": "3edc55470cfd9d9ce39f3ebf08960e27f1b3f83d",
+      "category": "legacy_harness",
+      "code_lines": 161,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/contracts/__init__.py",
+      "sha": "30e59abd62d31368d03d0ee54d1f64b44e9e4ca6",
+      "category": "legacy_harness",
+      "code_lines": 40,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/contracts/body.py",
+      "sha": "780acfe47310e5e8b62fc5c2824e49504fee52f1",
+      "category": "legacy_harness",
+      "code_lines": 75,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/contracts/capability_calls.py",
+      "sha": "40b914753ce7345ae8a8da55b1162b708b6f2aff",
+      "category": "legacy_harness",
+      "code_lines": 126,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/contracts/decisions.py",
+      "sha": "97035d897dfb323b1e3d82682aa189c4e7370b23",
+      "category": "legacy_harness",
+      "code_lines": 116,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/contracts/envelope.py",
+      "sha": "ac4e81c94d245d7ccfebf1c70f21db5b793fcf4f",
+      "category": "legacy_harness",
+      "code_lines": 127,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/contracts/experimental_decisions.py",
+      "sha": "d345cb7c7c0dadfa59c95dff46311cd27eb04762",
+      "category": "legacy_harness",
+      "code_lines": 56,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/contracts/goals.py",
+      "sha": "aac30ba3cecb60dfc4cd0905f5b00659d9e8516f",
+      "category": "legacy_harness",
+      "code_lines": 171,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/contracts/research_profiles.py",
+      "sha": "b748803b06c081887a6b25f528aa93c2dc476797",
+      "category": "legacy_harness",
+      "code_lines": 11,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/core/__init__.py",
+      "sha": "2581187430146995e952c2066cef6e476970760a",
+      "category": "legacy_harness",
+      "code_lines": 100,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/core/error_notice.py",
+      "sha": "5e9d8b16c5c0d90325a31a191e6c12ff3b45a98a",
+      "category": "legacy_harness",
+      "code_lines": 2,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/core/exceptions.py",
+      "sha": "56ac24021f27cd495c725e35a14c560d7c0a5237",
+      "category": "legacy_harness",
+      "code_lines": 7,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/core/expression.py",
+      "sha": "9388ceb54eb262bfbac535646220d2ddb8f127cd",
+      "category": "legacy_harness",
+      "code_lines": 63,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/core/ids.py",
+      "sha": "5b1745dc8f737119e3072404542c7ff5b554fd2a",
+      "category": "legacy_harness",
+      "code_lines": 32,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/core/inference.py",
+      "sha": "be410930ed8b27781851e43645eb77925e821146",
+      "category": "legacy_harness",
+      "code_lines": 331,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/core/models.py",
+      "sha": "dade6281b21d02edb8e215095a6018d3b49aa272",
+      "category": "legacy_harness",
+      "code_lines": 302,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/deploy/__init__.py",
+      "sha": "d35c7c14df148e52f1e0ccd7574331b65e1cd06e",
+      "category": "legacy_harness",
+      "code_lines": 0,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/deploy/__main__.py",
+      "sha": "eb53e2f31b2f703ad32ef64b8a41faa3e7d18e08",
+      "category": "legacy_harness",
+      "code_lines": 2,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/deploy/backup_job.py",
+      "sha": "75bee2e9817d8caa9e095f4d014b69a8ba8af856",
+      "category": "legacy_harness",
+      "code_lines": 295,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/deploy/cli.py",
+      "sha": "1d24bdd34e72cc0c9939c545797101d4efcd1a1a",
+      "category": "legacy_harness",
+      "code_lines": 123,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/deploy/config.py",
+      "sha": "7cca0e49347e35494f48ae6bcb23c32c4b0bf679",
+      "category": "legacy_harness",
+      "code_lines": 179,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/deploy/ingress.py",
+      "sha": "7c4fcc9a1a29090b5bfd3251b80c13d63c1309cc",
+      "category": "legacy_harness",
+      "code_lines": 62,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/deploy/package.py",
+      "sha": "5a8aa4a1141bcec9890ef7c288c2abfeaf1a1ff3",
+      "category": "legacy_harness",
+      "code_lines": 156,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/deploy/runner.py",
+      "sha": "7bed212d67b91967387395b9b8f1d3937ab56bf7",
+      "category": "legacy_harness",
+      "code_lines": 87,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/deploy/snapshot.py",
+      "sha": "e752ea1fa7074e6c460ab4e1679f4e117d6aae43",
+      "category": "legacy_harness",
+      "code_lines": 625,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/deploy/systemd.py",
+      "sha": "7179508893f4261b019a9bd08604f6c6f07f7196",
+      "category": "legacy_harness",
+      "code_lines": 323,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/diary/__init__.py",
+      "sha": "ba436f8073f2798d2ce42831689cdebe4732641d",
+      "category": "legacy_harness",
+      "code_lines": 0,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/diary/config.py",
+      "sha": "72e9d946182570c12f23610b4730aef168751a60",
+      "category": "legacy_harness",
+      "code_lines": 39,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/diary/models.py",
+      "sha": "92799bd7eac70fb5254b1a5703566ccd3f42f531",
+      "category": "legacy_harness",
+      "code_lines": 20,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/diary/reflection.py",
+      "sha": "21735a14bd72f6521d505f6d8b244a9081676e5c",
+      "category": "legacy_harness",
+      "code_lines": 148,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/diary/store.py",
+      "sha": "eaaab68bb9bc3596d4d7bc65ad36df748c0bfb9b",
+      "category": "legacy_harness",
+      "code_lines": 111,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/__init__.py",
+      "sha": "81ea7634b7c7d99aa0a039cacce3d07719e0ef3f",
+      "category": "legacy_harness",
+      "code_lines": 70,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/board_contracts.py",
+      "sha": "8ae6c1d298368e59b4e237dc8320577801616e27",
+      "category": "legacy_harness",
+      "code_lines": 95,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/capabilities.py",
+      "sha": "0a50a44133fb001f186f07a81e3a78397857c6b3",
+      "category": "legacy_harness",
+      "code_lines": 151,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/contracts.py",
+      "sha": "fe8b8a095b137f291fdcaa439e217a23482520b0",
+      "category": "legacy_harness",
+      "code_lines": 241,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/guards.py",
+      "sha": "70ad1e64efe559cce9de5e881ee2ce795eeef5ee",
+      "category": "legacy_harness",
+      "code_lines": 89,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/manager.py",
+      "sha": "c52df3a2599535b7d3493b31af0943992ca67db4",
+      "category": "legacy_harness",
+      "code_lines": 160,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/negotiation.py",
+      "sha": "56e5e8acb7487ad323ed953c9b9b49975e65eccc",
+      "category": "legacy_harness",
+      "code_lines": 71,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/ports.py",
+      "sha": "3f788848388b302dbb52724b42e07f36f2b2dfbe",
+      "category": "legacy_harness",
+      "code_lines": 91,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/providers/__init__.py",
+      "sha": "f95ee17bb827823a105292b3b8bd948a60737eb9",
+      "category": "legacy_harness",
+      "code_lines": 0,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/providers/board.py",
+      "sha": "96fbf4ed77e1c5cbc18c95b228fcddaeb55f588d",
+      "category": "legacy_harness",
+      "code_lines": 295,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/providers/deepseek_web.py",
+      "sha": "a02e2a87e9968df91dd5c11b3f718fd350650a46",
+      "category": "legacy_harness",
+      "code_lines": 91,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/providers/mistyai.py",
+      "sha": "09b108435ccc0adea394d748d8bc84bb881c9d27",
+      "category": "legacy_harness",
+      "code_lines": 886,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/providers/mistyai_dto.py",
+      "sha": "906a3cee404ae11343f52ed9c4ecb0bebf280681",
+      "category": "legacy_harness",
+      "code_lines": 247,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/providers/qq.py",
+      "sha": "97345a35ee0f6c256d6915cd7438e2d30caf522b",
+      "category": "legacy_harness",
+      "code_lines": 301,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/providers/server.py",
+      "sha": "79dbf77ff39c81b2b11df405d6df471a0de8b49c",
+      "category": "legacy_harness",
+      "code_lines": 262,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/providers/simulator.py",
+      "sha": "56a29d9f856e2d66562f17108ef9020c47c2d5eb",
+      "category": "legacy_harness",
+      "code_lines": 269,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/providers/voice.py",
+      "sha": "16f61330ee1a6cf6e02e34c98d47ed3718633ee4",
+      "category": "legacy_harness",
+      "code_lines": 306,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/providers/web.py",
+      "sha": "2fd037a2f25997d0dadf196bbc6d0a05cab5c97a",
+      "category": "legacy_harness",
+      "code_lines": 286,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/qq_contracts.py",
+      "sha": "3bb40086fbf23b006de4e60e48fcdcefdddfced6",
+      "category": "legacy_harness",
+      "code_lines": 137,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/schema.py",
+      "sha": "744529957ef0cdbdba6694195ba2b64b26b302e9",
+      "category": "legacy_harness",
+      "code_lines": 71,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/server_contracts.py",
+      "sha": "86d5814c8448e97b5d0812b1a07c76de2270c994",
+      "category": "legacy_harness",
+      "code_lines": 46,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/voice_contracts.py",
+      "sha": "89795cde5371bd77ec2088ebf72b58e9299b03a0",
+      "category": "legacy_harness",
+      "code_lines": 194,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/embodiment/web_contracts.py",
+      "sha": "b6cc54ba433adc7c8bdb0ac9d711df71ce41913f",
+      "category": "legacy_harness",
+      "code_lines": 84,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/emotion/__init__.py",
+      "sha": "ff4360dec43e8919380342fd3152d96bcaa082fc",
+      "category": "legacy_harness",
+      "code_lines": 8,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/emotion/endpoint.py",
+      "sha": "371cb6153ffce9a15f59726bb5689bb85e006001",
+      "category": "legacy_harness",
+      "code_lines": 37,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/emotion/models.py",
+      "sha": "695de92532580ef829dcf51a6ea8d2e9a82c38d9",
+      "category": "legacy_harness",
+      "code_lines": 107,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/emotion/semantics.py",
+      "sha": "8e9cc2a221951c56ef4e065a5c468442c6c67202",
+      "category": "legacy_harness",
+      "code_lines": 234,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/emotion/service.py",
+      "sha": "2b09ebcd851c0e1a6b1a0b19022b69605c21fcdb",
+      "category": "legacy_harness",
+      "code_lines": 660,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/files.py",
+      "sha": "e87c742169e64e8ef4a46efe80861f53e6139394",
+      "category": "legacy_harness",
+      "code_lines": 24,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/homeostasis/__init__.py",
+      "sha": "464a99d20d197751c463c762412291efef06f2e6",
+      "category": "legacy_harness",
+      "code_lines": 31,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/homeostasis/appraisal.py",
+      "sha": "22a921c2ef6a46bd6f04f7ac6041ede1140314b4",
+      "category": "legacy_harness",
+      "code_lines": 69,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/homeostasis/dynamics.py",
+      "sha": "08d1b1d7e03a896d0a2d7a65a06424144e06df3f",
+      "category": "legacy_harness",
+      "code_lines": 288,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/homeostasis/engine.py",
+      "sha": "7d6f2448fdb35d6acee5c88226e2c07220becc71",
+      "category": "legacy_harness",
+      "code_lines": 1503,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/homeostasis/ledger.py",
+      "sha": "3a5b9659e91b5cf93a6b809cf971526ff6b76a8a",
+      "category": "legacy_harness",
+      "code_lines": 769,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/homeostasis/models.py",
+      "sha": "f59116ecf1e77296aed7245ed9758156fe7c317a",
+      "category": "legacy_harness",
+      "code_lines": 610,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/homeostasis/native_appraisal.py",
+      "sha": "6962fbd3245dfd320257846714ba21279bbab629",
+      "category": "legacy_harness",
+      "code_lines": 88,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/homeostasis/profiles.py",
+      "sha": "8483b7987d8f04ddec5f00de88cec472c4e26025",
+      "category": "legacy_harness",
+      "code_lines": 88,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/homeostasis/rollout.py",
+      "sha": "6ce3b459bdeed160d34408275b689a3885774726",
+      "category": "legacy_harness",
+      "code_lines": 154,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/homeostasis/service.py",
+      "sha": "dbcde063d483f38a7c1299018f15b08488f322b4",
+      "category": "legacy_harness",
+      "code_lines": 43,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/homeostasis/work.py",
+      "sha": "ceac51ec4d1b4782d503686d189b9ba7e1f7e56f",
+      "category": "legacy_harness",
+      "code_lines": 80,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/interruption.py",
+      "sha": "112de6c999f230338b12e008860b3893174c4dd3",
+      "category": "legacy_harness",
+      "code_lines": 344,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/llm/__init__.py",
+      "sha": "e87864bf27c7326de172cd83b4069d5f4eb50e8e",
+      "category": "legacy_harness",
+      "code_lines": 42,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/llm/character.py",
+      "sha": "b86af578e18372aafed01b14a40f65191fb9ffac",
+      "category": "legacy_harness",
+      "code_lines": 60,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/llm/client.py",
+      "sha": "6744c43049d69928e85928a104a46cb2449c3ca6",
+      "category": "legacy_harness",
+      "code_lines": 923,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/llm/deadline.py",
+      "sha": "c42db17f737cf0e6b11bf7b3e0e363cc583006be",
+      "category": "legacy_harness",
+      "code_lines": 33,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/llm/deepseek_structured.py",
+      "sha": "2a5d88e8356c3fba3b3c6e12a92a21382a760532",
+      "category": "legacy_harness",
+      "code_lines": 201,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/llm/embeddings.py",
+      "sha": "63a42c6eecd59844fdf65799b8743ed519ba2374",
+      "category": "legacy_harness",
+      "code_lines": 174,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/llm/fallback.py",
+      "sha": "1079232dcb7912346d0153e0c5e1a450dafc6617",
+      "category": "legacy_harness",
+      "code_lines": 144,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/llm/health.py",
+      "sha": "0ad774b0c0b394c3a5428c3b0f9c98a9966457d9",
+      "category": "legacy_harness",
+      "code_lines": 99,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/llm/json_output.py",
+      "sha": "75bdde93518468a8148de228374280e32a95f74b",
+      "category": "legacy_harness",
+      "code_lines": 302,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/llm/native_stream.py",
+      "sha": "4b1f3e964d90fe2230de755371fdea588033d25d",
+      "category": "legacy_harness",
+      "code_lines": 65,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/llm/structured.py",
+      "sha": "407a203498af5f78aa32b052b7c504d32ae38cf4",
+      "category": "legacy_harness",
+      "code_lines": 126,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/llm/validation_tokens.py",
+      "sha": "c742b855dd67d5e3b3f96530ea4a8fb77392ee05",
+      "category": "legacy_harness",
+      "code_lines": 38,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/__init__.py",
+      "sha": "f874f45ff1cfae6b2c29da1119f4368bd4dddc07",
+      "category": "legacy_harness",
+      "code_lines": 8,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/dual.py",
+      "sha": "16ab2463f2261891bdeece7722aff5e8ca743308",
+      "category": "legacy_harness",
+      "code_lines": 76,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/evidence_manifest.py",
+      "sha": "198da708b2f8d604a8e0a2f51aa7753537ce1255",
+      "category": "legacy_harness",
+      "code_lines": 296,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/evidence_models.py",
+      "sha": "7d12681c419eb7a9a03a185154e7f715c01d5d7b",
+      "category": "legacy_harness",
+      "code_lines": 144,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/evidence_v2.py",
+      "sha": "98a34a91f0ee66099c91c59ca14ac5c8e038154b",
+      "category": "legacy_harness",
+      "code_lines": 499,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/identity.py",
+      "sha": "92fb1bc4476d697c41c245f022bc9b8936eb84e4",
+      "category": "legacy_harness",
+      "code_lines": 58,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/impressions.py",
+      "sha": "00db47bb2d8ef8c541860609da4c58bacc4a7549",
+      "category": "legacy_harness",
+      "code_lines": 205,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/orientation.py",
+      "sha": "df9fbfdf5498af51a70354f5b0a26a744ca2dc06",
+      "category": "legacy_harness",
+      "code_lines": 54,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/perception.py",
+      "sha": "8f823ca23a1e27f4150117a7e0cdd466eab5c5e9",
+      "category": "legacy_harness",
+      "code_lines": 18,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/production.py",
+      "sha": "a164ed868ee206f56bc57b0f5cf2ad38730eeb9a",
+      "category": "legacy_harness",
+      "code_lines": 902,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/production_migration.py",
+      "sha": "a8bd4b2b46434b46ea855b0a46d00c4db224a731",
+      "category": "legacy_harness",
+      "code_lines": 204,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/qq_assimilation.py",
+      "sha": "7b92775f60d78c3d41f8e05f619e836b002f406a",
+      "category": "legacy_harness",
+      "code_lines": 873,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/qq_backfill.py",
+      "sha": "2aa132c839171f370861817ce20fb7db813947d2",
+      "category": "legacy_harness",
+      "code_lines": 328,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/qq_observations.py",
+      "sha": "add73e7ed2fdec93ff2d2dea7cda6f5767a91445",
+      "category": "legacy_harness",
+      "code_lines": 149,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/retention.py",
+      "sha": "24cef6213296cdfa8809efeacfd71899f02ee811",
+      "category": "legacy_harness",
+      "code_lines": 20,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/retrieval/__init__.py",
+      "sha": "8a7ac995dbb1bb304a94854ff21741e0c3cd22dd",
+      "category": "legacy_harness",
+      "code_lines": 12,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/retrieval/conflict.py",
+      "sha": "bc1bd270f41f684ec5ae14c94b4c50db3e9b1b6e",
+      "category": "legacy_harness",
+      "code_lines": 50,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/retrieval/hybrid.py",
+      "sha": "e45edd8a1a5e9eb329ab1bc135524315ecf84685",
+      "category": "legacy_harness",
+      "code_lines": 110,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/retrieval/planner.py",
+      "sha": "0405275d69b0738a4bc99c0809dc2ef07c12f407",
+      "category": "legacy_harness",
+      "code_lines": 72,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/retrieval/signals.py",
+      "sha": "44564322afc7be47e79b08f963000030b1d2562a",
+      "category": "legacy_harness",
+      "code_lines": 216,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/revision/__init__.py",
+      "sha": "57b2b3ff1461c1dd415b03b479a3919e788427fc",
+      "category": "legacy_harness",
+      "code_lines": 0,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/revision/__main__.py",
+      "sha": "241396c285807ae488966eddafbac4b57b3f6366",
+      "category": "legacy_harness",
+      "code_lines": 110,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/revision/config.py",
+      "sha": "b36a72519d0ff826c07340a10e84006ace5feb79",
+      "category": "legacy_harness",
+      "code_lines": 98,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/revision/ledger.py",
+      "sha": "b2f8d0048b50a437534805d75b0715f1d2b53337",
+      "category": "legacy_harness",
+      "code_lines": 288,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/revision/models.py",
+      "sha": "a07121ad50ce67a3ef4d041de57426d2e1ec7c6e",
+      "category": "legacy_harness",
+      "code_lines": 91,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/revision/provider.py",
+      "sha": "b777d644c800f05dbc11133076baf6c295fe1524",
+      "category": "legacy_harness",
+      "code_lines": 346,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/revision/queue.py",
+      "sha": "2dccbd7bd7dfa5a5029633ec0d915676ad47ae4b",
+      "category": "legacy_harness",
+      "code_lines": 286,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/revision/recall.py",
+      "sha": "a2cb74438dcd49cce5f1eaf288537d854100758a",
+      "category": "legacy_harness",
+      "code_lines": 152,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/revision/reducer.py",
+      "sha": "95d6972e0982ab285f0a9dcc915146bbb2c210fd",
+      "category": "legacy_harness",
+      "code_lines": 415,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/revision/sources.py",
+      "sha": "102fd2c0569871edf3120bd1bd68979126daa5e1",
+      "category": "legacy_harness",
+      "code_lines": 167,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/service.py",
+      "sha": "5397d4395bb06e0773ee5b867dc85f03c3d0720e",
+      "category": "legacy_harness",
+      "code_lines": 559,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/shared.py",
+      "sha": "4657d1b53f57d9517895316324defe488ecbb38d",
+      "category": "legacy_harness",
+      "code_lines": 787,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/store/__init__.py",
+      "sha": "f9b96474f87099121724a949f8a4d38a4b6bee4d",
+      "category": "legacy_harness",
+      "code_lines": 8,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/store/inmemory.py",
+      "sha": "69f66fd4f86c4330c2ec121e41f103d876f75bf5",
+      "category": "legacy_harness",
+      "code_lines": 230,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/store/postgres.py",
+      "sha": "1d4402593fe3995c8f88f2b3ff0ce3b925229508",
+      "category": "legacy_harness",
+      "code_lines": 634,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/store/protocols.py",
+      "sha": "8ffef6124300d755317d8d83121d82cfbcf4d3f3",
+      "category": "legacy_harness",
+      "code_lines": 92,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/store/schema.py",
+      "sha": "95c23e9242cb1634cb95f4acade4d039077aa7f8",
+      "category": "legacy_harness",
+      "code_lines": 260,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/store/scope.py",
+      "sha": "ce19a1fc170400188d6777eb76d4b7ed247dd10a",
+      "category": "legacy_harness",
+      "code_lines": 18,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/store/vector_util.py",
+      "sha": "cbab168ee47b61cef4ba03abe7074dd6c66bdad0",
+      "category": "legacy_harness",
+      "code_lines": 34,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/tier.py",
+      "sha": "c2c9b9a0d357d095bfc91098b852859bbd80d318",
+      "category": "legacy_harness",
+      "code_lines": 357,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/writer/__init__.py",
+      "sha": "c8561a68ab69d662907db257e4e1b8964330d058",
+      "category": "legacy_harness",
+      "code_lines": 12,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/writer/confidence.py",
+      "sha": "a2c9e066e4f20441e751fcff4ab41e443efa07fa",
+      "category": "legacy_harness",
+      "code_lines": 18,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/writer/curator.py",
+      "sha": "0e7b248ff5e8d24efefe82ad48ce5676545be8c5",
+      "category": "legacy_harness",
+      "code_lines": 179,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory/writer/pipeline.py",
+      "sha": "ebf17a44f7e70a629a331bd33ca8b17e1102c672",
+      "category": "legacy_harness",
+      "code_lines": 263,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory_encoder/__init__.py",
+      "sha": "d589bc03eb566d2d316b32a71cac560b2a40dc61",
+      "category": "legacy_harness",
+      "code_lines": 2,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory_encoder/__main__.py",
+      "sha": "1b7cd2965bb65a7c8e23beb1b9b4907a606a83e1",
+      "category": "legacy_harness",
+      "code_lines": 89,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory_encoder/checkpoints.py",
+      "sha": "4e2e0f4cd94bfb15b34f91f0d732359b494f83e6",
+      "category": "legacy_harness",
+      "code_lines": 73,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory_encoder/client.py",
+      "sha": "4f0c27096115e3f03dc349694c8ebb5d78252685",
+      "category": "legacy_harness",
+      "code_lines": 22,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory_encoder/config.py",
+      "sha": "812426c75f830ce0dcc6a57c230e67abbba0434c",
+      "category": "legacy_harness",
+      "code_lines": 42,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory_encoder/contracts.py",
+      "sha": "bcd5f45ed9a80d6418b6b03316f4ed41c2f0ef3e",
+      "category": "legacy_harness",
+      "code_lines": 84,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory_encoder/data.py",
+      "sha": "908c7cc2ff6fff8720255f3a1e3319dcc1431a03",
+      "category": "legacy_harness",
+      "code_lines": 107,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory_encoder/experiments.py",
+      "sha": "44a83859bf7da7abd23424678e69717d62c6e6f8",
+      "category": "legacy_harness",
+      "code_lines": 247,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory_encoder/hy_worker.py",
+      "sha": "6fa6095c695ee3fd704d375b8a6a4b269c52812f",
+      "category": "legacy_harness",
+      "code_lines": 94,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory_encoder/modeling.py",
+      "sha": "ac487f5a99177fd44c25eba1c8a77aea6984738a",
+      "category": "legacy_harness",
+      "code_lines": 114,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory_encoder/packing.py",
+      "sha": "1688cd8fd20e52972fa17c3ab6c38f60e83e161e",
+      "category": "legacy_harness",
+      "code_lines": 41,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory_encoder/runtime.py",
+      "sha": "aee4637881a6911c6066abb9f1c7fc54210c964b",
+      "category": "legacy_harness",
+      "code_lines": 102,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory_encoder/service.py",
+      "sha": "0ea385e2371d917e6c7d7ba2de513079a1ecc1fe",
+      "category": "legacy_harness",
+      "code_lines": 63,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory_encoder/sources.py",
+      "sha": "c40e06c979ee0bc829f3610bf4d32bcae22b8673",
+      "category": "legacy_harness",
+      "code_lines": 109,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/memory_encoder/validation.py",
+      "sha": "4499575a62b1228c786c02174b9c94ee4c585980",
+      "category": "legacy_harness",
+      "code_lines": 177,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/pipeline/__init__.py",
+      "sha": "f65dd98d24e2ff37aaa766ccd4d872fdcc79b47c",
+      "category": "legacy_harness",
+      "code_lines": 35,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/pipeline/continuation.py",
+      "sha": "4ed3de0f8ca920e6116c5a0bd95411e880f3b8a3",
+      "category": "legacy_harness",
+      "code_lines": 99,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/pipeline/gateway.py",
+      "sha": "f4fef161829d879162391c185adbb6ab132690a4",
+      "category": "legacy_harness",
+      "code_lines": 28,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/pipeline/parser.py",
+      "sha": "bf4197ece72c91af28256c9fe0b823c96587545f",
+      "category": "legacy_harness",
+      "code_lines": 108,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/pipeline/pipeline.py",
+      "sha": "81ed05c6427b34a162c1d0a37932739839733491",
+      "category": "legacy_harness",
+      "code_lines": 917,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/pipeline/session.py",
+      "sha": "303e563acc783266273fafaaff5f42b7ed242eae",
+      "category": "legacy_harness",
+      "code_lines": 66,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/pipeline/state_builder.py",
+      "sha": "c6af325417a1f90198378b5adb6440057351fd96",
+      "category": "legacy_harness",
+      "code_lines": 65,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/production/__init__.py",
+      "sha": "9fc208c874281ef3b4a6eb5910407967153df167",
+      "category": "legacy_harness",
+      "code_lines": 0,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/production/accounting.py",
+      "sha": "4b22d411ed1e263d21a73b143b7127d3a400b4f0",
+      "category": "legacy_harness",
+      "code_lines": 38,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/production/config.py",
+      "sha": "b71989364b291448e47679e4eec35527c286fda4",
+      "category": "legacy_harness",
+      "code_lines": 15,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/production/maintenance.py",
+      "sha": "27a804daeba58f7d101c0beea4349bd3b6e58c3d",
+      "category": "legacy_harness",
+      "code_lines": 11,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/production/metering.py",
+      "sha": "745d68375e521c0558777350bed34267c0d741da",
+      "category": "legacy_harness",
+      "code_lines": 358,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/production/models.py",
+      "sha": "56fbc656639fe93a08fce7bdc4ab2af482262842",
+      "category": "legacy_harness",
+      "code_lines": 11,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/production/runtime.py",
+      "sha": "2c7c73d4bb7a4b8563121b560350de015320ceca",
+      "category": "legacy_harness",
+      "code_lines": 403,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/production/store.py",
+      "sha": "dd74e14091a9626daff2b6f76634f302f8ba8406",
+      "category": "legacy_harness",
+      "code_lines": 265,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/production/tool_accounting.py",
+      "sha": "e4dbfb62f943f200e36b32f6a87b331b75d37bf3",
+      "category": "legacy_harness",
+      "code_lines": 87,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/production/user_tasks.py",
+      "sha": "efcd83da9de4a21707f1975b0ae205df56d778c5",
+      "category": "legacy_harness",
+      "code_lines": 190,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/__init__.py",
+      "sha": "fa3b1589ea89776ba0e5ee39b4572b05a9332048",
+      "category": "legacy_harness",
+      "code_lines": 0,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/acceptance.py",
+      "sha": "e6b84c6909cacbe707fe868363db7575c3812e83",
+      "category": "legacy_harness",
+      "code_lines": 974,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/accessibility.py",
+      "sha": "1c331c85a5f7e7f87f8efbada749b5a7183f541d",
+      "category": "legacy_harness",
+      "code_lines": 527,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/attention.py",
+      "sha": "e3cbe64d4087224374af5bbd0a774351cefb20c1",
+      "category": "legacy_harness",
+      "code_lines": 228,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/capability_bridge.py",
+      "sha": "0f0869cd245ef9b4d8480a24cf257f022006edd7",
+      "category": "legacy_harness",
+      "code_lines": 87,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/context_budget.py",
+      "sha": "06b9461bfe10e987cd0f423f34594ac066f6d46c",
+      "category": "legacy_harness",
+      "code_lines": 169,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/context_window.py",
+      "sha": "31cc6cdca4a2983f9bd79043e55204a2451b308e",
+      "category": "legacy_harness",
+      "code_lines": 201,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/conversation.py",
+      "sha": "fc718ff073b798ec6605e58fec8dea272be0b5fa",
+      "category": "legacy_harness",
+      "code_lines": 40,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/decision.py",
+      "sha": "4335ea0150414646323d2c38244d35fd0a751e43",
+      "category": "legacy_harness",
+      "code_lines": 2174,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/desktop.py",
+      "sha": "a6cd5d16c2d8598f735d99ee38ffc1c947dd159f",
+      "category": "legacy_harness",
+      "code_lines": 1421,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/direct.py",
+      "sha": "e76d46051e05cae447ce329d569f68ac84a0a0e7",
+      "category": "legacy_harness",
+      "code_lines": 1007,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/direct_capabilities.py",
+      "sha": "b42959790e471916718802f54720b2f3d748f304",
+      "category": "legacy_harness",
+      "code_lines": 577,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/direct_config.py",
+      "sha": "0f75ac6f3ce98fbb60b89aacc65a9e128b93a5ee",
+      "category": "legacy_harness",
+      "code_lines": 113,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/direct_contacts.py",
+      "sha": "89bf9a4f9e05783a6594543516729927d970c4a5",
+      "category": "legacy_harness",
+      "code_lines": 112,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/direct_images.py",
+      "sha": "6744a04d782d469df68ea97c4ca48d5c76d2f5b4",
+      "category": "legacy_harness",
+      "code_lines": 503,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/direct_media.py",
+      "sha": "27c68a24e6553c2edc0306c6b17eecd3fa573aa0",
+      "category": "legacy_harness",
+      "code_lines": 172,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/direct_source.py",
+      "sha": "e31287de5922d86be11113b9c46cacfc3ca59ae3",
+      "category": "legacy_harness",
+      "code_lines": 129,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/direct_store.py",
+      "sha": "9bace887587f6032a2e6896bc811644b3b368bc0",
+      "category": "legacy_harness",
+      "code_lines": 522,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/draft.py",
+      "sha": "e0e5d27816d630f041de0842a33c57bee697d10d",
+      "category": "legacy_harness",
+      "code_lines": 273,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/embodied.py",
+      "sha": "7fa22a9fa05e291dbec36fd141182cac939ed219",
+      "category": "legacy_harness",
+      "code_lines": 603,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/emotion_window.py",
+      "sha": "f7f65a3b222edf88054930073db1038daae5ebc9",
+      "category": "legacy_harness",
+      "code_lines": 139,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/failures.py",
+      "sha": "9eeaa5375502eca4f9ba04c3744c694db35a0b30",
+      "category": "legacy_harness",
+      "code_lines": 45,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/feedback.py",
+      "sha": "4bea85bf46511ccd40b51642d97a7e22b3a5ba37",
+      "category": "legacy_harness",
+      "code_lines": 121,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/grounding.py",
+      "sha": "e568389ba14152bf52d0cff1cd31c1723a3c4558",
+      "category": "legacy_harness",
+      "code_lines": 186,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/group_observation.py",
+      "sha": "82c48dcc6b85aa81ee16330aaa70a197ea587896",
+      "category": "legacy_harness",
+      "code_lines": 167,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/history_selection.py",
+      "sha": "f581a121bf9d425ce2c6be4e297dc5e60d7dc3ef",
+      "category": "legacy_harness",
+      "code_lines": 194,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/homeostatic.py",
+      "sha": "3b815721e1d83d0bebb4d798fe197007712fdde0",
+      "category": "legacy_harness",
+      "code_lines": 370,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/identities.py",
+      "sha": "539d2a5973e4b36e1184936db0d9a6479c65bd1b",
+      "category": "legacy_harness",
+      "code_lines": 138,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/idle.py",
+      "sha": "a9ba60036ee8dba2c54a334e0899ca82fa252d62",
+      "category": "legacy_harness",
+      "code_lines": 61,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/interruption.py",
+      "sha": "764c67bf1996718ea8560d59d81b71307a6c9f5e",
+      "category": "legacy_harness",
+      "code_lines": 86,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/maintenance.py",
+      "sha": "b68c0f09a789cdaf5cb5c7e3284654aa2c6fc5c9",
+      "category": "legacy_harness",
+      "code_lines": 76,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/memory.py",
+      "sha": "feb7449ed11d7337ae0101953a561a35aeb687fd",
+      "category": "legacy_harness",
+      "code_lines": 762,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/memory_evidence.py",
+      "sha": "2fb1f93be5cf2891763dcdf00c9142c998e8ad3d",
+      "category": "legacy_harness",
+      "code_lines": 111,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/model_projection.py",
+      "sha": "cba406aedd8cbf01afe027e79c83f79f5ada4fa5",
+      "category": "legacy_harness",
+      "code_lines": 68,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/model_retry.py",
+      "sha": "1fae400ff5683906305cd652132c585193c9a433",
+      "category": "legacy_harness",
+      "code_lines": 25,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/navigation.py",
+      "sha": "754f8dc06c6819e1abe2b8c286e8d8bb00bd0a5b",
+      "category": "legacy_harness",
+      "code_lines": 222,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/observer.py",
+      "sha": "10c39f2a50d9f19176f59c91a36571a847a1e887",
+      "category": "legacy_harness",
+      "code_lines": 676,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/official_actor.py",
+      "sha": "10bfcc3aba372b7e676e9c33f8f8122c4da366c3",
+      "category": "legacy_harness",
+      "code_lines": 223,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/official_client.py",
+      "sha": "f0d0e217372352787a198dfc11d78d18cfeea0e2",
+      "category": "legacy_harness",
+      "code_lines": 199,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/official_enrollment.py",
+      "sha": "9be3a7ac963d63457a957b179ea5e1e608e423bb",
+      "category": "legacy_harness",
+      "code_lines": 44,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/official_events.py",
+      "sha": "c980577a9769ac3f1ed86f1b1c79dfe8d59d93f9",
+      "category": "legacy_harness",
+      "code_lines": 128,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/official_identity.py",
+      "sha": "0c58897ad080a91f06d72649d726e46f49a93df4",
+      "category": "legacy_harness",
+      "code_lines": 42,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/official_state.py",
+      "sha": "9139c14b228dcfab554e63c95232ae2fe61481e6",
+      "category": "legacy_harness",
+      "code_lines": 28,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/onebot.py",
+      "sha": "909b74f0fd6f3b1a5fa76b9a78a3f64518279814",
+      "category": "legacy_harness",
+      "code_lines": 130,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/policy.py",
+      "sha": "e3ab77d3c97e99e25d02ce26f426120a78c70520",
+      "category": "legacy_harness",
+      "code_lines": 116,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/prepared_evidence.py",
+      "sha": "af01a2ced95bef393778b3a081cf12eb7480d738",
+      "category": "legacy_harness",
+      "code_lines": 223,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/prepared_turn.py",
+      "sha": "39edad3f62f1cf1dd527d81d8fc3c3175fe85e6e",
+      "category": "legacy_harness",
+      "code_lines": 378,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/production_deadline.py",
+      "sha": "5600037c73aa633b4f495ff6160915c71b890dd2",
+      "category": "legacy_harness",
+      "code_lines": 17,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/reply_context.py",
+      "sha": "feb08367e47989d32145b273c206fd39bcbaf427",
+      "category": "legacy_harness",
+      "code_lines": 94,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/reply_requests.py",
+      "sha": "0d4ea8f76571c2648939d382e88eebbd371327d1",
+      "category": "legacy_harness",
+      "code_lines": 248,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/roster.py",
+      "sha": "1ced75a983561245827fe147177704f5044a68d6",
+      "category": "legacy_harness",
+      "code_lines": 31,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/segment_delivery.py",
+      "sha": "193bf9639a8ffb3692bf3e53541c1ea772949ad1",
+      "category": "legacy_harness",
+      "code_lines": 308,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/segment_ledger.py",
+      "sha": "09013611d8d7989d583c04f545772ea98e0a89c7",
+      "category": "legacy_harness",
+      "code_lines": 377,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/semantic_alignment.py",
+      "sha": "01eddaf8a47a2992b657b0f248c441a0e41f1590",
+      "category": "legacy_harness",
+      "code_lines": 65,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/session.py",
+      "sha": "a8a2ce56929460cd57f1b0d7d7b4aef1008a10bc",
+      "category": "legacy_harness",
+      "code_lines": 388,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/shared.py",
+      "sha": "b41be4c35a608040416feea05c8942dea3f30d17",
+      "category": "legacy_harness",
+      "code_lines": 231,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/source_index.py",
+      "sha": "cb4d8333f050833a312c1b2bb37c70260fe7ac5e",
+      "category": "legacy_harness",
+      "code_lines": 91,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/task_notifications.py",
+      "sha": "a2de33e0a3ccdafb3d31712e34e5a5f801da4c45",
+      "category": "legacy_harness",
+      "code_lines": 167,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/telemetry.py",
+      "sha": "0f14c3f9aa5eb520f415647094840025e2972ae5",
+      "category": "legacy_harness",
+      "code_lines": 361,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/tool_evidence.py",
+      "sha": "54062a1ade72dee4b3ae3313634e9ca547b00452",
+      "category": "legacy_harness",
+      "code_lines": 24,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/turn_checkpoints.py",
+      "sha": "b5d90e68c8310da160a663d9751078556b638d25",
+      "category": "legacy_harness",
+      "code_lines": 167,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/vision.py",
+      "sha": "9241c9aa90eeb4b06d02c3f24056985a0d65e001",
+      "category": "legacy_harness",
+      "code_lines": 256,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/vision_tool.py",
+      "sha": "a6b8aba73835d325d34074965421ed3bf6d49dc0",
+      "category": "legacy_harness",
+      "code_lines": 396,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/watch_ledger.py",
+      "sha": "8ced17c2307e0f95c3665993e8cd6d76183af44c",
+      "category": "legacy_harness",
+      "code_lines": 1118,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/watcher.py",
+      "sha": "7a096dea8ab3247f8b7bbff440857a2d970a0c2b",
+      "category": "legacy_harness",
+      "code_lines": 1294,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/qq/web_plan.py",
+      "sha": "a3b7f4224f45019aa631660c7fbab3127db02b9d",
+      "category": "legacy_harness",
+      "code_lines": 61,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/regulation/__init__.py",
+      "sha": "97b847c10f6b87c6c75661fbf3820738a60f3f6b",
+      "category": "legacy_harness",
+      "code_lines": 0,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/regulation/config.py",
+      "sha": "4f6dd9c5f4c612022e699e1d67fc7bd98b8cac1f",
+      "category": "legacy_harness",
+      "code_lines": 13,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/regulation/context.py",
+      "sha": "344eeccaf79d84fb5e0eb88b806e0b818218adc4",
+      "category": "legacy_harness",
+      "code_lines": 36,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/regulation/store.py",
+      "sha": "87fd4964f72380a7381b09928f459be36d990d02",
+      "category": "legacy_harness",
+      "code_lines": 102,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/research/__init__.py",
+      "sha": "c943354303799da6d092486c3eadc93b04c95147",
+      "category": "legacy_harness",
+      "code_lines": 12,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/research/grounded_agency/__init__.py",
+      "sha": "a8b1564bae03774fc5b0a3cbd6a1000bddac8bd3",
+      "category": "legacy_harness",
+      "code_lines": 16,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/research/grounded_agency/hashes.py",
+      "sha": "209aa127a51f92287cc173aed092c14d32c6c426",
+      "category": "legacy_harness",
+      "code_lines": 37,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/research/grounded_agency/manifest.py",
+      "sha": "83b215eb1eb7ef558776b310ede2ab97c7761dc3",
+      "category": "legacy_harness",
+      "code_lines": 136,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/research/grounded_agency/neutrality.py",
+      "sha": "b7fd7a6635fa6f3b2e9fb389f3f8ed8f32478443",
+      "category": "legacy_harness",
+      "code_lines": 195,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/research/interoception/__init__.py",
+      "sha": "1fb50880999485b27d421252c870186d3fb1379a",
+      "category": "legacy_harness",
+      "code_lines": 15,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/research/interoception/contracts.py",
+      "sha": "69a33fab621d835cfea664802906e6dff7a36a82",
+      "category": "legacy_harness",
+      "code_lines": 66,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/research/interoception/renderer.py",
+      "sha": "18a842b2ab0c926c2af2c3e57b5f4ba7fbcbdf02",
+      "category": "legacy_harness",
+      "code_lines": 44,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/research/interoception/store.py",
+      "sha": "080d4e9dc6df3a24656594929cb86677ec6c5ba9",
+      "category": "legacy_harness",
+      "code_lines": 222,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/research/interoception/transforms.py",
+      "sha": "882aa09452db9d4970501e987e8037d984c675fe",
+      "category": "legacy_harness",
+      "code_lines": 90,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/research/manifest.py",
+      "sha": "8802036215d5aecd33ae64cb3ec96a02c29769d9",
+      "category": "legacy_harness",
+      "code_lines": 325,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/router/__init__.py",
+      "sha": "6278075ab192592ac9cd7e8bd39edc5fc3b23102",
+      "category": "legacy_harness",
+      "code_lines": 2,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/router/gate.py",
+      "sha": "e8d4c3110aeb3a76a9262e6eadc194e8b27f3c21",
+      "category": "legacy_harness",
+      "code_lines": 222,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/__init__.py",
+      "sha": "514e06bf4ef6b94a35bb7b2101457aa3ffa9d2ab",
+      "category": "legacy_harness",
+      "code_lines": 74,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/action.py",
+      "sha": "38de41846887eb0c5fbc881b681a82c60e96e72c",
+      "category": "legacy_harness",
+      "code_lines": 392,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/adapters.py",
+      "sha": "2ccf69515c38e63b39d15e674a8f4f419e224bf2",
+      "category": "legacy_harness",
+      "code_lines": 1631,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/affect.py",
+      "sha": "835f793aab3aaf4ddfb76511193f5f15fa83fd76",
+      "category": "legacy_harness",
+      "code_lines": 203,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/attention.py",
+      "sha": "9b41463d91059d8617d105ea2494da3eafc32c04",
+      "category": "legacy_harness",
+      "code_lines": 112,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/background.py",
+      "sha": "65a1f2616de77501d47710588037a2df7b725d33",
+      "category": "legacy_harness",
+      "code_lines": 168,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/basic_terminal.py",
+      "sha": "4f155efe6173e94899a2d6a2f0c74e8f94b6e7f5",
+      "category": "legacy_harness",
+      "code_lines": 186,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/board.py",
+      "sha": "d61d90ed59a6fd2c74f35876bcf0252948f839f1",
+      "category": "legacy_harness",
+      "code_lines": 416,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/capabilities.py",
+      "sha": "bbb96dcea7e1f79b3fa88b7edb60553d89de3254",
+      "category": "legacy_harness",
+      "code_lines": 829,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/checkpoint.py",
+      "sha": "480ffd0393818f2763f1039df6f32bdfecfa5fad",
+      "category": "legacy_harness",
+      "code_lines": 60,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/cognitive_store.py",
+      "sha": "f9c7cdb6f549339ccd5ae96a4c3b87ad8cf6a7a0",
+      "category": "legacy_harness",
+      "code_lines": 194,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/control.py",
+      "sha": "a70a784bab79ac8ceb745eccf1daa17fd216eadd",
+      "category": "legacy_harness",
+      "code_lines": 543,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/daily_report.py",
+      "sha": "80931fe0ffe67d8e839041c9f75a16d9ec59b0c2",
+      "category": "legacy_harness",
+      "code_lines": 838,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/diary.py",
+      "sha": "14534bd555848b2e0811168d41444aee38b37b48",
+      "category": "legacy_harness",
+      "code_lines": 387,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/emotion.py",
+      "sha": "33d7ae543ab344832d942bff6514aaa29e34604f",
+      "category": "legacy_harness",
+      "code_lines": 199,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/experimental_decision.py",
+      "sha": "3e030f01a1fce6b21f9b71b68ba3cb4b32c5a4db",
+      "category": "legacy_harness",
+      "code_lines": 117,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/expired_web.py",
+      "sha": "07ca633f5b2ad7161aa5b8b4dcc9e939ee8da381",
+      "category": "legacy_harness",
+      "code_lines": 26,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/goals.py",
+      "sha": "0e6823b55209cf6911574723053def4cd2151ebc",
+      "category": "legacy_harness",
+      "code_lines": 782,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/journal.py",
+      "sha": "e2011f6dcfe877da667ae931da049d2788754e9c",
+      "category": "legacy_harness",
+      "code_lines": 419,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/journal_audit.py",
+      "sha": "8f6a116a563f25b5bb6a2e8a812d87acaae8b972",
+      "category": "legacy_harness",
+      "code_lines": 128,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/locking.py",
+      "sha": "328ab6c9391faa7b6b0f0380ee0c23fdff48f993",
+      "category": "legacy_harness",
+      "code_lines": 104,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/mistyai_config.py",
+      "sha": "bca0d990ed54d2a6778f4739039f4633f299e6cc",
+      "category": "legacy_harness",
+      "code_lines": 155,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/models.py",
+      "sha": "862c94370f913522acd3438eb4f3353453ed090c",
+      "category": "legacy_harness",
+      "code_lines": 298,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/monitor.py",
+      "sha": "ca480a7a4a3b960c988800b915552abce2cffebc",
+      "category": "legacy_harness",
+      "code_lines": 1201,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/native_regulation.py",
+      "sha": "93e8cc0f5a8410cda8aeb2602806bd1d39de3d1a",
+      "category": "legacy_harness",
+      "code_lines": 205,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/ownership.py",
+      "sha": "266035894aa69fa0a7465fffa4a17977c21d12ec",
+      "category": "legacy_harness",
+      "code_lines": 136,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/perception.py",
+      "sha": "f4cd1d9893eb985654a5f4ac1d86d162375ee810",
+      "category": "legacy_harness",
+      "code_lines": 213,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/qq_capabilities.py",
+      "sha": "92fc6cdaeacdb6764e539ef9aa228bfef143aa94",
+      "category": "legacy_harness",
+      "code_lines": 379,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/qq_direct_feedback.py",
+      "sha": "2956862363a12369d80d2747a5bd3ed98a670782",
+      "category": "legacy_harness",
+      "code_lines": 82,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/qq_homeostasis.py",
+      "sha": "5522613ddc5977a3ca7fa791beeafe7d89317842",
+      "category": "legacy_harness",
+      "code_lines": 145,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/qq_observations.py",
+      "sha": "c56490276c684ffb61993cb134f065346e9d51a9",
+      "category": "legacy_harness",
+      "code_lines": 36,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/qq_pipeline.py",
+      "sha": "33fc363ba2cc6f7e52d59e3961aeb8fe4c0f7afb",
+      "category": "legacy_harness",
+      "code_lines": 141,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/qq_sources.py",
+      "sha": "7527c83d20b58ba9b24db2321a7cf3fe1bb389f7",
+      "category": "legacy_harness",
+      "code_lines": 122,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/qq_turns.py",
+      "sha": "436b2d626ac991d04680cbd4b0668bab2fecdac7",
+      "category": "legacy_harness",
+      "code_lines": 218,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/qq_web.py",
+      "sha": "6c46fc669bca911a376c078b5f2736c5118500f9",
+      "category": "legacy_harness",
+      "code_lines": 130,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/queue.py",
+      "sha": "dc3af5fceca14d5c04b60879268a7eac1c8c8bdb",
+      "category": "legacy_harness",
+      "code_lines": 180,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/recovery.py",
+      "sha": "38d12c1da2e239e7a3e0da1bdca3a0344b11ab2a",
+      "category": "legacy_harness",
+      "code_lines": 696,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/report_insights.py",
+      "sha": "f23aeda9fed0714a91ccd393398397994e8f5240",
+      "category": "legacy_harness",
+      "code_lines": 138,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/report_timing.py",
+      "sha": "a9a18d344a05a5e6eaf6c373cc060d17894d92f1",
+      "category": "legacy_harness",
+      "code_lines": 80,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/research_agency.py",
+      "sha": "18e3762aa76ca5fccf25f8a2ba50910a49d12842",
+      "category": "legacy_harness",
+      "code_lines": 245,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/research_memory.py",
+      "sha": "0a764dd2f7cfc748ed935a5c3880872e9554b1e7",
+      "category": "legacy_harness",
+      "code_lines": 42,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/resources.py",
+      "sha": "e9217d3b7a9df13b1bb603828220c14c1eaf6a79",
+      "category": "legacy_harness",
+      "code_lines": 159,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/rpc.py",
+      "sha": "8bc1f7b8526593825b57751b402e9a144261494c",
+      "category": "legacy_harness",
+      "code_lines": 329,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/scheduler.py",
+      "sha": "c3c22535a38d834f798eab69083821cc37249073",
+      "category": "legacy_harness",
+      "code_lines": 43,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/self_check.py",
+      "sha": "09588efddffad0a6538fa0fe2b763394b81c4a40",
+      "category": "legacy_harness",
+      "code_lines": 224,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/server.py",
+      "sha": "5ba405036c62ae0d6fc1b659402916e918284828",
+      "category": "legacy_harness",
+      "code_lines": 394,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/server_config.py",
+      "sha": "be638736752c5876fe5fbb0ba5ca9a3730d60682",
+      "category": "legacy_harness",
+      "code_lines": 306,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/server_policy.py",
+      "sha": "6c0a90e27bdcccbb7916716020befa2953aba669",
+      "category": "legacy_harness",
+      "code_lines": 291,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/server_routes.py",
+      "sha": "47b1bedb2bef53d6cb33c2847875823ff478ab12",
+      "category": "legacy_harness",
+      "code_lines": 101,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/service.py",
+      "sha": "59f2a0e8d0c699f4d6b31c60e24ec8ec70c12521",
+      "category": "legacy_harness",
+      "code_lines": 381,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/supervisor.py",
+      "sha": "9b968393966a0e2c016d7fb0b2e3402c2bbaf683",
+      "category": "legacy_harness",
+      "code_lines": 4767,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/text_interruption.py",
+      "sha": "bb82c7e79eedf33b69d863029d4357d25ded31a4",
+      "category": "legacy_harness",
+      "code_lines": 62,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/voice.py",
+      "sha": "4da99ba1f5b9a57c260dd15387f5e49ce07eb3d0",
+      "category": "legacy_harness",
+      "code_lines": 232,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/voice_config.py",
+      "sha": "50b9110f548123e9f096bf63232291ca58feaaf9",
+      "category": "legacy_harness",
+      "code_lines": 50,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/watchdog.py",
+      "sha": "bcd61815fd1a2cec263e7b2063ed67165e137393",
+      "category": "legacy_harness",
+      "code_lines": 104,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/web.py",
+      "sha": "7dc26c8c932c49e08bf88ea62c574c8caa2d801a",
+      "category": "legacy_harness",
+      "code_lines": 347,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/web_config.py",
+      "sha": "ac95992ba93aa1a66de1f753783b4b8dcb4a262b",
+      "category": "legacy_harness",
+      "code_lines": 277,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/web_dialogue.py",
+      "sha": "70943c5cd2a4310e99c46391f1e948aafd1d4d78",
+      "category": "legacy_harness",
+      "code_lines": 98,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/runtime/web_routes.py",
+      "sha": "ba139f1445f0a0a72a2189d0f74302270fa804ff",
+      "category": "legacy_harness",
+      "code_lines": 56,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/social_world/__init__.py",
+      "sha": "80eccda0c96109b88992c5c1e6466bd4199a6ab2",
+      "category": "legacy_harness",
+      "code_lines": 5,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/social_world/compiler.py",
+      "sha": "d893083583393b504554d757595d76b752e89ea0",
+      "category": "legacy_harness",
+      "code_lines": 36,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/social_world/contracts.py",
+      "sha": "ab1af0c897c74772696d7eb8b2337c14e20c0528",
+      "category": "legacy_harness",
+      "code_lines": 169,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/social_world/entity_memory.py",
+      "sha": "5c4b63838e1c4b531ccf4707995dcbfd1f80fba6",
+      "category": "legacy_harness",
+      "code_lines": 94,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/social_world/evaluator_events.py",
+      "sha": "a689d74dfb513d64d2d658d1f9a2f32f7df89479",
+      "category": "legacy_harness",
+      "code_lines": 10,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/social_world/observations.py",
+      "sha": "ef4aefd00a64ae8986a0d80378fb4c6839d1f0ee",
+      "category": "legacy_harness",
+      "code_lines": 132,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/subagents/__init__.py",
+      "sha": "55fc49c04a6e5b13f313a88744da0003d92f987d",
+      "category": "legacy_harness",
+      "code_lines": 2,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/subagents/interpreter.py",
+      "sha": "96cbfd5eba3c73680f5a3bc2ce624c175fc2ba4b",
+      "category": "legacy_harness",
+      "code_lines": 116,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/validator/__init__.py",
+      "sha": "10607215fb8a520910966573c608bba1466374db",
+      "category": "legacy_harness",
+      "code_lines": 2,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/validator/audit.py",
+      "sha": "f9183b8eb20dcfac90993ac738321f7774980588",
+      "category": "legacy_harness",
+      "code_lines": 77,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/validator/evidence_projection.py",
+      "sha": "8f2e7619b26af4f71d7a62f9f78e5194762225e0",
+      "category": "legacy_harness",
+      "code_lines": 75,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/validator/semantic.py",
+      "sha": "9db9d5919e6fc70f706be840fa5cc0b4533e4bad",
+      "category": "legacy_harness",
+      "code_lines": 243,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "harness/validator/validator.py",
+      "sha": "3c2e4c1f060d14d00be9729daa9a16d0f51cdb5c",
+      "category": "legacy_harness",
+      "code_lines": 543,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "infra/__init__.py",
+      "sha": "22a4a3ac90bb0ed798fabd994da95d7fa042dbaf",
+      "category": "legacy_infra",
+      "code_lines": 2,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "infra/db/alembic/env.py",
+      "sha": "9885833ef336056d490512eceac129369de782e2",
+      "category": "legacy_infra",
+      "code_lines": 33,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "infra/db/alembic/versions/001_initial.py",
+      "sha": "8131725f04643988e9e796caa31133696c28cb40",
+      "category": "legacy_infra",
+      "code_lines": 175,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "infra/db/alembic/versions/002_runtime_prerequisites.py",
+      "sha": "8bd629a6d18fcf1aa221843d5a8f160546f5c7f5",
+      "category": "legacy_infra",
+      "code_lines": 204,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "infra/db/alembic/versions/003_scoped_memory.py",
+      "sha": "fdefda30ee959d69140bce46b57a3656d898b013",
+      "category": "legacy_infra",
+      "code_lines": 24,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "infra/db/alembic/versions/004_daily_revision.py",
+      "sha": "e03be692f14c561dcb28acf7bc5b2a8a830da8c4",
+      "category": "legacy_infra",
+      "code_lines": 19,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "infra/trace/__init__.py",
+      "sha": "53d28d8935e153c787f0247f27c33c9cabe92e73",
+      "category": "legacy_infra",
+      "code_lines": 13,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "infra/trace/call_log.py",
+      "sha": "4afabd853d2122f24753f5998676f330de8cbc5c",
+      "category": "legacy_infra",
+      "code_lines": 182,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "infra/trace/diagnostics.py",
+      "sha": "5569327a9d9e5c5c4a6df6ed5fb16b373379d59d",
+      "category": "legacy_infra",
+      "code_lines": 96,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "infra/trace/json_repair_evidence.py",
+      "sha": "2010838429e8b962d0baac2f327128087fc046c1",
+      "category": "legacy_infra",
+      "code_lines": 71,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "infra/trace/recorder.py",
+      "sha": "6f00b7e6bf040fbad4cbd1e10ffd01a9a2ff5608",
+      "category": "legacy_infra",
+      "code_lines": 37,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "infra/trace/request_spans.py",
+      "sha": "241752bd5819e4c9c152545b8fcb5858a68313a6",
+      "category": "legacy_infra",
+      "code_lines": 135,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "infra/trace/serialize.py",
+      "sha": "36280227ad109924a2fc2443b155b40d7172c174",
+      "category": "legacy_infra",
+      "code_lines": 26,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "launch.ps1",
+      "sha": "b58219b9e5355d22589461acb18f0075cb8a4c04",
+      "category": "other_entrypoints",
+      "code_lines": 23,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "plugins/dsh-neuralcloud/src/index.mjs",
+      "sha": "f5bc9c9514e390d56f22389b7aaae7257c1c5f5e",
+      "category": "memory_plugin",
+      "code_lines": 144,
+      "method": "Acorn 8.17.0 tokenizer"
+    },
+    {
+      "path": "plugins/mobile-chat/channel.mjs",
+      "sha": "75e24a6f2a977e3a7f9cb65e381f3e176ba8a69b",
+      "category": "mobile_chat_plugin",
+      "code_lines": 135,
+      "method": "Acorn 8.17.0 tokenizer"
+    },
+    {
+      "path": "plugins/mobile-chat/invited.mjs",
+      "sha": "df7d516c89198f68f26a0f379154a74174a123a5",
+      "category": "mobile_chat_plugin",
+      "code_lines": 28,
+      "method": "Acorn 8.17.0 tokenizer"
+    },
+    {
+      "path": "plugins/mobile-chat/join.mjs",
+      "sha": "12a9fe94a490a746460ab0a51b280fbd8de03fbf",
+      "category": "mobile_chat_plugin",
+      "code_lines": 12,
+      "method": "Acorn 8.17.0 tokenizer"
+    },
+    {
+      "path": "src/neuralcloud/__init__.py",
+      "sha": "a9db6c5e910ae7b4f23c1bbfeead3743ed479ab0",
+      "category": "resident_python",
+      "code_lines": 1,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "src/neuralcloud/__main__.py",
+      "sha": "a387cdee5ac2ba7e8c0b1ee51784fbfa91656e42",
+      "category": "resident_python",
+      "code_lines": 43,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "src/neuralcloud/api.py",
+      "sha": "b2016626c6d5e58c5ee1d66b8245976a8ea89202",
+      "category": "resident_python",
+      "code_lines": 70,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "src/neuralcloud/archive.py",
+      "sha": "1a34e23d113f80f50eee6cb2d28dc2ba953666ca",
+      "category": "resident_python",
+      "code_lines": 352,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "src/neuralcloud/contracts.py",
+      "sha": "af5b2197dc68d119df7ab40eab5e2f244a50deec",
+      "category": "resident_python",
+      "code_lines": 104,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "src/neuralcloud/maintenance.py",
+      "sha": "0959e6d960df4d4097928e797e2b4f614cdbf477",
+      "category": "resident_python",
+      "code_lines": 235,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "src/neuralcloud/migration.py",
+      "sha": "d7cd9091e87e2e9d74e92bbb297493dfdc82fd3e",
+      "category": "resident_python",
+      "code_lines": 390,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "src/neuralcloud/ownership.py",
+      "sha": "d805b62b08d0119cc37f1988d41ff283a4d80c3f",
+      "category": "resident_python",
+      "code_lines": 22,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "src/neuralcloud/storage.py",
+      "sha": "512311e63b67f5a6bf05b54f945d9701f042c253",
+      "category": "resident_python",
+      "code_lines": 331,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "src/neuralcloud/temporary_views.py",
+      "sha": "0763058c4908384fa4624e35950e288b6e7f66df",
+      "category": "resident_python",
+      "code_lines": 227,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "start-llama.cmd",
+      "sha": "285e63e409973b4650d63960ca466a4688d319eb",
+      "category": "other_entrypoints",
+      "code_lines": 6,
+      "method": "BatchLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "start.cmd",
+      "sha": "ab609c74366823047d440b0fe58a299cd550261c",
+      "category": "other_entrypoints",
+      "code_lines": 6,
+      "method": "BatchLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "start.ps1",
+      "sha": "fa2b607fa2eaf09c986d49694103c9a01d215597",
+      "category": "other_entrypoints",
+      "code_lines": 958,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "start.sh",
+      "sha": "a1348eff491d1d97c8c09a3a70afbb80b9a7a04c",
+      "category": "other_entrypoints",
+      "code_lines": 103,
+      "method": "BashLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "stop-llama.cmd",
+      "sha": "9befafee056a484d296e57458ca4ae39ff282d9a",
+      "category": "other_entrypoints",
+      "code_lines": 6,
+      "method": "BatchLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "stop.cmd",
+      "sha": "13ee609f91a5e3f8bc4ec7a5cbc8db0140312ee8",
+      "category": "other_entrypoints",
+      "code_lines": 6,
+      "method": "BatchLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "stop.ps1",
+      "sha": "7988983b9074c5d07bb2a6bdb7448a6802d5f1e4",
+      "category": "other_entrypoints",
+      "code_lines": 178,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "stop.sh",
+      "sha": "424c04690dccfbaeda3edd0c617f3bbc57e0e6df",
+      "category": "other_entrypoints",
+      "code_lines": 83,
+      "method": "BashLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/board/Board.psm1",
+      "sha": "ee27429ad3a4dccad031b9c1aecd94a2e617c9a9",
+      "category": "other_tools",
+      "code_lines": 134,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/board/Start-Board.ps1",
+      "sha": "8233759b9addc2643f8767139c5556cf9f96e133",
+      "category": "other_tools",
+      "code_lines": 13,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/board/Stop-Board.ps1",
+      "sha": "fc8e8564eec1950328cf0ded1363fe4afb8db69f",
+      "category": "other_tools",
+      "code_lines": 7,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/board/linux_board.py",
+      "sha": "a59bcf2cbee03f2ddc7e5c66bbe334c1941c11d0",
+      "category": "other_tools",
+      "code_lines": 234,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/ci/release_pair.py",
+      "sha": "1b69721e4f2c648ff41f90689e963889bc4a2e34",
+      "category": "other_tools",
+      "code_lines": 58,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/deploy/agentic-tunnel.ps1",
+      "sha": "a79b86902e54ecad6faf60cb88052fe5fbb33618",
+      "category": "other_tools",
+      "code_lines": 48,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/deploy/aux_qwen_probe.py",
+      "sha": "3ce94de12db0cc11b8a3c77672f663525d05a28d",
+      "category": "other_tools",
+      "code_lines": 87,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/deploy/aux_ssh_tunnel.py",
+      "sha": "f390202d7d308de619b793dd8db1bb9008ea9b89",
+      "category": "other_tools",
+      "code_lines": 90,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/deploy/check_agentic_vision.py",
+      "sha": "001873db04cca9245e4e8245eef73fb34abce3a5",
+      "category": "other_tools",
+      "code_lines": 120,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/deploy/download_gguf.py",
+      "sha": "5ccd7ec359cb633f3159455c5920aa17b1baeea4",
+      "category": "other_tools",
+      "code_lines": 123,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/deploy/export_shared.py",
+      "sha": "9dff664e473b104612629d2658e991f85f5d0884",
+      "category": "other_tools",
+      "code_lines": 66,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/deploy/frp_runner.py",
+      "sha": "d9e1175a4c758eb411bb0f9a49c8256437cbb453",
+      "category": "other_tools",
+      "code_lines": 23,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/deploy/install-aux-ollama.sh",
+      "sha": "cf2e3a16751682285b4d023e189227a4070e7f82",
+      "category": "other_tools",
+      "code_lines": 101,
+      "method": "BashLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/deploy/install-ingress.sh",
+      "sha": "514626f0adb7640db75a4b9fb0d4c4088f3f492f",
+      "category": "other_tools",
+      "code_lines": 244,
+      "method": "BashLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/deploy/install-llama-local.ps1",
+      "sha": "fccbc5a97f95c182a62ecf1e002bbea9d17c606f",
+      "category": "other_tools",
+      "code_lines": 52,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/deploy/install-napcat.sh",
+      "sha": "3b7905930823f6832a33c23032ae08a69bc5a5d0",
+      "category": "other_tools",
+      "code_lines": 418,
+      "method": "BashLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/deploy/llama-local.ps1",
+      "sha": "125b44226bce86006154df3eabd4041f4fbdd4c7",
+      "category": "other_tools",
+      "code_lines": 80,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/deploy/misty_oral_v2/deploy.py",
+      "sha": "2ecc890f0f82c3b356cae827065296c4b19542ba",
+      "category": "oral_deployment",
+      "code_lines": 98,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/deploy/misty_oral_v2/oral-expression.mjs",
+      "sha": "b91f6123696a167dfa1f458b24f10a24a4299578",
+      "category": "oral_deployment",
+      "code_lines": 1,
+      "method": "Acorn 8.17.0 tokenizer"
+    },
+    {
+      "path": "tools/deploy/napcat_login.py",
+      "sha": "5b74f8a54a3e7239c77182a40a627091acf888e5",
+      "category": "other_tools",
+      "code_lines": 179,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/deploy/templates/qwen38-neuralcloud.jinja",
+      "sha": "61def67d5539544358dbcc9895a7fb9be8cbca9f",
+      "category": "other_tools",
+      "code_lines": 171,
+      "method": "DjangoLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/diagnostics/audit_qq_configuration.py",
+      "sha": "2e02a8631ad7b649f51e82b0203c3b0584d382ea",
+      "category": "other_tools",
+      "code_lines": 61,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/diagnostics/build_emotion_human_report.py",
+      "sha": "2604fd20046fcbe7d8cc6fe804d4ccc408b5bbde",
+      "category": "other_tools",
+      "code_lines": 229,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/diagnostics/qq_expression_observe.py",
+      "sha": "3a1a8ba312bf5e02fbf6d74cf4895fc03a91b360",
+      "category": "other_tools",
+      "code_lines": 78,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/diagnostics/qq_semantic_observe.py",
+      "sha": "e9354d1d3e7b6220c088728a6e3ace55b6cbb5ea",
+      "category": "other_tools",
+      "code_lines": 117,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/diary_reflection_replay.py",
+      "sha": "ab47aeaef46655cc5262632afc450c706d090dc7",
+      "category": "other_tools",
+      "code_lines": 53,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/docker/DockerDesktop.psm1",
+      "sha": "739c409693af2c96776b61c37b9f53a4e734f198",
+      "category": "other_tools",
+      "code_lines": 383,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/docker/Start-DockerDesktop.ps1",
+      "sha": "52ee3eda06d04892ee5dd7854eafaead97f27e50",
+      "category": "other_tools",
+      "code_lines": 24,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/export_resident_contracts.py",
+      "sha": "2328abb160a58ba410796ae0aa0cef33f4e21310",
+      "category": "resident_tools",
+      "code_lines": 75,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/freeze_production_baseline.py",
+      "sha": "915d081e577b2496c590c626db6ce4978730e51e",
+      "category": "other_tools",
+      "code_lines": 68,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/launcher/Launcher.psm1",
+      "sha": "437b1cdeebd19bc3e58fa8682460303ccbd07370",
+      "category": "other_tools",
+      "code_lines": 3771,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/launcher/OneClick.psm1",
+      "sha": "f72cf50e2635fab234f53f49659d12493f68671d",
+      "category": "other_tools",
+      "code_lines": 340,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/production_profile.py",
+      "sha": "fa0b10209e3434f4c7f7bc5af10f1d15d292f5f5",
+      "category": "other_tools",
+      "code_lines": 31,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/qq/Reload-QQMemory.ps1",
+      "sha": "2b589ab24f13bafed20a14ec2380e13d18e65b70",
+      "category": "other_tools",
+      "code_lines": 115,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/qq/Setup-NapCatBridge.ps1",
+      "sha": "a382c4e0d34fe2533c000f0da8909b967014fd9a",
+      "category": "other_tools",
+      "code_lines": 213,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/qq/Show-NapCatLogin.ps1",
+      "sha": "b0370ec5c2c0fae2b357575d2d68550d5a5dd4b7",
+      "category": "other_tools",
+      "code_lines": 87,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/qq/Start-QQDirect.ps1",
+      "sha": "d50d1b60fc40dc1aa98eb8cffeb5be25080b0799",
+      "category": "other_tools",
+      "code_lines": 193,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/qq/Start-QQSession.ps1",
+      "sha": "331e905dfda68f4a15d2356b68088d0f40e4885a",
+      "category": "other_tools",
+      "code_lines": 241,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/qq/Start-QQWatcher.ps1",
+      "sha": "50a0f491ba1919e67af07fc6b9cea03d58ae80dd",
+      "category": "other_tools",
+      "code_lines": 382,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/qq/Stop-QQDirect.ps1",
+      "sha": "eb5de82302d3677584cdd08f34041593dd8eb68e",
+      "category": "other_tools",
+      "code_lines": 68,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/qq/Stop-QQWatcher.ps1",
+      "sha": "7dd678a6c09c66661964fbb00058b995a27c06a5",
+      "category": "other_tools",
+      "code_lines": 49,
+      "method": "PowerShellLexer",
+      "lexer_error_tokens": 0
+    },
+    {
+      "path": "tools/qq_cache_report.py",
+      "sha": "8bad9616bcf52e149a6968aa0c8fcb930a54d04a",
+      "category": "other_tools",
+      "code_lines": 186,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/qq_latency_report.py",
+      "sha": "8d480c055e7bef98c1f8c58b3242663d846bbe82",
+      "category": "other_tools",
+      "code_lines": 318,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/qqbot/bridge.mjs",
+      "sha": "b252a1be87f13fc1d8ed00c4edba26d0ac1439f5",
+      "category": "qq_bridge_tools",
+      "code_lines": 107,
+      "method": "Acorn 8.17.0 tokenizer"
+    },
+    {
+      "path": "tools/qqbot/check_connection.py",
+      "sha": "03043a41dca9df5b16241f8347380bf8e6e792c7",
+      "category": "qq_bridge_tools",
+      "code_lines": 55,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/qqbot/discover_group.py",
+      "sha": "a8fbf31c98dae15d4acbf809bf21bd458fc9b0d6",
+      "category": "qq_bridge_tools",
+      "code_lines": 70,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/qqbot/ingress.mjs",
+      "sha": "4f557bfbbf222e0b261b8d50ad30deee88ada5b6",
+      "category": "qq_bridge_tools",
+      "code_lines": 67,
+      "method": "Acorn 8.17.0 tokenizer"
+    },
+    {
+      "path": "tools/qqbot/paragraph_probe.py",
+      "sha": "53b80bc89d8179f35f8140ba764f570cf3e6cb4e",
+      "category": "qq_bridge_tools",
+      "code_lines": 32,
+      "method": "Python AST + tokenize"
+    },
+    {
+      "path": "tools/qqbot/private_probe.py",
+      "sha": "bb08eab1dbff80e06823b50eb09d7e40cf1dce0f",
+      "category": "qq_bridge_tools",
+      "code_lines": 117,
+      "method": "Python AST + tokenize"
+    }
+  ]
+}

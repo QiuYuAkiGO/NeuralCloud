@@ -2,6 +2,10 @@
 
 固定提交、范围与解释见[实施清单](../code-cleanup-implementation-checklist-20261114.md)。本目录不是清理实现或生产验收证据。
 
+批次 0 补充：[全仓体量与边界报告](../batch-0-neuralcloud-size-and-boundaries-20261114.md)；`count_repository.py` 对固定 Git tree 统计，`repository-size.json` 保存完整逐文件 SHA、行数、分类与汇总。统计不含本轮新增文档和工具；分类表示代码位置/用途，不表示已经获得删除资格。
+
+阅读实现口径：`count_implementation.py` / `implementation-size.json` 排除测试、文档、评测、验收/基准脚本、生成声明、注释/docstring/空行，保留业务实现和运行工具。结果为 518 文件 / 110,880 行；其中运行实现 99,549 行、启动与配套工具 11,331 行，新记忆服务和两个插件 2,094 行。
+
 - `inventory.json`：两仓库当前 Python 包的物理行数、最长函数及全部异常捕获位置，由 Python AST 扫描。行数含空行/注释；不是圈复杂度。未对历史代码做全量人工审核。
 - `fault-probe.mjs` / `fault-probe.json`：使用内存 Response 和临时 SQLite 复现错误混合；不调用 HTTP。后续错误收敛后输出应改变，不能把错误旧行为写成永久验收预期。
 - `neuralcloud-pytest.txt` / `mistyai-pytest.txt`：各自 `.venv/bin/python -m pytest -q`，28 / 29 passed。

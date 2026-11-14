@@ -2,6 +2,7 @@
 
 ## 当前代码清理计划（2026-11-14）
 
+- [批次 0：全仓体量与模块边界](batch-0-neuralcloud-size-and-boundaries-20261114.md)：全量 Git 源码统计、清理后代码量的条件估算、模块所有权与待核实入口；未实施清理。
 - [代码清理实施清单](code-cleanup-implementation-checklist-20261114.md)：基于两仓库最新实施分支，包含模块污染分级、分批 PR、功能一致性验证和新人 24 小时接手验收；仅完成审计与计划，未修改业务代码。
 - [简化与显式错误处理需求](simplification-and-error-handling-20261114.md)：本轮需求基线。
 - [实测与静态证据](code-cleanup-audit-20261114/README.md)：测试结果、模块统计、故障复现探针和适用边界。
