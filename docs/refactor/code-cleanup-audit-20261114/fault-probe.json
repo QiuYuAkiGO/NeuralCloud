@@ -1,0 +1,21 @@
+{
+  "invalid_json": {
+    "status": "CACHE_MISS",
+    "current": false,
+    "items": [],
+    "coverage": "Service unavailable; absence is unknown."
+  },
+  "unauthorized": {
+    "status": "CACHE_MISS",
+    "current": false,
+    "items": [],
+    "coverage": "Service unavailable; absence is unknown."
+  },
+  "invalid_shape": {},
+  "outbox_401": {
+    "pending": 1,
+    "blocked": 0,
+    "bytes": 42,
+    "attempts": 1
+  }
+}

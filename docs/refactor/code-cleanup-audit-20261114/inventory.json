@@ -1,0 +1,472 @@
+{
+  "NeuralCloud": {
+    "sha": "ab421b125be0dc632eef51ea2744fa22a75bbf98",
+    "physical_lines": 2038,
+    "files": [
+      {
+        "path": "src/neuralcloud/__init__.py",
+        "physical_lines": 3,
+        "longest_functions": [],
+        "exception_handlers": []
+      },
+      {
+        "path": "src/neuralcloud/__main__.py",
+        "physical_lines": 49,
+        "longest_functions": [
+          {
+            "name": "main",
+            "line": 9,
+            "span": 37
+          }
+        ],
+        "exception_handlers": []
+      },
+      {
+        "path": "src/neuralcloud/api.py",
+        "physical_lines": 94,
+        "longest_functions": [
+          {
+            "name": "create_app",
+            "line": 16,
+            "span": 79
+          },
+          {
+            "name": "bounded_request",
+            "line": 41,
+            "span": 9
+          },
+          {
+            "name": "lifespan",
+            "line": 25,
+            "span": 4
+          }
+        ],
+        "exception_handlers": []
+      },
+      {
+        "path": "src/neuralcloud/archive.py",
+        "physical_lines": 405,
+        "longest_functions": [
+          {
+            "name": "restore",
+            "line": 336,
+            "span": 70
+          },
+          {
+            "name": "verify_at_destination",
+            "line": 91,
+            "span": 42
+          },
+          {
+            "name": "export",
+            "line": 181,
+            "span": 40
+          }
+        ],
+        "exception_handlers": []
+      },
+      {
+        "path": "src/neuralcloud/contracts.py",
+        "physical_lines": 139,
+        "longest_functions": [
+          {
+            "name": "canonical",
+            "line": 132,
+            "span": 4
+          },
+          {
+            "name": "digest",
+            "line": 138,
+            "span": 2
+          }
+        ],
+        "exception_handlers": []
+      },
+      {
+        "path": "src/neuralcloud/maintenance.py",
+        "physical_lines": 266,
+        "longest_functions": [
+          {
+            "name": "run_once",
+            "line": 175,
+            "span": 34
+          },
+          {
+            "name": "main",
+            "line": 230,
+            "span": 33
+          },
+          {
+            "name": "capacity",
+            "line": 144,
+            "span": 30
+          }
+        ],
+        "exception_handlers": [
+          {
+            "line": 76,
+            "type": "BaseException"
+          },
+          {
+            "line": 196,
+            "type": "Refusal"
+          },
+          {
+            "line": 198,
+            "type": "OSError"
+          },
+          {
+            "line": 204,
+            "type": "(ValueError, TypeError, InvalidToken)"
+          }
+        ]
+      },
+      {
+        "path": "src/neuralcloud/migration.py",
+        "physical_lines": 428,
+        "longest_functions": [
+          {
+            "name": "step",
+            "line": 274,
+            "span": 108
+          },
+          {
+            "name": "__init__",
+            "line": 53,
+            "span": 69
+          },
+          {
+            "name": "_event",
+            "line": 202,
+            "span": 60
+          }
+        ],
+        "exception_handlers": [
+          {
+            "line": 119,
+            "type": "BaseException"
+          }
+        ]
+      },
+      {
+        "path": "src/neuralcloud/ownership.py",
+        "physical_lines": 30,
+        "longest_functions": [
+          {
+            "name": "__init__",
+            "line": 8,
+            "span": 19
+          },
+          {
+            "name": "close",
+            "line": 28,
+            "span": 3
+          }
+        ],
+        "exception_handlers": [
+          {
+            "line": 24,
+            "type": "BaseException"
+          }
+        ]
+      },
+      {
+        "path": "src/neuralcloud/storage.py",
+        "physical_lines": 369,
+        "longest_functions": [
+          {
+            "name": "correct",
+            "line": 233,
+            "span": 59
+          },
+          {
+            "name": "__init__",
+            "line": 89,
+            "span": 40
+          },
+          {
+            "name": "initialize",
+            "line": 59,
+            "span": 27
+          }
+        ],
+        "exception_handlers": [
+          {
+            "line": 126,
+            "type": "BaseException"
+          },
+          {
+            "line": 143,
+            "type": "BaseException"
+          }
+        ]
+      },
+      {
+        "path": "src/neuralcloud/temporary_views.py",
+        "physical_lines": 255,
+        "longest_functions": [
+          {
+            "name": "open",
+            "line": 150,
+            "span": 55
+          },
+          {
+            "name": "__init__",
+            "line": 28,
+            "span": 53
+          },
+          {
+            "name": "read",
+            "line": 206,
+            "span": 37
+          }
+        ],
+        "exception_handlers": [
+          {
+            "line": 78,
+            "type": "BaseException"
+          },
+          {
+            "line": 131,
+            "type": "(OSError, Refusal)"
+          },
+          {
+            "line": 201,
+            "type": "BaseException"
+          },
+          {
+            "line": 240,
+            "type": "BaseException"
+          },
+          {
+            "line": 73,
+            "type": "Exception"
+          }
+        ]
+      }
+    ]
+  },
+  "MistyAI": {
+    "sha": "37e093595b512ca139dfda0d70fc43eda5df207d",
+    "physical_lines": 1908,
+    "files": [
+      {
+        "path": "src/mistyai/state/__init__.py",
+        "physical_lines": 1,
+        "longest_functions": [],
+        "exception_handlers": []
+      },
+      {
+        "path": "src/mistyai/state/contracts.py",
+        "physical_lines": 61,
+        "longest_functions": [
+          {
+            "name": "canonical",
+            "line": 52,
+            "span": 6
+          },
+          {
+            "name": "digest",
+            "line": 60,
+            "span": 2
+          }
+        ],
+        "exception_handlers": []
+      },
+      {
+        "path": "src/mistyai/state/maintenance.py",
+        "physical_lines": 67,
+        "longest_functions": [
+          {
+            "name": "upgrade",
+            "line": 10,
+            "span": 33
+          },
+          {
+            "name": "main",
+            "line": 45,
+            "span": 19
+          }
+        ],
+        "exception_handlers": []
+      },
+      {
+        "path": "src/mistyai/state/runtime.py",
+        "physical_lines": 745,
+        "longest_functions": [
+          {
+            "name": "feedback",
+            "line": 383,
+            "span": 68
+          },
+          {
+            "name": "__init__",
+            "line": 109,
+            "span": 58
+          },
+          {
+            "name": "tick",
+            "line": 291,
+            "span": 58
+          }
+        ],
+        "exception_handlers": [
+          {
+            "line": 164,
+            "type": "BaseException"
+          },
+          {
+            "line": 181,
+            "type": "BaseException"
+          }
+        ]
+      },
+      {
+        "path": "src/mistyai/integration/__init__.py",
+        "physical_lines": 1,
+        "longest_functions": [],
+        "exception_handlers": []
+      },
+      {
+        "path": "src/mistyai/integration/deployment.py",
+        "physical_lines": 102,
+        "longest_functions": [
+          {
+            "name": "validate",
+            "line": 22,
+            "span": 44
+          },
+          {
+            "name": "main",
+            "line": 84,
+            "span": 15
+          },
+          {
+            "name": "systemd_active",
+            "line": 68,
+            "span": 14
+          }
+        ],
+        "exception_handlers": []
+      },
+      {
+        "path": "src/mistyai/integration/main.py",
+        "physical_lines": 68,
+        "longest_functions": [
+          {
+            "name": "main",
+            "line": 34,
+            "span": 31
+          },
+          {
+            "name": "load_persona",
+            "line": 11,
+            "span": 12
+          },
+          {
+            "name": "load_policy",
+            "line": 25,
+            "span": 7
+          }
+        ],
+        "exception_handlers": []
+      },
+      {
+        "path": "src/mistyai/integration/migration.py",
+        "physical_lines": 277,
+        "longest_functions": [
+          {
+            "name": "migrate",
+            "line": 76,
+            "span": 178
+          },
+          {
+            "name": "main",
+            "line": 256,
+            "span": 18
+          },
+          {
+            "name": "frozen_json",
+            "line": 55,
+            "span": 7
+          }
+        ],
+        "exception_handlers": []
+      },
+      {
+        "path": "src/mistyai/integration/operator.py",
+        "physical_lines": 79,
+        "longest_functions": [
+          {
+            "name": "main",
+            "line": 45,
+            "span": 31
+          }
+        ],
+        "exception_handlers": []
+      },
+      {
+        "path": "src/mistyai/integration/recovery.py",
+        "physical_lines": 196,
+        "longest_functions": [
+          {
+            "name": "preserve",
+            "line": 73,
+            "span": 57
+          },
+          {
+            "name": "file_owner",
+            "line": 25,
+            "span": 31
+          },
+          {
+            "name": "restore",
+            "line": 152,
+            "span": 22
+          }
+        ],
+        "exception_handlers": [
+          {
+            "line": 30,
+            "type": "FileExistsError"
+          },
+          {
+            "line": 39,
+            "type": "BaseException"
+          }
+        ]
+      },
+      {
+        "path": "src/mistyai/integration/service.py",
+        "physical_lines": 311,
+        "longest_functions": [
+          {
+            "name": "create_app",
+            "line": 124,
+            "span": 188
+          },
+          {
+            "name": "operator_console",
+            "line": 216,
+            "span": 13
+          },
+          {
+            "name": "ticks",
+            "line": 151,
+            "span": 10
+          }
+        ],
+        "exception_handlers": [
+          {
+            "line": 158,
+            "type": "(sqlite3.Error, Refusal)"
+          },
+          {
+            "line": 171,
+            "type": "asyncio.CancelledError"
+          }
+        ]
+      }
+    ]
+  }
+}

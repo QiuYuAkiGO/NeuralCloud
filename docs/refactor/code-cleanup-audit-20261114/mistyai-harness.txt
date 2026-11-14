@@ -1,0 +1,51 @@
+
+> test
+> node --test test/*.test.mjs
+
+✔ public owner handle: inject is idle, followup wakes, stable IDs survive consumption (51.676688ms)
+✔ dynamic context refresh preserves literal external braces and fixed persona (40.408059ms)
+✔ cancel at idle does not poison later work (11.562488ms)
+✔ content reads real response bytes, limits coverage and rejects redirects/private addresses/oversize bodies (92.202524ms)
+✔ mobile binds only authorized sessions and requires fresh observations and approval for sensitive screens (4.926797ms)
+✔ approval notification keeps uncertain send receipts across restart without retrying or exposing request parameters (5.102306ms)
+✔ image ingress persists verified bytes, omits signed URLs, handles missing/invalid/excess images without losing text (180.779294ms)
+✔ native images reach the existing OpenAI wire context and remain available after resident restart (565.068737ms)
+✔ launcher rejects unsafe endpoints, implicit destinations, ambiguous credentials and changed release config before network use (8.162752ms)
+✔ Misty guard actually denies unreviewed tools inside the pinned Harness pipeline (51.316707ms)
+✔ delivery records UNKNOWN after SDK ambiguity and WAIT never touches transport (0.552069ms)
+✔ transport preflight never overwrites a durable prior receipt or retries a prior NOT_SENT intent (0.391304ms)
+✔ durable ingress does not replay a PREPARED input after a process interruption (5.671099ms)
+✔ a real SDK receipt stays SENT even when the state receipt acknowledgment is lost (0.251629ms)
+✔ OneBot rejects public endpoints, wildcard scopes, wrong identity, self echoes and unmentioned groups (4.838121ms)
+✔ authenticated socket verifies account, correlates receipts and sends CQ-looking content as plain text (75.423538ms)
+✔ an offline official channel does not block OneBot; known offline sends settle NOT_SENT before transport (18.300077ms)
+✔ mention exception opens only an explicitly authorized group and never self echoes (2.190063ms)
+✔ wrong logged-in account never becomes ready or reconnects as another identity (12.493602ms)
+✔ ambiguous delivery settles UNKNOWN once and reconnect never resends it (37.287507ms)
+✔ actual resident persists OneBot input once, binds its reply destination, and emits no implicit response (144.731456ms)
+✔ real JSONL persistence restores pending input after a process exits without disposal (502.89289ms)
+✔ actual patched QQ bootstrap restores readiness on RESUMED, preserves it on nonfatal errors and logs no error payload (120.681926ms)
+✔ actual patched QQ router emits no implicit WAIT, chunk, tool or turn-error message (1.689082ms)
+✔ only explicit allowlisted SDK delivery returns an external receipt (1.261544ms)
+✔ session-creation failure does not trigger a hidden fallback QQ reply (2.599671ms)
+✔ QQ replay preserves the platform input identity rather than minting a random message ID (0.702881ms)
+✔ offline ingress quarantine preserves raw input, rotates ambiguous session and is hash-bound and resumable (16.68645ms)
+✔ explicit ingress index migration preserves pending raw input and accepted dedupe receipts (4.68304ms)
+✔ resident single owner and missing OPEN history fail closed without an empty replacement (58.159917ms)
+✔ committed ingress is reconciled and acknowledged before bounded session rotation; old log remains (146.861895ms)
+✔ checkpointed PREPARED inbox survives process exit; restart reconciles without a duplicate wake (395.577478ms)
+✔ one dedicated autonomy handle owns the opportunity; idle does not settle or repeatedly wake it (41.311698ms)
+✔ production channel wiring lets autonomy run with both chat transports offline and status endpoint unavailable (35.897049ms)
+✔ autonomy reports cooldown and retains stop, delivery and activity reconciliation barriers (24.943319ms)
+✔ patched QQ delegates lifecycle failures instead of falling back to create or cancelling idle input (1.040537ms)
+✔ operator stop parks claimed input durably instead of dropping it at the rejected step (47.63ms)
+✔ raw QQ input survives unavailable state during first bind and only an undispatched input is retried (43.730303ms)
+✔ locked existing pi-ai adapter resolves offline and streams the actual protocol against a local fixture (204.045089ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2955.206209

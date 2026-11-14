@@ -1,0 +1,70 @@
+{
+  "record_type": "observed command result summary, not raw tool output",
+  "checks": [
+    {
+      "repository": "NeuralCloud",
+      "command": ".venv/bin/python -m ruff check src/neuralcloud tests/resident",
+      "result": "All checks passed!"
+    },
+    {
+      "repository": "MistyAI",
+      "command": ".venv/bin/python -m ruff check src/mistyai/state src/mistyai/integration tests/resident",
+      "result": "All checks passed!"
+    },
+    {
+      "repository": "MistyAI",
+      "command": ".venv/bin/python -m ruff format --check src/mistyai/state src/mistyai/integration tests/resident",
+      "result": "19 files already formatted"
+    },
+    {
+      "repository": "NeuralCloud",
+      "command": ".venv/bin/python tools/export_resident_contracts.py --check",
+      "generated_contracts": 15,
+      "check": true
+    },
+    {
+      "repository": "MistyAI",
+      "command": ".venv/bin/python tools/export_resident_contracts.py --check",
+      "generated_contracts": 18,
+      "check": true
+    }
+  ],
+  "wheels": [
+    {
+      "name": "neuralcloud_memory-1.0.0a1-py3-none-any.whl",
+      "build": "uv build --wheel",
+      "result": "success",
+      "python_files": [
+        "neuralcloud/__init__.py",
+        "neuralcloud/__main__.py",
+        "neuralcloud/api.py",
+        "neuralcloud/archive.py",
+        "neuralcloud/contracts.py",
+        "neuralcloud/maintenance.py",
+        "neuralcloud/migration.py",
+        "neuralcloud/ownership.py",
+        "neuralcloud/storage.py",
+        "neuralcloud/temporary_views.py"
+      ]
+    },
+    {
+      "name": "mistyai-1.0.0a1-py3-none-any.whl",
+      "build": "uv build --wheel",
+      "result": "success",
+      "python_files": [
+        "mistyai/__init__.py",
+        "mistyai/integration/__init__.py",
+        "mistyai/integration/deployment.py",
+        "mistyai/integration/main.py",
+        "mistyai/integration/migration.py",
+        "mistyai/integration/operator.py",
+        "mistyai/integration/recovery.py",
+        "mistyai/integration/service.py",
+        "mistyai/state/__init__.py",
+        "mistyai/state/contracts.py",
+        "mistyai/state/maintenance.py",
+        "mistyai/state/runtime.py"
+      ]
+    }
+  ]
+}
