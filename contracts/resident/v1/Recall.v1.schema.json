@@ -1,4 +1,86 @@
 {
+  "$defs": {
+    "RecallConstraints": {
+      "additionalProperties": false,
+      "properties": {
+        "conversation_id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Conversation Id"
+        },
+        "since": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Since"
+        },
+        "until": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Until"
+        },
+        "phrases": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Phrases",
+          "type": "array"
+        }
+      },
+      "title": "RecallConstraints",
+      "type": "object"
+    },
+    "RecallSubject": {
+      "additionalProperties": false,
+      "properties": {
+        "platform": {
+          "enum": [
+            "qq",
+            "qqbot"
+          ],
+          "title": "Platform",
+          "type": "string"
+        },
+        "account_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_:-]+$",
+          "title": "Account Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "platform",
+        "account_id"
+      ],
+      "title": "RecallSubject",
+      "type": "object"
+    }
+  },
   "additionalProperties": false,
   "properties": {
     "query": {
@@ -13,6 +95,70 @@
       "minimum": 1,
       "title": "Limit",
       "type": "integer"
+    },
+    "subject": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RecallSubject"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "mode": {
+      "default": "auto",
+      "enum": [
+        "auto",
+        "legacy",
+        "keyword",
+        "semantic",
+        "hybrid"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "intent": {
+      "default": "auto",
+      "enum": [
+        "auto",
+        "identity",
+        "fact",
+        "event",
+        "cause",
+        "topic"
+      ],
+      "title": "Intent",
+      "type": "string"
+    },
+    "targets": {
+      "items": {
+        "$ref": "#/$defs/RecallSubject"
+      },
+      "maxItems": 8,
+      "title": "Targets",
+      "type": "array"
+    },
+    "constraints": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RecallConstraints"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "workflow": {
+      "default": "enabled",
+      "enum": [
+        "enabled",
+        "compat"
+      ],
+      "title": "Workflow",
+      "type": "string"
     }
   },
   "required": [

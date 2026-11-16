@@ -1,0 +1,120 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "mode": {
+      "title": "Mode",
+      "type": "string"
+    },
+    "semantic_requested": {
+      "title": "Semantic Requested",
+      "type": "boolean"
+    },
+    "degraded": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Degraded"
+    },
+    "identity_count": {
+      "title": "Identity Count",
+      "type": "integer"
+    },
+    "keyword_candidates": {
+      "title": "Keyword Candidates",
+      "type": "integer"
+    },
+    "semantic_candidates": {
+      "title": "Semantic Candidates",
+      "type": "integer"
+    },
+    "elapsed_ms": {
+      "title": "Elapsed Ms",
+      "type": "number"
+    },
+    "workflow_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Workflow Version"
+    },
+    "index_generation": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Index Generation"
+    },
+    "stages": {
+      "anyOf": [
+        {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Stages"
+    },
+    "rounds": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rounds"
+    },
+    "stop_reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Stop Reason"
+    },
+    "cache_hit": {
+      "default": false,
+      "title": "Cache Hit",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "mode",
+    "semantic_requested",
+    "identity_count",
+    "keyword_candidates",
+    "semantic_candidates",
+    "elapsed_ms"
+  ],
+  "title": "RecallDiagnostics",
+  "type": "object"
+}

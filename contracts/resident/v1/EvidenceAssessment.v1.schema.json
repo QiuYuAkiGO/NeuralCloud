@@ -1,0 +1,38 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "state": {
+      "enum": [
+        "DIRECT",
+        "INFERRED",
+        "RELATED",
+        "CONFLICT",
+        "NOT_FOUND",
+        "INCOMPLETE"
+      ],
+      "title": "State",
+      "type": "string"
+    },
+    "sufficient": {
+      "title": "Sufficient",
+      "type": "boolean"
+    },
+    "absence_confirmed": {
+      "const": false,
+      "default": false,
+      "title": "Absence Confirmed",
+      "type": "boolean"
+    },
+    "reason": {
+      "title": "Reason",
+      "type": "string"
+    }
+  },
+  "required": [
+    "state",
+    "sufficient",
+    "reason"
+  ],
+  "title": "EvidenceAssessment",
+  "type": "object"
+}

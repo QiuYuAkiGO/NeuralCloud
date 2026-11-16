@@ -4,16 +4,37 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 import secrets
+import hashlib
+import json
+import logging
+from pathlib import Path
 import sqlite3
+import asyncio
+import threading
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
-from .contracts import Correction, Recall, SourceEvent, DurableReceipt, MissingReceipt, RecordView, RecallResult
+from .contracts import (
+    Correction,
+    Recall,
+    SourceEvent,
+    SourceEventV2,
+    DurableReceipt,
+    MissingReceipt,
+    RecordView,
+    RecallResult,
+)
 from .storage import MemoryStore, Refusal
 
+LOADED_IMPLEMENTATION = {
+    "module": str(Path(__file__).resolve()),
+    "sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+}
 
-def create_app(store: MemoryStore, token: str, *, close_on_shutdown=False):
+
+def create_app(store: MemoryStore, token: str, *, close_on_shutdown=False, retriever=None):
     if len(token) < 32:
         raise ValueError("service token must contain at least 32 characters")
 
@@ -59,18 +80,75 @@ def create_app(store: MemoryStore, token: str, *, close_on_shutdown=False):
 
     @app.get("/v1/health")
     def health():
-        return store.health()
+        result = store.health()
+        result["source_event_versions"] = [1, 2]
+        result["implementation"] = LOADED_IMPLEMENTATION
+        if retriever is not None:
+            if hasattr(retriever, "status"):
+                result["workflow"] = retriever.status()
+            base = getattr(retriever, "base", retriever)
+            result["source_event_versions"] = [1, 2]
+            result["retrieval_v2"] = True
+            result["hybrid_configured"] = base.hybrid
+            result["identity_configured"] = base.identities is not None
+            # Capability only; per-request diagnostics and worker health report actual readiness.
+            result["semantic_search"] = base.hybrid and base.semantic is not None
+        return result
 
     @app.post("/v1/recall", response_model=RecallResult, response_model_exclude_none=True)
-    def recall(request: Recall):
-        return store.recall(request.query, request.limit)
+    async def recall(request: Recall, connection: Request):
+        if retriever is not None:
+            if hasattr(retriever, "plan"):
+                if request.workflow == "compat":
+                    if request.constraints or request.targets or request.intent != "auto":
+                        raise Refusal("WORKFLOW_REQUIRED_FOR_CONSTRAINTS")
+                    return await run_in_threadpool(
+                        retriever.base.recall, request.query, request.limit, request.subject, request.mode
+                    )
+                cancel = threading.Event()
+                pending = asyncio.create_task(
+                    run_in_threadpool(
+                        retriever.recall,
+                        request.query,
+                        request.limit,
+                        request.subject,
+                        request.mode,
+                        request.intent,
+                        request.targets,
+                        request.constraints,
+                        cancel=cancel,
+                    )
+                )
+                try:
+                    while not pending.done():
+                        await asyncio.wait({pending}, timeout=0.025)
+                        if await connection.is_disconnected():
+                            cancel.set()
+                    result = await pending
+                finally:
+                    cancel.set()
+                logging.getLogger("uvicorn.error").info(
+                    "MEMORY_WORKFLOW %s",
+                    json.dumps(
+                        {
+                            "query_sha256": hashlib.sha256(request.query.encode()).hexdigest(),
+                            "assessment": result.get("assessment"),
+                            "diagnostics": result.get("diagnostics"),
+                        }
+                    ),
+                )
+                return result
+            return await run_in_threadpool(
+                retriever.recall, request.query, request.limit, request.subject, request.mode
+            )
+        return await run_in_threadpool(store.recall, request.query, request.limit)
 
     @app.get("/v1/records/{record_id}", response_model=RecordView, response_model_exclude_none=True)
     def read(record_id: str, offset: int = Query(0, ge=0), length: int = Query(4096, ge=1, le=16384)):
         return store.read(record_id, offset, length)
 
     @app.post("/v1/ingest", response_model=DurableReceipt)
-    def ingest(event: SourceEvent):
+    def ingest(event: SourceEvent | SourceEventV2):
         return store.ingest(event)
 
     @app.post("/v1/candidate", response_model=DurableReceipt)

@@ -1,0 +1,93 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "platform": {
+      "enum": [
+        "qq",
+        "qqbot"
+      ],
+      "title": "Platform",
+      "type": "string"
+    },
+    "account_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Account Id",
+      "type": "string"
+    },
+    "message_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Message Id",
+      "type": "string"
+    },
+    "sender_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Sender Id",
+      "type": "string"
+    },
+    "conversation_id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "mentions": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 64,
+      "title": "Mentions",
+      "type": "array"
+    },
+    "reply_to": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reply To"
+    },
+    "nickname": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Nickname"
+    },
+    "group_card": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Group Card"
+    }
+  },
+  "required": [
+    "platform",
+    "account_id",
+    "message_id",
+    "sender_id",
+    "conversation_id"
+  ],
+  "title": "ChannelContext",
+  "type": "object"
+}

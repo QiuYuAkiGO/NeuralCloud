@@ -1,0 +1,607 @@
+{
+  "date": "2026-11-16",
+  "method": "read-only SSH password authentication; SHA-256 verified",
+  "files": [
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/__init__.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/__init__.py",
+      "sha256": "b057ae6888b9986cef29da12afb61e362fc77e75ae45e4ba793ff84598a05a52",
+      "base_git_content_sha256": "480f0c58878629e466a91b989f34043f8d6190673c4e9e06ddccef2608994e3f",
+      "lf_sha256": "480f0c58878629e466a91b989f34043f8d6190673c4e9e06ddccef2608994e3f"
+    },
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/__main__.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/__main__.py",
+      "sha256": "51b7029dd6019a962b17beeb35c04844c047c49ba85e4d26896ee0ed73ca9d94",
+      "base_git_content_sha256": "f971238f2ddddd3c9650cfb8f80378e75ffadd9cbdb4e761be4fdc4c585d92c9",
+      "lf_sha256": "5f131acbdbb06d4dffc28813faca1e6fc6668f633806c9517841117e33be7b07"
+    },
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/api.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/api.py",
+      "sha256": "cc96f400766cbc94f4a6fbf4af337de565a189e40c6f4f356d0b155cb0299ad6",
+      "base_git_content_sha256": "e663e145990dc9b0ac997a7ed25eb0916b1904efa8e74b8d10b1b5528c524753",
+      "lf_sha256": "c4f3b29467c94d71bb4364e2343016f45ba93d7967c6cecb7e0963e7a536feed"
+    },
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/archive.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/archive.py",
+      "sha256": "b5adc6936aa2f2d5c80e3183e44c3e5c106bf8b8b99ec7e713414ba7ac0f17c4",
+      "base_git_content_sha256": "daf8a3de374beb3609d1d7e1e077254d08284af8b2199c38afd7d3b6bae85d9a",
+      "lf_sha256": "daf8a3de374beb3609d1d7e1e077254d08284af8b2199c38afd7d3b6bae85d9a"
+    },
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/calibration.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/calibration.py",
+      "sha256": "fb59cd0f401f1021084308ed895307d045b75ead88163096c72bf5de2942a248",
+      "base_git_content_sha256": null,
+      "lf_sha256": "fb59cd0f401f1021084308ed895307d045b75ead88163096c72bf5de2942a248"
+    },
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/contracts.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/contracts.py",
+      "sha256": "1ed161c193aa310bc00b5b91ab3aa845e6c3b3870f1e177cdc9f24ee23277abf",
+      "base_git_content_sha256": "40b1dca31ed01737e6ba6a70ecd58c96f158c21853568d95a51d70513889913b",
+      "lf_sha256": "1ed161c193aa310bc00b5b91ab3aa845e6c3b3870f1e177cdc9f24ee23277abf"
+    },
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/evidence_index.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/evidence_index.py",
+      "sha256": "966ab8bbb23963ec1edfafa58ab06fa1b0a83ffbc101efa373e248e875b90f58",
+      "base_git_content_sha256": null,
+      "lf_sha256": "41093f23265fb43f162fba5487f1d2008bf856d6f6e5fd1dbfdcb4c60088f2fa"
+    },
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/maintenance.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/maintenance.py",
+      "sha256": "51e36cf3471bf4758bf048991bc76d2963f514365fd8d51ab1f21e31f89ac1e7",
+      "base_git_content_sha256": "0e2c2a6ad4345becc1252a87b6fcec2ade00021ec5897c958cdb8549f145cfd9",
+      "lf_sha256": "0e2c2a6ad4345becc1252a87b6fcec2ade00021ec5897c958cdb8549f145cfd9"
+    },
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/migration.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/migration.py",
+      "sha256": "6f1108d944af2848a6616f7074c3a1348d755d281938c60b1dc58b0c09e3b648",
+      "base_git_content_sha256": "9a8d7dcdce19dbf65c5d67675e112fb744c19155a13763d65fc80800173017a5",
+      "lf_sha256": "9a8d7dcdce19dbf65c5d67675e112fb744c19155a13763d65fc80800173017a5"
+    },
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/ownership.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/ownership.py",
+      "sha256": "5862041922d2a292a6c7c54104a53ed65a281baa5549e3f20e6c595af73caa41",
+      "base_git_content_sha256": "bc1087f68e51f10982411c4414c3fea9e72eb8154ab1a893acc564d94223898c",
+      "lf_sha256": "bc1087f68e51f10982411c4414c3fea9e72eb8154ab1a893acc564d94223898c"
+    },
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/rebuild.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/rebuild.py",
+      "sha256": "b155e98382e447581027b54d1eb07e1b5d0d01e07914602361d9fc9843244996",
+      "base_git_content_sha256": null,
+      "lf_sha256": "462eb0e377096ab61009c19053474eb3f780b609a912fed1a2162884e53ca7c4"
+    },
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/rebuild_batch.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/rebuild_batch.py",
+      "sha256": "0cb27972a6f8b612281b9499ea8d41e4a21e196e20fd3427459a707b79a8bb58",
+      "base_git_content_sha256": null,
+      "lf_sha256": "0cb27972a6f8b612281b9499ea8d41e4a21e196e20fd3427459a707b79a8bb58"
+    },
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/retrieval.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/retrieval.py",
+      "sha256": "156149f9dcf93f26d6242db6165ee5d3cc9dff10cf12c4ad75d21b0f057c1740",
+      "base_git_content_sha256": null,
+      "lf_sha256": "f58dd477e41fa3b5b5df866107ab34452a3af08a7ae425d1abdd0c7e628305e2"
+    },
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/semantic.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/semantic.py",
+      "sha256": "20204f2d4c6abd6db434d18a8f18d7d5edea0e75db5d5503b24672eee7fa922e",
+      "base_git_content_sha256": null,
+      "lf_sha256": "20204f2d4c6abd6db434d18a8f18d7d5edea0e75db5d5503b24672eee7fa922e"
+    },
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/storage.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/storage.py",
+      "sha256": "9662ac12fa3253d25ffc9825d4b34797198c0f1473e9647a4b44088cab848151",
+      "base_git_content_sha256": "3bc3abed784f7792c20d554cac0fc5f3fcdef907942482fb1ba01de5ae10d3f9",
+      "lf_sha256": "3bc3abed784f7792c20d554cac0fc5f3fcdef907942482fb1ba01de5ae10d3f9"
+    },
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/temporary_views.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/temporary_views.py",
+      "sha256": "a4ff87ea73de1016ccab20a383e5288c33ca52255efbacdb59cf6fb5d934d1ee",
+      "base_git_content_sha256": "dad4ed2b28a17ed8415859948a3c657415f4f7a1150e9c9f99d55efa9a2c2e7a",
+      "lf_sha256": "dad4ed2b28a17ed8415859948a3c657415f4f7a1150e9c9f99d55efa9a2c2e7a"
+    },
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/vector_index.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/vector_index.py",
+      "sha256": "7e440fdf8eeb815fc366c792e982a0e8174fc23c640924a2a769775110947910",
+      "base_git_content_sha256": null,
+      "lf_sha256": "7e440fdf8eeb815fc366c792e982a0e8174fc23c640924a2a769775110947910"
+    },
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/workflow.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/workflow.py",
+      "sha256": "b6b5644b85d4702c6ab6c0aafb4353c84c7b9b015f308f13687e0d468178a0b4",
+      "base_git_content_sha256": null,
+      "lf_sha256": "d205a4cd01f685db13daf004ab388ffa851bcf8e737efe995b0dd85983d6fe88"
+    },
+    {
+      "repo": "NC",
+      "path": "src/neuralcloud/workflows/memory-v1.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/src/neuralcloud/workflows/memory-v1.json",
+      "sha256": "eb8ca3dfafa9254a6d25af79d42d24fcf12c1c0358811589257c19a218612b72",
+      "base_git_content_sha256": null,
+      "lf_sha256": "b4a5bc05727662f906bad3bbe2ad023579a2de1d4e385dd7c3aac43c22f934bb"
+    },
+    {
+      "repo": "NC",
+      "path": "tests/resident/conftest.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tests/resident/conftest.py",
+      "sha256": "1cf12d4f3e170dee118e1846029a53885cd7075553d8ec62a20b8abbf5298d33",
+      "base_git_content_sha256": "0d8b8108266719e316b8dc52688a4d9f4fcc1a94f4fea0497b449d72ea198621",
+      "lf_sha256": "0d8b8108266719e316b8dc52688a4d9f4fcc1a94f4fea0497b449d72ea198621"
+    },
+    {
+      "repo": "NC",
+      "path": "tests/resident/test_archive.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tests/resident/test_archive.py",
+      "sha256": "85fd97e937ff4e6168aa012aae4279df7c7bc6a92343f3e9122071da35f7914e",
+      "base_git_content_sha256": "ac8f7c074fbc981b6fd3817b3a3d9e26d095b575d30ad19df53f459336c15219",
+      "lf_sha256": "ac8f7c074fbc981b6fd3817b3a3d9e26d095b575d30ad19df53f459336c15219"
+    },
+    {
+      "repo": "NC",
+      "path": "tests/resident/test_calibration.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tests/resident/test_calibration.py",
+      "sha256": "ba54c8afce8e615f7fca20d5d67fcc9f28b71b2fccff69ff233f88d97092ed35",
+      "base_git_content_sha256": null,
+      "lf_sha256": "ba54c8afce8e615f7fca20d5d67fcc9f28b71b2fccff69ff233f88d97092ed35"
+    },
+    {
+      "repo": "NC",
+      "path": "tests/resident/test_maintenance.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tests/resident/test_maintenance.py",
+      "sha256": "7f49bbc12b52fb81632e1e7e401ec3db192f1977c3885d58383e11c5d63f38ab",
+      "base_git_content_sha256": "bf8fdafa56edfb804699b8d5f769a9fc2b97238575c9691251209d31b3fc9f98",
+      "lf_sha256": "bf8fdafa56edfb804699b8d5f769a9fc2b97238575c9691251209d31b3fc9f98"
+    },
+    {
+      "repo": "NC",
+      "path": "tests/resident/test_memory.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tests/resident/test_memory.py",
+      "sha256": "5e0cbcf4a8c4814f83f14f8354eaec514b074c1c95f3745f56b7046f730c6a71",
+      "base_git_content_sha256": "f3b49f254798207e5371157e9dd62cc6337ae9dacb3e1d1c6491a9098a87fbfd",
+      "lf_sha256": "f3b49f254798207e5371157e9dd62cc6337ae9dacb3e1d1c6491a9098a87fbfd"
+    },
+    {
+      "repo": "NC",
+      "path": "tests/resident/test_migration.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tests/resident/test_migration.py",
+      "sha256": "e4b617d805cb78ba5e0c0ec4a0a35719bdd2047daa47729eacb806f9df084c1d",
+      "base_git_content_sha256": "ce501f8bf698a71d84d16c2bff94caa20d849d4007c59c518a01a7b0ad8e9ffe",
+      "lf_sha256": "ce501f8bf698a71d84d16c2bff94caa20d849d4007c59c518a01a7b0ad8e9ffe"
+    },
+    {
+      "repo": "NC",
+      "path": "tests/resident/test_rebuild_batch.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tests/resident/test_rebuild_batch.py",
+      "sha256": "dd24d6892288831ab654fd133b0c3c983dcd12af46d1003efc960cb528e4a83e",
+      "base_git_content_sha256": null,
+      "lf_sha256": "dd24d6892288831ab654fd133b0c3c983dcd12af46d1003efc960cb528e4a83e"
+    },
+    {
+      "repo": "NC",
+      "path": "tests/resident/test_retrieval_v2.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tests/resident/test_retrieval_v2.py",
+      "sha256": "850c2774cccdfc2a86359b0b30cf4ac57326724fc3da99ec21438bf45d8673c0",
+      "base_git_content_sha256": null,
+      "lf_sha256": "850c2774cccdfc2a86359b0b30cf4ac57326724fc3da99ec21438bf45d8673c0"
+    },
+    {
+      "repo": "NC",
+      "path": "tests/resident/test_temporary_views.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tests/resident/test_temporary_views.py",
+      "sha256": "c986e18e2f04698a53f0656037a1a6fead1d039401c09f1a8d6ae8eed4d7751b",
+      "base_git_content_sha256": "33976bcc30fc36cbd4f22935abf3ede9ad4500d18e8c2c17f787b151e7156902",
+      "lf_sha256": "33976bcc30fc36cbd4f22935abf3ede9ad4500d18e8c2c17f787b151e7156902"
+    },
+    {
+      "repo": "NC",
+      "path": "tests/resident/test_vector_lifecycle.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tests/resident/test_vector_lifecycle.py",
+      "sha256": "255c69dd284c56f7bdad754086cced3b3206d0cb06c5d5b330bd8e1c8738ec44",
+      "base_git_content_sha256": null,
+      "lf_sha256": "255c69dd284c56f7bdad754086cced3b3206d0cb06c5d5b330bd8e1c8738ec44"
+    },
+    {
+      "repo": "NC",
+      "path": "tests/resident/test_workflow.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tests/resident/test_workflow.py",
+      "sha256": "8b3c326b0b00953543c913f1298ae6171cc5e2ec4f9edd9ecf98d61cf2bca052",
+      "base_git_content_sha256": null,
+      "lf_sha256": "e5aea9c9b7e1d9fa9fffc862e130fb32d8eda68ad75ce4f0fc8c29f7bd5c9908"
+    },
+    {
+      "repo": "NC",
+      "path": "tests/resident/pytest.ini",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tests/resident/pytest.ini",
+      "sha256": "d8a92f8d3c8fbd33ff13810604dc9fba5b6430dd42bef34014d0bef1b84637be",
+      "base_git_content_sha256": "8a7f428f1a35ccaa57c8e9d12b3daeab54af4552eb3d4885c89af9049c688658",
+      "lf_sha256": "8a7f428f1a35ccaa57c8e9d12b3daeab54af4552eb3d4885c89af9049c688658"
+    },
+    {
+      "repo": "NC",
+      "path": "plugins/dsh-neuralcloud/src/index.mjs",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/plugins/dsh-neuralcloud/src/index.mjs",
+      "sha256": "14e1e2bac58c1cd25d463b92e0d0e67a07708ca596abbf6c03f5c97e50fcf49c",
+      "base_git_content_sha256": "23d1ff0a61ac9409ee94948e7301c0afebb4f6b9aada21a233cae9c008323b25",
+      "lf_sha256": "b8152731cc71adb2078d739a23f17e8e455b0f2ca80d10e854b4139a84e02fa2"
+    },
+    {
+      "repo": "NC",
+      "path": "plugins/dsh-neuralcloud/test/outbox.test.mjs",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/plugins/dsh-neuralcloud/test/outbox.test.mjs",
+      "sha256": "21ba632ae633b073cc84969bcd58856476d877f72be629bd0f77aed94dd361c1",
+      "base_git_content_sha256": "bdbc5bd4e0f9494239ed9b974b624f488ac63650a981f1a57a8617ce0c428dd1",
+      "lf_sha256": "2b30c3e9babad86371a4a45aae88e47b38c0cf54342dc4f1d03f976a11ef8065"
+    },
+    {
+      "repo": "NC",
+      "path": "plugins/dsh-neuralcloud/test/workflow.test.mjs",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/plugins/dsh-neuralcloud/test/workflow.test.mjs",
+      "sha256": "4f5609878a46d153dcd478b596f741483eed61ffe2f8e9f78e65d04b76a9783e",
+      "base_git_content_sha256": null,
+      "lf_sha256": "4f5609878a46d153dcd478b596f741483eed61ffe2f8e9f78e65d04b76a9783e"
+    },
+    {
+      "repo": "NC",
+      "path": "plugins/dsh-neuralcloud/src/contracts.d.ts",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/plugins/dsh-neuralcloud/src/contracts.d.ts",
+      "sha256": "69d68d5ad74fbdbd315bfdeb425b7697c107937193fd7fb3e152747a399e1d2b",
+      "base_git_content_sha256": "9ea35838695255be34995f846d59abc05d583e7d7bc7d68cfb7c5f9838460900",
+      "lf_sha256": "69d68d5ad74fbdbd315bfdeb425b7697c107937193fd7fb3e152747a399e1d2b"
+    },
+    {
+      "repo": "NC",
+      "path": "plugins/dsh-neuralcloud/package.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/plugins/dsh-neuralcloud/package.json",
+      "sha256": "c3033e3f6be6ca341702b47095c15d25ca44a73eb3a8bf2284a7890a11bc9d01",
+      "base_git_content_sha256": "8484fc19ac13f74148500ff3f09debc39e070705dd3f2caeb74a4e22decc79c8",
+      "lf_sha256": "8484fc19ac13f74148500ff3f09debc39e070705dd3f2caeb74a4e22decc79c8"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/ChannelContext.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/ChannelContext.v1.schema.json",
+      "sha256": "302e2e6f1acefb03f0f0b53e2108f23cc672c0c0ed81bffc6e7bf5f0f52e5fba",
+      "base_git_content_sha256": null,
+      "lf_sha256": "a5b73c2db85c8ac71e5d09bf4143041d4f8fce0ead191af3bce4e5acb994ac08"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/ContentPerception.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/ContentPerception.v1.schema.json",
+      "sha256": "2609fb93a50a73213150898fce9a56236d643d72d5ebe554337bb6baa87ffc24",
+      "base_git_content_sha256": "9406e39d7a60b5e0899a5dab36a08a8b3a396ed6eba7ba7d1fab52309db154c0",
+      "lf_sha256": "9406e39d7a60b5e0899a5dab36a08a8b3a396ed6eba7ba7d1fab52309db154c0"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/Correction.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/Correction.v1.schema.json",
+      "sha256": "6b9630875bf4b3b8b90bb2b6f35d0825f7bf24bdc0a6948d13633fcb1bb08893",
+      "base_git_content_sha256": "69d604253aa0ab69ae7a510fcf71b63117d80a166be86c7ee3f2d0191e1902b9",
+      "lf_sha256": "69d604253aa0ab69ae7a510fcf71b63117d80a166be86c7ee3f2d0191e1902b9"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/DocumentPerception.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/DocumentPerception.v1.schema.json",
+      "sha256": "1f5ad50aa57eabf759290425f8534e89285437b6763d305d3f6de2272938a349",
+      "base_git_content_sha256": null,
+      "lf_sha256": "1f5ad50aa57eabf759290425f8534e89285437b6763d305d3f6de2272938a349"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/DurableReceipt.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/DurableReceipt.v1.schema.json",
+      "sha256": "5bf62f71d2bb70e34f18eef39375db20dd4854ed11d63648834e23be3f68bdb7",
+      "base_git_content_sha256": "d2baade5187e3b9333b233cfa3c1376b0dc8c48cd194dc1301e1e1856b9a2981",
+      "lf_sha256": "d2baade5187e3b9333b233cfa3c1376b0dc8c48cd194dc1301e1e1856b9a2981"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/EvidenceAssessment.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/EvidenceAssessment.v1.schema.json",
+      "sha256": "6cf030dbdcb1e8d0bc3a456f2af99c9009467a8c9c15272ec907a4861e418203",
+      "base_git_content_sha256": null,
+      "lf_sha256": "168a6000f1537766df9d6c3967bd364186043dec3b5c618ecd138a2cb170a7ba"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/EvidenceReference.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/EvidenceReference.v1.schema.json",
+      "sha256": "e92de39c9121eb0f99a80dd9deb63762c4e834c0a154bc54c59daed18a0ceb0e",
+      "base_git_content_sha256": "403dd6c3e349790738c19827a92c451f50e623cc52aada921818a98ed99dacd7",
+      "lf_sha256": "403dd6c3e349790738c19827a92c451f50e623cc52aada921818a98ed99dacd7"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/IdentityEvidence.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/IdentityEvidence.v1.schema.json",
+      "sha256": "1788cf1d6f43436b394b833fa68b7a9870c1b723af530ace3721fe39fbdc999c",
+      "base_git_content_sha256": null,
+      "lf_sha256": "bff44dcf71e2658c5de4abe21e0cc80fc11090dc710e9f557a4396470182c3d2"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/LegacyProvenance.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/LegacyProvenance.v1.schema.json",
+      "sha256": "e6d31ca04d96ccc77267bb00939ad4f69c75cc7ab100b39355c5cde097ab5eef",
+      "base_git_content_sha256": "070cfe4f547b9fc854d72db78d0f817e6ab59dff021ddb69a5f0fbd9266c455c",
+      "lf_sha256": "070cfe4f547b9fc854d72db78d0f817e6ab59dff021ddb69a5f0fbd9266c455c"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/MissingReceipt.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/MissingReceipt.v1.schema.json",
+      "sha256": "01bac7a931d77696f3a50d806fefd2ab44fd7473ca235054902af474bcc95618",
+      "base_git_content_sha256": "69a9369b33efc7196169312efc00818e628176268c7dc1f50be7747f25a23617",
+      "lf_sha256": "69a9369b33efc7196169312efc00818e628176268c7dc1f50be7747f25a23617"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/Recall.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/Recall.v1.schema.json",
+      "sha256": "7058e6c2f7561c36d412f214bf2211f0f071f060cbe7d7c2a8dfcef6a09bceb2",
+      "base_git_content_sha256": "4745ab2f887e074bf0c141a79510652a083001a98d23e1828b8050b53ccc8dd9",
+      "lf_sha256": "616108d4efc33be308861249ceee65d8b222ef6f0c5ef643eb5699e76ea56a1b"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/RecallConstraints.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/RecallConstraints.v1.schema.json",
+      "sha256": "50b14fa6f3790d3fa84b9fdf46a5a29eea8792806f0334232b39b613c645c7ca",
+      "base_git_content_sha256": null,
+      "lf_sha256": "3f3da72e6ed5da8aea59b2e92ec099c090f60e1f3a2167ffe7a293f18a436a02"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/RecallDiagnostics.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/RecallDiagnostics.v1.schema.json",
+      "sha256": "dbf5ce8dfba38f24cdc6ccb1445803beb82f05f89987dd969bd04960055ccfc4",
+      "base_git_content_sha256": null,
+      "lf_sha256": "c887f51d699728f13391a42eb8d7768e0e206c45bc2265fa36f73561ef1b7b0b"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/RecallResult.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/RecallResult.v1.schema.json",
+      "sha256": "98a30bfba69c2cc74b64d7b8a9f3478bdc176d1a36f6718c7b577e2f72b1c42a",
+      "base_git_content_sha256": "24fc17b250416add99c60537a63a398e3f4a25b36b2900ecdc897fa7cf6155db",
+      "lf_sha256": "98a30bfba69c2cc74b64d7b8a9f3478bdc176d1a36f6718c7b577e2f72b1c42a"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/RecallSubject.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/RecallSubject.v1.schema.json",
+      "sha256": "bcdae6429cbe17858659bd7f18c70f6bf3d0360eb07e69f2416836ac2c2cfc6b",
+      "base_git_content_sha256": null,
+      "lf_sha256": "12fcfa04088d193846f3622eca25277d0b6690ee5904cf1f3661f1e78dfbabcb"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/RecordView.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/RecordView.v1.schema.json",
+      "sha256": "fe1aec370dc63c9817e4b375fc3d5d6c8aaae2de6af49d7b6f012f84fd2ef4d0",
+      "base_git_content_sha256": "564d417a10850982cd0dde3f0370a526cf5c8124a02c681aa91290200a21a43c",
+      "lf_sha256": "fe1aec370dc63c9817e4b375fc3d5d6c8aaae2de6af49d7b6f012f84fd2ef4d0"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/RestoreGrant.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/RestoreGrant.v1.schema.json",
+      "sha256": "15a977b8f6d158a4e24e261ef9be4456c0a3aa66bac434e5c7a2e5292ca62dae",
+      "base_git_content_sha256": "a8debc31396625ed9d158bae2e27d632ec78a102134cd95203bfc1acad4745c8",
+      "lf_sha256": "a8debc31396625ed9d158bae2e27d632ec78a102134cd95203bfc1acad4745c8"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/RetrievalEvidence.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/RetrievalEvidence.v1.schema.json",
+      "sha256": "d0ba20b5ea67cf57bd399f136f7c97161926cb0dfa091b2c914058d8924a37d0",
+      "base_git_content_sha256": null,
+      "lf_sha256": "f724c5cc64189233620827d81ae8eb029f1073de4c8c42a04e3d8c979ce51007"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/SourceEvent.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/SourceEvent.v1.schema.json",
+      "sha256": "dea06fcb2d0a9341b0316b5d85581a88430a3eda5383b0d67fe630010f8e1d3e",
+      "base_git_content_sha256": "fb6e8e3020f6f0d926ea66ebec8f71aed3459606d06184caa0e8278c07c43cc3",
+      "lf_sha256": "dea06fcb2d0a9341b0316b5d85581a88430a3eda5383b0d67fe630010f8e1d3e"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/SourceEventV2.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/SourceEventV2.v1.schema.json",
+      "sha256": "53ffa20fdeec19aa53402bb689002c362365812ebab1892d4749edf723660957",
+      "base_git_content_sha256": null,
+      "lf_sha256": "53ffa20fdeec19aa53402bb689002c362365812ebab1892d4749edf723660957"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/SourceInfo.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/SourceInfo.v1.schema.json",
+      "sha256": "69e82ee71e1941a8969ea2339c8922ba8e864bcb2e1d311316d4e30c4c40ff2d",
+      "base_git_content_sha256": "e5c34c0bc5fa242dbf960144e2871cc6eb12cb1e23be7f2f7152cf68a3022ce2",
+      "lf_sha256": "69e82ee71e1941a8969ea2339c8922ba8e864bcb2e1d311316d4e30c4c40ff2d"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/SourceInfoV2.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/SourceInfoV2.v1.schema.json",
+      "sha256": "fec1bf0ce7a2dc070f3dd307996ad4c2f2ae42e6337ef509cad40e2d4173d43d",
+      "base_git_content_sha256": null,
+      "lf_sha256": "fec1bf0ce7a2dc070f3dd307996ad4c2f2ae42e6337ef509cad40e2d4173d43d"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/SupersessionReference.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/SupersessionReference.v1.schema.json",
+      "sha256": "d82e5fb4ea950635b501f87a9e5007bf7fafba778072f8ce8a27395ec9528ae9",
+      "base_git_content_sha256": "f3c424dea123ac0fc8f96015ec2377155fd1bfe2462906639b17782ed5bd104d",
+      "lf_sha256": "f3c424dea123ac0fc8f96015ec2377155fd1bfe2462906639b17782ed5bd104d"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/TextRange.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/TextRange.v1.schema.json",
+      "sha256": "68a5131eeba4ca193a96f6fc2e4a2240c987f8de9e5e6b8937c79c5421ec5319",
+      "base_git_content_sha256": null,
+      "lf_sha256": "68a5131eeba4ca193a96f6fc2e4a2240c987f8de9e5e6b8937c79c5421ec5319"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/WorkflowEvidence.v1.schema.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/WorkflowEvidence.v1.schema.json",
+      "sha256": "6b13be21871dfa59a748fb004b0edb9d11a61a7c22dbee2dd931c7a5e72e9e50",
+      "base_git_content_sha256": null,
+      "lf_sha256": "e107c997ebf6588067d51d94a705e3380e87f9d2e5f6c37789c0530f88dd4b98"
+    },
+    {
+      "repo": "NC",
+      "path": "contracts/resident/v1/openapi.v1.json",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/contracts/resident/v1/openapi.v1.json",
+      "sha256": "e44d5d68bdb27aa01a755f0b720a8131ef42f8a71c94ff68508b18cb32799d04",
+      "base_git_content_sha256": "75cf6723fd34d747fdb42345cdc05f155c049c46700715bebe1b522b46f7521f",
+      "lf_sha256": "e44d5d68bdb27aa01a755f0b720a8131ef42f8a71c94ff68508b18cb32799d04"
+    },
+    {
+      "repo": "NC",
+      "path": "tools/benchmark_memory_workflow.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tools/benchmark_memory_workflow.py",
+      "sha256": "f2ca9a5b36d3d20c4a6f3694cea774fc8092a55efa1b56a1ec095793ce5bca9b",
+      "base_git_content_sha256": null,
+      "lf_sha256": "f2ca9a5b36d3d20c4a6f3694cea774fc8092a55efa1b56a1ec095793ce5bca9b"
+    },
+    {
+      "repo": "NC",
+      "path": "tools/benchmark_resident.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tools/benchmark_resident.py",
+      "sha256": "639889cfff2bbd032360cff848ce36d320b6fd1bc4e5b3b349ee7bfc7a6afb51",
+      "base_git_content_sha256": "835b3c9a154d1d1549d7dc2122525275ed9ac130046736aaafd2507dd052eff3",
+      "lf_sha256": "835b3c9a154d1d1549d7dc2122525275ed9ac130046736aaafd2507dd052eff3"
+    },
+    {
+      "repo": "NC",
+      "path": "tools/build_retrieval_evaluation.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tools/build_retrieval_evaluation.py",
+      "sha256": "443891e203b95bafea1f3f68c5c9497ef6646970915171b7c09d739d2b68e385",
+      "base_git_content_sha256": null,
+      "lf_sha256": "443891e203b95bafea1f3f68c5c9497ef6646970915171b7c09d739d2b68e385"
+    },
+    {
+      "repo": "NC",
+      "path": "tools/download_retrieval_models.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tools/download_retrieval_models.py",
+      "sha256": "2f6c63302307c19840f78308d69a7afd06dc5a1868e450aeaec04ff38c2aa094",
+      "base_git_content_sha256": null,
+      "lf_sha256": "2f6c63302307c19840f78308d69a7afd06dc5a1868e450aeaec04ff38c2aa094"
+    },
+    {
+      "repo": "NC",
+      "path": "tools/download_retrieval_modelscope.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tools/download_retrieval_modelscope.py",
+      "sha256": "fc22e2acd71699611c4b55be04f7d4d36a505be1103bbf77e49de4683566c389",
+      "base_git_content_sha256": null,
+      "lf_sha256": "fc22e2acd71699611c4b55be04f7d4d36a505be1103bbf77e49de4683566c389"
+    },
+    {
+      "repo": "NC",
+      "path": "tools/evaluate_local_retrieval.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tools/evaluate_local_retrieval.py",
+      "sha256": "0362da323164cc98ba83e6ad3ee741d4c78288f686d58abb6e11c367f3e7666e",
+      "base_git_content_sha256": null,
+      "lf_sha256": "0362da323164cc98ba83e6ad3ee741d4c78288f686d58abb6e11c367f3e7666e"
+    },
+    {
+      "repo": "NC",
+      "path": "tools/prepare_retrieval_int8.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tools/prepare_retrieval_int8.py",
+      "sha256": "ad730edbd41196b79548a4745a1a22006532807aef5c44e65cc3a76c5924ea2e",
+      "base_git_content_sha256": null,
+      "lf_sha256": "ad730edbd41196b79548a4745a1a22006532807aef5c44e65cc3a76c5924ea2e"
+    },
+    {
+      "repo": "NC",
+      "path": "tools/probe_retrieval_http.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tools/probe_retrieval_http.py",
+      "sha256": "98e41d1537b50bb85a1ddba318dcb54627bbba8b19c0047cf8e8df0c465ad5d7",
+      "base_git_content_sha256": null,
+      "lf_sha256": "98e41d1537b50bb85a1ddba318dcb54627bbba8b19c0047cf8e8df0c465ad5d7"
+    },
+    {
+      "repo": "NC",
+      "path": "tools/probe_semantic_lifecycle.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tools/probe_semantic_lifecycle.py",
+      "sha256": "1a66b9a5661ef8837d79837461ac2a516d083ccc6fda37bdaf4ba661ceca65ec",
+      "base_git_content_sha256": null,
+      "lf_sha256": "1a66b9a5661ef8837d79837461ac2a516d083ccc6fda37bdaf4ba661ceca65ec"
+    },
+    {
+      "repo": "NC",
+      "path": "tools/seed_identity.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tools/seed_identity.py",
+      "sha256": "5bcc730fa04681ac68480ea147d87e6a35ad388010269bbd40a34dafc36f5aba",
+      "base_git_content_sha256": null,
+      "lf_sha256": "5bcc730fa04681ac68480ea147d87e6a35ad388010269bbd40a34dafc36f5aba"
+    },
+    {
+      "repo": "NC",
+      "path": "tools/watch_retrieval.py",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/tools/watch_retrieval.py",
+      "sha256": "ff0b527221690404e376afe7a6ed0d9a03a4a412f0f021c9a4ca61670e30113e",
+      "base_git_content_sha256": null,
+      "lf_sha256": "ff0b527221690404e376afe7a6ed0d9a03a4a412f0f021c9a4ca61670e30113e"
+    },
+    {
+      "repo": "NC",
+      "path": "pyproject.toml",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/pyproject.toml",
+      "sha256": "97875a848d304fcd2631cebae90d431598d6d9d2615914ce8e14419bd4b982e9",
+      "base_git_content_sha256": "05e9762c6d9789b1ad1825b896f6f3a726dc479a505791fed877abd0d9241aa7",
+      "lf_sha256": "6eb6e05050b807ab0de3b9eedf7c193f7bcac0d8348256e856474bd85b779c18"
+    },
+    {
+      "repo": "NC",
+      "path": "uv.lock",
+      "source": "/opt/misty/releases/resident-20261028-memory-workflow-v4/NeuralCloud/uv.lock",
+      "sha256": "094e45a87ba60af60f726389e1cc3993f946564f4739d31135126d58d4c57d18",
+      "base_git_content_sha256": "bca25c84f7ea0ba8b3a9fc7ec1d5b369059de3dd50d173eb0a114a45b74fa8dd",
+      "lf_sha256": "094e45a87ba60af60f726389e1cc3993f946564f4739d31135126d58d4c57d18"
+    }
+  ],
+  "base_commit": "b375016beaa4a64b997b467d135d127a877d7aa4"
+}

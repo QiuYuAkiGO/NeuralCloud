@@ -1,0 +1,26 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "platform": {
+      "enum": [
+        "qq",
+        "qqbot"
+      ],
+      "title": "Platform",
+      "type": "string"
+    },
+    "account_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_:-]+$",
+      "title": "Account Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "platform",
+    "account_id"
+  ],
+  "title": "RecallSubject",
+  "type": "object"
+}

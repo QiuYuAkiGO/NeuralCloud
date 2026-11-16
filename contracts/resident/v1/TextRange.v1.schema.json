@@ -1,0 +1,47 @@
+{
+  "additionalProperties": false,
+  "description": "Half-open byte range in the extracted document, including its exact returned digest.",
+  "properties": {
+    "unit": {
+      "const": "utf8_bytes",
+      "title": "Unit",
+      "type": "string"
+    },
+    "start": {
+      "const": 0,
+      "title": "Start",
+      "type": "integer"
+    },
+    "end": {
+      "exclusiveMinimum": 0,
+      "maximum": 30000,
+      "title": "End",
+      "type": "integer"
+    },
+    "total": {
+      "exclusiveMinimum": 0,
+      "maximum": 1048576,
+      "title": "Total",
+      "type": "integer"
+    },
+    "truncated": {
+      "title": "Truncated",
+      "type": "boolean"
+    },
+    "sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Sha256",
+      "type": "string"
+    }
+  },
+  "required": [
+    "unit",
+    "start",
+    "end",
+    "total",
+    "truncated",
+    "sha256"
+  ],
+  "title": "TextRange",
+  "type": "object"
+}

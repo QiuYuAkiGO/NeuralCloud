@@ -1,0 +1,13 @@
+---
+description: Prefer GitHub CLI when synchronizing this project's GitHub branches
+alwaysApply: true
+---
+
+# GitHub 拉取约定
+
+- 对本项目的 GitHub 拉取/同步操作，优先使用 GitHub CLI（`gh`）。先检查 `git status --short`、当前分支、upstream 和 `gh auth status`。
+- 在本地仓库目录执行 `gh repo sync --source QiuYuAkiGO/NeuralCloud --branch <已确认的当前分支>`；不传远端 destination，不使用 `--force`。不同步不相关分支，不覆盖本地修改。
+- 如果当前分支与 upstream 名称不同，先核对同步语义；必要时使用 `git pull --ff-only` 更新已确认的 upstream。
+- `gh` 缺失、未认证或同步失败时，明确报告原因；可以回退到 `git pull --ff-only` 继续已获授权的拉取。代理仅按现有可用配置临时指定，不擅自改变全局 Git 配置。
+- 不自动发起交互登录，不输出或写入令牌；需要用户处理认证时说明具体阻塞。
+- 完成后核对 HEAD、upstream 和工作区状态；区分已 fetch 的远端分支与已更新的当前本地分支。

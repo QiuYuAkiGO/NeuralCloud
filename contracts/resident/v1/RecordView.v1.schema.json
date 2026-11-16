@@ -1,5 +1,98 @@
 {
   "$defs": {
+    "ChannelContext": {
+      "additionalProperties": false,
+      "properties": {
+        "platform": {
+          "enum": [
+            "qq",
+            "qqbot"
+          ],
+          "title": "Platform",
+          "type": "string"
+        },
+        "account_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Account Id",
+          "type": "string"
+        },
+        "message_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Message Id",
+          "type": "string"
+        },
+        "sender_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Sender Id",
+          "type": "string"
+        },
+        "conversation_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Conversation Id",
+          "type": "string"
+        },
+        "mentions": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 64,
+          "title": "Mentions",
+          "type": "array"
+        },
+        "reply_to": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reply To"
+        },
+        "nickname": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Nickname"
+        },
+        "group_card": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Group Card"
+        }
+      },
+      "required": [
+        "platform",
+        "account_id",
+        "message_id",
+        "sender_id",
+        "conversation_id"
+      ],
+      "title": "ChannelContext",
+      "type": "object"
+    },
     "ContentPerception": {
       "additionalProperties": false,
       "properties": {
@@ -34,6 +127,39 @@
         "observed_fraction"
       ],
       "title": "ContentPerception",
+      "type": "object"
+    },
+    "DocumentPerception": {
+      "additionalProperties": false,
+      "properties": {
+        "source_uri": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Source Uri",
+          "type": "string"
+        },
+        "coverage": {
+          "const": "document_text",
+          "title": "Coverage",
+          "type": "string"
+        },
+        "observed_fraction": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Observed Fraction",
+          "type": "number"
+        },
+        "text_range": {
+          "$ref": "#/$defs/TextRange"
+        }
+      },
+      "required": [
+        "source_uri",
+        "coverage",
+        "observed_fraction",
+        "text_range"
+      ],
+      "title": "DocumentPerception",
       "type": "object"
     },
     "EvidenceReference": {
@@ -89,6 +215,50 @@
         "role"
       ],
       "title": "EvidenceReference",
+      "type": "object"
+    },
+    "IdentityEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "platform": {
+          "title": "Platform",
+          "type": "string"
+        },
+        "account_id": {
+          "title": "Account Id",
+          "type": "string"
+        },
+        "confirmation": {
+          "enum": [
+            "operator_confirmed",
+            "self_reported",
+            "third_party"
+          ],
+          "title": "Confirmation",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "relation": {
+          "title": "Relation",
+          "type": "string"
+        },
+        "conflict": {
+          "title": "Conflict",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "platform",
+        "account_id",
+        "confirmation",
+        "name",
+        "relation",
+        "conflict"
+      ],
+      "title": "IdentityEvidence",
       "type": "object"
     },
     "LegacyProvenance": {
@@ -244,6 +414,54 @@
       "title": "LegacyProvenance",
       "type": "object"
     },
+    "RetrievalEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "semantic": {
+          "title": "Semantic",
+          "type": "boolean"
+        },
+        "keyword": {
+          "title": "Keyword",
+          "type": "boolean"
+        },
+        "start": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Start"
+        },
+        "end": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End"
+        }
+      },
+      "required": [
+        "score",
+        "semantic",
+        "keyword"
+      ],
+      "title": "RetrievalEvidence",
+      "type": "object"
+    },
     "SourceInfo": {
       "additionalProperties": false,
       "properties": {
@@ -373,13 +591,17 @@
         "perception": {
           "anyOf": [
             {
+              "$ref": "#/$defs/DocumentPerception"
+            },
+            {
               "$ref": "#/$defs/ContentPerception"
             },
             {
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "Perception"
         }
       },
       "required": [
@@ -390,6 +612,162 @@
         "occurred_at"
       ],
       "title": "SourceInfo",
+      "type": "object"
+    },
+    "SourceInfoV2": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 2,
+          "default": 2,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "character_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Character Id",
+          "type": "string"
+        },
+        "source_instance": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Source Instance",
+          "type": "string"
+        },
+        "event_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Event Id",
+          "type": "string"
+        },
+        "session_id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Session Id",
+          "type": "string"
+        },
+        "conversation_id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Conversation Id"
+        },
+        "activity_id": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Activity Id"
+        },
+        "occurred_at": {
+          "minimum": 0,
+          "title": "Occurred At",
+          "type": "number"
+        },
+        "kind": {
+          "default": "observation",
+          "enum": [
+            "observation",
+            "self_expression",
+            "summary",
+            "relationship",
+            "persona_history"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "privacy": {
+          "default": "private",
+          "enum": [
+            "public",
+            "private",
+            "sensitive"
+          ],
+          "title": "Privacy",
+          "type": "string"
+        },
+        "participants": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 64,
+          "title": "Participants",
+          "type": "array"
+        },
+        "aliases": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 64,
+          "title": "Aliases",
+          "type": "array"
+        },
+        "source_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 128,
+          "title": "Source Ids",
+          "type": "array"
+        },
+        "pinned": {
+          "default": false,
+          "title": "Pinned",
+          "type": "boolean"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LegacyProvenance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "perception": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DocumentPerception"
+            },
+            {
+              "$ref": "#/$defs/ContentPerception"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Perception"
+        },
+        "channel": {
+          "$ref": "#/$defs/ChannelContext"
+        }
+      },
+      "required": [
+        "character_id",
+        "source_instance",
+        "event_id",
+        "session_id",
+        "occurred_at",
+        "channel"
+      ],
+      "title": "SourceInfoV2",
       "type": "object"
     },
     "SupersessionReference": {
@@ -419,6 +797,152 @@
         "record_id"
       ],
       "title": "SupersessionReference",
+      "type": "object"
+    },
+    "TextRange": {
+      "additionalProperties": false,
+      "description": "Half-open byte range in the extracted document, including its exact returned digest.",
+      "properties": {
+        "unit": {
+          "const": "utf8_bytes",
+          "title": "Unit",
+          "type": "string"
+        },
+        "start": {
+          "const": 0,
+          "title": "Start",
+          "type": "integer"
+        },
+        "end": {
+          "exclusiveMinimum": 0,
+          "maximum": 30000,
+          "title": "End",
+          "type": "integer"
+        },
+        "total": {
+          "exclusiveMinimum": 0,
+          "maximum": 1048576,
+          "title": "Total",
+          "type": "integer"
+        },
+        "truncated": {
+          "title": "Truncated",
+          "type": "boolean"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "unit",
+        "start",
+        "end",
+        "total",
+        "truncated",
+        "sha256"
+      ],
+      "title": "TextRange",
+      "type": "object"
+    },
+    "WorkflowEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "entity": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Entity"
+        },
+        "predicate": {
+          "title": "Predicate",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "string"
+        },
+        "basis": {
+          "enum": [
+            "direct",
+            "inferred",
+            "context"
+          ],
+          "title": "Basis",
+          "type": "string"
+        },
+        "confirmation": {
+          "title": "Confirmation",
+          "type": "string"
+        },
+        "references": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "References",
+          "type": "array"
+        },
+        "scope": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Scope"
+        },
+        "occurred_at": {
+          "title": "Occurred At",
+          "type": "number"
+        },
+        "conflict": {
+          "default": false,
+          "title": "Conflict",
+          "type": "boolean"
+        },
+        "eligible": {
+          "default": false,
+          "title": "Eligible",
+          "type": "boolean"
+        },
+        "extractor_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extractor Version"
+        },
+        "temporal_status": {
+          "const": "observed_at_only",
+          "default": "observed_at_only",
+          "title": "Temporal Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "predicate",
+        "value",
+        "basis",
+        "confirmation",
+        "occurred_at"
+      ],
+      "title": "WorkflowEvidence",
       "type": "object"
     }
   },
@@ -528,6 +1052,43 @@
       "anyOf": [
         {
           "$ref": "#/$defs/SourceInfo"
+        },
+        {
+          "$ref": "#/$defs/SourceInfoV2"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source"
+    },
+    "identity": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/IdentityEvidence"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "retrieval": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RetrievalEvidence"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "evidence": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WorkflowEvidence"
         },
         {
           "type": "null"

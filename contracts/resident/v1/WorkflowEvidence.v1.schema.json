@@ -1,0 +1,99 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "entity": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Entity"
+    },
+    "predicate": {
+      "title": "Predicate",
+      "type": "string"
+    },
+    "value": {
+      "title": "Value",
+      "type": "string"
+    },
+    "basis": {
+      "enum": [
+        "direct",
+        "inferred",
+        "context"
+      ],
+      "title": "Basis",
+      "type": "string"
+    },
+    "confirmation": {
+      "title": "Confirmation",
+      "type": "string"
+    },
+    "references": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "References",
+      "type": "array"
+    },
+    "scope": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Scope"
+    },
+    "occurred_at": {
+      "title": "Occurred At",
+      "type": "number"
+    },
+    "conflict": {
+      "default": false,
+      "title": "Conflict",
+      "type": "boolean"
+    },
+    "eligible": {
+      "default": false,
+      "title": "Eligible",
+      "type": "boolean"
+    },
+    "extractor_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Extractor Version"
+    },
+    "temporal_status": {
+      "const": "observed_at_only",
+      "default": "observed_at_only",
+      "title": "Temporal Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "predicate",
+    "value",
+    "basis",
+    "confirmation",
+    "occurred_at"
+  ],
+  "title": "WorkflowEvidence",
+  "type": "object"
+}

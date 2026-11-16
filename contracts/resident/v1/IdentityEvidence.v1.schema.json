@@ -1,0 +1,44 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "platform": {
+      "title": "Platform",
+      "type": "string"
+    },
+    "account_id": {
+      "title": "Account Id",
+      "type": "string"
+    },
+    "confirmation": {
+      "enum": [
+        "operator_confirmed",
+        "self_reported",
+        "third_party"
+      ],
+      "title": "Confirmation",
+      "type": "string"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "relation": {
+      "title": "Relation",
+      "type": "string"
+    },
+    "conflict": {
+      "title": "Conflict",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "platform",
+    "account_id",
+    "confirmation",
+    "name",
+    "relation",
+    "conflict"
+  ],
+  "title": "IdentityEvidence",
+  "type": "object"
+}

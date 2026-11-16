@@ -186,7 +186,15 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SourceEvent"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/SourceEvent"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SourceEventV2"
+                  }
+                ],
+                "title": "Event"
               }
             }
           }
@@ -447,6 +455,96 @@
   },
   "components": {
     "schemas": {
+      "ChannelContext": {
+        "properties": {
+          "platform": {
+            "type": "string",
+            "enum": [
+              "qq",
+              "qqbot"
+            ],
+            "title": "Platform"
+          },
+          "account_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Account Id"
+          },
+          "message_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Message Id"
+          },
+          "sender_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Sender Id"
+          },
+          "conversation_id": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Conversation Id"
+          },
+          "mentions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 64,
+            "title": "Mentions"
+          },
+          "reply_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reply To"
+          },
+          "nickname": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nickname"
+          },
+          "group_card": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group Card"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "platform",
+          "account_id",
+          "message_id",
+          "sender_id",
+          "conversation_id"
+        ],
+        "title": "ChannelContext"
+      },
       "ContentPerception": {
         "properties": {
           "source_uri": {
@@ -556,6 +654,39 @@
         ],
         "title": "Correction"
       },
+      "DocumentPerception": {
+        "properties": {
+          "source_uri": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Source Uri"
+          },
+          "coverage": {
+            "type": "string",
+            "const": "document_text",
+            "title": "Coverage"
+          },
+          "observed_fraction": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Observed Fraction"
+          },
+          "text_range": {
+            "$ref": "#/components/schemas/TextRange"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source_uri",
+          "coverage",
+          "observed_fraction",
+          "text_range"
+        ],
+        "title": "DocumentPerception"
+      },
       "DurableReceipt": {
         "properties": {
           "status": {
@@ -585,6 +716,44 @@
           "revision"
         ],
         "title": "DurableReceipt"
+      },
+      "EvidenceAssessment": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "DIRECT",
+              "INFERRED",
+              "RELATED",
+              "CONFLICT",
+              "NOT_FOUND",
+              "INCOMPLETE"
+            ],
+            "title": "State"
+          },
+          "sufficient": {
+            "type": "boolean",
+            "title": "Sufficient"
+          },
+          "absence_confirmed": {
+            "type": "boolean",
+            "const": false,
+            "title": "Absence Confirmed",
+            "default": false
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "state",
+          "sufficient",
+          "reason"
+        ],
+        "title": "EvidenceAssessment"
       },
       "EvidenceReference": {
         "properties": {
@@ -651,6 +820,50 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "IdentityEvidence": {
+        "properties": {
+          "platform": {
+            "type": "string",
+            "title": "Platform"
+          },
+          "account_id": {
+            "type": "string",
+            "title": "Account Id"
+          },
+          "confirmation": {
+            "type": "string",
+            "enum": [
+              "operator_confirmed",
+              "self_reported",
+              "third_party"
+            ],
+            "title": "Confirmation"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "relation": {
+            "type": "string",
+            "title": "Relation"
+          },
+          "conflict": {
+            "type": "boolean",
+            "title": "Conflict"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "platform",
+          "account_id",
+          "confirmation",
+          "name",
+          "relation",
+          "conflict"
+        ],
+        "title": "IdentityEvidence"
       },
       "LegacyProvenance": {
         "properties": {
@@ -829,6 +1042,68 @@
             "minimum": 1.0,
             "title": "Limit",
             "default": 10
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecallSubject"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "legacy",
+              "keyword",
+              "semantic",
+              "hybrid"
+            ],
+            "title": "Mode",
+            "default": "auto"
+          },
+          "intent": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "identity",
+              "fact",
+              "event",
+              "cause",
+              "topic"
+            ],
+            "title": "Intent",
+            "default": "auto"
+          },
+          "targets": {
+            "items": {
+              "$ref": "#/components/schemas/RecallSubject"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "title": "Targets"
+          },
+          "constraints": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecallConstraints"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "workflow": {
+            "type": "string",
+            "enum": [
+              "enabled",
+              "compat"
+            ],
+            "title": "Workflow",
+            "default": "enabled"
           }
         },
         "additionalProperties": false,
@@ -837,6 +1112,171 @@
           "query"
         ],
         "title": "Recall"
+      },
+      "RecallConstraints": {
+        "properties": {
+          "conversation_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 256
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversation Id"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since"
+          },
+          "until": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Until"
+          },
+          "phrases": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "title": "Phrases"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "RecallConstraints"
+      },
+      "RecallDiagnostics": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "title": "Mode"
+          },
+          "semantic_requested": {
+            "type": "boolean",
+            "title": "Semantic Requested"
+          },
+          "degraded": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Degraded"
+          },
+          "identity_count": {
+            "type": "integer",
+            "title": "Identity Count"
+          },
+          "keyword_candidates": {
+            "type": "integer",
+            "title": "Keyword Candidates"
+          },
+          "semantic_candidates": {
+            "type": "integer",
+            "title": "Semantic Candidates"
+          },
+          "elapsed_ms": {
+            "type": "number",
+            "title": "Elapsed Ms"
+          },
+          "workflow_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workflow Version"
+          },
+          "index_generation": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Index Generation"
+          },
+          "stages": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stages"
+          },
+          "rounds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rounds"
+          },
+          "stop_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Reason"
+          },
+          "cache_hit": {
+            "type": "boolean",
+            "title": "Cache Hit",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "mode",
+          "semantic_requested",
+          "identity_count",
+          "keyword_candidates",
+          "semantic_candidates",
+          "elapsed_ms"
+        ],
+        "title": "RecallDiagnostics"
       },
       "RecallResult": {
         "properties": {
@@ -864,6 +1304,26 @@
           "coverage": {
             "type": "string",
             "title": "Coverage"
+          },
+          "diagnostics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecallDiagnostics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "assessment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvidenceAssessment"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
@@ -876,6 +1336,32 @@
           "coverage"
         ],
         "title": "RecallResult"
+      },
+      "RecallSubject": {
+        "properties": {
+          "platform": {
+            "type": "string",
+            "enum": [
+              "qq",
+              "qqbot"
+            ],
+            "title": "Platform"
+          },
+          "account_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_:-]+$",
+            "title": "Account Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "platform",
+          "account_id"
+        ],
+        "title": "RecallSubject"
       },
       "RecordView": {
         "properties": {
@@ -978,6 +1464,40 @@
                 "$ref": "#/components/schemas/SourceInfo"
               },
               {
+                "$ref": "#/components/schemas/SourceInfoV2"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "identity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IdentityEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "retrieval": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RetrievalEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkflowEvidence"
+              },
+              {
                 "type": "null"
               }
             ]
@@ -990,6 +1510,52 @@
           "record_id"
         ],
         "title": "RecordView"
+      },
+      "RetrievalEvidence": {
+        "properties": {
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "semantic": {
+            "type": "boolean",
+            "title": "Semantic"
+          },
+          "keyword": {
+            "type": "boolean",
+            "title": "Keyword"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "score",
+          "semantic",
+          "keyword"
+        ],
+        "title": "RetrievalEvidence"
       },
       "SourceEvent": {
         "properties": {
@@ -1122,12 +1688,16 @@
           "perception": {
             "anyOf": [
               {
+                "$ref": "#/components/schemas/DocumentPerception"
+              },
+              {
                 "$ref": "#/components/schemas/ContentPerception"
               },
               {
                 "type": "null"
               }
-            ]
+            ],
+            "title": "Perception"
           }
         },
         "additionalProperties": false,
@@ -1141,6 +1711,165 @@
           "content"
         ],
         "title": "SourceEvent"
+      },
+      "SourceEventV2": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 2,
+            "title": "Schema Version",
+            "default": 2
+          },
+          "character_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Character Id"
+          },
+          "source_instance": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Source Instance"
+          },
+          "event_id": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Event Id"
+          },
+          "session_id": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Session Id"
+          },
+          "conversation_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 256
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversation Id"
+          },
+          "activity_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 256
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Id"
+          },
+          "occurred_at": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Occurred At"
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 32768,
+            "minLength": 1,
+            "title": "Content"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "observation",
+              "self_expression",
+              "summary",
+              "relationship",
+              "persona_history"
+            ],
+            "title": "Kind",
+            "default": "observation"
+          },
+          "privacy": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private",
+              "sensitive"
+            ],
+            "title": "Privacy",
+            "default": "private"
+          },
+          "participants": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 64,
+            "title": "Participants"
+          },
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 64,
+            "title": "Aliases"
+          },
+          "source_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 128,
+            "title": "Source Ids"
+          },
+          "pinned": {
+            "type": "boolean",
+            "title": "Pinned",
+            "default": false
+          },
+          "provenance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LegacyProvenance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "perception": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DocumentPerception"
+              },
+              {
+                "$ref": "#/components/schemas/ContentPerception"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Perception"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/ChannelContext"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "character_id",
+          "source_instance",
+          "event_id",
+          "session_id",
+          "occurred_at",
+          "content",
+          "channel"
+        ],
+        "title": "SourceEventV2"
       },
       "SourceInfo": {
         "properties": {
@@ -1267,12 +1996,16 @@
           "perception": {
             "anyOf": [
               {
+                "$ref": "#/components/schemas/DocumentPerception"
+              },
+              {
                 "$ref": "#/components/schemas/ContentPerception"
               },
               {
                 "type": "null"
               }
-            ]
+            ],
+            "title": "Perception"
           }
         },
         "additionalProperties": false,
@@ -1285,6 +2018,158 @@
           "occurred_at"
         ],
         "title": "SourceInfo"
+      },
+      "SourceInfoV2": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 2,
+            "title": "Schema Version",
+            "default": 2
+          },
+          "character_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Character Id"
+          },
+          "source_instance": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Source Instance"
+          },
+          "event_id": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Event Id"
+          },
+          "session_id": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Session Id"
+          },
+          "conversation_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 256
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversation Id"
+          },
+          "activity_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 256
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Id"
+          },
+          "occurred_at": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Occurred At"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "observation",
+              "self_expression",
+              "summary",
+              "relationship",
+              "persona_history"
+            ],
+            "title": "Kind",
+            "default": "observation"
+          },
+          "privacy": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private",
+              "sensitive"
+            ],
+            "title": "Privacy",
+            "default": "private"
+          },
+          "participants": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 64,
+            "title": "Participants"
+          },
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 64,
+            "title": "Aliases"
+          },
+          "source_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 128,
+            "title": "Source Ids"
+          },
+          "pinned": {
+            "type": "boolean",
+            "title": "Pinned",
+            "default": false
+          },
+          "provenance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LegacyProvenance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "perception": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DocumentPerception"
+              },
+              {
+                "$ref": "#/components/schemas/ContentPerception"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Perception"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/ChannelContext"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "character_id",
+          "source_instance",
+          "event_id",
+          "session_id",
+          "occurred_at",
+          "channel"
+        ],
+        "title": "SourceInfoV2"
       },
       "SupersessionReference": {
         "properties": {
@@ -1313,6 +2198,53 @@
           "record_id"
         ],
         "title": "SupersessionReference"
+      },
+      "TextRange": {
+        "properties": {
+          "unit": {
+            "type": "string",
+            "const": "utf8_bytes",
+            "title": "Unit"
+          },
+          "start": {
+            "type": "integer",
+            "const": 0,
+            "title": "Start"
+          },
+          "end": {
+            "type": "integer",
+            "maximum": 30000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "End"
+          },
+          "total": {
+            "type": "integer",
+            "maximum": 1048576.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Total"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "unit",
+          "start",
+          "end",
+          "total",
+          "truncated",
+          "sha256"
+        ],
+        "title": "TextRange",
+        "description": "Half-open byte range in the extracted document, including its exact returned digest."
       },
       "ValidationError": {
         "properties": {
@@ -1353,6 +2285,102 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WorkflowEvidence": {
+        "properties": {
+          "entity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity"
+          },
+          "predicate": {
+            "type": "string",
+            "title": "Predicate"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "direct",
+              "inferred",
+              "context"
+            ],
+            "title": "Basis"
+          },
+          "confirmation": {
+            "type": "string",
+            "title": "Confirmation"
+          },
+          "references": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "References"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope"
+          },
+          "occurred_at": {
+            "type": "number",
+            "title": "Occurred At"
+          },
+          "conflict": {
+            "type": "boolean",
+            "title": "Conflict",
+            "default": false
+          },
+          "eligible": {
+            "type": "boolean",
+            "title": "Eligible",
+            "default": false
+          },
+          "extractor_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extractor Version"
+          },
+          "temporal_status": {
+            "type": "string",
+            "const": "observed_at_only",
+            "title": "Temporal Status",
+            "default": "observed_at_only"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "predicate",
+          "value",
+          "basis",
+          "confirmation",
+          "occurred_at"
+        ],
+        "title": "WorkflowEvidence"
       }
     }
   }

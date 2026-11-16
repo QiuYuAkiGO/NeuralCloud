@@ -3,7 +3,27 @@ import test from 'node:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
-import { DurableOutbox, collectCommitted, MemoryClient } from '../src/index.mjs';
+import { DurableOutbox, collectCommitted, MemoryClient, bindMemory } from '../src/index.mjs';
+
+test('recall tool takes its subject only from channel state and preserves mode and limit', async () => {
+  const definitions = new Map();
+  const agent = { id: 'current-agent', ctx: { tools: { register: definition => {
+    definitions.set(definition.name, definition); return () => definitions.delete(definition.name);
+  } } } };
+  const client = new MemoryClient('http://127.0.0.1:8765', 'x'.repeat(32));
+  const actor = {platform:'qq', account_id:'2285027817'};
+  client.setSubject(agent.id, actor);
+  let called;
+  client.recall = async (...args) => { called=args; return {status:'OK',items:[]}; };
+  const dispose = bindMemory(agent,client);
+  const recall = definitions.get('memory_recall');
+  assert.equal(recall.parameters.additionalProperties,false);
+  assert.equal(recall.parameters.properties.subject,undefined);
+  await recall.execute({query:'称呼',limit:3,mode:'keyword',subject:{platform:'qq',account_id:'other'}},{signal:undefined});
+  assert.deepEqual(called,['称呼',3,undefined,{subject:actor,mode:'keyword'}]);
+  dispose();
+  assert.equal(client.subjects.size,0);
+});
 
 function cleanup(root) {
   assert.equal(dirname(resolve(root)), resolve(tmpdir()));

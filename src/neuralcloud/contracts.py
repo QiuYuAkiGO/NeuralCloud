@@ -6,7 +6,7 @@ import hashlib
 import json
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, create_model
+from pydantic import BaseModel, ConfigDict, Field, create_model, model_validator
 
 
 class Contract(BaseModel):
@@ -53,6 +53,34 @@ class ContentPerception(Contract):
     observed_fraction: float = Field(ge=0, le=1, allow_inf_nan=False)
 
 
+class TextRange(Contract):
+    """Half-open byte range in the extracted document, including its exact returned digest."""
+
+    unit: Literal["utf8_bytes"]
+    start: Literal[0]
+    end: int = Field(gt=0, le=30000)
+    total: int = Field(gt=0, le=1048576)
+    truncated: bool
+    sha256: str = Field(pattern="^[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def valid_range(self):
+        if self.end > self.total or self.truncated != (self.end < self.total):
+            raise ValueError("inconsistent document byte range")
+        return self
+
+
+class DocumentPerception(ContentPerception):
+    coverage: Literal["document_text"]
+    text_range: TextRange
+
+    @model_validator(mode="after")
+    def valid_fraction(self):
+        if abs(self.observed_fraction - self.text_range.end / self.text_range.total) > 1e-12:
+            raise ValueError("document fraction does not match byte range")
+        return self
+
+
 class SourceEvent(Contract):
     schema_version: Literal[1] = 1
     character_id: str = Field(min_length=1, max_length=128)
@@ -70,7 +98,25 @@ class SourceEvent(Contract):
     source_ids: list[str] = Field(default_factory=list, max_length=128)
     pinned: bool = False
     provenance: LegacyProvenance | None = None
-    perception: ContentPerception | None = None
+    perception: DocumentPerception | ContentPerception | None = None
+
+
+class ChannelContext(Contract):
+    platform: Literal["qq", "qqbot"]
+    account_id: str = Field(min_length=1, max_length=128)
+    message_id: str = Field(min_length=1, max_length=128)
+    sender_id: str = Field(min_length=1, max_length=128)
+    conversation_id: str = Field(min_length=1, max_length=256)
+    mentions: list[str] = Field(default_factory=list, max_length=64)
+    reply_to: str | None = Field(default=None, max_length=128)
+    nickname: str | None = Field(default=None, max_length=128)
+    group_card: str | None = Field(default=None, max_length=128)
+
+
+class SourceEventV2(SourceEvent):
+    # Separate model preserves the exact canonical bytes and receipts of v1.
+    schema_version: Literal[2] = 2
+    channel: ChannelContext
 
 
 class Correction(Contract):
@@ -85,15 +131,62 @@ class Correction(Contract):
     retract: bool = False
 
 
+class RecallSubject(Contract):
+    platform: Literal["qq", "qqbot"]
+    account_id: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_:-]+$")
+
+
+class RecallConstraints(Contract):
+    conversation_id: str | None = Field(default=None, max_length=256)
+    since: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    until: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    phrases: list[str] = Field(default_factory=list, max_length=8)
+
+
+class EvidenceAssessment(Contract):
+    state: Literal["DIRECT", "INFERRED", "RELATED", "CONFLICT", "NOT_FOUND", "INCOMPLETE"]
+    sufficient: bool
+    absence_confirmed: Literal[False] = False
+    reason: str
+
+
+class WorkflowEvidence(Contract):
+    entity: str | None = None
+    predicate: str
+    value: str
+    basis: Literal["direct", "inferred", "context"]
+    confirmation: str
+    references: list[dict] = Field(default_factory=list)
+    scope: str | None = None
+    occurred_at: float
+    conflict: bool = False
+    eligible: bool = False
+    extractor_version: str | None = None
+    temporal_status: Literal["observed_at_only"] = "observed_at_only"
+
+
 class Recall(Contract):
     query: str = Field(min_length=1, max_length=256)
     limit: int = Field(default=10, ge=1, le=50)
+    subject: RecallSubject | None = None
+    mode: Literal["auto", "legacy", "keyword", "semantic", "hybrid"] = "auto"
+    intent: Literal["auto", "identity", "fact", "event", "cause", "topic"] = "auto"
+    targets: list[RecallSubject] = Field(default_factory=list, max_length=8)
+    constraints: RecallConstraints | None = None
+    workflow: Literal["enabled", "compat"] = "enabled"
 
 
 SourceInfo = create_model(
     "SourceInfo",
     __base__=Contract,
     **{name: (field.annotation, field) for name, field in SourceEvent.model_fields.items() if name != "content"},
+)
+
+
+SourceInfoV2 = create_model(
+    "SourceInfoV2",
+    __base__=Contract,
+    **{name: (field.annotation, field) for name, field in SourceEventV2.model_fields.items() if name != "content"},
 )
 
 
@@ -108,6 +201,39 @@ class MissingReceipt(Contract):
     status: Literal["NOT_FOUND"]
 
 
+class IdentityEvidence(Contract):
+    platform: str
+    account_id: str
+    confirmation: Literal["operator_confirmed", "self_reported", "third_party"]
+    name: str
+    relation: str
+    conflict: bool
+
+
+class RetrievalEvidence(Contract):
+    score: float
+    semantic: bool
+    keyword: bool
+    start: int | None = None
+    end: int | None = None
+
+
+class RecallDiagnostics(Contract):
+    mode: str
+    semantic_requested: bool
+    degraded: str | None = None
+    identity_count: int
+    keyword_candidates: int
+    semantic_candidates: int
+    elapsed_ms: float
+    workflow_version: str | None = None
+    index_generation: int | None = None
+    stages: list[dict] | None = None
+    rounds: int | None = None
+    stop_reason: str | None = None
+    cache_hit: bool = False
+
+
 class RecordView(Contract):
     status: Literal["ONLINE", "NOT_FOUND", "ARCHIVED_OFFLINE", "RETRACTED", "SOURCE_CHANGED", "INACTIVE"]
     record_id: str
@@ -118,7 +244,10 @@ class RecordView(Contract):
     content: str | None = None
     offset: int | None = None
     total_characters: int | None = None
-    source: SourceInfo | None = None
+    source: SourceInfo | SourceInfoV2 | None = None
+    identity: IdentityEvidence | None = None
+    retrieval: RetrievalEvidence | None = None
+    evidence: WorkflowEvidence | None = None
 
 
 class RecallResult(Contract):
@@ -127,6 +256,8 @@ class RecallResult(Contract):
     generation: int
     items: list[RecordView]
     coverage: str
+    diagnostics: RecallDiagnostics | None = None
+    assessment: EvidenceAssessment | None = None
 
 
 def canonical(value: object) -> str:

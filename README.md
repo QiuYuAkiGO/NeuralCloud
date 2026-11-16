@@ -1,8 +1,8 @@
 # NeuralCloud resident memory
 
-This implementation branch starts from the verified Linux source baseline `08751b4`. It introduces an independent online memory service. Production still runs the captured legacy services; no cutover or production cold eviction has occurred.
+This branch includes the running memory-service source recovered on 2026-11-16. Memory, evidence, semantic indexing, state and Harness services were verified active. See [source provenance and validation limits](docs/refactor/production-source-sync-20261116.md). This recovery does not deploy changes or authorize cold eviction.
 
-The v1 service uses SQLite WAL, explicit initialization, OS-held single-instance ownership, bounded Chinese text retrieval, durable idempotent ingestion, revision-aware corrections and dependency invalidation. The ordinary API cannot open archives, restore cold history, or execute tools. Semantic search is explicitly unavailable in this first implementation.
+The v1 service uses SQLite WAL, explicit initialization, OS-held single-instance ownership, bounded Chinese text retrieval, durable idempotent ingestion, revision-aware corrections and dependency invalidation. The ordinary API cannot open archives, restore cold history, or execute tools. The recovered implementation also contains semantic retrieval, evidence indexing and memory workflows; these require their explicitly configured services and optional dependencies.
 
 ```sh
 uv sync --locked --extra dev --extra archive

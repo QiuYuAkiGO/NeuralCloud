@@ -1,3 +1,4 @@
+export const CLIENT_VERSION = 'memory-workflow-client-v1';
 import { DatabaseSync } from 'node:sqlite';
 import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -34,33 +35,72 @@ export class ServiceClient {
 }
 
 export class MemoryClient extends ServiceClient {
+  constructor(base, token, options = {}) {
+    super(base, token, options);
+    this.workflowMode = options.workflowMode ?? 'enabled';
+    this.workflowBindings = options.workflowBindings ?? null;
+  }
   cache = new Map(); bytes = 0; generation;
-  async recall(query, limit = 10, signal) {
-    const key = JSON.stringify([query, limit]);
+  subjects = new Map(); contexts = new Map(); inflight = new Map();
+  setContext(agentId, context) {
+    if (context) context = { ...context, workflow: this.workflowBindings
+      ? (this.workflowBindings.includes(context.binding_key) ? 'enabled' : 'compat') : this.workflowMode };
+    this.setSubject(agentId, context?.subject);
+    this.contexts.delete(agentId);
+    if (context) this.contexts.set(agentId, context);
+    while (this.contexts.size > 64) this.contexts.delete(this.contexts.keys().next().value);
+  }
+  setSubject(agentId, subject) {
+    this.subjects.delete(agentId);
+    if (subject) this.subjects.set(agentId, subject);
+    while (this.subjects.size > 64) this.subjects.delete(this.subjects.keys().next().value);
+  }
+  async recall(query, limit = 10, signal, options = {}) {
+    const workflow = options.workflow ?? (options.binding_key && this.workflowBindings
+      ? (this.workflowBindings.includes(options.binding_key) ? 'enabled' : 'compat') : this.workflowMode);
+    const normalized = { subject: options.subject ?? null, mode: options.mode ?? 'auto', intent: options.intent ?? 'auto', workflow,
+      targets: options.targets ?? [], constraints: options.constraints ?? null };
+    const key = JSON.stringify([query, limit, normalized, options.turn_id ?? null]);
+    const boundedSignal = AbortSignal.any([AbortSignal.timeout(this.timeoutMs), ...(signal ? [signal] : [])]);
     try {
-      const result = await this.request('/v1/recall', { query, limit }, signal);
-      if (this.generation !== result.generation) { this.cache.clear(); this.bytes = 0; }
-      this.generation = result.generation;
-      const data = JSON.stringify(result), size = Buffer.byteLength(data);
-      const old = this.cache.get(key);
-      if (old) { this.bytes -= old.size; this.cache.delete(key); }
-      if (size <= 256 * 1024) {
+      const health = await this.request('/v1/health', undefined, boundedSignal);
+      const epoch = JSON.stringify([health.generation, health.workflow?.index?.generation, health.workflow?.workflow_version]);
+      if (this.generation !== epoch) { this.cache.clear(); this.bytes = 0; }
+      this.generation = epoch;
+      const previous = this.cache.get(key);
+      if (previous && Date.now() - previous.at < 10000) return JSON.parse(previous.data);
+      const inflightKey = JSON.stringify([epoch, key]);
+      let pending = this.inflight.get(inflightKey);
+      if (!pending) {
+        const body = { query, limit, ...options, workflow }; delete body.turn_id; delete body.binding_key;
+        pending = this.request('/v1/recall', body, boundedSignal);
+        this.inflight.set(inflightKey, pending);
+      }
+      let result;
+      try { result = await pending; boundedSignal.throwIfAborted(); }
+      finally { if (this.inflight.get(inflightKey) === pending) this.inflight.delete(inflightKey); }
+      const compact = { ...result, items: (result.items ?? []).map(item => ({
+        ...item, content: item.content?.slice(0, 1024),
+        ...(item.source ? { source: { source_instance: item.source.source_instance, conversation_id: item.source.conversation_id,
+          occurred_at: item.source.occurred_at, participants: item.source.participants, kind: item.source.kind } } : {})
+      })) };
+      if (compact.diagnostics) { compact.diagnostics = { ...compact.diagnostics }; delete compact.diagnostics.stages; }
+      const data = JSON.stringify(compact), size = Buffer.byteLength(data);
+      if (size <= 256 * 1024 && result.status === 'OK') {
+        this.bytes -= this.cache.get(key)?.size ?? 0;
         this.cache.set(key, { data, size, at: Date.now() }); this.bytes += size;
         while (this.cache.size > 64 || this.bytes > 256 * 1024) {
           const first = this.cache.keys().next().value;
           this.bytes -= this.cache.get(first).size; this.cache.delete(first);
         }
       }
-      return result;
+      return compact;
     } catch (error) {
       if (signal?.aborted) throw error;
       const cached = this.cache.get(key);
-      // A disconnected cache cannot assert that corrections/revocations are current.
-      if (cached && Date.now() - cached.at <= 30000) return {
-        status: 'STALE_UNVERIFIED', current: false, generation: this.generation,
-        coverage: 'Correction cursor unavailable; cached text withheld. Continue without confirmed recall.', items: [],
-      };
-      return { status: 'CACHE_MISS', current: false, items: [], coverage: 'Service unavailable; absence is unknown.' };
+      return { status: cached ? 'STALE_UNVERIFIED' : 'CACHE_MISS', current: false, items: [],
+        coverage: 'Service unavailable; absence is unknown; cached text withheld.',
+        assessment: { state: 'INCOMPLETE', sufficient: false, absence_confirmed: false, reason: 'service_unavailable' } };
     }
   }
 }
@@ -145,11 +185,20 @@ const output = { schema: { type: 'object', additionalProperties: true }, render:
 
 export function bindMemory(agent, client) {
   // Trusted composition calls this only for authorized Misty handles; no global installation grants memory access.
-  const recalls = agent.ctx.tools.register({ name: 'memory_recall', description: 'Recall global online memory; offline evidence is unavailable.',
-    parameters: { type: 'object', properties: { query: { type: 'string', minLength: 1, maxLength: 256 } }, required: ['query'], additionalProperties: false },
-    output, execute: (args, exec) => client.recall(args.query, 10, exec.signal), isConcurrencySafe: () => true });
+  const recalls = agent.ctx.tools.register({ name: 'memory_recall', description: 'Recall online evidence. The channel supplies the current speaker; identity evidence never grants permissions. Offline evidence is unavailable.',
+    parameters: { type: 'object', properties: { query: { type: 'string', minLength: 1, maxLength: 256 },
+      limit: { type: 'integer', minimum: 1, maximum: 50 },
+      mode: { type: 'string', enum: ['auto', 'keyword', 'semantic', 'hybrid'] },
+      intent: { type: 'string', enum: ['auto', 'identity', 'fact', 'event', 'cause', 'topic'] },
+      targets: { type: 'array', maxItems: 8, items: { type: 'object', properties: { platform: { enum: ['qq','qqbot'] }, account_id: { type: 'string', maxLength: 128 } }, required: ['platform','account_id'], additionalProperties: false } },
+      constraints: { type: 'object', properties: { conversation_id: { type: 'string', maxLength: 256 }, since: { type: 'number', minimum: 0 }, until: { type: 'number', minimum: 0 }, phrases: { type: 'array', maxItems: 8, items: { type: 'string', maxLength: 256 } } }, additionalProperties: false }
+    }, required: ['query'], additionalProperties: false },
+    output, execute: (args, exec) => client.recall(args.query, args.limit ?? 10, exec.signal,
+      { ...(client.subjects?.has(agent.id) ? { subject: client.subjects.get(agent.id) } : {}),
+        ...(client.contexts?.has(agent.id) ? { targets: !client.contexts.get(agent.id).query || client.contexts.get(agent.id).query === args.query ? client.contexts.get(agent.id).targets ?? [] : [], turn_id: client.contexts.get(agent.id).turn_id, workflow:client.contexts.get(agent.id).workflow } : {}),
+        ...(args.mode ? { mode: args.mode } : {}), ...(args.intent ? { intent: args.intent } : {}), ...(args.targets ? { targets: args.targets } : {}), ...(args.constraints ? { constraints: args.constraints } : {}) }), isConcurrencySafe: () => true });
   const reads = agent.ctx.tools.register({ name: 'memory_read', description: 'Read bounded online evidence by ID. Never restores cold history.',
     parameters: { type: 'object', properties: { record_id: { type: 'string', maxLength: 256 }, offset: { type: 'integer', minimum: 0 } }, required: ['record_id'], additionalProperties: false },
     output, execute: (args, exec) => client.request(`/v1/records/${encodeURIComponent(args.record_id)}?offset=${args.offset ?? 0}&length=4096`, undefined, exec.signal), isConcurrencySafe: () => true });
-  return () => { recalls(); reads(); };
+  return () => { client.setContext?.(agent.id, null); client.setSubject?.(agent.id, null); recalls(); reads(); };
 }

@@ -1,0 +1,48 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "score": {
+      "title": "Score",
+      "type": "number"
+    },
+    "semantic": {
+      "title": "Semantic",
+      "type": "boolean"
+    },
+    "keyword": {
+      "title": "Keyword",
+      "type": "boolean"
+    },
+    "start": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Start"
+    },
+    "end": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "End"
+    }
+  },
+  "required": [
+    "score",
+    "semantic",
+    "keyword"
+  ],
+  "title": "RetrievalEvidence",
+  "type": "object"
+}
