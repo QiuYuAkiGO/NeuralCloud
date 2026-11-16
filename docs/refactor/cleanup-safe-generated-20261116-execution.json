@@ -1,0 +1,11 @@
+{
+  "date": "2026-11-16",
+  "action": "deleted inventoried files from local disk after explicit user authorization",
+  "files_deleted": 665,
+  "logical_bytes_deleted": 8048228,
+  "remaining_targets": 0,
+  "empty_directories_retained": true,
+  "server_changed": false,
+  "script": "tools/cleanup/remove-verified-pytest-output.ps1",
+  "manifest_sha256": "573a11884bed03002c15f525f2724c05e527afba13386299392f88f29771000b"
+}

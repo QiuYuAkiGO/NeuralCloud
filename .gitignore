@@ -68,3 +68,6 @@ Deepseek-api-key-affect.txt
 
 # Private oral-expression trials, production chat excerpts and human votes.
 /data/misty-oral-*/
+
+# Generated pytest per-test state; keep evaluation summaries and evidence reports.
+/eval/reports/homeostatic_decision/**/pytest-temp*/test_*/

@@ -1,7 +1,0 @@
-{
-  "profile_path": "C:\\Projects\\NeuralCloud\\.tmp\\homeostasis-runtime-dc4db603f3fa\\test_profile_revision_is_immut0\\profiles\\functional-proxy-v1-r4.json",
-  "manifest_path": "C:\\Projects\\NeuralCloud\\.tmp\\homeostasis-runtime-dc4db603f3fa\\test_profile_revision_is_immut0\\manifests\\neuralcloud-development-r4.json",
-  "profile_ref": "functional-proxy-v1@4",
-  "manifest_ref": "manifest://neuralcloud-development/r4",
-  "restart_required": true
-}
