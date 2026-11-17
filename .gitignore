@@ -31,17 +31,17 @@ data/cognitive/
 data/homeostasis/
 .env
 .env.local
-eval/external/*
-!eval/external/.gitkeep
-eval/reports/rp_*.md
-eval/reports/traces/
+workspace_assets/eval/external/*
+!workspace_assets/eval/external/.gitkeep
+workspace_assets/eval/reports/rp_*.md
+workspace_assets/eval/reports/traces/
 .idea/
 .vscode/
 *.swp
 .DS_Store
 
 # Content-bearing diagnostic requests and private rating maps stay local.
-eval/reports/emotional_expression_diagnostics/private/
+workspace_assets/eval/reports/emotional_expression_diagnostics/private/
 
 # Private conversation corpus and model-judge request/response evidence.
 /data/evaluations/misty-humanization-*/
@@ -62,12 +62,17 @@ Deepseek-api-key-affect.txt
 /Linux-server-user-password.txt
 /openai-api-key.txt
 /秋语/
-/eval/reports/qq-group-*/
-/eval/reports/qq-memory-prepare-*/
-/eval/reports/qq-voice-*/
+/workspace_assets/eval/reports/qq-group-*/
+/workspace_assets/eval/reports/qq-memory-prepare-*/
+/workspace_assets/eval/reports/qq-voice-*/
 
 # Private oral-expression trials, production chat excerpts and human votes.
 /data/misty-oral-*/
 
 # Generated pytest per-test state; keep evaluation summaries and evidence reports.
-/eval/reports/homeostatic_decision/**/pytest-temp*/test_*/
+/workspace_assets/eval/reports/homeostatic_decision/**/pytest-temp*/test_*/
+
+# Group generated assets; evaluation source remains versioned.
+/workspace_assets/*
+!/workspace_assets/eval/
+!/workspace_assets/__init__.py

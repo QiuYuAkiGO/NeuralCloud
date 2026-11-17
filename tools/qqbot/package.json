@@ -1,9 +1,0 @@
-{
-  "name": "misty-qqbot-transport",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "engines": {"node": ">=20"},
-  "scripts": {"test": "node --test bridge.test.mjs"},
-  "dependencies": {"@tencent-connect/qqbot-nodejs": "1.0.5"}
-}

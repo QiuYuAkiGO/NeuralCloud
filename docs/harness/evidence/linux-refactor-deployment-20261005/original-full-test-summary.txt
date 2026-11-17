@@ -1,8 +1,0 @@
--- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-=========================== short test summary info ============================
-FAILED tests/test_runtime_recovery.py::test_audit_io_and_diagnostic_write_errors_do_not_modify_journal
-FAILED tests/test_validation_tokens.py::test_missing_optional_dependency_keeps_the_byte_bound
-FAILED tests/test_validation_tokens.py::test_invalid_assets_are_logged_and_cannot_enable_exact_routing[checksum]
-FAILED tests/test_validation_tokens.py::test_invalid_assets_are_logged_and_cannot_enable_exact_routing[parse]
-FAILED tests/test_validation_tokens.py::test_invalid_assets_are_logged_and_cannot_enable_exact_routing[missing_asset]
-5 failed, 7129 passed, 498 skipped, 2 warnings in 500.63s (0:08:20)

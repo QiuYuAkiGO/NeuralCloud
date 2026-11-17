@@ -1,1 +1,0 @@
-"""NeuralCloud Harness visualization GUI."""
