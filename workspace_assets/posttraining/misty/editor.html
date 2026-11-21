@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Misty 样本编辑器</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #242237;
+      --muted: #625f74;
+      --border: #e1deeb;
+      --accent: #6346a6;
+      --tint: #f0ebfa;
+      font: 15px/1.55 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+      color: var(--ink);
+      background: #f7f6fa;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button, input, select, textarea { border: 1px solid var(--border); border-radius: 8px; }
+    button, select { cursor: pointer; }
+    button { padding: 8px 14px; background: #fff; }
+    button:hover:not(:disabled) { border-color: var(--accent); }
+    button:disabled { opacity: .52; cursor: default; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    h1, h2, p { margin: 0; }
+    h1 { font-size: clamp(24px, 4vw, 32px); line-height: 1.15; letter-spacing: -.025em; }
+    h2 { font-size: 17px; }
+    small, .muted { color: var(--muted); }
+    .shell { max-width: 1200px; margin: auto; padding: 30px 22px; }
+    .page-header { display: flex; gap: 18px; justify-content: space-between; align-items: end; margin-bottom: 20px; }
+    .page-header p { margin-top: 7px; }
+    .dataset { display: grid; gap: 4px; min-width: min(100%, 260px); }
+    .dataset label, .sample-filter label { color: var(--muted); font-size: 13px; }
+    select, input, textarea { width: 100%; padding: 8px 11px; background: #fff; }
+    .layout { display: grid; grid-template-columns: minmax(222px, 275px) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .panel { background: #fff; border: 1px solid var(--border); border-radius: 14px; }
+    .sidebar { overflow: hidden; }
+    .sample-filter { display: grid; gap: 6px; padding: 14px; }
+    .sidebar-title { display: flex; justify-content: space-between; align-items: center; }
+    .list { display: grid; gap: 3px; overflow: auto; max-height: calc(100vh - 242px); padding: 0 8px 8px; }
+    .sample { display: grid; gap: 2px; text-align: left; background: transparent; border-color: transparent; min-width: 0; }
+    .sample[aria-current="true"] { border-color: #d5c8f1; background: var(--tint); }
+    .sample-name, .sample-text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .sample-name { font-size: 13px; font-weight: 650; }
+    .sample-text { font-size: 13px; color: var(--muted); }
+    .editor { padding: 19px; display: grid; gap: 16px; }
+    .editor-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; flex-wrap: wrap; }
+    #filename { display: block; overflow-wrap: anywhere; font-size: 12px; }
+    .pill { min-width: fit-content; padding: 4px 9px; border-radius: 99px; background: var(--tint); color: #4c337f; font-size: 13px; }
+    .columns { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 14px; }
+    fieldset { margin: 0; padding: 12px; min-width: 0; border: 1px solid var(--border); border-radius: 10px; }
+    legend { padding: 0 5px; font-weight: 650; }
+    .field { display: grid; gap: 5px; margin-bottom: 10px; }
+    .field:last-child { margin-bottom: 0; }
+    .field label { color: var(--muted); font-size: 13px; }
+    textarea { display: block; min-height: 76px; resize: vertical; line-height: 1.65; }
+    textarea.materials { min-height: 242px; }
+    textarea.answer { min-height: 170px; }
+    .editor-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .actions { display: flex; gap: 8px; margin-left: auto; }
+    .primary { background: var(--accent); color: white; border-color: var(--accent); font-weight: 650; }
+    .primary:hover:not(:disabled) { background: #53368e; }
+    #status[data-kind="error"] { color: #a42c3e; }
+    #status[data-kind="success"] { color: #2f6a51; }
+    [hidden] { display: none !important; }
+    @media (max-width: 790px) {
+      .columns { grid-template-columns: 1fr; }
+      textarea.answer { min-height: 116px; }
+    }
+    @media (max-width: 600px) {
+      .shell { padding: 18px 12px; }
+      .page-header { align-items: start; flex-direction: column; gap: 12px; }
+      .layout { grid-template-columns: 1fr; gap: 12px; }
+      .list { max-height: 172px; }
+      .editor { padding: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="page-header">
+      <div>
+        <h1>Misty 样本编辑器</h1>
+        <p class="muted">选择样本，修改 Prompt 与回复，保存到本地 JSONL。</p>
+      </div>
+      <div class="dataset">
+        <label for="dataset">样本集</label>
+        <select id="dataset" disabled></select>
+      </div>
+    </header>
+    <div class="layout">
+      <aside aria-label="样本列表" class="panel sidebar">
+        <div class="sample-filter">
+          <div class="sidebar-title"><h2>样本</h2><small id="count"></small></div>
+          <label for="filter">筛选样本</label>
+          <input id="filter" type="search" placeholder="编号、关系档或正文">
+        </div>
+        <div id="samples" class="list"></div>
+      </aside>
+      <section class="panel editor" aria-labelledby="sample-title">
+        <div class="editor-head">
+          <div>
+            <h2 id="sample-title">正在读取样本</h2>
+            <small id="filename"></small>
+          </div>
+          <span id="tier" class="pill" hidden></span>
+        </div>
+        <div id="edit-fields" class="columns" hidden>
+          <fieldset id="prompt-fields"><legend>Prompt</legend><div id="prompt"></div></fieldset>
+          <fieldset id="reply-fields"><legend>回复</legend><div id="reply"></div></fieldset>
+        </div>
+        <div class="editor-foot">
+          <p id="status" class="muted" role="status" aria-live="polite"></p>
+          <div class="actions">
+            <button id="reset" type="button" disabled>撤销未保存修改</button>
+            <button id="save" class="primary" type="button" disabled>保存样本</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script>
+    const $ = id => document.getElementById(id);
+    const dataset = $("dataset");
+    const filter = $("filter");
+    const samples = $("samples");
+    const tierLabels = { low: "低 · 还不太熟悉", medium: "中 · 有些熟悉", high: "高 · 已经很熟悉" };
+    const roleLabels = { system: "背景 / 状态", user: "用户", assistant: "小雾（历史回复）" };
+    let datasetKey = "";
+    let entries = [];
+    let active = null;
+    let draft = null;
+    let busy = false;
+
+    function status(message, kind = "") {
+      $("status").textContent = message;
+      $("status").dataset.kind = kind;
+    }
+
+    async function api(path, options) {
+      const response = await fetch(path, options);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "请求失败。");
+      return data;
+    }
+
+    function isDirty() {
+      if (!active) return false;
+      return JSON.stringify(draft.prompt) !== JSON.stringify(active.row.prompt)
+        || JSON.stringify(draft.completion) !== JSON.stringify(active.row.completion);
+    }
+
+    function setControls() {
+      const dirty = isDirty();
+      $("save").disabled = busy || !dirty;
+      $("reset").disabled = busy || !dirty;
+      $("prompt-fields").disabled = busy;
+      $("reply-fields").disabled = busy;
+      dataset.disabled = busy || dataset.options.length === 0;
+      filter.disabled = busy;
+      for (const button of samples.querySelectorAll("button")) button.disabled = busy;
+    }
+
+    function sampleText(row) {
+      return typeof row.prompt === "string" ? row.prompt.trim() : row.prompt.at(-1).content;
+    }
+
+    function drawList() {
+      const query = filter.value.trim().toLowerCase();
+      const matching = entries.filter(({ row }) => (
+        [row.id, row.group_id, tierLabels[row.relationship_tier], sampleText(row)]
+          .filter(Boolean).join(" ").toLowerCase().includes(query)
+      ));
+      $("count").textContent = query ? `${matching.length} / ${entries.length}` : `${entries.length} 条`;
+      samples.replaceChildren();
+      for (const entry of matching) {
+        const row = entry.row;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "sample";
+        button.setAttribute("aria-current", String(active?.row.id === row.id));
+        const name = document.createElement("span");
+        name.className = "sample-name";
+        name.textContent = row.relationship_tier
+          ? `第 ${row.group_id.replace("rel-", "")} 组 · ${tierLabels[row.relationship_tier].split(" · ")[0]}`
+          : `第 ${row.group_id} 组 · 第 ${row.turn} 轮`;
+        const excerpt = document.createElement("span");
+        excerpt.className = "sample-text";
+        excerpt.textContent = sampleText(row);
+        button.append(name, excerpt);
+        button.addEventListener("click", () => {
+          if (active?.row.id !== row.id && allowLeaving()) selectSample(entry);
+        });
+        samples.append(button);
+      }
+      if (matching.length === 0) {
+        const empty = document.createElement("small");
+        empty.textContent = "没有匹配的样本。";
+        samples.append(empty);
+      }
+      setControls();
+    }
+
+    function allowLeaving() {
+      return !isDirty() || window.confirm("这条样本有未保存的修改。要放弃修改吗？");
+    }
+
+    function field(id, label, value, className, onInput) {
+      const wrap = document.createElement("div");
+      wrap.className = "field";
+      const caption = document.createElement("label");
+      caption.htmlFor = id;
+      caption.textContent = label;
+      const area = document.createElement("textarea");
+      area.id = id;
+      area.className = className;
+      area.value = value;
+      area.addEventListener("input", () => {
+        onInput(area.value);
+        status(isDirty() ? "有未保存的修改。" : "");
+        setControls();
+      });
+      wrap.append(caption, area);
+      return wrap;
+    }
+
+    function selectSample(entry) {
+      active = entry;
+      const row = entry.row;
+      draft = structuredClone({ prompt: row.prompt, completion: row.completion });
+      $("sample-title").textContent = row.id;
+      $("tier").hidden = !row.relationship_tier;
+      $("tier").textContent = tierLabels[row.relationship_tier] || "";
+      $("edit-fields").hidden = false;
+      if (typeof draft.prompt === "string") {
+        $("prompt").replaceChildren(field("prompt-text", "材料和提示", draft.prompt, "materials", value => {
+          draft.prompt = value;
+        }));
+      } else {
+        $("prompt").replaceChildren(...draft.prompt.map((message, index) => field(
+          `prompt-${index}`, `${index + 1}. ${roleLabels[message.role] || message.role}`, message.content, "",
+          value => { draft.prompt[index].content = value; }
+        )));
+      }
+      const isText = typeof draft.completion === "string";
+      const answer = isText ? draft.completion : draft.completion[0].content;
+      $("reply").replaceChildren(field("completion", isText ? "Master 心声" : "小雾的回复", answer, "answer", value => {
+        if (isText) draft.completion = value;
+        else draft.completion[0].content = value;
+      }));
+      status("");
+      drawList();
+    }
+
+    async function loadDataset(key) {
+      busy = true;
+      setControls();
+      status("正在读取样本…");
+      try {
+        const data = await api(`/api/datasets/${key}`);
+        datasetKey = key;
+        entries = data.samples;
+        filter.value = "";
+        $("filename").textContent = data.filename;
+        if (entries.length) selectSample(entries[0]);
+        else {
+          active = null;
+          $("sample-title").textContent = "这个样本集为空";
+          $("tier").hidden = true;
+          $("edit-fields").hidden = true;
+          drawList();
+          status("");
+        }
+      } catch (error) {
+        dataset.value = datasetKey;
+        status(error.message, "error");
+      } finally {
+        busy = false;
+        setControls();
+      }
+    }
+
+    async function saveSample() {
+      if (!isDirty() || busy) return;
+      const values = typeof draft.prompt === "string"
+        ? [draft.prompt, draft.completion]
+        : [...draft.prompt, ...draft.completion].map(message => message.content);
+      if (values.some(value => !value.trim())) {
+        status("请填写所有消息正文。", "error");
+        return;
+      }
+      busy = true;
+      setControls();
+      status("正在保存…");
+      try {
+        const update = await api(`/api/datasets/${datasetKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: active.row.id, revision: active.revision, ...draft }),
+        });
+        entries[entries.indexOf(active)] = update;
+        selectSample(update);
+        status("已保存到 JSONL。", "success");
+      } catch (error) {
+        status(error.message, "error");
+      } finally {
+        busy = false;
+        setControls();
+      }
+    }
+
+    dataset.addEventListener("change", () => {
+      if (allowLeaving()) loadDataset(dataset.value);
+      else dataset.value = datasetKey;
+    });
+    filter.addEventListener("input", drawList);
+    $("save").addEventListener("click", saveSample);
+    $("reset").addEventListener("click", () => selectSample(active));
+    window.addEventListener("beforeunload", event => {
+      if (!isDirty()) return;
+      event.preventDefault();
+      event.returnValue = "";
+    });
+
+    async function start() {
+      try {
+        const datasets = await api("/api/datasets");
+        for (const item of datasets) dataset.add(new Option(item.label, item.key));
+        await loadDataset(datasets[0].key);
+      } catch (error) {
+        status(error.message, "error");
+      }
+    }
+    start();
+  </script>
+</body>
+</html>

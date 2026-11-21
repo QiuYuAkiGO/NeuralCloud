@@ -72,7 +72,8 @@ Deepseek-api-key-affect.txt
 # Generated pytest per-test state; keep evaluation summaries and evidence reports.
 /workspace_assets/eval/reports/homeostatic_decision/**/pytest-temp*/test_*/
 
-# Group generated assets; evaluation source remains versioned.
+# Group generated assets; evaluation and curated post-training sources remain versioned.
 /workspace_assets/*
 !/workspace_assets/eval/
+!/workspace_assets/posttraining/
 !/workspace_assets/__init__.py
