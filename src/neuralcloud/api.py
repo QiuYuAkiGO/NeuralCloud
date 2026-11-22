@@ -27,6 +27,7 @@ from .contracts import (
     RecallResult,
 )
 from .storage import MemoryStore, Refusal
+from .self_history import QqSelfHistoryQuery, QqSelfHistoryResult, recall_self_history
 
 LOADED_IMPLEMENTATION = {
     "module": str(Path(__file__).resolve()),
@@ -82,6 +83,7 @@ def create_app(store: MemoryStore, token: str, *, close_on_shutdown=False, retri
     def health():
         result = store.health()
         result["source_event_versions"] = [1, 2]
+        result["qq_self_history"] = True
         result["implementation"] = LOADED_IMPLEMENTATION
         if retriever is not None:
             if hasattr(retriever, "status"):
@@ -94,6 +96,11 @@ def create_app(store: MemoryStore, token: str, *, close_on_shutdown=False, retri
             # Capability only; per-request diagnostics and worker health report actual readiness.
             result["semantic_search"] = base.hybrid and base.semantic is not None
         return result
+
+    @app.post("/v1/recall/qq-self-history", response_model=QqSelfHistoryResult)
+    def qq_self_history(request: QqSelfHistoryQuery):
+        # The trusted channel supplies the peer. The store establishes authorship from original message metadata.
+        return recall_self_history(store, request)
 
     @app.post("/v1/recall", response_model=RecallResult, response_model_exclude_none=True)
     async def recall(request: Recall, connection: Request):

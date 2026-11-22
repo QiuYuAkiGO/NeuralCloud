@@ -14,6 +14,7 @@
 - `GET /v1/records/{record_id}?offset=0&length=4096`：有界读取正文；length 上限 16384。
 - `GET /v1/changes?after=0&limit=100`：从序号之后读取变化，limit 上限 500。
 - `POST /v1/recall`：查询在线记忆，返回记录与证据判断。
+- `POST /v1/recall/qq-self-history` 供已认证的 QQ 私聊渠道查询本人在不同会话发出的消息。渠道传入实际发件人的 `account_id`、以空格分隔的原文关键词 `query`、不含本轮的 Unix 秒时间上限 `before` 及可选的 `limit`。每条结果包含记录 ID、版本、发言时间、群聊或私聊来源与原话节选。记忆服务核对原始发送者，只读取当前在线、可见的本人发言。旧库记录还需实际迁移回执与对应的 QQ 协议消息引用。
 
 ## 写入时必须明确的身份
 

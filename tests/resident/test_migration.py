@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from neuralcloud.api import create_app
 from neuralcloud.contracts import digest
 from neuralcloud.migration import LegacyImporter, file_hash
+from neuralcloud.self_history import QqSelfHistoryQuery, recall_self_history
 from neuralcloud.storage import MemoryStore, Refusal
 
 
@@ -127,6 +128,44 @@ def test_snapshot_import_is_bounded_resumable_and_preserves_semantics(tmp_path):
         assert client.get("/v1/records/claim", headers={"Authorization": "Bearer " + "x" * 32}).status_code == 200
     finally:
         store.close()
+
+
+@pytest.mark.parametrize(
+    ("channel", "conversation", "refs", "expected"),
+    [
+        ("qq_group", "qq:group:10009", ["qq-protocol-message:10009:10002:81"], True),
+        ("qq_private", "qq:private:10001:10002", ["qq-protocol-private-message:10001:10002:10002:82"], True),
+        ("qq_group", "qq:group:10009", ["qq-profile:10002"], False),
+        ("qq_group", "qq:group:10009", ["qq-protocol-message:10009:10003:81"], False),
+        (
+            "qq_group",
+            "qq:group:10009",
+            ["qq-protocol-message:10009:10002:81", "qq-protocol-message:10009:10003:82"],
+            False,
+        ),
+    ],
+)
+def test_legacy_self_history_requires_original_protocol_sender(tmp_path, channel, conversation, refs, expected):
+    source, target = tmp_path / "source.sqlite3", tmp_path / "new.sqlite3"
+    legacy_snapshot(source)
+    db = sqlite3.connect(source)
+    raw = json.loads(db.execute("SELECT payload FROM pm_sources WHERE id='old-source'").fetchone()[0])
+    raw.update(
+        author_id="qq:member:10002", scope={"channel": channel, "conversation_id": conversation}, source_refs=refs
+    )
+    db.execute("UPDATE pm_sources SET payload=?,digest=? WHERE id='old-source'", (json.dumps(raw), digest(raw)))
+    db.commit()
+    db.close()
+    importer = LegacyImporter(
+        source, target, character="misty-test", expected_sha256=file_hash(source), expected_preset="test"
+    )
+    try:
+        while importer.step()["stage"] != "COMPLETE":
+            pass
+        result = recall_self_history(importer.target, QqSelfHistoryQuery(account_id="10002", query="星空", before=2e9))
+        assert [(i.record_id, i.origin) for i in result.items] == ([("old-source", channel)] if expected else [])
+    finally:
+        importer.close()
 
 
 def test_migration_failed_batch_rolls_back_and_changed_snapshot_is_rejected(tmp_path):
